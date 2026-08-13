@@ -1,0 +1,13 @@
+#ifndef MIR_FLAG_TOKEN_KIND
+#define MIR_FLAG_TOKEN_KIND(Kind)
+#endif // MIR_FLAG_TOKEN_KIND
+
+#ifndef MIR_FLAG
+#define MIR_FLAG(Flag) MIR_FLAG_TOKEN_KIND(Flag)
+#endif // MIR_FLAG
+
+MIR_FLAG(nsw)
+MIR_FLAG(nuw)
+
+#undef MIR_FLAG
+#undef MIR_FLAG_TOKEN_KIND

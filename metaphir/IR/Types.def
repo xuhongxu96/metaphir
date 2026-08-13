@@ -1,0 +1,26 @@
+#ifndef MIR_TYPE_TOKEN_KIND
+#define MIR_TYPE_TOKEN_KIND(Kind)
+#endif // MIR_TYPE_TOKEN_KIND
+
+#ifndef MIR_TYPE_ID
+#define MIR_TYPE_ID(TypeID)
+#endif // MIR_TYPE_ID
+
+#ifndef MIR_TYPE
+#define MIR_TYPE(TypeID, TokenKind)                                            \
+  MIR_TYPE_ID(TypeID)                                                          \
+  MIR_TYPE_TOKEN_KIND(TokenKind)
+#endif // MIR_TYPE
+
+MIR_TYPE(HalfTyID, half)     ///< 16-bit floating point type
+MIR_TYPE(BFloatTyID, bfloat) ///< 16-bit floating point type (7-bit significand)
+MIR_TYPE(FloatTyID, float)   ///< 32-bit floating point type
+MIR_TYPE(DoubleTyID, double) ///< 64-bit floating point type
+MIR_TYPE(FP128TyID,
+         fp128)          ///< 128-bit floating point type (112-bit significand)
+MIR_TYPE(VoidTyID, void) ///< type with no size
+MIR_TYPE(LabelTyID, label) ///< Labels
+
+#undef MIR_TYPE
+#undef MIR_TYPE_ID
+#undef MIR_TYPE_TOKEN_KIND

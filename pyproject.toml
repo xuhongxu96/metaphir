@@ -1,0 +1,9 @@
+[project]
+name = "metaphir"
+version = "0.1.0"
+description = "A measurement-first metaprogramming layer for LLVM IR, specialized to the InstCombine peephole optimizer."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic>=2.13.4",
+]

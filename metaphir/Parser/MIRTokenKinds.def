@@ -1,0 +1,71 @@
+#ifndef MIR_TOKEN_KIND
+#define MIR_TOKEN_KIND(Name)
+#endif // MIR_TOKEN_KIND
+
+#ifndef MIR_TOKEN_KIND_HAS_VALUE
+#define MIR_TOKEN_KIND_HAS_VALUE(Name, Value) MIR_TOKEN_KIND(Name)
+#endif // MIR_TOKEN_KIND_HAS_VALUE
+
+// Markers.
+MIR_TOKEN_KIND(Eof)
+MIR_TOKEN_KIND(Error)
+
+// Tokens with no info.
+MIR_TOKEN_KIND(dotdotdot) // ...
+MIR_TOKEN_KIND(equal)     // =
+MIR_TOKEN_KIND(comma)     // ,
+MIR_TOKEN_KIND(star)      // *
+MIR_TOKEN_KIND(lsquare)   // [
+MIR_TOKEN_KIND(rsquare)   // ]
+MIR_TOKEN_KIND(lbrace)    // {
+MIR_TOKEN_KIND(rbrace)    // }
+MIR_TOKEN_KIND(less)      // <
+MIR_TOKEN_KIND(greater)   // >
+MIR_TOKEN_KIND(lparen)    // (
+MIR_TOKEN_KIND(rparen)    // )
+MIR_TOKEN_KIND(exclaim)   // !
+MIR_TOKEN_KIND(bar)       // |
+MIR_TOKEN_KIND(colon)     // :
+MIR_TOKEN_KIND(hash)      // #
+
+MIR_TOKEN_KIND(kw_true)
+MIR_TOKEN_KIND(kw_false)
+MIR_TOKEN_KIND(kw_x) // <4 x i8>
+
+// Unsigned valued tokens (UIntVal).
+MIR_TOKEN_KIND_HAS_VALUE(LabelID, UIntVal)    // 42:
+MIR_TOKEN_KIND_HAS_VALUE(LocalVarID, UIntVal) // %42
+MIR_TOKEN_KIND_HAS_VALUE(GlobalID, UIntVal)   // @42
+
+// String valued tokens (StrVal).
+MIR_TOKEN_KIND_HAS_VALUE(LabelStr, StrVal)       // foo:
+MIR_TOKEN_KIND_HAS_VALUE(LocalVar, StrVal)       // %foo %"foo"
+MIR_TOKEN_KIND_HAS_VALUE(GlobalVar, StrVal)      // @foo @"foo"
+MIR_TOKEN_KIND_HAS_VALUE(MetadataVar, StrVal)    // !foo
+MIR_TOKEN_KIND_HAS_VALUE(StringConstant, StrVal) // "foo"
+MIR_TOKEN_KIND_HAS_VALUE(FloatLiteral, StrVal)   // Unparsed float literal
+MIR_TOKEN_KIND_HAS_VALUE(MetaVar, StrVal)        // ?foo
+MIR_TOKEN_KIND_HAS_VALUE(MetaCaptureVar, StrVal) // :?foo
+MIR_TOKEN_KIND_HAS_VALUE(MetaIntVar, StrVal)     // i?foo
+MIR_TOKEN_KIND_HAS_VALUE(MetaFlag, StrVal)       // :flag
+
+// Type valued tokens (TyVal).
+MIR_TOKEN_KIND_HAS_VALUE(Type, TyVal)
+
+MIR_TOKEN_KIND_HAS_VALUE(FloatHexLiteral, APSIntVal) // f0x..., stored as APSInt
+MIR_TOKEN_KIND_HAS_VALUE(APFloat, APFloatVal)        // APFloatVal
+MIR_TOKEN_KIND_HAS_VALUE(APSInt, APSIntVal)          // APSInt
+
+#define MIR_TYPE_TOKEN_KIND(Kind) MIR_TOKEN_KIND(kw_##Kind)
+#include "metaphir/IR/Types.def"
+
+// Matchers
+#define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Kind) MIR_TOKEN_KIND(kw_##Kind)
+#include "metaphir/IR/InstructionMatchers.def"
+
+// Flags
+#define MIR_FLAG_TOKEN_KIND(Flag) MIR_TOKEN_KIND(kw_##Flag)
+#include "metaphir/IR/Flags.def"
+
+#undef MIR_TOKEN_KIND_HAS_VALUE
+#undef MIR_TOKEN_KIND
