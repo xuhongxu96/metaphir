@@ -6,8 +6,7 @@ namespace llvm {
 namespace metaphir {
 
 IntegerType *IntegerType::get(MIRContext &C, unsigned NumBits) {
-  assert(NumBits >= MIN_INT_BITS && "bitwidth too small");
-  assert(NumBits <= MAX_INT_BITS && "bitwidth too large");
+  assert(NumBits >= 1 && "bitwidth too small");
 
   IntegerType *&Entry = C.pImpl->IntegerTypes[NumBits];
 
@@ -18,8 +17,7 @@ IntegerType *IntegerType::get(MIRContext &C, unsigned NumBits) {
 }
 
 ByteType *ByteType::get(MIRContext &C, unsigned NumBits) {
-  assert(NumBits >= MIN_INT_BITS && "bitwidth too small");
-  assert(NumBits <= MAX_INT_BITS && "bitwidth too large");
+  assert(NumBits >= 1 && "bitwidth too small");
 
   ByteType *&Entry = C.pImpl->ByteTypes[NumBits];
 

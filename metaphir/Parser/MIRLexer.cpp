@@ -510,8 +510,7 @@ tok::Kind MIRLexer::LexIdentifier() {
   if (IntOrByteEnd != StartChar) {
     CurPtr = IntOrByteEnd;
     uint64_t NumBits = atoull(StartChar, CurPtr);
-    if (NumBits < IntegerType::MIN_INT_BITS ||
-        NumBits > IntegerType::MAX_INT_BITS) {
+    if (NumBits < 1) {
       LexError("bitwidth for integer or byte type out of range");
       return tok::Error;
     }
