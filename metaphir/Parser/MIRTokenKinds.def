@@ -28,10 +28,6 @@ MIR_TOKEN_KIND(bar)       // |
 MIR_TOKEN_KIND(colon)     // :
 MIR_TOKEN_KIND(hash)      // #
 
-MIR_TOKEN_KIND(kw_true)
-MIR_TOKEN_KIND(kw_false)
-MIR_TOKEN_KIND(kw_x) // <4 x i8>
-
 // Unsigned valued tokens (UIntVal).
 MIR_TOKEN_KIND_HAS_VALUE(LabelID, UIntVal)    // 42:
 MIR_TOKEN_KIND_HAS_VALUE(LocalVarID, UIntVal) // %42
@@ -55,6 +51,11 @@ MIR_TOKEN_KIND_HAS_VALUE(Type, TyVal)
 MIR_TOKEN_KIND_HAS_VALUE(FloatHexLiteral, APSIntVal) // f0x..., stored as APSInt
 MIR_TOKEN_KIND_HAS_VALUE(APFloat, APFloatVal)        // APFloatVal
 MIR_TOKEN_KIND_HAS_VALUE(APSInt, APSIntVal)          // APSInt
+
+// Keywords.
+MIR_TOKEN_KIND(kw_true)
+MIR_TOKEN_KIND(kw_false)
+MIR_TOKEN_KIND(kw_x) // <4 x i8>
 
 #define MIR_TYPE_TOKEN_KIND(Kind) MIR_TOKEN_KIND(kw_##Kind)
 #include "metaphir/IR/Types.def"

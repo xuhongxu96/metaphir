@@ -6,8 +6,31 @@
 #define MIR_FLAG(Flag) MIR_FLAG_TOKEN_KIND(Flag)
 #endif // MIR_FLAG
 
+#ifndef MIR_FAST_MATH_FLAG
+#define MIR_FAST_MATH_FLAG(Flag) MIR_FLAG_TOKEN_KIND(Flag)
+#endif // MIR_FAST_MATH_FLAG
+
 MIR_FLAG(nsw)
 MIR_FLAG(nuw)
+MIR_FLAG(exact)
+MIR_FLAG(disjoint)
+MIR_FLAG(inalloca)
+MIR_FLAG(volatile)
+MIR_FLAG(inbounds)
+MIR_FLAG(nusw)
+MIR_FLAG(nneg)
+MIR_FLAG(samesign)
 
+// FMF
+MIR_FAST_MATH_FLAG(fast)
+MIR_FAST_MATH_FLAG(nnan)
+MIR_FAST_MATH_FLAG(ninf)
+MIR_FAST_MATH_FLAG(nsz)
+MIR_FAST_MATH_FLAG(arcp)
+MIR_FAST_MATH_FLAG(contract)
+MIR_FAST_MATH_FLAG(afn)
+MIR_FAST_MATH_FLAG(reassoc)
+
+#undef MIR_FAST_MATH_FLAG
 #undef MIR_FLAG
 #undef MIR_FLAG_TOKEN_KIND
