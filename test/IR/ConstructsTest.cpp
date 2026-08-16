@@ -1,0 +1,111 @@
+#include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/DerivedTypes.h"
+#include "metaphir/IR/Instruction.h"
+#include "metaphir/IR/MIRContext.h"
+#include "metaphir/IR/MetaFlag.h"
+#include "metaphir/IR/Values.h"
+#include "gtest/gtest.h"
+
+using namespace llvm;
+using namespace llvm::metaphir;
+
+TEST(MetaphIRConstructs, UsesOneTypeHierarchy) {
+  MIRContext Context;
+  SourceRange Range;
+  MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  Type *MetaInteger = MetaIntegerType::get(Context, Bits, false);
+  EXPECT_TRUE(isa<MetaIntegerType>(MetaInteger));
+  EXPECT_EQ(cast<MetaIntegerType>(MetaInteger)->getBitWidthVariable(), Bits);
+
+  Type *I32 = IntegerType::get(Context, 32);
+  Type *Vector = VectorType::get(Context, false, I32, 4);
+  EXPECT_TRUE(isa<VectorType>(Vector));
+  EXPECT_EQ(cast<VectorType>(Vector)->getElementType(), I32);
+}
+
+TEST(MetaphIRConstructs, UniquesTypesByStructure) {
+  MIRContext Context;
+  SourceRange Range;
+  MetaVariable *Ty = MetaVariable::get(Context, "ty", MetaType::Type, Range);
+  MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Count =
+      MetaVariable::get(Context, "count", MetaType::Nat, Range);
+
+  Type *I8 = IntegerType::get(Context, 8);
+  Type *I32 = IntegerType::get(Context, 32);
+  EXPECT_EQ(I32, IntegerType::get(Context, 32));
+  EXPECT_EQ(ByteType::get(Context, 8), ByteType::get(Context, 8));
+  EXPECT_EQ(MetaIRType::get(Context, Ty), MetaIRType::get(Context, Ty));
+  EXPECT_EQ(MetaIntegerType::get(Context, Bits, false),
+            MetaIntegerType::get(Context, Bits, false));
+  EXPECT_NE(MetaIntegerType::get(Context, Bits, false),
+            MetaIntegerType::get(Context, Bits, true));
+  EXPECT_EQ(PointerType::get(Context, I32), PointerType::get(Context, I32));
+  EXPECT_EQ(ArrayType::get(Context, I32, 4, Count),
+            ArrayType::get(Context, I32, 4, Count));
+  EXPECT_EQ(VectorType::get(Context, false, I32, 4, Count),
+            VectorType::get(Context, false, I32, 4, Count));
+  EXPECT_NE(VectorType::get(Context, false, I32, 4, Count),
+            VectorType::get(Context, true, I32, 4, Count));
+
+  Type *Elements[] = {I8, I32};
+  EXPECT_EQ(StructType::get(Context, Elements, false),
+            StructType::get(Context, Elements, false));
+  EXPECT_NE(StructType::get(Context, Elements, false),
+            StructType::get(Context, Elements, true));
+  EXPECT_EQ(FunctionType::get(Context, I32, Elements, false),
+            FunctionType::get(Context, I32, Elements, false));
+  EXPECT_NE(FunctionType::get(Context, I32, Elements, false),
+            FunctionType::get(Context, I32, Elements, true));
+}
+
+TEST(MetaphIRConstructs, GeneratedInstructionProperties) {
+  EXPECT_TRUE(Instruction::isCommutative(Instruction::I_add));
+  EXPECT_FALSE(Instruction::isCommutative(Instruction::I_sub));
+  EXPECT_NE(Instruction::getSupportedFlags(Instruction::I_add) &
+                Instruction::mask(Instruction::F_nsw),
+            0u);
+  EXPECT_EQ(Instruction::getSupportedFlags(Instruction::I_add) &
+                Instruction::mask(Instruction::F_exact),
+            0u);
+}
+
+TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
+  MIRContext Context;
+  SourceRange Range;
+  Type *I32 = IntegerType::get(Context, 32);
+  Value *LHS = KeywordConstant::get(Context, "poison", Range);
+  Value *RHS = KeywordConstant::get(Context, "undef", Range);
+  Value *Predicate = KeywordConstant::get(Context, "eq", Range);
+  MatcherOperand Operands[] = {
+      {I32, LHS},
+      {I32, RHS},
+      {nullptr, Predicate, false, false, nullptr, nullptr,
+       MatcherOperand::Predicate},
+  };
+
+  Instruction *Matcher = Instruction::get(Context, Instruction::I_icmp, "", {},
+                                          {}, Operands, nullptr, Range);
+  ASSERT_EQ(Matcher->getUnkeyedOperands().size(), 2u);
+  EXPECT_EQ(Matcher->getUnkeyedOperands()[0].Val, LHS);
+  EXPECT_EQ(Matcher->getUnkeyedOperands()[1].Val, RHS);
+  ASSERT_NE(Matcher->getKeyedOperand(MatcherOperand::Predicate), nullptr);
+  EXPECT_EQ(Matcher->getKeyedOperand(MatcherOperand::Predicate)->Val,
+            Predicate);
+  EXPECT_EQ(Matcher->getKeyedOperand(MatcherOperand::Alignment), nullptr);
+}
+
+TEST(MetaphIRConstructs, GeneratedExtensibilitySchemas) {
+  auto Or = MetaFlag::getSchema("or");
+  ASSERT_TRUE(Or);
+  EXPECT_EQ(Or->Arguments, MetaFlag::FlagArgument);
+  EXPECT_EQ(Or->AllowedPlacement, MetaFlag::OperandPlacement);
+  EXPECT_EQ(MetaFlag::getMetaFlagID("c"), MetaFlag::MF_c);
+  EXPECT_EQ(MetaFlag::getMetaFlagID("future_flag"), MetaFlag::UnknownMetaFlag);
+
+  auto ULT = Constraint::getFunctionSchema("ult");
+  ASSERT_TRUE(ULT);
+  EXPECT_EQ(ULT->Result, Constraint::BooleanResult);
+  EXPECT_EQ(ULT->Arity, 2u);
+  EXPECT_FALSE(Constraint::getFunctionSchema("future_predicate"));
+}

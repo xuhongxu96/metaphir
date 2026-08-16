@@ -16,51 +16,22 @@ namespace metaphir {
 
 class Type;
 class MIRContext;
+class MIRLexer;
+class MIRConstraintLexer;
 
 class MIRLexer {
-  const char *CurPtr;
-  StringRef CurBuf;
-
-  /// The end (exclusive) of the previous token.
-  const char *PrevTokEnd = nullptr;
-
-  enum class ErrorPriority {
-    None,   // No error message present.
-    Parser, // Errors issued by parser.
-    Lexer,  // Errors issued by lexer.
-  };
-
-  struct ErrorInfo {
-    ErrorPriority Priority = ErrorPriority::None;
-    SMDiagnostic &Error;
-
-    explicit ErrorInfo(SMDiagnostic &Error) : Error(Error) {}
-  } ErrorInfo;
-
-  SourceMgr &SM;
-  MIRContext &Context;
-
-  // Information about the current token.
-  const char *TokStart;
-  tok::Kind CurKind;
-  std::string StrVal;
-  unsigned UIntVal = 0;
-  Type *TyVal = nullptr;
-  APFloat APFloatVal{0.0};
-  APSInt APSIntVal{0};
-
 public:
+  using LocTy = SMLoc;
+
   explicit MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &,
                     MIRContext &C);
-
-  tok::Kind Lex() { return CurKind = LexToken(); }
-
-  typedef SMLoc LocTy;
+  tok::Kind Lex();
   LocTy getLoc() const { return SMLoc::getFromPointer(TokStart); }
   tok::Kind getKind() const { return CurKind; }
   const std::string &getStrVal() const { return StrVal; }
   Type *getTyVal() const { return TyVal; }
   unsigned getUIntVal() const { return UIntVal; }
+  char getMetaIntPrefix() const { return MetaIntPrefix; }
   const APSInt &getAPSIntVal() const { return APSIntVal; }
   const APFloat &getAPFloatVal() const { return APFloatVal; }
 
@@ -89,6 +60,42 @@ public:
   void Warning(const Twine &Msg) const { return Warning(getLoc(), Msg); }
 
 private:
+  friend class MIRConstraintLexer;
+
+  enum class ErrorPriority {
+    None,   // No error message present.
+    Parser, // Errors issued by parser.
+    Lexer,  // Errors issued by lexer.
+  };
+
+  struct ErrorInfo {
+    ErrorPriority Priority = ErrorPriority::None;
+    SMDiagnostic &Error;
+
+    explicit ErrorInfo(SMDiagnostic &Error) : Error(Error) {}
+  };
+
+  const char *CurPtr;
+  StringRef CurBuf;
+
+  /// The end (exclusive) of the previous token.
+  const char *PrevTokEnd = nullptr;
+
+  ErrorInfo ErrorInfo;
+  SourceMgr &SM;
+  MIRContext &Context;
+  bool InConstraint = false;
+
+  // Information about the current token.
+  const char *TokStart;
+  tok::Kind CurKind;
+  std::string StrVal;
+  unsigned UIntVal = 0;
+  char MetaIntPrefix = 'i';
+  Type *TyVal = nullptr;
+  APFloat APFloatVal{0.0};
+  APSInt APSIntVal{0};
+
   tok::Kind LexToken();
 
   int getNextChar();

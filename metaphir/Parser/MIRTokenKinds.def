@@ -9,6 +9,9 @@
 // Markers.
 MIR_TOKEN_KIND(Eof)
 MIR_TOKEN_KIND(Error)
+MIR_TOKEN_KIND(Newline)
+MIR_TOKEN_KIND(ConstraintMarker) // ;;
+MIR_TOKEN_KIND(IntrinsicPrefix)  // @llvm.
 
 // Tokens with no info.
 MIR_TOKEN_KIND(dotdotdot) // ...
@@ -27,6 +30,16 @@ MIR_TOKEN_KIND(exclaim)   // !
 MIR_TOKEN_KIND(bar)       // |
 MIR_TOKEN_KIND(colon)     // :
 MIR_TOKEN_KIND(hash)      // #
+MIR_TOKEN_KIND(plus)      // +
+MIR_TOKEN_KIND(minus)     // -
+MIR_TOKEN_KIND(slash)     // /
+MIR_TOKEN_KIND(percent)   // % (constraint remainder)
+MIR_TOKEN_KIND(ampamp)    // &&
+MIR_TOKEN_KIND(barbar)    // ||
+MIR_TOKEN_KIND(equalequal)// ==
+MIR_TOKEN_KIND(notequal)  // !=
+MIR_TOKEN_KIND(lessequal) // <=
+MIR_TOKEN_KIND(greaterequal) // >=
 
 // Unsigned valued tokens (UIntVal).
 MIR_TOKEN_KIND_HAS_VALUE(LabelID, UIntVal)    // 42:
@@ -44,6 +57,7 @@ MIR_TOKEN_KIND_HAS_VALUE(MetaVar, StrVal)        // ?foo
 MIR_TOKEN_KIND_HAS_VALUE(MetaCaptureVar, StrVal) // :?foo
 MIR_TOKEN_KIND_HAS_VALUE(MetaIntVar, StrVal)     // i?foo
 MIR_TOKEN_KIND_HAS_VALUE(MetaFlag, StrVal)       // :flag
+MIR_TOKEN_KIND_HAS_VALUE(Identifier, StrVal)     // extensible identifier
 
 // Type valued tokens (TyVal).
 MIR_TOKEN_KIND_HAS_VALUE(Type, TyVal)
@@ -53,9 +67,8 @@ MIR_TOKEN_KIND_HAS_VALUE(APFloat, APFloatVal)        // APFloatVal
 MIR_TOKEN_KIND_HAS_VALUE(APSInt, APSIntVal)          // APSInt
 
 // Keywords.
-MIR_TOKEN_KIND(kw_true)
-MIR_TOKEN_KIND(kw_false)
-MIR_TOKEN_KIND(kw_x) // <4 x i8>
+#define MIR_KEYWORD_TOKEN_KIND(Kind) MIR_TOKEN_KIND(kw_##Kind)
+#include "metaphir/Parser/MIRKeywords.def"
 
 #define MIR_TYPE_TOKEN_KIND(Kind) MIR_TOKEN_KIND(kw_##Kind)
 #include "metaphir/IR/Types.def"

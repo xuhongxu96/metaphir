@@ -5,7 +5,7 @@
 ; CHECK-NEXT: equal
 ; CHECK-NEXT: kw_call
 ; CHECK-NEXT: Type i32
-; CHECK-NEXT: GlobalVar llvm.
+; CHECK-NEXT: IntrinsicPrefix
 ; CHECK-NEXT: MetaVar id
 ; CHECK-NEXT: lparen
 ; CHECK-NEXT: Type i32

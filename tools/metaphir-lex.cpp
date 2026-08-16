@@ -40,6 +40,8 @@ int main(int Argc, char **Argv) {
 
   while (true) {
     tok::Kind Kind = Lexer.Lex();
+    if (Kind == tok::Newline)
+      continue;
     outs() << getTokenKindName(Kind);
     switch (Kind) {
 

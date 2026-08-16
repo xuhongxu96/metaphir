@@ -1,5 +1,6 @@
 #include "metaphir/Parser/MIRLexer.h"
 #include "metaphir/IR/DerivedTypes.h"
+#include "metaphir/Parser/MIRConstraintLexer.h"
 #include "metaphir/Parser/MIRToken.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
@@ -183,6 +184,15 @@ int MIRLexer::getNextChar() {
   }
 }
 
+tok::Kind MIRLexer::Lex() {
+  tok::Kind Kind = InConstraint ? MIRConstraintLexer(*this).Lex() : LexToken();
+  if (Kind == tok::ConstraintMarker)
+    InConstraint = true;
+  else if (Kind == tok::Newline || Kind == tok::Eof)
+    InConstraint = false;
+  return CurKind = Kind;
+}
+
 tok::Kind MIRLexer::LexToken() {
   // Set token end to next location, since the end is exclusive.
   PrevTokEnd = CurPtr;
@@ -201,10 +211,13 @@ tok::Kind MIRLexer::LexToken() {
     case 0:
     case ' ':
     case '\t':
-    case '\n':
-    case '\r':
-      // Ignore whitespace.
       continue;
+    case '\n':
+      return tok::Newline;
+    case '\r':
+      if (CurPtr[0] == '\n')
+        ++CurPtr;
+      return tok::Newline;
     case '+':
       return LexPositive();
     case '@':
@@ -227,6 +240,10 @@ tok::Kind MIRLexer::LexToken() {
       }
       return tok::Error;
     case ';':
+      if (CurPtr[0] == ';') {
+        ++CurPtr;
+        return tok::ConstraintMarker;
+      }
       SkipLineComment();
       continue;
     case '!':
@@ -269,9 +286,12 @@ tok::Kind MIRLexer::LexToken() {
       return tok::star;
     case '|':
       return tok::bar;
+    case '&':
+      return tok::Error;
     case '/':
-      if (getNextChar() != '*')
+      if (CurPtr[0] != '*')
         return tok::Error;
+      ++CurPtr;
       if (SkipCComment())
         return tok::Error;
       continue;
@@ -314,7 +334,12 @@ bool MIRLexer::SkipCComment() {
 ///   GlobalVar   @\"[^\"]*\"
 ///   GlobalVar   @[-a-zA-Z$._][-a-zA-Z$._0-9]*
 ///   GlobalVarID @[0-9]+
-tok::Kind MIRLexer::LexAt() { return LexVar(tok::GlobalVar, tok::GlobalID); }
+tok::Kind MIRLexer::LexAt() {
+  tok::Kind Kind = LexVar(tok::GlobalVar, tok::GlobalID);
+  if (Kind == tok::GlobalVar && StrVal == "llvm." && CurPtr[0] == '?')
+    return tok::IntrinsicPrefix;
+  return Kind;
+}
 
 tok::Kind MIRLexer::LexDollar() {
   if (const char *Ptr = isLabelTail(TokStart)) {
@@ -475,6 +500,7 @@ tok::Kind MIRLexer::LexIdentifier() {
   const char *KeywordEnd = nullptr;
 
   if (!IntOrByteEnd && CurPtr[0] == '?') {
+    MetaIntPrefix = IntOrByteIdentifier;
     ++CurPtr;
     if (ReadVarName()) {
       return tok::MetaIntVar;
@@ -535,9 +561,8 @@ tok::Kind MIRLexer::LexIdentifier() {
       return tok::kw_##STR;                                                    \
   } while (false)
 
-  KEYWORD(true);
-  KEYWORD(false);
-  KEYWORD(x);
+#define MIR_KEYWORD_TOKEN_KIND(Kind) KEYWORD(Kind);
+#include "metaphir/Parser/MIRKeywords.def"
 
 #define MIR_TYPE_TOKEN_KIND(Kind) KEYWORD(Kind);
 #include "metaphir/IR/Types.def"
@@ -573,9 +598,8 @@ tok::Kind MIRLexer::LexIdentifier() {
     return IsFloatConst ? tok::FloatHexLiteral : tok::APSInt;
   }
 
-  // Finally, if this isn't known, return an error.
-  CurPtr = TokStart + 1;
-  return tok::Error;
+  StrVal.assign(TokStart, CurPtr);
+  return tok::Identifier;
 }
 
 /// Lex all tokens that start with a 0x prefix, knowing they match and are not

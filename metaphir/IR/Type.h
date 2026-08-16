@@ -27,14 +27,19 @@ public:
     ArrayTyID,          ///< Arrays
     FixedVectorTyID,    ///< Fixed width SIMD vector type
     ScalableVectorTyID, ///< Scalable SIMD vector type
+    MetaTyID,           ///< A captured MetaphIR type
+    MetaIntegerTyID,    ///< Integer/byte type with captured bit width
   };
 
-public:
-  explicit Type(MIRContext &C, TypeID id) : Context(C), ID(id) {}
   virtual ~Type() = default;
 
   TypeID getTypeID() const { return ID; }
   MIRContext &getContext() const { return Context; }
+
+  static Type *get(MIRContext &C, TypeID ID);
+
+protected:
+  explicit Type(MIRContext &C, TypeID id) : Context(C), ID(id) {}
 
 private:
   MIRContext &Context;

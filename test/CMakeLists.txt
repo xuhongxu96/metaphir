@@ -4,3 +4,4 @@ file(MAKE_DIRECTORY ${METAPHIR_TEST_DIR})
 configure_file(lit.site.cfg.py.in ${METAPHIR_TEST_DIR}/lit.site.cfg.py @ONLY)
 
 add_subdirectory(Parser)
+add_subdirectory(IR)
