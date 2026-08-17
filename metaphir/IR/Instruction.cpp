@@ -7,11 +7,20 @@
 namespace llvm {
 namespace metaphir {
 
+void MatcherOperand::setMetaFlags(MIRContext &Context,
+                                  ArrayRef<MetaFlag *> Flags) {
+  MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Flags);
+}
+
 static void printWithoutType(raw_ostream &OS, const MatcherOperand &O) {
-  if (O.IsArray)
+  if (O.IsArray) {
     OS << O;
-  else if (O.Val)
+    return;
+  }
+  if (O.Val)
     OS << *O.Val;
+  for (const MetaFlag *F : O.MetaFlags)
+    OS << *F;
 }
 
 static void printSeparated(raw_ostream &OS, ArrayRef<MatcherOperand> Ops,
@@ -113,6 +122,8 @@ raw_ostream &operator<<(raw_ostream &OS, const MatcherOperand &O) {
     OS << *O.Ty << (O.Val ? " " : "");
   if (O.Val)
     OS << *O.Val;
+  for (const MetaFlag *F : O.MetaFlags)
+    OS << *F;
   return OS;
 }
 

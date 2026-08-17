@@ -1,6 +1,7 @@
 #ifndef METAPHIR_IR_INSTRUCTION_H
 #define METAPHIR_IR_INSTRUCTION_H
 
+#include "metaphir/IR/MetaFlag.h"
 #include "metaphir/IR/Values.h"
 #include <cstdint>
 
@@ -25,6 +26,9 @@ struct MatcherOperand {
   MetaVariable *TypeArray = nullptr;
   MetaVariable *ValueArray = nullptr;
   KeyedOperandKind Key = NotKeyed;
+  ArrayRef<MetaFlag *> MetaFlags;
+
+  void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
 };
 
 struct MatcherFlag {
@@ -32,7 +36,7 @@ struct MatcherFlag {
   MetaVariable *Capture = nullptr;
 };
 
-class Instruction {
+class Instruction : public Value {
 public:
   enum InstructionID {
 #define MIR_INSTRUCTION_MATCHER_ID(Name) I_##Name,
@@ -84,7 +88,9 @@ public:
   const MatcherOperand *
   getKeyedOperand(MatcherOperand::KeyedOperandKind Kind) const;
   MetaVariable *getCapture() const { return Capture; }
-  SourceRange getSourceRange() const { return Range; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == InstructionVal;
+  }
 
   static constexpr FlagMask mask(SemanticFlagID ID) {
     return FlagMask(1) << ID;
@@ -107,16 +113,16 @@ private:
   ArrayRef<MatcherOperand> KeyedOperands;
   uint64_t KeyedOperandMask;
   MetaVariable *Capture = nullptr;
-  SourceRange Range;
 
   Instruction(InstructionID ID, StringRef ResultName,
               ArrayRef<MatcherFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
               ArrayRef<MatcherOperand> UnkeyedOperands,
               ArrayRef<MatcherOperand> KeyedOperands, uint64_t KeyedOperandMask,
               MetaVariable *Capture, SourceRange Range)
-      : ID(ID), ResultName(ResultName), Flags(Flags), MetaFlags(MetaFlags),
-        UnkeyedOperands(UnkeyedOperands), KeyedOperands(KeyedOperands),
-        KeyedOperandMask(KeyedOperandMask), Capture(Capture), Range(Range) {}
+      : Value(InstructionVal, Range), ID(ID), ResultName(ResultName),
+        Flags(Flags), MetaFlags(MetaFlags), UnkeyedOperands(UnkeyedOperands),
+        KeyedOperands(KeyedOperands), KeyedOperandMask(KeyedOperandMask),
+        Capture(Capture) {}
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const MatcherFlag &F);

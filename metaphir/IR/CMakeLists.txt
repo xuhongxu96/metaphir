@@ -20,7 +20,6 @@ add_library(metaphir-ir
   Constraints.h
 
   Value.h
-  Value.cpp
   Values.h
   Values.cpp
 

@@ -8,7 +8,7 @@
 ; CHECK-NEXT: %cmp = icmp ?pred i?bits %sum, ?z
 
 br i1 %cmp, label %yes, label ?no
-; CHECK-NEXT: br i1 %cmp, label %yes, label ?no
+; CHECK-NEXT: br i1 %cmp, label ?yes, label ?no
 
 ;; ?has_nsw == true || ult(?bits, 64)
 ; CHECK-NEXT: constraint (|| (== ?has_nsw true) (ult ?bits 64))

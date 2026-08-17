@@ -404,47 +404,7 @@ bool MIRParser::parseType(Type *&Result, bool AllowVoid) {
 
 bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
   LocTy Loc = Lex.getLoc();
-  struct ValueBuildInfo {
-    Value::ValueID Kind;
-    StringRef Spelling = {};
-    MetaVariable *Meta = nullptr;
-    Instruction *Definition = nullptr;
-    APSInt Integer = APSInt(1, true);
-    APFloat Floating = APFloat(0.0);
-    ArrayRef<Value *> Elements = {};
-    ArrayRef<Type *> ElementTypes = {};
-    AggregateConstant::Delimiter Delimiter = AggregateConstant::Brace;
-  };
-  auto Make = [&](const ValueBuildInfo &Info) {
-    SourceRange R{Loc, Loc};
-    switch (Info.Kind) {
-    case Value::MetaVal:
-      return static_cast<Value *>(MetaValue::get(Context, Info.Meta, R));
-    case Value::LocalInstructionVal:
-      return static_cast<Value *>(LocalInstructionValue::get(
-          Context, Info.Spelling, Info.Definition, R));
-    case Value::BasicBlockVal:
-      return static_cast<Value *>(
-          BasicBlockValue::get(Context, Info.Spelling, Info.Meta, R));
-    case Value::GlobalVal:
-      return static_cast<Value *>(GlobalValue::get(Context, Info.Spelling, R));
-    case Value::IntrinsicVal:
-      return static_cast<Value *>(IntrinsicValue::get(Context, Info.Meta, R));
-    case Value::IntegerConstantVal:
-      return static_cast<Value *>(
-          IntegerConstant::get(Context, Info.Integer, R));
-    case Value::FloatingConstantVal:
-      return static_cast<Value *>(
-          FloatingConstant::get(Context, Info.Floating, R));
-    case Value::KeywordConstantVal:
-      return static_cast<Value *>(
-          KeywordConstant::get(Context, Info.Spelling, R));
-    case Value::AggregateConstantVal:
-      return static_cast<Value *>(AggregateConstant::get(
-          Context, Info.ElementTypes, Info.Elements, Info.Delimiter, R));
-    }
-    llvm_unreachable("invalid value kind");
-  };
+  SourceRange Range{Loc, Loc};
   if (Lex.getKind() == tok::plus || Lex.getKind() == tok::minus) {
     bool Negative = Lex.getKind() == tok::minus;
     next();
@@ -452,7 +412,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       APSInt Number = Lex.getAPSIntVal();
       if (Negative)
         Number = -Number;
-      Result = Make({Value::IntegerConstantVal, {}, nullptr, nullptr, Number});
+      Result = IntegerConstant::get(Context, Number, Range);
       next();
       return false;
     }
@@ -460,12 +420,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       APFloat Number = Lex.getAPFloatVal();
       if (Negative)
         Number.changeSign();
-      Result = Make({Value::FloatingConstantVal,
-                     {},
-                     nullptr,
-                     nullptr,
-                     APSInt(1, true),
-                     Number});
+      Result = FloatingConstant::get(Context, Number, Range);
       next();
       return false;
     }
@@ -475,7 +430,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     auto *M = getMeta(Lex.getStrVal(), Expected, Loc);
     if (!M)
       return true;
-    Result = Make({Value::MetaVal, {}, M});
+    Result = M;
     next();
     return false;
   }
@@ -490,14 +445,14 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       auto *M = getMeta(Name, MetaType::BasicBlock, Loc);
       if (!M)
         return true;
-      Result = Make({Value::BasicBlockVal, Name, M});
+      Result = M;
       next();
       return false;
     }
     auto It = Instructions.find(Name);
     if (It == Instructions.end())
       return error("undefined or forward local reference '%" + Name + "'");
-    Result = Make({Value::LocalInstructionVal, Name, nullptr, It->second});
+    Result = It->second;
     next();
     return false;
   }
@@ -509,7 +464,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     if (!M)
       return true;
     next();
-    Result = Make({Value::IntrinsicVal, {}, M});
+    Result = M;
     return false;
   }
   if (Lex.getKind() == tok::GlobalVar || Lex.getKind() == tok::GlobalID) {
@@ -520,33 +475,31 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       NameStorage = Twine(Lex.getUIntVal()).str();
     StringRef Name = NameStorage;
     next();
-    Result = Make({Value::GlobalVal, Name});
+    Result = GlobalValue::get(Context, Name, Range);
     return false;
   }
   if (Lex.getKind() == tok::APSInt) {
     APSInt V = Lex.getAPSIntVal();
-    Result = Make({Value::IntegerConstantVal, {}, nullptr, nullptr, V});
+    Result = IntegerConstant::get(Context, V, Range);
     next();
     return false;
   }
   if (Lex.getKind() == tok::APFloat) {
     APFloat V = Lex.getAPFloatVal();
-    Result = Make(
-        {Value::FloatingConstantVal, {}, nullptr, nullptr, APSInt(1, true), V});
+    Result = FloatingConstant::get(Context, V, Range);
     next();
     return false;
   }
   if (Lex.getKind() == tok::kw_true || Lex.getKind() == tok::kw_false) {
     bool V = Lex.getKind() == tok::kw_true;
     APSInt I(APInt(1, V), false);
-    Result = Make(
-        {Value::IntegerConstantVal, V ? "true" : "false", nullptr, nullptr, I});
+    Result = IntegerConstant::get(Context, I, Range);
     next();
     return false;
   }
 #define MIR_CONSTANT_KEYWORD(Kind)                                             \
   if (Lex.getKind() == tok::kw_##Kind) {                                       \
-    Result = Make({Value::KeywordConstantVal, #Kind});                         \
+    Result = KeywordConstant::get(Context, #Kind, Range);                      \
     next();                                                                    \
     return false;                                                              \
   }
@@ -571,17 +524,11 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     }
     if (expect(Close, "expected end of aggregate constant"))
       return true;
-    Result = Make({Value::AggregateConstantVal,
-                   {},
-                   nullptr,
-                   nullptr,
-                   APSInt(1, true),
-                   APFloat(0.0),
-                   Values,
-                   Types,
-                   Open == tok::lsquare ? AggregateConstant::Square
-                   : Open == tok::less  ? AggregateConstant::Angle
-                                        : AggregateConstant::Brace});
+    AggregateConstant::Delimiter Delimiter =
+        Open == tok::lsquare ? AggregateConstant::Square
+        : Open == tok::less  ? AggregateConstant::Angle
+                             : AggregateConstant::Brace;
+    Result = AggregateConstant::get(Context, Types, Values, Delimiter, Range);
     return false;
   }
   return error("expected value");
@@ -604,7 +551,7 @@ bool MIRParser::parseTypedOperand(MatcherOperand &Result, MetaType Expected) {
   if (parseMetaFlags(Flags, MetaFlag::OperandPlacement))
     return true;
   if (!Flags.empty()) {
-    Result.Val->setMetaFlags(Context, Flags);
+    Result.setMetaFlags(Context, Flags);
   }
   return false;
 }
@@ -719,7 +666,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     if (parseMetaFlags(Fs, MetaFlag::OperandPlacement))
       return true;
     if (!Fs.empty()) {
-      B.Val->setMetaFlags(Context, Fs);
+      B.setMetaFlags(Context, Fs);
     }
     Ops.push_back(B);
   } else if (ID == Instruction::I_extractelement) {
@@ -875,8 +822,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
           getMeta(Lex.getStrVal(), MetaType::CmpPredicate, Lex.getLoc());
       if (!M)
         return true;
-      Pred.Val =
-          MetaValue::get(Context, M, SourceRange{Lex.getLoc(), Lex.getLoc()});
+      Pred.Val = M;
       next();
     } else if (Lex.getKind() == tok::Identifier) {
       Pred.Val = KeywordConstant::get(Context, Lex.getStrVal(),

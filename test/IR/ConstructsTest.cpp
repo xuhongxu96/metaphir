@@ -13,6 +13,9 @@ TEST(MetaphIRConstructs, UsesOneTypeHierarchy) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  Value *BitsValue = Bits;
+  EXPECT_EQ(BitsValue->getValueID(), Value::MetaVariableVal);
+  EXPECT_EQ(cast<MetaVariable>(BitsValue), Bits);
   Type *MetaInteger = MetaIntegerType::get(Context, Bits, false);
   EXPECT_TRUE(isa<MetaIntegerType>(MetaInteger));
   EXPECT_EQ(cast<MetaIntegerType>(MetaInteger)->getBitWidthVariable(), Bits);
@@ -86,6 +89,9 @@ TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
 
   Instruction *Matcher = Instruction::get(Context, Instruction::I_icmp, "", {},
                                           {}, Operands, nullptr, Range);
+  Value *MatcherValue = Matcher;
+  EXPECT_EQ(MatcherValue->getValueID(), Value::InstructionVal);
+  EXPECT_EQ(cast<Instruction>(MatcherValue), Matcher);
   ASSERT_EQ(Matcher->getUnkeyedOperands().size(), 2u);
   EXPECT_EQ(Matcher->getUnkeyedOperands()[0].Val, LHS);
   EXPECT_EQ(Matcher->getUnkeyedOperands()[1].Val, RHS);

@@ -9,60 +9,6 @@
 namespace llvm {
 namespace metaphir {
 
-class Instruction;
-
-class MetaValue : public Value {
-public:
-  MetaVariable *getVariable() const { return Variable; }
-
-  static bool classof(const Value *V) { return V->getValueID() == MetaVal; }
-  static MetaValue *get(MIRContext &Context, MetaVariable *Variable,
-                        SourceRange Range);
-
-private:
-  MetaVariable *Variable;
-
-  MetaValue(MetaVariable *V, SourceRange R) : Value(MetaVal, R), Variable(V) {}
-};
-
-class LocalInstructionValue : public Value {
-public:
-  StringRef getName() const { return Name; }
-  Instruction *getDefinition() const { return Definition; }
-
-  static bool classof(const Value *V) {
-    return V->getValueID() == LocalInstructionVal;
-  }
-  static LocalInstructionValue *get(MIRContext &Context, StringRef Name,
-                                    Instruction *Definition, SourceRange Range);
-
-private:
-  StringRef Name;
-  Instruction *Definition;
-
-  LocalInstructionValue(StringRef N, Instruction *D, SourceRange R)
-      : Value(LocalInstructionVal, R), Name(N), Definition(D) {}
-};
-
-class BasicBlockValue : public Value {
-public:
-  StringRef getName() const { return Name; }
-  MetaVariable *getVariable() const { return Variable; }
-
-  static bool classof(const Value *V) {
-    return V->getValueID() == BasicBlockVal;
-  }
-  static BasicBlockValue *get(MIRContext &Context, StringRef Name,
-                              MetaVariable *Variable, SourceRange Range);
-
-private:
-  StringRef Name;
-  MetaVariable *Variable;
-
-  BasicBlockValue(StringRef N, MetaVariable *V, SourceRange R)
-      : Value(BasicBlockVal, R), Name(N), Variable(V) {}
-};
-
 class GlobalValue : public Value {
 public:
   StringRef getName() const { return Name; }
@@ -75,23 +21,6 @@ private:
   StringRef Name;
 
   GlobalValue(StringRef N, SourceRange R) : Value(GlobalVal, R), Name(N) {}
-};
-
-class IntrinsicValue : public Value {
-public:
-  MetaVariable *getID() const { return ID; }
-
-  static bool classof(const Value *V) {
-    return V->getValueID() == IntrinsicVal;
-  }
-  static IntrinsicValue *get(MIRContext &Context, MetaVariable *ID,
-                             SourceRange Range);
-
-private:
-  MetaVariable *ID;
-
-  IntrinsicValue(MetaVariable *ID, SourceRange R)
-      : Value(IntrinsicVal, R), ID(ID) {}
 };
 
 class IntegerConstant : public Value {

@@ -131,7 +131,7 @@
 ; CHECK-NEXT: %fcmp = fcmp fast ?fpred float ?f, ?g
 
 %phi = phi i32 [?a, %left], [?b, ?right]
-; CHECK-NEXT: %phi = phi i32 [?a, %left], [?b, ?right]
+; CHECK-NEXT: %phi = phi i32 [?a, ?left], [?b, ?right]
 
 %select = select nnan i1 ?cond, float ?f, float ?g
 ; CHECK-NEXT: %select = select nnan i1 ?cond, float ?f, float ?g
@@ -143,7 +143,7 @@
 ; CHECK-NEXT: %call = call:c i32 @f(i32 ?a, i32 ?b)
 
 %branch = br i1 %cmp, label %left, label ?right
-; CHECK-NEXT: %branch = br i1 %cmp, label %left, label ?right
+; CHECK-NEXT: %branch = br i1 %cmp, label ?left, label ?right
 
 ret i32 %call
 ; CHECK-NEXT: ret i32 %call
