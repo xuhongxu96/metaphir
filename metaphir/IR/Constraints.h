@@ -57,7 +57,8 @@ private:
 
 class OperatorConstraint : public Constraint {
 public:
-  StringRef getOperator() const { return Operator; }
+  OperatorID getOperatorID() const { return Operator; }
+  StringRef getOperator() const;
   ArrayRef<Constraint *> getArguments() const { return Arguments; }
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Unary || C->getConstraintID() == Binary ||
@@ -69,12 +70,14 @@ public:
                                  SourceRange Range);
 
 private:
-  StringRef Operator;
+  OperatorID Operator;
+  StringRef OperatorName;
   ArrayRef<Constraint *> Arguments;
 
-  OperatorConstraint(ConstraintID ID, ResultType T, StringRef Op,
-                     ArrayRef<Constraint *> A, SourceRange R)
-      : Constraint(ID, T, R), Operator(Op), Arguments(A) {}
+  OperatorConstraint(ConstraintID ID, ResultType T, OperatorID Op,
+                     StringRef OpName, ArrayRef<Constraint *> A, SourceRange R)
+      : Constraint(ID, T, R), Operator(Op), OperatorName(OpName), Arguments(A) {
+  }
 };
 
 } // namespace metaphir

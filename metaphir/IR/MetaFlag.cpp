@@ -21,12 +21,16 @@ MetaFlag::MetaFlagID MetaFlag::getMetaFlagID(StringRef Name) {
   return UnknownMetaFlag;
 }
 
-std::optional<MetaFlag::Schema> MetaFlag::getSchema(StringRef Name) {
+std::optional<MetaFlag::Schema> MetaFlag::getSchema(MetaFlagID ID) {
+  switch (ID) {
 #define MIR_META_FLAG_SCHEMA(FlagName, Placement, MinArgs, MaxArgs,            \
                              ArgumentKind)                                     \
-  if (Name == #FlagName)                                                       \
+  case MF_##FlagName:                                                          \
     return Schema{Placement, MinArgs, MaxArgs, ArgumentKind};
 #include "metaphir/IR/MetaFlags.def"
+  case UnknownMetaFlag:
+    break;
+  }
   return std::nullopt;
 }
 

@@ -46,7 +46,7 @@ public:
   ArrayRef<Argument> getArguments() const { return Arguments; }
   SourceRange getSourceRange() const { return Range; }
 
-  static std::optional<Schema> getSchema(StringRef Name);
+  static std::optional<Schema> getSchema(MetaFlagID ID);
   static MetaFlagID getMetaFlagID(StringRef Name);
   static MetaFlag *get(MIRContext &Context, StringRef Name,
                        ArrayRef<Argument> Arguments, SourceRange Range);

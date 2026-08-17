@@ -1,0 +1,40 @@
+#ifndef MIR_CONSTRAINT_OPERATOR_ID
+#define MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)
+#endif
+
+#ifndef MIR_CONSTRAINT_OPERATOR_SCHEMA
+#define MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, Arity)
+#endif
+
+#ifndef MIR_CONSTRAINT_OPERATOR
+#define MIR_CONSTRAINT_OPERATOR(ID, Name, Kind, Result, Arity)                 \
+  MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)                                   \
+  MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, Arity)
+#endif
+
+MIR_CONSTRAINT_OPERATOR(LogicalOr, "||", Binary, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(LogicalAnd, "&&", Binary, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(Equal, "==", Binary, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(NotEqual, "!=", Binary, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(Add, "+", Binary, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Subtract, "-", Binary, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Multiply, "*", Binary, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Not, "!", Unary, BooleanResult, 1)
+MIR_CONSTRAINT_OPERATOR(Negate, "-", Unary, IntegerResult, 1)
+
+MIR_CONSTRAINT_OPERATOR(SLT, "slt", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(ULT, "ult", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(SLE, "sle", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(ULE, "ule", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(SGT, "sgt", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(UGT, "ugt", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(SGE, "sge", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(UGE, "uge", Call, BooleanResult, 2)
+MIR_CONSTRAINT_OPERATOR(SDiv, "sdiv", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(UDiv, "udiv", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(SRem, "srem", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(URem, "urem", Call, IntegerResult, 2)
+
+#undef MIR_CONSTRAINT_OPERATOR
+#undef MIR_CONSTRAINT_OPERATOR_SCHEMA
+#undef MIR_CONSTRAINT_OPERATOR_ID

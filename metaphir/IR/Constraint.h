@@ -10,9 +10,14 @@ namespace metaphir {
 class Constraint {
 public:
   enum ConstraintID { Integer, Boolean, Variable, Unary, Binary, Call };
+  enum OperatorID {
+    UnknownOperator,
+#define MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind) O_##ID,
+#include "metaphir/IR/ConstraintOperators.def"
+  };
   enum ResultType { Unknown, IntegerResult, BooleanResult };
 
-  struct FunctionSchema {
+  struct OperatorSchema {
     ResultType Result;
     unsigned Arity;
   };
@@ -23,7 +28,9 @@ public:
   ResultType getResultType() const { return Ty; }
   SourceRange getSourceRange() const { return Range; }
 
-  static std::optional<FunctionSchema> getFunctionSchema(StringRef Name);
+  static std::optional<OperatorSchema> getOperatorSchema(OperatorID ID);
+  static StringRef getOperatorName(OperatorID ID);
+  static OperatorID getOperatorID(StringRef Name, ConstraintID Kind);
 
 protected:
   Constraint(ConstraintID ID, ResultType Ty, SourceRange R)

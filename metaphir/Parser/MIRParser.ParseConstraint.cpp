@@ -191,8 +191,10 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
     }
     if (expect(tok::rparen, "expected ')' after constraint arguments"))
       return true;
-    std::optional<Constraint::FunctionSchema> Schema =
-        Constraint::getFunctionSchema(Name);
+    Constraint::OperatorID ID =
+        Constraint::getOperatorID(Name, Constraint::Call);
+    std::optional<Constraint::OperatorSchema> Schema =
+        Constraint::getOperatorSchema(ID);
     if (Schema && Args.size() != Schema->Arity)
       return error("built-in constraint operation expects " +
                    Twine(Schema->Arity) + " arguments");

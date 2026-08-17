@@ -192,8 +192,9 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result) {
   if (Lex.getKind() != tok::MetaFlag)
     return error("expected meta flag");
   LocTy Loc = Lex.getLoc();
-  std::string NameStorage = Lex.getStrVal();
-  StringRef Name = NameStorage;
+  SmallString<16> Name;
+  Name = Lex.getStrVal();
+  MetaFlag::MetaFlagID ID = MetaFlag::getMetaFlagID(Name);
   next();
   SmallVector<MetaFlag::Argument, 4> Args;
   if (consume(tok::lparen)) {
@@ -219,7 +220,7 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result) {
     if (expect(tok::rparen, "expected ')' after meta flag arguments"))
       return true;
   }
-  if (std::optional<MetaFlag::Schema> Schema = MetaFlag::getSchema(Name)) {
+  if (std::optional<MetaFlag::Schema> Schema = MetaFlag::getSchema(ID)) {
     if (Args.size() < Schema->MinArguments ||
         Args.size() > Schema->MaxArguments)
       return Lex.ParseError(
@@ -246,7 +247,7 @@ bool MIRParser::parseMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
     if (parseMetaFlag(F))
       return true;
     if (std::optional<MetaFlag::Schema> Schema =
-            MetaFlag::getSchema(F->getName())) {
+            MetaFlag::getSchema(F->getMetaFlagID())) {
       if (!(Schema->AllowedPlacement & Placement))
         return Lex.ParseError(F->getSourceRange().Begin,
                               "meta flag ':" + F->getName() +

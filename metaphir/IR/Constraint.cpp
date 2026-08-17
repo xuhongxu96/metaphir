@@ -28,18 +28,53 @@ OperatorConstraint *OperatorConstraint::get(MIRContext &Context,
                                             StringRef Operator,
                                             ArrayRef<Constraint *> Arguments,
                                             SourceRange Range) {
+  OperatorID OperatorID = Constraint::getOperatorID(Operator, ID);
+  StringRef SavedOperator;
+  if (OperatorID == UnknownOperator)
+    SavedOperator = Context.pImpl->Saver.save(Operator);
   return new (Context.pImpl->Alloc) OperatorConstraint(
-      ID, Type, Context.pImpl->Saver.save(Operator),
+      ID, Type, OperatorID, SavedOperator,
       Context.pImpl->copyArray<Constraint *>(Arguments), Range);
 }
 
-std::optional<Constraint::FunctionSchema>
-Constraint::getFunctionSchema(StringRef Name) {
-#define MIR_CONSTRAINT_FUNCTION_SCHEMA(FunctionName, Result, Arity)            \
-  if (Name == #FunctionName)                                                   \
-    return FunctionSchema{Result, Arity};
-#include "metaphir/IR/ConstraintFunctions.def"
+StringRef OperatorConstraint::getOperator() const {
+  if (Operator != UnknownOperator)
+    return Constraint::getOperatorName(Operator);
+  return OperatorName;
+}
+
+std::optional<Constraint::OperatorSchema>
+Constraint::getOperatorSchema(OperatorID ID) {
+  switch (ID) {
+#define MIR_CONSTRAINT_OPERATOR_SCHEMA(OperatorID, Name, Kind, Result, Arity)  \
+  case O_##OperatorID:                                                         \
+    return OperatorSchema{Result, Arity};
+#include "metaphir/IR/ConstraintOperators.def"
+  case UnknownOperator:
+    break;
+  }
   return std::nullopt;
+}
+
+Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
+                                                 ConstraintID Kind) {
+#define MIR_CONSTRAINT_OPERATOR_ID(OperatorID, OperatorName, OperatorKind)     \
+  if (Name == OperatorName && Kind == OperatorKind)                            \
+    return O_##OperatorID;
+#include "metaphir/IR/ConstraintOperators.def"
+  return UnknownOperator;
+}
+
+StringRef Constraint::getOperatorName(OperatorID ID) {
+  switch (ID) {
+#define MIR_CONSTRAINT_OPERATOR_ID(OperatorID, Name, Kind)                     \
+  case O_##OperatorID:                                                         \
+    return Name;
+#include "metaphir/IR/ConstraintOperators.def"
+  case UnknownOperator:
+    return {};
+  }
+  llvm_unreachable("invalid constraint function ID");
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const Constraint &C) {
