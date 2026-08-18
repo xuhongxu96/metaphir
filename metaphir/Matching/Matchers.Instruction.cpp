@@ -95,6 +95,8 @@ static bool hasSemanticFlag(InstructionFlag::FlagID ID,
   case InstructionFlag::F_nsw:
     return Target.hasNoSignedWrap();
   case InstructionFlag::F_nuw:
+    if (const auto *GEP = dyn_cast<GEPOperator>(&Target))
+      return GEP->hasNoUnsignedWrap();
     return Target.hasNoUnsignedWrap();
   case InstructionFlag::F_exact:
     assert(isa<PossiblyExactOperator>(Target) &&

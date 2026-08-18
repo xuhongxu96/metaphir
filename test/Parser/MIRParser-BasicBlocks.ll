@@ -19,4 +19,3 @@ ret i32 %sum
 ; CHECK-NEXT: meta ?x type=Value
 ; CHECK-NEXT: meta ?y type=Value
 ; CHECK-NEXT: meta ?exit type=BasicBlock
-

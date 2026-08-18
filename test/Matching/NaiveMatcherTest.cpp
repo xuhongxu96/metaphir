@@ -182,6 +182,23 @@ TEST(NaiveMatcherTest, NonValueMetaTypesFailToMatchLLVMValues) {
   }
 }
 
+TEST(NaiveMatcherTest, RejectsUnknownMetaTypeAsUnexpected) {
+  MIRContext Context;
+  SourceRange Range;
+  LLVMContext LLVMContext;
+  MetaVariable *Variable =
+      MetaVariable::get(Context, "unknown", MetaType::Unknown, Range);
+  ConstantInt *Target =
+      ConstantInt::get(llvm::Type::getInt32Ty(LLVMContext), 0);
+
+  EXPECT_DEATH(
+      {
+        Instantiation State;
+        (void)matchValue(*Variable, *Target, State);
+      },
+      "unexpected meta type 'Unknown'");
+}
+
 TEST(NaiveMatcherTest, RecursivelyMatchesAndBindsOperandTypes) {
   MIRContext Context;
   SourceRange Range;

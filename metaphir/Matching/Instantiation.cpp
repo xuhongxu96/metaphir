@@ -31,7 +31,7 @@ raw_ostream &operator<<(raw_ostream &OS,
         } else if constexpr (std::is_same_v<T, CmpInst::Predicate>) {
           OS << CmpInst::getPredicateName(Value);
         } else if constexpr (std::is_same_v<T, Intrinsic::ID>) {
-          OS << Intrinsic::getName(Value);
+          OS << Intrinsic::getBaseName(Value);
         } else if constexpr (std::is_same_v<T, APInt>) {
           Value.print(OS, false);
         } else if constexpr (std::is_same_v<T, bool>) {

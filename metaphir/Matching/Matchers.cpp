@@ -6,6 +6,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <optional>
 
 namespace llvm {
 namespace metaphir {
@@ -30,33 +31,55 @@ bool bind(Instantiation &State, const Value &Matcher,
 using detail::bind;
 using detail::success;
 
-static bool matches(const MetaVariable &Matcher, const llvm::Value &Target) {
+static std::optional<Instantiation::Binding>
+getMetaVariableBinding(const MetaVariable &Matcher, const llvm::Value &Target) {
   switch (Matcher.getType()) {
   case MetaType::Value:
-    return true;
-  case MetaType::Nat:
-    return isa<ConstantInt>(Target);
+    return &Target;
+  case MetaType::Nat: {
+    const auto *Integer = dyn_cast<ConstantInt>(&Target);
+    if (!Integer)
+      return std::nullopt;
+    return Integer->getValue();
+  }
   case MetaType::Bool:
-    return Target.getType()->isIntegerTy(1);
+    if (!Target.getType()->isIntegerTy(1))
+      return std::nullopt;
+    return &Target;
   case MetaType::Instruction:
-    return isa<llvm::Instruction>(Target);
+    if (!isa<llvm::Instruction>(Target))
+      return std::nullopt;
+    return &Target;
   case MetaType::Function:
-    return isa<llvm::Function>(Target);
-  case MetaType::IntrinsicID:
-    if (const auto *Function = dyn_cast<llvm::Function>(&Target))
-      return Function->isIntrinsic();
-    return false;
+    if (!isa<llvm::Function>(Target))
+      return std::nullopt;
+    return &Target;
+  case MetaType::IntrinsicID: {
+    const auto *Function = dyn_cast<llvm::Function>(&Target);
+    if (!Function || !Function->isIntrinsic())
+      return std::nullopt;
+    return Function->getIntrinsicID();
+  }
   case MetaType::BasicBlock:
-    return isa<llvm::BasicBlock>(Target);
+    if (!isa<llvm::BasicBlock>(Target))
+      return std::nullopt;
+    return &Target;
   case MetaType::Type:
   case MetaType::CmpPredicate:
   case MetaType::TypeArray:
   case MetaType::ValueArray:
-    return false;
+    return std::nullopt;
   case MetaType::Unknown:
     report_fatal_error(Twine("unexpected meta type '") +
                        getMetaTypeName(Matcher.getType()) + "'");
   }
+}
+
+static std::optional<Instantiation::Binding>
+getTargetBinding(const metaphir::Value &Matcher, const llvm::Value &Target) {
+  if (const auto *Variable = dyn_cast<MetaVariable>(&Matcher))
+    return getMetaVariableBinding(*Variable, Target);
+  return &Target;
 }
 
 static bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
@@ -66,14 +89,22 @@ static bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
 
 static bool matches(const IntegerConstant &Matcher, const llvm::Value &Target) {
   const auto *Integer = dyn_cast<ConstantInt>(&Target);
-  return Integer &&
-         static_cast<const APInt &>(Matcher.getValue()) == Integer->getValue();
+  if (!Integer)
+    return false;
+  APSInt TargetValue(Integer->getValue(), Matcher.getValue().isUnsigned());
+  return APSInt::isSameValue(Matcher.getValue(), TargetValue);
 }
 
 static bool matches(const FloatingConstant &Matcher,
                     const llvm::Value &Target) {
   const auto *Floating = dyn_cast<ConstantFP>(&Target);
-  return Floating && Matcher.getValue().bitwiseIsEqual(Floating->getValueAPF());
+  if (!Floating)
+    return false;
+  APFloat Converted = Matcher.getValue();
+  bool LosesInfo;
+  Converted.convert(Floating->getValueAPF().getSemantics(),
+                    APFloat::rmNearestTiesToEven, &LosesInfo);
+  return Converted.bitwiseIsEqual(Floating->getValueAPF());
 }
 
 static bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
@@ -141,10 +172,13 @@ static MatchResults matchAggregate(const AggregateConstant &Matcher,
 MatchResults matchValue(const metaphir::Value &Matcher,
                         const llvm::Value &Target, Instantiation State,
                         const MatchDriver &Driver) {
+  std::optional<Instantiation::Binding> TargetBinding =
+      getTargetBinding(Matcher, Target);
+  if (!TargetBinding)
+    return {};
   if (const Instantiation::Binding *Existing = State.lookup(Matcher))
-    return *Existing == Instantiation::Binding(&Target)
-               ? success(std::move(State))
-               : MatchResults();
+    return *Existing == *TargetBinding ? success(std::move(State))
+                                       : MatchResults();
 
   switch (Matcher.getValueID()) {
   case Value::InstructionVal:
@@ -154,8 +188,6 @@ MatchResults matchValue(const metaphir::Value &Matcher,
     return matchAggregate(cast<AggregateConstant>(Matcher), Target,
                           std::move(State), Driver);
   case Value::MetaVariableVal:
-    if (!matches(cast<MetaVariable>(Matcher), Target))
-      return {};
     break;
   case Value::GlobalVal:
     if (!matches(cast<GlobalValue>(Matcher), Target))
@@ -174,7 +206,7 @@ MatchResults matchValue(const metaphir::Value &Matcher,
       return {};
     break;
   }
-  State.bind(Matcher, &Target);
+  State.bind(Matcher, std::move(*TargetBinding));
   return success(std::move(State));
 }
 

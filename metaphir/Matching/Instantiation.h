@@ -1,7 +1,7 @@
 #ifndef METAPHIR_MATCHING_INSTANTIATION_H
 #define METAPHIR_MATCHING_INSTANTIATION_H
 
-#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/InstrTypes.h"
@@ -41,7 +41,12 @@ public:
     Binding(TypeArray Types) : Data(std::move(Types)) {}
     Binding(ValueArray Values) : Data(std::move(Values)) {}
 
-    bool operator==(const Binding &Other) const { return Data == Other.Data; }
+    bool operator==(const Binding &Other) const {
+      if (const auto *Left = std::get_if<APInt>(&Data))
+        if (const auto *Right = std::get_if<APInt>(&Other.Data))
+          return APSInt::isSameValue(APSInt(*Left, true), APSInt(*Right, true));
+      return Data == Other.Data;
+    }
     bool operator!=(const Binding &Other) const { return !(*this == Other); }
   };
 

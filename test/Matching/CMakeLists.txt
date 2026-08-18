@@ -11,8 +11,17 @@ target_link_libraries(metaphir-matching-test
 set(METAPHIR_MATCHING_TEST_CASES
   MIRMatcher-Aggregate.ll
   MIRMatcher-Arrays.ll
+  MIRMatcher-BasicBlockMembership.ll
+  MIRMatcher-CrossBasicBlock.ll
   MIRMatcher-Graph.ll
+  MIRMatcher-FloatingConstants.ll
   MIRMatcher-Intrinsic.ll
+  MIRMatcher-MetaFlags-Constants.ll
+  MIRMatcher-MetaFlags-OrSelf.ll
+  MIRMatcher-MetaFlags-Uses.ll
+  MIRMatcher-MetaVariables.ll
+  MIRMatcher-KeyedOperands.ll
+  MIRMatcher-SemanticFlags.ll
 )
 
 foreach(test_case IN LISTS METAPHIR_MATCHING_TEST_CASES)

@@ -5,10 +5,10 @@
 call ?ret @llvm.?id(...?types ?values)
 ; CHECK: target 0: @abs_match
 ; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?id = @llvm.abs.i32, ?ret = i32, ?types = [i32, i1], ?values = [%x, false]}
+; CHECK-NEXT:     {?id = llvm.abs, ?ret = i32, ?types = [i32, i1], ?values = [%x, false]}
 ; CHECK-NEXT: target 1: @sqrt_match
 ; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?id = @llvm.sqrt.f32, ?ret = float, ?types = [float], ?values = [%x]}
+; CHECK-NEXT:     {?id = llvm.sqrt, ?ret = float, ?types = [float], ?values = [%x]}
 ; CHECK-NEXT: target 2: @intrinsic_no_match
 ; CHECK-NEXT:   no match
 
