@@ -1,0 +1,76 @@
+#include "metaphir/Matching/Instantiation.h"
+#include "metaphir/IR/MetaVariable.h"
+#include "metaphir/IR/Pattern.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include <type_traits>
+
+namespace llvm {
+namespace metaphir {
+
+void Instantiation::requireComplete(const Pattern &Pattern) const {
+  for (const MetaVariable *Variable : Pattern.getMetaVariables())
+    if (!lookup(*Variable))
+      report_fatal_error(Twine("successful match did not instantiate meta ") +
+                         "variable '?" + Variable->getName() + "'");
+}
+
+raw_ostream &operator<<(raw_ostream &OS,
+                        const Instantiation::Binding &Binding) {
+  std::visit(
+      [&OS](const auto &Value) {
+        using T = std::decay_t<decltype(Value)>;
+        if constexpr (std::is_same_v<T, std::monostate>) {
+          llvm_unreachable("cannot print an empty instantiation binding");
+        } else if constexpr (std::is_same_v<T, const llvm::Value *>) {
+          Value->printAsOperand(OS, false);
+        } else if constexpr (std::is_same_v<T, const llvm::Type *>) {
+          Value->print(OS);
+        } else if constexpr (std::is_same_v<T, CmpInst::Predicate>) {
+          OS << CmpInst::getPredicateName(Value);
+        } else if constexpr (std::is_same_v<T, Intrinsic::ID>) {
+          OS << Intrinsic::getName(Value);
+        } else if constexpr (std::is_same_v<T, APInt>) {
+          Value.print(OS, false);
+        } else if constexpr (std::is_same_v<T, bool>) {
+          OS << (Value ? "true" : "false");
+        } else {
+          OS << '[';
+          for (unsigned Index = 0; Index != Value.size(); ++Index) {
+            if (Index)
+              OS << ", ";
+            if constexpr (std::is_same_v<T, Instantiation::TypeArray>)
+              Value[Index]->print(OS);
+            else
+              Value[Index]->printAsOperand(OS, false);
+          }
+          OS << ']';
+        }
+      },
+      Binding.Data);
+  return OS;
+}
+
+raw_ostream &operator<<(raw_ostream &OS, const Instantiation &Instantiation) {
+  SmallVector<std::pair<StringRef, const Instantiation::Binding *>, 8> Bindings;
+  for (const auto &[Matcher, Binding] : Instantiation.Bindings)
+    if (const auto *Variable = dyn_cast<MetaVariable>(Matcher))
+      if (!Variable->getName().empty())
+        Bindings.emplace_back(Variable->getName(), &Binding);
+  llvm::sort(Bindings, [](const auto &Left, const auto &Right) {
+    return Left.first < Right.first;
+  });
+
+  OS << '{';
+  for (unsigned Index = 0; Index != Bindings.size(); ++Index) {
+    if (Index)
+      OS << ", ";
+    OS << '?' << Bindings[Index].first << " = " << *Bindings[Index].second;
+  }
+  return OS << '}';
+}
+
+} // namespace metaphir
+} // namespace llvm

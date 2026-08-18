@@ -13,6 +13,7 @@ set(METAPHIR_TEST_CASES
   MIRLexer-Value.ll
   MIRLexer.ll
   MIRParser.ll
+  MIRParser-BasicBlocks.ll
   MIRParser-BasicBlockConflict.ll
   MIRParser-ConstraintErrors.ll
   MIRParser-Constraints.ll

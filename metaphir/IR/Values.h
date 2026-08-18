@@ -59,19 +59,25 @@ private:
 
 class KeywordConstant : public Value {
 public:
-  StringRef getKeyword() const { return Keyword; }
+  enum KeywordID {
+#define MIR_KEYWORD_CONSTANT(ID, Spelling) K_##ID,
+#include "metaphir/IR/KeywordConstants.def"
+  };
+
+  KeywordID getKeywordID() const { return ID; }
 
   static bool classof(const Value *V) {
     return V->getValueID() == KeywordConstantVal;
   }
-  static KeywordConstant *get(MIRContext &Context, StringRef Keyword,
+  static StringRef getKeywordName(KeywordID ID);
+  static KeywordConstant *get(MIRContext &Context, KeywordID ID,
                               SourceRange Range);
 
 private:
-  StringRef Keyword;
+  KeywordID ID;
 
-  KeywordConstant(StringRef K, SourceRange R)
-      : Value(KeywordConstantVal, R), Keyword(K) {}
+  KeywordConstant(KeywordID ID, SourceRange R)
+      : Value(KeywordConstantVal, R), ID(ID) {}
 };
 
 class AggregateConstant : public Value {

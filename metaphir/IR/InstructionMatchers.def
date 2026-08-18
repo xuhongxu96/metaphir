@@ -13,74 +13,131 @@
 #ifndef MIR_INSTRUCTION_MATCHER_COMMUTATIVE
 #define MIR_INSTRUCTION_MATCHER_COMMUTATIVE(Name, Commutative)
 #endif
+#ifndef MIR_INSTRUCTION_MATCHER_TARGET
+#define MIR_INSTRUCTION_MATCHER_TARGET(Name, TargetMatcher)
+#endif
 #ifndef MIR_INSTRUCTION_MATCHER
-#define MIR_INSTRUCTION_MATCHER(Name, Flags, Commutative)                       \
-  MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Name)                                      \
-  MIR_INSTRUCTION_MATCHER_ID(Name)                                              \
-  MIR_INSTRUCTION_MATCHER_NAME(Name)                                            \
-  MIR_INSTRUCTION_MATCHER_SUPPORTED_FLAGS(Name, Flags)                          \
-  MIR_INSTRUCTION_MATCHER_COMMUTATIVE(Name, Commutative)
+#define MIR_INSTRUCTION_MATCHER(Name, TargetMatcher, Flags, Commutative)       \
+  MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Name)                                     \
+  MIR_INSTRUCTION_MATCHER_ID(Name)                                             \
+  MIR_INSTRUCTION_MATCHER_NAME(Name)                                           \
+  MIR_INSTRUCTION_MATCHER_SUPPORTED_FLAGS(Name, Flags)                         \
+  MIR_INSTRUCTION_MATCHER_COMMUTATIVE(Name, Commutative)                       \
+  MIR_INSTRUCTION_MATCHER_TARGET(Name, TargetMatcher)
 #endif
 
-// Name, supported semantic flags, supports :c.
-MIR_INSTRUCTION_MATCHER(fneg, FastMathFlags, false)
+// Name, target matcher, supported semantic flags, supports :c.
+MIR_INSTRUCTION_MATCHER(fneg, matchOpcode<llvm::Instruction::FNeg>,
+                        FastMathFlags, false)
 
-MIR_INSTRUCTION_MATCHER(add, NSWNUWFlags, true)
-MIR_INSTRUCTION_MATCHER(fadd, FastMathFlags, true)
-MIR_INSTRUCTION_MATCHER(sub, NSWNUWFlags, false)
-MIR_INSTRUCTION_MATCHER(fsub, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(mul, NSWNUWFlags, true)
-MIR_INSTRUCTION_MATCHER(fmul, FastMathFlags, true)
-MIR_INSTRUCTION_MATCHER(udiv, ExactFlag, false)
-MIR_INSTRUCTION_MATCHER(sdiv, ExactFlag, false)
-MIR_INSTRUCTION_MATCHER(fdiv, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(urem, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(srem, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(frem, FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(add, matchOpcode<llvm::Instruction::Add>, NSWNUWFlags,
+                        true)
+MIR_INSTRUCTION_MATCHER(fadd, matchOpcode<llvm::Instruction::FAdd>,
+                        FastMathFlags, true)
+MIR_INSTRUCTION_MATCHER(sub, matchOpcode<llvm::Instruction::Sub>, NSWNUWFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(fsub, matchOpcode<llvm::Instruction::FSub>,
+                        FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(mul, matchOpcode<llvm::Instruction::Mul>, NSWNUWFlags,
+                        true)
+MIR_INSTRUCTION_MATCHER(fmul, matchOpcode<llvm::Instruction::FMul>,
+                        FastMathFlags, true)
+MIR_INSTRUCTION_MATCHER(udiv, matchOpcode<llvm::Instruction::UDiv>, ExactFlag,
+                        false)
+MIR_INSTRUCTION_MATCHER(sdiv, matchOpcode<llvm::Instruction::SDiv>, ExactFlag,
+                        false)
+MIR_INSTRUCTION_MATCHER(fdiv, matchOpcode<llvm::Instruction::FDiv>,
+                        FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(urem, matchOpcode<llvm::Instruction::URem>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(srem, matchOpcode<llvm::Instruction::SRem>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(frem, matchOpcode<llvm::Instruction::FRem>,
+                        FastMathFlags, false)
 
-MIR_INSTRUCTION_MATCHER(shl, NSWNUWFlags, false)
-MIR_INSTRUCTION_MATCHER(lshr, ExactFlag, false)
-MIR_INSTRUCTION_MATCHER(ashr, ExactFlag, false)
-MIR_INSTRUCTION_MATCHER(and, NoFlags, true)
-MIR_INSTRUCTION_MATCHER(or, DisjointFlag, true)
-MIR_INSTRUCTION_MATCHER(xor, NoFlags, true)
+MIR_INSTRUCTION_MATCHER(shl, matchOpcode<llvm::Instruction::Shl>, NSWNUWFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(lshr, matchOpcode<llvm::Instruction::LShr>, ExactFlag,
+                        false)
+MIR_INSTRUCTION_MATCHER(ashr, matchOpcode<llvm::Instruction::AShr>, ExactFlag,
+                        false)
+MIR_INSTRUCTION_MATCHER(and, matchOpcode<llvm::Instruction::And>, NoFlags, true)
+MIR_INSTRUCTION_MATCHER(or, matchOpcode<llvm::Instruction::Or>, DisjointFlag,
+                        true)
+MIR_INSTRUCTION_MATCHER(xor, matchOpcode<llvm::Instruction::Xor>, NoFlags, true)
 
-MIR_INSTRUCTION_MATCHER(extractelement, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(insertelement, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(shufflevector, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(extractvalue, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(insertvalue, NoFlags, false)
+MIR_INSTRUCTION_MATCHER(extractelement,
+                        matchOpcode<llvm::Instruction::ExtractElement>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(insertelement,
+                        matchOpcode<llvm::Instruction::InsertElement>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(shufflevector,
+                        matchOpcode<llvm::Instruction::ShuffleVector>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(extractvalue,
+                        matchOpcode<llvm::Instruction::ExtractValue>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(insertvalue,
+                        matchOpcode<llvm::Instruction::InsertValue>, NoFlags,
+                        false)
 
-MIR_INSTRUCTION_MATCHER(alloca, InAllocaFlag, false)
-MIR_INSTRUCTION_MATCHER(load, VolatileFlag, false)
-MIR_INSTRUCTION_MATCHER(store, VolatileFlag, false)
-MIR_INSTRUCTION_MATCHER(getelementptr, GEPFlags, false)
+MIR_INSTRUCTION_MATCHER(alloca, matchOpcode<llvm::Instruction::Alloca>,
+                        InAllocaFlag, false)
+MIR_INSTRUCTION_MATCHER(load, matchOpcode<llvm::Instruction::Load>,
+                        VolatileFlag, false)
+MIR_INSTRUCTION_MATCHER(store, matchOpcode<llvm::Instruction::Store>,
+                        VolatileFlag, false)
+MIR_INSTRUCTION_MATCHER(getelementptr,
+                        matchOpcode<llvm::Instruction::GetElementPtr>, GEPFlags,
+                        false)
 
-MIR_INSTRUCTION_MATCHER(trunc, NSWNUWFlags, false)
-MIR_INSTRUCTION_MATCHER(zext, NNegFlag, false)
-MIR_INSTRUCTION_MATCHER(sext, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(fptrunc, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(fpext, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(fptoui, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(fptosi, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(uitofp, FastMathNNegFlags, false)
-MIR_INSTRUCTION_MATCHER(sitofp, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(ptrtoint, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(ptrtoaddr, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(inttoptr, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(bitcast, NoFlags, false)
+MIR_INSTRUCTION_MATCHER(trunc, matchOpcode<llvm::Instruction::Trunc>,
+                        NSWNUWFlags, false)
+MIR_INSTRUCTION_MATCHER(zext, matchOpcode<llvm::Instruction::ZExt>, NNegFlag,
+                        false)
+MIR_INSTRUCTION_MATCHER(sext, matchOpcode<llvm::Instruction::SExt>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(fptrunc, matchOpcode<llvm::Instruction::FPTrunc>,
+                        FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(fpext, matchOpcode<llvm::Instruction::FPExt>,
+                        FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(fptoui, matchOpcode<llvm::Instruction::FPToUI>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(fptosi, matchOpcode<llvm::Instruction::FPToSI>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(uitofp, matchOpcode<llvm::Instruction::UIToFP>,
+                        FastMathNNegFlags, false)
+MIR_INSTRUCTION_MATCHER(sitofp, matchOpcode<llvm::Instruction::SIToFP>,
+                        FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(ptrtoint, matchOpcode<llvm::Instruction::PtrToInt>,
+                        NoFlags, false)
+MIR_INSTRUCTION_MATCHER(ptrtoaddr, matchOpcode<llvm::Instruction::PtrToAddr>,
+                        NoFlags, false)
+MIR_INSTRUCTION_MATCHER(inttoptr, matchOpcode<llvm::Instruction::IntToPtr>,
+                        NoFlags, false)
+MIR_INSTRUCTION_MATCHER(bitcast, matchOpcode<llvm::Instruction::BitCast>,
+                        NoFlags, false)
 
-MIR_INSTRUCTION_MATCHER(ret, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(br, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(icmp, SameSignFlag, false)
-MIR_INSTRUCTION_MATCHER(fcmp, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(phi, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(select, FastMathFlags, false)
-MIR_INSTRUCTION_MATCHER(freeze, NoFlags, false)
-MIR_INSTRUCTION_MATCHER(call, NoFlags, true)
+MIR_INSTRUCTION_MATCHER(ret, matchOpcode<llvm::Instruction::Ret>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(br, matchBranch, NoFlags, false)
+MIR_INSTRUCTION_MATCHER(icmp, matchOpcode<llvm::Instruction::ICmp>,
+                        SameSignFlag, false)
+MIR_INSTRUCTION_MATCHER(fcmp, matchOpcode<llvm::Instruction::FCmp>,
+                        FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(phi, matchOpcode<llvm::Instruction::PHI>, FastMathFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(select, matchOpcode<llvm::Instruction::Select>,
+                        FastMathFlags, false)
+MIR_INSTRUCTION_MATCHER(freeze, matchOpcode<llvm::Instruction::Freeze>, NoFlags,
+                        false)
+MIR_INSTRUCTION_MATCHER(call, matchOpcode<llvm::Instruction::Call>, NoFlags,
+                        true)
 
 #undef MIR_INSTRUCTION_MATCHER
 #undef MIR_INSTRUCTION_MATCHER_COMMUTATIVE
+#undef MIR_INSTRUCTION_MATCHER_TARGET
 #undef MIR_INSTRUCTION_MATCHER_SUPPORTED_FLAGS
 #undef MIR_INSTRUCTION_MATCHER_NAME
 #undef MIR_INSTRUCTION_MATCHER_ID

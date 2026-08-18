@@ -27,6 +27,7 @@ enum class MetaType {
   ValueArray,
 };
 
+StringRef getMetaTypeName(MetaType Type);
 raw_ostream &operator<<(raw_ostream &OS, MetaType Type);
 
 class MetaVariable : public Value {

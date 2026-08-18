@@ -25,6 +25,7 @@ private:
   StringMap<MetaVariable *> MetaVariables;
   StringMap<Instruction *> Instructions;
   Pattern *CurrentPattern = nullptr;
+  MetaVariable *CurrentBlock = nullptr;
   bool SawConstraint = false;
 
   bool error(const Twine &Message) { return Lex.ParseError(Message); }
@@ -35,6 +36,7 @@ private:
 
   MetaVariable *getMeta(StringRef Name, MetaType Expected, LocTy Loc);
   bool infer(MetaVariable *M, MetaType Expected, LocTy Loc);
+  bool parseBlockLabel();
 
   bool parseInstruction(Instruction *&Result);
   bool parseType(Type *&Result, bool AllowVoid = false);
@@ -46,7 +48,7 @@ private:
   bool parseMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
                       MetaFlag::Placement Placement);
   bool parseSemanticFlags(Instruction::InstructionID ID,
-                          SmallVectorImpl<MatcherFlag> &Result);
+                          SmallVectorImpl<InstructionFlag> &Result);
 
   bool parseConstraint(Constraint *&Result);
   bool parseConstraintOr(Constraint *&Result);

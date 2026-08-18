@@ -6,29 +6,19 @@
 #define MIR_KEYWORD(Kind) MIR_KEYWORD_TOKEN_KIND(Kind)
 #endif
 
-#ifndef MIR_CONSTANT_KEYWORD
-#define MIR_CONSTANT_KEYWORD(Kind) MIR_KEYWORD(Kind)
-#endif
-
-#ifndef MIR_BOOLEAN_KEYWORD
-#define MIR_BOOLEAN_KEYWORD(Kind) MIR_KEYWORD(Kind)
-#endif
-
-MIR_BOOLEAN_KEYWORD(true)
-MIR_BOOLEAN_KEYWORD(false)
 MIR_KEYWORD(x)
 MIR_KEYWORD(ptr)
 MIR_KEYWORD(vscale)
-MIR_CONSTANT_KEYWORD(null)
-MIR_CONSTANT_KEYWORD(poison)
-MIR_CONSTANT_KEYWORD(undef)
-MIR_CONSTANT_KEYWORD(zeroinitializer)
 MIR_KEYWORD(align)
 MIR_KEYWORD(addrspace)
 MIR_KEYWORD(inrange)
 MIR_KEYWORD(to)
 
-#undef MIR_BOOLEAN_KEYWORD
+#ifndef MIR_CONSTANT_KEYWORD
+#define MIR_CONSTANT_KEYWORD(ID, Spelling) MIR_KEYWORD(Spelling)
+#endif
+#include "metaphir/IR/KeywordConstants.def"
+
 #undef MIR_CONSTANT_KEYWORD
 #undef MIR_KEYWORD
 #undef MIR_KEYWORD_TOKEN_KIND

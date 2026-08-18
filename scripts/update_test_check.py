@@ -7,6 +7,7 @@ import argparse
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -46,6 +47,11 @@ def parse_args() -> argparse.Namespace:
         "--metaphir-parse",
         type=Path,
         help="path to metaphir-parse (otherwise use METAPHIR_PARSE, PATH, or build/)",
+    )
+    parser.add_argument(
+        "--metaphir-match",
+        type=Path,
+        help="path to metaphir-match (otherwise use METAPHIR_MATCH, PATH, or build/)",
     )
     return parser.parse_args()
 
@@ -90,12 +96,15 @@ def test_kind(lines: list[str], path: Path) -> tuple[str, str]:
     tool_runs = [
         run
         for run in runs
-        if "%metaphir-lex" in run["command"] or "%metaphir-parse" in run["command"]
+        if any(
+            f"%{kind}" in run["command"]
+            for kind in ("metaphir-lex", "metaphir-parse", "metaphir-match")
+        )
     ]
     kinds = {
         kind
         for run in tool_runs
-        for kind in ("metaphir-lex", "metaphir-parse")
+        for kind in ("metaphir-lex", "metaphir-parse", "metaphir-match")
         if f"%{kind}" in run["command"]
     }
     if len(kinds) != 1 or any(
@@ -350,10 +359,117 @@ def update_parser_test(path: Path, lines: list[str], comment: str, parser: Path)
     return "\n".join(separate_check_blocks(clean_lines)) + "\n"
 
 
+def update_matcher_test(
+    path: Path, lines: list[str], comment: str, matcher: Path
+) -> str:
+    clean_lines = [line for line in lines if not CHECK_RE.match(line)]
+    sections: dict[str, str] = {}
+    current_section: str | None = None
+    section_lines: list[str] = []
+    for line in clean_lines:
+        if match := SPLIT_RE.match(line):
+            if current_section is not None:
+                sections[current_section] = "\n".join(section_lines) + "\n"
+            current_section = match["name"]
+            section_lines = []
+        elif current_section is not None:
+            section_lines.append(line)
+    if current_section is not None:
+        sections[current_section] = "\n".join(section_lines) + "\n"
+
+    generated: list[tuple[str | None, str, list[str]]] = []
+    with tempfile.TemporaryDirectory() as temporary:
+        temporary_path = Path(temporary)
+        for name, contents in sections.items():
+            output_path = temporary_path / name
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(contents)
+
+        for run in (match for line in lines if (match := RUN_RE.match(line))):
+            if "%metaphir-match" not in run["command"]:
+                continue
+            invocation = run["command"].split("|", 1)[0].strip()
+            arguments = shlex.split(invocation)
+            tool_index = arguments.index("%metaphir-match")
+            arguments = arguments[tool_index + 1 :]
+            pattern_argument = arguments[0]
+            section_name = (
+                pattern_argument[3:] if pattern_argument.startswith("%t/") else None
+            )
+            arguments = [
+                str(path)
+                if argument == "%s"
+                else argument.replace("%S", str(path.parent)).replace(
+                    "%t", str(temporary_path)
+                )
+                for argument in arguments
+            ]
+            result = subprocess.run(
+                [matcher, *arguments], text=True, capture_output=True, check=False
+            )
+            if result.returncode:
+                raise ValueError(
+                    f"{path}: metaphir-match failed:\n{result.stderr.rstrip()}"
+                )
+            output = result.stdout.splitlines()
+            if not output:
+                raise ValueError(
+                    f"{path}: metaphir-match produced no checkable output"
+                )
+            prefix_match = CHECK_PREFIX_RE.search(run["command"])
+            prefix = prefix_match["prefix"] if prefix_match else "CHECK"
+            generated.append((section_name, prefix, output))
+
+    checks_by_line: dict[int, list[str]] = {}
+    for section_name, prefix, output in generated:
+        if section_name is None:
+            start = 0
+            end = len(clean_lines)
+        else:
+            marker = next(
+                (
+                    index
+                    for index, line in enumerate(clean_lines)
+                    if (match := SPLIT_RE.match(line)) and match["name"] == section_name
+                ),
+                None,
+            )
+            if marker is None:
+                raise ValueError(f"{path}: no section marker for {section_name}")
+            start = marker + 1
+            end = next(
+                (
+                    index
+                    for index in range(start, len(clean_lines))
+                    if SPLIT_RE.match(clean_lines[index])
+                ),
+                len(clean_lines),
+            )
+        input_lines = [
+            index
+            for index in range(start, end)
+            if clean_lines[index].strip()
+            and not clean_lines[index].lstrip().startswith((";", "#", "//"))
+        ]
+        if not input_lines:
+            raise ValueError(f"{path}: matcher pattern has no input")
+        checks_by_line.setdefault(input_lines[-1], []).extend(
+            f"{comment} {prefix if index == 0 else prefix + '-NEXT'}: {line}"
+            for index, line in enumerate(output)
+        )
+
+    for target in sorted(checks_by_line, reverse=True):
+        clean_lines[target + 1 : target + 1] = checks_by_line[target]
+    while clean_lines and not clean_lines[-1].strip():
+        clean_lines.pop()
+    return "\n".join(separate_check_blocks(clean_lines)) + "\n"
+
+
 def main() -> int:
     args = parse_args()
     lexer: Path | None = None
     parser: Path | None = None
+    matcher: Path | None = None
     changed = 0
     for path in collect_files(args.paths):
         original = path.read_text()
@@ -371,6 +487,11 @@ def main() -> int:
                     "metaphir-parse", args.metaphir_parse, "METAPHIR_PARSE"
                 )
                 updated = update_parser_test(path, lines, comment, parser)
+            elif kind == "metaphir-match":
+                matcher = matcher or find_tool(
+                    "metaphir-match", args.metaphir_match, "METAPHIR_MATCH"
+                )
+                updated = update_matcher_test(path, lines, comment, matcher)
             elif kind == "skip":
                 continue
             else:

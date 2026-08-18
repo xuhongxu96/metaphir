@@ -17,10 +17,10 @@ tok::Kind MIRConstraintLexer::Lex() {
                Lexer.CurPtr[0] == '_')
           ++Lexer.CurPtr;
         Lexer.StrVal.assign(Lexer.TokStart, Lexer.CurPtr);
-#define MIR_BOOLEAN_KEYWORD(Kind)                                              \
-  if (Lexer.StrVal == #Kind)                                                   \
-    return tok::kw_##Kind;
-#include "metaphir/Parser/MIRKeywords.def"
+        if (Lexer.StrVal == "true")
+          return tok::kw_true;
+        if (Lexer.StrVal == "false")
+          return tok::kw_false;
         return tok::Identifier;
       }
       return tok::Error;

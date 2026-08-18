@@ -66,20 +66,28 @@ TEST(MetaphIRConstructs, GeneratedInstructionProperties) {
   EXPECT_TRUE(Instruction::isCommutative(Instruction::I_add));
   EXPECT_FALSE(Instruction::isCommutative(Instruction::I_sub));
   EXPECT_NE(Instruction::getSupportedFlags(Instruction::I_add) &
-                Instruction::mask(Instruction::F_nsw),
+                Instruction::mask(InstructionFlag::F_nsw),
             0u);
   EXPECT_EQ(Instruction::getSupportedFlags(Instruction::I_add) &
-                Instruction::mask(Instruction::F_exact),
+                Instruction::mask(InstructionFlag::F_exact),
             0u);
+}
+
+TEST(MetaphIRConstructs, UsesEnumeratedKeywordConstants) {
+  EXPECT_EQ(KeywordConstant::getKeywordName(KeywordConstant::K_Poison),
+            "poison");
 }
 
 TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
   MIRContext Context;
   SourceRange Range;
   Type *I32 = IntegerType::get(Context, 32);
-  Value *LHS = KeywordConstant::get(Context, "poison", Range);
-  Value *RHS = KeywordConstant::get(Context, "undef", Range);
-  Value *Predicate = KeywordConstant::get(Context, "eq", Range);
+  Value *LHS = KeywordConstant::get(Context, KeywordConstant::K_Poison, Range);
+  Value *RHS = KeywordConstant::get(Context, KeywordConstant::K_Undef, Range);
+  Value *Predicate =
+      KeywordConstant::get(Context, KeywordConstant::K_EQ, Range);
+  MetaVariable *Block =
+      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
   MatcherOperand Operands[] = {
       {I32, LHS},
       {I32, RHS},
@@ -88,7 +96,7 @@ TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
   };
 
   Instruction *Matcher = Instruction::get(Context, Instruction::I_icmp, "", {},
-                                          {}, Operands, nullptr, Range);
+                                          {}, Operands, nullptr, Range, Block);
   Value *MatcherValue = Matcher;
   EXPECT_EQ(MatcherValue->getValueID(), Value::InstructionVal);
   EXPECT_EQ(cast<Instruction>(MatcherValue), Matcher);

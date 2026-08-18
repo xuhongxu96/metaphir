@@ -564,6 +564,9 @@ tok::Kind MIRLexer::LexIdentifier() {
 #define MIR_KEYWORD_TOKEN_KIND(Kind) KEYWORD(Kind);
 #include "metaphir/Parser/MIRKeywords.def"
 
+#define MIR_PREDICATE_KEYWORD(ID, Spelling) KEYWORD(Spelling);
+#include "metaphir/IR/KeywordConstants.def"
+
 #define MIR_TYPE_TOKEN_KIND(Kind) KEYWORD(Kind);
 #include "metaphir/IR/Types.def"
 
@@ -933,8 +936,7 @@ tok::Kind MIRLexer::LexColon() {
     if (ReadVarName()) {
       return tok::MetaFlag;
     }
-    LexError("invalid meta flag name");
-    return tok::Error;
+    return tok::colon;
   }
 }
 

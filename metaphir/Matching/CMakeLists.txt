@@ -1,0 +1,19 @@
+add_library(metaphir-matching
+  Instantiation.cpp
+  Instantiation.h
+  Matchers.Instruction.cpp
+  Matchers.Type.cpp
+  NaiveMatcher.cpp
+  NaiveMatcher.h
+  Matchers.cpp
+  Matchers.h
+  Target.cpp
+  Target.h
+)
+
+target_link_libraries(metaphir-matching
+  PUBLIC
+    metaphir-ir
+    LLVMCore
+    LLVMSupport
+)

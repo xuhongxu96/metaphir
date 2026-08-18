@@ -17,9 +17,7 @@ public:
   ArrayRef<Constraint *> getConstraints() const { return Constraints; }
   ArrayRef<MetaVariable *> getMetaVariables() const { return MetaVariables; }
 
-  Instruction *getRoot() const {
-    return Instructions.empty() ? nullptr : Instructions.back();
-  }
+  SmallVector<Instruction *, 4> getRoots() const;
 
   void addInstruction(Instruction *Instruction) {
     Instructions.push_back(Instruction);

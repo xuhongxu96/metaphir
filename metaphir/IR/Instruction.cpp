@@ -33,13 +33,14 @@ static void printSeparated(raw_ostream &OS, ArrayRef<MatcherOperand> Ops,
 }
 
 Instruction *Instruction::get(MIRContext &Context, InstructionID ID,
-                              StringRef ResultName, ArrayRef<MatcherFlag> Flags,
+                              StringRef ResultName,
+                              ArrayRef<InstructionFlag> Flags,
                               ArrayRef<MetaFlag *> MetaFlags,
                               ArrayRef<MatcherOperand> Operands,
-                              MetaVariable *Capture, SourceRange Range) {
-  SmallVector<MatcherFlag, 8> SavedFlags(Flags);
-  for (MatcherFlag &Flag : SavedFlags)
-    Flag.Name = Context.pImpl->Saver.save(Flag.Name);
+                              MetaVariable *Capture, SourceRange Range,
+                              MetaVariable *ParentBlock) {
+  assert(ParentBlock && ParentBlock->getType() == MetaType::BasicBlock &&
+         "instruction must have a basic block");
   SmallVector<MatcherOperand, 8> UnkeyedOperands;
   MatcherOperand KeyedOperands[MatcherOperand::NumKeyedOperandKinds];
   uint64_t KeyedOperandMask = 0;
@@ -57,11 +58,26 @@ Instruction *Instruction::get(MIRContext &Context, InstructionID ID,
   }
   return new (Context.pImpl->Alloc)
       Instruction(ID, Context.pImpl->Saver.save(ResultName),
-                  Context.pImpl->copyArray<MatcherFlag>(SavedFlags),
+                  Context.pImpl->copyArray<InstructionFlag>(Flags),
                   Context.pImpl->copyArray<MetaFlag *>(MetaFlags),
                   Context.pImpl->copyArray<MatcherOperand>(UnkeyedOperands),
                   Context.pImpl->copyArray<MatcherOperand>(KeyedOperands),
-                  KeyedOperandMask, Capture, Range);
+                  KeyedOperandMask, Capture, Range, ParentBlock);
+}
+
+StringRef InstructionFlag::getName(FlagID ID) {
+  switch (ID) {
+#define MIR_FLAG(Name)                                                         \
+  case F_##Name:                                                               \
+    return #Name;
+#define MIR_FAST_MATH_FLAG(Name)                                               \
+  case F_##Name:                                                               \
+    return #Name;
+#include "metaphir/IR/Flags.def"
+  case NumFlagIDs:
+    break;
+  }
+  llvm_unreachable("invalid semantic flag ID");
 }
 
 const MatcherOperand *
@@ -104,8 +120,8 @@ bool Instruction::isCommutative(InstructionID ID) {
   llvm_unreachable("invalid instruction kind");
 }
 
-raw_ostream &operator<<(raw_ostream &OS, const MatcherFlag &F) {
-  OS << F.Name;
+raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F) {
+  OS << InstructionFlag::getName(F.ID);
   if (F.Capture)
     OS << ":" << *F.Capture;
   return OS;
@@ -136,7 +152,7 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
     OS << ":" << *I.getCapture();
   for (const MetaFlag *F : I.getMetaFlags())
     OS << *F;
-  for (const MatcherFlag &F : I.getFlags())
+  for (const InstructionFlag &F : I.getFlags())
     OS << ' ' << F;
 
   using ID = Instruction::InstructionID;

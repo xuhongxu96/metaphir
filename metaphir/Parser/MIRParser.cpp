@@ -35,6 +35,18 @@ static StringRef tokenName(tok::Kind K) {
   return N.consume_front("kw_") ? N : StringRef();
 }
 
+static std::optional<KeywordConstant::KeywordID>
+predicateKeywordID(tok::Kind K) {
+  switch (K) {
+#define MIR_PREDICATE_KEYWORD(ID, Spelling)                                    \
+  case tok::kw_##Spelling:                                                     \
+    return KeywordConstant::K_##ID;
+#include "metaphir/IR/KeywordConstants.def"
+  default:
+    return std::nullopt;
+  }
+}
+
 static std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
   switch (K) {
 #define MIR_TYPE(TypeID, TokenKind)                                            \
@@ -57,14 +69,14 @@ static bool isSemanticFlag(tok::Kind K) {
   }
 }
 
-static Instruction::SemanticFlagID semanticFlagID(tok::Kind K) {
+static InstructionFlag::FlagID semanticFlagID(tok::Kind K) {
   switch (K) {
 #define MIR_FLAG(Name)                                                         \
   case tok::kw_##Name:                                                         \
-    return Instruction::F_##Name;
+    return InstructionFlag::F_##Name;
 #define MIR_FAST_MATH_FLAG(Name)                                               \
   case tok::kw_##Name:                                                         \
-    return Instruction::F_##Name;
+    return InstructionFlag::F_##Name;
 #include "metaphir/IR/Flags.def"
   default:
     llvm_unreachable("not a semantic flag token");
@@ -128,9 +140,31 @@ MetaVariable *MIRParser::getMeta(StringRef Name, MetaType Expected, LocTy Loc) {
   return M;
 }
 
+bool MIRParser::parseBlockLabel() {
+  LocTy Loc = Lex.getLoc();
+  SmallString<16> Name;
+  if (Lex.getKind() == tok::LabelStr) {
+    Name = Lex.getStrVal();
+    next();
+  } else if (Lex.getKind() == tok::LabelID) {
+    Twine(Lex.getUIntVal()).toVector(Name);
+    next();
+  } else {
+    assert(Lex.getKind() == tok::MetaVar && "expected a block label");
+    Name = Lex.getStrVal();
+    next();
+    if (expect(tok::colon, "expected ':' after basic block meta variable"))
+      return true;
+  }
+
+  CurrentBlock = getMeta(Name, MetaType::BasicBlock, Loc);
+  return CurrentBlock == nullptr;
+}
+
 bool MIRParser::parse(Pattern *&Result) {
   Result = nullptr;
   CurrentPattern = Pattern::get(Context);
+  CurrentBlock = MetaVariable::get(Context, "", MetaType::BasicBlock, {});
   next();
   skipNewlines();
   while (Lex.getKind() != tok::Eof) {
@@ -149,7 +183,18 @@ bool MIRParser::parse(Pattern *&Result) {
     }
     if (SawConstraint)
       return error("instruction is not allowed after constraints");
+    if (Lex.getKind() == tok::LabelStr || Lex.getKind() == tok::LabelID ||
+        Lex.getKind() == tok::MetaVar) {
+      if (parseBlockLabel())
+        return true;
+      if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
+        return error("unexpected token after basic block label");
+      skipNewlines();
+      continue;
+    }
     if (!CurrentPattern->getInstructions().empty() &&
+        CurrentPattern->getInstructions().back()->getParentBlock() ==
+            CurrentBlock &&
         CurrentPattern->getInstructions().back()->getResultName().empty())
       return error("only the final instruction may omit a result assignment");
     Instruction *I = nullptr;
@@ -167,11 +212,11 @@ bool MIRParser::parse(Pattern *&Result) {
 }
 
 bool MIRParser::parseSemanticFlags(Instruction::InstructionID ID,
-                                   SmallVectorImpl<MatcherFlag> &Result) {
+                                   SmallVectorImpl<InstructionFlag> &Result) {
   while (isSemanticFlag(Lex.getKind())) {
     LocTy Loc = Lex.getLoc();
     StringRef Name = tokenName(Lex.getKind());
-    Instruction::SemanticFlagID FlagID = semanticFlagID(Lex.getKind());
+    InstructionFlag::FlagID FlagID = semanticFlagID(Lex.getKind());
     if (!(Instruction::getSupportedFlags(ID) & Instruction::mask(FlagID)))
       return Lex.ParseError(Loc, "flag '" + Name + "' is not valid for '" +
                                      Instruction::getOpcodeName(ID) + "'");
@@ -183,7 +228,7 @@ bool MIRParser::parseSemanticFlags(Instruction::InstructionID ID,
         return true;
       next();
     }
-    Result.push_back({Name, Capture});
+    Result.push_back({FlagID, Capture});
   }
   return false;
 }
@@ -497,9 +542,9 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     next();
     return false;
   }
-#define MIR_CONSTANT_KEYWORD(Kind)                                             \
+#define MIR_CONSTANT_KEYWORD(ID, Kind)                                         \
   if (Lex.getKind() == tok::kw_##Kind) {                                       \
-    Result = KeywordConstant::get(Context, #Kind, Range);                      \
+    Result = KeywordConstant::get(Context, KeywordConstant::K_##ID, Range);    \
     next();                                                                    \
     return false;                                                              \
   }
@@ -617,7 +662,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
       return Lex.ParseError(F->getSourceRange().Begin,
                             "commutative matching is not valid for '" + Op +
                                 "'");
-  SmallVector<MatcherFlag, 8> Flags;
+  SmallVector<InstructionFlag, 8> Flags;
   if (parseSemanticFlags(ID, Flags))
     return true;
   SmallVector<MatcherOperand, 8> Ops;
@@ -793,7 +838,9 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     MatcherOperand O;
     if (parseType(O.Ty, true))
       return true;
-    if (O.Ty->getTypeID() != Type::VoidTyID && parseValue(O.Val))
+    if (O.Ty->getTypeID() == Type::VoidTyID)
+      O.IsInstructionOperand = false;
+    else if (parseValue(O.Val))
       return true;
     Ops.push_back(O);
   } else if (ID == Instruction::I_br) {
@@ -824,8 +871,9 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
         return true;
       Pred.Val = M;
       next();
-    } else if (Lex.getKind() == tok::Identifier) {
-      Pred.Val = KeywordConstant::get(Context, Lex.getStrVal(),
+    } else if (std::optional<KeywordConstant::KeywordID> Predicate =
+                   predicateKeywordID(Lex.getKind())) {
+      Pred.Val = KeywordConstant::get(Context, *Predicate,
                                       SourceRange{Lex.getLoc(), Lex.getLoc()});
       next();
     } else
@@ -931,8 +979,9 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
                             "duplicate keyed operand");
     SeenKeyedOperand[Operand.Key] = true;
   }
-  Result = Instruction::get(Context, ID, ResultName, Flags, MFlags, Ops,
-                            Capture, SourceRange{Loc, Lex.getLoc()});
+  Result =
+      Instruction::get(Context, ID, ResultName, Flags, MFlags, Ops, Capture,
+                       SourceRange{Loc, Lex.getLoc()}, CurrentBlock);
   if (!ResultName.empty())
     Instructions[ResultName] = Result;
   return false;

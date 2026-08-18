@@ -24,10 +24,19 @@ FloatingConstant *FloatingConstant::get(MIRContext &Context,
   return new (Context.pImpl->Alloc) FloatingConstant(Number, Range);
 }
 
-KeywordConstant *KeywordConstant::get(MIRContext &Context, StringRef Keyword,
+StringRef KeywordConstant::getKeywordName(KeywordID ID) {
+  switch (ID) {
+#define MIR_KEYWORD_CONSTANT(ID, Spelling)                                     \
+  case K_##ID:                                                                 \
+    return #Spelling;
+#include "metaphir/IR/KeywordConstants.def"
+  }
+  llvm_unreachable("invalid keyword constant ID");
+}
+
+KeywordConstant *KeywordConstant::get(MIRContext &Context, KeywordID ID,
                                       SourceRange Range) {
-  return new (Context.pImpl->Alloc)
-      KeywordConstant(Context.pImpl->Saver.save(Keyword), Range);
+  return new (Context.pImpl->Alloc) KeywordConstant(ID, Range);
 }
 
 AggregateConstant *AggregateConstant::get(MIRContext &Context,
@@ -61,7 +70,8 @@ raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
     cast<FloatingConstant>(V).getValue().print(OS);
     break;
   case Value::KeywordConstantVal:
-    OS << cast<KeywordConstant>(V).getKeyword();
+    OS << KeywordConstant::getKeywordName(
+        cast<KeywordConstant>(V).getKeywordID());
     break;
   case Value::AggregateConstantVal: {
     const auto &A = cast<AggregateConstant>(V);

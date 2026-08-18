@@ -12,34 +12,38 @@ MetaVariable *MetaVariable::get(MIRContext &Context, StringRef Name,
       MetaVariable(Context.pImpl->Saver.save(Name), Ty, Range);
 }
 
-raw_ostream &operator<<(raw_ostream &OS, MetaType Type) {
+StringRef getMetaTypeName(MetaType Type) {
   switch (Type) {
   case MetaType::Unknown:
-    return OS << "Unknown";
+    return "Unknown";
   case MetaType::Nat:
-    return OS << "Nat";
+    return "Nat";
   case MetaType::Bool:
-    return OS << "i1";
+    return "i1";
   case MetaType::Type:
-    return OS << "Type";
+    return "Type";
   case MetaType::CmpPredicate:
-    return OS << "CmpPredicate";
+    return "CmpPredicate";
   case MetaType::Value:
-    return OS << "Value";
+    return "Value";
   case MetaType::Instruction:
-    return OS << "Instruction";
+    return "Instruction";
   case MetaType::Function:
-    return OS << "Function";
+    return "Function";
   case MetaType::IntrinsicID:
-    return OS << "Intrinsic::ID";
+    return "Intrinsic::ID";
   case MetaType::BasicBlock:
-    return OS << "BasicBlock";
+    return "BasicBlock";
   case MetaType::TypeArray:
-    return OS << "Type[]";
+    return "Type[]";
   case MetaType::ValueArray:
-    return OS << "Value[]";
+    return "Value[]";
   }
   llvm_unreachable("invalid meta type");
+}
+
+raw_ostream &operator<<(raw_ostream &OS, MetaType Type) {
+  return OS << getMetaTypeName(Type);
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const MetaVariable &M) {
