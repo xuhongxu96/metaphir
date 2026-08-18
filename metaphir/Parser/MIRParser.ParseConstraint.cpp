@@ -15,8 +15,14 @@ Constraint *MIRParser::makeConstraint(Constraint::ConstraintID K,
     return IntegerConstraint::get(Context, Integer, R);
   case Constraint::Boolean:
     return BooleanConstraint::get(Context, Boolean, R);
+  case Constraint::String:
+    llvm_unreachable("string constraints require a string value");
+  case Constraint::Array:
+    llvm_unreachable("array constraints require element values");
   case Constraint::Variable:
     return VariableConstraint::get(Context, Variable, Ty, R);
+  case Constraint::ArrayAccess:
+    llvm_unreachable("array access constraints require an array and index");
   case Constraint::Unary:
   case Constraint::Binary:
   case Constraint::Call:
@@ -135,7 +141,33 @@ bool MIRParser::parseConstraintUnary(Constraint *&R) {
                        Op, 0, false, nullptr, Args, L);
     return false;
   }
-  return parseConstraintPrimary(R);
+  return parseConstraintPostfix(R);
+}
+
+bool MIRParser::parseConstraintPostfix(Constraint *&R) {
+  if (parseConstraintPrimary(R))
+    return true;
+  while (consume(tok::lsquare)) {
+    LocTy L = Lex.getLoc();
+    Constraint *Index = nullptr;
+    if (parseConstraint(Index) ||
+        expect(tok::rsquare, "expected ']' after array index"))
+      return true;
+    Constraint::ResultType ElementType;
+    if (R->getResultType() == Constraint::TypeArrayResult)
+      ElementType = Constraint::TypeResult;
+    else if (R->getResultType() == Constraint::ValueArrayResult)
+      ElementType = Constraint::ValueResult;
+    else if (R->getResultType() == Constraint::StringArrayResult)
+      ElementType = Constraint::StringResult;
+    else
+      return error("constraint subscript requires an array operand");
+    if (Index->getResultType() != Constraint::IntegerResult)
+      return error("constraint array index must be an integer");
+    R = ArrayAccessConstraint::get(Context, ElementType, R, Index,
+                                   SourceRange{L, L});
+  }
+  return false;
 }
 
 bool MIRParser::parseConstraintPrimary(Constraint *&R) {
@@ -156,6 +188,42 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
                        nullptr, {}, L);
     return false;
   }
+  if (Lex.getKind() == tok::StringConstant) {
+    R = StringConstraint::get(Context, Lex.getStrVal(), SourceRange{L, L});
+    next();
+    return false;
+  }
+  if (consume(tok::lsquare)) {
+    SmallVector<Constraint *, 4> Elements;
+    if (Lex.getKind() == tok::rsquare)
+      return error("constraint array literal must not be empty");
+    do {
+      Constraint *Element = nullptr;
+      if (parseConstraint(Element))
+        return true;
+      Elements.push_back(Element);
+    } while (consume(tok::comma));
+    if (expect(tok::rsquare, "expected ']' after array literal"))
+      return true;
+
+    Constraint::ResultType ElementType = Elements.front()->getResultType();
+    Constraint::ResultType ArrayType;
+    if (ElementType == Constraint::TypeResult)
+      ArrayType = Constraint::TypeArrayResult;
+    else if (ElementType == Constraint::ValueResult)
+      ArrayType = Constraint::ValueArrayResult;
+    else if (ElementType == Constraint::StringResult)
+      ArrayType = Constraint::StringArrayResult;
+    else
+      return error(
+          "constraint array literal requires type, value, or string elements");
+    if (!llvm::all_of(Elements, [ElementType](const Constraint *Element) {
+          return Element->getResultType() == ElementType;
+        }))
+      return error("constraint array literal elements must have the same type");
+    R = ArrayConstraint::get(Context, ArrayType, Elements, SourceRange{L, L});
+    return false;
+  }
   if (Lex.getKind() == tok::MetaVar) {
     auto It = MetaVariables.find(Lex.getStrVal());
     if (It == MetaVariables.end())
@@ -163,9 +231,7 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
                    Lex.getStrVal() + "'");
     MetaVariable *M = It->second;
     next();
-    auto Ty = M->getType() == MetaType::Bool  ? Constraint::BooleanResult
-              : M->getType() == MetaType::Nat ? Constraint::IntegerResult
-                                              : Constraint::Unknown;
+    Constraint::ResultType Ty = Constraint::getResultType(M->getType());
     R = makeConstraint(Constraint::Variable, Ty, {}, 0, false, M, {}, L);
     return false;
   }

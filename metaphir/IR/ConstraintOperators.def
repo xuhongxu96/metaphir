@@ -12,6 +12,11 @@
   MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, Arity)
 #endif
 
+#ifndef MIR_CONSTRAINT_INTERPRETED_OPERATOR
+#define MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Kind, Result, Arity)     \
+  MIR_CONSTRAINT_OPERATOR(ID, Name, Kind, Result, Arity)
+#endif
+
 MIR_CONSTRAINT_OPERATOR(LogicalOr, "||", Binary, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(LogicalAnd, "&&", Binary, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(Equal, "==", Binary, BooleanResult, 2)
@@ -35,6 +40,11 @@ MIR_CONSTRAINT_OPERATOR(UDiv, "udiv", Call, IntegerResult, 2)
 MIR_CONSTRAINT_OPERATOR(SRem, "srem", Call, IntegerResult, 2)
 MIR_CONSTRAINT_OPERATOR(URem, "urem", Call, IntegerResult, 2)
 
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Isa, "isa", Call, BooleanResult, 2)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Lshr, "lshr", Call, IntegerResult, 2)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Ashr, "ashr", Call, IntegerResult, 2)
+
+#undef MIR_CONSTRAINT_INTERPRETED_OPERATOR
 #undef MIR_CONSTRAINT_OPERATOR
 #undef MIR_CONSTRAINT_OPERATOR_SCHEMA
 #undef MIR_CONSTRAINT_OPERATOR_ID

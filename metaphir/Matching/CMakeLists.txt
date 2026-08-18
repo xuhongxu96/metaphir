@@ -1,4 +1,8 @@
 add_library(metaphir-matching
+  ConstraintInterpreter.cpp
+  ConstraintInterpreter.h
+  ConstraintOps.cpp
+  ConstraintOps.h
   Instantiation.cpp
   Instantiation.h
   Matchers.Instruction.cpp

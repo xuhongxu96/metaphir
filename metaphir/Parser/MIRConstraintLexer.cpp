@@ -88,6 +88,12 @@ tok::Kind MIRConstraintLexer::Lex() {
       return tok::rparen;
     case ',':
       return tok::comma;
+    case '"':
+      return Lexer.LexQuote();
+    case '[':
+      return tok::lsquare;
+    case ']':
+      return tok::rsquare;
     case '?':
       return Lexer.LexQuestion();
     case '0':

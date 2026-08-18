@@ -13,18 +13,8 @@ namespace metaphir {
 class MIRContext;
 
 enum class MetaType {
-  Unknown,
-  Nat,
-  Bool,
-  Type,
-  CmpPredicate,
-  Value,
-  Instruction,
-  Function,
-  IntrinsicID,
-  BasicBlock,
-  TypeArray,
-  ValueArray,
+#define MIR_META_TYPE_ID(ID) ID,
+#include "metaphir/IR/MetaTypes.def"
 };
 
 StringRef getMetaTypeName(MetaType Type);

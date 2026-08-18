@@ -16,11 +16,33 @@ BooleanConstraint *BooleanConstraint::get(MIRContext &Context, bool State,
   return new (Context.pImpl->Alloc) BooleanConstraint(State, Range);
 }
 
+StringConstraint *StringConstraint::get(MIRContext &Context, StringRef Value,
+                                        SourceRange Range) {
+  return new (Context.pImpl->Alloc)
+      StringConstraint(Context.pImpl->Saver.save(Value), Range);
+}
+
+ArrayConstraint *ArrayConstraint::get(MIRContext &Context, ResultType Type,
+                                      ArrayRef<Constraint *> Elements,
+                                      SourceRange Range) {
+  return new (Context.pImpl->Alloc)
+      ArrayConstraint(Type, Context.pImpl->copyArray(Elements), Range);
+}
+
 VariableConstraint *VariableConstraint::get(MIRContext &Context,
                                             MetaVariable *Variable,
                                             ResultType Type,
                                             SourceRange Range) {
   return new (Context.pImpl->Alloc) VariableConstraint(Variable, Type, Range);
+}
+
+ArrayAccessConstraint *ArrayAccessConstraint::get(MIRContext &Context,
+                                                  ResultType Type,
+                                                  Constraint *Array,
+                                                  Constraint *Index,
+                                                  SourceRange Range) {
+  return new (Context.pImpl->Alloc)
+      ArrayAccessConstraint(Type, Array, Index, Range);
 }
 
 OperatorConstraint *OperatorConstraint::get(MIRContext &Context,
@@ -77,14 +99,40 @@ StringRef Constraint::getOperatorName(OperatorID ID) {
   llvm_unreachable("invalid constraint function ID");
 }
 
+Constraint::ResultType Constraint::getResultType(MetaType Type) {
+  switch (Type) {
+#define MIR_META_TYPE_CONSTRAINT_RESULT(ID, Result)                            \
+  case MetaType::ID:                                                           \
+    return Result;
+#include "metaphir/IR/MetaTypes.def"
+  }
+  llvm_unreachable("invalid meta type");
+}
+
 raw_ostream &operator<<(raw_ostream &OS, const Constraint &C) {
   switch (C.getConstraintID()) {
   case Constraint::Integer:
     return OS << cast<IntegerConstraint>(C).getValue();
   case Constraint::Boolean:
     return OS << (cast<BooleanConstraint>(C).getValue() ? "true" : "false");
+  case Constraint::String:
+    return OS << '"' << cast<StringConstraint>(C).getValue() << '"';
+  case Constraint::Array: {
+    const auto &Array = cast<ArrayConstraint>(C);
+    OS << '[';
+    for (unsigned Index = 0; Index != Array.getElements().size(); ++Index) {
+      if (Index)
+        OS << ',';
+      OS << *Array.getElements()[Index];
+    }
+    return OS << ']';
+  }
   case Constraint::Variable:
     return OS << *cast<VariableConstraint>(C).getVariable();
+  case Constraint::ArrayAccess: {
+    const auto &Access = cast<ArrayAccessConstraint>(C);
+    return OS << *Access.getArray() << '[' << *Access.getIndex() << ']';
+  }
   case Constraint::Unary:
   case Constraint::Binary:
   case Constraint::Call: {

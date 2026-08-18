@@ -57,6 +57,7 @@ private:
   bool parseConstraintAdd(Constraint *&Result);
   bool parseConstraintMul(Constraint *&Result);
   bool parseConstraintUnary(Constraint *&Result);
+  bool parseConstraintPostfix(Constraint *&Result);
   bool parseConstraintPrimary(Constraint *&Result);
   Constraint *makeConstraint(Constraint::ConstraintID K,
                              Constraint::ResultType Ty, StringRef Op,

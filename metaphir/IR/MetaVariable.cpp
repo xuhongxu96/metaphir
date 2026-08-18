@@ -14,30 +14,10 @@ MetaVariable *MetaVariable::get(MIRContext &Context, StringRef Name,
 
 StringRef getMetaTypeName(MetaType Type) {
   switch (Type) {
-  case MetaType::Unknown:
-    return "Unknown";
-  case MetaType::Nat:
-    return "Nat";
-  case MetaType::Bool:
-    return "i1";
-  case MetaType::Type:
-    return "Type";
-  case MetaType::CmpPredicate:
-    return "CmpPredicate";
-  case MetaType::Value:
-    return "Value";
-  case MetaType::Instruction:
-    return "Instruction";
-  case MetaType::Function:
-    return "Function";
-  case MetaType::IntrinsicID:
-    return "Intrinsic::ID";
-  case MetaType::BasicBlock:
-    return "BasicBlock";
-  case MetaType::TypeArray:
-    return "Type[]";
-  case MetaType::ValueArray:
-    return "Value[]";
+#define MIR_META_TYPE_NAME(ID, Name)                                           \
+  case MetaType::ID:                                                           \
+    return Name;
+#include "metaphir/IR/MetaTypes.def"
   }
   llvm_unreachable("invalid meta type");
 }

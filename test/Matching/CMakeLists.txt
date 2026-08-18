@@ -1,4 +1,5 @@
 add_metaphir_test(metaphir-matching-test
+  ConstraintInterpreterTest.cpp
   NaiveMatcherTest.cpp
 )
 

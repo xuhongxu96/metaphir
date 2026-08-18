@@ -39,6 +39,40 @@ private:
       : Constraint(Boolean, BooleanResult, R), State(S) {}
 };
 
+class StringConstraint : public Constraint {
+public:
+  StringRef getValue() const { return Value; }
+  static bool classof(const Constraint *C) {
+    return C->getConstraintID() == String;
+  }
+  static StringConstraint *get(MIRContext &Context, StringRef Value,
+                               SourceRange Range);
+
+private:
+  StringRef Value;
+
+  StringConstraint(StringRef Value, SourceRange Range)
+      : Constraint(String, StringResult, Range), Value(Value) {}
+};
+
+class ArrayConstraint : public Constraint {
+public:
+  ArrayRef<Constraint *> getElements() const { return Elements; }
+  static bool classof(const Constraint *C) {
+    return C->getConstraintID() == Array;
+  }
+  static ArrayConstraint *get(MIRContext &Context, ResultType Type,
+                              ArrayRef<Constraint *> Elements,
+                              SourceRange Range);
+
+private:
+  ArrayRef<Constraint *> Elements;
+
+  ArrayConstraint(ResultType Type, ArrayRef<Constraint *> Elements,
+                  SourceRange Range)
+      : Constraint(Array, Type, Range), Elements(Elements) {}
+};
+
 class VariableConstraint : public Constraint {
 public:
   MetaVariable *getVariable() const { return VariableValue; }
@@ -53,6 +87,26 @@ private:
 
   VariableConstraint(MetaVariable *V, ResultType T, SourceRange R)
       : Constraint(Variable, T, R), VariableValue(V) {}
+};
+
+class ArrayAccessConstraint : public Constraint {
+public:
+  Constraint *getArray() const { return Array; }
+  Constraint *getIndex() const { return Index; }
+  static bool classof(const Constraint *C) {
+    return C->getConstraintID() == ArrayAccess;
+  }
+  static ArrayAccessConstraint *get(MIRContext &Context, ResultType Type,
+                                    Constraint *Array, Constraint *Index,
+                                    SourceRange Range);
+
+private:
+  Constraint *Array;
+  Constraint *Index;
+
+  ArrayAccessConstraint(ResultType Type, Constraint *Array, Constraint *Index,
+                        SourceRange Range)
+      : Constraint(ArrayAccess, Type, Range), Array(Array), Index(Index) {}
 };
 
 class OperatorConstraint : public Constraint {
