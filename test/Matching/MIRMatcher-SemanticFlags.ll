@@ -12,12 +12,6 @@
 %compare = icmp samesign:?samesign eq i32 1, 2
 %fp = fadd fast:?fast nnan:?nnan ninf:?ninf nsz:?nsz arcp:?arcp contract:?contract afn:?afn reassoc:?reassoc float 1.0, 2.0
 ret void
-; CHECK: target 0: @all_flags
-; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?afn = true, ?arcp = true, ?contract = true, ?disjoint = true, ?exact = true, ?fast = true, ?gep_nuw = true, ?inalloca = true, ?inbounds = true, ?ninf = true, ?nnan = true, ?nneg = true, ?nsw = true, ?nsz = true, ?nusw = true, ?nuw = true, ?reassoc = true, ?samesign = true, ?volatile = true}
-; CHECK-NEXT: target 1: @no_flags
-; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?afn = false, ?arcp = false, ?contract = false, ?disjoint = false, ?exact = false, ?fast = false, ?gep_nuw = false, ?inalloca = false, ?inbounds = false, ?ninf = false, ?nnan = false, ?nneg = false, ?nsw = false, ?nsz = false, ?nusw = false, ?nuw = false, ?reassoc = false, ?samesign = false, ?volatile = false}
 
 ;--- flags.ll
 define void @all_flags() {
@@ -32,6 +26,9 @@ define void @all_flags() {
   %fp = fadd fast float 1.0, 2.0
   ret void
 }
+; CHECK: target 0: @all_flags
+; CHECK-NEXT:   match 0:
+; CHECK-NEXT:     {?afn = true, ?arcp = true, ?contract = true, ?disjoint = true, ?exact = true, ?fast = true, ?gep_nuw = true, ?inalloca = true, ?inbounds = true, ?ninf = true, ?nnan = true, ?nneg = true, ?nsw = true, ?nsz = true, ?nusw = true, ?nuw = true, ?reassoc = true, ?samesign = true, ?volatile = true}
 
 ;--- no-flags.ll
 define void @no_flags() {
@@ -46,3 +43,6 @@ define void @no_flags() {
   %fp = fadd float 1.0, 2.0
   ret void
 }
+; CHECK-NEXT: target 1: @no_flags
+; CHECK-NEXT:   match 0:
+; CHECK-NEXT:     {?afn = false, ?arcp = false, ?contract = false, ?disjoint = false, ?exact = false, ?fast = false, ?gep_nuw = false, ?inalloca = false, ?inbounds = false, ?ninf = false, ?nnan = false, ?nneg = false, ?nsw = false, ?nsz = false, ?nusw = false, ?nuw = false, ?reassoc = false, ?samesign = false, ?volatile = false}

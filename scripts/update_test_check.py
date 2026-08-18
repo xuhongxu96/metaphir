@@ -27,6 +27,10 @@ SPLIT_RE = re.compile(r"^\s*(?:;|#|//)---\s+(?P<name>\S+)\s*$")
 PARSER_INPUT_RE = re.compile(r"%metaphir-parse\s+(?P<input>%s|%t/\S+)")
 CHECK_PREFIX_RE = re.compile(r"--check-prefix(?:=|\s+)(?P<prefix>[A-Z0-9_-]+)")
 ERROR_RE = re.compile(r":(?P<line>[0-9]+):[0-9]+: error: (?P<message>.*)$")
+MATCH_TARGET_RE = re.compile(r"^target [0-9]+: @(?P<name>[-a-zA-Z$._0-9]+)$")
+LLVM_FUNCTION_RE = re.compile(
+    r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\("
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -392,10 +396,7 @@ def update_matcher_test(
             arguments = shlex.split(invocation)
             tool_index = arguments.index("%metaphir-match")
             arguments = arguments[tool_index + 1 :]
-            pattern_argument = arguments[0]
-            section_name = (
-                pattern_argument[3:] if pattern_argument.startswith("%t/") else None
-            )
+            target_arguments = arguments[1:]
             arguments = [
                 str(path)
                 if argument == "%s"
@@ -418,10 +419,55 @@ def update_matcher_test(
                 )
             prefix_match = CHECK_PREFIX_RE.search(run["command"])
             prefix = prefix_match["prefix"] if prefix_match else "CHECK"
-            generated.append((section_name, prefix, output))
+            target_sections = [
+                argument[3:] if argument.startswith("%t/") else None
+                for argument in target_arguments
+            ]
+            section_functions: list[tuple[str | None, str]] = []
+            for section_name, argument in zip(target_sections, arguments[1:]):
+                input_path = (
+                    path
+                    if section_name is None
+                    else temporary_path / section_name
+                )
+                if not input_path.is_file():
+                    raise ValueError(f"{path}: matcher input {argument} does not exist")
+                section_functions.extend(
+                    (section_name, match["name"])
+                    for line in input_path.read_text().splitlines()
+                    if (match := LLVM_FUNCTION_RE.match(line))
+                )
+
+            target_groups: list[tuple[str, list[str]]] = []
+            for line in output:
+                if match := MATCH_TARGET_RE.match(line):
+                    target_groups.append((match["name"], [line]))
+                elif target_groups:
+                    target_groups[-1][1].append(line)
+                else:
+                    raise ValueError(f"{path}: malformed metaphir-match output")
+            if len(target_groups) != len(section_functions):
+                raise ValueError(
+                    f"{path}: cannot map matcher targets to LLVM functions"
+                )
+            for index, ((name, group), (section_name, expected_name)) in enumerate(
+                zip(target_groups, section_functions)
+            ):
+                if name != expected_name:
+                    raise ValueError(
+                        f"{path}: matcher target @{name} does not correspond to "
+                        f"LLVM function @{expected_name}"
+                    )
+                directives = [
+                    f"{comment} "
+                    f"{prefix if index == 0 and line_index == 0 else prefix + '-NEXT'}: "
+                    f"{line}"
+                    for line_index, line in enumerate(group)
+                ]
+                generated.append((section_name, name, directives))
 
     checks_by_line: dict[int, list[str]] = {}
-    for section_name, prefix, output in generated:
+    for section_name, function_name, directives in generated:
         if section_name is None:
             start = 0
             end = len(clean_lines)
@@ -445,18 +491,32 @@ def update_matcher_test(
                 ),
                 len(clean_lines),
             )
-        input_lines = [
-            index
-            for index in range(start, end)
-            if clean_lines[index].strip()
-            and not clean_lines[index].lstrip().startswith((";", "#", "//"))
-        ]
-        if not input_lines:
-            raise ValueError(f"{path}: matcher pattern has no input")
-        checks_by_line.setdefault(input_lines[-1], []).extend(
-            f"{comment} {prefix if index == 0 else prefix + '-NEXT'}: {line}"
-            for index, line in enumerate(output)
+        definition = next(
+            (
+                index
+                for index in range(start, end)
+                if (match := LLVM_FUNCTION_RE.match(clean_lines[index]))
+                and match["name"] == function_name
+            ),
+            None,
         )
+        if definition is None:
+            raise ValueError(
+                f"{path}: no LLVM definition for matcher target @{function_name}"
+            )
+        function_end = next(
+            (
+                index
+                for index in range(definition + 1, end)
+                if clean_lines[index].strip() == "}"
+            ),
+            None,
+        )
+        if function_end is None:
+            raise ValueError(
+                f"{path}: unterminated LLVM definition @{function_name}"
+            )
+        checks_by_line.setdefault(function_end, []).extend(directives)
 
     for target in sorted(checks_by_line, reverse=True):
         clean_lines[target + 1 : target + 1] = checks_by_line[target]

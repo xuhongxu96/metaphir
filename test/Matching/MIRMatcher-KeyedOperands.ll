@@ -4,11 +4,6 @@
 ;--- pattern.mpir
 %slot = alloca i32, i32 1, align ?alignment, addrspace(?address_space)
 getelementptr i32, ptr %slot, i32 ?index
-; CHECK: target 0: @keyed_operands
-; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?address_space = 5, ?alignment = 16, ?index = %index}
-; CHECK-NEXT: target 1: @wrong_element_type
-; CHECK-NEXT:   no match
 
 ;--- match.ll
 define ptr addrspace(5) @keyed_operands(i32 %index) {
@@ -16,6 +11,9 @@ define ptr addrspace(5) @keyed_operands(i32 %index) {
   %result = getelementptr i32, ptr addrspace(5) %slot, i32 %index
   ret ptr addrspace(5) %result
 }
+; CHECK: target 0: @keyed_operands
+; CHECK-NEXT:   match 0:
+; CHECK-NEXT:     {?address_space = 5, ?alignment = 16, ?index = %index}
 
 ;--- no-match.ll
 define ptr addrspace(5) @wrong_element_type(i32 %index) {
@@ -23,3 +21,5 @@ define ptr addrspace(5) @wrong_element_type(i32 %index) {
   %result = getelementptr i64, ptr addrspace(5) %slot, i32 %index
   ret ptr addrspace(5) %result
 }
+; CHECK-NEXT: target 1: @wrong_element_type
+; CHECK-NEXT:   no match

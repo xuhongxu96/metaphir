@@ -4,12 +4,6 @@
 ;--- pattern.mpir
 %call = call:?instruction ?return_type ?callee(i?bits ?argument)
 br i1 ?condition, label ?yes, label ?no
-; CHECK: target 0: @meta_i32
-; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?argument = %argument, ?bits = 32, ?callee = @callee32, ?condition = %condition, ?instruction = %call, ?no = %no, ?return_type = i32, ?yes = %yes}
-; CHECK-NEXT: target 1: @meta_i64
-; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?argument = %argument, ?bits = 64, ?callee = @callee64, ?condition = %condition, ?instruction = %call, ?no = %no, ?return_type = i64, ?yes = %yes}
 
 ;--- i32.ll
 declare i32 @callee32(i32)
@@ -25,6 +19,9 @@ yes:
 no:
   ret void
 }
+; CHECK: target 0: @meta_i32
+; CHECK-NEXT:   match 0:
+; CHECK-NEXT:     {?argument = %argument, ?bits = 32, ?callee = @callee32, ?condition = %condition, ?instruction = %call, ?no = %no, ?return_type = i32, ?yes = %yes}
 
 ;--- i64.ll
 declare i64 @callee64(i64)
@@ -40,3 +37,6 @@ yes:
 no:
   ret void
 }
+; CHECK-NEXT: target 1: @meta_i64
+; CHECK-NEXT:   match 0:
+; CHECK-NEXT:     {?argument = %argument, ?bits = 64, ?callee = @callee64, ?condition = %condition, ?instruction = %call, ?no = %no, ?return_type = i64, ?yes = %yes}
