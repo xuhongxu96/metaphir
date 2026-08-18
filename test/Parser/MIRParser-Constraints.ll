@@ -1,7 +1,7 @@
 ; RUN: %metaphir-parse %s | FileCheck %s
 
 %sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allones, :not(:poison))
-; CHECK: pattern instructions=4 constraints=15
+; CHECK: pattern instructions=5 constraints=15
 ; CHECK-NEXT: %sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allones,:not(:poison))
 
 %cmp = icmp ?predicate i32 ?x, ?y
@@ -10,8 +10,8 @@
 %intrinsic_call = call i32 @llvm.?intrinsic(i32 ?x)
 ; CHECK-NEXT: %intrinsic_call = call i32 @llvm.?intrinsic(i32 ?x)
 
-call void @consume(...?types ?values)
-; CHECK-NEXT: call void @consume(...?types ?values)
+%consume = call i32 @consume(...?types ?values)
+; CHECK-NEXT: %consume = call i32 @consume(...?types ?values)
 
 ;; ?wrapped == true
 ; CHECK-NEXT: constraint (== ?wrapped true)
@@ -65,3 +65,6 @@ call void @consume(...?types ?values)
 ; CHECK-NEXT: meta ?intrinsic type=Intrinsic::ID
 ; CHECK-NEXT: meta ?types type=Type[]
 ; CHECK-NEXT: meta ?values type=Value[]
+
+%after = freeze i32 ?x
+; CHECK-NEXT: %after = freeze i32 ?x

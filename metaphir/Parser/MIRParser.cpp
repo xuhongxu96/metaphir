@@ -169,7 +169,6 @@ bool MIRParser::parse(Pattern *&Result) {
   skipNewlines();
   while (Lex.getKind() != tok::Eof) {
     if (consume(tok::ConstraintMarker)) {
-      SawConstraint = true;
       Constraint *C = nullptr;
       if (parseConstraint(C))
         return true;
@@ -181,8 +180,6 @@ bool MIRParser::parse(Pattern *&Result) {
       skipNewlines();
       continue;
     }
-    if (SawConstraint)
-      return error("instruction is not allowed after constraints");
     if (Lex.getKind() == tok::LabelStr || Lex.getKind() == tok::LabelID ||
         Lex.getKind() == tok::MetaVar) {
       if (parseBlockLabel())

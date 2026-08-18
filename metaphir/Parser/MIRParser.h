@@ -26,7 +26,6 @@ private:
   StringMap<Instruction *> Instructions;
   Pattern *CurrentPattern = nullptr;
   MetaVariable *CurrentBlock = nullptr;
-  bool SawConstraint = false;
 
   bool error(const Twine &Message) { return Lex.ParseError(Message); }
   void next() { Lex.Lex(); }

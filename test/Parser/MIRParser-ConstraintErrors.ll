@@ -2,7 +2,7 @@
 ; RUN: not %metaphir-parse %t/unknown.ll 2>&1 | FileCheck %s --check-prefix=UNKNOWN
 ; RUN: not %metaphir-parse %t/arity.ll 2>&1 | FileCheck %s --check-prefix=ARITY
 ; RUN: not %metaphir-parse %t/integer-result.ll 2>&1 | FileCheck %s --check-prefix=RESULT
-; RUN: not %metaphir-parse %t/after-constraint.ll 2>&1 | FileCheck %s --check-prefix=AFTER
+; RUN: not %metaphir-parse %t/later-variable.ll 2>&1 | FileCheck %s --check-prefix=LATER
 ; RUN: not %metaphir-parse %t/o-negative.ll 2>&1 | FileCheck %s --check-prefix=O-NEGATIVE
 ; RUN: not %metaphir-parse %t/o-range.ll 2>&1 | FileCheck %s --check-prefix=O-RANGE
 ; RUN: not %metaphir-parse %t/non-array.ll 2>&1 | FileCheck %s --check-prefix=NON-ARRAY
@@ -28,11 +28,12 @@ add i?bits ?x, ?y
 ; RESULT: constraint must have a boolean result
 
 
-;--- after-constraint.ll
-add i32 ?x, ?y
-;; true
-sub i32 ?x, ?y
-; AFTER: instruction is not allowed after constraints
+;--- later-variable.ll
+%sum = add i32 ?x, ?y
+;; ?later == true
+; LATER: constraint references unknown meta variable '?later'
+
+%later = freeze i1 ?later
 
 
 ;--- o-negative.ll
