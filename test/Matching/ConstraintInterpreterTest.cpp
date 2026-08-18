@@ -296,6 +296,13 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
   EXPECT_EQ(toString(DivisionResult.takeError()),
             "cannot evaluate constraint '(udiv 1 0)': division by zero");
 
+  for (StringRef Operator : {"sdiv", "srem", "urem"}) {
+    Expected<ConstraintValue> Result =
+        Interpreter.evaluate(*call(Operator, integer(1), integer(0)), State);
+    EXPECT_FALSE(Result);
+    EXPECT_FALSE(toString(Result.takeError()).empty());
+  }
+
   OperatorConstraint *Unknown =
       operation(Constraint::Call, "custom", {integer(1)});
   Expected<ConstraintValue> UnknownResult =
@@ -327,6 +334,72 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
   EXPECT_EQ(toString(ShiftResult.takeError()),
             "cannot evaluate constraint '(lshr 1 64)': shift amount is out of "
             "range");
+
+  OperatorConstraint *NegativeShift = call("ashr", integer(1), integer(-1));
+  Expected<ConstraintValue> NegativeShiftResult =
+      Interpreter.evaluate(*NegativeShift, State);
+  ASSERT_FALSE(NegativeShiftResult);
+  EXPECT_EQ(toString(NegativeShiftResult.takeError()),
+            "cannot evaluate constraint '(ashr 1 -1)': shift amount is "
+            "out of range");
+}
+
+TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
+  LLVMContext LLVMContext;
+  Type *I32 = Type::getInt32Ty(LLVMContext);
+  Constant *Value = ConstantInt::get(I32, 1);
+  MetaVariable *ValueVariable =
+      MetaVariable::get(Context, "value", MetaType::Value, Range);
+  VariableConstraint *ValueExpression = VariableConstraint::get(
+      Context, ValueVariable, Constraint::ValueResult, Range);
+  State.bind(*ValueVariable, Value);
+
+  Expected<ConstraintValue> IntegerResult =
+      Interpreter.evaluate(*binary("+", ValueExpression, integer(1)), State);
+  ASSERT_FALSE(IntegerResult);
+  EXPECT_EQ(toString(IntegerResult.takeError()),
+            "cannot evaluate constraint '(+ ?value 1)': expected an "
+            "integer-coercible operand");
+
+  Expected<ConstraintValue> BooleanResult =
+      Interpreter.evaluate(*binary("&&", ValueExpression, boolean(true)), State);
+  ASSERT_FALSE(BooleanResult);
+  EXPECT_EQ(toString(BooleanResult.takeError()),
+            "cannot evaluate constraint '(&& ?value true)': expected a "
+            "boolean-coercible operand");
+
+  Expected<ConstraintValue> EqualityResult = Interpreter.evaluate(
+      *binary("==", integer(1), StringConstraint::get(Context, "1", Range)),
+      State);
+  ASSERT_FALSE(EqualityResult);
+  EXPECT_EQ(toString(EqualityResult.takeError()),
+            "cannot evaluate constraint '(== 1 \"1\")': equality operands "
+            "have different types");
+
+  Expected<ConstraintValue> IsaValueResult = Interpreter.evaluate(
+      *call("isa", integer(1), StringConstraint::get(Context, "Value", Range)),
+      State);
+  ASSERT_FALSE(IsaValueResult);
+  EXPECT_EQ(toString(IsaValueResult.takeError()),
+            "cannot evaluate constraint '(isa 1 \"Value\")': expected an "
+            "LLVM value operand");
+
+  Expected<ConstraintValue> IsaNameResult = Interpreter.evaluate(
+      *call("isa", ValueExpression, integer(1)), State);
+  ASSERT_FALSE(IsaNameResult);
+  EXPECT_EQ(toString(IsaNameResult.takeError()),
+            "cannot evaluate constraint '(isa ?value 1)': expected a "
+            "string-coercible operand");
+
+  Expected<ConstraintValue> NegativeIndexResult = Interpreter.evaluate(
+      *access(array(Constraint::StringArrayResult,
+                    {StringConstraint::get(Context, "value", Range)}),
+              integer(-1), Constraint::StringResult),
+      State);
+  ASSERT_FALSE(NegativeIndexResult);
+  EXPECT_EQ(toString(NegativeIndexResult.takeError()),
+            "cannot evaluate constraint '[\"value\"][-1]': array index "
+            "is negative");
 }
 
 } // namespace

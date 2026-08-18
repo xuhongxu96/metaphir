@@ -14,6 +14,8 @@ set(METAPHIR_MATCHING_TEST_CASES
   MIRMatcher-Arrays.ll
   MIRMatcher-BasicBlockMembership.ll
   MIRMatcher-CrossBasicBlock.ll
+  MIRMatcher-Constraints.ll
+  MIRMatcher-ConstraintBindings.ll
   MIRMatcher-Graph.ll
   MIRMatcher-FloatingConstants.ll
   MIRMatcher-Intrinsic.ll

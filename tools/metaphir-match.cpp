@@ -1,14 +1,18 @@
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Pattern.h"
+#include "metaphir/Matching/ConstraintInterpreter.h"
 #include "metaphir/Matching/NaiveMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/AsmParser/Parser.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <utility>
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -29,6 +33,30 @@ static bool parsePattern(StringRef Filename, SourceMgr &SM, MIRContext &Context,
     return true;
   Error.print("metaphir-match", errs());
   return false;
+}
+
+static Expected<MatchResults>
+applyConstraints(const Pattern &Pattern, MatchResults Matches,
+                 SmallVectorImpl<const Constraint *> &Unsatisfied) {
+  ConstraintInterpreter Interpreter;
+  MatchResults Filtered;
+  for (Instantiation &Match : Matches) {
+    bool Satisfies = true;
+    for (const Constraint *Expression : Pattern.getConstraints()) {
+      Expected<ConstraintValue> Result =
+          Interpreter.evaluate(*Expression, Match);
+      if (!Result)
+        return Result.takeError();
+      if (!Result->getBoolean()) {
+        Satisfies = false;
+        if (llvm::find(Unsatisfied, Expression) == Unsatisfied.end())
+          Unsatisfied.push_back(Expression);
+      }
+    }
+    if (Satisfies)
+      Filtered.push_back(std::move(Match));
+  }
+  return Filtered;
 }
 
 int main(int Argc, char **Argv) {
@@ -60,10 +88,23 @@ int main(int Argc, char **Argv) {
         continue;
       Target Program(Function);
       MatchResults Matches = Matcher.matchInstantiations(*Pattern, Program);
+      bool HadGraphMatch = !Matches.empty();
+      SmallVector<const Constraint *, 4> Unsatisfied;
+      Expected<MatchResults> ConstrainedMatches =
+          applyConstraints(*Pattern, std::move(Matches), Unsatisfied);
+      if (!ConstrainedMatches) {
+        logAllUnhandledErrors(ConstrainedMatches.takeError(), errs(),
+                              "metaphir-match: ");
+        return 1;
+      }
+      Matches = std::move(*ConstrainedMatches);
       outs() << "target " << TargetIndex++ << ": @" << Function.getName()
              << '\n';
       if (Matches.empty()) {
         outs() << "  no match\n";
+        if (HadGraphMatch)
+          for (const Constraint *Expression : Unsatisfied)
+            outs() << "  constraint not satisfied: " << *Expression << '\n';
         continue;
       }
       for (unsigned MatchIndex = 0; MatchIndex != Matches.size();
