@@ -23,6 +23,8 @@ set(METAPHIR_MATCHING_TEST_CASES
   MIRMatcher-MetaFlags-OrSelf.ll
   MIRMatcher-MetaFlags-Uses.ll
   MIRMatcher-MetaVariables.ll
+  MIRMatcher-PHI.ll
+  MIRMatcher-PHICyclic.ll
   MIRMatcher-KeyedOperands.ll
   MIRMatcher-SemanticFlags.ll
 )
