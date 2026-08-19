@@ -73,6 +73,7 @@ getMetaVariableBinding(const MetaVariable &Matcher, const llvm::Value &Target) {
     report_fatal_error(Twine("unexpected meta type '") +
                        getMetaTypeName(Matcher.getType()) + "'");
   }
+  llvm_unreachable("invalid meta type");
 }
 
 static std::optional<Instantiation::Binding>
