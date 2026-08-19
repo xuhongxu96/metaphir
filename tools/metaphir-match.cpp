@@ -51,6 +51,7 @@ static bool collectLLVMIRFiles(StringRef Input,
     return true;
   }
 
+  SmallVector<std::string, 16> DirectoryFiles;
   std::error_code EC;
   for (sys::fs::recursive_directory_iterator I(Input, EC, false), E;
        I != E && !EC; I.increment(EC)) {
@@ -60,7 +61,7 @@ static bool collectLLVMIRFiles(StringRef Input,
 
     StringRef Extension = sys::path::extension(Path);
     if (Extension == ".ll" || Extension == ".bc")
-      Files.push_back(Path.str());
+      DirectoryFiles.push_back(Path.str());
   }
 
   if (EC) {
@@ -68,6 +69,8 @@ static bool collectLLVMIRFiles(StringRef Input,
     return false;
   }
 
+  llvm::sort(DirectoryFiles);
+  Files.append(DirectoryFiles);
   return true;
 }
 
@@ -111,7 +114,6 @@ int main(int Argc, char **Argv) {
   for (int Argument = 2; Argument != Argc; ++Argument)
     if (!collectLLVMIRFiles(Argv[Argument], InputFiles))
       return 1;
-  llvm::sort(InputFiles);
 
   NaiveMatcher Matcher;
   unsigned TargetIndex = 0;

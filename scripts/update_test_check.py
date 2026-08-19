@@ -382,6 +382,7 @@ def update_matcher_test(
         sections[current_section] = "\n".join(section_lines) + "\n"
 
     generated: list[tuple[str | None, str, list[str]]] = []
+    error_generated: list[tuple[str, list[str]]] = []
     with tempfile.TemporaryDirectory() as temporary:
         temporary_path = Path(temporary)
         for name, contents in sections.items():
@@ -392,7 +393,14 @@ def update_matcher_test(
         for run in (match for line in lines if (match := RUN_RE.match(line))):
             if "%metaphir-match" not in run["command"]:
                 continue
+            expected_failure = bool(
+                re.search(r"\bnot\s+%metaphir-match\b", run["command"])
+            )
             invocation = run["command"].split("|", 1)[0].strip()
+            invocation = re.sub(
+                r"\bnot\s+%metaphir-match\b", "%metaphir-match", invocation
+            )
+            invocation = invocation.replace("2>&1", "").strip()
             arguments = shlex.split(invocation)
             tool_index = arguments.index("%metaphir-match")
             arguments = arguments[tool_index + 1 :]
@@ -408,6 +416,25 @@ def update_matcher_test(
             result = subprocess.run(
                 [matcher, *arguments], text=True, capture_output=True, check=False
             )
+            if expected_failure:
+                if result.returncode == 0:
+                    raise ValueError(
+                        f"{path}: metaphir-match was expected to fail"
+                    )
+                prefix_match = CHECK_PREFIX_RE.search(run["command"])
+                prefix = prefix_match["prefix"] if prefix_match else "CHECK"
+                output = (result.stdout + result.stderr).splitlines()
+                if not output:
+                    raise ValueError(
+                        f"{path}: metaphir-match error run produced no output"
+                    )
+                error_generated.append(
+                    (
+                        prefix,
+                        [POINTER_RE.sub("{{0x[0-9A-Fa-f]+}}", line) for line in output],
+                    )
+                )
+                continue
             if result.returncode:
                 raise ValueError(
                     f"{path}: metaphir-match failed:\n{result.stderr.rstrip()}"
@@ -520,6 +547,12 @@ def update_matcher_test(
 
     for target in sorted(checks_by_line, reverse=True):
         clean_lines[target + 1 : target + 1] = checks_by_line[target]
+    for prefix, output in error_generated:
+        if clean_lines and clean_lines[-1].strip():
+            clean_lines.append("")
+        for line_index, line in enumerate(output):
+            directive = prefix if line_index == 0 else prefix + "-NEXT"
+            clean_lines.append(f"{comment} {directive}: {line}")
     while clean_lines and not clean_lines[-1].strip():
         clean_lines.pop()
     return "\n".join(separate_check_blocks(clean_lines)) + "\n"
