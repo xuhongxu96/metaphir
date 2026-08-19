@@ -1,0 +1,382 @@
+diff --git a/llvm/lib/Analysis/InstructionSimplify.cpp b/llvm/lib/Analysis/InstructionSimplify.cpp
+index 10b159192c4b..1280ac274629 100644
+--- a/llvm/lib/Analysis/InstructionSimplify.cpp
++++ b/llvm/lib/Analysis/InstructionSimplify.cpp
+@@ -2135,6 +2135,9 @@ static Value *simplifyAndInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
+   if (Value *V = simplifyAndOrOfCmps(Q, Op0, Op1, true))
+     return V;
+ 
++  // [MetaphIR eval] Disable PR 213313 (zext(X) & sext(X) --> zext(X)) to
++  // preserve the pattern for the evaluation corpus.
++#if 0
+   // zext(X) & sext(X) --> zext(X)
+   // sext(X) & zext(X) --> zext(X)
+   {
+@@ -2144,6 +2147,7 @@ static Value *simplifyAndInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
+     if (match(Op1, m_ZExt(m_Value(X))) && match(Op0, m_SExt(m_Specific(X))))
+       return Op1;
+   }
++#endif
+ 
+   // Try some generic simplifications for associative operations.
+   if (Value *V =
+@@ -2398,6 +2402,9 @@ static Value *simplifyOrInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
+     }
+   }
+ 
++  // [MetaphIR eval] Disable PR 213313 (zext(X) | sext(X) --> sext(X)) to
++  // preserve the pattern for the evaluation corpus.
++#if 0
+   // zext(X) | sext(X) --> sext(X)
+   // sext(X) | zext(X) --> sext(X)
+   {
+@@ -2407,6 +2414,7 @@ static Value *simplifyOrInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
+     if (match(Op1, m_ZExt(m_Value(X))) && match(Op0, m_SExt(m_Specific(X))))
+       return Op0;
+   }
++#endif
+ 
+   // A funnel shift (rotate) can be decomposed into simpler shifts. See if we
+   // are mixing in another shift that is redundant with the funnel shift.
+@@ -5688,6 +5696,9 @@ static Value *simplifyCastInst(unsigned CastOpc, Value *Op, Type *Ty,
+       X->getType() == Ty && Ty == Q.DL.getIndexType(Ptr->getType()))
+     return X;
+ 
++  // [MetaphIR eval] Disable PR 204089 (value-preserving zext/sext of trunc) to
++  // preserve the pattern for the evaluation corpus.
++#if 0
+   // Fold a value-preserving zext/sext of a trunc back to the original value.
+   if (CastOpc == Instruction::ZExt || CastOpc == Instruction::SExt) {
+     if (auto *Trunc = dyn_cast<TruncInst>(Op)) {
+@@ -5698,6 +5709,7 @@ static Value *simplifyCastInst(unsigned CastOpc, Value *Op, Type *Ty,
+         return Src;
+     }
+   }
++#endif
+ 
+   return nullptr;
+ }
+diff --git a/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp b/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
+index 30812cafd2f8..8109fbd0a7bb 100644
+--- a/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
++++ b/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
+@@ -1003,6 +1003,9 @@ Instruction *InstCombinerImpl::foldAddWithConstant(BinaryOperator &Add) {
+     return replaceInstUsesWith(
+         Add, Builder.CreateBinaryIntrinsic(
+                  Intrinsic::usub_sat, X, ConstantInt::get(Add.getType(), -*C)));
++  // [MetaphIR eval] Disable PR 215130 (uadd.sat(X,C) - C -> umin(X, ~C)) to
++  // preserve the pattern for the evaluation corpus.
++#if 0
+   // uadd.sat(X, C) + -C --> umin(X, ~C)
+   // The saturating add gives X + C or UMAX, so subtracting C leaves X or
+   // UMAX - C. Note UMAX - C == ~C.
+@@ -1014,6 +1017,7 @@ Instruction *InstCombinerImpl::foldAddWithConstant(BinaryOperator &Add) {
+           Add, Builder.CreateBinaryIntrinsic(Intrinsic::umin, X,
+                                              ConstantInt::get(Ty, ~SatC)));
+   }
++#endif
+   // Fold (add (zext (add X, -C)), C) -> (zext X) if X u>= C.
+   // Truncate C to the narrow type to avoid mismatched width comparisons.
+   {
+@@ -1232,8 +1236,12 @@ Value *InstCombinerImpl::SimplifyAddWithRemainder(BinaryOperator &I) {
+   };
+   if (Value *V = FoldDivRem(LHS, RHS))
+     return V;
++  // [MetaphIR eval] Disable PR 207462 (commuted add of udiv/urem by 2) by
++  // dropping the swapped-operand attempt.
++#if 0
+   if (Value *V = FoldDivRem(RHS, LHS))
+     return V;
++#endif
+ 
+   return nullptr;
+ }
+@@ -1821,6 +1829,10 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+     return BinaryOperator::CreateAnd(Add, A);
+   }
+ 
++  // [MetaphIR eval] Disable PR 215122 (align-up idiom
++  // X + ((-X) & (C-1)) --> (X + C-1) & -C) to preserve the pattern for the
++  // evaluation corpus.
++#if 0
+   // Align-up idiom:
+   // X + ((-X) & (C - 1)) --> (X + C - 1) & -C, for a power-of-two C.
+   // Note -C == ~(C - 1), so the mask is simply the inverted low-bit mask.
+@@ -1833,7 +1845,10 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+       return BinaryOperator::CreateAnd(NewAdd, ConstantInt::get(Ty, ~*LowMask));
+     }
+   }
++#endif
+ 
++  // [MetaphIR eval] PR 216436 ((X-1) | (C-1)) + 1 -> (X + C-1) & -C is absent
++  // in this LLVM revision, so there is nothing to disable.
+   // Canonicalize ((A & -A) - 1) --> ((A - 1) & ~A)
+   // Forms all commutable operations, and simplifies ctpop -> cttz folds.
+   if (match(&I,
+@@ -1937,6 +1952,8 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+     }
+   }
+ 
++  // [MetaphIR eval] PR 216470 (zext variant of the ceiling-division fold) is
++  // absent in this LLVM revision; nothing to disable.
+   // (~X) + (~Y) --> -2 - (X + Y)
+   {
+     // To ensure we can save instructions we need to ensure that we consume both
+diff --git a/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp b/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp
+index 7fee08ad21d2..0ed4b3df6ad2 100644
+--- a/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp
++++ b/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp
+@@ -522,10 +522,14 @@ static Instruction *foldCttzCtlz(IntrinsicInst &II, InstCombinerImpl &IC) {
+     if (match(Op0, m_c_And(m_Neg(m_Value(X)), m_Deferred(X))))
+       return CallInst::Create(II.getCalledFunction(), {X, Op1});
+ 
++    // [MetaphIR eval] Disable PR 214376 (cttz(mul X, OddC) -> cttz(X)) to
++    // preserve the pattern for the evaluation corpus.
++#if 0
+     // cttz(mul(X, OddC)) -> cttz(X)
+     if (match(Op0, m_Mul(m_Value(X),
+                          m_CheckedInt([](const APInt &C) { return C[0]; }))))
+       return CallInst::Create(II.getCalledFunction(), {X, Op1});
++#endif
+ 
+     // cttz(sext(x)) -> cttz(zext(x))
+     if (match(Op0, m_OneUse(m_SExt(m_Value(X))))) {
+@@ -2481,6 +2485,8 @@ Instruction *InstCombinerImpl::visitCallInst(CallInst &CI) {
+     break;
+   }
+   case Intrinsic::scmp: {
++    // [MetaphIR eval] PR 216046 (scmp(X, 0) -> sext_or_trunc(X) for X in
++    // [-1, 1]) is absent in this LLVM revision; nothing to disable.
+     Value *I0 = II->getArgOperand(0), *I1 = II->getArgOperand(1);
+     Value *LHS, *RHS;
+     if (match(I0, m_NSWSub(m_Value(LHS), m_Value(RHS))) && match(I1, m_Zero()))
+diff --git a/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp b/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp
+index 2db6396b9d66..5702d05842c7 100644
+--- a/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp
++++ b/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp
+@@ -1089,10 +1089,14 @@ Instruction *InstCombinerImpl::visitTrunc(TruncInst &Trunc) {
+     }
+   }
+   Value *X;
++  // [MetaphIR eval] Disable PR 210499 (trunc(shr exact X, Y) to i1
++  // --> icmp ne X, 0) to preserve the pattern for the evaluation corpus.
++#if 0
+   if (DestWidth == 1 &&
+       (Trunc.hasNoUnsignedWrap() || Trunc.hasNoSignedWrap()) &&
+       match(Src, m_Exact(m_Shr(m_Value(X), m_Value()))))
+     return new ICmpInst(ICmpInst::ICMP_NE, X, Constant::getNullValue(SrcTy));
++#endif
+ 
+   // See if we can simplify any instructions used by the input whose sole
+   // purpose is to compute bits we don't care about.
+@@ -1690,6 +1694,9 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
+     return BinaryOperator::CreateXor(Builder.CreateAnd(X, ZC), ZC);
+   }
+ 
++  // [MetaphIR eval] Disable PR 207564 (zext(sub(0, trunc(X)))
++  // -> and(sub(0, X), mask)) to preserve the pattern for the corpus.
++#if 0
+   // zext(sub(0, trunc(X))) -> and(sub(0, X), mask)
+   if (match(Src, m_Sub(m_Zero(), m_Trunc(m_SpecificType(DestTy, X))))) {
+     APInt Mask = APInt::getLowBitsSet(DestTy->getScalarSizeInBits(),
+@@ -1697,6 +1704,7 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
+     Value *Neg = Builder.CreateSub(ConstantInt::get(DestTy, 0), X);
+     return BinaryOperator::CreateAnd(Neg, ConstantInt::get(DestTy, Mask));
+   }
++#endif
+ 
+   // If we are truncating, masking, and then zexting back to the original type,
+   // that's just a mask. This is not handled by canEvaluateZextd if the
+@@ -1708,6 +1716,9 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
+     return BinaryOperator::CreateAnd(X, ZextC);
+   }
+ 
++  // [MetaphIR eval] Disable PR 204927 (zext(and/or/xor(trunc nuw x), y)
++  // -> and/or/xor(zext(y), x)) to preserve the pattern for the corpus.
++#if 0
+   Value *Y;
+   if (match(Src, m_OneUse(m_c_BitwiseLogic(
+                      m_NUWTrunc(m_SpecificType(DestTy, X)), m_Value(Y))))) {
+@@ -1715,6 +1726,7 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
+     return BinaryOperator::Create(cast<BinaryOperator>(Src)->getOpcode(), X,
+                                   ZextY);
+   }
++#endif
+ 
+   if (match(Src, m_VScale())) {
+     if (Zext.getFunction() &&
+@@ -2048,6 +2060,9 @@ Instruction *InstCombinerImpl::visitSExt(SExtInst &Sext) {
+         Sext, Builder.CreateIntrinsic(DestTy, CI->getIntrinsicID(),
+                                       {CI->getLHS(), CI->getRHS()}));
+ 
++  // [MetaphIR eval] Disable PR 204928 (sext(and/or/xor(trunc nsw x), y)
++  // -> and/or/xor(sext(y), x)) to preserve the pattern for the corpus.
++#if 0
+   Value *Y;
+   if (match(Src, m_OneUse(m_c_BitwiseLogic(
+                      m_NSWTrunc(m_SpecificType(DestTy, X)), m_Value(Y))))) {
+@@ -2055,6 +2070,7 @@ Instruction *InstCombinerImpl::visitSExt(SExtInst &Sext) {
+     return BinaryOperator::Create(cast<BinaryOperator>(Src)->getOpcode(), X,
+                                   SextY);
+   }
++#endif
+ 
+   return nullptr;
+ }
+diff --git a/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp b/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp
+index e186eed92e3e..e4f16b7b9a28 100644
+--- a/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp
++++ b/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp
+@@ -1989,6 +1989,9 @@ Instruction *InstCombinerImpl::foldICmpAndConstant(ICmpInst &Cmp,
+   if (!Cmp.isEquality())
+     return nullptr;
+ 
++  // [MetaphIR eval] Disable PR 213709 ((X & -X) ==/!= 0/1 folds) to preserve
++  // the pattern for the evaluation corpus.
++#if 0
+   // (X & -X) == 0 --> X == 0
+   // (X & -X) != 0 --> X != 0
+   // (X & -X) == 1 --> trunc X to i1
+@@ -2013,6 +2016,7 @@ Instruction *InstCombinerImpl::foldICmpAndConstant(ICmpInst &Cmp,
+       return BinaryOperator::CreateNot(Trunc);
+     }
+   }
++#endif
+ 
+   // X & -C == -C -> X >  u ~C
+   // X & -C != -C -> X <= u ~C
+@@ -3049,6 +3053,9 @@ Instruction *InstCombinerImpl::foldICmpSubConstant(ICmpInst &Cmp,
+   ICmpInst::Predicate Pred = Cmp.getPredicate();
+   Type *Ty = Sub->getType();
+ 
++  // [MetaphIR eval] Disable PR 214381 ((X - (X urem D)) u>= C -> X u>= D) to
++  // preserve the pattern for the evaluation corpus.
++#if 0
+   // (X - (X urem D)) is D*(X/D), a multiple of D, so it is u> C exactly when
+   // X u>= D (for C u< D), and u< C exactly when X u< D (for 0 u< C u<= D):
+   //   icmp ugt (sub X, (urem X, D)), C --> icmp ugt X, D-1
+@@ -3060,6 +3067,7 @@ Instruction *InstCombinerImpl::foldICmpSubConstant(ICmpInst &Cmp,
+     if (Pred == ICmpInst::ICMP_ULT && !C.isZero() && C.ule(*D))
+       return new ICmpInst(ICmpInst::ICMP_ULT, X, ConstantInt::get(Ty, *D));
+   }
++#endif
+ 
+   // (SubC - Y) == C) --> Y == (SubC - C)
+   // (SubC - Y) != C) --> Y != (SubC - C)
+diff --git a/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp b/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp
+index 4e1aa3623055..00717a8f5dfd 100644
+--- a/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp
++++ b/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp
+@@ -1827,6 +1827,9 @@ Instruction *InstCombinerImpl::visitUDiv(BinaryOperator &I) {
+     }
+   }
+ 
++  // [MetaphIR eval] Disable PR 214541 ((X udiv Y) udiv Z -> X udiv (Y*Z)) to
++  // preserve the pattern for the evaluation corpus.
++#if 0
+   // (X udiv Y) udiv Z --> X udiv (Y * Z), if Y * Z does not overflow.
+   // This is the variable-operand version of the (X / C1) / C2 fold in
+   // commonIDivTransforms().
+@@ -1840,12 +1843,14 @@ Instruction *InstCombinerImpl::visitUDiv(BinaryOperator &I) {
+       NewDiv->setIsExact();
+     return NewDiv;
+   }
++#endif
+ 
++  // [MetaphIR eval] Disable PR 209322 (generalize udiv-by-negative-constant to
++  // non-constant values) by restoring the constant-only version.
+   // Op0 / C where C is large (negative) --> zext (Op0 >= C)
+-  // This also handles non-constant values where the sign bit is known to be
+-  // set.
++  // TODO: Could use isKnownNegative() to handle non-constant values.
+   Type *Ty = I.getType();
+-  if (isKnownNegative(Op1, SQ.getWithInstruction(&I))) {
++  if (match(Op1, m_Negative())) {
+     Value *Cmp = Builder.CreateICmpUGE(Op0, Op1);
+     return CastInst::CreateZExtOrBitCast(Cmp, Ty);
+   }
+diff --git a/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp b/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
+index 558ad2ebccc3..171c67ddb864 100644
+--- a/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
++++ b/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
+@@ -1493,22 +1493,20 @@ static Value *foldAbsDiff(ICmpInst *Cmp, Value *TVal, Value *FVal,
+ static Instruction *foldSelectCtlzToCttz(ICmpInst *ICI, Value *TrueVal,
+                                          Value *FalseVal,
+                                          InstCombiner::BuilderTy &Builder) {
++  // [MetaphIR eval] Disable PR 205383 ((bw-1) - ctlz(x & -x) -> cttz) by
++  // restoring the original power-of-two-only (xor-form) behavior.
+   unsigned BitWidth = TrueVal->getType()->getScalarSizeInBits();
+-  if (!ICI->isEquality() || !match(ICI->getOperand(1), m_Zero()))
++  if (!isPowerOf2_32(BitWidth) || !ICI->isEquality() ||
++      !match(ICI->getOperand(1), m_Zero()))
+     return nullptr;
+ 
+   if (ICI->getPredicate() == ICmpInst::ICMP_NE)
+     std::swap(TrueVal, FalseVal);
+ 
+   Value *Ctlz;
+-  if (match(FalseVal,
+-            m_Xor(m_Value(Ctlz), m_SpecificIntAllowPoison(BitWidth - 1)))) {
+-    if (!isPowerOf2_32(BitWidth))
+-      return nullptr;
+-  } else if (!match(FalseVal, m_Sub(m_SpecificIntAllowPoison(BitWidth - 1),
+-                                    m_Value(Ctlz)))) {
++  if (!match(FalseVal,
++             m_Xor(m_Value(Ctlz), m_SpecificInt(BitWidth - 1))))
+     return nullptr;
+-  }
+ 
+   if (!match(Ctlz, m_Ctlz(m_Value(), m_Value())))
+     return nullptr;
+@@ -4511,6 +4509,9 @@ static Instruction *foldSelectNegNot(SelectInst &SI,
+   return nullptr;
+ }
+ 
++// [MetaphIR eval] Disable PR 212132 (select((A&S)==0||(B&S)==0, 0, S)
++  // -> S & A & B) to preserve the pattern for the evaluation corpus.
++#if 0
+ /// Fold select (A & Shift == 0 | B & Shift == 0), 0, Shift -> Shift & A & B
+ /// where Shift is known to be a power of two.
+ static Instruction *foldSelectAndOrPowerOfTwo(SelectInst &SI,
+@@ -4552,6 +4553,7 @@ static Instruction *foldSelectAndOrPowerOfTwo(SelectInst &SI,
+ 
+   return nullptr;
+ }
++#endif
+ 
+ // Return true if no use can observe the sign of zero of the select result,
+ // looking through phis, selects and the loop back edge to the select itself.
+@@ -4673,8 +4675,12 @@ Instruction *InstCombinerImpl::visitSelectInst(SelectInst &SI) {
+   if (Instruction *I = foldSelectNegNot(SI, Builder))
+     return I;
+ 
++  // [MetaphIR eval] Disable PR 212132 (select((A&S)==0||(B&S)==0, 0, S)
++  // -> S & A & B) call site.
++#if 0
+   if (Instruction *I = foldSelectAndOrPowerOfTwo(SI, Builder, SQ))
+     return I;
++#endif
+ 
+   auto *SIFPOp = dyn_cast<FPMathOperator>(&SI);
+ 
+diff --git a/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp b/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp
+index 241bc3bba51c..0fb4e7c80e4f 100644
+--- a/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp
++++ b/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp
+@@ -1374,12 +1374,16 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
+       return BinaryOperator::CreateLShr(
+           ConstantInt::get(Ty, APInt::getSignMask(BitWidth)), X);
+ 
++    // [MetaphIR eval] Disable PR 214517 (C << cttz(X,true) -> (-X & X) * C)
++    // to preserve the pattern for the evaluation corpus.
++#if 0
+     // Canonicalize "extract lowest set bit" using cttz to and-with-negate:
+     // 1 << (cttz X) --> -X & X
+     if (match(Op1, m_OneUse(m_Cttz(m_Value(X), m_Value())))) {
+       Value *NegX = Builder.CreateNeg(X, "neg");
+       return BinaryOperator::CreateAnd(NegX, X);
+     }
++#endif
+   }
+ 
+   return nullptr;

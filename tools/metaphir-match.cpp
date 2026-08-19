@@ -2,6 +2,7 @@
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/Matching/ConstraintInterpreter.h"
+#include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/NaiveMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
@@ -74,9 +75,14 @@ static bool collectLLVMIRFiles(StringRef Input,
   return true;
 }
 
-static Expected<MatchResults>
+struct UnsatisfiedConstraint {
+  const Constraint *Expression;
+  std::string Reason; // empty unless the constraint could not be evaluated
+};
+
+static MatchResults
 applyConstraints(const Pattern &Pattern, MatchResults Matches,
-                 SmallVectorImpl<const Constraint *> &Unsatisfied) {
+                 SmallVectorImpl<UnsatisfiedConstraint> &Unsatisfied) {
   ConstraintInterpreter Interpreter;
   MatchResults Filtered;
   for (Instantiation &Match : Matches) {
@@ -84,12 +90,31 @@ applyConstraints(const Pattern &Pattern, MatchResults Matches,
     for (const Constraint *Expression : Pattern.getConstraints()) {
       Expected<ConstraintValue> Result =
           Interpreter.evaluate(*Expression, Match);
-      if (!Result)
-        return Result.takeError();
+      if (!Result) {
+        // A constraint that cannot be evaluated for a particular binding
+        // (e.g. arithmetic on a non-constant value) is recorded as
+        // unsatisfied, carrying the evaluation reason (the constraint itself
+        // indicates the error position).
+        std::string Reason = "constraint could not be evaluated";
+        handleAllErrors(
+            Result.takeError(),
+            [&](const metaphir::detail::ConstraintEvaluationError &E) {
+            Reason = E.Message;
+          },
+            [&](const ErrorInfoBase &E) { Reason = E.message(); });
+        Satisfies = false;
+        if (llvm::find_if(Unsatisfied, [&](const UnsatisfiedConstraint &U) {
+              return U.Expression == Expression;
+            }) == Unsatisfied.end())
+          Unsatisfied.push_back({Expression, std::move(Reason)});
+        break;
+      }
       if (!Result->getBoolean()) {
         Satisfies = false;
-        if (llvm::find(Unsatisfied, Expression) == Unsatisfied.end())
-          Unsatisfied.push_back(Expression);
+        if (llvm::find_if(Unsatisfied, [&](const UnsatisfiedConstraint &U) {
+              return U.Expression == Expression;
+            }) == Unsatisfied.end())
+          Unsatisfied.push_back({Expression, ""});
       }
     }
     if (Satisfies)
@@ -133,22 +158,19 @@ int main(int Argc, char **Argv) {
       Target Program(Function);
       MatchResults Matches = Matcher.matchInstantiations(*Pattern, Program);
       bool HadGraphMatch = !Matches.empty();
-      SmallVector<const Constraint *, 4> Unsatisfied;
-      Expected<MatchResults> ConstrainedMatches =
-          applyConstraints(*Pattern, std::move(Matches), Unsatisfied);
-      if (!ConstrainedMatches) {
-        logAllUnhandledErrors(ConstrainedMatches.takeError(), errs(),
-                              "metaphir-match: ");
-        return 1;
-      }
-      Matches = std::move(*ConstrainedMatches);
+      SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
+      Matches = applyConstraints(*Pattern, std::move(Matches), Unsatisfied);
       outs() << "target " << TargetIndex++ << ": @" << Function.getName()
              << '\n';
       if (Matches.empty()) {
         outs() << "  no match\n";
         if (HadGraphMatch)
-          for (const Constraint *Expression : Unsatisfied)
-            outs() << "  constraint not satisfied: " << *Expression << '\n';
+          for (const UnsatisfiedConstraint &U : Unsatisfied) {
+            outs() << "  constraint not satisfied: " << *U.Expression;
+            if (!U.Reason.empty())
+              outs() << " (cannot evaluate: " << U.Reason << ")";
+            outs() << '\n';
+          }
         continue;
       }
       for (unsigned MatchIndex = 0; MatchIndex != Matches.size();

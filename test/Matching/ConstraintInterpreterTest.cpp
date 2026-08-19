@@ -356,10 +356,8 @@ TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
 
   Expected<ConstraintValue> IntegerResult =
       Interpreter.evaluate(*binary("+", ValueExpression, integer(1)), State);
-  ASSERT_FALSE(IntegerResult);
-  EXPECT_EQ(toString(IntegerResult.takeError()),
-            "cannot evaluate constraint '(+ ?value 1)': expected an "
-            "integer-coercible operand");
+  ASSERT_TRUE(static_cast<bool>(IntegerResult));
+  EXPECT_EQ(IntegerResult->getInteger().getSExtValue(), 2);
 
   Expected<ConstraintValue> BooleanResult =
       Interpreter.evaluate(*binary("&&", ValueExpression, boolean(true)), State);

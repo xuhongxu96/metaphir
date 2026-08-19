@@ -2,5 +2,7 @@
 __pycache__/
 .venv/
 /build/
+/build-release/
 .cache/
 /Testing/
+/eval/corpus/

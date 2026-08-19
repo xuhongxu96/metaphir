@@ -401,6 +401,39 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
     APSInt Extended = extend(*Operand, Operand->getBitWidth() + 1, false);
     return integerResult(-static_cast<const APInt &>(Extended), false);
   }
+  case Constraint::O_Lshr:
+  case Constraint::O_Ashr:
+  case Constraint::O_Shl: {
+    Expected<APSInt> Value =
+        requireInteger(evaluate(*Arguments[0], State), Expression);
+    if (!Value)
+      return Value.takeError();
+    Expected<APSInt> Amount =
+        requireInteger(evaluate(*Arguments[1], State), Expression);
+    if (!Amount)
+      return Amount.takeError();
+    if ((Amount->isSigned() && Amount->isNegative()) ||
+        Amount->uge(Value->getBitWidth()))
+      return evaluationError(Expression, "shift amount is out of range");
+    const APInt &Integer = *Value;
+    APInt Result;
+    switch (Operator.getOperatorID()) {
+    case Constraint::O_Lshr:
+      Result = Integer.lshr(Amount->getLimitedValue());
+      break;
+    case Constraint::O_Ashr:
+      Result = Integer.ashr(Amount->getLimitedValue());
+      break;
+    case Constraint::O_Shl:
+      Result = Integer.shl(Amount->getLimitedValue());
+      break;
+    default:
+      llvm_unreachable("invalid shift operator");
+    }
+    return integerResult(std::move(Result),
+                         Operator.getOperatorID() != Constraint::O_Ashr &&
+                             Value->isUnsigned());
+  }
   case Constraint::UnknownOperator:
     return evaluationError(Expression, Twine("unknown operator '") +
                                            Operator.getOperator() + "'");
@@ -451,6 +484,12 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
     return integerResult(L - R, false);
   case Constraint::O_Multiply:
     return integerResult(L * R, Unsigned);
+  case Constraint::O_And:
+    return integerResult(L & R, Unsigned);
+  case Constraint::O_Or:
+    return integerResult(L | R, Unsigned);
+  case Constraint::O_Xor:
+    return integerResult(L ^ R, Unsigned);
   case Constraint::O_SDiv:
   case Constraint::O_UDiv:
   case Constraint::O_SRem:

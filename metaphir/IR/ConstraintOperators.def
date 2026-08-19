@@ -39,10 +39,14 @@ MIR_CONSTRAINT_OPERATOR(SDiv, "sdiv", Call, IntegerResult, 2)
 MIR_CONSTRAINT_OPERATOR(UDiv, "udiv", Call, IntegerResult, 2)
 MIR_CONSTRAINT_OPERATOR(SRem, "srem", Call, IntegerResult, 2)
 MIR_CONSTRAINT_OPERATOR(URem, "urem", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Lshr, "lshr", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Ashr, "ashr", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Shl, "shl", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(And, "and", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Or, "or", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(Xor, "xor", Call, IntegerResult, 2)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Isa, "isa", Call, BooleanResult, 2)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Lshr, "lshr", Call, IntegerResult, 2)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Ashr, "ashr", Call, IntegerResult, 2)
 
 #undef MIR_CONSTRAINT_INTERPRETED_OPERATOR
 #undef MIR_CONSTRAINT_OPERATOR

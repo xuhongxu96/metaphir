@@ -6,7 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(LLVM_DIR ${PROJECT_SOURCE_DIR}/llvm-project/build/install/lib/cmake/llvm)
+add_compile_options(-fno-rtti)
+
+set(LLVM_DIR
+    ${PROJECT_SOURCE_DIR}/llvm-project/build/install/lib/cmake/llvm
+    CACHE PATH "Directory containing LLVMConfig.cmake")
 find_package(LLVM 24.0.0 REQUIRED CONFIG)
 
 enable_testing()
@@ -38,3 +42,10 @@ include_directories(${CMAKE_SOURCE_DIR} ${LLVM_INCLUDE_DIRS})
 add_subdirectory(metaphir)
 add_subdirectory(test)
 add_subdirectory(tools)
+
+option(METAPHIR_BUILD_EVAL_PLUGINS
+       "Build the InstCombine evaluation pass plugins under eval/plugins"
+       OFF)
+if(METAPHIR_BUILD_EVAL_PLUGINS)
+    add_subdirectory(eval/plugins)
+endif()

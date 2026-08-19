@@ -1,6 +1,6 @@
 ; RUN: split-file %s %t
 ; RUN: %metaphir-match %t/pattern.mpir %t/abs.ll %t/sqrt.ll %t/ordinary.ll | FileCheck %s
-; RUN: not %metaphir-match %t/error-pattern.mpir %t/abs.ll 2>&1 | FileCheck %s --check-prefix=ERROR
+; RUN: %metaphir-match %t/error-pattern.mpir %t/abs.ll 2>&1 | FileCheck %s --check-prefix=ERROR
 
 ;--- pattern.mpir
 call:?instruction ?return_type @llvm.?intrinsic(...?types ?values)
@@ -52,4 +52,6 @@ entry:
 ; CHECK-NEXT: target 2: @constraint_ordinary
 ; CHECK-NEXT:   no match
 
-; ERROR: metaphir-match: cannot evaluate constraint '(isa ?instruction "ImaginaryValue")': unknown LLVM value class 'ImaginaryValue'
+; ERROR: target 0: @constraint_abs
+; ERROR-NEXT:   no match
+; ERROR-NEXT:   constraint not satisfied: (isa ?instruction "ImaginaryValue") (cannot evaluate: unknown LLVM value class 'ImaginaryValue')

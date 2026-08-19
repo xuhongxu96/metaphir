@@ -11,13 +11,14 @@ namespace metaphir {
 
 namespace detail {
 
+char ConstraintEvaluationError::ID = 0;
+
+void ConstraintEvaluationError::log(raw_ostream &OS) const {
+  OS << "cannot evaluate constraint '" << *Expression << "': " << Message;
+}
+
 Error evaluationError(const Constraint &Expression, const Twine &Message) {
-  std::string ExpressionText;
-  raw_string_ostream OS(ExpressionText);
-  OS << Expression;
-  return createStringError(inconvertibleErrorCode(),
-                           "cannot evaluate constraint '%s': %s",
-                           OS.str().c_str(), Message.str().c_str());
+  return make_error<ConstraintEvaluationError>(Expression, Message.str());
 }
 
 Expected<APSInt> requireInteger(Expected<ConstraintValue> Result,
@@ -28,6 +29,15 @@ Expected<APSInt> requireInteger(Expected<ConstraintValue> Result,
     return Result->getInteger();
   if (Result->getKind() == ConstraintValue::Boolean)
     return APSInt(APInt(1, Result->getBoolean()), true);
+  // A value binding that is a constant integer can be coerced to an integer
+  // so shift amounts / constants captured as Value metas can be used in
+  // arithmetic constraints.
+  if (Result->getKind() == ConstraintValue::Value) {
+    if (const auto *Integer = dyn_cast<ConstantInt>(Result->getValue()))
+      return APSInt(Integer->getValue(), true);
+    return evaluationError(Expression,
+                           "expected an integer-valued constant operand");
+  }
   return evaluationError(Expression, "expected an integer-coercible operand");
 }
 
@@ -115,42 +125,6 @@ Expected<ConstraintValue> evaluateIsa(const ConstraintInterpreter &Interpreter,
     return detail::evaluationError(
         Expression, Twine("unknown LLVM value class '") + *ClassName + "'");
   return ConstraintValue::getBoolean(*Result);
-}
-
-static Expected<ConstraintValue>
-evaluateShift(const ConstraintInterpreter &Interpreter,
-              ArrayRef<Constraint *> Arguments, const Instantiation &State,
-              const Constraint &Expression, bool IsArithmetic) {
-  auto Values = evaluateArguments(Interpreter, Arguments, State);
-  if (!Values)
-    return Values.takeError();
-  auto Value = detail::requireInteger(std::move((*Values)[0]), Expression);
-  if (!Value)
-    return Value.takeError();
-  auto Amount = detail::requireInteger(std::move((*Values)[1]), Expression);
-  if (!Amount)
-    return Amount.takeError();
-  if ((Amount->isSigned() && Amount->isNegative()) ||
-      Amount->uge(Value->getBitWidth()))
-    return detail::evaluationError(Expression, "shift amount is out of range");
-  const APInt &Integer = *Value;
-  APInt Result = IsArithmetic ? Integer.ashr(Amount->getLimitedValue())
-                              : Integer.lshr(Amount->getLimitedValue());
-  return detail::integerResult(std::move(Result), !IsArithmetic);
-}
-
-Expected<ConstraintValue> evaluateLshr(const ConstraintInterpreter &Interpreter,
-                                       ArrayRef<Constraint *> Arguments,
-                                       const Instantiation &State,
-                                       const Constraint &Expression) {
-  return evaluateShift(Interpreter, Arguments, State, Expression, false);
-}
-
-Expected<ConstraintValue> evaluateAshr(const ConstraintInterpreter &Interpreter,
-                                       ArrayRef<Constraint *> Arguments,
-                                       const Instantiation &State,
-                                       const Constraint &Expression) {
-  return evaluateShift(Interpreter, Arguments, State, Expression, true);
 }
 
 } // namespace metaphir
