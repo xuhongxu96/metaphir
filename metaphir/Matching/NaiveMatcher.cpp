@@ -21,10 +21,10 @@ bool NaiveMatcher::matchProgram(const Pattern &Pattern, const Target &Program) {
 
 MatchResults NaiveMatcher::matchInstantiations(const Pattern &Pattern,
                                                const Target &Program) {
-  SmallVector<Instantiation, 4> Instantiations(1);
+  MatchResults Instantiations(1);
 
   for (const Instruction *Root : Pattern.getRoots()) {
-    SmallVector<Instantiation, 4> NewInstantiations;
+    MatchResults NewInstantiations;
     for (const Instantiation &Candidate : Instantiations)
       for (const llvm::Instruction *Instruction : Program.getInstructions())
         for (Instantiation &Matched :

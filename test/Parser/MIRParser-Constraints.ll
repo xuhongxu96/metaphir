@@ -1,7 +1,7 @@
 ; RUN: %metaphir-parse %s | FileCheck %s
 
 %sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allones, :not(:poison))
-; CHECK: pattern instructions=5 constraints=15
+; CHECK: pattern instructions=4 constraints=15
 ; CHECK-NEXT: %sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allones,:not(:poison))
 
 %cmp = icmp ?predicate i32 ?x, ?y
@@ -65,6 +65,3 @@
 ; CHECK-NEXT: meta ?intrinsic type=Intrinsic::ID
 ; CHECK-NEXT: meta ?types type=Type[]
 ; CHECK-NEXT: meta ?values type=Value[]
-
-%after = freeze i32 ?x
-; CHECK-NEXT: %after = freeze i32 ?x

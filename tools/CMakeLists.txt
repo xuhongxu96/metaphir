@@ -10,4 +10,5 @@ target_link_libraries(metaphir-match
     metaphir-matching
     metaphir-parser
     LLVMAsmParser
+    LLVMIRReader
 )

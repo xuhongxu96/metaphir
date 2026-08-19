@@ -19,6 +19,7 @@ set(METAPHIR_MATCHING_TEST_CASES
   MIRMatcher-Graph.ll
   MIRMatcher-FloatingConstants.ll
   MIRMatcher-Intrinsic.ll
+  MIRMatcher-Inputs.ll
   MIRMatcher-MetaFlags-Constants.ll
   MIRMatcher-MetaFlags-OrSelf.ll
   MIRMatcher-MetaFlags-Uses.ll

@@ -14,7 +14,7 @@ class Instruction;
 class Type;
 class Value;
 
-using MatchResults = SmallVector<Instantiation, 2>;
+using MatchResults = SmallVector<Instantiation, 4>;
 
 class MatchDriver {
 public:
