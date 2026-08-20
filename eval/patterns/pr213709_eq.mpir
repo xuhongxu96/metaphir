@@ -2,4 +2,4 @@
 %and = and:c i?bits %neg, ?x
 %cmp = icmp:?anch eq i?bits %and, ?c:constantint
 ;; sgt(?bits, 1)
-;; (?c == 0) || (?c == 1)
+;; ((?c == 0) || (?c == 1))

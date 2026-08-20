@@ -2,11 +2,13 @@
 //
 // (X /u Y) /u Z --> X /u (Y * Z) when Y*Z cannot overflow unsigned.
 // Conditions: root is a one-use udiv whose LHS is another udiv; the product of
-// the two divisors is unsigned-overflow-free. The constant-only overflow check
-// mirrors the pattern language; non-constant divisors that InstCombine could
-// prove non-overflowing are not matched (documented approximation).
+// the two divisors is unsigned-overflow-free (reuses LLVM's
+// computeOverflowForUnsignedMul, the same computation the InstCombine fold's
+// willNotOverflowUnsignedMul is built on).
 // Anchor: the root `udiv`.
 
+#include "llvm/Analysis/SimplifyQuery.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -21,28 +23,20 @@ using namespace PatternMatch;
 
 namespace {
 
-bool WillNotOverflowUnsignedMul(const Value *Y, const Value *Z) {
-  const APInt *CY = nullptr, *CZ = nullptr;
-  if (!match(Y, m_APInt(CY)) || !match(Z, m_APInt(CZ)))
-    return false;
-  unsigned BW = CY->getBitWidth();
-  APInt Product = *CY * *CZ;
-  if (CY->isZero() || CZ->isZero())
-    return false;
-  if (*CY != Product.udiv(*CZ))
-    return false;
-  return true;
-}
-
 struct PR214541 : public PassInfoMixin<PR214541> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
+    const DataLayout &DL = F.getParent()->getDataLayout();
     for (BasicBlock &BB : F) {
       for (Instruction &I : BB) {
         Value *X, *Y, *Z;
         if (!match(&I, m_UDiv(m_OneUse(m_UDiv(m_Value(X), m_Value(Y))),
                               m_Value(Z))))
           continue;
-        if (!I.getType()->isIntegerTy() || !WillNotOverflowUnsignedMul(Y, Z))
+        if (!I.getType()->isIntegerTy())
+          continue;
+        SimplifyQuery SQ(DL, &I);
+        if (computeOverflowForUnsignedMul(Y, Z, SQ) !=
+            OverflowResult::NeverOverflows)
           continue;
 
         std::string Name;

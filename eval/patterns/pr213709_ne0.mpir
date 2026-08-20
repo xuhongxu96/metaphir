@@ -1,0 +1,4 @@
+%neg = sub i?bits 0, ?x
+%and = and:c i?bits %neg, ?x
+%cmp = icmp:?anch ne i?bits %and, 0
+;; sgt(?bits, 1)

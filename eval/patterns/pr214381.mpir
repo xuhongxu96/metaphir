@@ -1,4 +1,5 @@
 %rem = urem i?bits ?x, ?d:constantint
 %sub = sub i?bits ?x, %rem
 %cmp = icmp:?anch ?pred i?bits %sub, ?c:constantint
-;; (?d != 0) && ((?pred == "ugt" && ult(?c, ?d)) || (?pred == "ult" && ?c != 0 && ule(?c, ?d)))
+;; (?d != 0)
+;; ((?pred == "ugt" && ult(?c, ?d)) || (?pred == "ult" && ?c != 0 && ule(?c, ?d)))

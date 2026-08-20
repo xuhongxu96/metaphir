@@ -4,4 +4,5 @@
 %final = xor:?finalres i?bits %ctlz, ?bm1:constantint
 %cmp = icmp:?cmp ?pred i?bits ?x, 0
 %sel = select:?anch i1 %cmp, i?bits ?t, i?bits ?f
-;; (?bm1 == (?bits - 1)) && ((?pred == "eq" && ?f == ?finalres && ?t == ?bits) || (?pred == "ne" && ?t == ?finalres && ?f == ?bits))
+;; (?bm1 == (?bits - 1))
+;; ((?pred == "eq" && ?f == ?finalres && ?t == ?bits) || (?pred == "ne" && ?t == ?finalres && ?f == ?bits))

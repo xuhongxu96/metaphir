@@ -39,8 +39,9 @@ Instruction *Instruction::get(MIRContext &Context, InstructionID ID,
                               ArrayRef<MatcherOperand> Operands,
                               MetaVariable *Capture, SourceRange Range,
                               MetaVariable *ParentBlock) {
-  assert(ParentBlock && ParentBlock->getType() == MetaType::BasicBlock &&
-         "instruction must have a basic block");
+  assert(ParentBlock == nullptr ||
+         ParentBlock->getType() == MetaType::BasicBlock &&
+             "instruction must have a basic block");
   SmallVector<MatcherOperand, 8> UnkeyedOperands;
   MatcherOperand KeyedOperands[MatcherOperand::NumKeyedOperandKinds];
   uint64_t KeyedOperandMask = 0;

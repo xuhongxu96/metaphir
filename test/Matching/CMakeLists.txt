@@ -12,6 +12,7 @@ set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-Graph.ll
     MIRMatcher-NamedInstOperand.ll
     MIRMatcher-BasicBlockMembership.ll
+    MIRMatcher-CrossBlock.ll
     MIRMatcher-Inputs.ll
     MIRMatcher-NewInstructionMatchers.ll
     MIRMatcher-BitCount.ll
