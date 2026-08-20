@@ -18,6 +18,7 @@ set(METAPHIR_TEST_CASES
   MIRParser-ConstraintErrors.ll
   MIRParser-Constraints.ll
   MIRParser-Instructions.ll
+  MIRParser-MetaLocalNameConflict.ll
   MIRParser-Extensible.ll
   MIRParser-InvalidCommutative.ll
   MIRParser-InvalidFlag.ll

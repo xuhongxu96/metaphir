@@ -5,20 +5,25 @@ from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import re
 import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass, field
+from pathlib import Path
 
+# ---------------------------------------------------------------------------
+# Regular expressions
+# ---------------------------------------------------------------------------
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_TEST_DIR = REPO_ROOT / "test"
 RUN_RE = re.compile(r"^\s*(?P<comment>;|#|//)\s*RUN:\s*(?P<command>.*)$")
 CHECK_RE = re.compile(
     r"^\s*(?:;|#|//)\s*(?!RUN:)[A-Z][A-Z0-9_-]*(?:-(?:NEXT|SAME|DAG|NOT))?:"
+)
+CHECK_HEAD_RE = re.compile(
+    r"^\s*(?:;|#|//)\s*([A-Za-z0-9_.-]+?)(?::|-NEXT|-SAME|-NOT|-DAG)"
 )
 LOCAL_RE = re.compile(r"^\s*%(?P<name>[-a-zA-Z$._0-9]+)(?=\s|=)")
 TOKEN_LOCAL_RE = re.compile(r"^LocalVar(?:ID)? (?P<name>\S+)$")
@@ -27,10 +32,138 @@ SPLIT_RE = re.compile(r"^\s*(?:;|#|//)---\s+(?P<name>\S+)\s*$")
 PARSER_INPUT_RE = re.compile(r"%metaphir-parse\s+(?P<input>%s|%t/\S+)")
 CHECK_PREFIX_RE = re.compile(r"--check-prefix(?:=|\s+)(?P<prefix>[A-Z0-9_-]+)")
 ERROR_RE = re.compile(r":(?P<line>[0-9]+):[0-9]+: error: (?P<message>.*)$")
-MATCH_TARGET_RE = re.compile(r"^target [0-9]+: @(?P<name>[-a-zA-Z$._0-9]+)$")
-LLVM_FUNCTION_RE = re.compile(
-    r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\("
+WARNING_RE = re.compile(r":(?P<line>[0-9]+):[0-9]+: warning: (?P<message>.*)$")
+TOOL_ERROR_HEAD_RE = re.compile(
+    r"^\s*(?:metaphir-[a-z0-9]+|opt):\s*\S+:\d+:\d+:\s*(?:error:)"
 )
+MATCH_TARGET_RE = re.compile(r"^target [0-9]+: @(?P<name>[-a-zA-Z$._0-9]+)$")
+LLVM_FUNCTION_RE = re.compile(r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\(")
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_TEST_DIR = REPO_ROOT / "test"
+
+TOOLS = ("metaphir-lex", "metaphir-parse", "metaphir-match")
+
+
+# ---------------------------------------------------------------------------
+# Structured data
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class LexerGroup:
+    name: str | None
+    tokens: list[str] = field(default_factory=list)
+
+
+@dataclass
+class Diagnostic:
+    line: int
+    message: str
+
+
+@dataclass
+class ParserRun:
+    """One `%metaphir-parse` invocation and the checks it produces."""
+
+    section: str | None
+    prefix: str
+    output: list[str] = field(default_factory=list)
+    diagnostic_line: int | None = None
+    warnings: list[Diagnostic] = field(default_factory=list)
+
+
+@dataclass
+class SectionFunction:
+    section: str | None
+    function: str
+
+
+@dataclass
+class TargetGroup:
+    name: str
+    lines: list[str] = field(default_factory=list)
+
+
+@dataclass
+class MatcherGroup:
+    """One target function's CHECK directives from a matcher run."""
+
+    section: str | None
+    function: str
+    directives: list[str] = field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Shared predicates and formatting helpers
+# ---------------------------------------------------------------------------
+
+
+def directive_prefix(directive: str) -> str:
+    match = CHECK_HEAD_RE.match(directive)
+    return match.group(1) if match else ""
+
+
+def strip_error_prefix(lines: list[str]) -> list[str]:
+    """Drop the volatile '<tool>: <path>:<line>:<col>: ' prefix from tool error
+    diagnostics so generated CHECKs don't embed the temp path. Only lines that
+    actually look like a tool diagnostic are rewritten."""
+    result: list[str] = []
+    for line in lines:
+        if TOOL_ERROR_HEAD_RE.match(line):
+            line = line[line.find("error:") :]
+        result.append(line)
+    return result
+
+
+def separate_prefix_groups(directives: list[str]) -> list[str]:
+    """Insert a blank line between consecutive directives with different prefixes."""
+    block: list[str] = []
+    last: str | None = None
+    for directive in directives:
+        prefix = directive_prefix(directive)
+        if last is not None and prefix != last:
+            block.append("")
+        block.append(directive)
+        last = prefix
+    return block
+
+
+def strip_inter_check_blanks(lines: list[str]) -> list[str]:
+    """Drop blank lines adjacent to a CHECK directive so regeneration is
+    idempotent (separator blanks from a previous run are not doubled)."""
+    nonblank = [index for index, line in enumerate(lines) if line.strip()]
+    check = {index for index, line in enumerate(lines) if CHECK_RE.match(line)}
+    drop: set[int] = set()
+    for index, line in enumerate(lines):
+        if line.strip():
+            continue
+        prev = next((j for j in reversed(nonblank) if j < index), None)
+        nxt = next((j for j in nonblank if j > index), None)
+        if prev in check or nxt in check:
+            drop.add(index)
+    return [line for index, line in enumerate(lines) if index not in drop]
+
+
+def separate_check_blocks(lines: list[str]) -> list[str]:
+    separated: list[str] = []
+    for index, line in enumerate(lines):
+        separated.append(line)
+        if not CHECK_RE.match(line):
+            continue
+        next_line = lines[index + 1] if index + 1 < len(lines) else None
+        if (
+            next_line is not None
+            and next_line.strip()
+            and not CHECK_RE.match(next_line)
+        ):
+            separated.append("")
+    return separated
+
+
+# ---------------------------------------------------------------------------
+# CLI / discovery
+# ---------------------------------------------------------------------------
 
 
 def parse_args() -> argparse.Namespace:
@@ -97,48 +230,150 @@ def test_kinds(lines: list[str], path: Path) -> tuple[set[str], str]:
     if not runs:
         print(f"{path}: no RUN directive", file=sys.stderr)
         return set(), ""
-    kinds = {
-        kind
-        for run in runs
-        for kind in ("metaphir-lex", "metaphir-parse", "metaphir-match")
-        if f"%{kind}" in run["command"]
-    }
+    kinds = {kind for run in runs for kind in TOOLS if f"%{kind}" in run["command"]}
     if not kinds:
         raise ValueError(f"{path}: no tool RUN directive")
     return kinds, runs[0]["comment"]
 
 
-def lexer_groups(output: str, path: Path) -> list[tuple[str | None, list[str]]]:
-    groups: list[tuple[str | None, list[str]]] = []
+def compute_sections(clean_lines: list[str]) -> dict[str, str]:
+    sections: dict[str, str] = {}
+    current_section: str | None = None
+    section_lines: list[str] = []
+    for line in clean_lines:
+        if match := SPLIT_RE.match(line):
+            if current_section is not None:
+                sections[current_section] = "\n".join(section_lines) + "\n"
+            current_section = match["name"]
+            section_lines = []
+        elif current_section is not None:
+            section_lines.append(line)
+    if current_section is not None:
+        sections[current_section] = "\n".join(section_lines) + "\n"
+    return sections
+
+
+def write_sections(temporary_path: Path, sections: dict[str, str]) -> None:
+    for name, contents in sections.items():
+        output_path = temporary_path / name
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(contents)
+
+
+def section_bounds(
+    clean_lines: list[str], path: Path, section_name: str | None
+) -> tuple[int, int]:
+    if section_name is None:
+        return 0, len(clean_lines)
+    marker = next(
+        (
+            index
+            for index, line in enumerate(clean_lines)
+            if (match := SPLIT_RE.match(line)) and match["name"] == section_name
+        ),
+        None,
+    )
+    if marker is None:
+        raise ValueError(f"{path}: no section marker for {section_name}")
+    start = marker + 1
+    end = next(
+        (
+            index
+            for index in range(start, len(clean_lines))
+            if SPLIT_RE.match(clean_lines[index])
+        ),
+        len(clean_lines),
+    )
+    return start, end
+
+
+def run_setup_commands(lines: list[str], temporary_path: Path, path: Path) -> None:
+    """Execute non-tool RUN commands (mkdir/cp/llvm-as/...) in the temp dir so
+    split inputs that are prepared by the RUN lines exist before matching."""
+    for line in lines:
+        match = RUN_RE.match(line)
+        if not match:
+            continue
+        command = match["command"]
+        if any(f"%{kind}" in command for kind in TOOLS):
+            continue
+        if command.strip().startswith("split-file"):
+            continue
+        command = command.split("|", 1)[0].strip()
+        command = (
+            command.replace("%t", str(temporary_path))
+            .replace("%S", str(path.parent))
+            .replace("%s", str(path))
+        )
+        command = command.removeprefix("not ")
+        proc = subprocess.run(
+            command,
+            shell=True,
+            cwd=str(temporary_path),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise ValueError(
+                f"{path}: setup command failed: {command}\n{proc.stderr.rstrip()}"
+            )
+
+
+def functions_in_input(
+    input_path: Path, section_name: str | None, path: Path
+) -> list[SectionFunction]:
+    """Collect (section, function-name) pairs from a matcher input, which may be
+    an .ll file, a .bc bitcode file, or a directory containing either."""
+    inputs: list[Path] = []
+    if input_path.is_dir():
+        inputs = sorted(p for p in input_path.rglob("*") if p.suffix in (".ll", ".bc"))
+    else:
+        inputs = [input_path]
+    results: list[SectionFunction] = []
+    for input_file in inputs:
+        if input_file.suffix == ".bc":
+            proc = subprocess.run(
+                ["llvm-dis", str(input_file), "-o", "-"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if proc.returncode:
+                raise ValueError(
+                    f"{path}: llvm-dis failed on {input_file}\n{proc.stderr.rstrip()}"
+                )
+            text = proc.stdout
+        else:
+            text = input_file.read_text()
+        results.extend(
+            SectionFunction(section_name, match["name"])
+            for line in text.splitlines()
+            if (match := LLVM_FUNCTION_RE.match(line))
+        )
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Generators
+# ---------------------------------------------------------------------------
+
+
+def lexer_groups(output: str, path: Path) -> list[LexerGroup]:
+    groups: list[LexerGroup] = []
     tokens = output.splitlines()
     for index, token in enumerate(tokens):
         if (match := TOKEN_LOCAL_RE.fullmatch(token)) and (
             index + 1 < len(tokens) and tokens[index + 1] == "equal"
         ):
-            groups.append((match["name"], []))
+            groups.append(LexerGroup(match["name"]))
         if not groups:
-            groups.append((None, []))
+            groups.append(LexerGroup(None))
         # Pointer-valued token details are process-specific and need a regex.
-        groups[-1][1].append(POINTER_RE.sub("{{0x[0-9A-Fa-f]+}}", token))
+        groups[-1].tokens.append(POINTER_RE.sub("{{0x[0-9A-Fa-f]+}}", token))
     if not groups:
         raise ValueError(f"{path}: lexer produced no tokens")
     return groups
-
-
-def separate_check_blocks(lines: list[str]) -> list[str]:
-    separated: list[str] = []
-    for index, line in enumerate(lines):
-        separated.append(line)
-        if not CHECK_RE.match(line):
-            continue
-        next_line = lines[index + 1] if index + 1 < len(lines) else None
-        if (
-            next_line is not None
-            and next_line.strip()
-            and not CHECK_RE.match(next_line)
-        ):
-            separated.append("")
-    return separated
 
 
 def update_lexer_test(path: Path, lines: list[str], comment: str, lexer: Path) -> str:
@@ -149,16 +384,15 @@ def update_lexer_test(path: Path, lines: list[str], comment: str, lexer: Path) -
     if result.returncode and not result.stdout:
         raise ValueError(f"{path}: metaphir-lex failed:\n{result.stderr.rstrip()}")
 
-    groups = lexer_groups(result.stdout, path)
     by_name: dict[str, list[str]] = {}
     anonymous: list[str] | None = None
-    for local_name, tokens in groups:
-        if local_name is None:
-            anonymous = tokens
+    for group in lexer_groups(result.stdout, path):
+        if group.name is None:
+            anonymous = group.tokens
             continue
-        if local_name in by_name:
-            raise ValueError(f"{path}: duplicate local %{local_name} in lexer output")
-        by_name[local_name] = tokens
+        if group.name in by_name:
+            raise ValueError(f"{path}: duplicate local %{group.name} in lexer output")
+        by_name[group.name] = group.tokens
 
     clean_lines: list[str] = []
     for line in lines:
@@ -213,126 +447,6 @@ def update_lexer_test(path: Path, lines: list[str], comment: str, lexer: Path) -
     return "\n".join(separate_check_blocks(updated)) + "\n"
 
 
-def compute_sections(clean_lines: list[str]) -> dict[str, str]:
-    sections: dict[str, str] = {}
-    current_section: str | None = None
-    section_lines: list[str] = []
-    for line in clean_lines:
-        if match := SPLIT_RE.match(line):
-            if current_section is not None:
-                sections[current_section] = "\n".join(section_lines) + "\n"
-            current_section = match["name"]
-            section_lines = []
-        elif current_section is not None:
-            section_lines.append(line)
-    if current_section is not None:
-        sections[current_section] = "\n".join(section_lines) + "\n"
-    return sections
-
-
-def write_sections(temporary_path: Path, sections: dict[str, str]) -> None:
-    for name, contents in sections.items():
-        output_path = temporary_path / name
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(contents)
-
-
-def functions_in_input(
-    input_path: Path, section_name: str | None, path: Path
-) -> list[tuple[str | None, str]]:
-    """Collect (section, function-name) pairs from a matcher input, which may be
-    an .ll file, a .bc bitcode file, or a directory containing either."""
-    inputs: list[Path] = []
-    if input_path.is_dir():
-        inputs = sorted(
-            p for p in input_path.rglob("*") if p.suffix in (".ll", ".bc")
-        )
-    else:
-        inputs = [input_path]
-    results: list[tuple[str | None, str]] = []
-    for input_file in inputs:
-        if input_file.suffix == ".bc":
-            proc = subprocess.run(
-                ["llvm-dis", str(input_file), "-o", "-"],
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            if proc.returncode:
-                raise ValueError(
-                    f"{path}: llvm-dis failed on {input_file}\n{proc.stderr.rstrip()}"
-                )
-            text = proc.stdout
-        else:
-            text = input_file.read_text()
-        results.extend(
-            (section_name, match["name"])
-            for line in text.splitlines()
-            if (match := LLVM_FUNCTION_RE.match(line))
-        )
-    return results
-
-
-def run_setup_commands(
-    lines: list[str], temporary_path: Path, path: Path
-) -> None:
-    """Execute non-tool RUN commands (mkdir/cp/llvm-as/...) in the temp dir so
-    split inputs that are prepared by the RUN lines exist before matching."""
-    for line in lines:
-        match = RUN_RE.match(line)
-        if not match:
-            continue
-        command = match["command"]
-        if any(
-            f"%{kind}" in command
-            for kind in ("metaphir-lex", "metaphir-parse", "metaphir-match")
-        ):
-            continue
-        if command.strip().startswith("split-file"):
-            continue
-        command = command.split("|", 1)[0].strip()
-        command = command.replace("%t", str(temporary_path)).replace(
-            "%S", str(path.parent)
-        ).replace("%s", str(path))
-        if command.startswith("not "):
-            command = command[4:]
-        proc = subprocess.run(
-            command, shell=True, cwd=str(temporary_path), capture_output=True,
-            text=True, check=False,
-        )
-        if proc.returncode != 0:
-            raise ValueError(
-                f"{path}: setup command failed: {command}\n{proc.stderr.rstrip()}"
-            )
-
-
-def section_bounds(
-    clean_lines: list[str], path: Path, section_name: str | None
-) -> tuple[int, int]:
-    if section_name is None:
-        return 0, len(clean_lines)
-    marker = next(
-        (
-            index
-            for index, line in enumerate(clean_lines)
-            if (match := SPLIT_RE.match(line)) and match["name"] == section_name
-        ),
-        None,
-    )
-    if marker is None:
-        raise ValueError(f"{path}: no section marker for {section_name}")
-    start = marker + 1
-    end = next(
-        (
-            index
-            for index in range(start, len(clean_lines))
-            if SPLIT_RE.match(clean_lines[index])
-        ),
-        len(clean_lines),
-    )
-    return start, end
-
-
 def gen_parser_checks(
     path: Path,
     clean_lines: list[str],
@@ -340,7 +454,7 @@ def gen_parser_checks(
     parser: Path,
     temporary_path: Path,
 ) -> dict[int, list[str]]:
-    generated: list[tuple[str | None, str, list[str], int | None]] = []
+    generated: list[ParserRun] = []
     runs = [match for line in clean_lines if (match := RUN_RE.match(line))]
     for run in runs:
         command = run["command"]
@@ -361,27 +475,36 @@ def gen_parser_checks(
             raise ValueError(f"{path}: metaphir-parse was expected to {expectation}")
         if expected_failure:
             diagnostics = [
-                (int(match["line"]), match["message"])
+                Diagnostic(int(match["line"]), match["message"])
                 for line in result.stderr.splitlines()
                 if (match := ERROR_RE.search(line))
             ]
-            output = [message for _, message in diagnostics]
-            diagnostic_line = diagnostics[0][0] if diagnostics else None
+            output = [diagnostic.message for diagnostic in diagnostics]
+            diagnostic_line = diagnostics[0].line if diagnostics else None
+            warnings: list[Diagnostic] = []
         else:
             output = result.stdout.splitlines()
             diagnostic_line = None
-        if not output:
+            warnings = [
+                Diagnostic(int(match["line"]), "warning: " + match["message"])
+                for line in result.stderr.splitlines()
+                if (match := WARNING_RE.search(line))
+            ]
+        if not output and not warnings:
             raise ValueError(f"{path}: metaphir-parse produced no checkable output")
         output = [POINTER_RE.sub("{{0x[0-9A-Fa-f]+}}", line) for line in output]
         prefix_match = CHECK_PREFIX_RE.search(command)
         prefix = prefix_match["prefix"] if prefix_match else "CHECK"
-        generated.append((section_name, prefix, output, diagnostic_line))
+        generated.append(
+            ParserRun(section_name, prefix, output, diagnostic_line, warnings)
+        )
 
     checks_by_line: dict[int, list[str]] = {}
-    for section_name, prefix, output, diagnostic_line in generated:
-        start, end = section_bounds(clean_lines, path, section_name)
-        if diagnostic_line is not None:
-            targets = [start + diagnostic_line - 1] * len(output)
+    for run in generated:
+        start, end = section_bounds(clean_lines, path, run.section)
+        if run.diagnostic_line is not None:
+            targets = [start + run.diagnostic_line - 1] * len(run.output)
+            run_output = run.output
         else:
             instruction_lines = [
                 index
@@ -394,14 +517,16 @@ def gen_parser_checks(
                 for index in range(start, end)
                 if clean_lines[index].lstrip().startswith(";;")
             ]
-            pattern_output = [line for line in output if line.startswith("pattern ")]
-            constraint_output = [
-                line for line in output if line.startswith("constraint ")
+            pattern_output = [
+                line for line in run.output if line.startswith("pattern ")
             ]
-            meta_output = [line for line in output if line.startswith("meta ")]
+            constraint_output = [
+                line for line in run.output if line.startswith("constraint ")
+            ]
+            meta_output = [line for line in run.output if line.startswith("meta ")]
             instruction_output = [
                 line
-                for line in output
+                for line in run.output
                 if not line.startswith(("pattern ", "constraint ", "meta "))
             ]
             if len(instruction_output) != len(instruction_lines):
@@ -421,12 +546,22 @@ def gen_parser_checks(
             )
             output = [line for _, line in placed]
             targets = [target for target, _ in placed]
+            run_output = output
 
-        for index, (target, output_line) in enumerate(zip(targets, output)):
-            directive = prefix if index == 0 else prefix + "-NEXT"
+        for index, (target, output_line) in enumerate(zip(targets, run_output)):
+            directive = run.prefix if index == 0 else run.prefix + "-NEXT"
             checks_by_line.setdefault(target, []).append(
                 f"{comment} {directive}: {output_line}"
             )
+        # Warnings appear on stderr before the stdout pattern dump (2>&1), so
+        # their CHECKs must precede the pattern-dump CHECKs. Prepend each
+        # warning as a fresh 'prefix:' directive at the section's first target.
+        if run.warnings and targets:
+            block = checks_by_line.setdefault(targets[0], [])
+            block[0:0] = [
+                f"{comment} {run.prefix}: {warning.message}"
+                for warning in run.warnings
+            ]
     return checks_by_line
 
 
@@ -437,18 +572,14 @@ def gen_matcher_checks(
     matcher: Path,
     temporary_path: Path,
 ) -> tuple[dict[int, list[str]], list[str]]:
-    generated: list[tuple[str | None, str, list[str]]] = []
+    generated: list[MatcherGroup] = []
     error_directives: list[str] = []
     for run in (match for line in clean_lines if (match := RUN_RE.match(line))):
         if "%metaphir-match" not in run["command"]:
             continue
-        expected_failure = bool(
-            re.search(r"\bnot\s+%metaphir-match\b", run["command"])
-        )
+        expected_failure = bool(re.search(r"\bnot\s+%metaphir-match\b", run["command"]))
         invocation = run["command"].split("|", 1)[0].strip()
-        invocation = re.sub(
-            r"\bnot\s+%metaphir-match\b", "%metaphir-match", invocation
-        )
+        invocation = re.sub(r"\bnot\s+%metaphir-match\b", "%metaphir-match", invocation)
         invocation = invocation.replace("2>&1", "").strip()
         arguments = shlex.split(invocation)
         tool_index = arguments.index("%metaphir-match")
@@ -472,13 +603,9 @@ def gen_matcher_checks(
             prefix = prefix_match["prefix"] if prefix_match else "CHECK"
             output = (result.stdout + result.stderr).splitlines()
             if not output:
-                raise ValueError(
-                    f"{path}: metaphir-match error run produced no output"
-                )
+                raise ValueError(f"{path}: metaphir-match error run produced no output")
             error_directives.extend(
-                f"{comment} "
-                f"{prefix if index == 0 else prefix + '-NEXT'}: "
-                f"{line}"
+                f"{comment} {prefix if index == 0 else prefix + '-NEXT'}: {line}"
                 for index, line in enumerate(
                     strip_error_prefix(
                         [POINTER_RE.sub("{{0x[0-9A-Fa-f]+}}", line) for line in output]
@@ -492,70 +619,62 @@ def gen_matcher_checks(
             )
         output = result.stdout.splitlines()
         if not output:
-            raise ValueError(
-                f"{path}: metaphir-match produced no checkable output"
-            )
+            raise ValueError(f"{path}: metaphir-match produced no checkable output")
         prefix_match = CHECK_PREFIX_RE.search(run["command"])
         prefix = prefix_match["prefix"] if prefix_match else "CHECK"
         target_sections = [
             argument[3:] if argument.startswith("%t/") else None
             for argument in target_arguments
         ]
-        section_functions: list[tuple[str | None, str]] = []
+        section_functions: list[SectionFunction] = []
         for section_name, argument in zip(target_sections, arguments[1:]):
-            input_path = (
-                path if section_name is None else temporary_path / section_name
-            )
+            input_path = path if section_name is None else temporary_path / section_name
             if not input_path.exists():
-                raise ValueError(
-                    f"{path}: matcher input {argument} does not exist"
-                )
-            section_functions.extend(
-                functions_in_input(input_path, section_name, path)
-            )
+                raise ValueError(f"{path}: matcher input {argument} does not exist")
+            section_functions.extend(functions_in_input(input_path, section_name, path))
 
-        target_groups: list[tuple[str, list[str]]] = []
+        target_groups: list[TargetGroup] = []
         for line in output:
             if match := MATCH_TARGET_RE.match(line):
-                target_groups.append((match["name"], [line]))
+                target_groups.append(TargetGroup(match["name"], [line]))
             elif target_groups:
-                target_groups[-1][1].append(line)
+                target_groups[-1].lines.append(line)
             else:
                 raise ValueError(f"{path}: malformed metaphir-match output")
         if len(target_groups) != len(section_functions):
-            raise ValueError(
-                f"{path}: cannot map matcher targets to LLVM functions"
-            )
-        for index, ((name, group), (section_name, expected_name)) in enumerate(
+            raise ValueError(f"{path}: cannot map matcher targets to LLVM functions")
+        for index, (group, expected) in enumerate(
             zip(target_groups, section_functions)
         ):
-            if name != expected_name:
+            if group.name != expected.function:
                 raise ValueError(
-                    f"{path}: matcher target @{name} does not correspond to "
-                    f"LLVM function @{expected_name}"
+                    f"{path}: matcher target @{group.name} does not correspond to "
+                    f"LLVM function @{expected.function}"
                 )
             directives = [
                 f"{comment} "
                 f"{prefix if index == 0 and line_index == 0 else prefix + '-NEXT'}: "
                 f"{line}"
-                for line_index, line in enumerate(group)
+                for line_index, line in enumerate(group.lines)
             ]
-            generated.append((section_name, name, directives))
+            generated.append(
+                MatcherGroup(expected.section, expected.function, directives)
+            )
 
     checks_by_line: dict[int, list[str]] = {}
-    for section_name, function_name, directives in generated:
+    for group in generated:
         definition = next(
             (
                 index
                 for index, line in enumerate(clean_lines)
                 if (match := LLVM_FUNCTION_RE.match(line))
-                and match["name"] == function_name
+                and match["name"] == group.function
             ),
             None,
         )
         if definition is None:
             raise ValueError(
-                f"{path}: no LLVM definition for matcher target @{function_name}"
+                f"{path}: no LLVM definition for matcher target @{group.function}"
             )
         function_end = next(
             (
@@ -566,63 +685,14 @@ def gen_matcher_checks(
             None,
         )
         if function_end is None:
-            raise ValueError(
-                f"{path}: unterminated LLVM definition @{function_name}"
-            )
-        checks_by_line.setdefault(function_end, []).extend(directives)
+            raise ValueError(f"{path}: unterminated LLVM definition @{group.function}")
+        checks_by_line.setdefault(function_end, []).extend(group.directives)
     return checks_by_line, error_directives
 
 
-CHECK_HEAD_RE = re.compile(r"^\s*(?:;|#|//)\s*([A-Za-z0-9_.-]+?)(?::|-NEXT|-SAME|-NOT|-DAG)")
-TOOL_ERROR_HEAD_RE = re.compile(
-    r"^\s*(?:metaphir-[a-z0-9]+|opt):\s*\S+:\d+:\d+:\s*(?:error:)"
-)
-
-
-def directive_prefix(directive: str) -> str:
-    match = CHECK_HEAD_RE.match(directive)
-    return match.group(1) if match else ""
-
-
-def strip_error_prefix(lines: list[str]) -> list[str]:
-    """Drop the volatile '<tool>: <path>:<line>:<col>: ' prefix from tool error
-    diagnostics so generated CHECKs don't embed the temp path. Only lines that
-    actually look like a tool diagnostic are rewritten."""
-    result: list[str] = []
-    for line in lines:
-        if TOOL_ERROR_HEAD_RE.match(line):
-            line = line[line.find("error:"):]
-        result.append(line)
-    return result
-
-
-def separate_prefix_groups(directives: list[str]) -> list[str]:
-    """Insert a blank line between consecutive directives with different prefixes."""
-    block: list[str] = []
-    last: str | None = None
-    for directive in directives:
-        prefix = directive_prefix(directive)
-        if last is not None and prefix != last:
-            block.append("")
-        block.append(directive)
-        last = prefix
-    return block
-
-
-def strip_inter_check_blanks(lines: list[str]) -> list[str]:
-    """Drop blank lines adjacent to a CHECK directive so regeneration is
-    idempotent (separator blanks from a previous run are not doubled)."""
-    nonblank = [index for index, line in enumerate(lines) if line.strip()]
-    check = {index for index, line in enumerate(lines) if CHECK_RE.match(line)}
-    drop: set[int] = set()
-    for index, line in enumerate(lines):
-        if line.strip():
-            continue
-        prev = next((j for j in reversed(nonblank) if j < index), None)
-        nxt = next((j for j in nonblank if j > index), None)
-        if prev in check or nxt in check:
-            drop.add(index)
-    return [line for index, line in enumerate(lines) if index not in drop]
+# ---------------------------------------------------------------------------
+# Assembly
+# ---------------------------------------------------------------------------
 
 
 def apply_checks(

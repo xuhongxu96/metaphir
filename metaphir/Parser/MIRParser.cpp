@@ -136,6 +136,9 @@ MetaVariable *MIRParser::getMeta(StringRef Name, MetaType Expected, LocTy Loc) {
   }
   auto *M = MetaVariable::get(Context, Name, Expected, SourceRange{Loc, Loc});
   MetaVariables[M->getName()] = M;
+  if (Instructions.count(Name))
+    Lex.Warning(Loc, "meta variable '?" + Name +
+                         "' shares a name with local variable '%" + Name + "'");
   CurrentPattern->addMetaVariable(M);
   return M;
 }
@@ -1010,8 +1013,21 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
   Result =
       Instruction::get(Context, ID, ResultName, Flags, MFlags, Ops, Capture,
                        SourceRange{Loc, Lex.getLoc()}, CurrentBlock);
-  if (!ResultName.empty())
+  if (!ResultName.empty()) {
+    if (MetaVariables.count(ResultName)) {
+      MetaVariable *SameName = MetaVariables[ResultName];
+      bool IsThisCapture =
+          SameName == Capture ||
+          any_of(Flags, [&](const InstructionFlag &F) {
+            return F.Capture == SameName;
+          });
+      if (!IsThisCapture)
+        Lex.Warning(Loc, "local variable '%" + ResultName +
+                             "' shares a name with meta variable '?" +
+                             ResultName + "'");
+    }
     Instructions[ResultName] = Result;
+  }
   return false;
 }
 
