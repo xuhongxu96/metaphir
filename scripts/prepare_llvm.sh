@@ -29,6 +29,10 @@ else
     echo "[$(date)] llvm-project already at correct version, skipping."
 fi
 
+# Patch
+git -C "$LLVM_DIR" reset --hard FETCH_HEAD
+git -C "$LLVM_DIR" apply $BASE_DIR/eval/patches/*.patch
+
 # Configure LLVM
 echo "[$(date)] Building LLVM..."
 mkdir -p "$LLVM_BUILD_DIR"
