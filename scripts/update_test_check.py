@@ -751,6 +751,7 @@ def main() -> int:
     parser: Path | None = None
     matcher: Path | None = None
     changed = 0
+    exit_code = 0
     for path in collect_files(args.paths):
         original = path.read_text()
         lines = original.splitlines()
@@ -781,14 +782,15 @@ def main() -> int:
                 updated = update_test(path, lines, comment, kinds, tools)
         except ValueError as error:
             print(error, file=sys.stderr)
-            return 1
+            exit_code = 1
+            continue
         assert updated is not None
         if updated != original:
             path.write_text(updated)
             changed += 1
             print(f"updated {path}")
     print(f"updated {changed} test(s)")
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":

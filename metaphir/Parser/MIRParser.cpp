@@ -149,6 +149,10 @@ bool MIRParser::parseBlockLabel() {
   if (Lex.getKind() == tok::LabelStr) {
     Name = Lex.getStrVal();
     next();
+    if (Name == "anyblock") {
+      CurrentBlock = nullptr;
+      return false;
+    }
   } else if (Lex.getKind() == tok::LabelID) {
     Twine(Lex.getUIntVal()).toVector(Name);
     next();
@@ -167,7 +171,7 @@ bool MIRParser::parseBlockLabel() {
 bool MIRParser::parse(Pattern *&Result) {
   Result = nullptr;
   CurrentPattern = Pattern::get(Context);
-  CurrentBlock = MetaVariable::get(Context, "", MetaType::BasicBlock, {});
+  CurrentBlock = nullptr;
   next();
   skipNewlines();
   while (Lex.getKind() != tok::Eof) {
@@ -1017,8 +1021,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     if (MetaVariables.count(ResultName)) {
       MetaVariable *SameName = MetaVariables[ResultName];
       bool IsThisCapture =
-          SameName == Capture ||
-          any_of(Flags, [&](const InstructionFlag &F) {
+          SameName == Capture || any_of(Flags, [&](const InstructionFlag &F) {
             return F.Capture == SameName;
           });
       if (!IsThisCapture)

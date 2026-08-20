@@ -526,9 +526,10 @@ MatchResults matchInstruction(const Instruction &Matcher,
       !matchInstructionTarget(Matcher.getInstructionID(), *TargetInstruction))
     return Results;
 
-  assert(Matcher.getParentBlock() && "instruction matcher has no parent block");
   if (!bind(State, Matcher, TargetInstruction) ||
-      !bind(State, *Matcher.getParentBlock(), TargetInstruction->getParent()) ||
+      (Matcher.getParentBlock() != nullptr &&
+       !bind(State, *Matcher.getParentBlock(),
+             TargetInstruction->getParent())) ||
       !matchTypeOnlyOperands(Matcher, *TargetInstruction, State) ||
       !matchSemanticFlags(Matcher, *TargetInstruction, State) ||
       !matchKeyedOperands(Matcher, *TargetInstruction, State))
