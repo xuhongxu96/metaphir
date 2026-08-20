@@ -39,13 +39,4 @@ foreach(test_case IN LISTS METAPHIR_TEST_CASES)
       "--filter=:: Parser/${test_case}$"
       ${METAPHIR_TEST_DIR}
   )
-  add_test(
-    NAME MetaphIR.Parser.${test_name}Debug
-    COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-lit -sv
-      --skip-test-time-recording
-      -D "metaphir_lex=$<TARGET_FILE:metaphir-lex>"
-      -D "metaphir_parse=$<TARGET_FILE:metaphir-parse>"
-      "--filter=:: Parser/${test_case}$"
-      ${METAPHIR_TEST_DIR}
-  )
 endforeach()

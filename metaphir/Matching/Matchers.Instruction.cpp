@@ -37,6 +37,8 @@ static bool matchOperandMetaFlag(const MetaFlag &Flag,
     return Target.hasOneUser();
   case MetaFlag::MF_allones:
     return PatternMatch::match(&Target, m_AllOnes());
+  case MetaFlag::MF_zero:
+    return PatternMatch::match(&Target, m_Zero());
   case MetaFlag::MF_lowbitmask:
     return PatternMatch::match(&Target, m_LowBitMask());
   case MetaFlag::MF_forbidpoison:

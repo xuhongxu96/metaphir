@@ -1,8 +1,8 @@
 add_metaphir_test(metaphir-matching-test ConstraintInterpreterTest.cpp
-                  NaiveMatcherTest.cpp)
+                  NaiveMatcherTest.cpp End2EndTest.cpp)
 
-target_link_libraries(metaphir-matching-test PRIVATE metaphir-matching
-                                                     LLVMAsmParser)
+target_link_libraries(metaphir-matching-test
+                      PRIVATE metaphir-matching metaphir-parser LLVMAsmParser)
 
 set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-Aggregate.ll
@@ -13,6 +13,7 @@ set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-NamedInstOperand.ll
     MIRMatcher-BasicBlockMembership.ll
     MIRMatcher-CrossBlock.ll
+    MIRMatcher-VectorTypes.ll
     MIRMatcher-Inputs.ll
     MIRMatcher-NewInstructionMatchers.ll
     MIRMatcher-BitCount.ll

@@ -17,6 +17,7 @@ MIR_META_FLAG(c, InstructionPlacement, 0, 0, AnyArgument)
 MIR_META_FLAG(o, InstructionPlacement, 0, 1, IntegerArgument)
 
 MIR_META_FLAG(allones, OperandPlacement, 0, 0, AnyArgument)
+MIR_META_FLAG(zero, OperandPlacement, 0, 0, AnyArgument)
 MIR_META_FLAG(lowbitmask, OperandPlacement, 0, 0, AnyArgument)
 MIR_META_FLAG(forbidpoison, OperandPlacement, 0, 0, AnyArgument)
 MIR_META_FLAG(integralconstant, OperandPlacement, 0, 0, AnyArgument)
