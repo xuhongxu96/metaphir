@@ -1,0 +1,3 @@
+%udiv1 = udiv:s i?bits ?x, ?y:constantint
+%udiv2 = udiv:?anch i?bits %udiv1, ?z:constantint
+;; ult((?y * ?z), shl(1, ?bits))

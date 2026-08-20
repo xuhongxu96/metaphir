@@ -3,13 +3,20 @@
 #endif
 
 #ifndef MIR_CONSTRAINT_OPERATOR_SCHEMA
-#define MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, Arity)
+#define MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, MinArity,       \
+                                       MaxArity)
 #endif
 
 #ifndef MIR_CONSTRAINT_OPERATOR
 #define MIR_CONSTRAINT_OPERATOR(ID, Name, Kind, Result, Arity)                 \
   MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)                                   \
-  MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, Arity)
+  MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, Arity, Arity)
+#endif
+
+#ifndef MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH
+#define MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(ID, Name, Kind, Result, Arity)    \
+  MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)                                   \
+  MIR_CONSTRAINT_OPERATOR_SCHEMA(ID, Name, Kind, Result, Arity, Arity + 1)
 #endif
 
 #ifndef MIR_CONSTRAINT_INTERPRETED_OPERATOR
@@ -17,15 +24,19 @@
   MIR_CONSTRAINT_OPERATOR(ID, Name, Kind, Result, Arity)
 #endif
 
+#ifndef MIR_CONSTRAINT_OPERATOR_ALIAS
+#define MIR_CONSTRAINT_OPERATOR_ALIAS(ID, Name, Kind)
+#endif
+
 MIR_CONSTRAINT_OPERATOR(LogicalOr, "||", Binary, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(LogicalAnd, "&&", Binary, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(Equal, "==", Binary, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(NotEqual, "!=", Binary, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(Add, "+", Binary, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Subtract, "-", Binary, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Multiply, "*", Binary, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Add, "+", Binary, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Subtract, "-", Binary, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Multiply, "*", Binary, IntegerResult, 2)
 MIR_CONSTRAINT_OPERATOR(Not, "!", Unary, BooleanResult, 1)
-MIR_CONSTRAINT_OPERATOR(Negate, "-", Unary, IntegerResult, 1)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Negate, "-", Unary, IntegerResult, 1)
 
 MIR_CONSTRAINT_OPERATOR(SLT, "slt", Call, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(ULT, "ult", Call, BooleanResult, 2)
@@ -35,20 +46,30 @@ MIR_CONSTRAINT_OPERATOR(SGT, "sgt", Call, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(UGT, "ugt", Call, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(SGE, "sge", Call, BooleanResult, 2)
 MIR_CONSTRAINT_OPERATOR(UGE, "uge", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(SDiv, "sdiv", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(UDiv, "udiv", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(SRem, "srem", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(URem, "urem", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Lshr, "lshr", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Ashr, "ashr", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Shl, "shl", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(And, "and", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Or, "or", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Xor, "xor", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(SDiv, "sdiv", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(UDiv, "udiv", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(SRem, "srem", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(URem, "urem", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Lshr, "lshr", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Ashr, "ashr", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Shl, "shl", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(And, "and", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Or, "or", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Xor, "xor", Call, IntegerResult, 2)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Isa, "isa", Call, BooleanResult, 2)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, IntegerResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, IntegerResult,
+                                    1)
 
+MIR_CONSTRAINT_OPERATOR_ALIAS(Add, "add", Call)
+MIR_CONSTRAINT_OPERATOR_ALIAS(Subtract, "sub", Call)
+MIR_CONSTRAINT_OPERATOR_ALIAS(Multiply, "mul", Call)
+MIR_CONSTRAINT_OPERATOR_ALIAS(Negate, "neg", Call)
+
+#undef MIR_CONSTRAINT_OPERATOR_ALIAS
 #undef MIR_CONSTRAINT_INTERPRETED_OPERATOR
 #undef MIR_CONSTRAINT_OPERATOR
+#undef MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH
 #undef MIR_CONSTRAINT_OPERATOR_SCHEMA
 #undef MIR_CONSTRAINT_OPERATOR_ID

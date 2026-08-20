@@ -1,0 +1,3 @@
+%neg = sub i?bits 0, ?a
+%and = and:s i?bits %neg, ?cm:lowbitmask
+%add = add:?anch:c i?bits ?a, %and

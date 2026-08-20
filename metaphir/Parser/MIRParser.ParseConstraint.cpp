@@ -261,9 +261,14 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
         Constraint::getOperatorID(Name, Constraint::Call);
     std::optional<Constraint::OperatorSchema> Schema =
         Constraint::getOperatorSchema(ID);
-    if (Schema && Args.size() != Schema->Arity)
-      return error("built-in constraint operation expects " +
-                   Twine(Schema->Arity) + " arguments");
+    if (Schema &&
+        (Args.size() < Schema->MinArity || Args.size() > Schema->MaxArity)) {
+      Twine Expected = Schema->MinArity == Schema->MaxArity
+                           ? Twine(Schema->MinArity) + " arguments"
+                           : Twine(Schema->MinArity) + " to " +
+                                 Twine(Schema->MaxArity) + " arguments";
+      return error("built-in constraint operation expects " + Expected);
+    }
     R = makeConstraint(Constraint::Call,
                        Schema ? Schema->Result : Constraint::Unknown, Name, 0,
                        false, nullptr, Args, L);

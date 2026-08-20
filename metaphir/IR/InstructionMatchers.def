@@ -16,124 +16,142 @@
 #ifndef MIR_INSTRUCTION_MATCHER_TARGET
 #define MIR_INSTRUCTION_MATCHER_TARGET(Name, TargetMatcher)
 #endif
+#ifndef MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX
+#define MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, OperandSyntax)
+#endif
 #ifndef MIR_INSTRUCTION_MATCHER
-#define MIR_INSTRUCTION_MATCHER(Name, TargetMatcher, Flags, Commutative)       \
+#define MIR_INSTRUCTION_MATCHER(Name, TargetMatcher, Flags, Commutative,       \
+                                OperandSyntax)                                 \
   MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Name)                                     \
   MIR_INSTRUCTION_MATCHER_ID(Name)                                             \
   MIR_INSTRUCTION_MATCHER_NAME(Name)                                           \
   MIR_INSTRUCTION_MATCHER_SUPPORTED_FLAGS(Name, Flags)                         \
   MIR_INSTRUCTION_MATCHER_COMMUTATIVE(Name, Commutative)                       \
-  MIR_INSTRUCTION_MATCHER_TARGET(Name, TargetMatcher)
+  MIR_INSTRUCTION_MATCHER_TARGET(Name, TargetMatcher)                          \
+  MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, OperandSyntax)
 #endif
 
-// Name, target matcher, supported semantic flags, supports :c.
+// Name, target matcher, supported semantic flags, supports :c, operand syntax.
+//
+// OperandSyntax is consumed by the MIR parser to decide how this instruction's
+// operands are spelled (see Instruction::OperandSyntax). Shared grammars:
+//   Unary   fneg:?f i?n ?a                     (one typed operand)
+//   Binary  add i?n ?a, ?b                     (typed, comma, value)
+//   Ternary select i1 ?c, i?n ?t, i?n ?f       (typed, comma, typed, comma,
+//   typed) Cast    trunc i?n ?a to i?m                (typed, 'to', type)
+//   Custom  all other grammars (call, load, phi, ...) get bespoke parser code
 MIR_INSTRUCTION_MATCHER(fneg, matchOpcode<llvm::Instruction::FNeg>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Unary)
 
 MIR_INSTRUCTION_MATCHER(add, matchOpcode<llvm::Instruction::Add>, NSWNUWFlags,
-                        true)
+                        true, Binary)
 MIR_INSTRUCTION_MATCHER(fadd, matchOpcode<llvm::Instruction::FAdd>,
-                        FastMathFlags, true)
+                        FastMathFlags, true, Binary)
 MIR_INSTRUCTION_MATCHER(sub, matchOpcode<llvm::Instruction::Sub>, NSWNUWFlags,
-                        false)
+                        false, Binary)
 MIR_INSTRUCTION_MATCHER(fsub, matchOpcode<llvm::Instruction::FSub>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Binary)
 MIR_INSTRUCTION_MATCHER(mul, matchOpcode<llvm::Instruction::Mul>, NSWNUWFlags,
-                        true)
+                        true, Binary)
 MIR_INSTRUCTION_MATCHER(fmul, matchOpcode<llvm::Instruction::FMul>,
-                        FastMathFlags, true)
+                        FastMathFlags, true, Binary)
 MIR_INSTRUCTION_MATCHER(udiv, matchOpcode<llvm::Instruction::UDiv>, ExactFlag,
-                        false)
+                        false, Binary)
 MIR_INSTRUCTION_MATCHER(sdiv, matchOpcode<llvm::Instruction::SDiv>, ExactFlag,
-                        false)
+                        false, Binary)
 MIR_INSTRUCTION_MATCHER(fdiv, matchOpcode<llvm::Instruction::FDiv>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Binary)
 MIR_INSTRUCTION_MATCHER(urem, matchOpcode<llvm::Instruction::URem>, NoFlags,
-                        false)
+                        false, Binary)
 MIR_INSTRUCTION_MATCHER(srem, matchOpcode<llvm::Instruction::SRem>, NoFlags,
-                        false)
+                        false, Binary)
 MIR_INSTRUCTION_MATCHER(frem, matchOpcode<llvm::Instruction::FRem>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Binary)
 
 MIR_INSTRUCTION_MATCHER(shl, matchOpcode<llvm::Instruction::Shl>, NSWNUWFlags,
-                        false)
+                        false, Binary)
 MIR_INSTRUCTION_MATCHER(lshr, matchOpcode<llvm::Instruction::LShr>, ExactFlag,
-                        false)
+                        false, Binary)
 MIR_INSTRUCTION_MATCHER(ashr, matchOpcode<llvm::Instruction::AShr>, ExactFlag,
-                        false)
-MIR_INSTRUCTION_MATCHER(and, matchOpcode<llvm::Instruction::And>, NoFlags, true)
+                        false, Binary)
+MIR_INSTRUCTION_MATCHER(shr, matchShr, ExactFlag, false, Binary)
+MIR_INSTRUCTION_MATCHER(and, matchOpcode<llvm::Instruction::And>, NoFlags, true,
+                        Binary)
 MIR_INSTRUCTION_MATCHER(or, matchOpcode<llvm::Instruction::Or>, DisjointFlag,
-                        true)
-MIR_INSTRUCTION_MATCHER(xor, matchOpcode<llvm::Instruction::Xor>, NoFlags, true)
+                        true, Binary)
+MIR_INSTRUCTION_MATCHER(xor, matchOpcode<llvm::Instruction::Xor>, NoFlags, true,
+                        Binary)
+MIR_INSTRUCTION_MATCHER(bitwiseLogic, matchBitwiseLogic, NoFlags, true, Binary)
 
 MIR_INSTRUCTION_MATCHER(extractelement,
                         matchOpcode<llvm::Instruction::ExtractElement>, NoFlags,
-                        false)
+                        false, Custom)
 MIR_INSTRUCTION_MATCHER(insertelement,
                         matchOpcode<llvm::Instruction::InsertElement>, NoFlags,
-                        false)
+                        false, Ternary)
 MIR_INSTRUCTION_MATCHER(shufflevector,
                         matchOpcode<llvm::Instruction::ShuffleVector>, NoFlags,
-                        false)
+                        false, Ternary)
 MIR_INSTRUCTION_MATCHER(extractvalue,
                         matchOpcode<llvm::Instruction::ExtractValue>, NoFlags,
-                        false)
+                        false, Custom)
 MIR_INSTRUCTION_MATCHER(insertvalue,
                         matchOpcode<llvm::Instruction::InsertValue>, NoFlags,
-                        false)
+                        false, Custom)
 
 MIR_INSTRUCTION_MATCHER(alloca, matchOpcode<llvm::Instruction::Alloca>,
-                        InAllocaFlag, false)
+                        InAllocaFlag, false, Custom)
 MIR_INSTRUCTION_MATCHER(load, matchOpcode<llvm::Instruction::Load>,
-                        VolatileFlag, false)
+                        VolatileFlag, false, Custom)
 MIR_INSTRUCTION_MATCHER(store, matchOpcode<llvm::Instruction::Store>,
-                        VolatileFlag, false)
+                        VolatileFlag, false, Custom)
 MIR_INSTRUCTION_MATCHER(getelementptr,
                         matchOpcode<llvm::Instruction::GetElementPtr>, GEPFlags,
-                        false)
+                        false, Custom)
 
 MIR_INSTRUCTION_MATCHER(trunc, matchOpcode<llvm::Instruction::Trunc>,
-                        NSWNUWFlags, false)
+                        NSWNUWFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(zext, matchOpcode<llvm::Instruction::ZExt>, NNegFlag,
-                        false)
+                        false, Cast)
 MIR_INSTRUCTION_MATCHER(sext, matchOpcode<llvm::Instruction::SExt>, NoFlags,
-                        false)
+                        false, Cast)
+MIR_INSTRUCTION_MATCHER(zextOrSext, matchZExtOrSExt, NoFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(fptrunc, matchOpcode<llvm::Instruction::FPTrunc>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(fpext, matchOpcode<llvm::Instruction::FPExt>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(fptoui, matchOpcode<llvm::Instruction::FPToUI>, NoFlags,
-                        false)
+                        false, Cast)
 MIR_INSTRUCTION_MATCHER(fptosi, matchOpcode<llvm::Instruction::FPToSI>, NoFlags,
-                        false)
+                        false, Cast)
 MIR_INSTRUCTION_MATCHER(uitofp, matchOpcode<llvm::Instruction::UIToFP>,
-                        FastMathNNegFlags, false)
+                        FastMathNNegFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(sitofp, matchOpcode<llvm::Instruction::SIToFP>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(ptrtoint, matchOpcode<llvm::Instruction::PtrToInt>,
-                        NoFlags, false)
+                        NoFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(ptrtoaddr, matchOpcode<llvm::Instruction::PtrToAddr>,
-                        NoFlags, false)
+                        NoFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(inttoptr, matchOpcode<llvm::Instruction::IntToPtr>,
-                        NoFlags, false)
+                        NoFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(bitcast, matchOpcode<llvm::Instruction::BitCast>,
-                        NoFlags, false)
+                        NoFlags, false, Cast)
 
 MIR_INSTRUCTION_MATCHER(ret, matchOpcode<llvm::Instruction::Ret>, NoFlags,
-                        false)
-MIR_INSTRUCTION_MATCHER(br, matchBranch, NoFlags, false)
+                        false, Custom)
+MIR_INSTRUCTION_MATCHER(br, matchBranch, NoFlags, false, Custom)
 MIR_INSTRUCTION_MATCHER(icmp, matchOpcode<llvm::Instruction::ICmp>,
-                        SameSignFlag, false)
+                        SameSignFlag, false, Custom)
 MIR_INSTRUCTION_MATCHER(fcmp, matchOpcode<llvm::Instruction::FCmp>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Custom)
 MIR_INSTRUCTION_MATCHER(phi, matchOpcode<llvm::Instruction::PHI>, FastMathFlags,
-                        false)
+                        false, Custom)
 MIR_INSTRUCTION_MATCHER(select, matchOpcode<llvm::Instruction::Select>,
-                        FastMathFlags, false)
+                        FastMathFlags, false, Ternary)
 MIR_INSTRUCTION_MATCHER(freeze, matchOpcode<llvm::Instruction::Freeze>, NoFlags,
-                        false)
+                        false, Unary)
 MIR_INSTRUCTION_MATCHER(call, matchOpcode<llvm::Instruction::Call>, NoFlags,
-                        true)
+                        true, Custom)
 
 #undef MIR_INSTRUCTION_MATCHER
 #undef MIR_INSTRUCTION_MATCHER_COMMUTATIVE
@@ -142,3 +160,4 @@ MIR_INSTRUCTION_MATCHER(call, matchOpcode<llvm::Instruction::Call>, NoFlags,
 #undef MIR_INSTRUCTION_MATCHER_NAME
 #undef MIR_INSTRUCTION_MATCHER_ID
 #undef MIR_INSTRUCTION_MATCHER_TOKEN_KIND
+#undef MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX

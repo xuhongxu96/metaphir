@@ -26,6 +26,10 @@ entry:
 ; CHECK-NEXT:   match 0:
 ; CHECK-NEXT:     {?instruction = %result, ?intrinsic = llvm.abs, ?return_type = i32, ?types = [i32, i1], ?values = [%x, false]}
 
+; ERROR: target 0: @constraint_abs
+; ERROR-NEXT:   no match
+; ERROR-NEXT:   constraint not satisfied: (isa ?instruction "ImaginaryValue") (cannot evaluate: unknown LLVM value class 'ImaginaryValue')
+
 ;--- sqrt.ll
 declare float @llvm.sqrt.f32(float)
 
@@ -51,7 +55,3 @@ entry:
 }
 ; CHECK-NEXT: target 2: @constraint_ordinary
 ; CHECK-NEXT:   no match
-
-; ERROR: target 0: @constraint_abs
-; ERROR-NEXT:   no match
-; ERROR-NEXT:   constraint not satisfied: (isa ?instruction "ImaginaryValue") (cannot evaluate: unknown LLVM value class 'ImaginaryValue')

@@ -1,0 +1,2 @@
+%scmp = call:?anch ?rty @llvm.scmp(i?bits ?x:apint, i?bits 0)
+;; sge(?x, -1) && sle(?x, 1)

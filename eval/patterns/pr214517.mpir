@@ -1,0 +1,2 @@
+%cttz = call:s i?bits @llvm.cttz(i?bits ?x, i1 ?isz)
+%shl = shl:?anch i?bits 1, %cttz

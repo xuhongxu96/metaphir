@@ -14,6 +14,9 @@ entry:
   %sum = add i32 %x, %y
   ret i32 %sum
 }
+; DIR: target 0: @from_ll
+; DIR-NEXT:   match 0:
+; DIR-NEXT:     {?x = %x, ?y = %y}
 
 ;--- bc-input.ll
 define i32 @from_bc(i32 %x, i32 %y) {
@@ -21,7 +24,10 @@ entry:
   %sum = add i32 %x, %y
   ret i32 %sum
 }
+; DIR-NEXT: target 1: @from_bc
+; DIR-NEXT:   match 0:
+; DIR-NEXT:     {?x = %x, ?y = %y}
 
-; DIR: target 0: @from_ll
-; DIR: target 1: @from_bc
 ; BC: target 0: @from_bc
+; BC-NEXT:   match 0:
+; BC-NEXT:     {?x = %x, ?y = %y}

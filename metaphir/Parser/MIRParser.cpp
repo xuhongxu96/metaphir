@@ -500,14 +500,22 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
   }
   if (Lex.getKind() == tok::IntrinsicPrefix) {
     next();
-    if (Lex.getKind() != tok::MetaVar)
-      return error("expected intrinsic ID meta variable");
-    auto *M = getMeta(Lex.getStrVal(), MetaType::IntrinsicID, Lex.getLoc());
-    if (!M)
-      return true;
-    next();
-    Result = M;
-    return false;
+    if (Lex.getKind() == tok::MetaVar) {
+      auto *M = getMeta(Lex.getStrVal(), MetaType::IntrinsicID, Lex.getLoc());
+      if (!M)
+        return true;
+      next();
+      Result = M;
+      return false;
+    }
+    if (Lex.getKind() == tok::Identifier) {
+      std::string Name = "llvm.";
+      Name += Lex.getStrVal();
+      next();
+      Result = GlobalValue::get(Context, Name, Range);
+      return false;
+    }
+    return error("expected intrinsic ID meta variable or intrinsic name");
   }
   if (Lex.getKind() == tok::GlobalVar || Lex.getKind() == tok::GlobalID) {
     std::string NameStorage;
@@ -589,11 +597,24 @@ bool MIRParser::parseTypedOperand(MatcherOperand &Result, MetaType Expected) {
   }
   if (parseValue(Result.Val, Expected))
     return true;
+  return parseOperandMetaFlags(Result);
+}
+
+bool MIRParser::parseOperandMetaFlags(MatcherOperand &Result) {
   SmallVector<MetaFlag *, 4> Flags;
   if (parseMetaFlags(Flags, MetaFlag::OperandPlacement))
     return true;
   if (!Flags.empty()) {
     Result.setMetaFlags(Context, Flags);
+    if (any_of(Flags, [](const MetaFlag *Flag) {
+          return Flag->getMetaFlagID() == MetaFlag::MF_constantint;
+        })) {
+      auto *Var = dyn_cast<MetaVariable>(Result.Val);
+      if (!Var)
+        return error(
+            "':constantint' can only be applied to a meta variable operand");
+      Var->setType(MetaType::Nat);
+    }
   }
   return false;
 }
@@ -682,18 +703,12 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     return expect(tok::comma, "expected ',' between operands");
   };
 
-  if (ID == Instruction::I_fneg || ID == Instruction::I_freeze) {
+  switch (Instruction::getOperandSyntax(ID)) {
+  case Instruction::OperandSyntax::Unary:
     if (Typed())
       return true;
-  } else if (ID == Instruction::I_add || ID == Instruction::I_fadd ||
-             ID == Instruction::I_sub || ID == Instruction::I_fsub ||
-             ID == Instruction::I_mul || ID == Instruction::I_fmul ||
-             ID == Instruction::I_udiv || ID == Instruction::I_sdiv ||
-             ID == Instruction::I_fdiv || ID == Instruction::I_urem ||
-             ID == Instruction::I_srem || ID == Instruction::I_frem ||
-             ID == Instruction::I_shl || ID == Instruction::I_lshr ||
-             ID == Instruction::I_ashr || ID == Instruction::I_and ||
-             ID == Instruction::I_or || ID == Instruction::I_xor) {
+    break;
+  case Instruction::OperandSyntax::Binary: {
     MatcherOperand A;
     if (parseTypedOperand(A))
       return true;
@@ -704,126 +719,16 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     B.Ty = A.Ty;
     if (parseValue(B.Val))
       return true;
-    SmallVector<MetaFlag *, 4> Fs;
-    if (parseMetaFlags(Fs, MetaFlag::OperandPlacement))
+    if (parseOperandMetaFlags(B))
       return true;
-    if (!Fs.empty()) {
-      B.setMetaFlags(Context, Fs);
-    }
     Ops.push_back(B);
-  } else if (ID == Instruction::I_extractelement) {
-    if (Typed() || Comma() || Typed(MetaType::Nat))
-      return true;
-  } else if (ID == Instruction::I_insertelement ||
-             ID == Instruction::I_shufflevector ||
-             ID == Instruction::I_select) {
+    break;
+  }
+  case Instruction::OperandSyntax::Ternary:
     if (Typed() || Comma() || Typed() || Comma() || Typed())
       return true;
-  } else if (ID == Instruction::I_extractvalue ||
-             ID == Instruction::I_insertvalue) {
-    if (Typed())
-      return true;
-    if (ID == Instruction::I_insertvalue && (Comma() || Typed()))
-      return true;
-    while (consume(tok::comma)) {
-      MatcherOperand O;
-      if (Lex.getKind() == tok::dotdotdot) {
-        if (parseArrayCapture(O, false))
-          return true;
-        Ops.push_back(O);
-        break;
-      }
-      if (parseValue(O.Val, MetaType::Nat))
-        return true;
-      Ops.push_back(O);
-    }
-  } else if (ID == Instruction::I_alloca) {
-    if (TypeOnly())
-      return true;
-    while (consume(tok::comma)) {
-      if (Lex.getKind() == tok::kw_align ||
-          Lex.getKind() == tok::kw_addrspace) {
-        bool AS = Lex.getKind() == tok::kw_addrspace;
-        next();
-        if (AS && expect(tok::lparen, "expected '(' after addrspace"))
-          return true;
-        MatcherOperand O;
-        O.IsInstructionOperand = false;
-        O.Key = AS ? MatcherOperand::AddressSpace : MatcherOperand::Alignment;
-        if (parseValue(O.Val, MetaType::Nat))
-          return true;
-        Ops.push_back(O);
-        if (AS && expect(tok::rparen, "expected ')' after addrspace"))
-          return true;
-      } else if (Typed(MetaType::Nat))
-        return true;
-    }
-  } else if (ID == Instruction::I_load) {
-    if (TypeOnly() || Comma() || Typed())
-      return true;
-    if (consume(tok::comma)) {
-      if (Lex.getKind() != tok::kw_align)
-        return error("expected align");
-      next();
-      MatcherOperand O;
-      O.IsInstructionOperand = false;
-      O.Key = MatcherOperand::Alignment;
-      if (parseValue(O.Val, MetaType::Nat))
-        return true;
-      Ops.push_back(O);
-    }
-  } else if (ID == Instruction::I_store) {
-    if (Typed() || Comma() || Typed())
-      return true;
-    if (consume(tok::comma)) {
-      if (Lex.getKind() != tok::kw_align)
-        return error("expected align");
-      next();
-      MatcherOperand O;
-      O.IsInstructionOperand = false;
-      O.Key = MatcherOperand::Alignment;
-      if (parseValue(O.Val, MetaType::Nat))
-        return true;
-      Ops.push_back(O);
-    }
-  } else if (ID == Instruction::I_getelementptr) {
-    if (Lex.getKind() == tok::kw_inrange) {
-      next();
-      if (expect(tok::lparen, "expected '(' after inrange"))
-        return true;
-      MatcherOperand L, U;
-      L.IsInstructionOperand = false;
-      U.IsInstructionOperand = false;
-      L.Key = MatcherOperand::InRangeLower;
-      U.Key = MatcherOperand::InRangeUpper;
-      if (parseValue(L.Val, MetaType::Nat) || Comma() ||
-          parseValue(U.Val, MetaType::Nat) ||
-          expect(tok::rparen, "expected ')' after inrange"))
-        return true;
-      Ops.push_back(L);
-      Ops.push_back(U);
-    }
-    if (TypeOnly() || Comma() || Typed())
-      return true;
-    while (consume(tok::comma)) {
-      MatcherOperand O;
-      if (Lex.getKind() == tok::dotdotdot) {
-        if (parseArrayCapture(O, true))
-          return true;
-        Ops.push_back(O);
-        break;
-      }
-      if (parseTypedOperand(O))
-        return true;
-      Ops.push_back(O);
-    }
-  } else if (ID == Instruction::I_trunc || ID == Instruction::I_zext ||
-             ID == Instruction::I_sext || ID == Instruction::I_fptrunc ||
-             ID == Instruction::I_fpext || ID == Instruction::I_fptoui ||
-             ID == Instruction::I_fptosi || ID == Instruction::I_uitofp ||
-             ID == Instruction::I_sitofp || ID == Instruction::I_ptrtoint ||
-             ID == Instruction::I_ptrtoaddr || ID == Instruction::I_inttoptr ||
-             ID == Instruction::I_bitcast) {
+    break;
+  case Instruction::OperandSyntax::Cast:
     if (Typed())
       return true;
     if (Lex.getKind() != tok::kw_to)
@@ -831,107 +736,233 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     next();
     if (TypeOnly())
       return true;
-  } else if (ID == Instruction::I_ret) {
-    MatcherOperand O;
-    if (parseType(O.Ty, true))
-      return true;
-    if (O.Ty->getTypeID() == Type::VoidTyID)
-      O.IsInstructionOperand = false;
-    else if (parseValue(O.Val))
-      return true;
-    Ops.push_back(O);
-  } else if (ID == Instruction::I_br) {
-    MatcherOperand First;
-    if (parseType(First.Ty))
-      return true;
-    bool IsLabel = First.Ty->getTypeID() == Type::LabelTyID;
-    bool IsBool = isa<IntegerType>(First.Ty) &&
-                  cast<IntegerType>(First.Ty)->getNumBits() == 1;
-    if (parseValue(First.Val, IsLabel  ? MetaType::BasicBlock
-                              : IsBool ? MetaType::Bool
-                                       : MetaType::Value))
-      return true;
-    Ops.push_back(First);
-    if (!IsLabel) {
-      if (Comma() || Typed(MetaType::BasicBlock) || Comma() ||
-          Typed(MetaType::BasicBlock))
+    break;
+  case Instruction::OperandSyntax::Custom:
+    switch (ID) {
+    case Instruction::I_extractelement:
+      if (Typed() || Comma() || Typed(MetaType::Nat))
         return true;
-    }
-  } else if (ID == Instruction::I_icmp || ID == Instruction::I_fcmp) {
-    MatcherOperand Pred;
-    Pred.IsInstructionOperand = false;
-    Pred.Key = MatcherOperand::Predicate;
-    if (Lex.getKind() == tok::MetaVar) {
-      MetaVariable *M =
-          getMeta(Lex.getStrVal(), MetaType::CmpPredicate, Lex.getLoc());
-      if (!M)
+      break;
+    case Instruction::I_extractvalue:
+    case Instruction::I_insertvalue:
+      if (Typed())
         return true;
-      Pred.Val = M;
-      next();
-    } else if (std::optional<KeywordConstant::KeywordID> Predicate =
-                   predicateKeywordID(Lex.getKind())) {
-      Pred.Val = KeywordConstant::get(Context, *Predicate,
-                                      SourceRange{Lex.getLoc(), Lex.getLoc()});
-      next();
-    } else
-      return error("expected comparison predicate");
-    Ops.push_back(Pred);
-    MatcherOperand A;
-    if (parseTypedOperand(A))
-      return true;
-    Ops.push_back(A);
-    if (Comma())
-      return true;
-    MatcherOperand B;
-    B.Ty = A.Ty;
-    if (parseValue(B.Val))
-      return true;
-    Ops.push_back(B);
-  } else if (ID == Instruction::I_phi) {
-    Type *Ty = nullptr;
-    if (parseType(Ty))
-      return true;
-    do {
-      if (expect(tok::lsquare, "expected '[' in phi"))
+      if (ID == Instruction::I_insertvalue && (Comma() || Typed()))
         return true;
-      MatcherOperand V;
-      V.Ty = Ty;
-      if (parseValue(V.Val) || Comma())
-        return true;
-      Ops.push_back(V);
-      MatcherOperand BB;
-      if (parseValue(BB.Val, MetaType::BasicBlock) ||
-          expect(tok::rsquare, "expected ']' in phi"))
-        return true;
-      Ops.push_back(BB);
-    } while (consume(tok::comma));
-  } else if (ID == Instruction::I_call) {
-    if (TypeOnly())
-      return true;
-    MatcherOperand Callee;
-    if (parseValue(Callee.Val, MetaType::Function))
-      return true;
-    Ops.push_back(Callee);
-    if (expect(tok::lparen, "expected '(' in call"))
-      return true;
-    if (Lex.getKind() != tok::rparen) {
-      do {
-        MatcherOperand A;
+      while (consume(tok::comma)) {
+        MatcherOperand O;
         if (Lex.getKind() == tok::dotdotdot) {
-          if (parseArrayCapture(A, true))
+          if (parseArrayCapture(O, false))
             return true;
-          Ops.push_back(A);
+          Ops.push_back(O);
           break;
         }
-        if (parseTypedOperand(A))
+        if (parseValue(O.Val, MetaType::Nat))
           return true;
-        Ops.push_back(A);
-      } while (consume(tok::comma));
+        Ops.push_back(O);
+      }
+      break;
+    case Instruction::I_alloca:
+      if (TypeOnly())
+        return true;
+      while (consume(tok::comma)) {
+        if (Lex.getKind() == tok::kw_align ||
+            Lex.getKind() == tok::kw_addrspace) {
+          bool AS = Lex.getKind() == tok::kw_addrspace;
+          next();
+          if (AS && expect(tok::lparen, "expected '(' after addrspace"))
+            return true;
+          MatcherOperand O;
+          O.IsInstructionOperand = false;
+          O.Key = AS ? MatcherOperand::AddressSpace : MatcherOperand::Alignment;
+          if (parseValue(O.Val, MetaType::Nat))
+            return true;
+          Ops.push_back(O);
+          if (AS && expect(tok::rparen, "expected ')' after addrspace"))
+            return true;
+        } else if (Typed(MetaType::Nat))
+          return true;
+      }
+      break;
+    case Instruction::I_load:
+      if (TypeOnly() || Comma() || Typed())
+        return true;
+      if (consume(tok::comma)) {
+        if (Lex.getKind() != tok::kw_align)
+          return error("expected align");
+        next();
+        MatcherOperand O;
+        O.IsInstructionOperand = false;
+        O.Key = MatcherOperand::Alignment;
+        if (parseValue(O.Val, MetaType::Nat))
+          return true;
+        Ops.push_back(O);
+      }
+      break;
+    case Instruction::I_store:
+      if (Typed() || Comma() || Typed())
+        return true;
+      if (consume(tok::comma)) {
+        if (Lex.getKind() != tok::kw_align)
+          return error("expected align");
+        next();
+        MatcherOperand O;
+        O.IsInstructionOperand = false;
+        O.Key = MatcherOperand::Alignment;
+        if (parseValue(O.Val, MetaType::Nat))
+          return true;
+        Ops.push_back(O);
+      }
+      break;
+    case Instruction::I_getelementptr:
+      if (Lex.getKind() == tok::kw_inrange) {
+        next();
+        if (expect(tok::lparen, "expected '(' after inrange"))
+          return true;
+        MatcherOperand L, U;
+        L.IsInstructionOperand = false;
+        U.IsInstructionOperand = false;
+        L.Key = MatcherOperand::InRangeLower;
+        U.Key = MatcherOperand::InRangeUpper;
+        if (parseValue(L.Val, MetaType::Nat) || Comma() ||
+            parseValue(U.Val, MetaType::Nat) ||
+            expect(tok::rparen, "expected ')' after inrange"))
+          return true;
+        Ops.push_back(L);
+        Ops.push_back(U);
+      }
+      if (TypeOnly() || Comma() || Typed())
+        return true;
+      while (consume(tok::comma)) {
+        MatcherOperand O;
+        if (Lex.getKind() == tok::dotdotdot) {
+          if (parseArrayCapture(O, true))
+            return true;
+          Ops.push_back(O);
+          break;
+        }
+        if (parseTypedOperand(O))
+          return true;
+        Ops.push_back(O);
+      }
+      break;
+    case Instruction::I_ret: {
+      MatcherOperand O;
+      if (parseType(O.Ty, true))
+        return true;
+      if (O.Ty->getTypeID() == Type::VoidTyID)
+        O.IsInstructionOperand = false;
+      else if (parseValue(O.Val))
+        return true;
+      Ops.push_back(O);
+      break;
     }
-    if (expect(tok::rparen, "expected ')' after call arguments"))
-      return true;
-  } else {
-    return error("instruction parser is not implemented for '" + Op + "'");
+    case Instruction::I_br: {
+      MatcherOperand First;
+      if (parseType(First.Ty))
+        return true;
+      bool IsLabel = First.Ty->getTypeID() == Type::LabelTyID;
+      bool IsBool = isa<IntegerType>(First.Ty) &&
+                    cast<IntegerType>(First.Ty)->getNumBits() == 1;
+      if (parseValue(First.Val, IsLabel  ? MetaType::BasicBlock
+                                : IsBool ? MetaType::Bool
+                                         : MetaType::Value))
+        return true;
+      Ops.push_back(First);
+      if (!IsLabel) {
+        if (Comma() || Typed(MetaType::BasicBlock) || Comma() ||
+            Typed(MetaType::BasicBlock))
+          return true;
+      }
+      break;
+    }
+    case Instruction::I_icmp:
+    case Instruction::I_fcmp: {
+      MatcherOperand Pred;
+      Pred.IsInstructionOperand = false;
+      Pred.Key = MatcherOperand::Predicate;
+      if (Lex.getKind() == tok::MetaVar) {
+        MetaVariable *M =
+            getMeta(Lex.getStrVal(), MetaType::CmpPredicate, Lex.getLoc());
+        if (!M)
+          return true;
+        Pred.Val = M;
+        next();
+      } else if (std::optional<KeywordConstant::KeywordID> Predicate =
+                     predicateKeywordID(Lex.getKind())) {
+        Pred.Val = KeywordConstant::get(
+            Context, *Predicate, SourceRange{Lex.getLoc(), Lex.getLoc()});
+        next();
+      } else
+        return error("expected comparison predicate");
+      Ops.push_back(Pred);
+      MatcherOperand A;
+      if (parseTypedOperand(A))
+        return true;
+      Ops.push_back(A);
+      if (Comma())
+        return true;
+      MatcherOperand B;
+      B.Ty = A.Ty;
+      if (parseValue(B.Val))
+        return true;
+      if (parseOperandMetaFlags(B))
+        return true;
+      Ops.push_back(B);
+      break;
+    }
+    case Instruction::I_phi: {
+      Type *Ty = nullptr;
+      if (parseType(Ty))
+        return true;
+      do {
+        if (expect(tok::lsquare, "expected '[' in phi"))
+          return true;
+        MatcherOperand V;
+        V.Ty = Ty;
+        if (parseValue(V.Val) || Comma())
+          return true;
+        Ops.push_back(V);
+        MatcherOperand BB;
+        if (parseValue(BB.Val, MetaType::BasicBlock) ||
+            expect(tok::rsquare, "expected ']' in phi"))
+          return true;
+        Ops.push_back(BB);
+      } while (consume(tok::comma));
+      break;
+    }
+    case Instruction::I_call:
+      if (TypeOnly())
+        return true;
+      {
+        MatcherOperand Callee;
+        if (parseValue(Callee.Val, MetaType::Function))
+          return true;
+        Ops.push_back(Callee);
+      }
+      if (expect(tok::lparen, "expected '(' in call"))
+        return true;
+      if (Lex.getKind() != tok::rparen) {
+        do {
+          MatcherOperand A;
+          if (Lex.getKind() == tok::dotdotdot) {
+            if (parseArrayCapture(A, true))
+              return true;
+            Ops.push_back(A);
+            break;
+          }
+          if (parseTypedOperand(A))
+            return true;
+          Ops.push_back(A);
+        } while (consume(tok::comma));
+      }
+      if (expect(tok::rparen, "expected ')' after call arguments"))
+        return true;
+      break;
+    default:
+      return error("instruction parser is not implemented for '" + Op + "'");
+    }
+    break;
   }
 
   for (MetaFlag *F : MFlags) {

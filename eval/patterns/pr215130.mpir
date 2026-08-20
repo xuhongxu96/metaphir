@@ -1,0 +1,3 @@
+%sat = call:s i?bits @llvm.uadd.sat(i?bits ?x, i?bits ?c:constantint)
+%add = add:?anch i?bits %sat, ?negc:constantint
+;; add(?c, ?negc, ?bits) == 0

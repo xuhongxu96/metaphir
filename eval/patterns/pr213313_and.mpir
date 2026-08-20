@@ -1,0 +1,3 @@
+%zext = zext i?small ?x to i?big
+%sext = sext i?small ?x to i?big
+%and = and:?anch i?big %zext, %sext

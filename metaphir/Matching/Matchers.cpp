@@ -5,6 +5,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
 
@@ -85,7 +86,19 @@ getTargetBinding(const metaphir::Value &Matcher, const llvm::Value &Target) {
 
 static bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
   const auto *Global = dyn_cast<llvm::GlobalValue>(&Target);
-  return Global && Matcher.getName() == Global->getName();
+  if (!Global)
+    return false;
+  StringRef MatcherName = Matcher.getName();
+  // llvm.* names denote intrinsic function calls (e.g. llvm.ctlz). Match on
+  // the intrinsic base name so an overloaded callee (llvm.ctlz.i32) matches
+  // the pattern's llvm.ctlz.
+  if (MatcherName.starts_with("llvm.")) {
+    const auto *Function = dyn_cast<llvm::Function>(Global);
+    if (!Function || !Function->isIntrinsic())
+      return false;
+    return Intrinsic::getBaseName(Function->getIntrinsicID()) == MatcherName;
+  }
+  return MatcherName == Global->getName();
 }
 
 static bool matches(const IntegerConstant &Matcher, const llvm::Value &Target) {

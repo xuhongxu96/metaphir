@@ -1,0 +1,3 @@
+%trunc = trunc i?big ?x to i?small
+%sub = sub i?small 0, %trunc
+%zext = zext:?anch i?small %sub to i?big

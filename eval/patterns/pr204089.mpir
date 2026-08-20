@@ -1,0 +1,3 @@
+%trunc = trunc nuw:?nuw nsw:?nsw i?big ?x to i?small
+%ext = zextOrSext:?anch i?small %trunc to i?big
+;; ((isa(?anch, "ZExtInst") && ?nuw) || (isa(?anch, "SExtInst") && ?nsw))

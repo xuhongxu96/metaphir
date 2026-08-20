@@ -4,8 +4,6 @@
 ;--- pattern.mpir
 ?loop:
 %value = phi i32 [0, ?entry], [%value, ?loop]
-; CHECK: undefined or forward local reference '%value'
-
 ;--- target.ll
 define i32 @phi_target(i1 %condition) {
 entry:
@@ -18,3 +16,7 @@ loop:
 exit:
   ret i32 0
 }
+
+; CHECK: error: undefined or forward local reference '%value'
+; CHECK-NEXT: %value = phi i32 [0, ?entry], [%value, ?loop]
+; CHECK-NEXT:                                ^

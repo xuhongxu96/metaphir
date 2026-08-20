@@ -121,7 +121,8 @@ TEST(MetaphIRConstructs, GeneratedExtensibilitySchemas) {
   auto ULT = Constraint::getOperatorSchema(Constraint::O_ULT);
   ASSERT_TRUE(ULT);
   EXPECT_EQ(ULT->Result, Constraint::BooleanResult);
-  EXPECT_EQ(ULT->Arity, 2u);
+  EXPECT_EQ(ULT->MinArity, 2u);
+  EXPECT_EQ(ULT->MaxArity, 2u);
   EXPECT_FALSE(Constraint::getOperatorSchema(Constraint::UnknownOperator));
   EXPECT_EQ(Constraint::getOperatorID("ult", Constraint::Call),
             Constraint::O_ULT);

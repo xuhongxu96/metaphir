@@ -3,6 +3,7 @@
 #include "metaphir/IR/Values.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
@@ -52,6 +53,10 @@ static bool matchOperandMetaFlag(const MetaFlag &Flag,
     const APInt *Value = nullptr;
     return PatternMatch::match(&Target, m_APInt(Value));
   }
+  case MetaFlag::MF_constantint:
+    return isa<llvm::ConstantInt>(Target);
+  case MetaFlag::MF_poweroftwo:
+    return PatternMatch::match(&Target, m_Power2());
   case MetaFlag::MF_or: {
     assert(!Flag.getArguments().empty() &&
            "':or' requires at least one argument");
@@ -186,6 +191,20 @@ static bool matchSemanticFlags(const Instruction &Matcher,
 template <unsigned Opcode>
 static bool matchOpcode(const llvm::Instruction &Target) {
   return Target.getOpcode() == Opcode;
+}
+
+static bool matchShr(const llvm::Instruction &Target) {
+  return Target.getOpcode() == llvm::Instruction::LShr ||
+         Target.getOpcode() == llvm::Instruction::AShr;
+}
+
+static bool matchZExtOrSExt(const llvm::Instruction &Target) {
+  return Target.getOpcode() == llvm::Instruction::ZExt ||
+         Target.getOpcode() == llvm::Instruction::SExt;
+}
+
+static bool matchBitwiseLogic(const llvm::Instruction &Target) {
+  return llvm::Instruction::isBitwiseLogicOp(Target.getOpcode());
 }
 
 static bool matchBranch(const llvm::Instruction &Target) {

@@ -54,6 +54,11 @@ public:
 
   using FlagMask = uint64_t;
 
+  // How the parser spells this instruction's operands. Shared grammars are
+  // dispatched by the parser from the .def (see getOperandSyntax); Custom
+  // instructions have bespoke per-ID parse code.
+  enum class OperandSyntax { Unary, Binary, Ternary, Cast, Custom };
+
   static constexpr FlagMask NoFlags = 0;
 
   static constexpr FlagMask FastMathFlags =
@@ -111,6 +116,7 @@ public:
   static StringRef getOpcodeName(InstructionID ID);
   static FlagMask getSupportedFlags(InstructionID ID);
   static bool isCommutative(InstructionID ID);
+  static OperandSyntax getOperandSyntax(InstructionID ID);
   static Instruction *get(MIRContext &Context, InstructionID ID,
                           StringRef ResultName, ArrayRef<InstructionFlag> Flags,
                           ArrayRef<MetaFlag *> MetaFlags,

@@ -68,9 +68,10 @@ StringRef OperatorConstraint::getOperator() const {
 std::optional<Constraint::OperatorSchema>
 Constraint::getOperatorSchema(OperatorID ID) {
   switch (ID) {
-#define MIR_CONSTRAINT_OPERATOR_SCHEMA(OperatorID, Name, Kind, Result, Arity)  \
+#define MIR_CONSTRAINT_OPERATOR_SCHEMA(OperatorID, Name, Kind, Result,         \
+                                       MinArity, MaxArity)                     \
   case O_##OperatorID:                                                         \
-    return OperatorSchema{Result, Arity};
+    return OperatorSchema{Result, MinArity, MaxArity};
 #include "metaphir/IR/ConstraintOperators.def"
   case UnknownOperator:
     break;
@@ -83,7 +84,11 @@ Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
 #define MIR_CONSTRAINT_OPERATOR_ID(OperatorID, OperatorName, OperatorKind)     \
   if (Name == OperatorName && Kind == OperatorKind)                            \
     return O_##OperatorID;
+#define MIR_CONSTRAINT_OPERATOR_ALIAS(OperatorID, OperatorName, OperatorKind)  \
+  if (Name == OperatorName && Kind == OperatorKind)                            \
+    return O_##OperatorID;
 #include "metaphir/IR/ConstraintOperators.def"
+#undef MIR_CONSTRAINT_OPERATOR_ALIAS
   return UnknownOperator;
 }
 

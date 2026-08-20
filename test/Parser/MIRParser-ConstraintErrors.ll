@@ -15,18 +15,15 @@ add i32 ?x, ?y
 ;; ?missing == 0
 ; UNKNOWN: constraint references unknown meta variable '?missing'
 
-
 ;--- arity.ll
 add i?bits ?x, ?y
 ;; ult(?bits)
 ; ARITY: built-in constraint operation expects 2 arguments
 
-
 ;--- integer-result.ll
 add i?bits ?x, ?y
 ;; ?bits + 1
 ; RESULT: constraint must have a boolean result
-
 
 ;--- later-variable.ll
 %sum = add i32 ?x, ?y
@@ -40,17 +37,14 @@ add i?bits ?x, ?y
 add:o(-1) i32 ?x, ?y
 ; O-NEGATIVE: :o expects one non-negative operand index
 
-
 ;--- o-range.ll
 add:o(2) i32 ?x, ?y
 ; O-RANGE: :o operand index is out of range
-
 
 ;--- non-array.ll
 add i?bits ?x, ?y
 ;; ?bits[0] == 1
 ; NON-ARRAY: constraint subscript requires an array operand
-
 
 ;--- non-integer-index.ll
 %sum = add nsw:?condition i32 ?x, ?y
@@ -58,12 +52,10 @@ call void @consume(...?types ?values)
 ;; ?values[?condition] == ?condition
 ; NON-INTEGER-INDEX: constraint array index must be an integer
 
-
 ;--- empty-array.ll
 add i32 ?x, ?y
 ;; [] == []
 ; EMPTY-ARRAY: constraint array literal must not be empty
-
 
 ;--- invalid-array-element.ll
 add i32 ?x, ?y

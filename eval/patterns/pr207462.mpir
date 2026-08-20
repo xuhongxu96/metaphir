@@ -1,0 +1,6 @@
+%div = udiv i?bits ?x, 2
+%divmul = mul:s i?bits %div, ?c1:apint
+%rem = urem i?bits ?x, 2
+%remmul = mul:s i?bits %rem, ?c2:apint
+%add = add:?anch i?bits %divmul, %remmul
+;; (?c1 - (?c2 * 2)) != 0

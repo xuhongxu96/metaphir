@@ -1,0 +1,2 @@
+%udiv = udiv:?anch i?bits ?x, ?c:constantint
+;; slt(?c, 0)

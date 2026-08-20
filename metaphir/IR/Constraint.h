@@ -39,7 +39,8 @@ public:
 
   struct OperatorSchema {
     ResultType Result;
-    unsigned Arity;
+    unsigned MinArity;
+    unsigned MaxArity;
   };
 
   virtual ~Constraint() = default;

@@ -1,0 +1,7 @@
+%shift = shl i?bits 1, ?k
+%and1 = and:c i?bits %shift, ?a
+%cmp1 = icmp ne i?bits %and1, 0
+%and2 = and:c i?bits %shift, ?b
+%cmp2 = icmp ne i?bits %and2, 0
+%cond = and:s i1 %cmp1, %cmp2
+%sel = select:?anch i1 %cond, i?bits %shift, i?bits 0

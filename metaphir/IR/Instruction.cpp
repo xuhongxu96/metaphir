@@ -120,6 +120,16 @@ bool Instruction::isCommutative(InstructionID ID) {
   llvm_unreachable("invalid instruction kind");
 }
 
+Instruction::OperandSyntax Instruction::getOperandSyntax(InstructionID ID) {
+  switch (ID) {
+#define MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, Syntax)                   \
+  case I_##Name:                                                               \
+    return Instruction::OperandSyntax::Syntax;
+#include "metaphir/IR/InstructionMatchers.def"
+  }
+  llvm_unreachable("invalid instruction kind");
+}
+
 raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F) {
   OS << InstructionFlag::getName(F.ID);
   if (F.Capture)
@@ -175,12 +185,14 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
   case ID::I_and:
   case ID::I_or:
   case ID::I_xor:
+  case ID::I_bitwiseLogic:
     OS << ' ' << Ops[0] << ", ";
     printWithoutType(OS, Ops[1]);
     return OS;
   case ID::I_trunc:
   case ID::I_zext:
   case ID::I_sext:
+  case ID::I_zextOrSext:
   case ID::I_fptrunc:
   case ID::I_fpext:
   case ID::I_fptoui:

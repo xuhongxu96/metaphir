@@ -6,7 +6,7 @@
 #define MIR_META_FLAG_SCHEMA(Name, Placement, MinArgs, MaxArgs, ArgumentKind)
 #endif
 #ifndef MIR_META_FLAG
-#define MIR_META_FLAG(Name, Placement, MinArgs, MaxArgs, ArgumentKind)          \
+#define MIR_META_FLAG(Name, Placement, MinArgs, MaxArgs, ArgumentKind)         \
   MIR_META_FLAG_ID(Name)                                                       \
   MIR_META_FLAG_SCHEMA(Name, Placement, MinArgs, MaxArgs, ArgumentKind)
 #endif
@@ -23,6 +23,9 @@ MIR_META_FLAG(integralconstant, OperandPlacement, 0, 0, AnyArgument)
 MIR_META_FLAG(zerofp, OperandPlacement, 0, 0, AnyArgument)
 MIR_META_FLAG(poison, OperandPlacement, 0, 0, AnyArgument)
 MIR_META_FLAG(apint, OperandPlacement, 0, 0, AnyArgument)
+MIR_META_FLAG(constantint, OperandPlacement, 0, 0, AnyArgument)
+MIR_META_FLAG(poweroftwo, OperandPlacement, 0, 0, AnyArgument)
+
 MIR_META_FLAG(or, OperandPlacement, 1, UnlimitedArgs, FlagArgument)
 MIR_META_FLAG(not, OperandPlacement, 1, 1, FlagArgument)
 

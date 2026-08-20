@@ -8,10 +8,7 @@
 namespace llvm {
 namespace metaphir {
 
-using detail::evaluationError;
-using detail::integerResult;
-using detail::requireInteger;
-using detail::requireString;
+using namespace detail;
 
 ConstraintValue::ValueKind ConstraintValue::getKind() const {
   if (std::holds_alternative<APSInt>(Data))
@@ -96,135 +93,6 @@ ConstraintValue ConstraintValue::getStringArray(StringArrayStorage Value) {
   return ConstraintValue(std::move(Value));
 }
 
-static Expected<bool> requireBoolean(Expected<ConstraintValue> Result,
-                                     const Constraint &Expression) {
-  if (!Result)
-    return Result.takeError();
-  if (Result->getKind() == ConstraintValue::Boolean)
-    return Result->getBoolean();
-  if (Result->getKind() == ConstraintValue::Integer)
-    return !Result->getInteger().isZero();
-  return evaluationError(Expression, "expected a boolean-coercible operand");
-}
-
-static Expected<ConstraintValue::StringArrayStorage>
-requireStringArray(Expected<ConstraintValue> Result,
-                   const Constraint &Expression) {
-  if (!Result)
-    return Result.takeError();
-  if (Result->getKind() == ConstraintValue::StringArray)
-    return Result->getStringArray();
-
-  ConstraintValue::StringArrayStorage Strings;
-  if (Result->getKind() == ConstraintValue::TypeArray) {
-    for (const llvm::Type *Type : Result->getTypeArray()) {
-      std::string Text;
-      raw_string_ostream OS(Text);
-      Type->print(OS);
-      Strings.push_back(OS.str());
-    }
-    return Strings;
-  }
-  if (Result->getKind() == ConstraintValue::ValueArray) {
-    for (const llvm::Value *Value : Result->getValueArray()) {
-      Expected<std::string> String = requireString(
-          ConstraintValue::getValue(Value), Expression);
-      if (!String)
-        return String.takeError();
-      Strings.push_back(std::move(*String));
-    }
-    return Strings;
-  }
-  return evaluationError(Expression,
-                         "expected a string-array-coercible operand");
-}
-
-static bool isNumeric(ConstraintValue::ValueKind Kind) {
-  return Kind == ConstraintValue::Integer || Kind == ConstraintValue::Boolean;
-}
-
-static bool isStringLike(ConstraintValue::ValueKind Kind) {
-  return Kind == ConstraintValue::String || Kind == ConstraintValue::Type ||
-         Kind == ConstraintValue::Value;
-}
-
-static bool isStringArrayLike(ConstraintValue::ValueKind Kind) {
-  return Kind == ConstraintValue::StringArray ||
-         Kind == ConstraintValue::TypeArray ||
-         Kind == ConstraintValue::ValueArray;
-}
-
-static Expected<bool> evaluateEquality(ConstraintValue Left,
-                                       ConstraintValue Right,
-                                       const Constraint &Expression) {
-  if (Left.getKind() == Right.getKind()) {
-    switch (Left.getKind()) {
-    case ConstraintValue::Integer:
-      return APSInt::isSameValue(Left.getInteger(), Right.getInteger());
-    case ConstraintValue::Boolean:
-      return Left.getBoolean() == Right.getBoolean();
-    case ConstraintValue::String:
-      return Left.getString() == Right.getString();
-    case ConstraintValue::Type:
-      return Left.getType() == Right.getType();
-    case ConstraintValue::Value:
-      return Left.getValue() == Right.getValue();
-    case ConstraintValue::TypeArray:
-      return Left.getTypeArray() == Right.getTypeArray();
-    case ConstraintValue::ValueArray:
-      return Left.getValueArray() == Right.getValueArray();
-    case ConstraintValue::StringArray:
-      return Left.getStringArray() == Right.getStringArray();
-    }
-    llvm_unreachable("invalid constraint value kind");
-  }
-
-  if (isNumeric(Left.getKind()) && isNumeric(Right.getKind())) {
-    Expected<APSInt> L = requireInteger(std::move(Left), Expression);
-    Expected<APSInt> R = requireInteger(std::move(Right), Expression);
-    if (!L)
-      return L.takeError();
-    if (!R)
-      return R.takeError();
-    return APSInt::isSameValue(*L, *R);
-  }
-  if (isStringLike(Left.getKind()) && isStringLike(Right.getKind())) {
-    Expected<std::string> L = requireString(std::move(Left), Expression);
-    Expected<std::string> R = requireString(std::move(Right), Expression);
-    if (!L)
-      return L.takeError();
-    if (!R)
-      return R.takeError();
-    return *L == *R;
-  }
-  if (isStringArrayLike(Left.getKind()) && isStringArrayLike(Right.getKind())) {
-    Expected<ConstraintValue::StringArrayStorage> L =
-        requireStringArray(std::move(Left), Expression);
-    Expected<ConstraintValue::StringArrayStorage> R =
-        requireStringArray(std::move(Right), Expression);
-    if (!L)
-      return L.takeError();
-    if (!R)
-      return R.takeError();
-    return *L == *R;
-  }
-  return evaluationError(Expression, "equality operands have different types");
-}
-
-static APSInt extend(const APSInt &Value, unsigned Width, bool IsUnsigned) {
-  APSInt Result = Value.extend(Width);
-  Result.setIsUnsigned(IsUnsigned);
-  return Result;
-}
-
-static std::pair<APSInt, APSInt> widen(const APSInt &Left, const APSInt &Right,
-                                       unsigned ExtraBits = 0) {
-  unsigned Width =
-      std::max(Left.getBitWidth(), Right.getBitWidth()) + ExtraBits;
-  bool IsUnsigned = Left.isUnsigned() && Right.isUnsigned();
-  return {extend(Left, Width, IsUnsigned), extend(Right, Width, IsUnsigned)};
-}
-
 Expected<ConstraintValue>
 ConstraintInterpreter::evaluate(const Constraint &Expression,
                                 const Instantiation &State) const {
@@ -289,7 +157,7 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
                                              "' is not instantiated");
     if (Expression.getResultType() == Constraint::IntegerResult) {
       if (const auto *Integer = std::get_if<APInt>(&Binding->Data))
-        return ConstraintValue::getInteger(APSInt(*Integer, true));
+        return ConstraintValue::getInteger(APSInt(*Integer, false));
     } else if (Expression.getResultType() == Constraint::BooleanResult) {
       if (const auto *Boolean = std::get_if<bool>(&Binding->Data))
         return ConstraintValue::getBoolean(*Boolean);
@@ -364,8 +232,22 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   if (std::optional<Constraint::OperatorSchema> Schema =
           Constraint::getOperatorSchema(Operator.getOperatorID()))
-    assert(Arguments.size() == Schema->Arity &&
+    assert(Arguments.size() >= Schema->MinArity &&
+           Arguments.size() <= Schema->MaxArity &&
            "built-in constraint operator has invalid arity");
+
+  auto EvaluateBitWidth =
+      [&](unsigned Index) -> Expected<std::optional<unsigned>> {
+    if (Arguments.size() <= Index)
+      return std::nullopt;
+    Expected<APSInt> Width =
+        requireInteger(evaluate(*Arguments[Index], State), Expression);
+    if (!Width)
+      return Width.takeError();
+    if (Width->isNegative() || Width->isZero())
+      return evaluationError(Expression, "bitwidth must be positive");
+    return static_cast<unsigned>(Width->getLimitedValue());
+  };
   switch (Operator.getOperatorID()) {
 #define MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Kind, Result, Arity)     \
   case Constraint::O_##ID:                                                     \
@@ -394,20 +276,33 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
     return ConstraintValue::getBoolean(!*Operand);
   }
   case Constraint::O_Negate: {
+    Expected<std::optional<unsigned>> BitWidth = EvaluateBitWidth(1);
+    if (!BitWidth)
+      return BitWidth.takeError();
     Expected<APSInt> Operand =
         requireInteger(evaluate(*Arguments[0], State), Expression);
     if (!Operand)
       return Operand.takeError();
+    if (*BitWidth)
+      *Operand = castToBitWidth(*Operand, **BitWidth);
+    if (*BitWidth)
+      return integerResult(-static_cast<const APInt &>(*Operand),
+                           Operand->isUnsigned());
     APSInt Extended = extend(*Operand, Operand->getBitWidth() + 1, false);
     return integerResult(-static_cast<const APInt &>(Extended), false);
   }
   case Constraint::O_Lshr:
   case Constraint::O_Ashr:
   case Constraint::O_Shl: {
+    Expected<std::optional<unsigned>> BitWidth = EvaluateBitWidth(2);
+    if (!BitWidth)
+      return BitWidth.takeError();
     Expected<APSInt> Value =
         requireInteger(evaluate(*Arguments[0], State), Expression);
     if (!Value)
       return Value.takeError();
+    if (*BitWidth)
+      *Value = castToBitWidth(*Value, **BitWidth);
     Expected<APSInt> Amount =
         requireInteger(evaluate(*Arguments[1], State), Expression);
     if (!Amount)
@@ -465,14 +360,31 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
   if (!Right)
     return Right.takeError();
 
+  std::optional<unsigned> BitWidth;
+  if (Expected<std::optional<unsigned>> Width = EvaluateBitWidth(2)) {
+    BitWidth = *Width;
+  } else {
+    return Width.takeError();
+  }
+
   bool Unsigned = Left->isUnsigned() && Right->isUnsigned();
-  unsigned ExtraBits =
-      Operator.getOperatorID() == Constraint::O_Multiply
-          ? std::min(Left->getBitWidth(), Right->getBitWidth())
-          : (Operator.getOperatorID() == Constraint::O_Add ||
-                     Operator.getOperatorID() == Constraint::O_Subtract
-                 ? 1
-                 : 0);
+  unsigned ExtraBits = 0;
+  if (BitWidth) {
+    *Left = castToBitWidth(*Left, *BitWidth);
+    *Right = castToBitWidth(*Right, *BitWidth);
+  } else {
+    switch (Operator.getOperatorID()) {
+    case Constraint::O_Multiply:
+      ExtraBits = std::min(Left->getBitWidth(), Right->getBitWidth());
+      break;
+    case Constraint::O_Add:
+    case Constraint::O_Subtract:
+      ExtraBits = 1;
+      break;
+    default:
+      break;
+    }
+  }
   auto [LHS, RHS] = widen(*Left, *Right, ExtraBits);
   const APInt &L = LHS;
   const APInt &R = RHS;

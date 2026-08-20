@@ -42,6 +42,7 @@ private:
   bool parseValue(Value *&Result, MetaType Expected = MetaType::Value);
   bool parseTypedOperand(MatcherOperand &Result,
                          MetaType Expected = MetaType::Value);
+  bool parseOperandMetaFlags(MatcherOperand &Result);
   bool parseArrayCapture(MatcherOperand &Result, bool WithTypes);
   bool parseMetaFlag(MetaFlag *&Result);
   bool parseMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
