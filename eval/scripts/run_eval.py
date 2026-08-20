@@ -25,6 +25,35 @@ REPO = Path(__file__).resolve().parents[2]
 OPT = REPO / "llvm-project" / "build-release" / "bin" / "opt"
 METAPHIR_MATCH = REPO / "build-release" / "tools" / "metaphir-match"
 
+# PR -> MetaphIR pattern files (relative to the repo root).
+PR_PATTERNS: dict[str, list[str]] = {
+    "pr216436": ["eval/patterns/pr216436.mpir"],
+    "pr215122": ["eval/patterns/pr215122.mpir"],
+    "pr215130": ["eval/patterns/pr215130.mpir"],
+    "pr214541": ["eval/patterns/pr214541.mpir"],
+    "pr214517": ["eval/patterns/pr214517.mpir"],
+    "pr214381": ["eval/patterns/pr214381.mpir"],
+    "pr214376": ["eval/patterns/pr214376.mpir"],
+    "pr213709": ["eval/patterns/pr213709.mpir"],
+    "pr213313": ["eval/patterns/pr213313_and.mpir",
+                 "eval/patterns/pr213313_or.mpir"],
+    "pr212132": ["eval/patterns/pr212132_c1.mpir",
+                 "eval/patterns/pr212132_c2.mpir",
+                 "eval/patterns/pr212132_c3.mpir",
+                 "eval/patterns/pr212132_c4.mpir"],
+    "pr210499": ["eval/patterns/pr210499.mpir"],
+    "pr209322": ["eval/patterns/pr209322.mpir"],
+    "pr207564": ["eval/patterns/pr207564.mpir"],
+    "pr207462": ["eval/patterns/pr207462.mpir"],
+    "pr205383": ["eval/patterns/pr205383_sub.mpir",
+                 "eval/patterns/pr205383_xor.mpir"],
+    "pr204928": ["eval/patterns/pr204928.mpir"],
+    "pr204927": ["eval/patterns/pr204927.mpir"],
+    "pr216470": ["eval/patterns/pr216470.mpir"],
+    "pr216046": ["eval/patterns/pr216046.mpir"],
+    "pr204089": ["eval/patterns/pr204089.mpir"],
+}
+
 ANCHOR_RE = re.compile(r"^ANCHOR (\S+) (\S+)$")
 TARGET_RE = re.compile(r"^target \d+: @(\S+)$")
 BINDING_RE = re.compile(r"\?anch = (%[^,\s]+)")
@@ -212,6 +241,40 @@ def cmd_metrics(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run_all(args: argparse.Namespace) -> int:
+    """Run collect + metrics for every PR, then print a summary table."""
+    out = Path(args.outdir)
+    out.mkdir(parents=True, exist_ok=True)
+    rows: list[tuple[str, int, int, int, int, int, float, float]] = []
+    for pr, patterns in PR_PATTERNS.items():
+        plugin = REPO / "build-release" / "eval" / "plugins" / f"{pr}.so"
+        collect_args = argparse.Namespace(
+            pr=pr, plugin=plugin, pass_name=pr,
+            patterns=[REPO / p for p in patterns],
+            corpus=args.corpus, preprocess=False, outdir=out,
+        )
+        if cmd_collect(collect_args) != 0:
+            return 1
+        g = load_anchors(out / f"{pr}_G.anchors")
+        p = load_anchors(out / f"{pr}_P.anchors")
+        tp = len(g & p)
+        fp = len(p - g)
+        fn = len(g - p)
+        recall = tp / len(g) if g else 1.0
+        f1 = 2 * tp / (len(g) + len(p)) if (len(g) + len(p)) else 1.0
+        rows.append((pr, len(g), len(p), tp, fp, fn, recall, f1))
+        print(f"  {pr}: G={len(g)} P={len(p)} TP={tp} FP={fp} FN={fn} "
+              f"R={recall:.3f} F1={f1:.3f}")
+
+    print("\n=== SUMMARY ===")
+    print(f"{'pr':<10} {'G':>5} {'P':>5} {'TP':>4} {'FP':>4} {'FN':>4} "
+          f"{'recall':>7} {'F1':>6}")
+    for pr, g, p, tp, fp, fn, recall, f1 in rows:
+        print(f"{pr:<10} {g:>5} {p:>5} {tp:>4} {fp:>4} {fn:>4} "
+              f"{recall:>7.3f} {f1:>6.3f}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="stage", required=True)
@@ -235,6 +298,11 @@ def main() -> int:
     m.add_argument("--pr", required=True)
     m.add_argument("--anchors-dir", required=True, type=Path)
     m.set_defaults(func=cmd_metrics)
+
+    a = sub.add_parser("run_all", help="collect + metrics for every PR")
+    a.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
+    a.add_argument("--outdir", required=True, type=Path)
+    a.set_defaults(func=cmd_run_all)
 
     args = ap.parse_args()
     return args.func(args)
