@@ -1,6 +1,8 @@
-#include "metaphir/Matching/Matchers.h"
+#include "metaphir/Matching/SubtreeMatcher.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/Values.h"
+#include "metaphir/Matching/InstructionMatcher.h"
+#include "metaphir/Matching/MatchersDetail.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -11,29 +13,12 @@
 
 namespace llvm {
 namespace metaphir {
-namespace detail {
-
-MatchResults success(Instantiation State) {
-  MatchResults Results;
-  Results.push_back(std::move(State));
-  return Results;
-}
-
-bool bind(Instantiation &State, const Value &Matcher,
-          Instantiation::Binding Target) {
-  if (const Instantiation::Binding *Existing = State.lookup(Matcher))
-    return *Existing == Target;
-  State.bind(Matcher, std::move(Target));
-  return true;
-}
-
-} // namespace detail
 
 using detail::bind;
 using detail::success;
 
-static std::optional<Instantiation::Binding>
-getMetaVariableBinding(const MetaVariable &Matcher, const llvm::Value &Target) {
+std::optional<Instantiation::Binding>
+SubtreeMatcher::getMetaVariableBinding(const MetaVariable &Matcher) {
   switch (Matcher.getType()) {
   case MetaType::Value:
     return &Target;
@@ -82,10 +67,9 @@ getMetaVariableBinding(const MetaVariable &Matcher, const llvm::Value &Target) {
   llvm_unreachable("invalid meta type");
 }
 
-static std::optional<Instantiation::Binding>
-getTargetBinding(const metaphir::Value &Matcher, const llvm::Value &Target) {
+std::optional<Instantiation::Binding> SubtreeMatcher::getTargetBinding() {
   if (const auto *Variable = dyn_cast<MetaVariable>(&Matcher))
-    return getMetaVariableBinding(*Variable, Target);
+    return getMetaVariableBinding(*Variable);
   return &Target;
 }
 
@@ -137,10 +121,7 @@ static bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
   }
 }
 
-static MatchResults matchAggregate(const AggregateConstant &Matcher,
-                                   const llvm::Value &Target,
-                                   Instantiation State,
-                                   const MatchDriver &Driver) {
+MatchResults SubtreeMatcher::matchAggregate(const AggregateConstant &Matcher) {
   const auto *Constant = dyn_cast<llvm::Constant>(&Target);
   if (!Constant)
     return {};
@@ -178,8 +159,9 @@ static MatchResults matchAggregate(const AggregateConstant &Matcher,
       return {};
     MatchResults Next;
     for (Instantiation &Candidate : States) {
-      MatchResults Matches = Driver.match(*Matcher.getElements()[Index],
-                                          *Element, std::move(Candidate));
+      MatchResults Matches = SubtreeMatcher(*Matcher.getElements()[Index],
+                                            *Element, std::move(Candidate))
+                                 .match();
       Next.append(std::make_move_iterator(Matches.begin()),
                   std::make_move_iterator(Matches.end()));
     }
@@ -188,11 +170,8 @@ static MatchResults matchAggregate(const AggregateConstant &Matcher,
   return States;
 }
 
-MatchResults matchValue(const metaphir::Value &Matcher,
-                        const llvm::Value &Target, Instantiation State,
-                        const MatchDriver &Driver) {
-  std::optional<Instantiation::Binding> TargetBinding =
-      getTargetBinding(Matcher, Target);
+MatchResults SubtreeMatcher::match() {
+  std::optional<Instantiation::Binding> TargetBinding = getTargetBinding();
   if (!TargetBinding)
     return {};
   if (const Instantiation::Binding *Existing = State.lookup(Matcher))
@@ -201,11 +180,11 @@ MatchResults matchValue(const metaphir::Value &Matcher,
 
   switch (Matcher.getValueID()) {
   case Value::InstructionVal:
-    return detail::matchInstruction(cast<Instruction>(Matcher), Target,
-                                    std::move(State), Driver);
+    return InstructionMatcher(cast<Instruction>(Matcher), Target,
+                              std::move(State))
+        .match();
   case Value::AggregateConstantVal:
-    return matchAggregate(cast<AggregateConstant>(Matcher), Target,
-                          std::move(State), Driver);
+    return matchAggregate(cast<AggregateConstant>(Matcher));
   case Value::MetaVariableVal:
     break;
   case Value::GlobalVal:
@@ -227,21 +206,6 @@ MatchResults matchValue(const metaphir::Value &Matcher,
   }
   State.bind(Matcher, std::move(*TargetBinding));
   return success(std::move(State));
-}
-
-bool matchValue(const metaphir::Value &Matcher, const llvm::Value &Target,
-                Instantiation &State) {
-  auto RecursiveMatch =
-      [](const metaphir::Value &Pattern, const llvm::Value &Candidate,
-         Instantiation CandidateState, const MatchDriver &Self) {
-        return matchValue(Pattern, Candidate, std::move(CandidateState), Self);
-      };
-  MatchDriver Driver(RecursiveMatch);
-  MatchResults Results = Driver.match(Matcher, Target, State);
-  if (Results.empty())
-    return false;
-  State = std::move(Results.front());
-  return true;
 }
 
 } // namespace metaphir

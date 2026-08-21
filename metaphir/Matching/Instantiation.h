@@ -68,6 +68,8 @@ private:
                                  const Instantiation &Instantiation);
 };
 
+using MatchResults = SmallVector<Instantiation, 4>;
+
 raw_ostream &operator<<(raw_ostream &OS, const Instantiation::Binding &Binding);
 raw_ostream &operator<<(raw_ostream &OS, const Instantiation &Instantiation);
 

@@ -1,5 +1,12 @@
-add_metaphir_test(metaphir-matching-test ConstraintInterpreterTest.cpp
-                  NaiveMatcherTest.cpp End2EndTest.cpp)
+add_metaphir_test(
+  metaphir-matching-test
+  ConstraintInterpreterTest.cpp
+  PatternMatcherTest.cpp
+  SubtreeMatcherTest.cpp
+  InstructionMatcherTest.cpp
+  TypeMatcherTest.cpp
+  MetaFlagMatcherTest.cpp
+  End2EndTest.cpp)
 
 target_link_libraries(metaphir-matching-test
                       PRIVATE metaphir-matching metaphir-parser LLVMAsmParser)

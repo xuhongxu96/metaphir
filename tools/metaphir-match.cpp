@@ -3,7 +3,7 @@
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/Matching/ConstraintInterpreter.h"
 #include "metaphir/Matching/ConstraintOps.h"
-#include "metaphir/Matching/NaiveMatcher.h"
+#include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Module.h"
@@ -140,7 +140,7 @@ int main(int Argc, char **Argv) {
     if (!collectLLVMIRFiles(Argv[Argument], InputFiles))
       return 1;
 
-  NaiveMatcher Matcher;
+  PatternMatcher Matcher;
   unsigned TargetIndex = 0;
   for (const std::string &InputFile : InputFiles) {
     LLVMContext LLVMContext;
