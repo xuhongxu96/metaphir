@@ -17,6 +17,57 @@ namespace metaphir {
 using detail::bind;
 using detail::success;
 
+namespace {
+
+bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
+  const auto *Global = dyn_cast<llvm::GlobalValue>(&Target);
+  if (!Global)
+    return false;
+  StringRef MatcherName = Matcher.getName();
+  // llvm.* names denote intrinsic function calls (e.g. llvm.ctlz). Match on
+  // the intrinsic base name so an overloaded callee (llvm.ctlz.i32) matches
+  // the pattern's llvm.ctlz.
+  if (MatcherName.starts_with("llvm.")) {
+    const auto *Function = dyn_cast<llvm::Function>(Global);
+    if (!Function || !Function->isIntrinsic())
+      return false;
+    return Intrinsic::getBaseName(Function->getIntrinsicID()) == MatcherName;
+  }
+  return MatcherName == Global->getName();
+}
+
+bool matches(const IntegerConstant &Matcher, const llvm::Value &Target) {
+  const auto *Integer = dyn_cast<ConstantInt>(&Target);
+  if (!Integer)
+    return false;
+  APSInt TargetValue(Integer->getValue(), Matcher.getValue().isUnsigned());
+  return APSInt::isSameValue(Matcher.getValue(), TargetValue);
+}
+
+bool matches(const FloatingConstant &Matcher, const llvm::Value &Target) {
+  const auto *Floating = dyn_cast<ConstantFP>(&Target);
+  if (!Floating)
+    return false;
+  APFloat Converted = Matcher.getValue();
+  bool LosesInfo;
+  Converted.convert(Floating->getValueAPF().getSemantics(),
+                    APFloat::rmNearestTiesToEven, &LosesInfo);
+  return Converted.bitwiseIsEqual(Floating->getValueAPF());
+}
+
+bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
+  switch (Matcher.getKeywordID()) {
+#define MIR_MATCHABLE_CONSTANT_KEYWORD(ID, Spelling, LLVMClass)                \
+  case KeywordConstant::K_##ID:                                                \
+    return isa<LLVMClass>(Target);
+#include "metaphir/IR/KeywordConstants.def"
+  default:
+    llvm_unreachable("invalid keyword constant ID");
+  }
+}
+
+} // namespace
+
 std::optional<Instantiation::Binding>
 SubtreeMatcher::getMetaVariableBinding(const MetaVariable &Matcher) {
   switch (Matcher.getType()) {
@@ -71,54 +122,6 @@ std::optional<Instantiation::Binding> SubtreeMatcher::getTargetBinding() {
   if (const auto *Variable = dyn_cast<MetaVariable>(&Matcher))
     return getMetaVariableBinding(*Variable);
   return &Target;
-}
-
-static bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
-  const auto *Global = dyn_cast<llvm::GlobalValue>(&Target);
-  if (!Global)
-    return false;
-  StringRef MatcherName = Matcher.getName();
-  // llvm.* names denote intrinsic function calls (e.g. llvm.ctlz). Match on
-  // the intrinsic base name so an overloaded callee (llvm.ctlz.i32) matches
-  // the pattern's llvm.ctlz.
-  if (MatcherName.starts_with("llvm.")) {
-    const auto *Function = dyn_cast<llvm::Function>(Global);
-    if (!Function || !Function->isIntrinsic())
-      return false;
-    return Intrinsic::getBaseName(Function->getIntrinsicID()) == MatcherName;
-  }
-  return MatcherName == Global->getName();
-}
-
-static bool matches(const IntegerConstant &Matcher, const llvm::Value &Target) {
-  const auto *Integer = dyn_cast<ConstantInt>(&Target);
-  if (!Integer)
-    return false;
-  APSInt TargetValue(Integer->getValue(), Matcher.getValue().isUnsigned());
-  return APSInt::isSameValue(Matcher.getValue(), TargetValue);
-}
-
-static bool matches(const FloatingConstant &Matcher,
-                    const llvm::Value &Target) {
-  const auto *Floating = dyn_cast<ConstantFP>(&Target);
-  if (!Floating)
-    return false;
-  APFloat Converted = Matcher.getValue();
-  bool LosesInfo;
-  Converted.convert(Floating->getValueAPF().getSemantics(),
-                    APFloat::rmNearestTiesToEven, &LosesInfo);
-  return Converted.bitwiseIsEqual(Floating->getValueAPF());
-}
-
-static bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
-  switch (Matcher.getKeywordID()) {
-#define MIR_MATCHABLE_CONSTANT_KEYWORD(ID, Spelling, LLVMClass)                \
-  case KeywordConstant::K_##ID:                                                \
-    return isa<LLVMClass>(Target);
-#include "metaphir/IR/KeywordConstants.def"
-  default:
-    llvm_unreachable("invalid keyword constant ID");
-  }
 }
 
 MatchResults SubtreeMatcher::matchAggregate(const AggregateConstant &Matcher) {

@@ -5,28 +5,32 @@
 namespace llvm {
 namespace metaphir {
 
+namespace {
+
 template <unsigned Opcode>
-static bool matchOpcode(const llvm::Instruction &Target) {
+bool matchOpcode(const llvm::Instruction &Target) {
   return Target.getOpcode() == Opcode;
 }
 
-static bool matchShr(const llvm::Instruction &Target) {
+bool matchShr(const llvm::Instruction &Target) {
   return Target.getOpcode() == llvm::Instruction::LShr ||
          Target.getOpcode() == llvm::Instruction::AShr;
 }
 
-static bool matchZExtOrSExt(const llvm::Instruction &Target) {
+bool matchZExtOrSExt(const llvm::Instruction &Target) {
   return Target.getOpcode() == llvm::Instruction::ZExt ||
          Target.getOpcode() == llvm::Instruction::SExt;
 }
 
-static bool matchBitwiseLogic(const llvm::Instruction &Target) {
+bool matchBitwiseLogic(const llvm::Instruction &Target) {
   return llvm::Instruction::isBitwiseLogicOp(Target.getOpcode());
 }
 
-static bool matchBranch(const llvm::Instruction &Target) {
+bool matchBranch(const llvm::Instruction &Target) {
   return isa<CondBrInst, UncondBrInst>(Target);
 }
+
+} // namespace
 
 bool InstructionMatcher::matchInstructionTarget() {
   switch (Matcher.getInstructionID()) {
