@@ -36,3 +36,7 @@ linux__rfc8009_aes2.bc	rfc8009_encrypt	68
 linux__rfc8009_aes2.bc	rfc8009_encrypt	99
 linux__shmem.bc	shmem_fallocate	25
 linux__shmem.bc	shmem_setattr	47
+linux__write.bc	nfs_update_folio	171
+qemu__addrspace.bc	pa_space_create	58
+rocksdb__concurrent_arena.bc	_ZN7rocksdb15ConcurrentArena15AllocateAlignedEmmPNS_6LoggerE	8
+rocksdb__memtable.bc	_ZN7rocksdb15ConcurrentArena15AllocateAlignedEmmPNS_6LoggerE	8
