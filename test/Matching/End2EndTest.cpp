@@ -2,8 +2,7 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
-#include "metaphir/Matching/Matchers.h"
-#include "metaphir/Matching/NaiveMatcher.h"
+#include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
@@ -64,7 +63,7 @@ define <2 x i128> @vec(<2 x i128> %x) {
   auto &Function = *Module->functions().begin();
   Target Program(Function);
 
-  NaiveMatcher Matcher;
+  PatternMatcher Matcher;
   MatchResults Matches = Matcher.match(*Pattern, Program);
   ASSERT_EQ(Matches.size(), 1u);
 }
