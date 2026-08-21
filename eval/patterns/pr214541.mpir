@@ -1,3 +1,3 @@
-%udiv1 = udiv:s i?bits ?x, ?y:constantint
-%udiv2 = udiv:?anch i?bits %udiv1, ?z:constantint
-;; (?z != 0) && ult(?z, udiv(shl(1, ?bits), ?y))
+%udiv1 = udiv:s i?bits ?x, ?y
+%udiv2 = udiv:?anch i?bits %udiv1, ?z
+;; no-overflow("umul", ?y, ?z)
