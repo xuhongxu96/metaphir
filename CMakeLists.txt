@@ -45,7 +45,7 @@ add_subdirectory(tools)
 
 option(METAPHIR_BUILD_EVAL_PLUGINS
        "Build the InstCombine evaluation pass plugins under eval/plugins"
-       OFF)
+       ON)
 if(METAPHIR_BUILD_EVAL_PLUGINS)
     add_subdirectory(eval/plugins)
 endif()
