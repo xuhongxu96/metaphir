@@ -1,10 +1,8 @@
 #include "metaphir/Parser/MIRParser.h"
+#include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/DerivedTypes.h"
-#include "metaphir/IR/MIRContext.h"
+#include "metaphir/IR/Instruction.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/raw_ostream.h"
-#include <limits>
-#include <memory>
 
 namespace llvm {
 namespace metaphir {
@@ -106,6 +104,36 @@ std::optional<PatternSettings::Setting> settingFromKeyword(tok::Kind Kind) {
 #include "metaphir/IR/PatternSettings.def"
   default:
     return std::nullopt;
+  }
+}
+
+// Records the pattern instruction that lexically precedes a constraint as the
+// default context (use-point) for value-tracking operators on every node of the
+// constraint expression tree.
+void setConstraintContext(Constraint &C, const Instruction *Context) {
+  C.setContextInstruction(Context);
+  switch (C.getConstraintID()) {
+  case Constraint::Array:
+    for (Constraint *Element : cast<ArrayConstraint>(C).getElements())
+      setConstraintContext(*Element, Context);
+    break;
+  case Constraint::ArrayAccess: {
+    const ArrayAccessConstraint &Access = cast<ArrayAccessConstraint>(C);
+    setConstraintContext(*Access.getArray(), Context);
+    setConstraintContext(*Access.getIndex(), Context);
+    break;
+  }
+  case Constraint::Unary:
+  case Constraint::Binary:
+  case Constraint::Call:
+    for (Constraint *Argument : cast<OperatorConstraint>(C).getArguments())
+      setConstraintContext(*Argument, Context);
+    break;
+  case Constraint::Integer:
+  case Constraint::Boolean:
+  case Constraint::String:
+  case Constraint::Variable:
+    break;
   }
 }
 
@@ -224,6 +252,11 @@ bool MIRParser::parse(Pattern *&Result) {
         return true;
       if (C->getResultType() == Constraint::IntegerResult)
         return error("constraint must have a boolean result");
+      const Instruction *Context =
+          CurrentPattern->getInstructions().empty()
+              ? nullptr
+              : CurrentPattern->getInstructions().back();
+      setConstraintContext(*C, Context);
       CurrentPattern->addConstraint(C);
       if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
         return error("unexpected token after constraint");

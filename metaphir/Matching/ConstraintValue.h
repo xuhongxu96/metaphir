@@ -3,7 +3,7 @@
 
 #include "metaphir/Matching/Instantiation.h"
 #include "llvm/ADT/APSInt.h"
-#include "llvm/Support/Error.h"
+#include "llvm/Support/KnownBits.h"
 #include <string>
 #include <variant>
 
@@ -21,6 +21,7 @@ public:
     TypeArray,
     ValueArray,
     StringArray,
+    BitVector,
     NumValueKinds
   };
 
@@ -35,6 +36,7 @@ public:
   const Instantiation::TypeArray &getTypeArray() const;
   const Instantiation::ValueArray &getValueArray() const;
   const StringArrayStorage &getStringArray() const;
+  const llvm::KnownBits &getKnownBits() const;
 
   static ConstraintValue getInteger(APSInt Value);
   static ConstraintValue getBoolean(bool Value);
@@ -44,11 +46,13 @@ public:
   static ConstraintValue getTypeArray(Instantiation::TypeArray Value);
   static ConstraintValue getValueArray(Instantiation::ValueArray Value);
   static ConstraintValue getStringArray(StringArrayStorage Value);
+  static ConstraintValue getKnownBits(llvm::KnownBits Value);
 
 private:
   using Storage = std::variant<APSInt, bool, std::string, const llvm::Type *,
                                const llvm::Value *, Instantiation::TypeArray,
-                               Instantiation::ValueArray, StringArrayStorage>;
+                               Instantiation::ValueArray, StringArrayStorage,
+                               llvm::KnownBits>;
 
   Storage Data;
 

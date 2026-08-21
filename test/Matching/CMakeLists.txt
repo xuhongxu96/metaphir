@@ -39,6 +39,7 @@ set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-MetaFlags-Constants.ll
     MIRMatcher-SemanticFlags.ll
     MIRMatcher-Constraints.ll
+    MIRMatcher-ValueTrack.ll
     MIRMatcher-MetaFlags-OrSelf.ll
     MIRMatcher-CrossBasicBlock.ll
     MIRMatcher-MetaFlags-Uses.ll)

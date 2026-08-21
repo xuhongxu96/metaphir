@@ -27,6 +27,9 @@ add_library(
   PatternMatcher.cpp
   PatternMatcher.h
   Target.cpp
-  Target.h)
+  Target.h
+  ValueTrackContext.cpp
+  ValueTrackContext.h)
 
-target_link_libraries(metaphir-matching PUBLIC metaphir-ir LLVMCore LLVMSupport)
+target_link_libraries(metaphir-matching PUBLIC metaphir-ir LLVMAnalysis
+                                                  LLVMCore LLVMSupport)

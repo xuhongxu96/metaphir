@@ -14,20 +14,22 @@
 using namespace llvm;
 using namespace llvm::metaphir;
 
-static MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
-                          ArrayRef<MetaFlag::Argument> Arguments = {},
-                          SourceRange Range = {}) {
+namespace {
+
+MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
+                   ArrayRef<MetaFlag::Argument> Arguments = {},
+                   SourceRange Range = {}) {
   return MetaFlag::get(Context, Name, Arguments, Range);
 }
 
-static MetaFlag::Argument nestedFlag(MetaFlag *Flag) {
+MetaFlag::Argument nestedFlag(MetaFlag *Flag) {
   MetaFlag::Argument Arg;
   Arg.K = MetaFlag::Argument::Flag;
   Arg.FlagValue = Flag;
   return Arg;
 }
 
-static std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
+std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
   SMDiagnostic Error;
   return parseAssemblyString(IR, Error, Context);
 }
@@ -293,3 +295,5 @@ TEST(MetaFlagMatcherTest, MatchesUseCountFlags) {
   EXPECT_TRUE(SMatcher.matchUseFlags(B));
   EXPECT_FALSE(SMatcher.matchUseFlags(A));
 }
+
+} // namespace
