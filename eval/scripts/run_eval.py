@@ -219,7 +219,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
     print(f"  saved G anchors -> {g_path} ({len(G)})")
     print(f"  saved P anchors -> {p_path} ({len(P)})")
     print(f"  saved timing    -> {timing_path}")
-    print(f"  preprocess+plugin {t_plugin:.2f}s | pattern {t_pattern:.2f}s")
+    print(f"  plugin {t_plugin:.2f}s | pattern {t_pattern:.2f}s")
     return 0
 
 
