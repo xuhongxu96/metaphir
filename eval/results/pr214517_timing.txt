@@ -1,0 +1,6 @@
+modules_ok=50839
+plugin_seconds=1313.049
+pattern_seconds=617.622
+patterns=1
+G_anchors=15
+P_anchors=15

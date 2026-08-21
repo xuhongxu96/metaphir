@@ -1,0 +1,5 @@
+pr212132__select-and-or-powerof2.ll	select_and_ne_zero_powerof2	zero_or_shift
+pr212132__select-and-or-powerof2.ll	select_and_ne_zero_powerof2_commuted	zero_or_shift
+pr212132__select-and-or-powerof2.ll	select_or_eq_zero_powerof2	zero_or_shift
+pr212132__select-and-or-powerof2.ll	select_or_eq_zero_powerof2_commuted	zero_or_shift
+pr212132__select-and-or-powerof2.ll	select_or_eq_zero_powerof2_vec	zero_or_shift
