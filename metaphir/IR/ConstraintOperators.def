@@ -58,6 +58,7 @@ MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Or, "or", Call, IntegerResult, 2)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Xor, "xor", Call, IntegerResult, 2)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Isa, "isa", Call, BooleanResult, 2)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Opcode, "opcode", Call, StringResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, IntegerResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, IntegerResult,
                                     1)

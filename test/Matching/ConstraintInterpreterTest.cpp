@@ -243,6 +243,41 @@ TEST_F(ConstraintInterpreterTest, EvaluatesIsaPredicates) {
             "unknown LLVM value class 'ImaginaryValue'");
 }
 
+TEST_F(ConstraintInterpreterTest, EvaluatesOpcodePredicates) {
+  LLVMContext LLVMContext;
+  Type *I32 = Type::getInt32Ty(LLVMContext);
+  auto Add = std::unique_ptr<BinaryOperator>(BinaryOperator::CreateAdd(
+      ConstantInt::get(I32, 1), ConstantInt::get(I32, 2), "sum"));
+  auto Cast = std::unique_ptr<CastInst>(CastInst::Create(
+      Instruction::ZExt, Add.get(), Type::getInt64Ty(LLVMContext), "extended"));
+  MetaVariable *Value =
+      MetaVariable::get(Context, "value", MetaType::Value, Range);
+  VariableConstraint *ValueExpression =
+      VariableConstraint::get(Context, Value, Constraint::ValueResult, Range);
+  State.bind(*Value, Cast.get());
+
+  EXPECT_TRUE(evaluateBoolean(
+      *binary("==", operation(Constraint::Call, "opcode", {ValueExpression}),
+              StringConstraint::get(Context, "zext", Range))));
+  EXPECT_FALSE(evaluateBoolean(
+      *binary("==", operation(Constraint::Call, "opcode", {ValueExpression}),
+              StringConstraint::get(Context, "add", Range))));
+
+  MetaVariable *IntegerValue =
+      MetaVariable::get(Context, "integer_value", MetaType::Value, Range);
+  VariableConstraint *IntegerExpression = VariableConstraint::get(
+      Context, IntegerValue, Constraint::ValueResult, Range);
+  State.bind(*IntegerValue, ConstantInt::get(I32, 1));
+  OperatorConstraint *NonInstruction =
+      operation(Constraint::Call, "opcode", {IntegerExpression});
+  Expected<ConstraintValue> Result =
+      Interpreter.evaluate(*NonInstruction, State);
+  ASSERT_FALSE(Result);
+  EXPECT_EQ(toString(Result.takeError()),
+            "cannot evaluate constraint '(opcode ?integer_value)': expected an "
+            "instruction operand");
+}
+
 TEST_F(ConstraintInterpreterTest, ConvertsSymbolicBindingsToStrings) {
   MetaVariable *Predicate =
       MetaVariable::get(Context, "predicate", MetaType::CmpPredicate, Range);
@@ -326,8 +361,7 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "cannot evaluate constraint '?values[0]': array index is out of "
             "bounds");
 
-  OperatorConstraint *InvalidShift =
-      call("lshr", integer(1), integer(64));
+  OperatorConstraint *InvalidShift = call("lshr", integer(1), integer(64));
   Expected<ConstraintValue> ShiftResult =
       Interpreter.evaluate(*InvalidShift, State);
   ASSERT_FALSE(ShiftResult);
@@ -359,8 +393,8 @@ TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
   ASSERT_TRUE(static_cast<bool>(IntegerResult));
   EXPECT_EQ(IntegerResult->getInteger().getSExtValue(), 2);
 
-  Expected<ConstraintValue> BooleanResult =
-      Interpreter.evaluate(*binary("&&", ValueExpression, boolean(true)), State);
+  Expected<ConstraintValue> BooleanResult = Interpreter.evaluate(
+      *binary("&&", ValueExpression, boolean(true)), State);
   ASSERT_FALSE(BooleanResult);
   EXPECT_EQ(toString(BooleanResult.takeError()),
             "cannot evaluate constraint '(&& ?value true)': expected a "
@@ -382,8 +416,8 @@ TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
             "cannot evaluate constraint '(isa 1 \"Value\")': expected an "
             "LLVM value operand");
 
-  Expected<ConstraintValue> IsaNameResult = Interpreter.evaluate(
-      *call("isa", ValueExpression, integer(1)), State);
+  Expected<ConstraintValue> IsaNameResult =
+      Interpreter.evaluate(*call("isa", ValueExpression, integer(1)), State);
   ASSERT_FALSE(IsaNameResult);
   EXPECT_EQ(toString(IsaNameResult.takeError()),
             "cannot evaluate constraint '(isa ?value 1)': expected a "

@@ -8,7 +8,7 @@ call:?instruction ?return_type @llvm.?intrinsic(...?types ?values)
 ;; ?return_type == "i32"
 ;; ?types == ["i32", "i1"]
 ;; ?values == ["%x", "false"]
-;; isa(?instruction, "CallInst")
+;; opcode(?instruction) == "call"
 
 ;--- error-pattern.mpir
 call:?instruction ?return_type @llvm.?intrinsic(...?types ?values)
