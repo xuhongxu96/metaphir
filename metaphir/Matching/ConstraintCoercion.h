@@ -12,15 +12,34 @@ class Constraint;
 
 namespace detail {
 
+// Integer promotion helpers (the numeric coercion lattice). widen() extends
+// both operands to a common bitwidth so that binary arithmetic never overflows
+// (the analog of C's usual arithmetic conversions).
 APSInt extend(const APSInt &Value, unsigned Width, bool IsUnsigned);
 std::pair<APSInt, APSInt> widen(const APSInt &Left, const APSInt &Right,
                                 unsigned ExtraBits = 0);
 APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth);
 
+// Coercion-class predicates. A value belongs to a class when it can be coerced
+// to the corresponding target kind (see Coercions.def). isNumeric() is
+// additionally gated on a Value actually being a constant integer, since a
+// non-constant Value can never satisfy an integer demand.
 bool isNumeric(const ConstraintValue &V);
 bool isStringLike(const ConstraintValue &V);
 bool isStringArrayLike(const ConstraintValue &V);
 
+// Table-driven coercion dispatch. Converts V into the target kind when an
+// admissible coercion exists, and returns a structured error otherwise. The
+// admissible conversions are listed in Coercions.def; each destination kind
+// owns its acceptance policy in a dedicated converter.
+bool canCoerceTo(const ConstraintValue &V, ConstraintValue::ValueKind Target);
+Expected<ConstraintValue> coerce(ConstraintValue V,
+                                 ConstraintValue::ValueKind Target,
+                                 const Constraint &Expression);
+
+// Coercion-aware accessors. They forward evaluation errors, coerce the value
+// into the requested representation, and report a structured error when no
+// coercion exists.
 Expected<bool> requireBoolean(Expected<ConstraintValue> Result,
                               const Constraint &Expression);
 Expected<APSInt> requireInteger(Expected<ConstraintValue> Result,

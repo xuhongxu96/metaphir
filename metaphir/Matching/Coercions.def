@@ -1,0 +1,28 @@
+//===------ Coercions.def - coercion lattice for constraint values ------*-===//
+//
+// Admissible value coercions for the constraint interpreter. Each entry
+// declares a directed conversion from a source ConstraintValue kind to a
+// destination kind, implemented by the converter function Coerce<Op>. The
+// table is the single source of truth for which cross-kind conversions are
+// permitted; see ConstraintCoercion.cpp for the dispatch logic.
+//
+// Identity coercions (Src == Dst) are handled by a fast path in coerce() and
+// are intentionally not listed here. Conversions that are only admissible for
+// some values (e.g. Value -> Integer requires a ConstantInt) are still listed;
+// their converter reports the precise rejection reason.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef MIR_COERCION
+#define MIR_COERCION(Src, Dst, Op)
+#endif
+
+MIR_COERCION(Boolean, Integer, BooleanToInteger)
+MIR_COERCION(Integer, Boolean, IntegerToBoolean)
+MIR_COERCION(Value, Integer, ValueToInteger)
+MIR_COERCION(Type, String, TypeToString)
+MIR_COERCION(Value, String, ValueToString)
+MIR_COERCION(TypeArray, StringArray, TypeArrayToStringArray)
+MIR_COERCION(ValueArray, StringArray, ValueArrayToStringArray)
+
+#undef MIR_COERCION
