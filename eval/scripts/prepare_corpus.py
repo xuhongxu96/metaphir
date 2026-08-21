@@ -28,7 +28,7 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-OPT = REPO / "llvm-project" / "build-release" / "bin" / "opt"
+OPT = REPO / "llvm-project" / "build" / "bin" / "opt"
 BENCH_ROOT = Path("/ssd/h445xu/llvm-opt-benchmark-nightly/local")
 LLVM_TEST_DIR = REPO / "llvm-project" / "llvm" / "test" / "Transforms"
 PASSES = "default<O2>"

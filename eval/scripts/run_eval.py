@@ -22,8 +22,8 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-OPT = REPO / "llvm-project" / "build-release" / "bin" / "opt"
-METAPHIR_MATCH = REPO / "build-release" / "tools" / "metaphir-match"
+OPT = REPO / "llvm-project" / "build" / "bin" / "opt"
+METAPHIR_MATCH = REPO / "build" / "tools" / "metaphir-match"
 
 # PR -> MetaphIR pattern files (relative to the repo root).
 PR_PATTERNS: dict[str, list[str]] = {
@@ -249,7 +249,7 @@ def cmd_run_all(args: argparse.Namespace) -> int:
     out.mkdir(parents=True, exist_ok=True)
     rows: list[tuple[str, int, int, int, int, int, float, float]] = []
     for pr, patterns in PR_PATTERNS.items():
-        plugin = REPO / "build-release" / "eval" / "plugins" / f"{pr}.so"
+        plugin = REPO / "build" / "eval" / "plugins" / f"{pr}.so"
         collect_args = argparse.Namespace(
             pr=pr, plugin=plugin, pass_name=pr,
             patterns=[REPO / p for p in patterns],
