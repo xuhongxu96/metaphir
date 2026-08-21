@@ -247,8 +247,17 @@ def cmd_run_all(args: argparse.Namespace) -> int:
     """Run collect + metrics for every PR, then print a summary table."""
     out = Path(args.outdir)
     out.mkdir(parents=True, exist_ok=True)
+
+    prs = list(PR_PATTERNS)
+    if args.pr:
+        unknown = [pr for pr in args.pr if pr not in PR_PATTERNS]
+        if unknown:
+            sys.exit(f"unknown PR(s): {', '.join(unknown)}")
+        prs = args.pr
+
     rows: list[tuple[str, int, int, int, int, int, float, float]] = []
-    for pr, patterns in PR_PATTERNS.items():
+    for pr in prs:
+        patterns = PR_PATTERNS[pr]
         plugin = REPO / "build" / "eval" / "plugins" / f"{pr}.so"
         collect_args = argparse.Namespace(
             pr=pr, plugin=plugin, pass_name=pr,
@@ -303,6 +312,11 @@ def main() -> int:
 
     a = sub.add_parser("run_all", help="collect + metrics for every PR")
     a.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
+    a.add_argument(
+        "--pr",
+        nargs="*",
+        help="only run the given PRs (default: all); e.g. --pr pr214541 pr204089",
+    )
     a.add_argument("--outdir", required=True, type=Path)
     a.set_defaults(func=cmd_run_all)
 
