@@ -20,7 +20,8 @@ public:
     Value,
     TypeArray,
     ValueArray,
-    StringArray
+    StringArray,
+    NumValueKinds
   };
 
   using StringArrayStorage = SmallVector<std::string, 4>;
