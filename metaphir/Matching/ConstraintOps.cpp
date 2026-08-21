@@ -62,6 +62,22 @@ Expected<ConstraintValue> evaluateIsa(const ConstraintInterpreter &Interpreter,
   return ConstraintValue::getBoolean(*Result);
 }
 
+Expected<ConstraintValue>
+evaluateOpcode(const ConstraintInterpreter &Interpreter,
+               ArrayRef<Constraint *> Arguments, const Instantiation &State,
+               const Constraint &Expression) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  auto Value = requireValue(std::move((*Values)[0]), Expression);
+  if (!Value)
+    return Value.takeError();
+  if (const auto *Instruction = dyn_cast<llvm::Instruction>(*Value))
+    return ConstraintValue::getString(Instruction->getOpcodeName());
+  return make_error<ConstraintEvaluationError>(
+      Expression, "expected an instruction operand");
+}
+
 Expected<ConstraintValue> evaluateLog2(const ConstraintInterpreter &Interpreter,
                                        ArrayRef<Constraint *> Arguments,
                                        const Instantiation &State,

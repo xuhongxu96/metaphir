@@ -21,6 +21,11 @@ Expected<ConstraintValue> evaluateIsa(const ConstraintInterpreter &Interpreter,
                                       const Instantiation &State,
                                       const Constraint &Expression);
 
+Expected<ConstraintValue>
+evaluateOpcode(const ConstraintInterpreter &Interpreter,
+               ArrayRef<Constraint *> Arguments, const Instantiation &State,
+               const Constraint &Expression);
+
 Expected<ConstraintValue> evaluateLog2(const ConstraintInterpreter &Interpreter,
                                        ArrayRef<Constraint *> Arguments,
                                        const Instantiation &State,
