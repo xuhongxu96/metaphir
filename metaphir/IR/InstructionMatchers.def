@@ -31,15 +31,19 @@
   MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, OperandSyntax)
 #endif
 
+// clang-format off
+//
 // Name, target matcher, supported semantic flags, supports :c, operand syntax.
 //
 // OperandSyntax is consumed by the MIR parser to decide how this instruction's
 // operands are spelled (see Instruction::OperandSyntax). Shared grammars:
 //   Unary   fneg:?f i?n ?a                     (one typed operand)
 //   Binary  add i?n ?a, ?b                     (typed, comma, value)
-//   Ternary select i1 ?c, i?n ?t, i?n ?f       (typed, comma, typed, comma,
-//   typed) Cast    trunc i?n ?a to i?m                (typed, 'to', type)
+//   Ternary select i1 ?c, i?n ?t, i?n ?f       (typed, comma, typed, comma, typed)
+//   Cast    trunc i?n ?a to i?m                (typed, 'to', type)
 //   Custom  all other grammars (call, load, phi, ...) get bespoke parser code
+//
+// clang-format on
 MIR_INSTRUCTION_MATCHER(fneg, matchOpcode<llvm::Instruction::FNeg>,
                         FastMathFlags, false, Unary)
 

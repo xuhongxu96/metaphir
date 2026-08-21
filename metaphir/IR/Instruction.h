@@ -54,7 +54,7 @@ class PatternSettings {
 public:
   enum Setting : uint64_t {
     None = 0,
-#define MIR_PATTERN_SETTING_ID(Name, Bit, Comment) Name = 1u << Bit,
+#define MIR_PATTERN_SETTING_ID(Name, Bit, Comment) Name = uint64_t(1) << Bit,
 #include "metaphir/IR/PatternSettings.def"
   };
 
