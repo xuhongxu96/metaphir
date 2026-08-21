@@ -13,8 +13,13 @@ tok::Kind MIRConstraintLexer::Lex() {
     switch (CurChar) {
     default:
       if (isalpha(static_cast<unsigned char>(CurChar)) || CurChar == '_') {
+        // Operator names may be hyphenated (e.g. no-overflow); a '-' is only
+        // part of the identifier when immediately followed by an alphanumeric
+        // character, so "a - b" still lexes as subtraction.
         while (isalnum(static_cast<unsigned char>(Lexer.CurPtr[0])) ||
-               Lexer.CurPtr[0] == '_')
+               Lexer.CurPtr[0] == '_' ||
+               (Lexer.CurPtr[0] == '-' &&
+                isalnum(static_cast<unsigned char>(Lexer.CurPtr[1]))))
           ++Lexer.CurPtr;
         Lexer.StrVal.assign(Lexer.TokStart, Lexer.CurPtr);
         if (Lexer.StrVal == "true")

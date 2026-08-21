@@ -2,6 +2,7 @@
 #define METAPHIR_MATCHING_CONSTRAINTINTERPRETER_H
 
 #include "metaphir/Matching/ConstraintValue.h"
+#include "metaphir/Matching/ValueTrackContext.h"
 #include "llvm/Support/Error.h"
 #include <optional>
 
@@ -18,36 +19,67 @@ class VariableConstraint;
 class ConstraintInterpreter {
 public:
   Expected<ConstraintValue> evaluate(const Constraint &Expression,
-                                     const Instantiation &State) const;
+                                     const Instantiation &State);
 
 private:
+  // Signature of a value-tracking operator's pure evaluator: given the
+  // evaluated operand values, the query context, and the operator node,
+  // produce the result.
+  using ValueTrackOp = Expected<ConstraintValue> (*)(
+      ArrayRef<ConstraintValue> Values, const SimplifyQuery &Query,
+      const Constraint &Expression);
+
+  // Evaluates the operator's fixed operands, resolves the context instruction
+  // (explicit ?ctx or the constraint's context instruction), builds the lazy
+  // query, and dispatches to the operator's pure evaluator.
+  Expected<ConstraintValue> evaluateValueTrack(ArrayRef<Constraint *> Arguments,
+                                               unsigned BaseArity,
+                                               const Instantiation &State,
+                                               const Constraint &Expression,
+                                               ValueTrackOp Op);
+
+  // Value-tracking operators build their query through this context. The
+  // per-function analyses are materialized lazily on first use.
+  SimplifyQuery getValueTrackQuery(const llvm::Instruction *CtxI) {
+    return Analysis.getQuery(CtxI);
+  }
+
+  // Resolves the use-point instruction for a value-tracking operator: the
+  // explicit trailing ?ctx argument when present, otherwise the constraint's
+  // context instruction resolved through the match bindings.
+  Expected<const llvm::Instruction *>
+  resolveValueTrackContext(ArrayRef<Constraint *> Arguments, unsigned BaseArity,
+                           const Instantiation &State,
+                           const Constraint &Expression);
   // Evaluates integer/boolean/string literal nodes.
   Expected<ConstraintValue> evalLiteral(const Constraint &Expression,
-                                        const Instantiation &State) const;
+                                        const Instantiation &State);
   // Dispatches a variable reference by resolving it against the instantiation
   // state, checking that the bound value matches the expected result type.
   Expected<ConstraintValue> evalVariable(const VariableConstraint &Expression,
-                                         const Instantiation &State) const;
+                                         const Instantiation &State);
   Expected<ConstraintValue> evalArray(const ArrayConstraint &Expression,
-                                      const Instantiation &State) const;
+                                      const Instantiation &State);
   Expected<ConstraintValue> evalArrayAccess(const ArrayAccessConstraint &Access,
-                                            const Instantiation &State) const;
+                                            const Instantiation &State);
   Expected<ConstraintValue> evalOperator(const OperatorConstraint &Operator,
-                                         const Instantiation &State) const;
+                                         const Instantiation &State);
   Expected<ConstraintValue> evalLogical(const OperatorConstraint &Operator,
-                                        const Instantiation &State) const;
+                                        const Instantiation &State);
   Expected<ConstraintValue> evalUnary(const OperatorConstraint &Operator,
-                                      const Instantiation &State) const;
+                                      const Instantiation &State);
   Expected<ConstraintValue> evalShift(const OperatorConstraint &Operator,
-                                      const Instantiation &State) const;
+                                      const Instantiation &State);
   Expected<ConstraintValue> evalArithmetic(const OperatorConstraint &Operator,
-                                           const Instantiation &State) const;
+                                           const Instantiation &State);
   // Evaluates an optional trailing bitwidth argument. Returns std::nullopt when
   // the argument is absent (i.e. the operator was used without a bitwidth).
   Expected<std::optional<unsigned>>
   evalOptionalBitWidth(const OperatorConstraint &Operator,
-                       unsigned ArgumentIndex,
-                       const Instantiation &State) const;
+                       unsigned ArgumentIndex, const Instantiation &State);
+
+  // Lazily-constructed per-function analyses for value-tracking operators.
+  detail::ValueTrackContext Analysis;
 };
 
 } // namespace metaphir

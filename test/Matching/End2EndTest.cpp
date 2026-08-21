@@ -17,12 +17,14 @@ using namespace llvm::metaphir;
 using MIRInstruction = llvm::metaphir::Instruction;
 using MIRTarget = llvm::metaphir::Target;
 
-static std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
+namespace {
+
+std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
   SMDiagnostic Error;
   return parseAssemblyString(IR, Error, Context);
 }
 
-static Pattern *parsePattern(StringRef IR, MIRContext &Context) {
+Pattern *parsePattern(StringRef IR, MIRContext &Context) {
   SourceMgr SM;
   MemoryBufferRef F(IR, "<string>");
   SM.AddNewSourceBuffer(MemoryBuffer::getMemBuffer(F), SMLoc());
@@ -67,3 +69,5 @@ define <2 x i128> @vec(<2 x i128> %x) {
   MatchResults Matches = Matcher.match(*Pattern, Program);
   ASSERT_EQ(Matches.size(), 1u);
 }
+
+} // namespace

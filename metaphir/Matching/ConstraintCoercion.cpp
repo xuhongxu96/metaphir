@@ -66,6 +66,8 @@ StringRef targetName(ConstraintValue::ValueKind Target) {
     return "a type-array";
   case ConstraintValue::ValueArray:
     return "a value-array";
+  case ConstraintValue::BitVector:
+    return "a bit-vector";
   case ConstraintValue::NumValueKinds:
     break;
   }
@@ -279,6 +281,8 @@ Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,
       return Left.getValueArray() == Right.getValueArray();
     case ConstraintValue::StringArray:
       return Left.getStringArray() == Right.getStringArray();
+    case ConstraintValue::BitVector:
+      return Left.getKnownBits() == Right.getKnownBits();
     case ConstraintValue::NumValueKinds:
       break;
     }

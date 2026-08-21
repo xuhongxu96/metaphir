@@ -7,6 +7,8 @@
 namespace llvm {
 namespace metaphir {
 
+class Instruction;
+
 class Constraint {
 public:
   enum ConstraintID {
@@ -34,7 +36,8 @@ public:
     ValueResult,
     TypeArrayResult,
     ValueArrayResult,
-    StringArrayResult
+    StringArrayResult,
+    BitVectorResult
   };
 
   struct OperatorSchema {
@@ -49,6 +52,15 @@ public:
   ResultType getResultType() const { return Ty; }
   SourceRange getSourceRange() const { return Range; }
 
+  // The pattern instruction that lexically precedes this constraint, used as
+  // the default context (use-point) for value-tracking operators that omit an
+  // explicit ?ctx argument. Null when the constraint precedes every
+  // instruction.
+  const Instruction *getContextInstruction() const { return Context; }
+  void setContextInstruction(const Instruction *Context) {
+    this->Context = Context;
+  }
+
   static std::optional<OperatorSchema> getOperatorSchema(OperatorID ID);
   static StringRef getOperatorName(OperatorID ID);
   static OperatorID getOperatorID(StringRef Name, ConstraintID Kind);
@@ -62,6 +74,7 @@ private:
   ConstraintID ID;
   ResultType Ty;
   SourceRange Range;
+  const Instruction *Context = nullptr;
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const Constraint &C);

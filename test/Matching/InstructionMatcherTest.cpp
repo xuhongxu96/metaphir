@@ -18,7 +18,9 @@ using namespace llvm;
 using namespace llvm::metaphir;
 using MIRInstruction = llvm::metaphir::Instruction;
 
-static std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
+namespace {
+
+std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
   SMDiagnostic Error;
   return parseAssemblyString(IR, Error, Context);
 }
@@ -26,9 +28,8 @@ static std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
 // Matches a single instruction matcher against a target instruction by
 // constructing an InstructionMatcher directly (backed by a fresh
 // SubtreeMatcher), storing the first successful instantiation.
-static bool matchesInstruction(const MIRInstruction &Pat,
-                               const llvm::Instruction &Target,
-                               Instantiation &State) {
+bool matchesInstruction(const MIRInstruction &Pat,
+                        const llvm::Instruction &Target, Instantiation &State) {
   MatchResults Results = InstructionMatcher(Pat, Target, State).match();
   if (Results.empty())
     return false;
@@ -390,3 +391,5 @@ TEST(InstructionMatcherTest, CapturesAggregateIndicesAsValueArray) {
   EXPECT_EQ(cast<ConstantInt>(Captured[0])->getZExtValue(), 1u);
   EXPECT_EQ(cast<ConstantInt>(Captured[1])->getZExtValue(), 0u);
 }
+
+} // namespace

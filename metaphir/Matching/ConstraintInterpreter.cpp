@@ -1,9 +1,11 @@
 #include "metaphir/Matching/ConstraintInterpreter.h"
 #include "metaphir/IR/Constraints.h"
+#include "metaphir/IR/Instruction.h"
 #include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Instantiation.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <optional>
 
 namespace llvm {
 namespace metaphir {
@@ -12,7 +14,7 @@ using namespace detail;
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evaluate(const Constraint &Expression,
-                                const Instantiation &State) const {
+                                const Instantiation &State) {
   switch (Expression.getConstraintID()) {
   case Constraint::Integer:
   case Constraint::Boolean:
@@ -32,9 +34,63 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
   llvm_unreachable("unknown constraint ID");
 }
 
+Expected<const llvm::Instruction *>
+ConstraintInterpreter::resolveValueTrackContext(
+    ArrayRef<Constraint *> Arguments, unsigned BaseArity,
+    const Instantiation &State, const Constraint &Expression) {
+  if (Arguments.size() > BaseArity) {
+    Expected<ConstraintValue> Context = evaluate(*Arguments[BaseArity], State);
+    if (!Context)
+      return Context.takeError();
+    Expected<const llvm::Value *> Value =
+        requireValue(std::move(*Context), Expression);
+    if (!Value)
+      return Value.takeError();
+    if (const auto *Instruction = dyn_cast<llvm::Instruction>(*Value))
+      return Instruction;
+    return make_error<ConstraintEvaluationError>(
+        Expression, "expected an instruction context operand");
+  }
+
+  const metaphir::Instruction *Pattern = Expression.getContextInstruction();
+  if (!Pattern)
+    return make_error<ConstraintEvaluationError>(
+        Expression, "no context instruction for value-tracking operator "
+                    "(place the constraint after an instruction or pass ?ctx "
+                    "explicitly)");
+  if (const Instantiation::Binding *Binding = State.lookup(*Pattern))
+    if (const auto *Value = std::get_if<const llvm::Value *>(&Binding->Data))
+      if (const auto *Instruction = dyn_cast<llvm::Instruction>(*Value))
+        return Instruction;
+  return make_error<ConstraintEvaluationError>(
+      Expression, "no context instruction for value-tracking operator "
+                  "(place the constraint after an instruction or pass ?ctx "
+                  "explicitly)");
+}
+
+Expected<ConstraintValue> ConstraintInterpreter::evaluateValueTrack(
+    ArrayRef<Constraint *> Arguments, unsigned BaseArity,
+    const Instantiation &State, const Constraint &Expression, ValueTrackOp Op) {
+  SmallVector<ConstraintValue, 2> Values;
+  Values.reserve(BaseArity);
+  for (const Constraint *Argument : Arguments.take_front(BaseArity)) {
+    Expected<ConstraintValue> Value = evaluate(*Argument, State);
+    if (!Value)
+      return Value.takeError();
+    Values.push_back(std::move(*Value));
+  }
+
+  Expected<const llvm::Instruction *> Context =
+      resolveValueTrackContext(Arguments, BaseArity, State, Expression);
+  if (!Context)
+    return Context.takeError();
+  SimplifyQuery Query = getValueTrackQuery(*Context);
+  return Op(Values, Query, Expression);
+}
+
 Expected<ConstraintValue>
 ConstraintInterpreter::evalLiteral(const Constraint &Expression,
-                                   const Instantiation &State) const {
+                                   const Instantiation &State) {
   switch (Expression.getConstraintID()) {
   case Constraint::Integer: {
     int64_t Value = cast<IntegerConstraint>(Expression).getValue();
@@ -54,7 +110,7 @@ ConstraintInterpreter::evalLiteral(const Constraint &Expression,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
-                                    const Instantiation &State) const {
+                                    const Instantiation &State) {
   const MetaVariable &Variable = *Expression.getVariable();
   const Instantiation::Binding *Binding = State.lookup(Variable);
   if (!Binding)
@@ -106,7 +162,7 @@ ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalArray(const ArrayConstraint &Expression,
-                                 const Instantiation &State) const {
+                                 const Instantiation &State) {
   switch (Expression.getResultType()) {
   case Constraint::TypeArrayResult: {
     Instantiation::TypeArray Types;
@@ -150,7 +206,7 @@ ConstraintInterpreter::evalArray(const ArrayConstraint &Expression,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalArrayAccess(const ArrayAccessConstraint &Access,
-                                       const Instantiation &State) const {
+                                       const Instantiation &State) {
   Expected<ConstraintValue> Array = evaluate(*Access.getArray(), State);
   if (!Array)
     return Array.takeError();
@@ -193,7 +249,7 @@ ConstraintInterpreter::evalArrayAccess(const ArrayAccessConstraint &Access,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
-                                    const Instantiation &State) const {
+                                    const Instantiation &State) {
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   if (std::optional<Constraint::OperatorSchema> Schema =
           Constraint::getOperatorSchema(Operator.getOperatorID()))
@@ -219,12 +275,17 @@ ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
     break;
   }
 
-  // Interpreted built-ins (isa, log2, popcount) are table-driven so that
-  // adding a new interpreted operator is a one-line change in the .def file.
+  // Interpreted built-ins (isa, log2, popcount, value-tracking) are
+  // table-driven so that adding a new interpreted operator is a one-line
+  // change in the .def file.
   switch (Operator.getOperatorID()) {
 #define MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Kind, Result, Arity)     \
   case Constraint::O_##ID:                                                     \
     return evaluate##ID(*this, Operator.getArguments(), State, Operator);
+#define MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(ID, Name, Kind, Result, BaseArity) \
+  case Constraint::O_##ID:                                                     \
+    return evaluateValueTrack(Operator.getArguments(), BaseArity, State,       \
+                              Operator, evaluate##ID);
 #include "metaphir/IR/ConstraintOperators.def"
   default:
     break;
@@ -236,7 +297,7 @@ ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
 Expected<std::optional<unsigned>>
 ConstraintInterpreter::evalOptionalBitWidth(const OperatorConstraint &Operator,
                                             unsigned ArgumentIndex,
-                                            const Instantiation &State) const {
+                                            const Instantiation &State) {
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   if (Arguments.size() <= ArgumentIndex)
     return std::nullopt;
@@ -252,7 +313,7 @@ ConstraintInterpreter::evalOptionalBitWidth(const OperatorConstraint &Operator,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalLogical(const OperatorConstraint &Operator,
-                                   const Instantiation &State) const {
+                                   const Instantiation &State) {
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   Expected<bool> Left =
       requireBoolean(evaluate(*Arguments[0], State), Operator);
@@ -270,7 +331,7 @@ ConstraintInterpreter::evalLogical(const OperatorConstraint &Operator,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalUnary(const OperatorConstraint &Operator,
-                                 const Instantiation &State) const {
+                                 const Instantiation &State) {
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   if (Operator.getOperatorID() == Constraint::O_Not) {
     Expected<bool> Operand =
@@ -300,7 +361,7 @@ ConstraintInterpreter::evalUnary(const OperatorConstraint &Operator,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalShift(const OperatorConstraint &Operator,
-                                 const Instantiation &State) const {
+                                 const Instantiation &State) {
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   Expected<std::optional<unsigned>> BitWidth =
       evalOptionalBitWidth(Operator, 2, State);
@@ -342,7 +403,7 @@ ConstraintInterpreter::evalShift(const OperatorConstraint &Operator,
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalArithmetic(const OperatorConstraint &Operator,
-                                      const Instantiation &State) const {
+                                      const Instantiation &State) {
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   Expected<ConstraintValue> LeftResult = evaluate(*Arguments[0], State);
   if (!LeftResult)

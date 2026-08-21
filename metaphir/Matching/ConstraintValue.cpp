@@ -23,6 +23,8 @@ ConstraintValue::ValueKind ConstraintValue::getKind() const {
           return TypeArray;
         else if constexpr (std::is_same_v<T, Instantiation::ValueArray>)
           return ValueArray;
+        else if constexpr (std::is_same_v<T, llvm::KnownBits>)
+          return BitVector;
         else {
           static_assert(std::is_same_v<T, StringArrayStorage>);
           return StringArray;
@@ -62,6 +64,10 @@ ConstraintValue::getStringArray() const {
   return std::get<StringArrayStorage>(Data);
 }
 
+const llvm::KnownBits &ConstraintValue::getKnownBits() const {
+  return std::get<llvm::KnownBits>(Data);
+}
+
 ConstraintValue ConstraintValue::getInteger(APSInt Value) {
   return ConstraintValue(std::move(Value));
 }
@@ -92,6 +98,10 @@ ConstraintValue::getValueArray(Instantiation::ValueArray Value) {
 }
 
 ConstraintValue ConstraintValue::getStringArray(StringArrayStorage Value) {
+  return ConstraintValue(std::move(Value));
+}
+
+ConstraintValue ConstraintValue::getKnownBits(llvm::KnownBits Value) {
   return ConstraintValue(std::move(Value));
 }
 
