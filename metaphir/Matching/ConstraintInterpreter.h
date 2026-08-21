@@ -1,66 +1,53 @@
 #ifndef METAPHIR_MATCHING_CONSTRAINTINTERPRETER_H
 #define METAPHIR_MATCHING_CONSTRAINTINTERPRETER_H
 
-#include "metaphir/Matching/Instantiation.h"
-#include "llvm/ADT/APSInt.h"
+#include "metaphir/Matching/ConstraintValue.h"
 #include "llvm/Support/Error.h"
-#include <string>
-#include <variant>
+#include <optional>
 
 namespace llvm {
 namespace metaphir {
 
 class Constraint;
 class Instantiation;
-
-class ConstraintValue {
-public:
-  enum ValueKind {
-    Integer,
-    Boolean,
-    String,
-    Type,
-    Value,
-    TypeArray,
-    ValueArray,
-    StringArray
-  };
-
-  using StringArrayStorage = SmallVector<std::string, 4>;
-
-  ValueKind getKind() const;
-  const APSInt &getInteger() const;
-  bool getBoolean() const;
-  StringRef getString() const;
-  const llvm::Type *getType() const;
-  const llvm::Value *getValue() const;
-  const Instantiation::TypeArray &getTypeArray() const;
-  const Instantiation::ValueArray &getValueArray() const;
-  const StringArrayStorage &getStringArray() const;
-
-  static ConstraintValue getInteger(APSInt Value);
-  static ConstraintValue getBoolean(bool Value);
-  static ConstraintValue getString(StringRef Value);
-  static ConstraintValue getType(const llvm::Type *Value);
-  static ConstraintValue getValue(const llvm::Value *Value);
-  static ConstraintValue getTypeArray(Instantiation::TypeArray Value);
-  static ConstraintValue getValueArray(Instantiation::ValueArray Value);
-  static ConstraintValue getStringArray(StringArrayStorage Value);
-
-private:
-  using Storage = std::variant<APSInt, bool, std::string, const llvm::Type *,
-                               const llvm::Value *, Instantiation::TypeArray,
-                               Instantiation::ValueArray, StringArrayStorage>;
-
-  Storage Data;
-
-  explicit ConstraintValue(Storage Value) : Data(std::move(Value)) {}
-};
+class ArrayConstraint;
+class ArrayAccessConstraint;
+class OperatorConstraint;
+class VariableConstraint;
 
 class ConstraintInterpreter {
 public:
   Expected<ConstraintValue> evaluate(const Constraint &Expression,
                                      const Instantiation &State) const;
+
+private:
+  // Evaluates integer/boolean/string literal nodes.
+  Expected<ConstraintValue> evalLiteral(const Constraint &Expression,
+                                        const Instantiation &State) const;
+  // Dispatches a variable reference by resolving it against the instantiation
+  // state, checking that the bound value matches the expected result type.
+  Expected<ConstraintValue> evalVariable(const VariableConstraint &Expression,
+                                         const Instantiation &State) const;
+  Expected<ConstraintValue> evalArray(const ArrayConstraint &Expression,
+                                      const Instantiation &State) const;
+  Expected<ConstraintValue> evalArrayAccess(const ArrayAccessConstraint &Access,
+                                            const Instantiation &State) const;
+  Expected<ConstraintValue> evalOperator(const OperatorConstraint &Operator,
+                                         const Instantiation &State) const;
+  Expected<ConstraintValue> evalLogical(const OperatorConstraint &Operator,
+                                        const Instantiation &State) const;
+  Expected<ConstraintValue> evalUnary(const OperatorConstraint &Operator,
+                                      const Instantiation &State) const;
+  Expected<ConstraintValue> evalShift(const OperatorConstraint &Operator,
+                                      const Instantiation &State) const;
+  Expected<ConstraintValue> evalArithmetic(const OperatorConstraint &Operator,
+                                           const Instantiation &State) const;
+  // Evaluates an optional trailing bitwidth argument. Returns std::nullopt when
+  // the argument is absent (i.e. the operator was used without a bitwidth).
+  Expected<std::optional<unsigned>>
+  evalOptionalBitWidth(const OperatorConstraint &Operator,
+                       unsigned ArgumentIndex,
+                       const Instantiation &State) const;
 };
 
 } // namespace metaphir

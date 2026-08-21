@@ -1,8 +1,15 @@
-add_library(metaphir-matching
+add_library(
+  metaphir-matching
+  ConstraintCoercion.cpp
+  ConstraintCoercion.h
+  ConstraintError.cpp
+  ConstraintError.h
   ConstraintInterpreter.cpp
   ConstraintInterpreter.h
   ConstraintOps.cpp
   ConstraintOps.h
+  ConstraintValue.cpp
+  ConstraintValue.h
   Instantiation.cpp
   Instantiation.h
   MatchersDetail.cpp
@@ -19,12 +26,6 @@ add_library(metaphir-matching
   PatternMatcher.cpp
   PatternMatcher.h
   Target.cpp
-  Target.h
-)
+  Target.h)
 
-target_link_libraries(metaphir-matching
-  PUBLIC
-    metaphir-ir
-    LLVMCore
-    LLVMSupport
-)
+target_link_libraries(metaphir-matching PUBLIC metaphir-ir LLVMCore LLVMSupport)
