@@ -2,7 +2,7 @@
 set -e
 
 BASE_DIR=$(pwd)
-CACHE_DIR=${CACHE_DIR:-/nvme/h445xu/ccache}
+CACHE_DIR=${CACHE_DIR:-/data/h445xu/ccache}
 LLVM_COMMIT="53a7028134738d799d8b758a5675873e325dd9e0"
 LLVM_DIR="$BASE_DIR/llvm-project"
 LLVM_BUILD_DIR="$LLVM_DIR/build"
@@ -50,7 +50,7 @@ cmake -G Ninja ../llvm \
     -DLLVM_CCACHE_DIR=$CACHE_DIR
 
 # Build
-cmake --build . --target all -- -j8
+cmake --build . --target all -- -j80
 
 # Install
 cmake --install . --prefix "$LLVM_BUILD_DIR/install"
