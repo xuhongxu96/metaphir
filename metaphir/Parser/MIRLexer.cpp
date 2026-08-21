@@ -15,26 +15,55 @@
 namespace llvm {
 namespace metaphir {
 
-// Both the lexer and parser can issue error messages. If the lexer issues a
-// lexer error, since we do not terminate execution immediately, usually that
-// is followed by the parser issuing a parser error. However, the error issued
-// by the lexer is more relevant in that case as opposed to potentially more
-// generic parser error. So instead of always recording the last error message
-// use the `Priority` to establish a priority, with Lexer > Parser > None. We
-// record the issued message only if the message has same or higher priority
-// than the existing one. This prevents lexer errors from being overwritten by
-// parser errors.
-void MIRLexer::Error(LocTy ErrorLoc, const Twine &Msg,
-                     MIRLexer::ErrorPriority Priority) {
-  if (Priority < ErrorInfo.Priority)
+namespace {
+
+// UnEscapeLexed - Run through the specified buffer and change \xx codes to the
+// appropriate character.
+void UnEscapeLexed(std::string &Str) {
+  if (Str.empty())
     return;
-  ErrorInfo.Error = SM.GetMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
-  ErrorInfo.Priority = Priority;
+
+  char *Buffer = &Str[0], *EndBuffer = Buffer + Str.size();
+  char *BOut = Buffer;
+  for (char *BIn = Buffer; BIn != EndBuffer;) {
+    if (BIn[0] == '\\') {
+      if (BIn < EndBuffer - 1 && BIn[1] == '\\') {
+        *BOut++ = '\\'; // Two \ becomes one
+        BIn += 2;
+      } else if (BIn < EndBuffer - 2 &&
+                 isxdigit(static_cast<unsigned char>(BIn[1])) &&
+                 isxdigit(static_cast<unsigned char>(BIn[2]))) {
+        *BOut = hexDigitValue(BIn[1]) * 16 + hexDigitValue(BIn[2]);
+        BIn += 3; // Skip over handled chars
+        ++BOut;
+      } else {
+        *BOut++ = *BIn++;
+      }
+    } else {
+      *BOut++ = *BIn++;
+    }
+  }
+  Str.resize(BOut - Buffer);
 }
 
-void MIRLexer::Warning(LocTy WarningLoc, const Twine &Msg) const {
-  SM.PrintMessage(WarningLoc, SourceMgr::DK_Warning, Msg);
+/// isLabelChar - Return true for [-a-zA-Z$._0-9].
+bool isLabelChar(char C) {
+  return isalnum(static_cast<unsigned char>(C)) || C == '-' || C == '$' ||
+         C == '.' || C == '_';
 }
+
+/// isLabelTail - Return true if this pointer points to a valid end of a label.
+const char *isLabelTail(const char *CurPtr) {
+  while (true) {
+    if (CurPtr[0] == ':')
+      return CurPtr + 1;
+    if (!isLabelChar(CurPtr[0]))
+      return nullptr;
+    ++CurPtr;
+  }
+}
+
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // Helper functions.
@@ -111,50 +140,25 @@ void MIRLexer::FP80HexToIntPair(const char *Buffer, const char *End,
     LexError("constant bigger than 128 bits detected");
 }
 
-// UnEscapeLexed - Run through the specified buffer and change \xx codes to the
-// appropriate character.
-static void UnEscapeLexed(std::string &Str) {
-  if (Str.empty())
+// Both the lexer and parser can issue error messages. If the lexer issues a
+// lexer error, since we do not terminate execution immediately, usually that
+// is followed by the parser issuing a parser error. However, the error issued
+// by the lexer is more relevant in that case as opposed to potentially more
+// generic parser error. So instead of always recording the last error message
+// use the `Priority` to establish a priority, with Lexer > Parser > None. We
+// record the issued message only if the message has same or higher priority
+// than the existing one. This prevents lexer errors from being overwritten by
+// parser errors.
+void MIRLexer::Error(LocTy ErrorLoc, const Twine &Msg,
+                     MIRLexer::ErrorPriority Priority) {
+  if (Priority < ErrorInfo.Priority)
     return;
-
-  char *Buffer = &Str[0], *EndBuffer = Buffer + Str.size();
-  char *BOut = Buffer;
-  for (char *BIn = Buffer; BIn != EndBuffer;) {
-    if (BIn[0] == '\\') {
-      if (BIn < EndBuffer - 1 && BIn[1] == '\\') {
-        *BOut++ = '\\'; // Two \ becomes one
-        BIn += 2;
-      } else if (BIn < EndBuffer - 2 &&
-                 isxdigit(static_cast<unsigned char>(BIn[1])) &&
-                 isxdigit(static_cast<unsigned char>(BIn[2]))) {
-        *BOut = hexDigitValue(BIn[1]) * 16 + hexDigitValue(BIn[2]);
-        BIn += 3; // Skip over handled chars
-        ++BOut;
-      } else {
-        *BOut++ = *BIn++;
-      }
-    } else {
-      *BOut++ = *BIn++;
-    }
-  }
-  Str.resize(BOut - Buffer);
+  ErrorInfo.Error = SM.GetMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
+  ErrorInfo.Priority = Priority;
 }
 
-/// isLabelChar - Return true for [-a-zA-Z$._0-9].
-static bool isLabelChar(char C) {
-  return isalnum(static_cast<unsigned char>(C)) || C == '-' || C == '$' ||
-         C == '.' || C == '_';
-}
-
-/// isLabelTail - Return true if this pointer points to a valid end of a label.
-static const char *isLabelTail(const char *CurPtr) {
-  while (true) {
-    if (CurPtr[0] == ':')
-      return CurPtr + 1;
-    if (!isLabelChar(CurPtr[0]))
-      return nullptr;
-    ++CurPtr;
-  }
+void MIRLexer::Warning(LocTy WarningLoc, const Twine &Msg) const {
+  SM.PrintMessage(WarningLoc, SourceMgr::DK_Warning, Msg);
 }
 
 //===----------------------------------------------------------------------===//

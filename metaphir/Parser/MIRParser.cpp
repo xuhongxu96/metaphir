@@ -9,7 +9,9 @@
 namespace llvm {
 namespace metaphir {
 
-static bool isOpcode(tok::Kind K) {
+namespace {
+
+bool isOpcode(tok::Kind K) {
   switch (K) {
 #define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Name) case tok::kw_##Name:
 #include "metaphir/IR/InstructionMatchers.def"
@@ -19,7 +21,7 @@ static bool isOpcode(tok::Kind K) {
   }
 }
 
-static Instruction::InstructionID instructionID(tok::Kind K) {
+Instruction::InstructionID instructionID(tok::Kind K) {
   switch (K) {
 #define MIR_INSTRUCTION_MATCHER_NAME(Name)                                     \
   case tok::kw_##Name:                                                         \
@@ -30,13 +32,12 @@ static Instruction::InstructionID instructionID(tok::Kind K) {
   }
 }
 
-static StringRef tokenName(tok::Kind K) {
+StringRef tokenName(tok::Kind K) {
   StringRef N = tok::getTokenKindName(K);
   return N.consume_front("kw_") ? N : StringRef();
 }
 
-static std::optional<KeywordConstant::KeywordID>
-predicateKeywordID(tok::Kind K) {
+std::optional<KeywordConstant::KeywordID> predicateKeywordID(tok::Kind K) {
   switch (K) {
 #define MIR_PREDICATE_KEYWORD(ID, Spelling)                                    \
   case tok::kw_##Spelling:                                                     \
@@ -47,7 +48,7 @@ predicateKeywordID(tok::Kind K) {
   }
 }
 
-static std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
+std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
   switch (K) {
 #define MIR_TYPE(TypeID, TokenKind)                                            \
   case tok::kw_##TokenKind:                                                    \
@@ -58,7 +59,7 @@ static std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
   }
 }
 
-static bool isSemanticFlag(tok::Kind K) {
+bool isSemanticFlag(tok::Kind K) {
   switch (K) {
 #define MIR_FLAG(Flag) case tok::kw_##Flag:
 #define MIR_FAST_MATH_FLAG(Flag) case tok::kw_##Flag:
@@ -69,7 +70,7 @@ static bool isSemanticFlag(tok::Kind K) {
   }
 }
 
-static InstructionFlag::FlagID semanticFlagID(tok::Kind K) {
+InstructionFlag::FlagID semanticFlagID(tok::Kind K) {
   switch (K) {
 #define MIR_FLAG(Name)                                                         \
   case tok::kw_##Name:                                                         \
@@ -82,6 +83,33 @@ static InstructionFlag::FlagID semanticFlagID(tok::Kind K) {
     llvm_unreachable("not a semantic flag token");
   }
 }
+
+bool compatibleMeta(MetaType A, MetaType B) {
+  if (A == B || A == MetaType::Unknown || B == MetaType::Unknown)
+    return true;
+  auto IsValue = [](MetaType T) {
+    return T == MetaType::Value || T == MetaType::Instruction ||
+           T == MetaType::Function || T == MetaType::Nat || T == MetaType::Bool;
+  };
+  if ((A == MetaType::Value && IsValue(B)) ||
+      (B == MetaType::Value && IsValue(A)))
+    return true;
+  return (A == MetaType::Nat && B == MetaType::Bool) ||
+         (A == MetaType::Bool && B == MetaType::Nat);
+}
+
+std::optional<PatternSettings::Setting> settingFromKeyword(tok::Kind Kind) {
+  switch (Kind) {
+#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
+  case tok::kw_##Name:                                                         \
+    return PatternSettings::Name;
+#include "metaphir/IR/PatternSettings.def"
+  default:
+    return std::nullopt;
+  }
+}
+
+} // namespace
 
 bool MIRParser::consume(tok::Kind K) {
   if (Lex.getKind() != K)
@@ -100,20 +128,6 @@ bool MIRParser::expect(tok::Kind K, const Twine &Message) {
 void MIRParser::skipNewlines() {
   while (consume(tok::Newline)) {
   }
-}
-
-static bool compatibleMeta(MetaType A, MetaType B) {
-  if (A == B || A == MetaType::Unknown || B == MetaType::Unknown)
-    return true;
-  auto IsValue = [](MetaType T) {
-    return T == MetaType::Value || T == MetaType::Instruction ||
-           T == MetaType::Function || T == MetaType::Nat || T == MetaType::Bool;
-  };
-  if ((A == MetaType::Value && IsValue(B)) ||
-      (B == MetaType::Value && IsValue(A)))
-    return true;
-  return (A == MetaType::Nat && B == MetaType::Bool) ||
-         (A == MetaType::Bool && B == MetaType::Nat);
 }
 
 bool MIRParser::infer(MetaVariable *M, MetaType Expected, LocTy Loc) {
@@ -166,18 +180,6 @@ bool MIRParser::parseBlockLabel() {
 
   CurrentBlock = getMeta(Name, MetaType::BasicBlock, Loc);
   return CurrentBlock == nullptr;
-}
-
-static std::optional<PatternSettings::Setting>
-settingFromKeyword(tok::Kind Kind) {
-  switch (Kind) {
-#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
-  case tok::kw_##Name:                                                         \
-    return PatternSettings::Name;
-#include "metaphir/IR/PatternSettings.def"
-  default:
-    return std::nullopt;
-  }
 }
 
 bool MIRParser::parsePatternSetting(PatternSettings::Setting Setting) {
