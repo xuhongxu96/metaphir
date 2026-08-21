@@ -45,6 +45,33 @@ struct InstructionFlag {
   static StringRef getName(FlagID ID);
 };
 
+// Encapsulates global pattern settings, applied at a `;; <name>(true|false)`
+// directive and active for the instructions that follow it. Stored as an ORed
+// bitmask so more settings can be added later; the Setting enum is generated
+// from PatternSettings.def. Callers query/update through methods rather than
+// manipulating raw bits.
+class PatternSettings {
+public:
+  enum Setting : uint64_t {
+    None = 0,
+#define MIR_PATTERN_SETTING_ID(Name, Bit, Comment) Name = 1u << Bit,
+#include "metaphir/IR/PatternSettings.def"
+  };
+
+  PatternSettings() = default;
+  explicit PatternSettings(uint64_t Mask) : Mask(Mask) {}
+
+  bool has(Setting Flag) const { return Mask & uint64_t(Flag); }
+  void set(Setting Flag) { Mask |= uint64_t(Flag); }
+  void clear(Setting Flag) { Mask &= ~uint64_t(Flag); }
+
+  // Map a Setting back to its directive keyword (used in error messages).
+  static StringRef getName(Setting Flag);
+
+private:
+  uint64_t Mask = None;
+};
+
 class Instruction : public Value {
 public:
   enum InstructionID {
@@ -100,6 +127,7 @@ public:
   ArrayRef<InstructionFlag> getFlags() const { return Flags; }
   ArrayRef<MetaFlag *> getMetaFlags() const { return MetaFlags; }
   MetaVariable *getParentBlock() const { return ParentBlock; }
+  PatternSettings getSettings() const { return Settings; }
   ArrayRef<MatcherOperand> getUnkeyedOperands() const {
     return UnkeyedOperands;
   }
@@ -122,7 +150,8 @@ public:
                           ArrayRef<MetaFlag *> MetaFlags,
                           ArrayRef<MatcherOperand> Operands,
                           MetaVariable *Capture, SourceRange Range,
-                          MetaVariable *ParentBlock);
+                          MetaVariable *ParentBlock,
+                          PatternSettings Settings = {});
 
 private:
   InstructionID ID;
@@ -134,17 +163,18 @@ private:
   uint64_t KeyedOperandMask;
   MetaVariable *Capture = nullptr;
   MetaVariable *ParentBlock;
+  PatternSettings Settings;
 
   Instruction(InstructionID ID, StringRef ResultName,
               ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
               ArrayRef<MatcherOperand> UnkeyedOperands,
               ArrayRef<MatcherOperand> KeyedOperands, uint64_t KeyedOperandMask,
               MetaVariable *Capture, SourceRange Range,
-              MetaVariable *ParentBlock)
+              MetaVariable *ParentBlock, PatternSettings Settings)
       : Value(InstructionVal, Range), ID(ID), ResultName(ResultName),
         Flags(Flags), MetaFlags(MetaFlags), UnkeyedOperands(UnkeyedOperands),
         KeyedOperands(KeyedOperands), KeyedOperandMask(KeyedOperandMask),
-        Capture(Capture), ParentBlock(ParentBlock) {}
+        Capture(Capture), ParentBlock(ParentBlock), Settings(Settings) {}
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F);

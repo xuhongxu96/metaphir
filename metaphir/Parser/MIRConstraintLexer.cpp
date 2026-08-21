@@ -21,6 +21,10 @@ tok::Kind MIRConstraintLexer::Lex() {
           return tok::kw_true;
         if (Lexer.StrVal == "false")
           return tok::kw_false;
+#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
+  if (Lexer.StrVal == #Name)                                                   \
+    return tok::kw_##Name;
+#include "metaphir/IR/PatternSettings.def"
         return tok::Identifier;
       }
       return tok::Error;

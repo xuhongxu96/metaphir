@@ -53,8 +53,8 @@ TEST(NaiveMatcherTest, EnforcesRepeatedBindings) {
   MIRTarget Same(*Module->getFunction("same"));
   MIRTarget Different(*Module->getFunction("different"));
   NaiveMatcher Matcher;
-  EXPECT_TRUE(Matcher.matchProgram(*Pat, Same));
-  EXPECT_FALSE(Matcher.matchProgram(*Pat, Different));
+  EXPECT_FALSE(Matcher.match(*Pat, Same).empty());
+  EXPECT_TRUE(Matcher.match(*Pat, Different).empty());
 }
 
 TEST(NaiveMatcherTest, RequiresEveryRootAndFiltersPrograms) {
@@ -95,9 +95,8 @@ TEST(NaiveMatcherTest, RequiresEveryRootAndFiltersPrograms) {
   MIRTarget Incomplete(*Module->getFunction("incomplete"));
   const MIRTarget *Programs[] = {&Complete, &Incomplete};
   NaiveMatcher Matcher;
-  SmallVector<const MIRTarget *, 4> Results = Matcher.match(*Pat, Programs);
-  ASSERT_EQ(Results.size(), 1u);
-  EXPECT_EQ(Results.front(), &Complete);
+  EXPECT_FALSE(Matcher.match(*Pat, Complete).empty());
+  EXPECT_TRUE(Matcher.match(*Pat, Incomplete).empty());
 }
 
 TEST(NaiveMatcherTest, MetaVariablesMatchTypeCompatibleInstructions) {
@@ -129,7 +128,7 @@ TEST(NaiveMatcherTest, MetaVariablesMatchTypeCompatibleInstructions) {
 
   MIRTarget Program(*Module->getFunction("f"));
   NaiveMatcher Matcher;
-  EXPECT_TRUE(Matcher.matchProgram(*Pat, Program));
+  EXPECT_FALSE(Matcher.match(*Pat, Program).empty());
 }
 
 TEST(NaiveMatcherTest, ReportsIncompleteSuccessfulInstantiationAsUnexpected) {
@@ -162,7 +161,7 @@ TEST(NaiveMatcherTest, ReportsIncompleteSuccessfulInstantiationAsUnexpected) {
 
   MIRTarget Program(*Module->getFunction("f"));
   NaiveMatcher Matcher;
-  EXPECT_DEATH(Matcher.matchProgram(*Pat, Program),
+  EXPECT_DEATH(Matcher.match(*Pat, Program),
                "successful match did not instantiate meta variable "
                "'\\?unbound'");
 }
@@ -251,36 +250,37 @@ TEST(NaiveMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
   auto expectMatch = [](llvm::metaphir::Type *Matcher,
                         const llvm::Type *Target) {
     Instantiation State;
-    EXPECT_TRUE(matchType(*Matcher, *Target, State)) << "matcher type "
-                                                     << *Matcher;
+    EXPECT_TRUE(matchType(*Matcher, *Target, State))
+        << "matcher type " << *Matcher;
   };
   auto expectNoMatch = [](llvm::metaphir::Type *Matcher,
                           const llvm::Type *Target) {
     Instantiation State;
-    EXPECT_FALSE(matchType(*Matcher, *Target, State)) << "matcher type "
-                                                      << *Matcher;
+    EXPECT_FALSE(matchType(*Matcher, *Target, State))
+        << "matcher type " << *Matcher;
   };
 
-  expectMatch(llvm::metaphir::Type::get(Context,
-                                       llvm::metaphir::Type::HalfTyID),
-              llvm::Type::getHalfTy(LLVMContext));
-  expectMatch(llvm::metaphir::Type::get(Context,
-                                       llvm::metaphir::Type::BFloatTyID),
-              llvm::Type::getBFloatTy(LLVMContext));
-  expectMatch(llvm::metaphir::Type::get(Context,
-                                       llvm::metaphir::Type::FloatTyID), Float);
-  expectMatch(llvm::metaphir::Type::get(Context,
-                                       llvm::metaphir::Type::DoubleTyID),
-              llvm::Type::getDoubleTy(LLVMContext));
-  expectMatch(llvm::metaphir::Type::get(Context,
-                                       llvm::metaphir::Type::FP128TyID),
-              llvm::Type::getFP128Ty(LLVMContext));
-  expectMatch(llvm::metaphir::Type::get(Context,
-                                       llvm::metaphir::Type::VoidTyID),
-              llvm::Type::getVoidTy(LLVMContext));
-  expectMatch(llvm::metaphir::Type::get(Context,
-                                       llvm::metaphir::Type::LabelTyID),
-              llvm::Type::getLabelTy(LLVMContext));
+  expectMatch(
+      llvm::metaphir::Type::get(Context, llvm::metaphir::Type::HalfTyID),
+      llvm::Type::getHalfTy(LLVMContext));
+  expectMatch(
+      llvm::metaphir::Type::get(Context, llvm::metaphir::Type::BFloatTyID),
+      llvm::Type::getBFloatTy(LLVMContext));
+  expectMatch(
+      llvm::metaphir::Type::get(Context, llvm::metaphir::Type::FloatTyID),
+      Float);
+  expectMatch(
+      llvm::metaphir::Type::get(Context, llvm::metaphir::Type::DoubleTyID),
+      llvm::Type::getDoubleTy(LLVMContext));
+  expectMatch(
+      llvm::metaphir::Type::get(Context, llvm::metaphir::Type::FP128TyID),
+      llvm::Type::getFP128Ty(LLVMContext));
+  expectMatch(
+      llvm::metaphir::Type::get(Context, llvm::metaphir::Type::VoidTyID),
+      llvm::Type::getVoidTy(LLVMContext));
+  expectMatch(
+      llvm::metaphir::Type::get(Context, llvm::metaphir::Type::LabelTyID),
+      llvm::Type::getLabelTy(LLVMContext));
   expectMatch(llvm::metaphir::IntegerType::get(Context, 32), I32);
   expectMatch(llvm::metaphir::ByteType::get(Context, 8),
               llvm::Type::getByte8Ty(LLVMContext));
@@ -291,12 +291,10 @@ TEST(NaiveMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
       llvm::StructType::get(LLVMContext, StructElements, false);
   llvm::StructType *PackedTargetStruct =
       llvm::StructType::get(LLVMContext, StructElements, true);
-  llvm::StructType *OpaqueTargetStruct =
-      llvm::StructType::create(LLVMContext);
+  llvm::StructType *OpaqueTargetStruct = llvm::StructType::create(LLVMContext);
   expectMatch(llvm::metaphir::StructType::get(
-                  Context,
-                  {llvm::metaphir::IntegerType::get(Context, 8),
-                   llvm::metaphir::IntegerType::get(Context, 32)}),
+                  Context, {llvm::metaphir::IntegerType::get(Context, 8),
+                            llvm::metaphir::IntegerType::get(Context, 32)}),
               TargetStruct);
   expectNoMatch(llvm::metaphir::StructType::get(
                     Context,
@@ -304,10 +302,10 @@ TEST(NaiveMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
                      llvm::metaphir::IntegerType::get(Context, 32)},
                     true),
                 TargetStruct);
-  expectNoMatch(llvm::metaphir::StructType::get(
-                    Context, {llvm::metaphir::IntegerType::get(Context, 8)}),
-                llvm::StructType::get(LLVMContext,
-                                      llvm::ArrayRef<llvm::Type *>({I32})));
+  expectNoMatch(
+      llvm::metaphir::StructType::get(
+          Context, {llvm::metaphir::IntegerType::get(Context, 8)}),
+      llvm::StructType::get(LLVMContext, llvm::ArrayRef<llvm::Type *>({I32})));
   expectNoMatch(llvm::metaphir::StructType::get(
                     Context,
                     {llvm::metaphir::IntegerType::get(Context, 8),
@@ -315,9 +313,8 @@ TEST(NaiveMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
                     false),
                 PackedTargetStruct);
   expectNoMatch(llvm::metaphir::StructType::get(
-                    Context,
-                    {llvm::metaphir::IntegerType::get(Context, 8),
-                     llvm::metaphir::IntegerType::get(Context, 32)}),
+                    Context, {llvm::metaphir::IntegerType::get(Context, 8),
+                              llvm::metaphir::IntegerType::get(Context, 32)}),
                 OpaqueTargetStruct);
 
   auto *Array = llvm::metaphir::ArrayType::get(
@@ -337,7 +334,8 @@ TEST(NaiveMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
   auto *Function = llvm::metaphir::FunctionType::get(
       Context, llvm::metaphir::IntegerType::get(Context, 32),
       {llvm::metaphir::IntegerType::get(Context, 8),
-       llvm::metaphir::PointerType::get(Context)}, false);
+       llvm::metaphir::PointerType::get(Context)},
+      false);
   expectMatch(Function, llvm::FunctionType::get(I32, Parameters, false));
   expectNoMatch(Function, llvm::FunctionType::get(I32, Parameters, true));
 
@@ -348,20 +346,19 @@ TEST(NaiveMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
                         *I32, ElementState));
   EXPECT_EQ(*ElementState.lookup(*Element), Instantiation::Binding(I32));
 
-  MetaVariable *Bits =
-      MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
   Instantiation BitsState;
-  EXPECT_TRUE(matchType(
-      *llvm::metaphir::MetaIntegerType::get(Context, Bits, false), *I32,
-      BitsState));
+  EXPECT_TRUE(
+      matchType(*llvm::metaphir::MetaIntegerType::get(Context, Bits, false),
+                *I32, BitsState));
   EXPECT_EQ(*BitsState.lookup(*Bits), Instantiation::Binding(APInt(64, 32)));
 
   MetaVariable *ByteBits =
       MetaVariable::get(Context, "byte_bits", MetaType::Nat, Range);
   Instantiation ByteBitsState;
-  EXPECT_TRUE(matchType(
-      *llvm::metaphir::MetaIntegerType::get(Context, ByteBits, true),
-      *llvm::Type::getByte8Ty(LLVMContext), ByteBitsState));
+  EXPECT_TRUE(
+      matchType(*llvm::metaphir::MetaIntegerType::get(Context, ByteBits, true),
+                *llvm::Type::getByte8Ty(LLVMContext), ByteBitsState));
   EXPECT_EQ(*ByteBitsState.lookup(*ByteBits),
             Instantiation::Binding(APInt(64, 8)));
 
@@ -370,7 +367,8 @@ TEST(NaiveMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
   auto *CountedArray = llvm::metaphir::ArrayType::get(
       Context, llvm::metaphir::IntegerType::get(Context, 8), 0, Count);
   Instantiation CountState;
-  EXPECT_TRUE(matchType(*CountedArray, *llvm::ArrayType::get(I8, 6), CountState));
+  EXPECT_TRUE(
+      matchType(*CountedArray, *llvm::ArrayType::get(I8, 6), CountState));
   EXPECT_EQ(*CountState.lookup(*Count), Instantiation::Binding(APInt(64, 6)));
 }
 
@@ -450,8 +448,8 @@ TEST(NaiveMatcherTest, EnforcesInstructionBlockMembership) {
   MIRTarget SameBlock(*Module->getFunction("same_block"));
   MIRTarget DifferentBlocks(*Module->getFunction("different_blocks"));
   NaiveMatcher Matcher;
-  EXPECT_TRUE(Matcher.matchProgram(*Pat, SameBlock));
-  EXPECT_FALSE(Matcher.matchProgram(*Pat, DifferentBlocks));
+  EXPECT_FALSE(Matcher.match(*Pat, SameBlock).empty());
+  EXPECT_TRUE(Matcher.match(*Pat, DifferentBlocks).empty());
 }
 
 TEST(NaiveMatcherTest, AllowsInstructionOperandsFromOtherBlocks) {
@@ -491,7 +489,7 @@ TEST(NaiveMatcherTest, AllowsInstructionOperandsFromOtherBlocks) {
 
   MIRTarget Program(*Module->getFunction("cross_block"));
   NaiveMatcher Matcher;
-  EXPECT_TRUE(Matcher.matchProgram(*Pat, Program));
+  EXPECT_FALSE(Matcher.match(*Pat, Program).empty());
 }
 
 TEST(NaiveMatcherTest, InstructionMatcherControlsCommutativeOperands) {
@@ -523,7 +521,7 @@ TEST(NaiveMatcherTest, InstructionMatcherControlsCommutativeOperands) {
 
   MIRTarget Program(*Module->getFunction("f"));
   NaiveMatcher Matcher;
-  EXPECT_TRUE(Matcher.matchProgram(*Pat, Program));
+  EXPECT_FALSE(Matcher.match(*Pat, Program).empty());
 }
 
 TEST(NaiveMatcherTest, ReportsUnsupportedCommutativeLayout) {
@@ -598,7 +596,7 @@ TEST(NaiveMatcherTest, OrSelfAdmitsSelectedOperandAsRoot) {
 
   MIRTarget Program(*Module->getFunction("f"));
   NaiveMatcher Matcher;
-  EXPECT_TRUE(Matcher.matchProgram(*Pat, Program));
+  EXPECT_FALSE(Matcher.match(*Pat, Program).empty());
 }
 
 TEST(NaiveMatcherTest, BindsPredicatesAndCapturedSemanticFlags) {
@@ -785,8 +783,8 @@ TEST(NaiveMatcherTest, EvaluatesOperandMetaFlags) {
   MIRTarget AllOnesTarget(*Module->getFunction("all_ones"));
   MIRTarget OtherTarget(*Module->getFunction("not_all_ones"));
   NaiveMatcher Matcher;
-  EXPECT_TRUE(Matcher.matchProgram(*Pat, AllOnesTarget));
-  EXPECT_FALSE(Matcher.matchProgram(*Pat, OtherTarget));
+  EXPECT_FALSE(Matcher.match(*Pat, AllOnesTarget).empty());
+  EXPECT_TRUE(Matcher.match(*Pat, OtherTarget).empty());
 }
 
 TEST(NaiveMatcherTest, InstantiationsRepresentNonValueBindings) {

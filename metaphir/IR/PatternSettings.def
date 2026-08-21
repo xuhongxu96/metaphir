@@ -1,0 +1,30 @@
+// Global pattern settings, applied at a `;; <name>(true|false)` directive and
+// active for the instructions that follow it. Each entry provides the setting
+// name (used as the directive keyword, the lexer token, and the
+// PatternSettings::Setting enum constant) and a bit index for its flag.
+//
+// Consumers:
+//   MIR_PATTERN_SETTING_TOKEN_KIND(Name)  -> lexer token / parser dispatch
+//   MIR_PATTERN_SETTING_ID(Name, Bit, Comment) -> enum constant
+//
+// Adding an entry here automatically extends the lexer keyword, the enum, and
+// the parser's recognition of the directive.
+
+#ifndef MIR_PATTERN_SETTING_TOKEN_KIND
+#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)
+#endif
+#ifndef MIR_PATTERN_SETTING_ID
+#define MIR_PATTERN_SETTING_ID(Name, Bit, Comment)
+#endif
+#ifndef MIR_PATTERN_SETTING
+#define MIR_PATTERN_SETTING(Name, Bit, Comment)                                \
+  MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                        \
+  MIR_PATTERN_SETTING_ID(Name, Bit, Comment)
+#endif
+
+MIR_PATTERN_SETTING(treatIntAsVec, 0,
+                    "a scalar integer type/constant also matches vectors")
+
+#undef MIR_PATTERN_SETTING
+#undef MIR_PATTERN_SETTING_ID
+#undef MIR_PATTERN_SETTING_TOKEN_KIND

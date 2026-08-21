@@ -26,6 +26,8 @@ set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-LiteralIntrinsic.ll
     MIRMatcher-PowerOfTwoMeta.ll
     MIRMatcher-ConstraintBitWidth.ll
+    MIRMatcher-ConstantSplatMeta.ll
+    MIRMatcher-TreatIntAsVec.ll
     MIRMatcher-MetaFlags-Constants.ll
     MIRMatcher-SemanticFlags.ll
     MIRMatcher-Constraints.ll

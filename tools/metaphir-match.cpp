@@ -6,8 +6,8 @@
 #include "metaphir/Matching/NaiveMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/IRReader/IRReader.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -99,8 +99,8 @@ applyConstraints(const Pattern &Pattern, MatchResults Matches,
         handleAllErrors(
             Result.takeError(),
             [&](const metaphir::detail::ConstraintEvaluationError &E) {
-            Reason = E.Message;
-          },
+              Reason = E.Message;
+            },
             [&](const ErrorInfoBase &E) { Reason = E.message(); });
         Satisfies = false;
         if (llvm::find_if(Unsatisfied, [&](const UnsatisfiedConstraint &U) {
@@ -145,8 +145,7 @@ int main(int Argc, char **Argv) {
   for (const std::string &InputFile : InputFiles) {
     LLVMContext LLVMContext;
     SMDiagnostic Error;
-    std::unique_ptr<Module> Module =
-        parseIRFile(InputFile, Error, LLVMContext);
+    std::unique_ptr<Module> Module = parseIRFile(InputFile, Error, LLVMContext);
     if (!Module) {
       Error.print(Argv[0], errs());
       return 1;
@@ -156,7 +155,7 @@ int main(int Argc, char **Argv) {
       if (Function.isDeclaration())
         continue;
       Target Program(Function);
-      MatchResults Matches = Matcher.matchInstantiations(*Pattern, Program);
+      MatchResults Matches = Matcher.match(*Pattern, Program);
       bool HadGraphMatch = !Matches.empty();
       SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
       Matches = applyConstraints(*Pattern, std::move(Matches), Unsatisfied);

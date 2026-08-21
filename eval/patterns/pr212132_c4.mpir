@@ -1,3 +1,4 @@
+;; treatIntAsVec(true)
 %shift = shl i?bits 1, ?k
 %and1 = and:c i?bits %shift, ?a
 %cmp1 = icmp ne i?bits %and1, 0

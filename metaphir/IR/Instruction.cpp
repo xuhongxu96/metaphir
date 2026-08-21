@@ -32,13 +32,11 @@ static void printSeparated(raw_ostream &OS, ArrayRef<MatcherOperand> Ops,
   }
 }
 
-Instruction *Instruction::get(MIRContext &Context, InstructionID ID,
-                              StringRef ResultName,
-                              ArrayRef<InstructionFlag> Flags,
-                              ArrayRef<MetaFlag *> MetaFlags,
-                              ArrayRef<MatcherOperand> Operands,
-                              MetaVariable *Capture, SourceRange Range,
-                              MetaVariable *ParentBlock) {
+Instruction *Instruction::get(
+    MIRContext &Context, InstructionID ID, StringRef ResultName,
+    ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
+    ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
+    MetaVariable *ParentBlock, PatternSettings Settings) {
   assert(ParentBlock == nullptr ||
          ParentBlock->getType() == MetaType::BasicBlock &&
              "instruction must have a basic block");
@@ -63,7 +61,7 @@ Instruction *Instruction::get(MIRContext &Context, InstructionID ID,
                   Context.pImpl->copyArray<MetaFlag *>(MetaFlags),
                   Context.pImpl->copyArray<MatcherOperand>(UnkeyedOperands),
                   Context.pImpl->copyArray<MatcherOperand>(KeyedOperands),
-                  KeyedOperandMask, Capture, Range, ParentBlock);
+                  KeyedOperandMask, Capture, Range, ParentBlock, Settings);
 }
 
 StringRef InstructionFlag::getName(FlagID ID) {
@@ -129,6 +127,17 @@ Instruction::OperandSyntax Instruction::getOperandSyntax(InstructionID ID) {
 #include "metaphir/IR/InstructionMatchers.def"
   }
   llvm_unreachable("invalid instruction kind");
+}
+
+StringRef PatternSettings::getName(PatternSettings::Setting Flag) {
+  switch (Flag) {
+#define MIR_PATTERN_SETTING_ID(Name, Bit, Comment)                             \
+  case Name:                                                                   \
+    return #Name;
+#include "metaphir/IR/PatternSettings.def"
+  default:
+    llvm_unreachable("invalid pattern setting");
+  }
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F) {

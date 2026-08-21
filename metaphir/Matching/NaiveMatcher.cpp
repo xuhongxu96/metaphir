@@ -6,21 +6,23 @@
 namespace llvm {
 namespace metaphir {
 
-SmallVector<const Target *, 4>
-NaiveMatcher::match(const Pattern &Pattern, ArrayRef<const Target *> Programs) {
-  SmallVector<const Target *, 4> Results;
-  for (const Target *Program : Programs)
-    if (matchProgram(Pattern, *Program))
-      Results.push_back(Program);
-  return Results;
-}
+// SmallVector<const Target *, 4>
+// NaiveMatcher::match(const Pattern &Pattern, ArrayRef<const Target *>
+// Programs) {
+//   SmallVector<const Target *, 4> Results;
+//   for (const Target *Program : Programs)
+//     if (matchProgram(Pattern, *Program))
+//       Results.push_back(Program);
+//   return Results;
+// }
 
-bool NaiveMatcher::matchProgram(const Pattern &Pattern, const Target &Program) {
-  return !matchInstantiations(Pattern, Program).empty();
-}
+// bool NaiveMatcher::matchProgram(const Pattern &Pattern, const Target
+// &Program) {
+//   return !matchInstantiations(Pattern, Program).empty();
+// }
 
-MatchResults NaiveMatcher::matchInstantiations(const Pattern &Pattern,
-                                               const Target &Program) {
+MatchResults NaiveMatcher::match(const Pattern &Pattern,
+                                 const Target &Program) {
   MatchResults Instantiations(1);
 
   for (const Instruction *Root : Pattern.getRoots()) {

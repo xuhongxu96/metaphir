@@ -38,7 +38,7 @@ MatchResults matchValue(const metaphir::Value &Matcher,
                         const MatchDriver &Driver);
 
 bool matchType(const metaphir::Type &Matcher, const llvm::Type &Target,
-               Instantiation &State);
+               Instantiation &State, bool TreatIntAsVec = false);
 bool matchValue(const metaphir::Value &Matcher, const llvm::Value &Target,
                 Instantiation &State);
 

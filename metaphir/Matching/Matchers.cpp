@@ -38,10 +38,15 @@ getMetaVariableBinding(const MetaVariable &Matcher, const llvm::Value &Target) {
   case MetaType::Value:
     return &Target;
   case MetaType::Nat: {
-    const auto *Integer = dyn_cast<ConstantInt>(&Target);
-    if (!Integer)
-      return std::nullopt;
-    return Integer->getValue();
+    if (const auto *Integer = dyn_cast<ConstantInt>(&Target))
+      return Integer->getValue();
+    // A vector splat constant binds its scalar element value.
+    if (const auto *Constant = dyn_cast<llvm::Constant>(&Target))
+      if (Constant->getType()->isVectorTy())
+        if (const auto *Splat = Constant->getSplatValue())
+          if (const auto *Integer = dyn_cast<ConstantInt>(Splat))
+            return Integer->getValue();
+    return std::nullopt;
   }
   case MetaType::Bool:
     if (!Target.getType()->isIntegerTy(1))
