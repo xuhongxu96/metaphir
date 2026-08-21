@@ -65,6 +65,6 @@ define <2 x i128> @vec(<2 x i128> %x) {
   Target Program(Function);
 
   NaiveMatcher Matcher;
-  MatchResults Matches = Matcher.matchInstantiations(*Pattern, Program);
+  MatchResults Matches = Matcher.match(*Pattern, Program);
   ASSERT_EQ(Matches.size(), 1u);
 }

@@ -26,6 +26,7 @@ private:
   StringMap<Instruction *> Instructions;
   Pattern *CurrentPattern = nullptr;
   MetaVariable *CurrentBlock = nullptr;
+  PatternSettings Settings;
 
   bool error(const Twine &Message) { return Lex.ParseError(Message); }
   void next() { Lex.Lex(); }
@@ -36,6 +37,7 @@ private:
   MetaVariable *getMeta(StringRef Name, MetaType Expected, LocTy Loc);
   bool infer(MetaVariable *M, MetaType Expected, LocTy Loc);
   bool parseBlockLabel();
+  bool parsePatternSetting(PatternSettings::Setting Setting);
 
   bool parseInstruction(Instruction *&Result);
   bool parseType(Type *&Result, bool AllowVoid = false);

@@ -57,6 +57,14 @@ static bool matchOperandMetaFlag(const MetaFlag &Flag,
   }
   case MetaFlag::MF_constantint:
     return isa<llvm::ConstantInt>(Target);
+  case MetaFlag::MF_constantsplat: {
+    if (const auto &CI = dyn_cast<ConstantInt>(&Target))
+      return true;
+    if (const auto *Constant = dyn_cast<llvm::Constant>(&Target))
+      if (Constant->getType()->isVectorTy())
+        return Constant->getSplatValue();
+    return false;
+  }
   case MetaFlag::MF_poweroftwo:
     return PatternMatch::match(&Target, m_Power2());
   case MetaFlag::MF_or: {
@@ -317,18 +325,34 @@ static bool matchKeyedOperands(const Instruction &Matcher,
 static MatchResults matchValueOperand(const MatcherOperand &Matcher,
                                       const llvm::Value &Target,
                                       Instantiation State,
-                                      const MatchDriver &Driver) {
+                                      const MatchDriver &Driver,
+                                      const PatternSettings &Settings) {
   assert(Matcher.IsInstructionOperand && "expected a value operand");
   if (Matcher.IsArray)
     return {};
   assert(Matcher.Val && "matcher operand has no value");
-  if (Matcher.Ty && !matchType(*Matcher.Ty, *Target.getType(), State))
+  if (Matcher.Ty && !matchType(*Matcher.Ty, *Target.getType(), State,
+                               Settings.has(PatternSettings::treatIntAsVec)))
     return {};
   if (!all_of(Matcher.MetaFlags, [&](const MetaFlag *Flag) {
         assert(Flag && "null operand meta flag");
         return matchOperandMetaFlag(*Flag, Target);
       }))
     return {};
+  // Under treatIntAsVec, a scalar integer constant also matches a vector splat
+  // constant whose element equals it (e.g. 0 matches zeroinitializer).
+  if (Settings.has(PatternSettings::treatIntAsVec)) {
+    if (const auto *IC = dyn_cast<IntegerConstant>(Matcher.Val)) {
+      if (const auto *CV = dyn_cast<llvm::Constant>(&Target))
+        if (CV->getType()->isVectorTy())
+          if (const auto *Splat = CV->getSplatValue())
+            if (const auto *CI = dyn_cast<ConstantInt>(Splat)) {
+              APSInt TargetValue(CI->getValue(), IC->getValue().isUnsigned());
+              if (APSInt::isSameValue(IC->getValue(), TargetValue))
+                return success(std::move(State));
+            }
+    }
+  }
   return Driver.match(*Matcher.Val, Target, std::move(State));
 }
 
@@ -336,7 +360,8 @@ static MatchResults matchOperandOrder(ArrayRef<MatcherOperand> PatternOperands,
                                       ArrayRef<const llvm::Value *> Targets,
                                       ArrayRef<unsigned> Order,
                                       Instantiation State,
-                                      const MatchDriver &Driver) {
+                                      const MatchDriver &Driver,
+                                      const PatternSettings &Settings) {
   assert(Targets.size() == Order.size() &&
          "target operand order has inconsistent sizes");
   MatchResults States = success(std::move(State));
@@ -373,8 +398,9 @@ static MatchResults matchOperandOrder(ArrayRef<MatcherOperand> PatternOperands,
     MatchResults Next;
     for (Instantiation &Candidate : States) {
       assert(Order[Index] < Targets.size() && "operand index is out of range");
-      MatchResults Matches = matchValueOperand(Operand, *Targets[Order[Index]],
-                                               std::move(Candidate), Driver);
+      MatchResults Matches =
+          matchValueOperand(Operand, *Targets[Order[Index]],
+                            std::move(Candidate), Driver, Settings);
       Next.append(std::make_move_iterator(Matches.begin()),
                   std::make_move_iterator(Matches.end()));
     }
@@ -472,7 +498,8 @@ static bool matchTypeOnlyOperands(const Instruction &Matcher,
            "type-only operand contains a value");
     if (!Operand.Ty)
       continue;
-    if (!matchType(*Operand.Ty, TargetType, State))
+    if (!matchType(*Operand.Ty, TargetType, State,
+                   Matcher.getSettings().has(PatternSettings::treatIntAsVec)))
       return false;
   }
   return true;
@@ -555,7 +582,8 @@ MatchResults matchInstruction(const Instruction &Matcher,
   for (unsigned Index = 0; Index != Targets.size(); ++Index)
     NaturalOrder.push_back(Index);
   MatchResults Natural =
-      matchOperandOrder(PatternOperands, Targets, NaturalOrder, State, Driver);
+      matchOperandOrder(PatternOperands, Targets, NaturalOrder, State, Driver,
+                        Matcher.getSettings());
   Results.append(std::make_move_iterator(Natural.begin()),
                  std::make_move_iterator(Natural.end()));
 
@@ -570,8 +598,9 @@ MatchResults matchInstruction(const Instruction &Matcher,
       report_fatal_error(
           Twine("commutative matcher '") + Matcher.getOpcodeName() +
           "' has unsupported operand count " + Twine(SwappedIndices.size()));
-    MatchResults Swapped = matchOperandOrder(
-        PatternOperands, Targets, SwappedIndices, std::move(State), Driver);
+    MatchResults Swapped =
+        matchOperandOrder(PatternOperands, Targets, SwappedIndices,
+                          std::move(State), Driver, Matcher.getSettings());
     Results.append(std::make_move_iterator(Swapped.begin()),
                    std::make_move_iterator(Swapped.end()));
   }

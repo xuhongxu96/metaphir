@@ -168,6 +168,38 @@ bool MIRParser::parseBlockLabel() {
   return CurrentBlock == nullptr;
 }
 
+static std::optional<PatternSettings::Setting>
+settingFromKeyword(tok::Kind Kind) {
+  switch (Kind) {
+#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
+  case tok::kw_##Name:                                                         \
+    return PatternSettings::Name;
+#include "metaphir/IR/PatternSettings.def"
+  default:
+    return std::nullopt;
+  }
+}
+
+bool MIRParser::parsePatternSetting(PatternSettings::Setting Setting) {
+  LocTy Loc = Lex.getLoc();
+  next(); // consume the setting name
+  if (expect(tok::lparen,
+             "expected '(' after '" + PatternSettings::getName(Setting) + "'"))
+    return true;
+  if (Lex.getKind() != tok::kw_true && Lex.getKind() != tok::kw_false)
+    return error("expected true or false in '" +
+                 PatternSettings::getName(Setting) + "'");
+  bool Value = Lex.getKind() == tok::kw_true;
+  if (Value)
+    Settings.set(Setting);
+  else
+    Settings.clear(Setting);
+  next();
+  if (expect(tok::rparen, "expected ')' after setting value"))
+    return true;
+  return false;
+}
+
 bool MIRParser::parse(Pattern *&Result) {
   Result = nullptr;
   CurrentPattern = Pattern::get(Context);
@@ -176,6 +208,15 @@ bool MIRParser::parse(Pattern *&Result) {
   skipNewlines();
   while (Lex.getKind() != tok::Eof) {
     if (consume(tok::ConstraintMarker)) {
+      if (std::optional<PatternSettings::Setting> Setting =
+              settingFromKeyword(Lex.getKind())) {
+        if (parsePatternSetting(*Setting))
+          return true;
+        if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
+          return error("unexpected token after pattern setting");
+        skipNewlines();
+        continue;
+      }
       Constraint *C = nullptr;
       if (parseConstraint(C))
         return true;
@@ -614,7 +655,8 @@ bool MIRParser::parseOperandMetaFlags(MatcherOperand &Result) {
   if (!Flags.empty()) {
     Result.setMetaFlags(Context, Flags);
     if (any_of(Flags, [](const MetaFlag *Flag) {
-          return Flag->getMetaFlagID() == MetaFlag::MF_constantint;
+          return Flag->getMetaFlagID() == MetaFlag::MF_constantint ||
+                 Flag->getMetaFlagID() == MetaFlag::MF_constantsplat;
         })) {
       auto *Var = dyn_cast<MetaVariable>(Result.Val);
       if (!Var)
@@ -1016,7 +1058,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
   }
   Result =
       Instruction::get(Context, ID, ResultName, Flags, MFlags, Ops, Capture,
-                       SourceRange{Loc, Lex.getLoc()}, CurrentBlock);
+                       SourceRange{Loc, Lex.getLoc()}, CurrentBlock, Settings);
   if (!ResultName.empty()) {
     if (MetaVariables.count(ResultName)) {
       MetaVariable *SameName = MetaVariables[ResultName];

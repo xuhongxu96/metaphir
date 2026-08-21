@@ -16,11 +16,7 @@ class Value;
 
 class NaiveMatcher {
 public:
-  SmallVector<const Target *, 4> match(const Pattern &Pattern,
-                                       ArrayRef<const Target *> Programs);
-  bool matchProgram(const Pattern &Pattern, const Target &Program);
-  MatchResults matchInstantiations(const Pattern &Pattern,
-                                   const Target &Program);
+  MatchResults match(const Pattern &Pattern, const Target &Program);
 
 private:
   MatchResults matchSubgraph(const metaphir::Value &PatternNode,

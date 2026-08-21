@@ -1,3 +1,4 @@
+;; treatIntAsVec(true)
 %trunc = trunc nsw i?big ?x to i?small
 %logic = bitwiseLogic:c:s i?small %trunc, ?y
 %sext = sext:?anch i?small %logic to i?big

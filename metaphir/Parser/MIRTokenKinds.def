@@ -84,5 +84,9 @@ MIR_TOKEN_KIND_HAS_VALUE(APSInt, APSIntVal)          // APSInt
 #define MIR_FLAG_TOKEN_KIND(Flag) MIR_TOKEN_KIND(kw_##Flag)
 #include "metaphir/IR/Flags.def"
 
+// Pattern settings
+#define MIR_PATTERN_SETTING_TOKEN_KIND(Name) MIR_TOKEN_KIND(kw_##Name)
+#include "metaphir/IR/PatternSettings.def"
+
 #undef MIR_TOKEN_KIND_HAS_VALUE
 #undef MIR_TOKEN_KIND
