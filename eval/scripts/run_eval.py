@@ -15,6 +15,7 @@ Both run on the same preprocessed (pre-InstCombine) IR.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -34,21 +35,23 @@ PR_PATTERNS: dict[str, list[str]] = {
     "pr214517": ["eval/patterns/pr214517.mpir"],
     "pr214381": ["eval/patterns/pr214381.mpir"],
     "pr214376": ["eval/patterns/pr214376.mpir"],
-    "pr213709": ["eval/patterns/pr213709_eq.mpir",
-                 "eval/patterns/pr213709_ne0.mpir",
-                 "eval/patterns/pr213709_ne1.mpir"],
-    "pr213313": ["eval/patterns/pr213313_and.mpir",
-                 "eval/patterns/pr213313_or.mpir"],
-    "pr212132": ["eval/patterns/pr212132_c1.mpir",
-                 "eval/patterns/pr212132_c2.mpir",
-                 "eval/patterns/pr212132_c3.mpir",
-                 "eval/patterns/pr212132_c4.mpir"],
+    "pr213709": [
+        "eval/patterns/pr213709_eq.mpir",
+        "eval/patterns/pr213709_ne0.mpir",
+        "eval/patterns/pr213709_ne1.mpir",
+    ],
+    "pr213313": ["eval/patterns/pr213313_and.mpir", "eval/patterns/pr213313_or.mpir"],
+    "pr212132": [
+        "eval/patterns/pr212132_c1.mpir",
+        "eval/patterns/pr212132_c2.mpir",
+        "eval/patterns/pr212132_c3.mpir",
+        "eval/patterns/pr212132_c4.mpir",
+    ],
     "pr210499": ["eval/patterns/pr210499.mpir"],
     "pr209322": ["eval/patterns/pr209322.mpir"],
     "pr207564": ["eval/patterns/pr207564.mpir"],
     "pr207462": ["eval/patterns/pr207462.mpir"],
-    "pr205383": ["eval/patterns/pr205383_sub.mpir",
-                 "eval/patterns/pr205383_xor.mpir"],
+    "pr205383": ["eval/patterns/pr205383_sub.mpir", "eval/patterns/pr205383_xor.mpir"],
     "pr204928": ["eval/patterns/pr204928.mpir"],
     "pr204927": ["eval/patterns/pr204927.mpir"],
     "pr216470": ["eval/patterns/pr216470.mpir"],
@@ -56,7 +59,7 @@ PR_PATTERNS: dict[str, list[str]] = {
     "pr204089": ["eval/patterns/pr204089.mpir"],
 }
 
-ANCHOR_RE = re.compile(r"^ANCHOR (\S+) (\S+)$")
+ANCHOR_RE = re.compile(r"^ANCHOR (\S+) (\S+)(?: (\S+))?$")
 TARGET_RE = re.compile(r"^target \d+: @(\S+)$")
 BINDING_RE = re.compile(r"\?anch = (%[^,\s]+)")
 
@@ -109,6 +112,36 @@ def run_plugin(so: Path, pass_name: str, bc: Path) -> set[tuple[str, str, str]]:
     for line in proc.stderr.splitlines():
         m = ANCHOR_RE.match(line)
         if m:
+            anchors.add((bc.name, m.group(1), m.group(2)))
+    return anchors
+
+
+def run_instrumented(bc: Path, want_fold: str) -> set[tuple[str, str, str]]:
+    """Collect ground-truth anchors from LLVM's own fold sites.
+
+    Runs a single instcombine pass with METAPHIR_EVAL_ANCHOR set so the
+    instrumented folds report every firing as ``ANCHOR <func> <ssa> <foldID>``
+    on stderr. Only anchors whose foldID matches ``want_fold`` are kept.
+    """
+    anchors: set[tuple[str, str, str]] = set()
+    env = dict(os.environ)
+    env["METAPHIR_EVAL_ANCHOR"] = "1"
+    proc = subprocess.run(
+        [
+            str(OPT),
+            "-passes=function(instcombine)",
+            str(bc),
+            "-o",
+            "/dev/null",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+    for line in proc.stderr.splitlines():
+        m = ANCHOR_RE.match(line)
+        if m and (want_fold is None or m.group(3) == want_fold):
             anchors.add((bc.name, m.group(1), m.group(2)))
     return anchors
 
@@ -182,6 +215,9 @@ def cmd_collect(args: argparse.Namespace) -> int:
     n_ok = 0
     import tempfile
 
+    if args.gt == "plugin" and (not args.plugin or not args.pass_name):
+        sys.exit("--gt plugin requires --plugin and --pass")
+
     with tempfile.TemporaryDirectory(prefix="metaphir-eval-") as tmp:
         tmp_path = Path(tmp)
         for bc in corpus_files:
@@ -193,7 +229,10 @@ def cmd_collect(args: argparse.Namespace) -> int:
                     continue
             n_ok += 1
             t0 = time.time()
-            anchors = run_plugin(args.plugin, args.pass_name, pp)
+            if args.gt == "llvm":
+                anchors = run_instrumented(pp, args.pr)
+            else:
+                anchors = run_plugin(args.plugin, args.pass_name, pp)
             t_plugin += time.time() - t0
             G |= anchors
 
@@ -204,12 +243,20 @@ def cmd_collect(args: argparse.Namespace) -> int:
             t_pattern += time.time() - t0
             P |= file_anchors
 
+    if args.gt == "llvm" and len(G) == 0:
+        print(
+            f"  warning: no LLVM ground-truth anchors for {args.pr}; the fold "
+            f"may be absent from this LLVM revision or never fires on the "
+            f"corpus"
+        )
+
     with open(g_path, "w") as fh:
         fh.writelines("\t".join(a) + "\n" for a in sorted(G))
     with open(p_path, "w") as fh:
         fh.writelines("\t".join(a) + "\n" for a in sorted(P))
     with open(timing_path, "w") as fh:
         fh.write(f"modules_ok={n_ok}\n")
+        fh.write(f"gt_mode={args.gt}\n")
         fh.write(f"plugin_seconds={t_plugin:.3f}\n")
         fh.write(f"pattern_seconds={t_pattern:.3f}\n")
         fh.write(f"patterns={len(args.patterns)}\n")
@@ -219,7 +266,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
     print(f"  saved G anchors -> {g_path} ({len(G)})")
     print(f"  saved P anchors -> {p_path} ({len(P)})")
     print(f"  saved timing    -> {timing_path}")
-    print(f"  plugin {t_plugin:.2f}s | pattern {t_pattern:.2f}s")
+    print(f"  gt={args.gt} plugin {t_plugin:.2f}s | pattern {t_pattern:.2f}s")
     return 0
 
 
@@ -260,9 +307,14 @@ def cmd_run_all(args: argparse.Namespace) -> int:
         patterns = PR_PATTERNS[pr]
         plugin = REPO / "build" / "eval" / "plugins" / f"{pr}.so"
         collect_args = argparse.Namespace(
-            pr=pr, plugin=plugin, pass_name=pr,
+            pr=pr,
+            plugin=plugin,
+            pass_name=pr,
             patterns=[REPO / p for p in patterns],
-            corpus=args.corpus, preprocess=False, outdir=out,
+            corpus=args.corpus,
+            preprocess=False,
+            outdir=out,
+            gt=args.gt,
         )
         if cmd_collect(collect_args) != 0:
             return 1
@@ -274,15 +326,20 @@ def cmd_run_all(args: argparse.Namespace) -> int:
         recall = tp / len(g) if g else 1.0
         f1 = 2 * tp / (len(g) + len(p)) if (len(g) + len(p)) else 1.0
         rows.append((pr, len(g), len(p), tp, fp, fn, recall, f1))
-        print(f"  {pr}: G={len(g)} P={len(p)} TP={tp} FP={fp} FN={fn} "
-              f"R={recall:.3f} F1={f1:.3f}")
+        print(
+            f"  {pr}: G={len(g)} P={len(p)} TP={tp} FP={fp} FN={fn} "
+            f"R={recall:.3f} F1={f1:.3f}"
+        )
 
     print("\n=== SUMMARY ===")
-    print(f"{'pr':<10} {'G':>5} {'P':>5} {'TP':>4} {'FP':>4} {'FN':>4} "
-          f"{'recall':>7} {'F1':>6}")
+    print(
+        f"{'pr':<10} {'G':>5} {'P':>5} {'TP':>4} {'FP':>4} {'FN':>4} "
+        f"{'recall':>7} {'F1':>6}"
+    )
     for pr, g, p, tp, fp, fn, recall, f1 in rows:
-        print(f"{pr:<10} {g:>5} {p:>5} {tp:>4} {fp:>4} {fn:>4} "
-              f"{recall:>7.3f} {f1:>6.3f}")
+        print(
+            f"{pr:<10} {g:>5} {p:>5} {tp:>4} {fp:>4} {fn:>4} {recall:>7.3f} {f1:>6.3f}"
+        )
     return 0
 
 
@@ -292,9 +349,26 @@ def main() -> int:
 
     c = sub.add_parser("collect", help="run tools and save anchors")
     c.add_argument("--pr", required=True)
-    c.add_argument("--plugin", required=True, type=Path)
-    c.add_argument("--pass", dest="pass_name", required=True)
+    c.add_argument(
+        "--plugin",
+        required=False,
+        type=Path,
+        help="pass-plugin .so (required when --gt=plugin)",
+    )
+    c.add_argument(
+        "--pass",
+        dest="pass_name",
+        required=False,
+        help="pass name (required when --gt=plugin)",
+    )
     c.add_argument("--patterns", nargs="+", type=Path, required=True)
+    c.add_argument(
+        "--gt",
+        choices=["plugin", "llvm"],
+        default="plugin",
+        help="ground-truth source: hand-written plugin (default) or "
+        "LLVM's own instrumented fold sites",
+    )
     c.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
     c.add_argument(
         "--preprocess",
@@ -312,6 +386,13 @@ def main() -> int:
 
     a = sub.add_parser("run_all", help="collect + metrics for every PR")
     a.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
+    a.add_argument(
+        "--gt",
+        choices=["plugin", "llvm"],
+        default="plugin",
+        help="ground-truth source: hand-written plugin (default) or LLVM's own "
+        "instrumented fold sites",
+    )
     a.add_argument(
         "--pr",
         nargs="*",

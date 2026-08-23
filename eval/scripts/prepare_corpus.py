@@ -93,9 +93,12 @@ def preprocess_benchmark(bench_root: Path, corpus: Path, passes: str,
     def one(item: tuple[int, tuple[str, Path]], tmp: Path) -> tuple[bool, str]:
         index, (name, src) = item
         tmp_bc = tmp / f"{index}.bc"
+        env = dict(os.environ)
+        env.pop("METAPHIR_EVAL_ANCHOR", None)  # ensure folds stay disabled
         proc = subprocess.run(
             [str(opt), f"-passes={passes}", str(src), "-o", str(tmp_bc)],
             capture_output=True, text=True,
+            env=env,
         )
         if proc.returncode != 0:
             return False, (f"  PREPROCESS FAILED {src}: "

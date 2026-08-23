@@ -23,14 +23,13 @@ if [ "$CURRENT_COMMIT" != "$LLVM_COMMIT" ]; then
         echo "[$(date)] Fetch failed."
         exit 1
     fi
-    git -C "$LLVM_DIR" reset --hard FETCH_HEAD
-    git -C "$LLVM_DIR" clean -fdx
 else
     echo "[$(date)] llvm-project already at correct version, skipping."
 fi
 
 # Patch
 git -C "$LLVM_DIR" reset --hard FETCH_HEAD
+git -C "$LLVM_DIR" clean -fdx
 git -C "$LLVM_DIR" apply $BASE_DIR/eval/patches/*.patch
 
 # Configure LLVM
