@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
-"""Evaluate a MetaphIR pattern against a PR pass-plugin over a corpus.
+"""Evaluate MetaphIR patterns against LLVM's InstCombine pass over a corpus.
 
-Two decoupled stages so that metric tweaks don't require re-running the tools:
+The evaluation is split into independent, cacheable steps so that tweaking
+patterns does not force re-running the (slower) ground-truth collection:
 
-  collect   Run the plugin and the MetaphIR pattern(s) over the corpus and save
-            the anchor sets + timing to files.
-  metrics   Load saved anchor sets and compute evaluation metrics.
+  gt        Run LLVM's instrumented InstCombine over the corpus and save the
+            ground-truth anchor set to ``<pr>_G.anchors``. Runs for every PR by
+            default; use ``--pr`` to select a subset.
 
-Ground truth (G): anchors (file, function, anchor-ssa-name) where the PR's pass
-plugin fires. Prediction (P): anchors where the MetaphIR pattern(s) match.
-Both run on the same preprocessed (pre-InstCombine) IR.
+  pattern   Run the MetaphIR pattern(s) over the corpus and save the prediction
+            anchor set to ``<pr>_P.anchors``. Runs for every PR by default; use
+            ``--pr`` to select a subset (or ``--patterns`` to override the
+            patterns for a single PR).
+
+  metrics   Load the saved anchor sets and compute precision/recall/F1 for
+            every PR (use ``--pr`` to select a subset).
+
+Ground truth (G): anchors (file, function, anchor-ssa-name) where LLVM's own
+fold fires, captured by running an instrumented InstCombine with
+``METAPHIR_EVAL_ANCHOR=1``. Prediction (P): anchors where the MetaphIR
+pattern(s) match. Both run on the same corpus IR.
 """
 
 from __future__ import annotations
@@ -20,6 +30,7 @@ import re
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -50,12 +61,21 @@ PR_PATTERNS: dict[str, list[str]] = {
     "pr210499": ["eval/patterns/pr210499.mpir"],
     "pr209322": ["eval/patterns/pr209322.mpir"],
     "pr207564": ["eval/patterns/pr207564.mpir"],
-    "pr207462": ["eval/patterns/pr207462.mpir"],
+    "pr207462": [
+        "eval/patterns/pr207462.mpir",
+        "eval/patterns/pr207462_mul.mpir",
+    ],
     "pr205383": ["eval/patterns/pr205383_sub.mpir", "eval/patterns/pr205383_xor.mpir"],
     "pr204928": ["eval/patterns/pr204928.mpir"],
     "pr204927": ["eval/patterns/pr204927.mpir"],
-    "pr216470": ["eval/patterns/pr216470.mpir"],
-    "pr216046": ["eval/patterns/pr216046.mpir"],
+    "pr216470": [
+        "eval/patterns/pr216470.mpir",
+        "eval/patterns/pr216470_self.mpir",
+    ],
+    "pr216046": [
+        "eval/patterns/pr216046.mpir",
+        "eval/patterns/pr216046_range.mpir",
+    ],
     "pr204089": ["eval/patterns/pr204089.mpir"],
 }
 
@@ -63,7 +83,12 @@ ANCHOR_RE = re.compile(r"^ANCHOR (\S+) (\S+)(?: (\S+))?$")
 TARGET_RE = re.compile(r"^target \d+: @(\S+)$")
 BINDING_RE = re.compile(r"\?anch = (%[^,\s]+)")
 
+Anchor = tuple[str, str, str]
 
+
+# --------------------------------------------------------------------------- #
+# Corpus
+# --------------------------------------------------------------------------- #
 def collect_corpus(corpus: Path) -> list[Path]:
     files = sorted(p for p in corpus.rglob("*") if p.suffix in (".bc", ".ll"))
     if not files:
@@ -71,74 +96,26 @@ def collect_corpus(corpus: Path) -> list[Path]:
     return files
 
 
-def preprocess(bc: Path, out: Path) -> bool:
-    """Run the pre-InstCombine passes to reproduce the IR InstCombine sees.
-
-    The collected `original/` modules are O0 (alloca/load/store); InstCombine in
-    a real pipeline runs after mem2reg/sroa/early-cse/simplifycfg, which is what
-    exposes the SSA algebraic patterns. Both ground truth and prediction run on
-    this preprocessed IR.
-    """
-    proc = subprocess.run(
-        [
-            str(OPT),
-            "-passes=function(sroa,mem2reg,early-cse,simplifycfg)",
-            str(bc),
-            "-o",
-            str(out),
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return proc.returncode == 0
-
-
-def run_plugin(so: Path, pass_name: str, bc: Path) -> set[tuple[str, str, str]]:
-    anchors: set[tuple[str, str, str]] = set()
-    proc = subprocess.run(
-        [
-            str(OPT),
-            f"-load-pass-plugin={so}",
-            f"-passes={pass_name}",
-            str(bc),
-            "-o",
-            "/dev/null",
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    for line in proc.stderr.splitlines():
-        m = ANCHOR_RE.match(line)
-        if m:
-            anchors.add((bc.name, m.group(1), m.group(2)))
-    return anchors
-
-
-def run_instrumented(bc: Path, want_fold: str) -> set[tuple[str, str, str]]:
+# --------------------------------------------------------------------------- #
+# Tool runners
+# --------------------------------------------------------------------------- #
+def run_llvm_anchors(bc: Path, want_fold: str) -> set[Anchor]:
     """Collect ground-truth anchors from LLVM's own fold sites.
 
-    Runs a single instcombine pass with METAPHIR_EVAL_ANCHOR set so the
+    Runs a single instcombine pass with ``METAPHIR_EVAL_ANCHOR=1`` so the
     instrumented folds report every firing as ``ANCHOR <func> <ssa> <foldID>``
     on stderr. Only anchors whose foldID matches ``want_fold`` are kept.
     """
-    anchors: set[tuple[str, str, str]] = set()
     env = dict(os.environ)
     env["METAPHIR_EVAL_ANCHOR"] = "1"
     proc = subprocess.run(
-        [
-            str(OPT),
-            "-passes=function(instcombine)",
-            str(bc),
-            "-o",
-            "/dev/null",
-        ],
+        [str(OPT), "-passes=function(instcombine)", str(bc), "-o", "/dev/null"],
         capture_output=True,
         text=True,
         check=False,
         env=env,
     )
+    anchors: set[Anchor] = set()
     for line in proc.stderr.splitlines():
         m = ANCHOR_RE.match(line)
         if m and (want_fold is None or m.group(3) == want_fold):
@@ -146,8 +123,7 @@ def run_instrumented(bc: Path, want_fold: str) -> set[tuple[str, str, str]]:
     return anchors
 
 
-def run_pattern(pattern: Path, bc: Path) -> set[tuple[str, str, str]]:
-    anchors: set[tuple[str, str, str]] = set()
+def run_pattern(pattern: Path, bc: Path) -> set[Anchor]:
     proc = subprocess.run(
         [str(METAPHIR_MATCH), str(pattern), str(bc)],
         capture_output=True,
@@ -155,7 +131,9 @@ def run_pattern(pattern: Path, bc: Path) -> set[tuple[str, str, str]]:
         check=False,
     )
     if proc.returncode != 0:
-        return anchors
+        return set()
+
+    anchors: set[Anchor] = set()
     func = None
     for line in proc.stdout.splitlines():
         m = TARGET_RE.match(line)
@@ -169,8 +147,28 @@ def run_pattern(pattern: Path, bc: Path) -> set[tuple[str, str, str]]:
     return anchors
 
 
-def load_anchors(path: Path) -> set[tuple[str, str, str]]:
-    anchors: set[tuple[str, str, str]] = set()
+def run_over_corpus(
+    files: list[Path], run: Callable[[Path], set[Anchor]]
+) -> tuple[set[Anchor], float]:
+    """Apply ``run(bc) -> anchors`` to every corpus file, accumulating anchors and wall time."""
+    anchors: set[Anchor] = set()
+    elapsed = 0.0
+    for bc in files:
+        t0 = time.time()
+        anchors |= run(bc)
+        elapsed += time.time() - t0
+    return anchors, elapsed
+
+
+# --------------------------------------------------------------------------- #
+# Anchor I/O and metrics
+# --------------------------------------------------------------------------- #
+def save_anchors(path: Path, anchors: set[Anchor]) -> None:
+    path.write_text("".join("\t".join(a) + "\n" for a in sorted(anchors)))
+
+
+def load_anchors(path: Path) -> set[Anchor]:
+    anchors: set[Anchor] = set()
     for line in path.read_text().splitlines():
         if not line.strip():
             continue
@@ -179,227 +177,186 @@ def load_anchors(path: Path) -> set[tuple[str, str, str]]:
     return anchors
 
 
-def func_keys(anchors: set[tuple[str, str, str]]) -> set[tuple[str, str]]:
+def func_keys(anchors: set[Anchor]) -> set[tuple[str, str]]:
     return {(f, fn) for (f, fn, _) in anchors}
 
 
-def metrics(G: set, P: set, label: str) -> None:
+def print_metrics(G: set[Anchor], P: set[Anchor], label: str) -> None:
     tp = len(G & P)
     fp = len(P - G)
     fn = len(G - P)
-    denom = len(G | P)
+    union = len(G | P)
     recall = tp / len(G) if G else 1.0
     precision = tp / len(P) if P else 1.0
     f1 = 2 * tp / (len(G) + len(P)) if (len(G) + len(P)) else 1.0
-    jaccard = tp / denom if denom else 1.0
+    diff_rate = 1 - (tp / union) if union else 1.0
     print(f"  [{label}] |G|={len(G)} |P|={len(P)} TP={tp} FP={fp} FN={fn}")
     print(
         f"  [{label}] recall={recall:.4f} precision={precision:.4f} "
-        f"F1={f1:.4f} diff_rate={1 - jaccard:.4f}"
+        f"F1={f1:.4f} diff_rate={diff_rate:.4f}"
     )
 
 
-def cmd_collect(args: argparse.Namespace) -> int:
-    corpus_files = collect_corpus(args.corpus)
-    print(f"== collect {args.pr}: {len(corpus_files)} corpus files ==")
-    out = Path(args.outdir)
-    out.mkdir(parents=True, exist_ok=True)
-    g_path = out / f"{args.pr}_G.anchors"
-    p_path = out / f"{args.pr}_P.anchors"
-    timing_path = out / f"{args.pr}_timing.txt"
+# --------------------------------------------------------------------------- #
+# Collection steps
+# --------------------------------------------------------------------------- #
+def collect_ground_truth(files: list[Path], pr: str, outdir: Path) -> None:
+    print(f"== gt {pr}: {len(files)} modules ==")
+    G, t_gt = run_over_corpus(files, lambda bc: run_llvm_anchors(bc, pr))
 
-    G: set = set()
-    P: set = set()
-    t_plugin = 0.0
-    t_pattern = 0.0
-    n_ok = 0
-    import tempfile
-
-    if args.gt == "plugin" and (not args.plugin or not args.pass_name):
-        sys.exit("--gt plugin requires --plugin and --pass")
-
-    with tempfile.TemporaryDirectory(prefix="metaphir-eval-") as tmp:
-        tmp_path = Path(tmp)
-        for bc in corpus_files:
-            pp = bc
-            if args.preprocess:
-                pp = tmp_path / (bc.stem + ".bc")
-                if not preprocess(bc, pp):
-                    print(f"  warning: preprocessing failed for {bc.name}")
-                    continue
-            n_ok += 1
-            t0 = time.time()
-            if args.gt == "llvm":
-                anchors = run_instrumented(pp, args.pr)
-            else:
-                anchors = run_plugin(args.plugin, args.pass_name, pp)
-            t_plugin += time.time() - t0
-            G |= anchors
-
-            file_anchors: set = set()
-            t0 = time.time()
-            for pattern in args.patterns:
-                file_anchors |= run_pattern(pattern, pp)
-            t_pattern += time.time() - t0
-            P |= file_anchors
-
-    if args.gt == "llvm" and len(G) == 0:
+    if not G:
         print(
-            f"  warning: no LLVM ground-truth anchors for {args.pr}; the fold "
-            f"may be absent from this LLVM revision or never fires on the "
-            f"corpus"
+            f"  warning: no LLVM ground-truth anchors for {pr}; the fold may be "
+            f"absent from this LLVM revision or never fires on the corpus"
         )
 
-    with open(g_path, "w") as fh:
-        fh.writelines("\t".join(a) + "\n" for a in sorted(G))
-    with open(p_path, "w") as fh:
-        fh.writelines("\t".join(a) + "\n" for a in sorted(P))
-    with open(timing_path, "w") as fh:
-        fh.write(f"modules_ok={n_ok}\n")
-        fh.write(f"gt_mode={args.gt}\n")
-        fh.write(f"plugin_seconds={t_plugin:.3f}\n")
-        fh.write(f"pattern_seconds={t_pattern:.3f}\n")
-        fh.write(f"patterns={len(args.patterns)}\n")
-        fh.write(f"G_anchors={len(G)}\n")
-        fh.write(f"P_anchors={len(P)}\n")
-
+    g_path = outdir / f"{pr}_G.anchors"
+    save_anchors(g_path, G)
+    (outdir / f"{pr}_G_timing.txt").write_text(
+        f"modules={len(files)}\ngt_seconds={t_gt:.3f}\nG_anchors={len(G)}\n"
+    )
     print(f"  saved G anchors -> {g_path} ({len(G)})")
+    print(f"  gt {t_gt:.2f}s")
+
+
+def collect_patterns(
+    files: list[Path], pr: str, patterns: list[Path], outdir: Path
+) -> None:
+    print(f"== pattern {pr}: {len(files)} modules, {len(patterns)} pattern(s) ==")
+    run = lambda bc: set().union(*(run_pattern(p, bc) for p in patterns))
+    P, t_pat = run_over_corpus(files, run)
+
+    p_path = outdir / f"{pr}_P.anchors"
+    save_anchors(p_path, P)
+    (outdir / f"{pr}_P_timing.txt").write_text(
+        f"modules={len(files)}\n"
+        f"pattern_seconds={t_pat:.3f}\n"
+        f"patterns={len(patterns)}\n"
+        f"P_anchors={len(P)}\n"
+    )
     print(f"  saved P anchors -> {p_path} ({len(P)})")
-    print(f"  saved timing    -> {timing_path}")
-    print(f"  gt={args.gt} plugin {t_plugin:.2f}s | pattern {t_pattern:.2f}s")
+    print(f"  pattern {t_pat:.2f}s")
+
+
+# --------------------------------------------------------------------------- #
+# Commands
+# --------------------------------------------------------------------------- #
+def selected_prs(prs_arg: list[str] | None) -> list[str]:
+    if prs_arg:
+        unknown = [pr for pr in prs_arg if pr not in PR_PATTERNS]
+        if unknown:
+            sys.exit(f"unknown PR(s): {', '.join(unknown)}")
+        return prs_arg
+    return list(PR_PATTERNS)
+
+
+def setup_outdir(args: argparse.Namespace) -> tuple[Path, list[Path]]:
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    return outdir, collect_corpus(args.corpus)
+
+
+def cmd_gt(args: argparse.Namespace) -> int:
+    outdir, files = setup_outdir(args)
+    for pr in selected_prs(args.pr):
+        collect_ground_truth(files, pr, outdir)
+    return 0
+
+
+def cmd_pattern(args: argparse.Namespace) -> int:
+    outdir, files = setup_outdir(args)
+    prs = selected_prs(args.pr)
+    if args.patterns and len(prs) != 1:
+        sys.exit("--patterns overrides the patterns for exactly one --pr")
+    for pr in prs:
+        patterns = (
+            args.patterns if args.patterns else [REPO / p for p in PR_PATTERNS[pr]]
+        )
+        collect_patterns(files, pr, patterns, outdir)
     return 0
 
 
 def cmd_metrics(args: argparse.Namespace) -> int:
-    out = Path(args.anchors_dir)
-    g_path = out / f"{args.pr}_G.anchors"
-    p_path = out / f"{args.pr}_P.anchors"
-    if not g_path.is_file() or not p_path.is_file():
-        sys.exit(f"missing anchor files for {args.pr} in {out}; run collect first")
-    G = load_anchors(g_path)
-    P = load_anchors(p_path)
-    timing_path = out / f"{args.pr}_timing.txt"
-    if timing_path.is_file():
-        print(f"== {args.pr} (saved anchors) ==")
-        for line in timing_path.read_text().splitlines():
-            print(f"  {line}")
-    print("\n--- anchored-instruction level ---")
-    metrics(G, P, "anchor")
-    print("\n--- function level ---")
-    metrics(func_keys(G), func_keys(P), "function")
+    outdir = Path(args.outdir)
+    for pr in selected_prs(args.pr):
+        g_path = outdir / f"{pr}_G.anchors"
+        p_path = outdir / f"{pr}_P.anchors"
+        if not g_path.is_file():
+            sys.exit(
+                f"missing ground-truth anchors for {pr} in {outdir}; run `gt` first"
+            )
+        if not p_path.is_file():
+            sys.exit(
+                f"missing prediction anchors for {pr} in {outdir}; run `pattern` first"
+            )
+
+        G = load_anchors(g_path)
+        P = load_anchors(p_path)
+        print(f"== {pr} ==")
+        for stem in ("G", "P"):
+            timing = outdir / f"{pr}_{stem}_timing.txt"
+            if timing.is_file():
+                print(f"  {stem} timing:")
+                for line in timing.read_text().splitlines():
+                    print(f"    {line}")
+
+        print("  --- anchored-instruction level ---")
+        print_metrics(G, P, "anchor")
+        print("  --- function level ---")
+        print_metrics(func_keys(G), func_keys(P), "function")
     return 0
 
 
-def cmd_run_all(args: argparse.Namespace) -> int:
-    """Run collect + metrics for every PR, then print a summary table."""
-    out = Path(args.outdir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    prs = list(PR_PATTERNS)
-    if args.pr:
-        unknown = [pr for pr in args.pr if pr not in PR_PATTERNS]
-        if unknown:
-            sys.exit(f"unknown PR(s): {', '.join(unknown)}")
-        prs = args.pr
-
-    rows: list[tuple[str, int, int, int, int, int, float, float]] = []
-    for pr in prs:
-        patterns = PR_PATTERNS[pr]
-        plugin = REPO / "build" / "eval" / "plugins" / f"{pr}.so"
-        collect_args = argparse.Namespace(
-            pr=pr,
-            plugin=plugin,
-            pass_name=pr,
-            patterns=[REPO / p for p in patterns],
-            corpus=args.corpus,
-            preprocess=False,
-            outdir=out,
-            gt=args.gt,
-        )
-        if cmd_collect(collect_args) != 0:
-            return 1
-        g = load_anchors(out / f"{pr}_G.anchors")
-        p = load_anchors(out / f"{pr}_P.anchors")
-        tp = len(g & p)
-        fp = len(p - g)
-        fn = len(g - p)
-        recall = tp / len(g) if g else 1.0
-        f1 = 2 * tp / (len(g) + len(p)) if (len(g) + len(p)) else 1.0
-        rows.append((pr, len(g), len(p), tp, fp, fn, recall, f1))
-        print(
-            f"  {pr}: G={len(g)} P={len(p)} TP={tp} FP={fp} FN={fn} "
-            f"R={recall:.3f} F1={f1:.3f}"
-        )
-
-    print("\n=== SUMMARY ===")
-    print(
-        f"{'pr':<10} {'G':>5} {'P':>5} {'TP':>4} {'FP':>4} {'FN':>4} "
-        f"{'recall':>7} {'F1':>6}"
+# --------------------------------------------------------------------------- #
+# CLI
+# --------------------------------------------------------------------------- #
+def add_common_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
+    p.add_argument(
+        "--outdir",
+        type=Path,
+        default=REPO / "eval" / "results",
+        help="output directory for anchors/timing (default: eval/results)",
     )
-    for pr, g, p, tp, fp, fn, recall, f1 in rows:
-        print(
-            f"{pr:<10} {g:>5} {p:>5} {tp:>4} {fp:>4} {fn:>4} {recall:>7.3f} {f1:>6.3f}"
-        )
-    return 0
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="stage", required=True)
 
-    c = sub.add_parser("collect", help="run tools and save anchors")
-    c.add_argument("--pr", required=True)
-    c.add_argument(
-        "--plugin",
-        required=False,
-        type=Path,
-        help="pass-plugin .so (required when --gt=plugin)",
-    )
-    c.add_argument(
-        "--pass",
-        dest="pass_name",
-        required=False,
-        help="pass name (required when --gt=plugin)",
-    )
-    c.add_argument("--patterns", nargs="+", type=Path, required=True)
-    c.add_argument(
-        "--gt",
-        choices=["plugin", "llvm"],
-        default="plugin",
-        help="ground-truth source: hand-written plugin (default) or "
-        "LLVM's own instrumented fold sites",
-    )
-    c.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
-    c.add_argument(
-        "--preprocess",
-        action="store_true",
-        help="preprocess each module before matching (use only if "
-        "the corpus is not already preprocessed)",
-    )
-    c.add_argument("--outdir", required=True, type=Path)
-    c.set_defaults(func=cmd_collect)
-
-    m = sub.add_parser("metrics", help="compute metrics from saved anchors")
-    m.add_argument("--pr", required=True)
-    m.add_argument("--anchors-dir", required=True, type=Path)
-    m.set_defaults(func=cmd_metrics)
-
-    a = sub.add_parser("run_all", help="collect + metrics for every PR")
-    a.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
-    a.add_argument(
-        "--gt",
-        choices=["plugin", "llvm"],
-        default="plugin",
-        help="ground-truth source: hand-written plugin (default) or LLVM's own "
-        "instrumented fold sites",
-    )
-    a.add_argument(
+    g = sub.add_parser("gt", help="collect LLVM ground-truth anchors")
+    g.add_argument(
         "--pr",
         nargs="*",
         help="only run the given PRs (default: all); e.g. --pr pr214541 pr204089",
     )
-    a.add_argument("--outdir", required=True, type=Path)
-    a.set_defaults(func=cmd_run_all)
+    add_common_args(g)
+    g.set_defaults(func=cmd_gt)
+
+    p = sub.add_parser("pattern", help="collect MetaphIR pattern predictions")
+    p.add_argument(
+        "--pr",
+        nargs="*",
+        help="only run the given PRs (default: all); e.g. --pr pr214541 pr204089",
+    )
+    p.add_argument(
+        "--patterns",
+        nargs="+",
+        type=Path,
+        help="override the patterns for exactly one --pr (otherwise patterns "
+        "come from the built-in PR_PATTERNS map)",
+    )
+    add_common_args(p)
+    p.set_defaults(func=cmd_pattern)
+
+    m = sub.add_parser("metrics", help="compute metrics from saved anchors")
+    m.add_argument(
+        "--pr",
+        nargs="*",
+        help="only compute metrics for the given PRs (default: all)",
+    )
+    add_common_args(m)
+    m.set_defaults(func=cmd_metrics)
 
     args = ap.parse_args()
     return args.func(args)

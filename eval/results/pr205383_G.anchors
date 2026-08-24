@@ -1,5 +1,0 @@
-pr205383__select-ctlz-to-cttz.ll	select_clz_to_ctz_constant_for_zero	cond
-pr205383__select-ctlz-to-cttz.ll	select_clz_to_ctz_constant_for_zero_poison_flag	cond
-pr205383__select-ctlz-to-cttz.ll	select_clz_to_ctz_sub_constant_for_zero	cond
-pr205383__select-ctlz-to-cttz.ll	select_clz_to_ctz_sub_constant_for_zero_33	cond
-pr205383__select-ctlz-to-cttz.ll	select_clz_to_ctz_xor_non_pot	cond

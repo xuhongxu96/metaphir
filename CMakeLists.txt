@@ -42,10 +42,3 @@ include_directories(${CMAKE_SOURCE_DIR} ${LLVM_INCLUDE_DIRS})
 add_subdirectory(metaphir)
 add_subdirectory(test)
 add_subdirectory(tools)
-
-option(METAPHIR_BUILD_EVAL_PLUGINS
-       "Build the InstCombine evaluation pass plugins under eval/plugins"
-       ON)
-if(METAPHIR_BUILD_EVAL_PLUGINS)
-    add_subdirectory(eval/plugins)
-endif()

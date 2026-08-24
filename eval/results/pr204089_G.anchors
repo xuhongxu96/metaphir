@@ -1,3 +1,0 @@
-pr204089__cast.ll	sext_of_trunc_nsw	s
-pr204089__cast.ll	zext_of_trunc_nuw	z
-pr204089__cast.ll	zext_of_trunc_nuw_vec	z
