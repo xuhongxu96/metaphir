@@ -2,6 +2,7 @@
 ; RUN: %metaphir-match %t/log2.mpir %t/input.ll | FileCheck %s --check-prefix=L2
 ; RUN: %metaphir-match %t/log2-or.mpir %t/input.ll | FileCheck %s --check-prefix=L2O
 ; RUN: %metaphir-match %t/popcount.mpir %t/popcount.ll | FileCheck %s --check-prefix=PC
+; RUN: %metaphir-match %t/ispowertwo.mpir %t/ispowertwo.ll | FileCheck %s --check-prefix=POW
 
 ; 'log2' computes the integer floor log2 of a positive constant.
 ;--- log2.mpir
@@ -98,3 +99,45 @@ entry:
 ; L2O-NEXT: target 3: @pow2_1
 ; L2O-NEXT:   no match
 ; L2O-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
+
+; 'ispowertwo' checks whether a constant is a power of two.
+;--- ispowertwo.mpir
+%udiv = udiv:?anch i?bits ?x, ?d:constantint
+;; ispowertwo(?d)
+
+;--- ispowertwo.ll
+define i32 @d8(i32 %x) {
+entry:
+  %r = udiv i32 %x, 8
+  ret i32 %r
+}
+; POW: target 0: @d8
+; POW-NEXT:   match 0:
+; POW-NEXT:     {?anch = %r, ?bits = 32, ?d = 8, ?x = %x}
+
+define i32 @d6(i32 %x) {
+entry:
+  %r = udiv i32 %x, 6
+  ret i32 %r
+}
+; POW-NEXT: target 1: @d6
+; POW-NEXT:   no match
+; POW-NEXT:   constraint not satisfied: (ispowertwo ?d)
+
+define i32 @d1(i32 %x) {
+entry:
+  %r = udiv i32 %x, 1
+  ret i32 %r
+}
+; POW-NEXT: target 2: @d1
+; POW-NEXT:   match 0:
+; POW-NEXT:     {?anch = %r, ?bits = 32, ?d = 1, ?x = %x}
+
+define i32 @d0(i32 %x) {
+entry:
+  %r = udiv i32 %x, 0
+  ret i32 %r
+}
+; POW-NEXT: target 3: @d0
+; POW-NEXT:   no match
+; POW-NEXT:   constraint not satisfied: (ispowertwo ?d)

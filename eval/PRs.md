@@ -3,11 +3,6 @@
 All 20 PRs are **merged** InstCombine folds with a clear `src -> tgt` transform
 and an existing test under `llvm-project/test/Transforms/InstCombine/`.
 
-Each is replicated two ways:
-1. a MetaphIR pattern (`eval/patterns/<pr>.mpir`) and
-2. a pass plugin (`eval/plugins/<pr>.cpp`) run via
-   `opt -load-pass-plugin=<pr>.so -passes=<pr>` with built-in instcombine **not** in the pipeline.
-
 | #   | PR     | Title (src -> tgt)                                                |
 | --- | ------ | ----------------------------------------------------------------- |
 | 1   | 216436 | `((x-1) \| (2^k-1)) + 1 -> (x + (2^k-1)) & -(2^k)` (power-of-2 C) |

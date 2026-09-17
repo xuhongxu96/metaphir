@@ -1,2 +1,3 @@
-%udiv = udiv:?anch i?bits ?x, ?c:constantint
-;; slt(?c, 0)
+;; treatIntAsVec(true)
+%udiv = udiv:?anch i?bits ?x, ?y
+;; is-known-negative(?y)

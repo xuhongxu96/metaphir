@@ -36,6 +36,11 @@ Expected<ConstraintValue> evaluatePopcount(ConstraintInterpreter &Interpreter,
                                            const Instantiation &State,
                                            const Constraint &Expression);
 
+Expected<ConstraintValue>
+evaluateIsPowerOfTwo(ConstraintInterpreter &Interpreter,
+                     ArrayRef<Constraint *> Arguments,
+                     const Instantiation &State, const Constraint &Expression);
+
 // Value-tracking backed operators. Each is a pure evaluator invoked by
 // ConstraintInterpreter::evaluateValueTrack: given the already-evaluated
 // operand values, the query context, and the operator node, it produces the

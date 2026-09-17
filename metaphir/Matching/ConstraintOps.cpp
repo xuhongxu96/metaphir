@@ -145,6 +145,19 @@ Expected<ConstraintValue> evaluatePopcount(ConstraintInterpreter &Interpreter,
                        true);
 }
 
+Expected<ConstraintValue>
+evaluateIsPowerOfTwo(ConstraintInterpreter &Interpreter,
+                     ArrayRef<Constraint *> Arguments,
+                     const Instantiation &State, const Constraint &Expression) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  auto Operand = requireInteger(std::move((*Values)[0]), Expression);
+  if (!Operand)
+    return Operand.takeError();
+  return ConstraintValue::getBoolean(Operand->isPowerOf2());
+}
+
 Expected<ConstraintValue> evaluateNoOverflow(ArrayRef<ConstraintValue> Values,
                                              const SimplifyQuery &Query,
                                              const Constraint &Expression) {

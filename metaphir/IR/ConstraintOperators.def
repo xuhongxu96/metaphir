@@ -80,6 +80,8 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(Opcode, "opcode", Call, StringResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, IntegerResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, IntegerResult,
                                     1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPowerOfTwo, "ispowertwo", Call,
+                                    BooleanResult, 1)
 
 // Value-tracking backed operators. The trailing ?ctx is optional and defaults
 // to the pattern instruction preceding the constraint.

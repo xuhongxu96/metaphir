@@ -2,4 +2,5 @@
 %sub = sub i?bits ?x, %rem
 %cmp = icmp:?anch ?pred i?bits %sub, ?c:constantint
 ;; (?d != 0)
-;; ((?pred == "ugt" && ult(?c, ?d)) || (?pred == "ult" && ?c != 0 && ule(?c, ?d)))
+;; !ispowertwo(?d)
+;; ((?pred == "ugt" && ult(?c, ?d)) || (?pred == "ult" && ?c != 0 && ule(?c, ?d)) || (?pred == "uge" && ?c == ?d) || (?pred == "ule" && (add(?c, 1)) == ?d))

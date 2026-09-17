@@ -65,17 +65,14 @@ PR_PATTERNS: dict[str, list[str]] = {
         "eval/patterns/pr207462.mpir",
         "eval/patterns/pr207462_mul.mpir",
     ],
-    "pr205383": ["eval/patterns/pr205383_sub.mpir", "eval/patterns/pr205383_xor.mpir"],
+    "pr205383": [
+        "eval/patterns/pr205383_sub.mpir",
+        "eval/patterns/pr205383_xor.mpir",
+    ],
     "pr204928": ["eval/patterns/pr204928.mpir"],
     "pr204927": ["eval/patterns/pr204927.mpir"],
-    "pr216470": [
-        "eval/patterns/pr216470.mpir",
-        "eval/patterns/pr216470_self.mpir",
-    ],
-    "pr216046": [
-        "eval/patterns/pr216046.mpir",
-        "eval/patterns/pr216046_range.mpir",
-    ],
+    "pr216470": ["eval/patterns/pr216470.mpir"],
+    "pr216046": ["eval/patterns/pr216046.mpir"],
     "pr204089": ["eval/patterns/pr204089.mpir"],
 }
 
@@ -99,12 +96,19 @@ def collect_corpus(corpus: Path) -> list[Path]:
 # --------------------------------------------------------------------------- #
 # Tool runners
 # --------------------------------------------------------------------------- #
-def run_llvm_anchors(bc: Path, want_fold: str) -> set[Anchor]:
+def fold_id_matches(fold_id: str, pr: str) -> bool:
+    """A foldID belongs to ``pr`` when it is exactly the PR name or extends it
+    with a ``_`` suffix (e.g. ``pr213313_and`` matches ``pr213313``)."""
+    return fold_id == pr or fold_id.startswith(pr + "_")
+
+
+def run_llvm_anchors(bc: Path, pr: str) -> set[Anchor]:
     """Collect ground-truth anchors from LLVM's own fold sites.
 
     Runs a single instcombine pass with ``METAPHIR_EVAL_ANCHOR=1`` so the
     instrumented folds report every firing as ``ANCHOR <func> <ssa> <foldID>``
-    on stderr. Only anchors whose foldID matches ``want_fold`` are kept.
+    on stderr. Only anchors whose foldID matches ``pr`` (exact or ``_``-suffixed)
+    are kept.
     """
     env = dict(os.environ)
     env["METAPHIR_EVAL_ANCHOR"] = "1"
@@ -118,7 +122,7 @@ def run_llvm_anchors(bc: Path, want_fold: str) -> set[Anchor]:
     anchors: set[Anchor] = set()
     for line in proc.stderr.splitlines():
         m = ANCHOR_RE.match(line)
-        if m and (want_fold is None or m.group(3) == want_fold):
+        if m and fold_id_matches(m.group(3), pr):
             anchors.add((bc.name, m.group(1), m.group(2)))
     return anchors
 
@@ -272,6 +276,11 @@ def cmd_pattern(args: argparse.Namespace) -> int:
         patterns = (
             args.patterns if args.patterns else [REPO / p for p in PR_PATTERNS[pr]]
         )
+        missing = [str(p) for p in patterns if not p.is_file()]
+        if missing:
+            sys.exit(
+                f"missing pattern file(s) for {pr}: {', '.join(missing)}"
+            )
         collect_patterns(files, pr, patterns, outdir)
     return 0
 
