@@ -189,12 +189,46 @@ int MIRLexer::getNextChar() {
 }
 
 tok::Kind MIRLexer::Lex() {
-  tok::Kind Kind = InConstraint ? MIRConstraintLexer(*this).Lex() : LexToken();
-  if (Kind == tok::ConstraintMarker)
-    InConstraint = true;
-  else if (Kind == tok::Newline || Kind == tok::Eof)
-    InConstraint = false;
+  tok::Kind Kind =
+      inConstraint() ? MIRConstraintLexer(*this).Lex() : LexToken();
+  updateConstraintContext(Kind);
   return CurKind = Kind;
+}
+
+/// Track whether the next token belongs to a constraint expression or to
+/// pattern syntax. See the flag declarations in MIRLexer.h.
+void MIRLexer::updateConstraintContext(tok::Kind Kind) {
+  switch (Kind) {
+  case tok::ConstraintMarker:
+    InConstraintLine = true;
+    break;
+  case tok::Newline:
+    // A marker only covers its own line; a definition body spans lines.
+    InConstraintLine = false;
+    break;
+  case tok::kw_constraint:
+  case tok::kw_metaflag:
+    ExpectConstraintBody = true;
+    break;
+  case tok::lbrace:
+    // Only a 'constraint'/'metaflag' body holds an expression; a 'match'
+    // body holds instructions.
+    if (ExpectConstraintBody) {
+      ExpectConstraintBody = false;
+      InConstraintBody = true;
+    }
+    break;
+  case tok::rbrace:
+    InConstraintBody = false;
+    break;
+  case tok::Eof:
+    InConstraintLine = false;
+    InConstraintBody = false;
+    ExpectConstraintBody = false;
+    break;
+  default:
+    break;
+  }
 }
 
 tok::Kind MIRLexer::LexToken() {

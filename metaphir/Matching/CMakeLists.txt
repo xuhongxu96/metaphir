@@ -15,8 +15,6 @@ add_library(
   Instantiation.h
   MatchersDetail.cpp
   MatchersDetail.h
-  MetaFlagMatcher.cpp
-  MetaFlagMatcher.h
   TypeMatcher.cpp
   TypeMatcher.h
   SubtreeMatcher.cpp

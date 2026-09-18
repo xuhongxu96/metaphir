@@ -1,8 +1,12 @@
 #include "metaphir/Parser/MIRParser.h"
+#include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/IR/MIRContext.h"
+#include "metaphir/IR/MIRContextImpl.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
 
 namespace llvm {
 namespace metaphir {
@@ -28,11 +32,6 @@ Instruction::InstructionID instructionID(tok::Kind K) {
   default:
     llvm_unreachable("not an instruction token");
   }
-}
-
-StringRef tokenName(tok::Kind K) {
-  StringRef N = tok::getTokenKindName(K);
-  return N.consume_front("kw_") ? N : StringRef();
 }
 
 std::optional<KeywordConstant::KeywordID> predicateKeywordID(tok::Kind K) {
@@ -211,7 +210,6 @@ bool MIRParser::parseBlockLabel() {
 }
 
 bool MIRParser::parsePatternSetting(PatternSettings::Setting Setting) {
-  LocTy Loc = Lex.getLoc();
   next(); // consume the setting name
   if (expect(tok::lparen,
              "expected '(' after '" + PatternSettings::getName(Setting) + "'"))
@@ -230,13 +228,61 @@ bool MIRParser::parsePatternSetting(PatternSettings::Setting Setting) {
   return false;
 }
 
+#include "StdLibSource.inc"
+
+bool MIRParser::loadLibrary(MIRContext &Context, StringRef Name,
+                            StringRef Source) {
+  // Record the library before parsing it. This makes loading idempotent and
+  // keeps the parse below from re-entering this function, since parse() loads
+  // the standard library on demand.
+  if (!Context.markLibraryLoaded(Name))
+    return false;
+  SourceMgr SM;
+  SMDiagnostic Error;
+  // The library name doubles as the buffer identifier, so diagnostics inside a
+  // library are reported against it.
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Source, Name);
+  StringRef BufferRef = Buf->getBuffer();
+  SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
+  MIRParser Parser(BufferRef, SM, Error, Context);
+  Pattern *Unused = nullptr;
+  return Parser.parse(Unused);
+}
+
 bool MIRParser::parse(Pattern *&Result) {
+  if (!Context.isLibraryLoaded(StdLibName)) {
+    if (loadLibrary(Context, StdLibName, StdLibSource))
+      return true;
+  }
+
   Result = nullptr;
   CurrentPattern = Pattern::get(Context);
   CurrentBlock = nullptr;
+  bool HasParsedTopLevelDefinition = false;
   next();
   skipNewlines();
   while (Lex.getKind() != tok::Eof) {
+    if (Lex.getKind() == tok::kw_match) {
+      if (parseTopLevelMatch())
+        return true;
+      HasParsedTopLevelDefinition = true;
+      skipNewlines();
+      continue;
+    }
+    if (Lex.getKind() == tok::kw_constraint) {
+      if (parseTopLevelConstraint())
+        return true;
+      HasParsedTopLevelDefinition = true;
+      skipNewlines();
+      continue;
+    }
+    if (Lex.getKind() == tok::kw_metaflag) {
+      if (parseTopLevelMetaFlag())
+        return true;
+      HasParsedTopLevelDefinition = true;
+      skipNewlines();
+      continue;
+    }
     if (consume(tok::ConstraintMarker)) {
       if (std::optional<PatternSettings::Setting> Setting =
               settingFromKeyword(Lex.getKind())) {
@@ -252,11 +298,11 @@ bool MIRParser::parse(Pattern *&Result) {
         return true;
       if (C->getResultType() == Constraint::IntegerResult)
         return error("constraint must have a boolean result");
-      const Instruction *Context =
+      const Instruction *ContextInst =
           CurrentPattern->getInstructions().empty()
               ? nullptr
               : CurrentPattern->getInstructions().back();
-      setConstraintContext(*C, Context);
+      setConstraintContext(*C, ContextInst);
       CurrentPattern->addConstraint(C);
       if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
         return error("unexpected token after constraint");
@@ -285,25 +331,61 @@ bool MIRParser::parse(Pattern *&Result) {
       return error("unexpected token after instruction");
     skipNewlines();
   }
-  if (CurrentPattern->getInstructions().empty())
+  if (CurrentPattern->getInstructions().empty()) {
+    if (HasParsedTopLevelDefinition) {
+      // A library may hold only 'match', 'constraint' and 'metaflag'
+      // definitions without patterns.
+      Result = CurrentPattern;
+      return false;
+    }
     return error("expected at least one instruction matcher");
+  }
   Result = CurrentPattern;
   return false;
 }
 
-bool MIRParser::parseSemanticFlags(Instruction::InstructionID ID,
-                                   SmallVectorImpl<InstructionFlag> &Result) {
+bool MIRParser::parseInstructionCapture(MetaVariable *&Capture) {
+  Capture = nullptr;
+  if (Lex.getKind() != tok::MetaCaptureVar)
+    return false;
+  Capture = getMeta(Lex.getStrVal(), MetaType::Instruction, Lex.getLoc());
+  if (!Capture)
+    return true;
+  next();
+  return false;
+}
+
+bool MIRParser::parseInstructionMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
+                                          bool IsCommutative,
+                                          StringRef OwnerName) {
+  if (parseMetaFlags(Result, MetaFlag::InstructionPlacement))
+    return true;
+  for (MetaFlag *F : Result)
+    if (F->getMetaFlagID() == MetaFlag::MF_c && !IsCommutative)
+      return Lex.ParseError(F->getSourceRange().Begin,
+                            "commutative matching is not valid for '" +
+                                OwnerName + "'");
+  return false;
+}
+
+bool MIRParser::parseSemanticFlags(
+    function_ref<bool(InstructionFlag::FlagID)> IsSupported,
+    StringRef OwnerName, SmallVectorImpl<InstructionFlag> &Result) {
   while (isSemanticFlag(Lex.getKind())) {
     LocTy Loc = Lex.getLoc();
-    StringRef Name = tokenName(Lex.getKind());
     InstructionFlag::FlagID FlagID = semanticFlagID(Lex.getKind());
-    if (!(Instruction::getSupportedFlags(ID) & Instruction::mask(FlagID)))
-      return Lex.ParseError(Loc, "flag '" + Name + "' is not valid for '" +
-                                     Instruction::getOpcodeName(ID) + "'");
+    if (!IsSupported(FlagID))
+      return Lex.ParseError(Loc, "flag '" + InstructionFlag::getName(FlagID) +
+                                     "' is not valid for '" + OwnerName + "'");
     next();
     MetaVariable *Capture = nullptr;
     if (Lex.getKind() == tok::MetaCaptureVar) {
-      Capture = getMeta(Lex.getStrVal(), MetaType::Bool, Lex.getLoc());
+      StringRef CaptureName = Lex.getStrVal();
+      if (CaptureName == "_") {
+        CaptureName = Context.pImpl->Saver.save(
+            (Twine("_flag$") + Twine(WildcardCaptureCounter++)).str());
+      }
+      Capture = getMeta(CaptureName, MetaType::Bool, Lex.getLoc());
       if (!Capture)
         return true;
       next();
@@ -313,7 +395,10 @@ bool MIRParser::parseSemanticFlags(Instruction::InstructionID ID,
   return false;
 }
 
-bool MIRParser::parseMetaFlag(MetaFlag *&Result) {
+/// Parses one metaflag and reports through Allowed where it may be written.
+/// Resolving the flag -- built-in schema or 'metaflag' definition -- happens
+/// here, so callers need not look it up again.
+bool MIRParser::parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed) {
   if (Lex.getKind() != tok::MetaFlag)
     return error("expected meta flag");
   LocTy Loc = Lex.getLoc();
@@ -328,8 +413,14 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result) {
         MetaFlag::Argument Arg;
         if (Lex.getKind() == tok::MetaFlag) {
           Arg.K = MetaFlag::Argument::Flag;
-          if (parseMetaFlag(Arg.FlagValue))
+          MetaFlag::Placement NestedAllowed = MetaFlag::OperandPlacement;
+          if (parseMetaFlag(Arg.FlagValue, NestedAllowed))
             return true;
+          // A nested flag is tested against the operand its parent applies to.
+          if (!(NestedAllowed & MetaFlag::OperandPlacement))
+            return Lex.ParseError(Arg.FlagValue->getSourceRange().Begin,
+                                  "meta flag ':" + Arg.FlagValue->getName() +
+                                      "' is not valid as a nested meta flag");
         } else if (Lex.getKind() == tok::APSInt) {
           if (!Lex.getAPSIntVal().isSignedIntN(64))
             return error("meta flag integer argument is too large");
@@ -346,6 +437,7 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result) {
       return true;
   }
   if (std::optional<MetaFlag::Schema> Schema = MetaFlag::getSchema(ID)) {
+    Allowed = Schema->AllowedPlacement;
     if (Args.size() < Schema->MinArguments ||
         Args.size() > Schema->MaxArguments)
       return Lex.ParseError(
@@ -360,7 +452,22 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result) {
         return Lex.ParseError(Loc, "meta flag ':" + Name +
                                        "' expects nested meta flags");
     }
+  } else if (MetaFlagDef *Def = Context.getMetaFlagDef(Name)) {
+    Allowed = Def->getPlacement();
+    // The first parameter is the subject the flag is written on, so a use
+    // supplies every parameter but that one.
+    if (Args.size() != Def->getNumArguments())
+      return Lex.ParseError(Loc, "meta flag ':" + Name + "' expects " +
+                                     Twine(Def->getNumArguments()) +
+                                     " argument(s), got " + Twine(Args.size()));
+  } else {
+    // A flag is either built in or introduced by a 'metaflag' definition, which
+    // is how the flag vocabulary is extended. An unknown name cannot be lowered
+    // into a constraint and has no implementation in the matcher, so it is
+    // reported here rather than silently failing to match.
+    return Lex.ParseError(Loc, "unknown meta flag ':" + Name + "'");
   }
+
   Result = MetaFlag::get(Context, Name, Args, SourceRange{Loc, Loc});
   return false;
 }
@@ -369,15 +476,15 @@ bool MIRParser::parseMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
                                MetaFlag::Placement Placement) {
   while (Lex.getKind() == tok::MetaFlag) {
     MetaFlag *F = nullptr;
-    if (parseMetaFlag(F))
+    MetaFlag::Placement Allowed = MetaFlag::OperandPlacement;
+    if (parseMetaFlag(F, Allowed))
       return true;
-    if (std::optional<MetaFlag::Schema> Schema =
-            MetaFlag::getSchema(F->getMetaFlagID())) {
-      if (!(Schema->AllowedPlacement & Placement))
-        return Lex.ParseError(F->getSourceRange().Begin,
-                              "meta flag ':" + F->getName() +
-                                  "' is not valid in this position");
-    }
+
+    if (!(Allowed & Placement))
+      return Lex.ParseError(F->getSourceRange().Begin,
+                            "meta flag ':" + F->getName() +
+                                "' is not valid in this position");
+
     Result.push_back(F);
   }
   return false;
@@ -560,12 +667,10 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     return false;
   }
   if (Lex.getKind() == tok::LocalVar || Lex.getKind() == tok::LocalVarID) {
-    std::string NameStorage;
+    SmallString<16> NameStorage;
     StringRef Name = Lex.getStrVal();
-    if (Lex.getKind() == tok::LocalVarID) {
-      NameStorage = Twine(Lex.getUIntVal()).str();
-      Name = NameStorage;
-    }
+    if (Lex.getKind() == tok::LocalVarID)
+      Name = Twine(Lex.getUIntVal()).toStringRef(NameStorage);
     if (Expected == MetaType::BasicBlock) {
       auto *M = getMeta(Name, MetaType::BasicBlock, Loc);
       if (!M)
@@ -592,7 +697,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       return false;
     }
     if (Lex.getKind() == tok::Identifier) {
-      std::string Name = "llvm.";
+      SmallString<32> Name("llvm.");
       Name += Lex.getStrVal();
       next();
       Result = GlobalValue::get(Context, Name, Range);
@@ -601,14 +706,14 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     return error("expected intrinsic ID meta variable or intrinsic name");
   }
   if (Lex.getKind() == tok::GlobalVar || Lex.getKind() == tok::GlobalID) {
-    std::string NameStorage;
+    // The name has to outlive the lexer's buffer, which next() overwrites.
+    SmallString<32> NameStorage;
     if (Lex.getKind() == tok::GlobalVar)
       NameStorage = Lex.getStrVal();
     else
-      NameStorage = Twine(Lex.getUIntVal()).str();
-    StringRef Name = NameStorage;
+      Twine(Lex.getUIntVal()).toVector(NameStorage);
     next();
-    Result = GlobalValue::get(Context, Name, Range);
+    Result = GlobalValue::get(Context, NameStorage, Range);
     return false;
   }
   if (Lex.getKind() == tok::APSInt) {
@@ -687,19 +792,14 @@ bool MIRParser::parseOperandMetaFlags(MatcherOperand &Result) {
   SmallVector<MetaFlag *, 4> Flags;
   if (parseMetaFlags(Flags, MetaFlag::OperandPlacement))
     return true;
-  if (!Flags.empty()) {
-    Result.setMetaFlags(Context, Flags);
-    if (any_of(Flags, [](const MetaFlag *Flag) {
-          return Flag->getMetaFlagID() == MetaFlag::MF_constantint ||
-                 Flag->getMetaFlagID() == MetaFlag::MF_constantsplat;
-        })) {
-      auto *Var = dyn_cast<MetaVariable>(Result.Val);
-      if (!Var)
-        return error(
-            "':constantint' can only be applied to a meta variable operand");
-      Var->setType(MetaType::Nat);
-    }
-  }
+  if (Flags.empty())
+    return false;
+  Result.setMetaFlags(Context, Flags);
+  if (!isa_and_nonnull<MetaVariable>(Result.Val))
+    for (const MetaFlag *Flag : Flags)
+      if (Context.getMetaFlagDef(Flag->getName()))
+        return error("meta flag ':" + Flag->getName() +
+                     "' can only be applied to a meta variable operand");
   return false;
 }
 
@@ -728,6 +828,60 @@ bool MIRParser::parseArrayCapture(MatcherOperand &Result, bool WithTypes) {
 
 // Parsing is schema-driven here so the stored representation stays uniform
 // while syntax and arity remain instruction-specific.
+bool MIRParser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
+                                       SmallVectorImpl<MatcherOperand> &Ops) {
+  auto Typed = [&](MetaType E = MetaType::Value) -> bool {
+    MatcherOperand O;
+    if (parseTypedOperand(O, E))
+      return true;
+    Ops.push_back(O);
+    return false;
+  };
+  auto Comma = [&]() -> bool {
+    return expect(tok::comma, "expected ',' between operands");
+  };
+
+  switch (Syntax) {
+  case Instruction::OperandSyntax::Unary:
+    return Typed();
+  case Instruction::OperandSyntax::Binary: {
+    // The second operand repeats the first operand's type rather than spelling
+    // it again.
+    MatcherOperand A;
+    if (parseTypedOperand(A))
+      return true;
+    Ops.push_back(A);
+    if (Comma())
+      return true;
+    MatcherOperand B;
+    B.Ty = A.Ty;
+    if (parseValue(B.Val) || parseOperandMetaFlags(B))
+      return true;
+    Ops.push_back(B);
+    return false;
+  }
+  case Instruction::OperandSyntax::Ternary:
+    return Typed() || Comma() || Typed() || Comma() || Typed();
+  case Instruction::OperandSyntax::Cast: {
+    if (Typed())
+      return true;
+    if (Lex.getKind() != tok::kw_to)
+      return error("expected 'to' in conversion");
+    next();
+    // The destination is a bare type, not an operand of the instruction.
+    MatcherOperand Dst;
+    Dst.IsInstructionOperand = false;
+    if (parseType(Dst.Ty, true))
+      return true;
+    Ops.push_back(Dst);
+    return false;
+  }
+  case Instruction::OperandSyntax::Custom:
+    break;
+  }
+  llvm_unreachable("custom operand syntax is not a shared archetype");
+}
+
 bool MIRParser::parseInstruction(Instruction *&Result) {
   LocTy Loc = Lex.getLoc();
   SmallString<16> ResultNameStorage;
@@ -744,28 +898,32 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     if (expect(tok::equal, "expected '=' after instruction result"))
       return true;
   }
-  if (!isOpcode(Lex.getKind()))
+  if (!isOpcode(Lex.getKind())) {
+    // Anything that is not a built-in matcher must name a composite one, and
+    // matcher names are plain identifiers.
+    if (Lex.getKind() == tok::Identifier) {
+      StringRef OpName = Context.pImpl->Saver.save(Lex.getStrVal());
+      if (CompositeMatcher *CM = Context.getCompositeMatcher(OpName))
+        return parseCompositeInstruction(Result, CM, OpName, ResultName, Loc);
+    }
     return error("expected instruction matcher");
+  }
   Instruction::InstructionID ID = instructionID(Lex.getKind());
-  StringRef Op = tokenName(Lex.getKind());
+  StringRef Op = Instruction::getOpcodeName(ID);
   next();
   MetaVariable *Capture = nullptr;
-  if (Lex.getKind() == tok::MetaCaptureVar) {
-    Capture = getMeta(Lex.getStrVal(), MetaType::Instruction, Lex.getLoc());
-    if (!Capture)
-      return true;
-    next();
-  }
-  SmallVector<MetaFlag *, 4> MFlags;
-  if (parseMetaFlags(MFlags, MetaFlag::InstructionPlacement))
+  if (parseInstructionCapture(Capture))
     return true;
-  for (MetaFlag *F : MFlags)
-    if (F->getMetaFlagID() == MetaFlag::MF_c && !Instruction::isCommutative(ID))
-      return Lex.ParseError(F->getSourceRange().Begin,
-                            "commutative matching is not valid for '" + Op +
-                                "'");
+  SmallVector<MetaFlag *, 4> MFlags;
+  if (parseInstructionMetaFlags(MFlags, Instruction::isCommutative(ID), Op))
+    return true;
   SmallVector<InstructionFlag, 8> Flags;
-  if (parseSemanticFlags(ID, Flags))
+  if (parseSemanticFlags(
+          [ID](InstructionFlag::FlagID F) {
+            return (Instruction::getSupportedFlags(ID) &
+                    Instruction::mask(F)) != 0;
+          },
+          Op, Flags))
     return true;
   SmallVector<MatcherOperand, 8> Ops;
   auto Typed = [&](MetaType E = MetaType::Value) -> bool {
@@ -789,36 +947,10 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
 
   switch (Instruction::getOperandSyntax(ID)) {
   case Instruction::OperandSyntax::Unary:
-    if (Typed())
-      return true;
-    break;
-  case Instruction::OperandSyntax::Binary: {
-    MatcherOperand A;
-    if (parseTypedOperand(A))
-      return true;
-    Ops.push_back(A);
-    if (Comma())
-      return true;
-    MatcherOperand B;
-    B.Ty = A.Ty;
-    if (parseValue(B.Val))
-      return true;
-    if (parseOperandMetaFlags(B))
-      return true;
-    Ops.push_back(B);
-    break;
-  }
+  case Instruction::OperandSyntax::Binary:
   case Instruction::OperandSyntax::Ternary:
-    if (Typed() || Comma() || Typed() || Comma() || Typed())
-      return true;
-    break;
   case Instruction::OperandSyntax::Cast:
-    if (Typed())
-      return true;
-    if (Lex.getKind() != tok::kw_to)
-      return error("expected 'to' in conversion");
-    next();
-    if (TypeOnly())
+    if (parseArchetypeOperands(Instruction::getOperandSyntax(ID), Ops))
       return true;
     break;
   case Instruction::OperandSyntax::Custom:
@@ -1108,6 +1240,469 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     }
     Instructions[ResultName] = Result;
   }
+  return false;
+}
+
+/// Parses the parameter list of a 'match' declaration. Its shape follows the
+/// declared archetype, and each position is parsed with the same routines used
+/// for pattern operands: a type position therefore accepts any type, whether it
+/// leaves the type open ('?ty', 'i?bits') or fixes it ('i8', 'ptr').
+bool MIRParser::parseMatchParameters(Instruction::OperandSyntax Syntax,
+                                     SmallVectorImpl<ParameterDef> &Result) {
+  auto typeParameter = [&]() -> bool {
+    ParameterDef P;
+    LocTy Loc = Lex.getLoc();
+    P.Range = SourceRange{Loc, Loc};
+    P.IsType = true;
+    if (parseType(P.Ty))
+      return true;
+    // A name is bound only where the declaration leaves the type open; a
+    // concrete type is recorded in P.Ty and matched against the caller's.
+    if (auto *MetaTy = dyn_cast<MetaIRType>(P.Ty))
+      P.Name = Context.pImpl->Saver.save(MetaTy->getVariable()->getName());
+    else if (auto *MetaInt = dyn_cast<MetaIntegerType>(P.Ty))
+      if (MetaVariable *BitWidth = MetaInt->getBitWidthVariable())
+        P.Name = Context.pImpl->Saver.save(BitWidth->getName());
+    Result.push_back(std::move(P));
+    return false;
+  };
+  auto operandParameter = [&]() -> bool {
+    if (Lex.getKind() != tok::MetaVar)
+      return error("expected operand meta variable in parameter list");
+    ParameterDef P;
+    LocTy Loc = Lex.getLoc();
+    P.Range = SourceRange{Loc, Loc};
+    P.Name = Context.pImpl->Saver.save(Lex.getStrVal());
+    Result.push_back(std::move(P));
+    next();
+    return false;
+  };
+  auto comma = [&]() -> bool {
+    return expect(tok::comma, "expected ',' between operand parameters");
+  };
+
+  switch (Syntax) {
+  case Instruction::OperandSyntax::Unary:
+    return typeParameter() || operandParameter();
+  case Instruction::OperandSyntax::Binary:
+    return typeParameter() || operandParameter() || comma() ||
+           operandParameter();
+  case Instruction::OperandSyntax::Ternary:
+    // Each Ternary operand carries its own type ('select i1 ?c, i?n ?t,
+    // i?n ?f'), unlike Binary where one type is shared.
+    return typeParameter() || operandParameter() || comma() ||
+           typeParameter() || operandParameter() || comma() ||
+           typeParameter() || operandParameter();
+  case Instruction::OperandSyntax::Cast:
+    return typeParameter() || operandParameter() ||
+           expect(tok::kw_to, "expected 'to' before the result type") ||
+           typeParameter();
+  case Instruction::OperandSyntax::Custom:
+    break;
+  }
+  return error("unsupported archetype in match declaration");
+}
+
+bool MIRParser::parseTopLevelConstraint() {
+  next();
+  // A constraint name is an identifier, so a keyword token cannot name one.
+  if (Lex.getKind() != tok::Identifier)
+    return error("expected constraint name, which must be an identifier and "
+                 "not a keyword");
+  std::string Name = Lex.getStrVal();
+  next();
+  if (expect(tok::lparen, "expected '(' after constraint name"))
+    return true;
+  SmallVector<std::string, 4> Params;
+  SmallVector<SourceRange, 4> ParamRanges;
+  StringSet<> SeenParams;
+  if (Lex.getKind() != tok::rparen) {
+    do {
+      // Parameters are meta variables, spelled '?name' as everywhere else.
+      if (Lex.getKind() != tok::MetaVar)
+        return error("expected '?' parameter meta variable");
+      if (!SeenParams.insert(Lex.getStrVal()).second)
+        return error("duplicate parameter '?" + Lex.getStrVal() +
+                     "' in constraint declaration");
+      LocTy ParamLoc = Lex.getLoc();
+      Params.push_back(Lex.getStrVal());
+      ParamRanges.push_back(SourceRange{ParamLoc, ParamLoc});
+      next();
+    } while (consume(tok::comma));
+  }
+  if (expect(tok::rparen, "expected ')' after parameters"))
+    return true;
+  skipNewlines();
+  if (expect(tok::lbrace, "expected '{' before constraint body"))
+    return true;
+  skipNewlines();
+
+  StringMap<MetaVariable *> OldMetaVariables = std::move(MetaVariables);
+  MetaVariables.clear();
+  SmallVector<MetaVariable *, 4> ParamVars;
+  for (unsigned I = 0; I != Params.size(); ++I) {
+    MetaVariable *M = MetaVariable::get(Context, Params[I], MetaType::Unknown,
+                                        ParamRanges[I]);
+    MetaVariables[Params[I]] = M;
+    ParamVars.push_back(M);
+  }
+
+  Constraint *Body = nullptr;
+  if (parseConstraint(Body))
+    return true;
+  skipNewlines();
+  if (expect(tok::rbrace, "expected '}' after constraint body"))
+    return true;
+
+  MetaVariables = std::move(OldMetaVariables);
+
+  SmallVector<StringRef, 4> ArenaParams;
+  ArenaParams.reserve(Params.size());
+  for (const auto &P : Params)
+    ArenaParams.push_back(Context.pImpl->Saver.save(P));
+
+  auto *Def = new (Context.pImpl->Alloc)
+      ConstraintDef(Context.pImpl->Saver.save(Name),
+                    Context.pImpl->copyArray(ArrayRef(ArenaParams)),
+                    Context.pImpl->copyArray(ArrayRef(ParamVars)), Body);
+  Context.registerConstraintDef(Def);
+  return false;
+}
+
+bool MIRParser::parseTopLevelMetaFlag() {
+  next();
+  // An optional placement mark follows the keyword: 'metaflag:i' for
+  // instructions, 'metaflag:o' for operands, 'metaflag:i:o' for both. Each mark
+  // lexes as its own MetaFlag token. Without a mark the flag is operand-only.
+  unsigned Placement = 0;
+  while (Lex.getKind() == tok::MetaFlag &&
+         (Lex.getStrVal() == "i" || Lex.getStrVal() == "o")) {
+    Placement |= Lex.getStrVal() == "i" ? MetaFlag::InstructionPlacement
+                                        : MetaFlag::OperandPlacement;
+    next();
+  }
+  if (Placement == 0)
+    Placement = MetaFlag::OperandPlacement;
+
+  // A metaflag name is written directly after ':' and the lexer packages both
+  // into one token. The prefix keeps it unambiguous, so the name may be
+  // spelled like a keyword -- ':poison' and ':or' are built-in metaflags.
+  if (Lex.getKind() != tok::MetaFlag)
+    return error("expected ':' followed by a metaflag name");
+  std::string Name = Lex.getStrVal();
+  next();
+  if (expect(tok::lparen, "expected '(' after metaflag name"))
+    return true;
+  // The first parameter is the subject the flag is written on; any further ones
+  // are its arguments, so ':f(1, 2)' is declared with three parameters.
+  SmallVector<std::string, 2> Params;
+  SmallVector<SourceRange, 2> ParamRanges;
+  StringSet<> SeenParams;
+  do {
+    if (Lex.getKind() != tok::MetaVar)
+      return error("expected '?' parameter meta variable");
+    if (!SeenParams.insert(Lex.getStrVal()).second)
+      return error("duplicate parameter '?" + Lex.getStrVal() +
+                   "' in metaflag declaration");
+    LocTy ParamLoc = Lex.getLoc();
+    Params.push_back(Lex.getStrVal());
+    ParamRanges.push_back(SourceRange{ParamLoc, ParamLoc});
+    next();
+  } while (consume(tok::comma));
+  if (expect(tok::rparen, "expected ')' after parameters"))
+    return true;
+  skipNewlines();
+  if (expect(tok::lbrace, "expected '{' before metaflag body"))
+    return true;
+  skipNewlines();
+
+  StringMap<MetaVariable *> OldMetaVariables = std::move(MetaVariables);
+  MetaVariables.clear();
+  SmallVector<MetaVariable *, 2> ParamVars;
+  for (unsigned I = 0; I != Params.size(); ++I) {
+    MetaVariable *M = MetaVariable::get(Context, Params[I], MetaType::Unknown,
+                                        ParamRanges[I]);
+    MetaVariables[Params[I]] = M;
+    ParamVars.push_back(M);
+  }
+
+  Constraint *Body = nullptr;
+  if (parseConstraint(Body))
+    return true;
+  skipNewlines();
+  if (expect(tok::rbrace, "expected '}' after metaflag body"))
+    return true;
+
+  MetaVariables = std::move(OldMetaVariables);
+
+  SmallVector<StringRef, 2> ArenaParams;
+  ArenaParams.reserve(Params.size());
+  for (const auto &P : Params)
+    ArenaParams.push_back(Context.pImpl->Saver.save(P));
+
+  auto *Def = new (Context.pImpl->Alloc)
+      MetaFlagDef(Context.pImpl->Saver.save(Name),
+                  static_cast<MetaFlag::Placement>(Placement),
+                  Context.pImpl->copyArray(ArrayRef(ArenaParams)),
+                  Context.pImpl->copyArray(ArrayRef(ParamVars)), Body);
+  Context.registerMetaFlagDef(Def);
+  return false;
+}
+
+bool MIRParser::parseTopLevelMatch() {
+  next();
+  bool IsCommutative = false;
+  // 'match:c' declares a commutative matcher.
+  if (Lex.getKind() == tok::MetaFlag) {
+    if (Lex.getStrVal() != "c")
+      return error("expected ':c' in match declaration");
+    IsCommutative = true;
+    next();
+  }
+  // A custom matcher's name must be an identifier, so that it can never
+  // collide with a keyword or with a built-in matcher.
+  if (Lex.getKind() != tok::Identifier)
+    return error("expected matcher name in match declaration, which must be "
+                 "an identifier and not a keyword");
+  std::string MatcherName = Lex.getStrVal();
+  next();
+
+  if (expect(tok::lsquare, "expected '[' before supported flags"))
+    return true;
+  SmallVector<InstructionFlag::FlagID, 4> SupportedFlags;
+  if (Lex.getKind() != tok::rsquare) {
+    do {
+      if (!isSemanticFlag(Lex.getKind()))
+        return error("expected semantic flag name");
+      SupportedFlags.push_back(semanticFlagID(Lex.getKind()));
+      next();
+    } while (consume(tok::comma));
+  }
+  if (expect(tok::rsquare, "expected ']' after supported flags"))
+    return true;
+
+  Instruction::OperandSyntax Syntax;
+  if (consume(tok::kw_Unary))
+    Syntax = Instruction::OperandSyntax::Unary;
+  else if (consume(tok::kw_Binary))
+    Syntax = Instruction::OperandSyntax::Binary;
+  else if (consume(tok::kw_Ternary))
+    Syntax = Instruction::OperandSyntax::Ternary;
+  else if (consume(tok::kw_Cast))
+    Syntax = Instruction::OperandSyntax::Cast;
+  else
+    return error("expected archetype Unary, Binary, Ternary, or Cast");
+
+  if (IsCommutative && Syntax != Instruction::OperandSyntax::Binary)
+    return error("only Binary matchers can be declared commutative with ':c'");
+
+  if (expect(tok::lparen, "expected '(' before parameter list"))
+    return true;
+  // The parameter list forms its own scope: parseType interns the meta
+  // variables it sees into the current scope and pattern, while each branch
+  // below binds its own copies. Parse against scratch state so the enclosing
+  // pattern does not acquire meta variables it never instantiates.
+  SmallVector<ParameterDef, 4> Parameters;
+  StringMap<MetaVariable *> OuterMetaVariables = std::move(MetaVariables);
+  Pattern *OuterPattern = CurrentPattern;
+  MetaVariables.clear();
+  CurrentPattern = Pattern::get(Context);
+  bool ParametersFailed = parseMatchParameters(Syntax, Parameters);
+  MetaVariables = std::move(OuterMetaVariables);
+  CurrentPattern = OuterPattern;
+  if (ParametersFailed)
+    return true;
+  if (expect(tok::rparen, "expected ')' after parameter list"))
+    return true;
+
+  StringSet<> SeenOperands;
+  for (const ParameterDef &P : Parameters) {
+    if (!P.IsType && !P.Name.empty()) {
+      if (!SeenOperands.insert(P.Name).second)
+        return error("duplicate parameter '?" + P.Name +
+                     "' in match declaration");
+    }
+  }
+
+  skipNewlines();
+
+  SmallVector<CompositeMatcher::Branch, 2> Branches;
+  do {
+    skipNewlines();
+
+    SmallVector<std::pair<InstructionFlag::FlagID, bool>, 2> BranchFlags;
+    if (Lex.getKind() == tok::lsquare) {
+      next();
+      if (Lex.getKind() != tok::rsquare) {
+        do {
+          if (!isSemanticFlag(Lex.getKind()))
+            return error("expected semantic flag name");
+          InstructionFlag::FlagID FlagID = semanticFlagID(Lex.getKind());
+          if (!llvm::is_contained(SupportedFlags, FlagID))
+            return error("flag '" + InstructionFlag::getName(FlagID) +
+                         "' is not declared in matcher's supported flags");
+          next();
+          bool Val = true;
+          if (consume(tok::equal)) {
+            if (Lex.getKind() == tok::kw_true) {
+              Val = true;
+              next();
+            } else if (Lex.getKind() == tok::kw_false) {
+              Val = false;
+              next();
+            } else {
+              return error("expected 'true' or 'false' after '='");
+            }
+          }
+          BranchFlags.push_back({FlagID, Val});
+        } while (consume(tok::comma));
+      }
+      if (expect(tok::rsquare, "expected ']' after branch flags"))
+        return true;
+      skipNewlines();
+    }
+
+    if (expect(tok::lbrace, "expected '{' to start match branch"))
+      return true;
+    skipNewlines();
+
+    SmallVector<Instruction *, 4> BranchInstructions;
+    SmallVector<Constraint *, 2> BranchConstraints;
+    Pattern *OldPattern = CurrentPattern;
+    MetaVariable *OldBlock = CurrentBlock;
+    StringMap<Instruction *> OldInstructions = std::move(Instructions);
+    StringMap<MetaVariable *> OldMetaVariables = std::move(MetaVariables);
+
+    // A branch is a closed scope: a matcher is expanded at each of its uses, so
+    // the only names its body may refer to are its parameters. Leaving the
+    // enclosing pattern's locals and meta variables visible would let a body
+    // capture them and silently tie the matcher to one pattern.
+    CurrentPattern = Pattern::get(Context);
+    CurrentBlock = nullptr;
+    Instructions.clear();
+    MetaVariables.clear();
+    for (const ParameterDef &P : Parameters) {
+      MetaVariable *M =
+          MetaVariable::get(Context, P.Name, MetaType::Unknown, P.Range);
+      MetaVariables[P.Name] = M;
+    }
+
+    // Settings written in a body override the use site; anything the body
+    // leaves alone is inherited when the branch is inlined. Starting from a
+    // default here is what makes that distinction: it keeps the declaration
+    // from capturing whatever happened to be active around it.
+    PatternSettings OldSettings = Settings;
+    Settings = PatternSettings();
+
+    while (Lex.getKind() != tok::rbrace && Lex.getKind() != tok::Eof) {
+      if (consume(tok::ConstraintMarker)) {
+        if (std::optional<PatternSettings::Setting> Setting =
+                settingFromKeyword(Lex.getKind())) {
+          if (parsePatternSetting(*Setting))
+            return true;
+          if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
+            return error("unexpected token after pattern setting");
+          skipNewlines();
+          continue;
+        }
+        Constraint *C = nullptr;
+        if (parseConstraint(C))
+          return true;
+        // As at top level, a value-tracking operator defaults to the
+        // instruction the constraint follows. Expansion rewrites this to the
+        // inlined copy of that instruction.
+        const Instruction *ContextInst =
+            BranchInstructions.empty() ? nullptr : BranchInstructions.back();
+        setConstraintContext(*C, ContextInst);
+        BranchConstraints.push_back(C);
+        skipNewlines();
+        continue;
+      }
+      if (Lex.getKind() == tok::LabelStr || Lex.getKind() == tok::LabelID ||
+          Lex.getKind() == tok::MetaVar) {
+        if (parseBlockLabel())
+          return true;
+        skipNewlines();
+        continue;
+      }
+      Instruction *I = nullptr;
+      if (parseInstruction(I))
+        return true;
+      BranchInstructions.push_back(I);
+      skipNewlines();
+    }
+
+    if (expect(tok::rbrace, "expected '}' to end match branch"))
+      return true;
+    skipNewlines();
+
+    if (BranchInstructions.empty())
+      return error("match branch must contain at least one instruction");
+
+    unsigned RetCount = 0;
+    for (const Instruction *I : BranchInstructions) {
+      if (I->getResultName() == "ret")
+        ++RetCount;
+    }
+    if (RetCount > 1)
+      return error("multiple '%ret' instructions in match branch");
+
+    CompositeMatcher::Branch StoredBranch;
+    StoredBranch.Instructions =
+        Context.pImpl->copyArray(ArrayRef(BranchInstructions));
+    StoredBranch.Constraints =
+        Context.pImpl->copyArray(ArrayRef(BranchConstraints));
+    StoredBranch.FixedFlags = Context.pImpl->copyArray(ArrayRef(BranchFlags));
+    Branches.push_back(StoredBranch);
+
+    CurrentPattern = OldPattern;
+    CurrentBlock = OldBlock;
+    Instructions = std::move(OldInstructions);
+    MetaVariables = std::move(OldMetaVariables);
+    Settings = OldSettings;
+
+  } while (consume(tok::kw_or));
+
+  auto *CM = new (Context.pImpl->Alloc)
+      CompositeMatcher(Context.pImpl->Saver.save(MatcherName), IsCommutative,
+                       Context.pImpl->copyArray(ArrayRef(SupportedFlags)),
+                       Syntax, Context.pImpl->copyArray(ArrayRef(Parameters)),
+                       Context.pImpl->copyArray(ArrayRef(Branches)));
+  Context.registerCompositeMatcher(CM);
+  return false;
+}
+
+bool MIRParser::parseCompositeInstruction(Instruction *&Result,
+                                          CompositeMatcher *CM,
+                                          StringRef OpName,
+                                          StringRef ResultName, LocTy Loc) {
+  next();
+  MetaVariable *Capture = nullptr;
+  if (parseInstructionCapture(Capture))
+    return true;
+  SmallVector<MetaFlag *, 4> MFlags;
+  if (parseInstructionMetaFlags(MFlags, CM->isCommutative(), OpName))
+    return true;
+  SmallVector<InstructionFlag, 8> Flags;
+  if (parseSemanticFlags(
+          [CM](InstructionFlag::FlagID F) { return CM->hasSupportedFlag(F); },
+          OpName, Flags))
+    return true;
+
+  // A composite matcher declares one of the shared archetypes, so its operands
+  // are spelled exactly like a built-in matcher's.
+  SmallVector<MatcherOperand, 8> Ops;
+  if (CM->getSyntax() == Instruction::OperandSyntax::Custom)
+    return error("custom syntax not supported for composite matchers");
+  if (parseArchetypeOperands(CM->getSyntax(), Ops))
+    return true;
+
+  SourceRange Range{Loc, Lex.getLoc()};
+  Result =
+      Instruction::getComposite(Context, ResultName, CM, OpName, Flags, MFlags,
+                                Ops, Capture, Range, CurrentBlock, Settings);
+  if (!ResultName.empty())
+    Instructions[ResultName] = Result;
   return false;
 }
 

@@ -84,7 +84,28 @@ private:
   ErrorInfo ErrorInfo;
   SourceMgr &SM;
   MIRContext &Context;
-  bool InConstraint = false;
+
+  /// Constraint expressions use a different token set than pattern syntax
+  /// (see MIRConstraintLexer), so the lexer tracks which sublanguage it is
+  /// in. Two contexts select it, with different lifetimes:
+  ///
+  ///   ;; <expr>                 -- a marker introduces a single line
+  ///   constraint f(v) { <expr> } -- a definition body spans lines
+  ///
+  /// Tracking both here keeps tokenization independent of the parser, so
+  /// tools that drive the lexer directly see the same tokens.
+  ///
+  /// Set between a ';;' marker and the end of that line.
+  bool InConstraintLine = false;
+  /// Set between the braces of a 'constraint'/'metaflag' definition body.
+  bool InConstraintBody = false;
+  /// Set after a 'constraint'/'metaflag' keyword, until its body's '{' is
+  /// seen. Distinguishes those bodies from a 'match' body, whose braces hold
+  /// pattern syntax.
+  bool ExpectConstraintBody = false;
+
+  bool inConstraint() const { return InConstraintLine || InConstraintBody; }
+  void updateConstraintContext(tok::Kind Kind);
 
   // Information about the current token.
   const char *TokStart;

@@ -17,6 +17,10 @@ public:
   ArrayRef<Constraint *> getConstraints() const { return Constraints; }
   ArrayRef<MetaVariable *> getMetaVariables() const { return MetaVariables; }
 
+  ArrayRef<std::pair<const MetaVariable *, bool>> getFixedFlags() const {
+    return FixedFlags;
+  }
+
   SmallVector<Instruction *, 4> getRoots() const;
 
   void addInstruction(Instruction *Instruction) {
@@ -25,7 +29,16 @@ public:
   void addConstraint(Constraint *Constraint) {
     Constraints.push_back(Constraint);
   }
+  void addFixedFlag(const MetaVariable *Var, bool Value) {
+    FixedFlags.push_back({Var, Value});
+  }
   void addMetaVariable(MetaVariable *MetaVariable) {
+    assert(llvm::none_of(MetaVariables,
+                         [&](const auto *M) {
+                           return M == MetaVariable ||
+                                  M->getName() == MetaVariable->getName();
+                         }) &&
+           "meta variable already added to pattern");
     MetaVariables.push_back(MetaVariable);
   }
 
@@ -36,6 +49,7 @@ private:
   SmallVector<Instruction *, 16> Instructions;
   SmallVector<Constraint *, 8> Constraints;
   SmallVector<MetaVariable *, 16> MetaVariables;
+  SmallVector<std::pair<const MetaVariable *, bool>, 4> FixedFlags;
 
   explicit Pattern(MIRContext &Context) : Context(Context) {}
 };

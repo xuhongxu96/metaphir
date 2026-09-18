@@ -6,7 +6,7 @@ add_metaphir_test(
   SubtreeMatcherTest.cpp
   InstructionMatcherTest.cpp
   TypeMatcherTest.cpp
-  MetaFlagMatcherTest.cpp
+  MetaFlagTest.cpp
   End2EndTest.cpp)
 
 target_link_libraries(metaphir-matching-test
@@ -42,7 +42,19 @@ set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-ValueTrack.ll
     MIRMatcher-MetaFlags-OrSelf.ll
     MIRMatcher-CrossBasicBlock.ll
-    MIRMatcher-MetaFlags-Uses.ll)
+    MIRMatcher-MetaFlags-Uses.ll
+    MIRMatcher-MetaFlagLowering.ll
+    MIRMatcher-AddLike.ll
+    MIRMatcher-Signum.ll
+    MIRMatcher-UserConstraints.ll
+    MIRMatcher-ConstraintBodyOperators.ll
+    MIRMatcher-MetaFlagsInMatchBody.ll
+    MIRMatcher-MatchParameterTypes.ll
+    MIRMatcher-ConstraintContextInMatcher.ll
+    MIRMatcher-SettingsInMatcher.ll
+    MIRMatcher-MetaFlagParams.ll
+    MIRMatcher-CompositeDownstreamKeyed.ll
+    MIRMatcher-CompositeMetaFlags.ll)
 
 foreach(test_case IN LISTS METAPHIR_MATCHING_TEST_CASES)
   get_filename_component(test_name ${test_case} NAME_WE)

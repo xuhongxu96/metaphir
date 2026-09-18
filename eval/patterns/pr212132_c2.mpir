@@ -3,4 +3,4 @@
 %and2 = and:c i?bits ?shift, ?b
 %cmp2 = icmp ne i?bits %and2, 0
 %cond = and:s i1 %cmp1, %cmp2
-%sel = select:?anch i1 %cond, i?bits ?shift:constantint:poweroftwo, i?bits 0
+%sel = select:?anch i1 %cond, i?bits ?shift:constantInt:powerOfTwo, i?bits 0

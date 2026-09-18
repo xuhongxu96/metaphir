@@ -1,7 +1,6 @@
 ; RUN: %metaphir-lex %s | FileCheck %s
 
 %r = fadd float +1.5, -2.0
-;; ?n + 2 * 3 == 7 && !false || sdiv(?n, -2) != 0 || ?values[?n] == ?x || isa(?x, "BinaryOperator")
 ; CHECK: LocalVar r
 ; CHECK-NEXT: equal
 ; CHECK-NEXT: kw_fadd
@@ -9,6 +8,8 @@
 ; CHECK-NEXT: APFloat 1.5
 ; CHECK-NEXT: comma
 ; CHECK-NEXT: APFloat -2
+
+;; ?n + 2 * 3 == 7 && !false || sdiv(?n, -2) != 0 || ?values[?n] == ?x || isa(?x, "BinaryOperator")
 ; CHECK-NEXT: ConstraintMarker
 ; CHECK-NEXT: MetaVar n
 ; CHECK-NEXT: plus

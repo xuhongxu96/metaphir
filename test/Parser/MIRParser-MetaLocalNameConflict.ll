@@ -11,7 +11,7 @@
 %shr = shr exact i?bits ?x, ?y
 ; CONFLICT: warning: meta variable '?shr' shares a name with local variable '%shr'
 ; CONFLICT: pattern instructions=2 constraints=1
-; CONFLICT-NEXT: %shr = shr exact i?bits ?x, i?bits ?y
+; CONFLICT-NEXT: %shr = shr exact i?bits ?x, ?y
 
 %trunc = trunc:?anch nuw:?nuw nsw:?nsw i?bits ?shr to i1
 ; CONFLICT-NEXT: %trunc = trunc:?anch nuw:?nuw nsw:?nsw i?bits ?shr to i1

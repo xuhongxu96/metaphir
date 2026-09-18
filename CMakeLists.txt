@@ -37,7 +37,8 @@ function(add_metaphir_test test_name)
     gtest_discover_tests(${test_name})
 endfunction()
 
-include_directories(${CMAKE_SOURCE_DIR} ${LLVM_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 
 add_subdirectory(metaphir)
 add_subdirectory(test)

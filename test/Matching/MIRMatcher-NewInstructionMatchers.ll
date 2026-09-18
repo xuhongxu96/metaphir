@@ -108,7 +108,7 @@ entry:
 ; on by name, instead of hard-coding the predicate in the instruction.
 ;--- predicate.mpir
 %sub = sub i?bits ?x, ?y
-%cmp = icmp:?anch ?pred i?bits %sub, ?c:constantint
+%cmp = icmp:?anch ?pred i?bits %sub, ?c:constantInt
 ;; (?pred == "ugt") && ugt(?c, 1)
 
 ;--- predicate.ll

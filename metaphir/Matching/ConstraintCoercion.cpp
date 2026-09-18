@@ -14,6 +14,22 @@ namespace detail {
 
 namespace {
 
+// The integer that a constant operand contributes, if any: either a scalar
+// integer constant, or the repeated element of a vector constant. Operands
+// carrying ':constantsplat' are vector constants, so both forms have to be
+// accepted for them to take part in arithmetic. isNumeric and
+// coerceValueToInteger share this so they cannot disagree.
+std::optional<APInt> constantIntegerValue(const llvm::Value *Operand) {
+  if (const auto *Integer = dyn_cast<ConstantInt>(Operand))
+    return Integer->getValue();
+  if (const auto *Constant = dyn_cast<llvm::Constant>(Operand))
+    if (Constant->getType()->isVectorTy())
+      if (const auto *Splat = Constant->getSplatValue())
+        if (const auto *Integer = dyn_cast<ConstantInt>(Splat))
+          return Integer->getValue();
+  return std::nullopt;
+}
+
 // Identifiers for each admissible coercion. This enum is the set of
 // converters named by the Coercions.def entries; each enumerator is a single
 // edge of the coercion lattice. UnknownCoercion marks an absent edge.
@@ -78,25 +94,27 @@ StringRef targetName(ConstraintValue::ValueKind Target) {
 // is responsible for both producing the destination value and reporting the
 // precise reason a value cannot be converted.
 Expected<ConstraintValue> coerceBooleanToInteger(const ConstraintValue &V,
-                                                 const Constraint &Expression) {
+                                                 const Constraint &) {
   return integerResult(APInt(1, V.getBoolean()), true);
 }
 
 Expected<ConstraintValue> coerceIntegerToBoolean(const ConstraintValue &V,
-                                                 const Constraint &Expression) {
+                                                 const Constraint &) {
   return ConstraintValue::getBoolean(!V.getInteger().isZero());
 }
 
 Expected<ConstraintValue> coerceValueToInteger(const ConstraintValue &V,
                                                const Constraint &Expression) {
-  if (const auto *Integer = dyn_cast<ConstantInt>(V.getValue()))
-    return integerResult(Integer->getValue(), true);
+  // Constants are treated as signed, so that 'slt' on a negative constant is
+  // correct; the unsigned operators still compare the bit pattern.
+  if (std::optional<APInt> Integer = constantIntegerValue(V.getValue()))
+    return integerResult(*Integer, false);
   return make_error<ConstraintEvaluationError>(
       Expression, "expected an integer-valued constant operand");
 }
 
 Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
-                                             const Constraint &Expression) {
+                                             const Constraint &) {
   std::string Text;
   raw_string_ostream OS(Text);
   V.getType()->print(OS);
@@ -104,7 +122,7 @@ Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
 }
 
 Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
-                                              const Constraint &Expression) {
+                                              const Constraint &) {
   std::string Text;
   raw_string_ostream OS(Text);
   if (const auto *Instruction = dyn_cast<llvm::Instruction>(V.getValue()))
@@ -114,9 +132,8 @@ Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
   return ConstraintValue::getString(OS.str());
 }
 
-Expected<ConstraintValue>
-coerceTypeArrayToStringArray(const ConstraintValue &V,
-                             const Constraint &Expression) {
+Expected<ConstraintValue> coerceTypeArrayToStringArray(const ConstraintValue &V,
+                                                       const Constraint &) {
   ConstraintValue::StringArrayStorage Strings;
   for (const llvm::Type *Type : V.getTypeArray()) {
     std::string Text;
@@ -163,7 +180,7 @@ APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth) {
 
 bool isNumeric(const ConstraintValue &V) {
   if (V.getKind() == ConstraintValue::Value)
-    return isa<llvm::ConstantInt>(V.getValue());
+    return constantIntegerValue(V.getValue()).has_value();
   return canCoerceTo(V, ConstraintValue::Integer);
 }
 
@@ -202,59 +219,48 @@ Expected<ConstraintValue> coerce(ConstraintValue V,
       Twine("expected ") + targetName(Target) + "-coercible operand");
 }
 
-Expected<bool> requireBoolean(Expected<ConstraintValue> Result,
+Expected<bool> requireBoolean(const ConstraintValue &Value,
                               const Constraint &Expression) {
-  if (!Result)
-    return Result.takeError();
   Expected<ConstraintValue> Boolean =
-      coerce(std::move(*Result), ConstraintValue::Boolean, Expression);
+      coerce(Value, ConstraintValue::Boolean, Expression);
   if (!Boolean)
     return Boolean.takeError();
   return Boolean->getBoolean();
 }
 
-Expected<APSInt> requireInteger(Expected<ConstraintValue> Result,
+Expected<APSInt> requireInteger(const ConstraintValue &Value,
                                 const Constraint &Expression) {
-  if (!Result)
-    return Result.takeError();
   Expected<ConstraintValue> Integer =
-      coerce(std::move(*Result), ConstraintValue::Integer, Expression);
+      coerce(Value, ConstraintValue::Integer, Expression);
   if (!Integer)
     return Integer.takeError();
   return Integer->getInteger();
 }
 
-Expected<std::string> requireString(Expected<ConstraintValue> Result,
+Expected<std::string> requireString(const ConstraintValue &Value,
                                     const Constraint &Expression) {
-  if (!Result)
-    return Result.takeError();
   Expected<ConstraintValue> String =
-      coerce(std::move(*Result), ConstraintValue::String, Expression);
+      coerce(Value, ConstraintValue::String, Expression);
   if (!String)
     return String.takeError();
   return String->getString().str();
 }
 
 Expected<ConstraintValue::StringArrayStorage>
-requireStringArray(Expected<ConstraintValue> Result,
-                   const Constraint &Expression) {
-  if (!Result)
-    return Result.takeError();
+requireStringArray(const ConstraintValue &Value, const Constraint &Expression) {
   Expected<ConstraintValue> StringArray =
-      coerce(std::move(*Result), ConstraintValue::StringArray, Expression);
+      coerce(Value, ConstraintValue::StringArray, Expression);
   if (!StringArray)
     return StringArray.takeError();
   return StringArray->getStringArray();
 }
 
-Expected<const llvm::Value *> requireValue(Expected<ConstraintValue> Result,
+Expected<const llvm::Value *> requireValue(const ConstraintValue &Value,
                                            const Constraint &Expression) {
-  if (!Result)
-    return Result.takeError();
-  if (Result->getKind() != ConstraintValue::Value)
+  if (Value.getKind() != ConstraintValue::Value)
     return make_error<ConstraintEvaluationError>(
         Expression, "expected an LLVM value operand");
-  return Result->getValue();
+  return Value.getValue();
 }
 
 ConstraintValue integerResult(APInt Value, bool IsUnsigned) {

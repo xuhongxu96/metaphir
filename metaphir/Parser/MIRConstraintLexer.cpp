@@ -13,9 +13,9 @@ tok::Kind MIRConstraintLexer::Lex() {
     switch (CurChar) {
     default:
       if (isalpha(static_cast<unsigned char>(CurChar)) || CurChar == '_') {
-        // Operator names may be hyphenated (e.g. no-overflow); a '-' is only
-        // part of the identifier when immediately followed by an alphanumeric
-        // character, so "a - b" still lexes as subtraction.
+        // Operator names may contain hyphens (e.g. user-defined names); a '-'
+        // is only part of the identifier when immediately followed by an
+        // alphanumeric character, so "a - b" still lexes as subtraction.
         while (isalnum(static_cast<unsigned char>(Lexer.CurPtr[0])) ||
                Lexer.CurPtr[0] == '_' ||
                (Lexer.CurPtr[0] == '-' &&
@@ -45,6 +45,9 @@ tok::Kind MIRConstraintLexer::Lex() {
       if (Lexer.CurPtr[0] == '\n')
         ++Lexer.CurPtr;
       return tok::Newline;
+    case ';':
+      Lexer.SkipLineComment();
+      continue;
     case '+':
       return tok::plus;
     case '-':
@@ -103,6 +106,12 @@ tok::Kind MIRConstraintLexer::Lex() {
       return tok::lsquare;
     case ']':
       return tok::rsquare;
+    // Braces delimit the body of a top-level 'constraint'/'metaflag'
+    // definition, which is lexed entirely in constraint mode.
+    case '{':
+      return tok::lbrace;
+    case '}':
+      return tok::rbrace;
     case '?':
       return Lexer.LexQuestion();
     case '0':

@@ -1,6 +1,8 @@
 #include "metaphir/Matching/ConstraintInterpreter.h"
+#include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/IR/MIRContext.h"
 #include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Instantiation.h"
@@ -90,7 +92,7 @@ Expected<ConstraintValue> ConstraintInterpreter::evaluateValueTrack(
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evalLiteral(const Constraint &Expression,
-                                   const Instantiation &State) {
+                                   const Instantiation &) {
   switch (Expression.getConstraintID()) {
   case Constraint::Integer: {
     int64_t Value = cast<IntegerConstraint>(Expression).getValue();
@@ -151,6 +153,32 @@ ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
             std::get_if<Instantiation::ValueArray>(&Binding->Data))
       return ConstraintValue::getValueArray(*Values);
     break;
+  case Constraint::Unknown:
+    return std::visit(
+        [&](const auto &Val) -> Expected<ConstraintValue> {
+          using T = std::decay_t<decltype(Val)>;
+          if constexpr (std::is_same_v<T, const llvm::Value *>)
+            return ConstraintValue::getValue(Val);
+          else if constexpr (std::is_same_v<T, const llvm::Type *>)
+            return ConstraintValue::getType(Val);
+          else if constexpr (std::is_same_v<T, APInt>)
+            return ConstraintValue::getInteger(APSInt(Val, false));
+          else if constexpr (std::is_same_v<T, bool>)
+            return ConstraintValue::getBoolean(Val);
+          else if constexpr (std::is_same_v<T, CmpInst::Predicate>)
+            return ConstraintValue::getString(CmpInst::getPredicateName(Val));
+          else if constexpr (std::is_same_v<T, Intrinsic::ID>)
+            return ConstraintValue::getString(Intrinsic::getBaseName(Val));
+          else if constexpr (std::is_same_v<T, Instantiation::TypeArray>)
+            return ConstraintValue::getTypeArray(Val);
+          else if constexpr (std::is_same_v<T, Instantiation::ValueArray>)
+            return ConstraintValue::getValueArray(Val);
+          else
+            return make_error<ConstraintEvaluationError>(
+                Expression, Twine("meta variable '?") + Variable.getName() +
+                                "' has an incompatible binding");
+        },
+        Binding->Data);
   default:
     llvm_unreachable("variable constraint has no result type");
   }
@@ -268,9 +296,56 @@ ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
   case Constraint::O_Ashr:
   case Constraint::O_Shl:
     return evalShift(Operator, State);
-  case Constraint::UnknownOperator:
+  case Constraint::UnknownOperator: {
+    if (Context) {
+      if (const ConstraintDef *Def =
+              Context->getConstraintDef(Operator.getOperator())) {
+        if (Arguments.size() != Def->getParameters().size())
+          return make_error<ConstraintEvaluationError>(
+              Operator,
+              "wrong number of arguments to user-defined constraint '" +
+                  Operator.getOperator() + "'");
+        Instantiation SubState = State;
+        for (size_t I = 0; I < Arguments.size(); ++I) {
+          Expected<ConstraintValue> ArgVal = evaluate(*Arguments[I], State);
+          if (!ArgVal)
+            return ArgVal.takeError();
+          MetaVariable *ParamVar = Def->getParameterVars()[I];
+          std::optional<Instantiation::Binding> ArgBinding;
+          switch (ArgVal->getKind()) {
+          case ConstraintValue::Integer:
+            ArgBinding = Instantiation::Binding(ArgVal->getInteger());
+            break;
+          case ConstraintValue::Boolean:
+            ArgBinding = Instantiation::Binding(ArgVal->getBoolean());
+            break;
+          case ConstraintValue::Type:
+            ArgBinding = Instantiation::Binding(ArgVal->getType());
+            break;
+          case ConstraintValue::Value:
+            ArgBinding = Instantiation::Binding(ArgVal->getValue());
+            break;
+          case ConstraintValue::TypeArray:
+            ArgBinding = Instantiation::Binding(ArgVal->getTypeArray());
+            break;
+          case ConstraintValue::ValueArray:
+            ArgBinding = Instantiation::Binding(ArgVal->getValueArray());
+            break;
+          default:
+            break;
+          }
+          if (!ArgBinding)
+            return make_error<ConstraintEvaluationError>(
+                Operator,
+                "unsupported argument type for user-defined constraint");
+          SubState.bind(*ParamVar, std::move(*ArgBinding));
+        }
+        return evaluate(*Def->getBody(), SubState);
+      }
+    }
     return make_error<ConstraintEvaluationError>(
         Operator, Twine("unknown operator '") + Operator.getOperator() + "'");
+  }
   default:
     break;
   }

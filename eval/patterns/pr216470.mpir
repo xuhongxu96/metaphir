@@ -1,9 +1,9 @@
 ;; treatIntAsVec(true)
-%and = and:s i?bits ?x, ?mask:lowbitmask
+%and = and:s i?bits ?x, ?mask:lowBitMask
 %cmp = icmp ne i?bits %and, 0
 %ext = zext i1 %cmp to ?rty
-%shr = lshr:s i?bits ?x, ?shift:constantint
+%shr = lshr:s i?bits ?x, ?shift:constantInt
 %zext = zext:?zxt:s:o i?bits %shr to ?rty
 %add = add:?anch:c ?rty %ext, %zext
 ;; popcount(?mask) == ?shift
-;; ((opcode(?zxt) == "zext") || no-overflow("uadd", ?x, ?mask))
+;; ((opcode(?zxt) == "zext") || noOverflow("uadd", ?x, ?mask))

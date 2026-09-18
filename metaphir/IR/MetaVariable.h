@@ -29,6 +29,8 @@ public:
     return V->getValueID() == MetaVariableVal;
   }
 
+  // The range is required rather than defaulted, so a caller cannot leave a
+  // meta variable without a source location by omission.
   static MetaVariable *get(MIRContext &Context, StringRef Name, MetaType Ty,
                            SourceRange Range);
 

@@ -78,14 +78,12 @@ MIR_INSTRUCTION_MATCHER(lshr, matchOpcode<llvm::Instruction::LShr>, ExactFlag,
                         false, Binary)
 MIR_INSTRUCTION_MATCHER(ashr, matchOpcode<llvm::Instruction::AShr>, ExactFlag,
                         false, Binary)
-MIR_INSTRUCTION_MATCHER(shr, matchShr, ExactFlag, false, Binary)
 MIR_INSTRUCTION_MATCHER(and, matchOpcode<llvm::Instruction::And>, NoFlags, true,
                         Binary)
 MIR_INSTRUCTION_MATCHER(or, matchOpcode<llvm::Instruction::Or>, DisjointFlag,
                         true, Binary)
 MIR_INSTRUCTION_MATCHER(xor, matchOpcode<llvm::Instruction::Xor>, NoFlags, true,
                         Binary)
-MIR_INSTRUCTION_MATCHER(bitwiseLogic, matchBitwiseLogic, NoFlags, true, Binary)
 
 MIR_INSTRUCTION_MATCHER(extractelement,
                         matchOpcode<llvm::Instruction::ExtractElement>, NoFlags,
@@ -119,7 +117,6 @@ MIR_INSTRUCTION_MATCHER(zext, matchOpcode<llvm::Instruction::ZExt>, NNegFlag,
                         false, Cast)
 MIR_INSTRUCTION_MATCHER(sext, matchOpcode<llvm::Instruction::SExt>, NoFlags,
                         false, Cast)
-MIR_INSTRUCTION_MATCHER(zextOrSext, matchZExtOrSExt, NoFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(fptrunc, matchOpcode<llvm::Instruction::FPTrunc>,
                         FastMathFlags, false, Cast)
 MIR_INSTRUCTION_MATCHER(fpext, matchOpcode<llvm::Instruction::FPExt>,

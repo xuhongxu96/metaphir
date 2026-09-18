@@ -40,17 +40,53 @@ Expected<ConstraintValue> coerce(ConstraintValue V,
 // Coercion-aware accessors. They forward evaluation errors, coerce the value
 // into the requested representation, and report a structured error when no
 // coercion exists.
-Expected<bool> requireBoolean(Expected<ConstraintValue> Result,
+Expected<bool> requireBoolean(const ConstraintValue &Value,
                               const Constraint &Expression);
-Expected<APSInt> requireInteger(Expected<ConstraintValue> Result,
+inline Expected<bool> requireBoolean(Expected<ConstraintValue> Result,
+                                     const Constraint &Expression) {
+  if (!Result)
+    return Result.takeError();
+  return requireBoolean(*Result, Expression);
+}
+
+Expected<APSInt> requireInteger(const ConstraintValue &Value,
                                 const Constraint &Expression);
-Expected<std::string> requireString(Expected<ConstraintValue> Result,
+inline Expected<APSInt> requireInteger(Expected<ConstraintValue> Result,
+                                       const Constraint &Expression) {
+  if (!Result)
+    return Result.takeError();
+  return requireInteger(*Result, Expression);
+}
+
+Expected<std::string> requireString(const ConstraintValue &Value,
                                     const Constraint &Expression);
+inline Expected<std::string> requireString(Expected<ConstraintValue> Result,
+                                           const Constraint &Expression) {
+  if (!Result)
+    return Result.takeError();
+  return requireString(*Result, Expression);
+}
+
 Expected<ConstraintValue::StringArrayStorage>
-requireStringArray(Expected<ConstraintValue> Result,
+requireStringArray(const ConstraintValue &Value,
                    const Constraint &Expression);
-Expected<const llvm::Value *> requireValue(Expected<ConstraintValue> Result,
+inline Expected<ConstraintValue::StringArrayStorage>
+requireStringArray(Expected<ConstraintValue> Result,
+                   const Constraint &Expression) {
+  if (!Result)
+    return Result.takeError();
+  return requireStringArray(*Result, Expression);
+}
+
+Expected<const llvm::Value *> requireValue(const ConstraintValue &Value,
                                            const Constraint &Expression);
+inline Expected<const llvm::Value *> requireValue(Expected<ConstraintValue> Result,
+                                                  const Constraint &Expression) {
+  if (!Result)
+    return Result.takeError();
+  return requireValue(*Result, Expression);
+}
+
 ConstraintValue integerResult(APInt Value, bool IsUnsigned);
 
 Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,

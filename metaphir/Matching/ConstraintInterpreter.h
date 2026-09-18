@@ -15,9 +15,16 @@ class ArrayConstraint;
 class ArrayAccessConstraint;
 class OperatorConstraint;
 class VariableConstraint;
+class MIRContext;
 
 class ConstraintInterpreter {
 public:
+  explicit ConstraintInterpreter(MIRContext *Context = nullptr)
+      : Context(Context) {}
+
+  void setContext(MIRContext *C) { Context = C; }
+  MIRContext *getContext() const { return Context; }
+
   Expected<ConstraintValue> evaluate(const Constraint &Expression,
                                      const Instantiation &State);
 
@@ -80,6 +87,7 @@ private:
 
   // Lazily-constructed per-function analyses for value-tracking operators.
   detail::ValueTrackContext Analysis;
+  MIRContext *Context = nullptr;
 };
 
 } // namespace metaphir

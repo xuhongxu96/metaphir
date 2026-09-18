@@ -2,6 +2,7 @@
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Pattern.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -11,10 +12,13 @@ namespace llvm {
 namespace metaphir {
 
 void Instantiation::requireComplete(const Pattern &Pattern) const {
-  for (const MetaVariable *Variable : Pattern.getMetaVariables())
+  for (const MetaVariable *Variable : Pattern.getMetaVariables()) {
+    if (Variable->getName().empty() || Variable->getName().starts_with("_"))
+      continue;
     if (!lookup(*Variable))
       report_fatal_error(Twine("successful match did not instantiate meta ") +
                          "variable '?" + Variable->getName() + "'");
+  }
 }
 
 raw_ostream &operator<<(raw_ostream &OS,
@@ -27,7 +31,7 @@ raw_ostream &operator<<(raw_ostream &OS,
         } else if constexpr (std::is_same_v<T, const llvm::Value *>) {
           Value->printAsOperand(OS, false);
         } else if constexpr (std::is_same_v<T, const llvm::Type *>) {
-          Value->print(OS);
+          Value->print(OS, false, true);
         } else if constexpr (std::is_same_v<T, CmpInst::Predicate>) {
           OS << CmpInst::getPredicateName(Value);
         } else if constexpr (std::is_same_v<T, Intrinsic::ID>) {
@@ -42,7 +46,9 @@ raw_ostream &operator<<(raw_ostream &OS,
             if (Index)
               OS << ", ";
             if constexpr (std::is_same_v<T, Instantiation::TypeArray>)
-              Value[Index]->print(OS);
+              Value[Index]->print(OS, false, true);
+            else if (Value[Index]->hasName())
+              OS << '%' << Value[Index]->getName();
             else
               Value[Index]->printAsOperand(OS, false);
           }
@@ -55,10 +61,12 @@ raw_ostream &operator<<(raw_ostream &OS,
 
 raw_ostream &operator<<(raw_ostream &OS, const Instantiation &Instantiation) {
   SmallVector<std::pair<StringRef, const Instantiation::Binding *>, 8> Bindings;
+  StringSet<> SeenNames;
   for (const auto &[Matcher, Binding] : Instantiation.Bindings)
     if (const auto *Variable = dyn_cast<MetaVariable>(Matcher))
-      if (!Variable->getName().empty())
-        Bindings.emplace_back(Variable->getName(), &Binding);
+      if (!Variable->getName().empty() && !Variable->getName().starts_with("_"))
+        if (SeenNames.insert(Variable->getName()).second)
+          Bindings.emplace_back(Variable->getName(), &Binding);
   llvm::sort(Bindings, [](const auto &Left, const auto &Right) {
     return Left.first < Right.first;
   });

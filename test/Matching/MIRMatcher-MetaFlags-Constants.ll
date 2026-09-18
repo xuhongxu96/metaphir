@@ -2,7 +2,7 @@
 ; RUN: %metaphir-match %t/pattern.mpir %t/match.ll %t/no-match.ll | FileCheck %s
 
 ;--- pattern.mpir
-call void @sink(i32 ?allones:allones, i32 ?safe:forbidpoison, i32 ?integral:integralconstant, float ?zero:zerofp, i32 ?poison:poison, i32 ?apint:apint, i32 ?either:or(:allones, :poison), i32 ?not_poison:not(:poison), i32 ?low:lowbitmask)
+call void @sink(i32 ?allones:allOnes, i32 ?safe:forbidPoison, i32 ?integral:integralConstant, float ?zero:zeroFP, i32 ?poison:poison, i32 ?apint:apInt, i32 ?either:or(:allOnes, :poison), i32 ?not_poison:not(:poison), i32 ?low:lowBitMask)
 
 ;--- match.ll
 declare void @sink(i32, i32, i32, float, i32, i32, i32, i32, i32)
@@ -32,6 +32,7 @@ define void @bad_allones() {
 }
 ; CHECK-NEXT: target 2: @bad_allones
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (isAllOnes ?allones)
 
 define void @bad_forbidpoison() {
   call void @sink(i32 -1, i32 poison, i32 17, float 0.0, i32 poison, i32 42, i32 -1, i32 0, i32 255)
@@ -39,6 +40,7 @@ define void @bad_forbidpoison() {
 }
 ; CHECK-NEXT: target 3: @bad_forbidpoison
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (isForbidPoison ?safe)
 
 define void @bad_integralconstant(i32 %integral) {
   call void @sink(i32 -1, i32 7, i32 %integral, float 0.0, i32 poison, i32 42, i32 -1, i32 0, i32 255)
@@ -46,6 +48,7 @@ define void @bad_integralconstant(i32 %integral) {
 }
 ; CHECK-NEXT: target 4: @bad_integralconstant
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (isIntegralConstant ?integral)
 
 define void @bad_zerofp() {
   call void @sink(i32 -1, i32 7, i32 17, float 1.0, i32 poison, i32 42, i32 -1, i32 0, i32 255)
@@ -53,6 +56,7 @@ define void @bad_zerofp() {
 }
 ; CHECK-NEXT: target 5: @bad_zerofp
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (isZeroFP ?zero)
 
 define void @bad_poison() {
   call void @sink(i32 -1, i32 7, i32 17, float 0.0, i32 0, i32 42, i32 -1, i32 0, i32 255)
@@ -60,6 +64,7 @@ define void @bad_poison() {
 }
 ; CHECK-NEXT: target 6: @bad_poison
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (isPoison ?poison)
 
 define void @bad_apint(i32 %value) {
   call void @sink(i32 -1, i32 7, i32 17, float 0.0, i32 poison, i32 %value, i32 -1, i32 0, i32 255)
@@ -67,6 +72,7 @@ define void @bad_apint(i32 %value) {
 }
 ; CHECK-NEXT: target 7: @bad_apint
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (isAPInt ?apint)
 
 define void @bad_or() {
   call void @sink(i32 -1, i32 7, i32 17, float 0.0, i32 poison, i32 42, i32 0, i32 0, i32 255)
@@ -74,6 +80,7 @@ define void @bad_or() {
 }
 ; CHECK-NEXT: target 8: @bad_or
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (|| (isAllOnes ?either) (isPoison ?either))
 
 define void @bad_not() {
   call void @sink(i32 -1, i32 7, i32 17, float 0.0, i32 poison, i32 42, i32 -1, i32 poison, i32 255)
@@ -81,6 +88,7 @@ define void @bad_not() {
 }
 ; CHECK-NEXT: target 9: @bad_not
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (! (isPoison ?not_poison))
 
 define void @bad_lowbitmask() {
   call void @sink(i32 -1, i32 7, i32 17, float 0.0, i32 poison, i32 42, i32 -1, i32 0, i32 5)
@@ -88,3 +96,4 @@ define void @bad_lowbitmask() {
 }
 ; CHECK-NEXT: target 10: @bad_lowbitmask
 ; CHECK-NEXT:   no match
+; CHECK-NEXT:   constraint not satisfied: (isLowBitMask ?low)

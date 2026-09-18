@@ -1,6 +1,7 @@
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/Pattern.h"
+#include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Matching/SubtreeMatcher.h"
 #include "llvm/IR/Instruction.h"
 
@@ -22,9 +23,22 @@ MatchResults PatternMatcher::match(const Pattern &Pattern,
     if (Instantiations.empty())
       return {};
   }
-  for (const Instantiation &Candidate : Instantiations)
+  for (Instantiation &Candidate : Instantiations) {
+    for (const auto &[Var, Val] : Pattern.getFixedFlags())
+      Candidate.bind(*Var, Val);
     Candidate.requireComplete(Pattern);
+  }
   return Instantiations;
+}
+
+MatchResults PatternMatcher::match(const PatternVariants &Variants,
+                                   const Target &Program) {
+  MatchResults Combined;
+  for (const Pattern *Variant : Variants) {
+    MatchResults Res = match(*Variant, Program);
+    Combined.append(Res.begin(), Res.end());
+  }
+  return Combined;
 }
 
 MatchResults PatternMatcher::matchSubgraph(const Value &PatternNode,

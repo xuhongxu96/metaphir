@@ -1,6 +1,10 @@
+add_metaphir_test(metaphir-parser-test SourceRangeTest.cpp)
+target_link_libraries(metaphir-parser-test PRIVATE metaphir-parser)
+
 set(METAPHIR_TEST_CASES
   MIRLexer-CmpPredicate.ll
   MIRLexer-Constraint.ll
+  MIRLexer-ConstraintBody.ll
   MIRLexer-ConstantInt.ll
   MIRLexer-Function.ll
   MIRLexer-i1.ll
@@ -15,6 +19,7 @@ set(METAPHIR_TEST_CASES
   MIRParser.ll
   MIRParser-BasicBlocks.ll
   MIRParser-BasicBlockConflict.ll
+  MIRParser-BranchFlags.ll
   MIRParser-ConstraintErrors.ll
   MIRParser-Constraints.ll
   MIRParser-Instructions.ll
@@ -23,6 +28,11 @@ set(METAPHIR_TEST_CASES
   MIRParser-InvalidCommutative.ll
   MIRParser-InvalidFlag.ll
   MIRParser-InvalidMetaFlag.ll
+  MIRParser-MatcherName.ll
+  MIRParser-MetaFlagName.ll
+  MIRParser-MatchParameters.ll
+  MIRParser-MatchBodyScope.ll
+  MIRParser-MetaFlagParams.ll
   MIRParser-TypesConstants.ll
   MIRParser-Undefined.ll
 )

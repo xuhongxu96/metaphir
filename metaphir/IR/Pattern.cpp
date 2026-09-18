@@ -37,7 +37,7 @@ raw_ostream &operator<<(raw_ostream &OS, const Pattern &P) {
   for (const Instruction *I : P.getInstructions()) {
     if (I->getParentBlock() != CurrentBlock) {
       CurrentBlock = I->getParentBlock();
-      if (!CurrentBlock->getName().empty())
+      if (CurrentBlock && !CurrentBlock->getName().empty())
         OS << *CurrentBlock << ":\n";
     }
     OS << *I << '\n';

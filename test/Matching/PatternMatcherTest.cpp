@@ -3,6 +3,7 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
+#include "metaphir/IR/PatternVariants.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
@@ -91,7 +92,6 @@ TEST(PatternMatcherTest, RequiresEveryRootAndFiltersPrograms) {
 
   MIRTarget Complete(*Module->getFunction("complete"));
   MIRTarget Incomplete(*Module->getFunction("incomplete"));
-  const MIRTarget *Programs[] = {&Complete, &Incomplete};
   PatternMatcher Matcher;
   EXPECT_FALSE(Matcher.match(*Pat, Complete).empty());
   EXPECT_TRUE(Matcher.match(*Pat, Incomplete).empty());
@@ -321,42 +321,43 @@ TEST(PatternMatcherTest, OrSelfAdmitsSelectedOperandAsRoot) {
   EXPECT_FALSE(Matcher.match(*Pat, Program).empty());
 }
 
-TEST(PatternMatcherTest, EvaluatesOperandMetaFlags) {
+TEST(PatternMatcherTest, MatchesPatternVariants) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+
+  Pattern *AddPat = Pattern::get(Context);
   MetaVariable *Block =
       MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
-  MetaVariable *Constant =
-      MetaVariable::get(Context, "constant", MetaType::Value, Range);
-  MetaFlag *AllOnes = MetaFlag::get(Context, "allones", {}, Range);
-  MatcherOperand Operands[] = {{nullptr, X}, {nullptr, Constant}};
-  MetaFlag *OperandFlags[] = {AllOnes};
-  Operands[1].setMetaFlags(Context, OperandFlags);
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
-                                          {}, {}, Operands, nullptr, Range,
-                                          Block));
+  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
+  MatcherOperand Operands[] = {{nullptr, X}, {nullptr, Y}};
+  AddPat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
+                                             {}, {}, Operands, nullptr, Range,
+                                             Block));
+
+  Pattern *SubPat = Pattern::get(Context);
+  SubPat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_sub, "",
+                                             {}, {}, Operands, nullptr, Range,
+                                             Block));
+
+  PatternVariants Variants;
+  Variants.addVariant(AddPat);
+  Variants.addVariant(SubPat);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = parseModule(
       R"(
-        define i32 @all_ones(i32 %x) {
-          %result = add i32 %x, -1
-          ret i32 %result
-        }
-
-        define i32 @not_all_ones(i32 %x) {
-          %result = add i32 %x, 1
-          ret i32 %result
+        define i32 @both(i32 %a, i32 %b) {
+          %1 = add i32 %a, %b
+          %2 = sub i32 %a, %b
+          ret i32 %1
         }
       )",
       LLVMContext);
   ASSERT_NE(Module, nullptr);
 
-  MIRTarget AllOnesTarget(*Module->getFunction("all_ones"));
-  MIRTarget OtherTarget(*Module->getFunction("not_all_ones"));
+  MIRTarget Target(*Module->getFunction("both"));
   PatternMatcher Matcher;
-  EXPECT_FALSE(Matcher.match(*Pat, AllOnesTarget).empty());
-  EXPECT_TRUE(Matcher.match(*Pat, OtherTarget).empty());
+  MatchResults Matches = Matcher.match(Variants, Target);
+  EXPECT_EQ(Matches.size(), 2u);
 }

@@ -6,17 +6,17 @@
 
 ; 'log2' computes the integer floor log2 of a positive constant.
 ;--- log2.mpir
-%udiv = udiv:?anch i?bits ?x, ?d:constantint
+%udiv = udiv:?anch i?bits ?x, ?d:constantInt
 ;; log2(?d) == 3
 
 ; It can be nested in arithmetic expressions.
 ;--- log2-or.mpir
-%udiv = udiv:?anch i?bits ?x, ?d:constantint
+%udiv = udiv:?anch i?bits ?x, ?d:constantInt
 ;; (log2(?d) + 1) == 5
 
 ; 'popcount' counts the number of set bits of an integer constant.
 ;--- popcount.mpir
-%lshr = lshr:?anch i?bits ?x, ?amt:constantint
+%lshr = lshr:?anch i?bits ?x, ?amt:constantInt
 ;; popcount(?amt) == 1
 
 ;--- popcount.ll
@@ -100,10 +100,10 @@ entry:
 ; L2O-NEXT:   no match
 ; L2O-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
 
-; 'ispowertwo' checks whether a constant is a power of two.
+; 'isPowerOfTwo' checks whether a constant is a power of two.
 ;--- ispowertwo.mpir
-%udiv = udiv:?anch i?bits ?x, ?d:constantint
-;; ispowertwo(?d)
+%udiv = udiv:?anch i?bits ?x, ?d:constantInt
+;; isPowerOfTwo(?d)
 
 ;--- ispowertwo.ll
 define i32 @d8(i32 %x) {
@@ -122,7 +122,7 @@ entry:
 }
 ; POW-NEXT: target 1: @d6
 ; POW-NEXT:   no match
-; POW-NEXT:   constraint not satisfied: (ispowertwo ?d)
+; POW-NEXT:   constraint not satisfied: (isPowerOfTwo ?d)
 
 define i32 @d1(i32 %x) {
 entry:
@@ -140,4 +140,4 @@ entry:
 }
 ; POW-NEXT: target 3: @d0
 ; POW-NEXT:   no match
-; POW-NEXT:   constraint not satisfied: (ispowertwo ?d)
+; POW-NEXT:   constraint not satisfied: (isPowerOfTwo ?d)

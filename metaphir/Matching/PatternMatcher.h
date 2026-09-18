@@ -9,6 +9,7 @@ class Value;
 namespace metaphir {
 
 class Pattern;
+class PatternVariants;
 class Value;
 
 // Searches a whole target (program) for all instantiations of a MetaphIR
@@ -18,6 +19,7 @@ class Value;
 class PatternMatcher {
 public:
   MatchResults match(const Pattern &Pattern, const Target &Program);
+  MatchResults match(const PatternVariants &Variants, const Target &Program);
 
 private:
   MatchResults matchSubgraph(const Value &PatternNode,

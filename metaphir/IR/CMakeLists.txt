@@ -13,11 +13,18 @@ add_library(metaphir-ir
 
   Pattern.cpp
   Pattern.h
+  PatternVariants.h
 
   Constraint.cpp
   Constraint.h
 
   Constraints.h
+
+  CompositeMatcher.cpp
+  CompositeMatcher.h
+
+  PatternLowering.cpp
+  PatternLowering.h
 
   Value.h
   Values.h

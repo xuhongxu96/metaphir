@@ -3,10 +3,14 @@
 
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/Parser/MIRLexer.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/StringMap.h"
 
 namespace llvm {
 namespace metaphir {
+
+class CompositeMatcher;
+struct ParameterDef;
 
 class MIRParser {
 public:
@@ -17,12 +21,22 @@ public:
   /// Parse a complete pattern. Returns true on error.
   bool parse(Pattern *&Result);
 
+  /// Name under which the embedded standard library is recorded in a context.
+  static constexpr StringRef StdLibName = "stdlib";
+
+  /// Parses Source as the library named Name into Context, registering its
+  /// definitions. Does nothing if a library of that name is already loaded.
+  /// Returns true on error.
+  static bool loadLibrary(MIRContext &Context, StringRef Name,
+                          StringRef Source);
+
 private:
   using LocTy = MIRLexer::LocTy;
 
   MIRLexer Lex;
   MIRContext &Context;
   StringMap<MetaVariable *> MetaVariables;
+  unsigned WildcardCaptureCounter = 0;
   StringMap<Instruction *> Instructions;
   Pattern *CurrentPattern = nullptr;
   MetaVariable *CurrentBlock = nullptr;
@@ -46,11 +60,41 @@ private:
                          MetaType Expected = MetaType::Value);
   bool parseOperandMetaFlags(MatcherOperand &Result);
   bool parseArrayCapture(MatcherOperand &Result, bool WithTypes);
-  bool parseMetaFlag(MetaFlag *&Result);
+  bool parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed);
   bool parseMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
                       MetaFlag::Placement Placement);
-  bool parseSemanticFlags(Instruction::InstructionID ID,
-                          SmallVectorImpl<InstructionFlag> &Result);
+
+  // The pieces below are shared by built-in and composite matchers, which are
+  // spelled the same way and differ only in what a flag is validated against.
+
+  /// Parses an optional ':?var' result capture.
+  bool parseInstructionCapture(MetaVariable *&Capture);
+
+  /// Parses instruction-placement metaflags, rejecting ':c' unless the matcher
+  /// named by OwnerName is commutative.
+  bool parseInstructionMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
+                                 bool IsCommutative, StringRef OwnerName);
+
+  /// Parses semantic flags with optional captures, rejecting any that
+  /// IsSupported declines for the matcher named by OwnerName.
+  bool
+  parseSemanticFlags(function_ref<bool(InstructionFlag::FlagID)> IsSupported,
+                     StringRef OwnerName,
+                     SmallVectorImpl<InstructionFlag> &Result);
+
+  /// Parses the operands of one of the shared archetypes. Custom grammars are
+  /// specific to a built-in instruction and stay with the caller.
+  bool parseArchetypeOperands(Instruction::OperandSyntax Syntax,
+                              SmallVectorImpl<MatcherOperand> &Ops);
+
+  bool parseTopLevelMatch();
+  bool parseMatchParameters(Instruction::OperandSyntax Syntax,
+                            SmallVectorImpl<ParameterDef> &Result);
+  bool parseTopLevelConstraint();
+  bool parseTopLevelMetaFlag();
+  bool parseCompositeInstruction(Instruction *&Result, CompositeMatcher *CM,
+                                 StringRef OpName, StringRef ResultName,
+                                 LocTy Loc);
 
   bool parseConstraint(Constraint *&Result);
   bool parseConstraintOr(Constraint *&Result);

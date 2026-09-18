@@ -40,7 +40,7 @@
 ; CHECK-NEXT: comma
 ; CHECK-NEXT: LocalVar y
 
-%5 = add:c:o(1) i8 %x:s, ?y:su:apint
+%5 = add:c:o(1) i8 %x:s, ?y:su:apInt
 ; CHECK-NEXT: LocalVarID 5
 ; CHECK-NEXT: equal
 ; CHECK-NEXT: kw_add
@@ -55,9 +55,9 @@
 ; CHECK-NEXT: comma
 ; CHECK-NEXT: MetaVar y
 ; CHECK-NEXT: MetaFlag su
-; CHECK-NEXT: MetaFlag apint
+; CHECK-NEXT: MetaFlag apInt
 
-%6 = add i8 %x, ?c:allones:or(:poison)
+%6 = add i8 %x, ?c:allOnes:or(:poison)
 ; CHECK-NEXT: LocalVarID 6
 ; CHECK-NEXT: equal
 ; CHECK-NEXT: kw_add
@@ -65,7 +65,7 @@
 ; CHECK-NEXT: LocalVar x
 ; CHECK-NEXT: comma
 ; CHECK-NEXT: MetaVar c
-; CHECK-NEXT: MetaFlag allones
+; CHECK-NEXT: MetaFlag allOnes
 ; CHECK-NEXT: MetaFlag or
 ; CHECK-NEXT: lparen
 ; CHECK-NEXT: MetaFlag poison

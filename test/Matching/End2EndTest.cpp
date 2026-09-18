@@ -2,6 +2,7 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
+#include "metaphir/IR/PatternLowering.h"
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/AsmParser/Parser.h"
@@ -33,6 +34,11 @@ Pattern *parsePattern(StringRef IR, MIRContext &Context) {
                    Error, Context);
   Pattern *Result = nullptr;
   if (!Parser.parse(Result)) {
+    // Operand metaflags are defined in the standard library, so matching
+    // requires lowering to desugar them into constraints.
+    Expected<PatternVariants> Lowered = PatternLowering(Context).lower(Result);
+    if (!Lowered)
+      llvm_unreachable("Failed to lower pattern");
     return Result;
   }
   llvm_unreachable("Failed to parse pattern");

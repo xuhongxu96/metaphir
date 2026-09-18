@@ -1,6 +1,6 @@
 ;; treatIntAsVec(true)
-%div = udiv:s i?bits ?x, ?c0:constantint
-%divshl = shl:s i?bits %div, ?k:constantint
+%div = udiv:s i?bits ?x, ?c0:constantInt
+%divshl = shl:s i?bits %div, ?k:constantInt
 %rem = urem i?bits ?x, ?c0
 %add = add:?anch:c i?bits %rem, %divshl
 ;; (?c0 != 0)

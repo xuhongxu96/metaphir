@@ -89,10 +89,16 @@ TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
   MetaVariable *Block =
       MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
   MatcherOperand Operands[] = {
-      {I32, LHS},
-      {I32, RHS},
-      {nullptr, Predicate, false, false, nullptr, nullptr,
-       MatcherOperand::Predicate},
+      {I32, LHS, false, true, nullptr, nullptr, MatcherOperand::NotKeyed, {}},
+      {I32, RHS, false, true, nullptr, nullptr, MatcherOperand::NotKeyed, {}},
+      {nullptr,
+       Predicate,
+       false,
+       false,
+       nullptr,
+       nullptr,
+       MatcherOperand::Predicate,
+       {}},
   };
 
   Instruction *Matcher = Instruction::get(Context, Instruction::I_icmp, "", {},

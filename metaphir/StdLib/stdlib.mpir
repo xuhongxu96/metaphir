@@ -1,0 +1,93 @@
+
+match:c addLike [nsw, nuw] Binary (?ty ?x, ?y) {
+	%ret = add nsw:?nsw nuw:?nuw ?ty ?x, ?y
+} or [nsw = true, nuw = true] {
+	%ret = or disjoint ?ty ?x, ?y
+}
+
+match shr [exact] Binary (?ty ?x, ?y) {
+	%ret = lshr exact:?exact ?ty ?x, ?y
+} or {
+	%ret = ashr exact:?exact ?ty ?x, ?y
+}
+
+match:c bitwiseLogic [] Binary (?ty ?x, ?y) {
+	%ret = and ?ty ?x, ?y
+} or {
+	%ret = or ?ty ?x, ?y
+} or {
+	%ret = xor ?ty ?x, ?y
+}
+
+match zextOrSext [] Cast (?ty1 ?x to ?ty2) {
+	%ret = zext ?ty1 ?x to ?ty2
+} or {
+	%ret = sext ?ty1 ?x to ?ty2
+}
+
+match signum [] Unary (i?bits ?x) {
+	%neg = sub i?bits 0, ?x
+	%lhs = ashr i?bits ?x, ?shift
+	%rhs = lshr i?bits %neg, ?shift
+	%ret = or i?bits %lhs, %rhs
+	;; ?shift == ?bits - 1
+}
+
+constraint isConstantInt(?v) {
+	isa(?v, "ConstantInt")
+}
+metaflag :constantInt(?v) {
+	isConstantInt(?v)
+}
+
+metaflag :powerOfTwo(?v) {
+	isPowerOfTwo(?v)
+}
+
+metaflag :zero(?v) {
+	isZero(?v)
+}
+
+metaflag :allOnes(?v) {
+	isAllOnes(?v)
+}
+
+metaflag :lowBitMask(?v) {
+	isLowBitMask(?v)
+}
+
+metaflag :poison(?v) {
+	isPoison(?v)
+}
+
+metaflag :forbidPoison(?v) {
+	isForbidPoison(?v)
+}
+
+metaflag :integralConstant(?v) {
+	isIntegralConstant(?v)
+}
+
+constraint isAPInt(?v) {
+	isIntegralConstant(?v)
+}
+metaflag :apInt(?v) {
+	isAPInt(?v)
+}
+
+metaflag :zeroFP(?v) {
+	isZeroFP(?v)
+}
+
+metaflag :constantSplat(?v) {
+	isConstantSplat(?v)
+}
+
+metaflag:i:o :s(?v) {
+	hasOneUse(?v)
+}
+
+metaflag:i:o :su(?v) {
+	hasOneUser(?v)
+}
+

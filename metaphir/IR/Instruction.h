@@ -8,6 +8,9 @@
 namespace llvm {
 namespace metaphir {
 
+class CompositeMatcher;
+class MetaVariable;
+
 struct MatcherOperand {
   enum KeyedOperandKind {
     NotKeyed,
@@ -27,6 +30,16 @@ struct MatcherOperand {
   MetaVariable *ValueArray = nullptr;
   KeyedOperandKind Key = NotKeyed;
   ArrayRef<MetaFlag *> MetaFlags;
+
+  MatcherOperand(Type *Ty = nullptr, Value *Val = nullptr, bool IsArray = false,
+                 bool IsInstructionOperand = true,
+                 MetaVariable *TypeArray = nullptr,
+                 MetaVariable *ValueArray = nullptr,
+                 KeyedOperandKind Key = NotKeyed,
+                 ArrayRef<MetaFlag *> MetaFlags = {})
+      : Ty(Ty), Val(Val), IsArray(IsArray),
+        IsInstructionOperand(IsInstructionOperand), TypeArray(TypeArray),
+        ValueArray(ValueArray), Key(Key), MetaFlags(MetaFlags) {}
 
   void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
 };
@@ -59,17 +72,40 @@ public:
   };
 
   PatternSettings() = default;
-  explicit PatternSettings(uint64_t Mask) : Mask(Mask) {}
+  explicit PatternSettings(uint64_t Mask) : Mask(Mask), Specified(Mask) {}
 
   bool has(Setting Flag) const { return Mask & uint64_t(Flag); }
-  void set(Setting Flag) { Mask |= uint64_t(Flag); }
-  void clear(Setting Flag) { Mask &= ~uint64_t(Flag); }
+  void set(Setting Flag) {
+    Mask |= uint64_t(Flag);
+    Specified |= uint64_t(Flag);
+  }
+  void clear(Setting Flag) {
+    Mask &= ~uint64_t(Flag);
+    Specified |= uint64_t(Flag);
+  }
+
+  /// Whether this setting was written here, as opposed to being left at its
+  /// default or taken from an enclosing position.
+  bool isSpecified(Setting Flag) const { return Specified & uint64_t(Flag); }
+
+  /// Settings for an instruction placed at Outer's position: Outer's values
+  /// apply, except for settings written here, which take precedence. Used when
+  /// a 'match' body is inlined into a use site.
+  PatternSettings inheritedFrom(PatternSettings Outer) const {
+    PatternSettings Result;
+    Result.Mask = (Outer.Mask & ~Specified) | (Mask & Specified);
+    Result.Specified = Outer.Specified | Specified;
+    return Result;
+  }
 
   // Map a Setting back to its directive keyword (used in error messages).
   static StringRef getName(Setting Flag);
 
 private:
   uint64_t Mask = None;
+  /// Bits for the settings written explicitly, so an inlined body can override
+  /// its use site rather than silently resetting it.
+  uint64_t Specified = None;
 };
 
 class Instruction : public Value {
@@ -122,18 +158,37 @@ public:
   static constexpr FlagMask FastMathNNegFlags = FastMathFlags | NNegFlag;
 
   InstructionID getInstructionID() const { return ID; }
-  StringRef getOpcodeName() const { return getOpcodeName(ID); }
+  StringRef getOpcodeName() const {
+    return isComposite() ? CustomOpcodeName : getOpcodeName(ID);
+  }
   StringRef getResultName() const { return ResultName; }
   ArrayRef<InstructionFlag> getFlags() const { return Flags; }
+
   ArrayRef<MetaFlag *> getMetaFlags() const { return MetaFlags; }
+  void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
+  void setOperandMetaFlags(unsigned OpIdx, MIRContext &Context,
+                           ArrayRef<MetaFlag *> Flags);
+  bool hasMetaFlag(MetaFlag::MetaFlagID FlagID) const {
+    return llvm::any_of(MetaFlags, [FlagID](const MetaFlag *Flag) {
+      return Flag->getMetaFlagID() == FlagID;
+    });
+  }
+
   MetaVariable *getParentBlock() const { return ParentBlock; }
   PatternSettings getSettings() const { return Settings; }
   ArrayRef<MatcherOperand> getUnkeyedOperands() const {
     return UnkeyedOperands;
   }
+  SmallVector<MatcherOperand, 4> getKeyedOperands() const;
   const MatcherOperand *
   getKeyedOperand(MatcherOperand::KeyedOperandKind Kind) const;
+
   MetaVariable *getCapture() const { return Capture; }
+  void setCapture(MetaVariable *V) { Capture = V; }
+
+  Value *getOrSelfValue() const { return OrSelfValue; }
+  void setOrSelfValue(Value *V) { OrSelfValue = V; }
+
   static bool classof(const Value *V) {
     return V->getValueID() == InstructionVal;
   }
@@ -145,6 +200,10 @@ public:
   static FlagMask getSupportedFlags(InstructionID ID);
   static bool isCommutative(InstructionID ID);
   static OperandSyntax getOperandSyntax(InstructionID ID);
+  bool isComposite() const { return Composite != nullptr; }
+  CompositeMatcher *getCompositeMatcher() const { return Composite; }
+  StringRef getCustomOpcodeName() const { return CustomOpcodeName; }
+
   static Instruction *get(MIRContext &Context, InstructionID ID,
                           StringRef ResultName, ArrayRef<InstructionFlag> Flags,
                           ArrayRef<MetaFlag *> MetaFlags,
@@ -152,6 +211,13 @@ public:
                           MetaVariable *Capture, SourceRange Range,
                           MetaVariable *ParentBlock,
                           PatternSettings Settings = {});
+  static Instruction *
+  getComposite(MIRContext &Context, StringRef ResultName,
+               CompositeMatcher *Composite, StringRef OpcodeName,
+               ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
+               ArrayRef<MatcherOperand> Operands, MetaVariable *Capture,
+               SourceRange Range, MetaVariable *ParentBlock,
+               PatternSettings Settings = {});
 
 private:
   InstructionID ID;
@@ -162,19 +228,27 @@ private:
   ArrayRef<MatcherOperand> KeyedOperands;
   uint64_t KeyedOperandMask;
   MetaVariable *Capture = nullptr;
+  // For an expanded composite's ':o', this is the caller operand used by the
+  // or-self alternative. It is separate from the branch root's operands.
+  Value *OrSelfValue = nullptr;
   MetaVariable *ParentBlock;
   PatternSettings Settings;
+  CompositeMatcher *Composite = nullptr;
+  StringRef CustomOpcodeName;
 
   Instruction(InstructionID ID, StringRef ResultName,
               ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
               ArrayRef<MatcherOperand> UnkeyedOperands,
               ArrayRef<MatcherOperand> KeyedOperands, uint64_t KeyedOperandMask,
               MetaVariable *Capture, SourceRange Range,
-              MetaVariable *ParentBlock, PatternSettings Settings)
+              MetaVariable *ParentBlock, PatternSettings Settings,
+              CompositeMatcher *Composite = nullptr,
+              StringRef CustomOpcodeName = "")
       : Value(InstructionVal, Range), ID(ID), ResultName(ResultName),
         Flags(Flags), MetaFlags(MetaFlags), UnkeyedOperands(UnkeyedOperands),
         KeyedOperands(KeyedOperands), KeyedOperandMask(KeyedOperandMask),
-        Capture(Capture), ParentBlock(ParentBlock), Settings(Settings) {}
+        Capture(Capture), ParentBlock(ParentBlock), Settings(Settings),
+        Composite(Composite), CustomOpcodeName(CustomOpcodeName) {}
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F);

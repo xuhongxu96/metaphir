@@ -9,6 +9,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/PatternMatch.h"
 #include <optional>
 
 namespace llvm {
@@ -48,17 +49,16 @@ std::optional<bool> matchesLLVMValueClass(StringRef ClassName,
 // Value with an integer (or vector-of-integer) type, as required by the
 // integer value-tracking queries.
 Expected<const llvm::Value *>
-requireIntegerValue(Expected<ConstraintValue> Result,
+requireIntegerValue(const ConstraintValue &Value,
                     const Constraint &Expression) {
-  Expected<const llvm::Value *> Value =
-      requireValue(std::move(Result), Expression);
-  if (!Value)
-    return Value.takeError();
-  const llvm::Type *Type = (*Value)->getType();
+  Expected<const llvm::Value *> Val = requireValue(Value, Expression);
+  if (!Val)
+    return Val.takeError();
+  const llvm::Type *Type = (*Val)->getType();
   if (const auto *Vector = dyn_cast<llvm::VectorType>(Type))
     Type = Vector->getElementType();
   if (Type->isIntegerTy())
-    return Value;
+    return Val;
   return make_error<ConstraintEvaluationError>(
       Expression, "expected an integer-typed value operand");
 }
@@ -68,12 +68,6 @@ unsigned integerElementWidth(const llvm::Value &Value) {
   if (const auto *Vector = dyn_cast<llvm::VectorType>(Type))
     Type = Vector->getElementType();
   return cast<llvm::IntegerType>(Type)->getBitWidth();
-}
-
-// Copies a constraint value into an Expected so a require* helper can consume
-// it (the operand list passed to a value-tracking operator is read-only).
-Expected<ConstraintValue> copyValue(const ConstraintValue &Value) {
-  return Expected<ConstraintValue>(Value);
 }
 
 } // namespace
@@ -152,24 +146,184 @@ evaluateIsPowerOfTwo(ConstraintInterpreter &Interpreter,
   auto Values = evaluateArguments(Interpreter, Arguments, State);
   if (!Values)
     return Values.takeError();
-  auto Operand = requireInteger(std::move((*Values)[0]), Expression);
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(
+        PatternMatch::match(V.getValue(), PatternMatch::m_Power2()));
+  auto Operand = requireInteger(V, Expression);
   if (!Operand)
-    return Operand.takeError();
+    return ConstraintValue::getBoolean(false);
   return ConstraintValue::getBoolean(Operand->isPowerOf2());
+}
+
+Expected<ConstraintValue> evaluateIsZero(ConstraintInterpreter &Interpreter,
+                                         ArrayRef<Constraint *> Arguments,
+                                         const Instantiation &State,
+                                         const Constraint &Expression) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(
+        PatternMatch::match(V.getValue(), PatternMatch::m_Zero()));
+  auto Operand = requireInteger(V, Expression);
+  if (!Operand)
+    return ConstraintValue::getBoolean(false);
+  return ConstraintValue::getBoolean(Operand->isZero());
+}
+
+Expected<ConstraintValue> evaluateIsAllOnes(ConstraintInterpreter &Interpreter,
+                                            ArrayRef<Constraint *> Arguments,
+                                            const Instantiation &State,
+                                            const Constraint &Expression) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(
+        PatternMatch::match(V.getValue(), PatternMatch::m_AllOnes()));
+  auto Operand = requireInteger(V, Expression);
+  if (!Operand)
+    return ConstraintValue::getBoolean(false);
+  return ConstraintValue::getBoolean(Operand->isAllOnes());
+}
+
+Expected<ConstraintValue>
+evaluateIsLowBitMask(ConstraintInterpreter &Interpreter,
+                     ArrayRef<Constraint *> Arguments,
+                     const Instantiation &State, const Constraint &Expression) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(
+        PatternMatch::match(V.getValue(), PatternMatch::m_LowBitMask()));
+  auto Operand = requireInteger(V, Expression);
+  if (!Operand)
+    return ConstraintValue::getBoolean(false);
+  return ConstraintValue::getBoolean((*Operand + 1).isPowerOf2());
+}
+
+Expected<ConstraintValue> evaluateIsZeroFP(ConstraintInterpreter &Interpreter,
+                                           ArrayRef<Constraint *> Arguments,
+                                           const Instantiation &State,
+                                           const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(
+        PatternMatch::match(V.getValue(), PatternMatch::m_AnyZeroFP()));
+  return ConstraintValue::getBoolean(false);
+}
+
+Expected<ConstraintValue>
+evaluateIsIntegralConstant(ConstraintInterpreter &Interpreter,
+                           ArrayRef<Constraint *> Arguments,
+                           const Instantiation &State, const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(PatternMatch::match(
+        V.getValue(), PatternMatch::m_AnyIntegralConstant()));
+  if (V.getKind() == ConstraintValue::Integer)
+    return ConstraintValue::getBoolean(true);
+  return ConstraintValue::getBoolean(false);
+}
+
+Expected<ConstraintValue> evaluateIsPoison(ConstraintInterpreter &Interpreter,
+                                           ArrayRef<Constraint *> Arguments,
+                                           const Instantiation &State,
+                                           const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(
+        PatternMatch::match(V.getValue(), PatternMatch::m_Poison()));
+  return ConstraintValue::getBoolean(false);
+}
+
+Expected<ConstraintValue>
+evaluateIsForbidPoison(ConstraintInterpreter &Interpreter,
+                       ArrayRef<Constraint *> Arguments,
+                       const Instantiation &State, const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue()) {
+    if (const auto *Constant = dyn_cast<llvm::Constant>(V.getValue()))
+      return ConstraintValue::getBoolean(!isa<PoisonValue>(Constant) &&
+                                         !Constant->containsPoisonElement());
+  }
+  return ConstraintValue::getBoolean(false);
+}
+
+Expected<ConstraintValue>
+evaluateIsConstantSplat(ConstraintInterpreter &Interpreter,
+                        ArrayRef<Constraint *> Arguments,
+                        const Instantiation &State, const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue()) {
+    if (isa<llvm::ConstantInt>(V.getValue()))
+      return ConstraintValue::getBoolean(true);
+    if (const auto *Constant = dyn_cast<llvm::Constant>(V.getValue()))
+      if (Constant->getType()->isVectorTy())
+        return ConstraintValue::getBoolean(Constant->getSplatValue() !=
+                                           nullptr);
+  }
+  return ConstraintValue::getBoolean(false);
+}
+
+Expected<ConstraintValue> evaluateHasOneUse(ConstraintInterpreter &Interpreter,
+                                            ArrayRef<Constraint *> Arguments,
+                                            const Instantiation &State,
+                                            const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(V.getValue()->hasOneUse());
+  return ConstraintValue::getBoolean(false);
+}
+
+Expected<ConstraintValue> evaluateHasOneUser(ConstraintInterpreter &Interpreter,
+                                             ArrayRef<Constraint *> Arguments,
+                                             const Instantiation &State,
+                                             const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(V.getValue()->hasOneUser());
+  return ConstraintValue::getBoolean(false);
 }
 
 Expected<ConstraintValue> evaluateNoOverflow(ArrayRef<ConstraintValue> Values,
                                              const SimplifyQuery &Query,
                                              const Constraint &Expression) {
-  Expected<std::string> Kind = requireString(copyValue(Values[0]), Expression);
+  Expected<std::string> Kind = requireString(Values[0], Expression);
   if (!Kind)
     return Kind.takeError();
   Expected<const llvm::Value *> LHS =
-      requireIntegerValue(copyValue(Values[1]), Expression);
+      requireIntegerValue(Values[1], Expression);
   if (!LHS)
     return LHS.takeError();
   Expected<const llvm::Value *> RHS =
-      requireIntegerValue(copyValue(Values[2]), Expression);
+      requireIntegerValue(Values[2], Expression);
   if (!RHS)
     return RHS.takeError();
 
@@ -200,7 +354,7 @@ Expected<ConstraintValue> evaluateKnownBits(ArrayRef<ConstraintValue> Values,
                                             const SimplifyQuery &Query,
                                             const Constraint &Expression) {
   Expected<const llvm::Value *> Value =
-      requireIntegerValue(copyValue(Values[0]), Expression);
+      requireIntegerValue(Values[0], Expression);
   if (!Value)
     return Value.takeError();
   return ConstraintValue::getKnownBits(computeKnownBits(*Value, Query));
@@ -236,8 +390,7 @@ Expected<ConstraintValue>
 evaluateIsKnownNonZero(ArrayRef<ConstraintValue> Values,
                        const SimplifyQuery &Query,
                        const Constraint &Expression) {
-  Expected<const llvm::Value *> Value =
-      requireValue(copyValue(Values[0]), Expression);
+  Expected<const llvm::Value *> Value = requireValue(Values[0], Expression);
   if (!Value)
     return Value.takeError();
   return ConstraintValue::getBoolean(isKnownNonZero(*Value, Query));
@@ -248,7 +401,7 @@ evaluateIsKnownNegative(ArrayRef<ConstraintValue> Values,
                         const SimplifyQuery &Query,
                         const Constraint &Expression) {
   Expected<const llvm::Value *> Value =
-      requireIntegerValue(copyValue(Values[0]), Expression);
+      requireIntegerValue(Values[0], Expression);
   if (!Value)
     return Value.takeError();
   return ConstraintValue::getBoolean(isKnownNegative(*Value, Query));
@@ -259,7 +412,7 @@ evaluateIsKnownNonNegative(ArrayRef<ConstraintValue> Values,
                            const SimplifyQuery &Query,
                            const Constraint &Expression) {
   Expected<const llvm::Value *> Value =
-      requireIntegerValue(copyValue(Values[0]), Expression);
+      requireIntegerValue(Values[0], Expression);
   if (!Value)
     return Value.takeError();
   return ConstraintValue::getBoolean(isKnownNonNegative(*Value, Query));
@@ -270,7 +423,7 @@ evaluateIsKnownPositive(ArrayRef<ConstraintValue> Values,
                         const SimplifyQuery &Query,
                         const Constraint &Expression) {
   Expected<const llvm::Value *> Value =
-      requireIntegerValue(copyValue(Values[0]), Expression);
+      requireIntegerValue(Values[0], Expression);
   if (!Value)
     return Value.takeError();
   return ConstraintValue::getBoolean(isKnownPositive(*Value, Query));
@@ -281,7 +434,7 @@ evaluateIsKnownPowerOfTwo(ArrayRef<ConstraintValue> Values,
                           const SimplifyQuery &Query,
                           const Constraint &Expression) {
   Expected<const llvm::Value *> Value =
-      requireIntegerValue(copyValue(Values[0]), Expression);
+      requireIntegerValue(Values[0], Expression);
   if (!Value)
     return Value.takeError();
   return ConstraintValue::getBoolean(
@@ -293,10 +446,10 @@ evaluateMaskedValueIsZero(ArrayRef<ConstraintValue> Values,
                           const SimplifyQuery &Query,
                           const Constraint &Expression) {
   Expected<const llvm::Value *> Value =
-      requireIntegerValue(copyValue(Values[0]), Expression);
+      requireIntegerValue(Values[0], Expression);
   if (!Value)
     return Value.takeError();
-  Expected<APSInt> Mask = requireInteger(copyValue(Values[1]), Expression);
+  Expected<APSInt> Mask = requireInteger(Values[1], Expression);
   if (!Mask)
     return Mask.takeError();
   APInt MaskValue = Mask->zextOrTrunc(integerElementWidth(**Value));

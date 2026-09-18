@@ -4,7 +4,7 @@
 ;--- pattern.mpir
 %udiv1 = udiv:s i?bits ?x, ?y
 %udiv2 = udiv:?anch i?bits %udiv1, ?z
-;; is-known-nonzero(?z) && no-overflow("umul", ?y, ?z)
+;; isKnownNonZero(?z) && noOverflow("umul", ?y, ?z)
 
 ;--- input.ll
 define i8 @bounded(i8 %a, i8 range(i8 0, 15) %b, i8 range(i8 1, 16) %c) {
@@ -20,7 +20,7 @@ define i8 @bounded(i8 %a, i8 range(i8 0, 15) %b, i8 range(i8 1, 16) %c) {
 ; EXPLICIT-NEXT:   match 0:
 ; EXPLICIT-NEXT:     {?anch = %d2, ?bits = 8, ?x = %a, ?y = %b, ?z = %c}
 
-; The divisors are unbounded, so is-known-nonzero and no-overflow cannot be
+; The divisors are unbounded, so isKnownNonZero and noOverflow cannot be
 ; proven.
 define i8 @unbounded(i8 %a, i8 %b, i8 %c) {
   %d1 = udiv i8 %a, %b
@@ -29,15 +29,15 @@ define i8 @unbounded(i8 %a, i8 %b, i8 %c) {
 }
 ; CHECK-NEXT: target 1: @unbounded
 ; CHECK-NEXT:   no match
-; CHECK-NEXT:   constraint not satisfied: (&& (is-known-nonzero ?z) (no-overflow "umul" ?y ?z))
+; CHECK-NEXT:   constraint not satisfied: (&& (isKnownNonZero ?z) (noOverflow "umul" ?y ?z))
 
 ; EXPLICIT-NEXT: target 1: @unbounded
 ; EXPLICIT-NEXT:   no match
-; EXPLICIT-NEXT:   constraint not satisfied: (&& (is-known-nonzero ?z ?anch) (no-overflow "umul" ?y ?z ?anch))
+; EXPLICIT-NEXT:   constraint not satisfied: (&& (isKnownNonZero ?z ?anch) (noOverflow "umul" ?y ?z ?anch))
 
 ; Explicit ?ctx overrides the constraint's default context instruction.
 ;--- explicit.mpir
 %udiv1 = udiv:s i?bits ?x, ?y
 %udiv2 = udiv:?anch i?bits %udiv1, ?z
-;; is-known-nonzero(?z, ?anch) && no-overflow("umul", ?y, ?z, ?anch)
+;; isKnownNonZero(?z, ?anch) && noOverflow("umul", ?y, ?z, ?anch)
 ; RUN: %metaphir-match %t/explicit.mpir %t/input.ll | FileCheck %s --check-prefix=EXPLICIT

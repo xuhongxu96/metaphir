@@ -1,3 +1,5 @@
+add_compile_options(-Werror)
+
 add_executable(metaphir-lex metaphir-lex.cpp)
 target_link_libraries(metaphir-lex PRIVATE metaphir-parser)
 

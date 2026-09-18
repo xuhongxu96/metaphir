@@ -1,6 +1,7 @@
 #ifndef METAPHIR_IR_MIRCONTEXTIMPL_H
 #define METAPHIR_IR_MIRCONTEXTIMPL_H
 
+#include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Type.h"
@@ -9,6 +10,8 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/StringSaver.h"
 #include <new>
@@ -203,6 +206,13 @@ public:
   FunctionTypeSet FunctionTypes;
 
   SmallPtrSet<Pattern *, 4> OwnedPatterns;
+
+  StringMap<CompositeMatcher *> CompositeMatchers;
+  StringMap<ConstraintDef *> ConstraintDefs;
+  StringMap<MetaFlagDef *> MetaFlagDefs;
+  /// Names of the libraries whose definitions have been loaded into this
+  /// context, so each is parsed at most once.
+  StringSet<> LoadedLibraries;
 
   explicit MIRContextImpl(MIRContext &C) : Context(C) {}
   ~MIRContextImpl();

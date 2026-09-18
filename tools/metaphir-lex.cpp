@@ -19,15 +19,28 @@ static void printTokenValue(raw_ostream &OS, Type *Value) {
 }
 
 int main(int Argc, char **Argv) {
-  if (Argc != 2) {
-    errs() << "usage: metaphir-lex <input>\n";
+  bool PrintLineNumbers = false;
+  const char *Filename = nullptr;
+  for (int i = 1; i < Argc; ++i) {
+    if (StringRef(Argv[i]) == "--line-numbers") {
+      PrintLineNumbers = true;
+    } else if (!Filename) {
+      Filename = Argv[i];
+    } else {
+      errs() << "usage: metaphir-lex [--line-numbers] <input>\n";
+      return 1;
+    }
+  }
+
+  if (!Filename) {
+    errs() << "usage: metaphir-lex [--line-numbers] <input>\n";
     return 1;
   }
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer =
-      MemoryBuffer::getFile(Argv[1]);
+      MemoryBuffer::getFile(Filename);
   if (!Buffer) {
-    errs() << Argv[1] << ": " << Buffer.getError().message() << '\n';
+    errs() << Filename << ": " << Buffer.getError().message() << '\n';
     return 1;
   }
 
@@ -42,6 +55,10 @@ int main(int Argc, char **Argv) {
     tok::Kind Kind = Lexer.Lex();
     if (Kind == tok::Newline)
       continue;
+    if (PrintLineNumbers) {
+      unsigned Line = SM.FindLineNumber(Lexer.getLoc(), SM.getMainFileID());
+      outs() << Line << ": ";
+    }
     outs() << getTokenKindName(Kind);
     switch (Kind) {
 

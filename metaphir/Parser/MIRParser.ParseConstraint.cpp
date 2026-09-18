@@ -1,5 +1,7 @@
 #include "metaphir/Parser/MIRParser.h"
+#include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/MIRContext.h"
+#include "metaphir/IR/MIRContextImpl.h"
 
 namespace llvm {
 namespace metaphir {
@@ -244,7 +246,8 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
     std::string NameStorage = Lex.getStrVal();
     StringRef Name = NameStorage;
     next();
-    if (expect(tok::lparen, "expected '(' after constraint function"))
+    if (expect(tok::lparen,
+               "expected '(' after constraint operation '" + Name + "'"))
       return true;
     SmallVector<Constraint *, 4> Args;
     if (Lex.getKind() != tok::rparen) {
@@ -263,12 +266,19 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
         Constraint::getOperatorSchema(ID);
     if (Schema &&
         (Args.size() < Schema->MinArity || Args.size() > Schema->MaxArity)) {
-      Twine Expected = Schema->MinArity == Schema->MaxArity
-                           ? Twine(Schema->MinArity) + " arguments"
-                           : Twine(Schema->MinArity) + " to " +
-                                 Twine(Schema->MaxArity) + " arguments";
+      std::string Expected =
+          Schema->MinArity == Schema->MaxArity
+              ? std::to_string(Schema->MinArity) + " arguments"
+              : std::to_string(Schema->MinArity) + " to " +
+                    std::to_string(Schema->MaxArity) + " arguments";
       return error("built-in constraint operation expects " + Expected);
     }
+    // A call names either a built-in operation or a 'constraint' definition,
+    // which is how the operation vocabulary is extended. Reporting an unknown
+    // name here points at the call, rather than surfacing much later as an
+    // evaluation failure while a candidate match is being checked.
+    if (!Schema && !Context.getConstraintDef(Name))
+      return Lex.ParseError(L, "unknown constraint operation '" + Name + "'");
     R = makeConstraint(Constraint::Call,
                        Schema ? Schema->Result : Constraint::Unknown, Name, 0,
                        false, nullptr, Args, L);

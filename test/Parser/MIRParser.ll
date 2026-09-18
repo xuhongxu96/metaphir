@@ -1,8 +1,8 @@
 ; RUN: %metaphir-parse %s | FileCheck %s
 
-%sum = add:c nsw:?has_nsw i?bits ?x, ?y:allones
+%sum = add:c nsw:?has_nsw i?bits ?x, ?y:allOnes
 ; CHECK: pattern instructions=6 constraints=1
-; CHECK-NEXT: %sum = add:c nsw:?has_nsw i?bits ?x, ?y:allones
+; CHECK-NEXT: %sum = add:c nsw:?has_nsw i?bits ?x, ?y:allOnes
 
 %cmp = icmp ?pred i?bits %sum, ?z
 ; CHECK-NEXT: %cmp = icmp ?pred i?bits %sum, ?z

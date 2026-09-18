@@ -1,6 +1,6 @@
-%rem = urem i?bits ?x, ?d:constantint
+%rem = urem i?bits ?x, ?d:constantInt
 %sub = sub i?bits ?x, %rem
-%cmp = icmp:?anch ?pred i?bits %sub, ?c:constantint
+%cmp = icmp:?anch ?pred i?bits %sub, ?c:constantInt
 ;; (?d != 0)
-;; !ispowertwo(?d)
+;; !isPowerOfTwo(?d)
 ;; ((?pred == "ugt" && ult(?c, ?d)) || (?pred == "ult" && ?c != 0 && ule(?c, ?d)) || (?pred == "uge" && ?c == ?d) || (?pred == "ule" && (add(?c, 1)) == ?d))

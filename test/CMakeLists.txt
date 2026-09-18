@@ -1,3 +1,5 @@
+add_compile_options(-Werror)
+
 set(LLVM_TOOLS_BINARY_DIR ${PROJECT_SOURCE_DIR}/llvm-project/build/bin)
 set(METAPHIR_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
 file(MAKE_DIRECTORY ${METAPHIR_TEST_DIR})

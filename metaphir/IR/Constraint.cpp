@@ -81,15 +81,48 @@ Constraint::getOperatorSchema(OperatorID ID) {
 
 Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
                                                  ConstraintID Kind) {
+  static const auto OperatorMaps = [] {
+    struct Maps {
+      StringMap<OperatorID> Unary;
+      StringMap<OperatorID> Binary;
+      StringMap<OperatorID> Call;
+    } M;
 #define MIR_CONSTRAINT_OPERATOR_ID(OperatorID, OperatorName, OperatorKind)     \
-  if (Name == OperatorName && Kind == OperatorKind)                            \
-    return O_##OperatorID;
+  if (OperatorKind == Constraint::Unary)                                       \
+    M.Unary[OperatorName] = Constraint::O_##OperatorID;                        \
+  else if (OperatorKind == Constraint::Binary)                                 \
+    M.Binary[OperatorName] = Constraint::O_##OperatorID;                       \
+  else if (OperatorKind == Constraint::Call)                                   \
+    M.Call[OperatorName] = Constraint::O_##OperatorID;
 #define MIR_CONSTRAINT_OPERATOR_ALIAS(OperatorID, OperatorName, OperatorKind)  \
-  if (Name == OperatorName && Kind == OperatorKind)                            \
-    return O_##OperatorID;
+  if (OperatorKind == Constraint::Unary)                                       \
+    M.Unary[OperatorName] = Constraint::O_##OperatorID;                        \
+  else if (OperatorKind == Constraint::Binary)                                 \
+    M.Binary[OperatorName] = Constraint::O_##OperatorID;                       \
+  else if (OperatorKind == Constraint::Call)                                   \
+    M.Call[OperatorName] = Constraint::O_##OperatorID;
 #include "metaphir/IR/ConstraintOperators.def"
 #undef MIR_CONSTRAINT_OPERATOR_ALIAS
-  return UnknownOperator;
+    return M;
+  }();
+
+  const StringMap<OperatorID> *Map = nullptr;
+  switch (Kind) {
+  case Unary:
+    Map = &OperatorMaps.Unary;
+    break;
+  case Binary:
+    Map = &OperatorMaps.Binary;
+    break;
+  case Call:
+    Map = &OperatorMaps.Call;
+    break;
+  default:
+    return UnknownOperator;
+  }
+
+  auto It = Map->find(Name);
+  return It != Map->end() ? It->second : UnknownOperator;
 }
 
 StringRef Constraint::getOperatorName(OperatorID ID) {

@@ -1,3 +1,3 @@
 %sub = add i?bits ?x, -1
-%or = or:s i?bits %sub, ?cm:lowbitmask
+%or = or:s i?bits %sub, ?cm:lowBitMask
 %add = add:?anch i?bits %or, 1

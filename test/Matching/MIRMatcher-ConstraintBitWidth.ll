@@ -20,7 +20,7 @@ entry:
 }
 ; ADDBW: target 0: @wrap_add
 ; ADDBW-NEXT:   match 0:
-; ADDBW-NEXT:     {?anch = %r, ?bits = 8, ?c1 = 5, ?c2 = 251}
+; ADDBW-NEXT:     {?anch = %r, ?bits = 8, ?c1 = 5, ?c2 = -5}
 
 ; ADDBW2: target 0: @wrap_add
 ; ADDBW2-NEXT:   no match
@@ -53,7 +53,7 @@ entry:
 
 ; ADDBW2-NEXT: target 1: @neg_sum
 ; ADDBW2-NEXT:   match 0:
-; ADDBW2-NEXT:     {?anch = %r, ?bits = 8, ?c1 = 156, ?c2 = 156}
+; ADDBW2-NEXT:     {?anch = %r, ?bits = 8, ?c1 = -100, ?c2 = -100}
 
 ; ADDWIDE-NEXT: target 1: @neg_sum
 ; ADDWIDE-NEXT:   no match
@@ -180,42 +180,42 @@ entry:
 
 ; NEGBW-NEXT: target 5: @neg_five
 ; NEGBW-NEXT:   match 0:
-; NEGBW-NEXT:     {?a = 251, ?anch = %r, ?bits = 8}
+; NEGBW-NEXT:     {?a = -5, ?anch = %r, ?bits = 8}
 
 ;--- add-bw.mpir
-%add = add:?anch i?bits ?c1:constantint, ?c2:constantint
+%add = add:?anch i?bits ?c1:constantInt, ?c2:constantInt
 ;; add(?c1, ?c2, ?bits) == 0
 
 ;--- add-bw2.mpir
-%add = add:?anch i?bits ?c1:constantint, ?c2:constantint
+%add = add:?anch i?bits ?c1:constantInt, ?c2:constantInt
 ;; add(?c1, ?c2, ?bits) == 56
 
 ;--- add-wide.mpir
-%add = add:?anch i?bits ?c1:constantint, ?c2:constantint
+%add = add:?anch i?bits ?c1:constantInt, ?c2:constantInt
 ;; (?c1 + ?c2) == 56
 
 ;--- mul-bw.mpir
-%mul = mul:?anch i?bits ?c1:constantint, ?c2:constantint
+%mul = mul:?anch i?bits ?c1:constantInt, ?c2:constantInt
 ;; mul(?c1, ?c2, ?bits) == 0
 
 ;--- mul-wide.mpir
-%mul = mul:?anch i?bits ?c1:constantint, ?c2:constantint
+%mul = mul:?anch i?bits ?c1:constantInt, ?c2:constantInt
 ;; (?c1 * ?c2) == 0
 
 ;--- shl-bw.mpir
-%shl = shl:?anch i?bits 1, ?s:constantint
+%shl = shl:?anch i?bits 1, ?s:constantInt
 ;; shl(1, ?s, ?bits) == 4
 
 ;--- neg-bw.mpir
-%sub = sub:?anch i?bits 0, ?a:constantint
+%sub = sub:?anch i?bits 0, ?a:constantInt
 ;; neg(?a, ?bits) == 5
 
 ;--- too-many.mpir
-%add = add:?anch i?bits ?c1:constantint, ?c2:constantint
+%add = add:?anch i?bits ?c1:constantInt, ?c2:constantInt
 ;; add(?c1, ?c2, ?bits, 1) == 0
 ; TOOMANY: built-in constraint operation expects 2 to 3 arguments
 
 ;--- cmp-bw.mpir
-%udiv = udiv:?anch i?bits ?x, ?c:constantint
+%udiv = udiv:?anch i?bits ?x, ?c:constantInt
 ;; slt(?c, 0, ?bits)
 ; CMPBW: built-in constraint operation expects 2 arguments

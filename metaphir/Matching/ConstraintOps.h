@@ -41,6 +41,53 @@ evaluateIsPowerOfTwo(ConstraintInterpreter &Interpreter,
                      ArrayRef<Constraint *> Arguments,
                      const Instantiation &State, const Constraint &Expression);
 
+Expected<ConstraintValue> evaluateIsZero(ConstraintInterpreter &Interpreter,
+                                         ArrayRef<Constraint *> Arguments,
+                                         const Instantiation &State,
+                                         const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateIsAllOnes(ConstraintInterpreter &Interpreter,
+                                            ArrayRef<Constraint *> Arguments,
+                                            const Instantiation &State,
+                                            const Constraint &Expression);
+
+Expected<ConstraintValue>
+evaluateIsLowBitMask(ConstraintInterpreter &Interpreter,
+                     ArrayRef<Constraint *> Arguments,
+                     const Instantiation &State, const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateIsZeroFP(ConstraintInterpreter &Interpreter,
+                                           ArrayRef<Constraint *> Arguments,
+                                           const Instantiation &State,
+                                           const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateIsIntegralConstant(
+    ConstraintInterpreter &Interpreter, ArrayRef<Constraint *> Arguments,
+    const Instantiation &State, const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateIsPoison(ConstraintInterpreter &Interpreter,
+                                           ArrayRef<Constraint *> Arguments,
+                                           const Instantiation &State,
+                                           const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateIsForbidPoison(
+    ConstraintInterpreter &Interpreter, ArrayRef<Constraint *> Arguments,
+    const Instantiation &State, const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateIsConstantSplat(
+    ConstraintInterpreter &Interpreter, ArrayRef<Constraint *> Arguments,
+    const Instantiation &State, const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateHasOneUse(ConstraintInterpreter &Interpreter,
+                                            ArrayRef<Constraint *> Arguments,
+                                            const Instantiation &State,
+                                            const Constraint &Expression);
+
+Expected<ConstraintValue> evaluateHasOneUser(ConstraintInterpreter &Interpreter,
+                                             ArrayRef<Constraint *> Arguments,
+                                             const Instantiation &State,
+                                             const Constraint &Expression);
+
 // Value-tracking backed operators. Each is a pure evaluator invoked by
 // ConstraintInterpreter::evaluateValueTrack: given the already-evaluated
 // operand values, the query context, and the operator node, it produces the

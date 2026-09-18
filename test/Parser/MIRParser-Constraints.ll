@@ -1,8 +1,14 @@
 ; RUN: %metaphir-parse %s | FileCheck %s
 
-%sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allones, :not(:poison))
+; Names used in constraints are resolved against the context, so a
+; user-defined operation is declared before use.
+constraint custom_predicate(?a, ?b) {
+	?a == ?b
+}
+
+%sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allOnes, :not(:poison))
 ; CHECK: pattern instructions=4 constraints=15
-; CHECK-NEXT: %sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allones,:not(:poison))
+; CHECK-NEXT: %sum = add:o(1):su nsw:?wrapped i?bits ?x, ?y:or(:allOnes,:not(:poison))
 
 %cmp = icmp ?predicate i32 ?x, ?y
 ; CHECK-NEXT: %cmp = icmp ?predicate i32 ?x, ?y

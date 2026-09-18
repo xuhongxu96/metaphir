@@ -2,7 +2,6 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/Values.h"
 #include "metaphir/Matching/MatchersDetail.h"
-#include "metaphir/Matching/MetaFlagMatcher.h"
 #include "metaphir/Matching/SubtreeMatcher.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
@@ -255,10 +254,29 @@ bool InstructionMatcher::matchKeyedOperands() {
 }
 
 bool InstructionMatcher::matchSemanticFlags() {
-  for (const InstructionFlag &Flag : Matcher.getFlags()) {
-    bool Present = hasSemanticFlag(Flag.ID, *TargetInstruction);
-    if (Flag.Capture) {
-      if (!bind(State, *Flag.Capture, Present))
+  Instruction::FlagMask Supported =
+      Instruction::getSupportedFlags(Matcher.getInstructionID());
+  for (unsigned ID = 0; ID != InstructionFlag::NumFlagIDs; ++ID) {
+    auto FlagID = static_cast<InstructionFlag::FlagID>(ID);
+    if (!(Supported & Instruction::mask(FlagID)))
+      continue;
+
+    const InstructionFlag *Flag = nullptr;
+    for (const InstructionFlag &Candidate : Matcher.getFlags()) {
+      if (Candidate.ID == FlagID) {
+        Flag = &Candidate;
+        break;
+      }
+    }
+
+    bool Present = hasSemanticFlag(FlagID, *TargetInstruction);
+    if (!Flag) {
+      // An omitted supported flag is an assertion that the target does not
+      // have it. Captures remain the way to explicitly accept either value.
+      if (Present)
+        return false;
+    } else if (Flag->Capture) {
+      if (!bind(State, *Flag->Capture, Present))
         return false;
     } else if (!Present) {
       return false;
@@ -280,8 +298,8 @@ InstructionMatcher::matchValueOperand(const MatcherOperand &Matcher,
                          .match())
     return {};
 
-  if (!MetaFlagMatcher(Matcher.MetaFlags).matchOperandFlags(Target))
-    return {};
+  assert(Matcher.MetaFlags.empty() &&
+         "operand meta flag reached matching without being lowered");
 
   // Under treatIntAsVec, a scalar integer constant also matches a vector splat
   // constant whose element equals it (e.g. 0 matches zeroinitializer).
@@ -373,11 +391,15 @@ MatchResults InstructionMatcher::matchOrSelf(unsigned OperandIndex) {
   if (OperandIndex >= PatternOperands.size() ||
       PatternOperands[OperandIndex].IsArray)
     return {};
-  assert(PatternOperands[OperandIndex].Val &&
-         "':o' operand has no matcher value");
+  const Value *OrSelfValue = Matcher.getOrSelfValue();
+  if (!OrSelfValue) {
+    assert(PatternOperands[OperandIndex].Val &&
+           "':o' operand has no matcher value");
+    OrSelfValue = PatternOperands[OperandIndex].Val;
+  }
 
   MatchResults Results =
-      SubtreeMatcher(*PatternOperands[OperandIndex].Val, Target, State).match();
+      SubtreeMatcher(*OrSelfValue, Target, State).match();
   MatchResults BoundResults;
   for (Instantiation &Candidate : Results) {
     if (!bind(Candidate, Matcher, &Target))
@@ -395,10 +417,6 @@ MatchResults InstructionMatcher::match() {
   PatternOperands.clear();
   TargetInstruction = nullptr;
   TargetOperands.clear();
-  MetaFlagMatcher MFM(Matcher.getMetaFlags());
-
-  if (!MFM.matchUseFlags(Target))
-    return {};
 
   for (const MatcherOperand &Operand : Matcher.getUnkeyedOperands())
     if (Operand.IsInstructionOperand) {
@@ -441,7 +459,7 @@ MatchResults InstructionMatcher::match() {
   for (unsigned Index = 0; Index != TargetOperands.size(); ++Index)
     NaturalOrder.push_back(Index);
 
-  bool HasCommutativeFlag = MFM.hasMetaFlag(MetaFlag::MF_c);
+  bool HasCommutativeFlag = Matcher.hasMetaFlag(MetaFlag::MF_c);
 
   MatchResults Natural =
       HasCommutativeFlag ? matchOperandOrder(NaturalOrder, State)

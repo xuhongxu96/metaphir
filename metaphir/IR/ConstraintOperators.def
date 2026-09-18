@@ -80,32 +80,51 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(Opcode, "opcode", Call, StringResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, IntegerResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, IntegerResult,
                                     1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPowerOfTwo, "ispowertwo", Call,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPowerOfTwo, "isPowerOfTwo", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsZero, "isZero", Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAllOnes, "isAllOnes", Call, BooleanResult,
+                                    1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLowBitMask, "isLowBitMask", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsZeroFP, "isZeroFP", Call, BooleanResult,
+                                    1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsIntegralConstant, "isIntegralConstant",
+                                    Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPoison, "isPoison", Call, BooleanResult,
+                                    1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsForbidPoison, "isForbidPoison", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsConstantSplat, "isConstantSplat", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUse, "hasOneUse", Call, BooleanResult,
+                                    1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUser, "hasOneUser", Call,
                                     BooleanResult, 1)
 
 // Value-tracking backed operators. The trailing ?ctx is optional and defaults
 // to the pattern instruction preceding the constraint.
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(NoOverflow, "no-overflow", Call,
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(NoOverflow, "noOverflow", Call,
                                     BooleanResult, 3)
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(KnownBits, "known-bits", Call,
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(KnownBits, "knownBits", Call,
                                     BitVectorResult, 1)
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonZero, "is-known-nonzero", Call,
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonZero, "isKnownNonZero", Call,
                                     BooleanResult, 1)
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNegative, "is-known-negative", Call,
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNegative, "isKnownNegative", Call,
                                     BooleanResult, 1)
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonNegative, "is-known-nonnegative",
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonNegative, "isKnownNonNegative",
                                     Call, BooleanResult, 1)
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPositive, "is-known-positive", Call,
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPositive, "isKnownPositive", Call,
                                     BooleanResult, 1)
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPowerOfTwo, "is-known-power-of-two",
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPowerOfTwo, "isKnownPowerOfTwo",
                                     Call, BooleanResult, 1)
-MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaskedValueIsZero, "masked-value-is-zero",
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaskedValueIsZero, "maskedValueIsZero",
                                     Call, BooleanResult, 2)
 
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownZeros, "known-zeros", Call,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownZeros, "knownZeros", Call,
                                     IntegerResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownOnes, "known-ones", Call,
-                                    IntegerResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownOnes, "knownOnes", Call, IntegerResult,
+                                    1)
 
 MIR_CONSTRAINT_OPERATOR_ALIAS(Add, "add", Call)
 MIR_CONSTRAINT_OPERATOR_ALIAS(Subtract, "sub", Call)

@@ -3,6 +3,7 @@
 #include "metaphir/IR/MIRContextImpl.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 
 namespace llvm {
 namespace metaphir {
@@ -15,12 +16,12 @@ namespace {
 constexpr unsigned getMaxSettingBit() {
   unsigned Max = 0;
 #define MIR_PATTERN_SETTING_ID(Name, Bit, Comment)                             \
-  if (Bit > Max)                                                               \
-    Max = Bit;
+  Max = std::max(Max, static_cast<unsigned>(Bit));
 #include "metaphir/IR/PatternSettings.def"
   return Max;
 }
-static_assert(getMaxSettingBit() < 64, "pattern settings exceed the 64-bit mask");
+static_assert(getMaxSettingBit() < 64,
+              "pattern settings exceed the 64-bit mask");
 
 void printWithoutType(raw_ostream &OS, const MatcherOperand &O) {
   if (O.IsArray) {
@@ -49,14 +50,26 @@ void MatcherOperand::setMetaFlags(MIRContext &Context,
   MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Flags);
 }
 
+void Instruction::setMetaFlags(MIRContext &Context,
+                               ArrayRef<MetaFlag *> Flags) {
+  MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Flags);
+}
+
+void Instruction::setOperandMetaFlags(unsigned OpIdx, MIRContext &Context,
+                                      ArrayRef<MetaFlag *> Flags) {
+  assert(OpIdx < UnkeyedOperands.size() && "operand index out of range");
+  const_cast<MatcherOperand &>(UnkeyedOperands[OpIdx])
+      .setMetaFlags(Context, Flags);
+}
+
 Instruction *Instruction::get(
     MIRContext &Context, InstructionID ID, StringRef ResultName,
     ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
     ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
     MetaVariable *ParentBlock, PatternSettings Settings) {
-  assert(ParentBlock == nullptr ||
-         ParentBlock->getType() == MetaType::BasicBlock &&
-             "instruction must have a basic block");
+  assert((ParentBlock == nullptr ||
+          ParentBlock->getType() == MetaType::BasicBlock) &&
+         "instruction must have a basic block");
   SmallVector<MatcherOperand, 8> UnkeyedOperands;
   MatcherOperand KeyedOperands[MatcherOperand::NumKeyedOperandKinds];
   uint64_t KeyedOperandMask = 0;
@@ -81,6 +94,20 @@ Instruction *Instruction::get(
                   KeyedOperandMask, Capture, Range, ParentBlock, Settings);
 }
 
+Instruction *Instruction::getComposite(
+    MIRContext &Context, StringRef ResultName, CompositeMatcher *Composite,
+    StringRef OpcodeName, ArrayRef<InstructionFlag> Flags,
+    ArrayRef<MetaFlag *> MetaFlags, ArrayRef<MatcherOperand> Operands,
+    MetaVariable *Capture, SourceRange Range, MetaVariable *ParentBlock,
+    PatternSettings Settings) {
+  return new (Context.pImpl->Alloc) Instruction(
+      InstructionID(0), Context.pImpl->Saver.save(ResultName),
+      Context.pImpl->copyArray<InstructionFlag>(Flags),
+      Context.pImpl->copyArray<MetaFlag *>(MetaFlags),
+      Context.pImpl->copyArray<MatcherOperand>(Operands), {}, 0, Capture, Range,
+      ParentBlock, Settings, Composite, Context.pImpl->Saver.save(OpcodeName));
+}
+
 StringRef InstructionFlag::getName(FlagID ID) {
   switch (ID) {
 #define MIR_FLAG(Name)                                                         \
@@ -94,6 +121,16 @@ StringRef InstructionFlag::getName(FlagID ID) {
     break;
   }
   llvm_unreachable("invalid semantic flag ID");
+}
+
+SmallVector<MatcherOperand, 4> Instruction::getKeyedOperands() const {
+  SmallVector<MatcherOperand, 4> Result;
+  for (unsigned I = MatcherOperand::NotKeyed + 1;
+       I < MatcherOperand::NumKeyedOperandKinds; ++I) {
+    if (KeyedOperandMask & (uint64_t(1) << I))
+      Result.push_back(KeyedOperands[I]);
+  }
+  return Result;
 }
 
 const MatcherOperand *
@@ -192,6 +229,17 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
   for (const InstructionFlag &F : I.getFlags())
     OS << ' ' << F;
 
+  if (I.isComposite()) {
+    if (Ops.empty())
+      return OS;
+    OS << ' ' << Ops[0];
+    for (unsigned Index = 1; Index != Ops.size(); ++Index) {
+      OS << ", ";
+      printWithoutType(OS, Ops[Index]);
+    }
+    return OS;
+  }
+
   using ID = Instruction::InstructionID;
   switch (I.getInstructionID()) {
   case ID::I_add:
@@ -212,14 +260,12 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
   case ID::I_and:
   case ID::I_or:
   case ID::I_xor:
-  case ID::I_bitwiseLogic:
     OS << ' ' << Ops[0] << ", ";
     printWithoutType(OS, Ops[1]);
     return OS;
   case ID::I_trunc:
   case ID::I_zext:
   case ID::I_sext:
-  case ID::I_zextOrSext:
   case ID::I_fptrunc:
   case ID::I_fpext:
   case ID::I_fptoui:

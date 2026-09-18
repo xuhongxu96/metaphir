@@ -1,6 +1,8 @@
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Pattern.h"
+#include "metaphir/IR/PatternLowering.h"
+#include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Matching/ConstraintInterpreter.h"
 #include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/PatternMatcher.h"
@@ -82,8 +84,9 @@ struct UnsatisfiedConstraint {
 
 static MatchResults
 applyConstraints(const Pattern &Pattern, MatchResults Matches,
-                 SmallVectorImpl<UnsatisfiedConstraint> &Unsatisfied) {
-  ConstraintInterpreter Interpreter;
+                 SmallVectorImpl<UnsatisfiedConstraint> &Unsatisfied,
+                 MIRContext &Context) {
+  ConstraintInterpreter Interpreter(&Context);
   MatchResults Filtered;
   for (Instantiation &Match : Matches) {
     bool Satisfies = true;
@@ -123,6 +126,28 @@ applyConstraints(const Pattern &Pattern, MatchResults Matches,
   return Filtered;
 }
 
+static MatchResults
+matchAndFilterPattern(const PatternVariants &Variants, const Target &Program,
+                      PatternMatcher &Matcher, MIRContext &Context,
+                      SmallVectorImpl<UnsatisfiedConstraint> &Unsatisfied,
+                      bool &HadGraphMatch) {
+  MatchResults Combined;
+  for (const Pattern *Variant : Variants) {
+    MatchResults VarMatches = Matcher.match(*Variant, Program);
+    if (!VarMatches.empty())
+      HadGraphMatch = true;
+    SmallVector<UnsatisfiedConstraint, 4> VarUnsatisfied;
+    VarMatches = applyConstraints(*Variant, std::move(VarMatches),
+                                  VarUnsatisfied, Context);
+    Combined.append(VarMatches.begin(), VarMatches.end());
+    if (Combined.empty()) {
+      for (const auto &U : VarUnsatisfied)
+        Unsatisfied.push_back(U);
+    }
+  }
+  return Combined;
+}
+
 int main(int Argc, char **Argv) {
   if (Argc < 3) {
     errs() << "usage: metaphir-match <pattern> <llvm-ir>...\n";
@@ -131,9 +156,15 @@ int main(int Argc, char **Argv) {
 
   SourceMgr PatternSource;
   MIRContext Context;
-  Pattern *Pattern = nullptr;
-  if (!parsePattern(Argv[1], PatternSource, Context, Pattern))
+  Pattern *RawPattern = nullptr;
+  if (!parsePattern(Argv[1], PatternSource, Context, RawPattern))
     return 1;
+  Expected<PatternVariants> Lowered = PatternLowering(Context).lower(RawPattern);
+  if (!Lowered) {
+    logAllUnhandledErrors(Lowered.takeError(), errs(), "metaphir-match: ");
+    return 1;
+  }
+  PatternVariants Patterns = std::move(*Lowered);
 
   SmallVector<std::string, 16> InputFiles;
   for (int Argument = 2; Argument != Argc; ++Argument)
@@ -155,10 +186,10 @@ int main(int Argc, char **Argv) {
       if (Function.isDeclaration())
         continue;
       Target Program(Function);
-      MatchResults Matches = Matcher.match(*Pattern, Program);
-      bool HadGraphMatch = !Matches.empty();
+      bool HadGraphMatch = false;
       SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
-      Matches = applyConstraints(*Pattern, std::move(Matches), Unsatisfied);
+      MatchResults Matches = matchAndFilterPattern(
+          Patterns, Program, Matcher, Context, Unsatisfied, HadGraphMatch);
       outs() << "target " << TargetIndex++ << ": @" << Function.getName()
              << '\n';
       if (Matches.empty()) {

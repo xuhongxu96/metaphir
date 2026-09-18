@@ -4,6 +4,7 @@
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/Matching/Instantiation.h"
 #include "metaphir/Matching/ValueTrackContext.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/ConstantRange.h"
@@ -14,6 +15,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -54,6 +56,10 @@ protected:
   OperatorConstraint *binary(StringRef Name, Constraint *Left,
                              Constraint *Right) {
     return operation(Constraint::Binary, Name, {Left, Right});
+  }
+
+  OperatorConstraint *call(StringRef Name, Constraint *Operand) {
+    return operation(Constraint::Call, Name, {Operand});
   }
 
   OperatorConstraint *call(StringRef Name, Constraint *Left,
@@ -250,6 +256,41 @@ TEST_F(ConstraintInterpreterTest, EvaluatesIsaPredicates) {
   EXPECT_EQ(toString(Result.takeError()),
             "cannot evaluate constraint '(isa ?value \"ImaginaryValue\")': "
             "unknown LLVM value class 'ImaginaryValue'");
+}
+
+TEST_F(ConstraintInterpreterTest, EvaluatesUsePredicates) {
+  LLVMContext LLVMContext;
+  SMDiagnostic Error;
+  std::unique_ptr<Module> M = parseAssemblyString(
+      R"(
+        define i32 @f(i32 %x, i32 %y) {
+          %a = add i32 %x, %y
+          %b = add i32 %a, %a
+          %c = add i32 %b, 1
+          ret i32 %c
+        }
+      )",
+      Error, LLVMContext);
+  ASSERT_NE(M, nullptr);
+  Function *F = M->getFunction("f");
+  auto It = F->getEntryBlock().begin();
+  const llvm::Instruction *A = &*It++;
+  const llvm::Instruction *B = &*It++;
+
+  MetaVariable *ValA = MetaVariable::get(Context, "a", MetaType::Value, Range);
+  MetaVariable *ValB = MetaVariable::get(Context, "b", MetaType::Value, Range);
+  VariableConstraint *ExprA =
+      VariableConstraint::get(Context, ValA, Constraint::ValueResult, Range);
+  VariableConstraint *ExprB =
+      VariableConstraint::get(Context, ValB, Constraint::ValueResult, Range);
+  State.bind(*ValA, A);
+  State.bind(*ValB, B);
+
+  EXPECT_FALSE(evaluateBoolean(*call("hasOneUse", ExprA)));
+  EXPECT_TRUE(evaluateBoolean(*call("hasOneUser", ExprA)));
+
+  EXPECT_TRUE(evaluateBoolean(*call("hasOneUse", ExprB)));
+  EXPECT_TRUE(evaluateBoolean(*call("hasOneUser", ExprB)));
 }
 
 TEST_F(ConstraintInterpreterTest, EvaluatesOpcodePredicates) {
@@ -479,11 +520,11 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
   // y and z are constrained to [0, 15], so y*z fits in i8 without unsigned
   // overflow; signed overflow is possible (15*15 > 127).
   EXPECT_TRUE(
-      evaluateBoolean(*operation(Constraint::Call, "no-overflow",
+      evaluateBoolean(*operation(Constraint::Call, "noOverflow",
                                  {StringConstraint::get(Context, "umul", Range),
                                   YExpression, ZExpression, CtxExpression})));
   EXPECT_FALSE(
-      evaluateBoolean(*operation(Constraint::Call, "no-overflow",
+      evaluateBoolean(*operation(Constraint::Call, "noOverflow",
                                  {StringConstraint::get(Context, "smul", Range),
                                   YExpression, ZExpression, CtxExpression})));
 
@@ -497,27 +538,27 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
   State.bind(*Big, ConstantInt::get(I8, 255));
   State.bind(*Two, ConstantInt::get(I8, 2));
   EXPECT_FALSE(evaluateBoolean(
-      *operation(Constraint::Call, "no-overflow",
+      *operation(Constraint::Call, "noOverflow",
                  {StringConstraint::get(Context, "umul", Range), BigExpression,
                   TwoExpression, CtxExpression})));
 
   // Sign predicates on the range-constrained argument.
   EXPECT_TRUE(evaluateBoolean(*operation(
-      Constraint::Call, "is-known-nonnegative", {YExpression, CtxExpression})));
+      Constraint::Call, "isKnownNonNegative", {YExpression, CtxExpression})));
 
   // Known bits of the constant 5 (0b00000101): ones mask 0x05, zeros 0xFA.
   MetaVariable *Const = MetaVariable::get(Context, "c", MetaType::Value, Range);
   VariableConstraint *ConstExpression =
       VariableConstraint::get(Context, Const, Constraint::ValueResult, Range);
   State.bind(*Const, ConstantInt::get(I8, 5));
-  EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "is-known-nonzero",
+  EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownNonZero",
                                          {ConstExpression, CtxExpression})));
   EXPECT_FALSE(
-      evaluateBoolean(*operation(Constraint::Call, "is-known-power-of-two",
+      evaluateBoolean(*operation(Constraint::Call, "isKnownPowerOfTwo",
                                  {ConstExpression, CtxExpression})));
-  EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "is-known-positive",
+  EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownPositive",
                                          {ConstExpression, CtxExpression})));
-  EXPECT_FALSE(evaluateBoolean(*operation(Constraint::Call, "is-known-negative",
+  EXPECT_FALSE(evaluateBoolean(*operation(Constraint::Call, "isKnownNegative",
                                           {ConstExpression, CtxExpression})));
 
   // Constant 4 is a power of two.
@@ -527,11 +568,11 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
       VariableConstraint::get(Context, Four, Constraint::ValueResult, Range);
   State.bind(*Four, ConstantInt::get(I8, 4));
   EXPECT_TRUE(
-      evaluateBoolean(*operation(Constraint::Call, "is-known-power-of-two",
+      evaluateBoolean(*operation(Constraint::Call, "isKnownPowerOfTwo",
                                  {FourExpression, CtxExpression})));
 
   Expected<ConstraintValue> KnownBits =
-      Interpreter.evaluate(*operation(Constraint::Call, "known-bits",
+      Interpreter.evaluate(*operation(Constraint::Call, "knownBits",
                                       {ConstExpression, CtxExpression}),
                            State);
   ASSERT_TRUE(static_cast<bool>(KnownBits));
@@ -539,41 +580,41 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
   EXPECT_EQ(KnownBits->getKnownBits().Zero, APInt(8, 0xFA));
 
   OperatorConstraint *KnownBitsCall = operation(
-      Constraint::Call, "known-bits", {ConstExpression, CtxExpression});
+      Constraint::Call, "knownBits", {ConstExpression, CtxExpression});
   Expected<ConstraintValue> Zeros = Interpreter.evaluate(
-      *operation(Constraint::Call, "known-zeros", {KnownBitsCall}), State);
+      *operation(Constraint::Call, "knownZeros", {KnownBitsCall}), State);
   ASSERT_TRUE(static_cast<bool>(Zeros));
   EXPECT_EQ(Zeros->getInteger(), APSInt(APInt(8, 0xFA), true));
   Expected<ConstraintValue> Ones = Interpreter.evaluate(
-      *operation(Constraint::Call, "known-ones", {KnownBitsCall}), State);
+      *operation(Constraint::Call, "knownOnes", {KnownBitsCall}), State);
   ASSERT_TRUE(static_cast<bool>(Ones));
   EXPECT_EQ(Ones->getInteger(), APSInt(APInt(8, 0x05), true));
 
   // Bit-vector equality compares both masks.
   EXPECT_TRUE(
       evaluateBoolean(*binary("==",
-                              operation(Constraint::Call, "known-bits",
+                              operation(Constraint::Call, "knownBits",
                                         {ConstExpression, CtxExpression}),
-                              operation(Constraint::Call, "known-bits",
+                              operation(Constraint::Call, "knownBits",
                                         {ConstExpression, CtxExpression}))));
 
   // masked-value-is-zero: 5 & 8 == 0, 5 & 4 != 0.
   EXPECT_TRUE(evaluateBoolean(
-      *operation(Constraint::Call, "masked-value-is-zero",
+      *operation(Constraint::Call, "maskedValueIsZero",
                  {ConstExpression, integer(8), CtxExpression})));
   EXPECT_FALSE(evaluateBoolean(
-      *operation(Constraint::Call, "masked-value-is-zero",
+      *operation(Constraint::Call, "maskedValueIsZero",
                  {ConstExpression, integer(4), CtxExpression})));
 
   // Unknown overflow kind.
   Expected<ConstraintValue> UnknownKind = Interpreter.evaluate(
-      *operation(Constraint::Call, "no-overflow",
+      *operation(Constraint::Call, "noOverflow",
                  {StringConstraint::get(Context, "foo", Range), ConstExpression,
                   ConstExpression, CtxExpression}),
       State);
   ASSERT_FALSE(UnknownKind);
   EXPECT_EQ(toString(UnknownKind.takeError()),
-            "cannot evaluate constraint '(no-overflow \"foo\" ?c ?c ?ctx)': "
+            "cannot evaluate constraint '(noOverflow \"foo\" ?c ?c ?ctx)': "
             "unknown overflow kind 'foo'");
 
   // Non-integer operand.
@@ -583,22 +624,22 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
       Context, FloatValue, Constraint::ValueResult, Range);
   State.bind(*FloatValue, ConstantFP::get(Float, 1.0));
   Expected<ConstraintValue> NonInteger =
-      Interpreter.evaluate(*operation(Constraint::Call, "is-known-nonnegative",
+      Interpreter.evaluate(*operation(Constraint::Call, "isKnownNonNegative",
                                       {FloatExpression, CtxExpression}),
                            State);
   ASSERT_FALSE(NonInteger);
   EXPECT_EQ(toString(NonInteger.takeError()),
-            "cannot evaluate constraint '(is-known-nonnegative ?float_value "
+            "cannot evaluate constraint '(isKnownNonNegative ?float_value "
             "?ctx)': expected an integer-typed value operand");
 
   // Context that is a value but not an instruction.
   Expected<ConstraintValue> BadContext =
-      Interpreter.evaluate(*operation(Constraint::Call, "is-known-nonzero",
+      Interpreter.evaluate(*operation(Constraint::Call, "isKnownNonZero",
                                       {ConstExpression, BigExpression}),
                            State);
   ASSERT_FALSE(BadContext);
   EXPECT_EQ(toString(BadContext.takeError()),
-            "cannot evaluate constraint '(is-known-nonzero ?c ?big)': expected "
+            "cannot evaluate constraint '(isKnownNonZero ?c ?big)': expected "
             "an instruction context operand");
 }
 
@@ -636,7 +677,7 @@ TEST_F(ConstraintInterpreterTest, ResolvesDefaultValueTrackContext) {
       /*Operands=*/{}, /*Capture=*/nullptr, Range, /*ParentBlock=*/nullptr);
   State.bind(*PatternInst, Instantiation::Binding(Root));
   OperatorConstraint *NoOverflow =
-      operation(Constraint::Call, "no-overflow",
+      operation(Constraint::Call, "noOverflow",
                 {StringConstraint::get(Context, "umul", Range), YExpression,
                  ZExpression});
   NoOverflow->setContextInstruction(PatternInst);
@@ -645,13 +686,13 @@ TEST_F(ConstraintInterpreterTest, ResolvesDefaultValueTrackContext) {
 
   // Without a resolvable context instruction the operator reports an error.
   OperatorConstraint *Unanchored =
-      operation(Constraint::Call, "no-overflow",
+      operation(Constraint::Call, "noOverflow",
                 {StringConstraint::get(Context, "umul", Range), YExpression,
                  ZExpression});
   Expected<ConstraintValue> Result = Interpreter.evaluate(*Unanchored, State);
   ASSERT_FALSE(Result);
   EXPECT_EQ(toString(Result.takeError()),
-            "cannot evaluate constraint '(no-overflow \"umul\" ?y ?z)': no "
+            "cannot evaluate constraint '(noOverflow \"umul\" ?y ?z)': no "
             "context instruction for value-tracking operator (place the "
             "constraint after an instruction or pass ?ctx explicitly)");
 }
