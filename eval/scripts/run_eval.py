@@ -46,17 +46,11 @@ PR_PATTERNS: dict[str, list[str]] = {
     "pr214517": ["eval/patterns/pr214517.mpir"],
     "pr214381": ["eval/patterns/pr214381.mpir"],
     "pr214376": ["eval/patterns/pr214376.mpir"],
-    "pr213709": [
-        "eval/patterns/pr213709_eq.mpir",
-        "eval/patterns/pr213709_ne0.mpir",
-        "eval/patterns/pr213709_ne1.mpir",
-    ],
-    "pr213313": ["eval/patterns/pr213313_and.mpir", "eval/patterns/pr213313_or.mpir"],
+    "pr213709": ["eval/patterns/pr213709.mpir"],
+    "pr213313": ["eval/patterns/pr213313.mpir"],
     "pr212132": [
-        "eval/patterns/pr212132_c1.mpir",
-        "eval/patterns/pr212132_c2.mpir",
-        "eval/patterns/pr212132_c3.mpir",
-        "eval/patterns/pr212132_c4.mpir",
+        "eval/patterns/pr212132_case1.mpir",
+        "eval/patterns/pr212132_case2.mpir",
     ],
     "pr210499": ["eval/patterns/pr210499.mpir"],
     "pr209322": ["eval/patterns/pr209322.mpir"],
@@ -152,15 +146,29 @@ def run_pattern(pattern: Path, bc: Path) -> set[Anchor]:
 
 
 def run_over_corpus(
-    files: list[Path], run: Callable[[Path], set[Anchor]]
+    files: list[Path], run: Callable[[Path], set[Anchor]], jobs: int = 1
 ) -> tuple[set[Anchor], float]:
     """Apply ``run(bc) -> anchors`` to every corpus file, accumulating anchors and wall time."""
     anchors: set[Anchor] = set()
     elapsed = 0.0
-    for bc in files:
+    if jobs <= 1:
+        for bc in files:
+            t0 = time.time()
+            anchors |= run(bc)
+            elapsed += time.time() - t0
+        return anchors, elapsed
+
+    from concurrent.futures import ThreadPoolExecutor
+
+    def worker(bc: Path) -> tuple[set[Anchor], float]:
         t0 = time.time()
-        anchors |= run(bc)
-        elapsed += time.time() - t0
+        res = run(bc)
+        return res, time.time() - t0
+
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        for res, t in pool.map(worker, files):
+            anchors |= res
+            elapsed += t
     return anchors, elapsed
 
 
@@ -179,6 +187,23 @@ def load_anchors(path: Path) -> set[Anchor]:
         f, fn, a = line.split("\t", 2)
         anchors.add((f, fn, a))
     return anchors
+
+
+def normalize_anchors(anchors: set[Anchor]) -> set[Anchor]:
+    """Normalize unnamed numerical slot names per (file, func) by ascending numerical order.
+    Named SSA slots (e.g. %x, s, z) remain untouched.
+    """
+    by_func: dict[tuple[str, str], list[str]] = {}
+    for f, fn, a in anchors:
+        by_func.setdefault((f, fn), []).append(a)
+
+    normalized: set[Anchor] = set()
+    for (f, fn), slot_list in by_func.items():
+        unnamed = sorted({int(s) for s in slot_list if s.isdigit()})
+        unnamed_map = {str(val): f"anon#{idx}" for idx, val in enumerate(unnamed)}
+        for s in slot_list:
+            normalized.add((f, fn, unnamed_map.get(s, s)))
+    return normalized
 
 
 def func_keys(anchors: set[Anchor]) -> set[tuple[str, str]]:
@@ -204,9 +229,11 @@ def print_metrics(G: set[Anchor], P: set[Anchor], label: str) -> None:
 # --------------------------------------------------------------------------- #
 # Collection steps
 # --------------------------------------------------------------------------- #
-def collect_ground_truth(files: list[Path], pr: str, outdir: Path) -> None:
+def collect_ground_truth(
+    files: list[Path], pr: str, outdir: Path, jobs: int = 1
+) -> None:
     print(f"== gt {pr}: {len(files)} modules ==")
-    G, t_gt = run_over_corpus(files, lambda bc: run_llvm_anchors(bc, pr))
+    G, t_gt = run_over_corpus(files, lambda bc: run_llvm_anchors(bc, pr), jobs=jobs)
 
     if not G:
         print(
@@ -224,11 +251,11 @@ def collect_ground_truth(files: list[Path], pr: str, outdir: Path) -> None:
 
 
 def collect_patterns(
-    files: list[Path], pr: str, patterns: list[Path], outdir: Path
+    files: list[Path], pr: str, patterns: list[Path], outdir: Path, jobs: int = 1
 ) -> None:
     print(f"== pattern {pr}: {len(files)} modules, {len(patterns)} pattern(s) ==")
     run = lambda bc: set().union(*(run_pattern(p, bc) for p in patterns))
-    P, t_pat = run_over_corpus(files, run)
+    P, t_pat = run_over_corpus(files, run, jobs=jobs)
 
     p_path = outdir / f"{pr}_P.anchors"
     save_anchors(p_path, P)
@@ -263,7 +290,7 @@ def setup_outdir(args: argparse.Namespace) -> tuple[Path, list[Path]]:
 def cmd_gt(args: argparse.Namespace) -> int:
     outdir, files = setup_outdir(args)
     for pr in selected_prs(args.pr):
-        collect_ground_truth(files, pr, outdir)
+        collect_ground_truth(files, pr, outdir, jobs=args.jobs)
     return 0
 
 
@@ -281,7 +308,7 @@ def cmd_pattern(args: argparse.Namespace) -> int:
             sys.exit(
                 f"missing pattern file(s) for {pr}: {', '.join(missing)}"
             )
-        collect_patterns(files, pr, patterns, outdir)
+        collect_patterns(files, pr, patterns, outdir, jobs=args.jobs)
     return 0
 
 
@@ -309,8 +336,10 @@ def cmd_metrics(args: argparse.Namespace) -> int:
                 for line in timing.read_text().splitlines():
                     print(f"    {line}")
 
+        G_norm = normalize_anchors(G)
+        P_norm = normalize_anchors(P)
         print("  --- anchored-instruction level ---")
-        print_metrics(G, P, "anchor")
+        print_metrics(G_norm, P_norm, "anchor")
         print("  --- function level ---")
         print_metrics(func_keys(G), func_keys(P), "function")
     return 0
@@ -326,6 +355,13 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
         type=Path,
         default=REPO / "eval" / "results",
         help="output directory for anchors/timing (default: eval/results)",
+    )
+    p.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=1,
+        help="number of parallel jobs (default: 1)",
     )
 
 

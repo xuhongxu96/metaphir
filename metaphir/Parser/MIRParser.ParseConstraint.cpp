@@ -27,8 +27,12 @@ Constraint *MIRParser::makeConstraint(Constraint::ConstraintID K,
     llvm_unreachable("array access constraints require an array and index");
   case Constraint::Unary:
   case Constraint::Binary:
-  case Constraint::Call:
-    return OperatorConstraint::get(Context, K, Ty, Op, Args, R);
+  case Constraint::Call: {
+    Constraint::OperatorID OpID = Constraint::getOperatorID(Op, K);
+    if (OpID != Constraint::UnknownOperator)
+      return OperatorConstraint::getBuiltin(Context, K, Ty, OpID, Args, R);
+    return OperatorConstraint::getUserDefined(Context, K, Ty, Op, Args, R);
+  }
   }
   llvm_unreachable("invalid constraint kind");
 }

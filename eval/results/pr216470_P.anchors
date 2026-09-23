@@ -1,1 +1,5 @@
-clamav__rebuildpe.bc	cli_rebuildpe_align	80
+pr216470__add.ll	ceil_div_by_16_i16	r
+pr216470__add.ll	ceil_div_by_8_known_range	r
+pr216470__add.ll	ceil_div_commuted	r
+pr216470__add.ll	ceil_div_from_clz	r
+pr216470__add.ll	ceil_div_zext_multi_use	r

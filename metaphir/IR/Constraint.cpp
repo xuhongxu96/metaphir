@@ -30,8 +30,7 @@ ArrayConstraint *ArrayConstraint::get(MIRContext &Context, ResultType Type,
 }
 
 VariableConstraint *VariableConstraint::get(MIRContext &Context,
-                                            MetaVariable *Variable,
-                                            ResultType Type,
+                                            Value *Variable, ResultType Type,
                                             SourceRange Range) {
   return new (Context.pImpl->Alloc) VariableConstraint(Variable, Type, Range);
 }
@@ -45,24 +44,37 @@ ArrayAccessConstraint *ArrayAccessConstraint::get(MIRContext &Context,
       ArrayAccessConstraint(Type, Array, Index, Range);
 }
 
-OperatorConstraint *OperatorConstraint::get(MIRContext &Context,
-                                            ConstraintID ID, ResultType Type,
-                                            StringRef Operator,
-                                            ArrayRef<Constraint *> Arguments,
-                                            SourceRange Range) {
-  OperatorID OperatorID = Constraint::getOperatorID(Operator, ID);
-  StringRef SavedOperator;
-  if (OperatorID == UnknownOperator)
-    SavedOperator = Context.pImpl->Saver.save(Operator);
+OperatorConstraint *OperatorConstraint::getBuiltin(
+    MIRContext &Context, ConstraintID ID, ResultType Type, OperatorID OpID,
+    ArrayRef<Constraint *> Arguments, SourceRange Range) {
+  assert(OpID != UnknownOperator &&
+         "built-in OperatorConstraint::getBuiltin requires a known OperatorID");
   return new (Context.pImpl->Alloc) OperatorConstraint(
-      ID, Type, OperatorID, SavedOperator,
+      ID, Type, OpID, Context.pImpl->copyArray<Constraint *>(Arguments), Range);
+}
+
+OperatorConstraint *OperatorConstraint::getUserDefined(
+    MIRContext &Context, ConstraintID ID, ResultType Type, StringRef Operator,
+    ArrayRef<Constraint *> Arguments, SourceRange Range) {
+  assert(Constraint::getOperatorID(Operator, ID) == UnknownOperator &&
+         "custom OperatorConstraint::getUserDefined cannot be called with a "
+         "built-in operator name");
+  StringRef SavedOperator = Context.pImpl->Saver.save(Operator);
+  return new (Context.pImpl->Alloc) OperatorConstraint(
+      ID, Type, SavedOperator,
       Context.pImpl->copyArray<Constraint *>(Arguments), Range);
 }
 
+Constraint::OperatorID OperatorConstraint::getOperatorID() const {
+  if (const auto *ID = std::get_if<OperatorID>(&Op))
+    return *ID;
+  return UnknownOperator;
+}
+
 StringRef OperatorConstraint::getOperator() const {
-  if (Operator != UnknownOperator)
-    return Constraint::getOperatorName(Operator);
-  return OperatorName;
+  if (const auto *ID = std::get_if<OperatorID>(&Op))
+    return Constraint::getOperatorName(*ID);
+  return std::get<StringRef>(Op);
 }
 
 std::optional<Constraint::OperatorSchema>
@@ -165,8 +177,12 @@ raw_ostream &operator<<(raw_ostream &OS, const Constraint &C) {
     }
     return OS << ']';
   }
-  case Constraint::Variable:
-    return OS << *cast<VariableConstraint>(C).getVariable();
+  case Constraint::Variable: {
+    const Value *V = cast<VariableConstraint>(C).getVariable();
+    if (const auto *MV = dyn_cast<MetaVariable>(V))
+      return OS << *MV;
+    return OS << *V;
+  }
   case Constraint::ArrayAccess: {
     const auto &Access = cast<ArrayAccessConstraint>(C);
     return OS << *Access.getArray() << '[' << *Access.getIndex() << ']';

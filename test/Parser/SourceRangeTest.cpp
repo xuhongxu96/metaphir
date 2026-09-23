@@ -106,7 +106,7 @@ TEST(SourceRangeTest, MatchParametersBoundPerBranch) {
   }
 }
 
-TEST(SourceRangeTest, SynthesizedInstructionCapture) {
+TEST(SourceRangeTest, InstructionDirectSubjectConstraint) {
   SourceMgr SM;
   MIRContext Context;
   Pattern *P = parsePattern(R"(metaflag:i :isaddop(?i) {
@@ -119,17 +119,28 @@ TEST(SourceRangeTest, SynthesizedInstructionCapture) {
   ASSERT_NE(P, nullptr);
   ASSERT_EQ(P->getInstructions().size(), 1u);
 
-  // The pattern named no capture, so lowering synthesizes one for the flag's
-  // subject; it reports the instruction's own location.
+  // The pattern named no capture. Lowering does not mutate or synthesize a
+  // capture on the instruction; instead, the constraint directly targets the
+  // instruction node.
   Instruction *I = P->getInstructions().front();
   ASSERT_EQ(I->getCapture(), nullptr);
-  ASSERT_TRUE(static_cast<bool>(PatternLowering(Context).lower(P)));
-  MetaVariable *Capture = I->getCapture();
-  ASSERT_NE(Capture, nullptr);
-  EXPECT_TRUE(Capture->getSourceRange().Begin.isValid());
-  EXPECT_EQ(Capture->getSourceRange().Begin, I->getSourceRange().Begin);
-  // Hidden from reported bindings by the '_' prefix.
-  EXPECT_EQ(Capture->getName(), "_");
+  auto VariantsOrErr = PatternLowering(Context).lower(P);
+  ASSERT_TRUE(static_cast<bool>(VariantsOrErr));
+  EXPECT_EQ(I->getCapture(), nullptr);
+  ASSERT_EQ(VariantsOrErr->getVariants().size(), 1u);
+  Pattern *Variant = VariantsOrErr->getVariants().front();
+  ASSERT_FALSE(Variant->getConstraints().empty());
+  // The first argument of the binary opcode check is (opcode %r), whose
+  // operand is the Instruction itself.
+  auto *C = dyn_cast<OperatorConstraint>(Variant->getConstraints().front());
+  ASSERT_NE(C, nullptr);
+  ASSERT_GE(C->getArguments().size(), 1u);
+  auto *OpcodeCall = dyn_cast<OperatorConstraint>(C->getArguments().front());
+  ASSERT_NE(OpcodeCall, nullptr);
+  ASSERT_EQ(OpcodeCall->getArguments().size(), 1u);
+  auto *VarC = dyn_cast<VariableConstraint>(OpcodeCall->getArguments().front());
+  ASSERT_NE(VarC, nullptr);
+  EXPECT_EQ(VarC->getVariable(), I);
 }
 
 } // namespace

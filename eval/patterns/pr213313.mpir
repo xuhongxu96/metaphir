@@ -1,0 +1,10 @@
+;; treatIntAsVec(true)
+match:c andOr [] Binary (?ty ?x, ?y) {
+	%ret = and ?ty ?x, ?y
+} or {
+	%ret = or disjoint:?_ ?ty ?x, ?y
+}
+
+%zext = zext i?small ?x to i?big
+%sext = sext i?small ?x to i?big
+%root = andOr:?anch:c i?big %zext, %sext

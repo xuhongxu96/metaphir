@@ -468,7 +468,11 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed) {
     return Lex.ParseError(Loc, "unknown meta flag ':" + Name + "'");
   }
 
-  Result = MetaFlag::get(Context, Name, Args, SourceRange{Loc, Loc});
+  if (ID != MetaFlag::UnknownMetaFlag)
+    Result = MetaFlag::getBuiltin(Context, ID, Args, SourceRange{Loc, Loc});
+  else
+    Result =
+        MetaFlag::getUserDefined(Context, Name, Args, SourceRange{Loc, Loc});
   return false;
 }
 
@@ -1699,8 +1703,8 @@ bool MIRParser::parseCompositeInstruction(Instruction *&Result,
 
   SourceRange Range{Loc, Lex.getLoc()};
   Result =
-      Instruction::getComposite(Context, ResultName, CM, OpName, Flags, MFlags,
-                                Ops, Capture, Range, CurrentBlock, Settings);
+      Instruction::getComposite(Context, ResultName, CM, Flags, MFlags, Ops,
+                                Capture, Range, CurrentBlock, Settings);
   if (!ResultName.empty())
     Instructions[ResultName] = Result;
   return false;

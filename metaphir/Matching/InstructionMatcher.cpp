@@ -298,9 +298,6 @@ InstructionMatcher::matchValueOperand(const MatcherOperand &Matcher,
                          .match())
     return {};
 
-  assert(Matcher.MetaFlags.empty() &&
-         "operand meta flag reached matching without being lowered");
-
   // Under treatIntAsVec, a scalar integer constant also matches a vector splat
   // constant whose element equals it (e.g. 0 matches zeroinitializer).
   if (Settings.has(PatternSettings::treatIntAsVec)) {

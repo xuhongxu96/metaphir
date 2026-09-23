@@ -5,8 +5,12 @@
 #include "metaphir/IR/MIRContextImpl.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"
-#include "metaphir/IR/Values.h"
 #include "metaphir/Parser/MIRParser.h"
+#include "metaphir/Matching/ConstraintInterpreter.h"
+#include "metaphir/Matching/PatternMatcher.h"
+#include "llvm/AsmParser/Parser.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
@@ -22,10 +26,16 @@ using namespace llvm::metaphir;
 
 namespace {
 
+using Instruction = llvm::metaphir::Instruction;
+using MIRInstruction = llvm::metaphir::Instruction;
+
 MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
                    ArrayRef<MetaFlag::Argument> Arguments = {},
                    SourceRange Range = {}) {
-  return MetaFlag::get(Context, Name, Arguments, Range);
+  MetaFlag::MetaFlagID ID = MetaFlag::getMetaFlagID(Name);
+  if (ID != MetaFlag::UnknownMetaFlag)
+    return MetaFlag::getBuiltin(Context, ID, Arguments, Range);
+  return MetaFlag::getUserDefined(Context, Name, Arguments, Range);
 }
 
 static Pattern *parseAndLowerPattern(StringRef IR, MIRContext &Context) {
@@ -43,6 +53,25 @@ static Pattern *parseAndLowerPattern(StringRef IR, MIRContext &Context) {
     return Result;
   }
   return nullptr;
+}
+
+static Pattern *parsePatternOnly(StringRef IR, SourceMgr &SM,
+                                  MIRContext &Context) {
+  SMDiagnostic Error;
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(IR);
+  SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
+  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
+                   Error, Context);
+  Pattern *Result = nullptr;
+  if (!Parser.parse(Result))
+    return Result;
+  return nullptr;
+}
+
+static std::unique_ptr<Module> parseLLVMModule(StringRef IR,
+                                               LLVMContext &Context) {
+  SMDiagnostic Error;
+  return parseAssemblyString(IR, Error, Context);
 }
 
 static Pattern *makePatternWithOperandFlag(MIRContext &Context,
@@ -79,8 +108,8 @@ TEST(MetaFlagTest, PreservesMatcherHandledFlagsDuringLowering) {
   MIRContext Context;
   SmallVector<MetaFlag *, 2> Flags = {makeFlag(Context, "c"),
                                       makeFlag(Context, "o")};
-  auto *Inst = Instruction::get(Context, Instruction::I_add, "", {}, Flags,
-                                {}, nullptr, {}, nullptr);
+  auto *Inst = Instruction::get(Context, Instruction::I_add, "", {}, Flags, {},
+                                nullptr, {}, nullptr);
   Pattern *P = Pattern::get(Context);
   P->addInstruction(Inst);
 
@@ -93,8 +122,8 @@ TEST(MetaFlagTest, PreservesMatcherHandledFlagsDuringLowering) {
 TEST(MetaFlagTest, ReportsMalformedMetaFlagDefinition) {
   MIRContext Context;
   StringRef Parameters[] = {"subject"};
-  auto *Def = new (Context.pImpl->Alloc)
-      MetaFlagDef("broken", MetaFlag::OperandPlacement, Parameters, {}, nullptr);
+  auto *Def = new (Context.pImpl->Alloc) MetaFlagDef(
+      "broken", MetaFlag::OperandPlacement, Parameters, {}, nullptr);
   Context.registerMetaFlagDef(Def);
 
   Pattern *P = makePatternWithOperandFlag(Context, makeFlag(Context, "broken"));
@@ -110,8 +139,8 @@ TEST(MetaFlagTest, ReportsUnlowerableNotChild) {
   BadArgument.K = MetaFlag::Argument::Flag;
   BadArgument.FlagValue = nullptr;
   ArrayRef<MetaFlag::Argument> Arguments(&BadArgument, 1);
-  Pattern *P = makePatternWithOperandFlag(
-      Context, makeFlag(Context, "not", Arguments));
+  Pattern *P =
+      makePatternWithOperandFlag(Context, makeFlag(Context, "not", Arguments));
   Expected<PatternVariants> Lowered = PatternLowering(Context).lower(P);
   ASSERT_FALSE(static_cast<bool>(Lowered));
   std::string Message = toString(Lowered.takeError());
@@ -163,4 +192,181 @@ TEST(MetaFlagTest, LowersOrAndNotCombinatorsWithUseCountFlags) {
               C1Text.find("!") != std::string::npos);
 }
 
+TEST(MetaFlagTest, NonDestructiveDesugaringPreservesFlagsAndAvoidsSyntheticCapture) {
+  SourceMgr SM;
+  MIRContext Context;
+  Pattern *P = parsePatternOnly(
+      R"(
+        %r = add:s i32 ?x:su, ?y
+      )",
+      SM, Context);
+  ASSERT_NE(P, nullptr);
+  ASSERT_EQ(P->getInstructions().size(), 1u);
+  MIRInstruction *I = P->getInstructions().front();
+
+  // Before lowering: instruction has :s, operand ?x has :su, capture is null.
+  EXPECT_EQ(I->getCapture(), nullptr);
+  EXPECT_EQ(I->getMetaFlags().size(), 1u);
+  EXPECT_EQ(I->getMetaFlags()[0]->getName(), "s");
+  ASSERT_GE(I->getUnkeyedOperands().size(), 1u);
+  EXPECT_EQ(I->getUnkeyedOperands()[0].MetaFlags.size(), 1u);
+  EXPECT_EQ(I->getUnkeyedOperands()[0].MetaFlags[0]->getName(), "su");
+
+  // Run lowering.
+  auto VariantsOrErr = PatternLowering(Context).lower(P);
+  ASSERT_TRUE(static_cast<bool>(VariantsOrErr));
+  ASSERT_EQ(VariantsOrErr->getVariants().size(), 1u);
+  Pattern *Variant = VariantsOrErr->getVariants().front();
+
+  // After lowering: instruction and operand metaflags MUST NOT be stripped or mutated.
+  EXPECT_EQ(I->getCapture(), nullptr);
+  EXPECT_EQ(I->getMetaFlags().size(), 1u);
+  EXPECT_EQ(I->getMetaFlags()[0]->getName(), "s");
+  EXPECT_EQ(I->getUnkeyedOperands()[0].MetaFlags.size(), 1u);
+  EXPECT_EQ(I->getUnkeyedOperands()[0].MetaFlags[0]->getName(), "su");
+
+  // Constraints should have been generated and added to Variant.
+  ASSERT_EQ(Variant->getConstraints().size(), 2u);
+
+  // Check that the constraint for :s directly targets Instruction *I as its subject.
+  bool FoundDirectInstSubject = false;
+  for (const Constraint *C : Variant->getConstraints()) {
+    if (const auto *OC = dyn_cast<OperatorConstraint>(C)) {
+      if (OC->getOperator() == "hasOneUse" && !OC->getArguments().empty()) {
+        if (const auto *VC = dyn_cast<VariableConstraint>(OC->getArguments().front())) {
+          if (VC->getVariable() == I)
+            FoundDirectInstSubject = true;
+        }
+      }
+    }
+  }
+  EXPECT_TRUE(FoundDirectInstSubject);
+}
+
+TEST(MetaFlagTest, CompositeInliningSharesPrecedingAndCOWDownstream) {
+  SourceMgr SM;
+  MIRContext Context;
+  Pattern *P = parsePatternOnly(
+      R"(
+        match foldTest [] Binary (?ty ?a, ?b) {
+          %r1 = add ?ty ?a, ?b
+        } or {
+          %r2 = sub ?ty ?a, ?b
+        }
+
+        %prec = mul i32 ?x, ?y
+        %mid = foldTest i32 %prec, ?z
+        %down_indep = xor i32 ?x, ?y
+        %down_dep = and i32 %mid, ?z
+      )",
+      SM, Context);
+  ASSERT_NE(P, nullptr);
+  ASSERT_EQ(P->getInstructions().size(), 4u);
+  MIRInstruction *OrigPrec = P->getInstructions()[0];
+  MIRInstruction *OrigComp = P->getInstructions()[1];
+  (void)OrigComp;
+  MIRInstruction *OrigDownIndep = P->getInstructions()[2];
+  MIRInstruction *OrigDownDep = P->getInstructions()[3];
+
+  auto VariantsOrErr = PatternLowering(Context).lower(P);
+  ASSERT_TRUE(static_cast<bool>(VariantsOrErr));
+  ASSERT_EQ(VariantsOrErr->getVariants().size(), 2u);
+
+  Pattern *V0 = VariantsOrErr->getVariants()[0];
+  Pattern *V1 = VariantsOrErr->getVariants()[1];
+
+  // Each branch has: %prec, inlined branch inst (%r1 or %r2), %down_indep, %down_dep.
+  ASSERT_EQ(V0->getInstructions().size(), 4u);
+  ASSERT_EQ(V1->getInstructions().size(), 4u);
+
+  // 1. Preceding instruction (%prec) is shared across all branches by raw pointer (0 copies).
+  EXPECT_EQ(V0->getInstructions()[0], OrigPrec);
+  EXPECT_EQ(V1->getInstructions()[0], OrigPrec);
+
+  // 2. Downstream independent instruction (%down_indep) doesn't use inlined insts,
+  // so it is also shared by raw pointer.
+  EXPECT_EQ(V0->getInstructions()[2], OrigDownIndep);
+  EXPECT_EQ(V1->getInstructions()[2], OrigDownIndep);
+
+  // 3. Downstream dependent instruction (%down_dep) uses %mid, so it is COW duplicated.
+  EXPECT_NE(V0->getInstructions()[3], OrigDownDep);
+  EXPECT_NE(V1->getInstructions()[3], OrigDownDep);
+  EXPECT_NE(V0->getInstructions()[3], V1->getInstructions()[3]);
+
+  // The duplicated instruction shares ResultName slice without re-saving.
+  EXPECT_EQ(V0->getInstructions()[3]->getResultName().data(),
+            OrigDownDep->getResultName().data());
+  EXPECT_EQ(V1->getInstructions()[3]->getResultName().data(),
+            OrigDownDep->getResultName().data());
+
+  // Operand 0 of %down_dep is remapped to the respective inlined root.
+  EXPECT_EQ(V0->getInstructions()[3]->getUnkeyedOperands()[0].Val,
+            V0->getInstructions()[1]);
+  EXPECT_EQ(V1->getInstructions()[3]->getUnkeyedOperands()[0].Val,
+            V1->getInstructions()[1]);
+}
+
+TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
+  SourceMgr SM;
+  MIRContext Context;
+  Pattern *P = parsePatternOnly(
+      R"(
+        %sat = call:s i32 @llvm.uadd.sat(i32 ?x, i32 ?c)
+        %res = add i32 %sat, ?c
+      )",
+      SM, Context);
+  ASSERT_NE(P, nullptr);
+
+  auto VariantsOrErr = PatternLowering(Context).lower(P);
+  ASSERT_TRUE(static_cast<bool>(VariantsOrErr));
+
+  LLVMContext LLVMContext;
+  std::unique_ptr<Module> Module = parseLLVMModule(
+      R"(
+        declare i32 @llvm.uadd.sat.i32(i32, i32)
+
+        define i32 @single_use(i32 %x, i32 %c) {
+          %sat = call i32 @llvm.uadd.sat.i32(i32 %x, i32 %c)
+          %res = add i32 %sat, %c
+          ret i32 %res
+        }
+
+        define i32 @multi_use(i32 %x, i32 %c) {
+          %sat = call i32 @llvm.uadd.sat.i32(i32 %x, i32 %c)
+          %extra = mul i32 %sat, 2
+          %res = add i32 %sat, %c
+          ret i32 %res
+        }
+      )",
+      LLVMContext);
+  ASSERT_NE(Module, nullptr);
+
+  PatternMatcher Matcher;
+  ConstraintInterpreter Interpreter(&Context);
+  const Pattern *Variant = VariantsOrErr->getVariants().front();
+
+  Target SingleTarget(*Module->getFunction("single_use"));
+  MatchResults SingleMatches = Matcher.match(*Variant, SingleTarget);
+  ASSERT_EQ(SingleMatches.size(), 1u);
+  // Verify constraints evaluate to true on single_use.
+  for (const Constraint *C : Variant->getConstraints()) {
+    Expected<ConstraintValue> Res = Interpreter.evaluate(*C, SingleMatches[0]);
+    ASSERT_TRUE(static_cast<bool>(Res));
+    EXPECT_TRUE(Res->getBoolean());
+  }
+
+  Target MultiTarget(*Module->getFunction("multi_use"));
+  MatchResults MultiMatches = Matcher.match(*Variant, MultiTarget);
+  ASSERT_EQ(MultiMatches.size(), 1u);
+  // Verify constraint hasOneUse(%sat) evaluates to false on multi_use.
+  bool ConstraintSatisfied = true;
+  for (const Constraint *C : Variant->getConstraints()) {
+    Expected<ConstraintValue> Res = Interpreter.evaluate(*C, MultiMatches[0]);
+    if (!Res || !Res->getBoolean())
+      ConstraintSatisfied = false;
+  }
+  EXPECT_FALSE(ConstraintSatisfied);
+}
+
 } // namespace
+

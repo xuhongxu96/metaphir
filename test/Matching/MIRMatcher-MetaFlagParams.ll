@@ -38,8 +38,8 @@ define i32 @out_of_range(i32 %x) {
 ; ARGS-NEXT:   no match
 ; ARGS-NEXT:   constraint not satisfied: (&& (sle 5 ?c) (sle ?c 8))
 
-; The pattern need not name the instruction: lowering synthesizes a hidden
-; capture for the flag's subject, which stays out of the reported bindings.
+; The pattern need not name the instruction: lowering uses the instruction
+; directly as the flag's subject, avoiding any synthetic capture variable.
 ;--- no-capture.mpir
 metaflag:i :ismulop(?i) {
 	opcode(?i) == "mul"
@@ -90,4 +90,4 @@ define i32 @is_add(i32 %x, i32 %y) {
 
 ; NOCAP: target 0: @is_add
 ; NOCAP-NEXT:   no match
-; NOCAP-NEXT:   constraint not satisfied: (== (opcode ?_) "mul")
+; NOCAP-NEXT:   constraint not satisfied: (== (opcode %r) "mul")

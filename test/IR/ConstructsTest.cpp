@@ -1,4 +1,6 @@
+#include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
@@ -138,4 +140,80 @@ TEST(MetaphIRConstructs, GeneratedExtensibilitySchemas) {
             Constraint::O_Subtract);
   EXPECT_EQ(Constraint::getOperatorID("future_predicate", Constraint::Call),
             Constraint::UnknownOperator);
+}
+
+TEST(MetaphIRConstructs, OperatorConstraintUniquesUserOperatorNames) {
+  MIRContext Context;
+  SourceRange Range;
+  OperatorConstraint *Op1 = OperatorConstraint::getUserDefined(
+      Context, Constraint::Call, Constraint::BooleanResult,
+      "myCustomConstraint", {}, Range);
+  OperatorConstraint *Op2 = OperatorConstraint::getUserDefined(
+      Context, Constraint::Call, Constraint::BooleanResult,
+      "myCustomConstraint", {}, Range);
+
+  EXPECT_TRUE(Op1->isUserDefined());
+  EXPECT_TRUE(Op2->isUserDefined());
+  EXPECT_EQ(Op1->getOperatorID(), Constraint::UnknownOperator);
+  EXPECT_EQ(Op2->getOperatorID(), Constraint::UnknownOperator);
+  EXPECT_EQ(Op1->getOperator(), "myCustomConstraint");
+  EXPECT_EQ(Op2->getOperator(), "myCustomConstraint");
+  EXPECT_EQ(Op1->getOperator().data(), Op2->getOperator().data());
+
+  // Built-in operator overload:
+  OperatorConstraint *Builtin = OperatorConstraint::getBuiltin(
+      Context, Constraint::Binary, Constraint::BooleanResult,
+      Constraint::O_Equal, {}, Range);
+  EXPECT_FALSE(Builtin->isUserDefined());
+  EXPECT_EQ(Builtin->getOperatorID(), Constraint::O_Equal);
+  EXPECT_EQ(Builtin->getOperator(), "==");
+}
+
+TEST(MetaphIRConstructs, MetaFlagBuiltinAndCustomVariants) {
+  MIRContext Context;
+  SourceRange Range;
+
+  // Built-in MetaFlag:
+  MetaFlag *Builtin = MetaFlag::getBuiltin(Context, MetaFlag::MF_c, {}, Range);
+  EXPECT_FALSE(Builtin->isUserDefined());
+  EXPECT_EQ(Builtin->getMetaFlagID(), MetaFlag::MF_c);
+  EXPECT_EQ(Builtin->getName(), "c");
+
+  // Custom / User-defined MetaFlags:
+  MetaFlag *Custom1 = MetaFlag::getUserDefined(Context, "userFlag", {}, Range);
+  MetaFlag *Custom2 = MetaFlag::getUserDefined(Context, "userFlag", {}, Range);
+  EXPECT_TRUE(Custom1->isUserDefined());
+  EXPECT_TRUE(Custom2->isUserDefined());
+  EXPECT_EQ(Custom1->getMetaFlagID(), MetaFlag::UnknownMetaFlag);
+  EXPECT_EQ(Custom2->getMetaFlagID(), MetaFlag::UnknownMetaFlag);
+  EXPECT_EQ(Custom1->getName(), "userFlag");
+  EXPECT_EQ(Custom2->getName(), "userFlag");
+  // Verified to be uniqued by Saver
+  EXPECT_EQ(Custom1->getName().data(), Custom2->getName().data());
+}
+
+TEST(MetaphIRConstructs, InstructionCustomOpcodeAndKeyedOperands) {
+  MIRContext Context;
+  SourceRange Range;
+  MetaVariable *Block =
+      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+
+  // Instruction without keyed operands has 0 keyed operand allocations:
+  Instruction *Inst = Instruction::get(Context, Instruction::I_add, "res", {},
+                                       {}, {}, nullptr, Range, Block);
+  EXPECT_EQ(Inst->getOpcodeName(), "add");
+  EXPECT_EQ(Inst->getCustomOpcodeName(), "");
+  EXPECT_TRUE(Inst->getKeyedOperands().empty());
+  EXPECT_EQ(Inst->getKeyedOperand(MatcherOperand::Predicate), nullptr);
+
+  // Composite instruction gets opcode name from CompositeMatcher:
+  auto *CM = new CompositeMatcher("myCompositeOp", false, {},
+                                  Instruction::OperandSyntax::Binary, {}, {});
+  Instruction *CompInst = Instruction::getComposite(Context, "cres", CM, {}, {},
+                                                    {}, nullptr, Range, Block);
+  EXPECT_TRUE(CompInst->isComposite());
+  EXPECT_EQ(CompInst->getOpcodeName(), "myCompositeOp");
+  EXPECT_EQ(CompInst->getCustomOpcodeName(), "myCompositeOp");
+  EXPECT_EQ(CompInst->getCompositeMatcher(), CM);
+  delete CM;
 }

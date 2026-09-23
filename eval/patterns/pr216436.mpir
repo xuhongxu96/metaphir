@@ -1,3 +1,4 @@
-%sub = add i?bits ?x, -1
-%or = or:s i?bits %sub, ?cm:lowBitMask
-%add = add:?anch i?bits %or, 1
+;; treatIntAsVec(true)
+%sub = add nuw:?_ nsw:?_ i?bits ?x, ?c:allOnes
+%or = or:s disjoint:?_ i?bits %sub, ?cm:lowBitMask
+%add = add:?anch nuw:?_ nsw:?_ i?bits %or, 1

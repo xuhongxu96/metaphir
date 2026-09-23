@@ -4,6 +4,8 @@
 #include "metaphir/IR/Constraint.h"
 #include "llvm/ADT/ArrayRef.h"
 
+#include <variant>
+
 namespace llvm {
 namespace metaphir {
 
@@ -75,17 +77,17 @@ private:
 
 class VariableConstraint : public Constraint {
 public:
-  MetaVariable *getVariable() const { return VariableValue; }
+  Value *getVariable() const { return VariableValue; }
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Variable;
   }
-  static VariableConstraint *get(MIRContext &Context, MetaVariable *Variable,
+  static VariableConstraint *get(MIRContext &Context, Value *Variable,
                                  ResultType Type, SourceRange Range);
 
 private:
-  MetaVariable *VariableValue;
+  Value *VariableValue;
 
-  VariableConstraint(MetaVariable *V, ResultType T, SourceRange R)
+  VariableConstraint(Value *V, ResultType T, SourceRange R)
       : Constraint(Variable, T, R), VariableValue(V) {}
 };
 
@@ -111,27 +113,32 @@ private:
 
 class OperatorConstraint : public Constraint {
 public:
-  OperatorID getOperatorID() const { return Operator; }
+  OperatorID getOperatorID() const;
   StringRef getOperator() const;
+  bool isUserDefined() const { return std::holds_alternative<StringRef>(Op); }
   ArrayRef<Constraint *> getArguments() const { return Arguments; }
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Unary || C->getConstraintID() == Binary ||
            C->getConstraintID() == Call;
   }
-  static OperatorConstraint *get(MIRContext &Context, ConstraintID ID,
-                                 ResultType Type, StringRef Operator,
-                                 ArrayRef<Constraint *> Arguments,
-                                 SourceRange Range);
+  static OperatorConstraint *getBuiltin(MIRContext &Context, ConstraintID ID,
+                                        ResultType Type, OperatorID OpID,
+                                        ArrayRef<Constraint *> Arguments,
+                                        SourceRange Range);
+  static OperatorConstraint *getUserDefined(MIRContext &Context,
+                                            ConstraintID ID, ResultType Type,
+                                            StringRef Operator,
+                                            ArrayRef<Constraint *> Arguments,
+                                            SourceRange Range);
 
 private:
-  OperatorID Operator;
-  StringRef OperatorName;
+  std::variant<OperatorID, StringRef> Op;
   ArrayRef<Constraint *> Arguments;
 
-  OperatorConstraint(ConstraintID ID, ResultType T, OperatorID Op,
-                     StringRef OpName, ArrayRef<Constraint *> A, SourceRange R)
-      : Constraint(ID, T, R), Operator(Op), OperatorName(OpName), Arguments(A) {
-  }
+  OperatorConstraint(ConstraintID ID, ResultType T,
+                     std::variant<OperatorID, StringRef> Op,
+                     ArrayRef<Constraint *> A, SourceRange R)
+      : Constraint(ID, T, R), Op(Op), Arguments(A) {}
 };
 
 } // namespace metaphir

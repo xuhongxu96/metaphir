@@ -45,8 +45,11 @@ protected:
         Constraint::getOperatorSchema(ID);
     Constraint::ResultType Result =
         Schema ? Schema->Result : Constraint::BooleanResult;
-    return OperatorConstraint::get(Context, Kind, Result, Name, Arguments,
-                                   Range);
+    if (ID != Constraint::UnknownOperator)
+      return OperatorConstraint::getBuiltin(Context, Kind, Result, ID,
+                                            Arguments, Range);
+    return OperatorConstraint::getUserDefined(Context, Kind, Result, Name,
+                                              Arguments, Range);
   }
 
   OperatorConstraint *unary(StringRef Name, Constraint *Operand) {
@@ -375,6 +378,28 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "cannot evaluate constraint '?flag': meta variable '?flag' has an "
             "incompatible binding");
 
+  metaphir::Instruction *InstSubject = metaphir::Instruction::get(
+      Context, metaphir::Instruction::I_add, "sum", {}, {}, {}, nullptr, Range,
+      nullptr);
+  VariableConstraint *UninstInstExpr = VariableConstraint::get(
+      Context, InstSubject, Constraint::ValueResult, Range);
+  Expected<ConstraintValue> UninstInstRes =
+      Interpreter.evaluate(*UninstInstExpr, State);
+  ASSERT_FALSE(UninstInstRes);
+  EXPECT_EQ(toString(UninstInstRes.takeError()),
+            "cannot evaluate constraint '%sum': variable '%sum' "
+            "is not instantiated");
+
+  VariableConstraint *IncompatInstExpr = VariableConstraint::get(
+      Context, InstSubject, Constraint::IntegerResult, Range);
+  State.bind(*InstSubject, true);
+  Expected<ConstraintValue> IncompatInstRes =
+      Interpreter.evaluate(*IncompatInstExpr, State);
+  ASSERT_FALSE(IncompatInstRes);
+  EXPECT_EQ(toString(IncompatInstRes.takeError()),
+            "cannot evaluate constraint '%sum': variable '%sum' has an "
+            "incompatible binding");
+
   OperatorConstraint *DivisionByZero = call("udiv", integer(1), integer(0));
   Expected<ConstraintValue> DivisionResult =
       Interpreter.evaluate(*DivisionByZero, State);
@@ -543,8 +568,8 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
                   TwoExpression, CtxExpression})));
 
   // Sign predicates on the range-constrained argument.
-  EXPECT_TRUE(evaluateBoolean(*operation(
-      Constraint::Call, "isKnownNonNegative", {YExpression, CtxExpression})));
+  EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownNonNegative",
+                                         {YExpression, CtxExpression})));
 
   // Known bits of the constant 5 (0b00000101): ones mask 0x05, zeros 0xFA.
   MetaVariable *Const = MetaVariable::get(Context, "c", MetaType::Value, Range);
@@ -553,9 +578,8 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
   State.bind(*Const, ConstantInt::get(I8, 5));
   EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownNonZero",
                                          {ConstExpression, CtxExpression})));
-  EXPECT_FALSE(
-      evaluateBoolean(*operation(Constraint::Call, "isKnownPowerOfTwo",
-                                 {ConstExpression, CtxExpression})));
+  EXPECT_FALSE(evaluateBoolean(*operation(Constraint::Call, "isKnownPowerOfTwo",
+                                          {ConstExpression, CtxExpression})));
   EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownPositive",
                                          {ConstExpression, CtxExpression})));
   EXPECT_FALSE(evaluateBoolean(*operation(Constraint::Call, "isKnownNegative",
@@ -567,9 +591,8 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
   VariableConstraint *FourExpression =
       VariableConstraint::get(Context, Four, Constraint::ValueResult, Range);
   State.bind(*Four, ConstantInt::get(I8, 4));
-  EXPECT_TRUE(
-      evaluateBoolean(*operation(Constraint::Call, "isKnownPowerOfTwo",
-                                 {FourExpression, CtxExpression})));
+  EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownPowerOfTwo",
+                                         {FourExpression, CtxExpression})));
 
   Expected<ConstraintValue> KnownBits =
       Interpreter.evaluate(*operation(Constraint::Call, "knownBits",

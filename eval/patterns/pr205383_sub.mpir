@@ -1,7 +1,7 @@
-%neg = sub i?bits 0, ?x
+%neg = neg i?bits ?x
 %and = and:c i?bits %neg, ?x
 %ctlz = call i?bits @llvm.ctlz(i?bits %and, i1 ?isz)
-%final = sub:?finalres i?bits ?bm1:constantInt, %ctlz
+%final = sub:?finalres nuw:?_ nsw:?_ i?bits ?bm1:constantInt, %ctlz
 %cmp = icmp:?cmp ?pred i?bits ?x, 0
 %sel = select:?anch i1 %cmp, i?bits ?t, i?bits ?f
 ;; (?bm1 == (?bits - 1))

@@ -6,11 +6,49 @@
 namespace llvm {
 namespace metaphir {
 
-MetaFlag *MetaFlag::get(MIRContext &Context, StringRef Name,
-                        ArrayRef<Argument> Arguments, SourceRange Range) {
+MetaFlag *MetaFlag::getBuiltin(MIRContext &Context, MetaFlagID ID,
+                               ArrayRef<Argument> Arguments,
+                               SourceRange Range) {
+  assert(ID != UnknownMetaFlag &&
+         "built-in MetaFlag::getBuiltin requires a known MetaFlagID");
   return new (Context.pImpl->Alloc)
-      MetaFlag(getMetaFlagID(Name), Context.pImpl->Saver.save(Name),
+      MetaFlag(ID, Context.pImpl->copyArray<Argument>(Arguments), Range);
+}
+
+MetaFlag *MetaFlag::getUserDefined(MIRContext &Context, StringRef Name,
+                                   ArrayRef<Argument> Arguments,
+                                   SourceRange Range) {
+  assert(
+      getMetaFlagID(Name) == UnknownMetaFlag &&
+      "custom MetaFlag::getUserDefined cannot be called with a built-in flag "
+      "name");
+  return new (Context.pImpl->Alloc)
+      MetaFlag(Context.pImpl->Saver.save(Name),
                Context.pImpl->copyArray<Argument>(Arguments), Range);
+}
+
+StringRef MetaFlag::getName() const {
+  if (const auto *ID = std::get_if<MetaFlagID>(&Flag))
+    return getMetaFlagName(*ID);
+  return std::get<StringRef>(Flag);
+}
+
+MetaFlag::MetaFlagID MetaFlag::getMetaFlagID() const {
+  if (const auto *ID = std::get_if<MetaFlagID>(&Flag))
+    return *ID;
+  return UnknownMetaFlag;
+}
+
+StringRef MetaFlag::getMetaFlagName(MetaFlagID ID) {
+  switch (ID) {
+#define MIR_META_FLAG_ID(FlagName)                                             \
+  case MF_##FlagName:                                                          \
+    return #FlagName;
+#include "metaphir/IR/MetaFlags.def"
+  case UnknownMetaFlag:
+    break;
+  }
+  llvm_unreachable("invalid meta flag ID");
 }
 
 MetaFlag::MetaFlagID MetaFlag::getMetaFlagID(StringRef Name) {

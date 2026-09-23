@@ -1,4 +1,3 @@
 ;; treatIntAsVec(true)
-%mul = mul i?bits ?x, ?c:constantSplat
+%mul = mul nuw:?_ nsw:?_ i?bits ?x, ?c:constantSplat:odd
 %cttz = call:?anch i?bits @llvm.cttz(i?bits %mul, i1 ?isz)
-;; and(?c, 1) == 1

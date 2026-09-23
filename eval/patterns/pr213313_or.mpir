@@ -1,4 +1,0 @@
-;; treatIntAsVec(true)
-%zext = zext i?small ?x to i?big
-%sext = sext i?small ?x to i?big
-%or = or:?anch:c i?big %zext, %sext

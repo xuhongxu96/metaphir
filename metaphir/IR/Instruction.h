@@ -158,9 +158,7 @@ public:
   static constexpr FlagMask FastMathNNegFlags = FastMathFlags | NNegFlag;
 
   InstructionID getInstructionID() const { return ID; }
-  StringRef getOpcodeName() const {
-    return isComposite() ? CustomOpcodeName : getOpcodeName(ID);
-  }
+  StringRef getOpcodeName() const;
   StringRef getResultName() const { return ResultName; }
   ArrayRef<InstructionFlag> getFlags() const { return Flags; }
 
@@ -202,7 +200,7 @@ public:
   static OperandSyntax getOperandSyntax(InstructionID ID);
   bool isComposite() const { return Composite != nullptr; }
   CompositeMatcher *getCompositeMatcher() const { return Composite; }
-  StringRef getCustomOpcodeName() const { return CustomOpcodeName; }
+  StringRef getCustomOpcodeName() const;
 
   static Instruction *get(MIRContext &Context, InstructionID ID,
                           StringRef ResultName, ArrayRef<InstructionFlag> Flags,
@@ -211,13 +209,17 @@ public:
                           MetaVariable *Capture, SourceRange Range,
                           MetaVariable *ParentBlock,
                           PatternSettings Settings = {});
-  static Instruction *
-  getComposite(MIRContext &Context, StringRef ResultName,
-               CompositeMatcher *Composite, StringRef OpcodeName,
-               ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
-               ArrayRef<MatcherOperand> Operands, MetaVariable *Capture,
-               SourceRange Range, MetaVariable *ParentBlock,
-               PatternSettings Settings = {});
+  static Instruction *getComposite(MIRContext &Context, StringRef ResultName,
+                                   CompositeMatcher *Composite,
+                                   ArrayRef<InstructionFlag> Flags,
+                                   ArrayRef<MetaFlag *> MetaFlags,
+                                   ArrayRef<MatcherOperand> Operands,
+                                   MetaVariable *Capture, SourceRange Range,
+                                   MetaVariable *ParentBlock,
+                                   PatternSettings Settings = {});
+
+  static Instruction *withOperands(MIRContext &Context, const Instruction *Orig,
+                                   ArrayRef<MatcherOperand> NewUnkeyedOperands);
 
 private:
   InstructionID ID;
@@ -234,7 +236,6 @@ private:
   MetaVariable *ParentBlock;
   PatternSettings Settings;
   CompositeMatcher *Composite = nullptr;
-  StringRef CustomOpcodeName;
 
   Instruction(InstructionID ID, StringRef ResultName,
               ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
@@ -242,13 +243,12 @@ private:
               ArrayRef<MatcherOperand> KeyedOperands, uint64_t KeyedOperandMask,
               MetaVariable *Capture, SourceRange Range,
               MetaVariable *ParentBlock, PatternSettings Settings,
-              CompositeMatcher *Composite = nullptr,
-              StringRef CustomOpcodeName = "")
+              CompositeMatcher *Composite = nullptr)
       : Value(InstructionVal, Range), ID(ID), ResultName(ResultName),
         Flags(Flags), MetaFlags(MetaFlags), UnkeyedOperands(UnkeyedOperands),
         KeyedOperands(KeyedOperands), KeyedOperandMask(KeyedOperandMask),
         Capture(Capture), ParentBlock(ParentBlock), Settings(Settings),
-        Composite(Composite), CustomOpcodeName(CustomOpcodeName) {}
+        Composite(Composite) {}
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F);

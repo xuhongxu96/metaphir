@@ -83,6 +83,10 @@ metaflag :constantSplat(?v) {
 	isConstantSplat(?v)
 }
 
+match neg [] Unary (?ty ?x) {
+	%ret = sub nsw:?_ nuw:?_ ?ty 0, ?x
+}
+
 metaflag:i:o :s(?v) {
 	hasOneUse(?v)
 }
@@ -91,3 +95,23 @@ metaflag:i:o :su(?v) {
 	hasOneUser(?v)
 }
 
+constraint isKnownNegative(?v) {
+	isKnownNegative(?v)
+}
+metaflag :knownNegative(?v) {
+	isKnownNegative(?v)
+}
+
+constraint isKnownPowerOfTwo(?v) {
+	isKnownPowerOfTwo(?v)
+}
+metaflag :knownPowerOfTwo(?v) {
+	isKnownPowerOfTwo(?v)
+}
+
+constraint isOdd(?v) {
+	and(?v, 1) == 1
+}
+metaflag :odd(?v) {
+	isOdd(?v)
+}

@@ -258,7 +258,8 @@ TEST(PatternMatcherTest, InstructionMatcherControlsCommutativeOperands) {
   IntegerConstant *One =
       IntegerConstant::get(Context, APSInt(APInt(32, 1), false), Range);
   MatcherOperand Operands[] = {{nullptr, One}, {nullptr, X}};
-  MetaFlag *Commutative = MetaFlag::get(Context, "c", {}, Range);
+  MetaFlag *Commutative =
+      MetaFlag::getBuiltin(Context, MetaFlag::MF_c, {}, Range);
   MetaFlag *MetaFlags[] = {Commutative};
   Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
                                           {}, MetaFlags, Operands, nullptr,
@@ -297,7 +298,8 @@ TEST(PatternMatcherTest, OrSelfAdmitsSelectedOperandAsRoot) {
   MetaFlag::Argument OperandIndex;
   OperandIndex.K = MetaFlag::Argument::Integer;
   OperandIndex.IntegerValue = 1;
-  MetaFlag *OrSelf = MetaFlag::get(Context, "o", OperandIndex, Range);
+  MetaFlag *OrSelf =
+      MetaFlag::getBuiltin(Context, MetaFlag::MF_o, OperandIndex, Range);
   MetaFlag *MetaFlags[] = {OrSelf};
   MIRInstruction *Add =
       MIRInstruction::get(Context, MIRInstruction::I_add, "", {}, MetaFlags,
@@ -361,3 +363,50 @@ TEST(PatternMatcherTest, MatchesPatternVariants) {
   MatchResults Matches = Matcher.match(Variants, Target);
   EXPECT_EQ(Matches.size(), 2u);
 }
+
+TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
+  MIRContext Context;
+  SourceRange Range;
+
+  Pattern *Pat = Pattern::get(Context);
+  MetaVariable *Block =
+      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
+
+  // %x = add i32 ?x, ?y
+  MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, Y}};
+  MIRInstruction *Add = MIRInstruction::get(Context, MIRInstruction::I_add, "x",
+                                            {}, {}, AddOperands, nullptr, Range,
+                                            Block);
+  Pat->addInstruction(Add);
+
+  // %res = sub i32 %x, ?x
+  MatcherOperand SubOperands[] = {{nullptr, Add}, {nullptr, X}};
+  MIRInstruction *Sub = MIRInstruction::get(Context, MIRInstruction::I_sub, "res",
+                                            {}, {}, SubOperands, nullptr, Range,
+                                            Block);
+  Pat->addInstruction(Sub);
+
+  LLVMContext LLVMContext;
+  std::unique_ptr<Module> Module = parseModule(
+      R"(
+        define i32 @f(i32 %a, i32 %b) {
+          %1 = add i32 %a, %b
+          %2 = sub i32 %1, %a
+          ret i32 %2
+        }
+      )",
+      LLVMContext);
+  ASSERT_NE(Module, nullptr);
+
+  MIRTarget Target(*Module->getFunction("f"));
+  PatternMatcher Matcher;
+  MatchResults Matches = Matcher.match(*Pat, Target);
+  EXPECT_EQ(Matches.size(), 1u);
+  if (!Matches.empty()) {
+    EXPECT_EQ(std::get<const llvm::Value *>(Matches[0].lookup(*X)->Data),
+              Module->getFunction("f")->getArg(0));
+  }
+}
+

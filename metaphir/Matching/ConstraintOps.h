@@ -141,6 +141,11 @@ evaluateMaskedValueIsZero(ArrayRef<ConstraintValue> Values,
                           const SimplifyQuery &Query,
                           const Constraint &Expression);
 
+Expected<ConstraintValue>
+evaluateInSignedRange(ArrayRef<ConstraintValue> Values,
+                      const SimplifyQuery &Query,
+                      const Constraint &Expression);
+
 } // namespace metaphir
 } // namespace llvm
 

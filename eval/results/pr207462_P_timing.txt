@@ -1,0 +1,4 @@
+modules=50839
+pattern_seconds=2640.507
+patterns=2
+P_anchors=248

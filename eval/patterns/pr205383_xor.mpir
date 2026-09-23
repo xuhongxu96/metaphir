@@ -1,9 +1,9 @@
-%neg = sub i?bits 0, ?x
+%neg = neg i?bits ?x
 %and = and:c i?bits %neg, ?x
-%ctlz = call:?ctlzval i?bits @llvm.ctlz(i?bits %and, i1 ?isz:constantInt)
+%ctlz = call i?bits @llvm.ctlz(i?bits %and, i1 ?_)
 %final = xor:?finalres i?bits %ctlz, ?bm1:constantInt
 %cmp = icmp:?cmp ?pred i?bits ?x, 0
 %sel = select:?anch i1 %cmp, i?bits ?t, i?bits ?f
 ;; (?bm1 == (?bits - 1))
 ;; isPowerOfTwo(?bits)
-;; ((?pred == "eq" && ?f == ?finalres && ((?t == ?ctlzval && ?isz == 0) || ?t == ?bits)) || (?pred == "ne" && ?t == ?finalres && ((?f == ?ctlzval && ?isz == 0) || ?f == ?bits)))
+;; ((?pred == "eq" && ?f == ?finalres && ?t == ?bits) || (?pred == "ne" && ?t == ?finalres && ?f == ?bits))

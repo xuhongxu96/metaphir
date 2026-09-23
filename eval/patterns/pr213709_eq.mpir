@@ -1,6 +1,0 @@
-;; treatIntAsVec(true)
-%neg = sub i?bits 0, ?x
-%and = and:c i?bits %neg, ?x
-%cmp = icmp:?anch eq i?bits %and, ?c:constantSplat
-;; sgt(?bits, 1)
-;; ((?c == 0) || (?c == 1))

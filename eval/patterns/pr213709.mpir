@@ -1,0 +1,8 @@
+;; treatIntAsVec(true)
+%neg = neg i?bits ?x
+%and = and:?and:c i?bits %neg, ?x
+%cmp = icmp:?anch ?pred i?bits %and, ?c:constantSplat
+;; sgt(?bits, 1)
+;; (?pred == "eq" || ?pred == "ne")
+;; (?c == 0 || ?c == 1)
+;; (?pred != "ne" || ?c != 1 || hasOneUse(?and))

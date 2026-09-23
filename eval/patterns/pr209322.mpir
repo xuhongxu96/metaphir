@@ -1,3 +1,2 @@
 ;; treatIntAsVec(true)
-%udiv = udiv:?anch i?bits ?x, ?y
-;; isKnownNegative(?y)
+%udiv = udiv:?anch exact:?_ i?bits ?x, ?y:knownNegative

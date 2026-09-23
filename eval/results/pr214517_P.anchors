@@ -9,6 +9,7 @@ openmpi__bitmap.bc	hwloc_bitmap_singlify	12
 openmpi__bitmap.bc	hwloc_bitmap_singlify	20
 openmpi__bitmap.bc	hwloc_bitmap_singlify	29
 pr214517__shift.ll	shl1_cttz	shl
+pr214517__shift.ll	shl1_cttz_vec	shl
 qemu__listener.bc	vfio_container_region_add	135
 qemu__virtio-iommu.bc	virtio_iommu_freeze_granule	7
 qemu__virtio-iommu.bc	virtio_iommu_set_iommu_device	111

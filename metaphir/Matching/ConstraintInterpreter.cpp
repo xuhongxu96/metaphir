@@ -3,6 +3,7 @@
 #include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
+#include "metaphir/IR/Values.h"
 #include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Instantiation.h"
@@ -113,12 +114,19 @@ ConstraintInterpreter::evalLiteral(const Constraint &Expression,
 Expected<ConstraintValue>
 ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
                                     const Instantiation &State) {
-  const MetaVariable &Variable = *Expression.getVariable();
+  const Value &Variable = *Expression.getVariable();
   const Instantiation::Binding *Binding = State.lookup(Variable);
+  auto FormatMsg = [&](StringRef Msg) -> std::string {
+    if (const auto *MV = dyn_cast<MetaVariable>(&Variable))
+      return (Twine("meta variable '?") + MV->getName() + "' " + Msg).str();
+    std::string Str;
+    raw_string_ostream OS(Str);
+    OS << Variable;
+    return (Twine("variable '") + OS.str() + "' " + Msg).str();
+  };
   if (!Binding)
     return make_error<ConstraintEvaluationError>(
-        Expression, Twine("meta variable '?") + Variable.getName() +
-                        "' is not instantiated");
+        Expression, FormatMsg("is not instantiated"));
 
   switch (Expression.getResultType()) {
   case Constraint::IntegerResult:
@@ -175,8 +183,7 @@ ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
             return ConstraintValue::getValueArray(Val);
           else
             return make_error<ConstraintEvaluationError>(
-                Expression, Twine("meta variable '?") + Variable.getName() +
-                                "' has an incompatible binding");
+                Expression, FormatMsg("has an incompatible binding"));
         },
         Binding->Data);
   default:
@@ -184,8 +191,7 @@ ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
   }
 
   return make_error<ConstraintEvaluationError>(
-      Expression, Twine("meta variable '?") + Variable.getName() +
-                      "' has an incompatible binding");
+      Expression, FormatMsg("has an incompatible binding"));
 }
 
 Expected<ConstraintValue>

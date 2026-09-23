@@ -56,7 +56,7 @@ index 000000000000..1e6829c752c1
 +
 +#endif
 diff --git a/llvm/lib/Analysis/InstructionSimplify.cpp b/llvm/lib/Analysis/InstructionSimplify.cpp
-index 10b159192c4b..0ca67bb19527 100644
+index 10b159192c4b..f3399695848b 100644
 --- a/llvm/lib/Analysis/InstructionSimplify.cpp
 +++ b/llvm/lib/Analysis/InstructionSimplify.cpp
 @@ -34,8 +34,10 @@
@@ -203,7 +203,7 @@ index 10b159192c4b..0ca67bb19527 100644
 +        bool NoWrap = CastOpc == Instruction::ZExt ? Trunc->hasNoUnsignedWrap()
 +                                                   : Trunc->hasNoSignedWrap();
 +        if (Src->getType() == Ty && NoWrap) {
-+          metaphir_eval::reportAnchor(Q.CxtI, "pr204089");
++          metaphir_eval::reportAnchor(Trunc, "pr204089");
 +          return Src;
 +        }
 +      }
@@ -211,7 +211,7 @@ index 10b159192c4b..0ca67bb19527 100644
    }
  
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp b/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
-index 30812cafd2f8..ca30c14126c8 100644
+index 30812cafd2f8..0c7200b81daf 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
 @@ -16,6 +16,7 @@
@@ -244,12 +244,18 @@ index 30812cafd2f8..ca30c14126c8 100644
    }
    // Fold (add (zext (add X, -C)), C) -> (zext X) if X u>= C.
    // Truncate C to the narrow type to avoid mismatched width comparisons.
-@@ -1232,8 +1235,12 @@ Value *InstCombinerImpl::SimplifyAddWithRemainder(BinaryOperator &I) {
+@@ -1230,10 +1233,17 @@ Value *InstCombinerImpl::SimplifyAddWithRemainder(BinaryOperator &I) {
+     }
+     return nullptr;
    };
-   if (Value *V = FoldDivRem(LHS, RHS))
-     return V;
--  if (Value *V = FoldDivRem(RHS, LHS))
+-  if (Value *V = FoldDivRem(LHS, RHS))
 -    return V;
+-  if (Value *V = FoldDivRem(RHS, LHS))
++  if (Value *V = FoldDivRem(LHS, RHS)) {
++    if (!metaphir_eval::foldsDisabled())
++      metaphir_eval::reportAnchor(&I, "pr207462");
+     return V;
++  }
 +  // [MetaphIR eval] PR 207462: commuted add of udiv/urem by 2.
 +  if (!metaphir_eval::foldsDisabled())
 +    if (Value *V = FoldDivRem(RHS, LHS)) {
@@ -259,7 +265,7 @@ index 30812cafd2f8..ca30c14126c8 100644
  
    return nullptr;
  }
-@@ -1822,13 +1829,22 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+@@ -1822,13 +1832,22 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
    }
  
    // Align-up idiom:
@@ -284,7 +290,7 @@ index 30812cafd2f8..ca30c14126c8 100644
        Value *NewAdd = Builder.CreateAdd(A, ConstantInt::get(Ty, *LowMask));
        return BinaryOperator::CreateAnd(NewAdd, ConstantInt::get(Ty, ~*LowMask));
      }
-@@ -1919,20 +1935,30 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+@@ -1919,20 +1938,30 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
  
      // Match: (X >> C) + zext((X & Mask) != 0)
      // or:    zext((X & Mask) != 0) + (X >> C)

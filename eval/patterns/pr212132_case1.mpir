@@ -1,6 +1,7 @@
-%and1 = and:c i?bits ?shift, ?a
+;; treatIntAsVec(true)
+%and1 = and:c i?bits ?shift:knownPowerOfTwo, ?a
 %cmp1 = icmp eq i?bits %and1, 0
 %and2 = and:c i?bits ?shift, ?b
 %cmp2 = icmp eq i?bits %and2, 0
 %cond = or:s i1 %cmp1, %cmp2
-%sel = select:?anch i1 %cond, i?bits 0, i?bits ?shift:constantInt:powerOfTwo
+%sel = select:?anch i1 %cond, i?bits 0, i?bits ?shift

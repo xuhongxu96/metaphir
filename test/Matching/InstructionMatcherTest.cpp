@@ -118,7 +118,8 @@ TEST(InstructionMatcherTest, ReportsUnsupportedCommutativeLayout) {
   MetaVariable *Block =
       MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
-  MetaFlag *Commutative = MetaFlag::get(Context, "c", {}, Range);
+  MetaFlag *Commutative =
+      MetaFlag::getBuiltin(Context, MetaFlag::MF_c, {}, Range);
   MetaFlag *Flags[] = {Commutative};
   MatcherOperand Operands[] = {{nullptr, X}};
   MIRInstruction *Freeze =

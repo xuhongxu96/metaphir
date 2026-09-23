@@ -4,6 +4,8 @@ pr210499__trunc.ll	trunc_nsw_ashr_exact	ret
 pr210499__trunc.ll	trunc_nsw_lshr_exact	ret
 pr210499__trunc.ll	trunc_nuw_ashr_exact	ret
 pr210499__trunc.ll	trunc_nuw_ashr_exact_use	ret
+pr210499__trunc.ll	trunc_nuw_ashr_icmp_vec	ret
 pr210499__trunc.ll	trunc_nuw_lshr_exact	ret
 pr210499__trunc.ll	trunc_nuw_lshr_exact_use	ret
+pr210499__trunc.ll	trunc_nuw_lshr_icmp_vec	ret
 wireshark__packet-lbtrm.bc	dissect_lbtrm	213

@@ -1,4 +1,5 @@
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MIRContextImpl.h"
 #include "llvm/ADT/SmallVector.h"
@@ -85,27 +86,48 @@ Instruction *Instruction::get(
     KeyedOperandMask |= Bit;
     KeyedOperands[Operand.Key] = Operand;
   }
-  return new (Context.pImpl->Alloc)
-      Instruction(ID, Context.pImpl->Saver.save(ResultName),
-                  Context.pImpl->copyArray<InstructionFlag>(Flags),
-                  Context.pImpl->copyArray<MetaFlag *>(MetaFlags),
-                  Context.pImpl->copyArray<MatcherOperand>(UnkeyedOperands),
-                  Context.pImpl->copyArray<MatcherOperand>(KeyedOperands),
-                  KeyedOperandMask, Capture, Range, ParentBlock, Settings);
+  return new (Context.pImpl->Alloc) Instruction(
+      ID, Context.pImpl->Saver.save(ResultName),
+      Context.pImpl->copyArray<InstructionFlag>(Flags),
+      Context.pImpl->copyArray<MetaFlag *>(MetaFlags),
+      Context.pImpl->copyArray<MatcherOperand>(UnkeyedOperands),
+      KeyedOperandMask ? Context.pImpl->copyArray<MatcherOperand>(KeyedOperands)
+                       : ArrayRef<MatcherOperand>{},
+      KeyedOperandMask, Capture, Range, ParentBlock, Settings);
 }
 
 Instruction *Instruction::getComposite(
     MIRContext &Context, StringRef ResultName, CompositeMatcher *Composite,
-    StringRef OpcodeName, ArrayRef<InstructionFlag> Flags,
-    ArrayRef<MetaFlag *> MetaFlags, ArrayRef<MatcherOperand> Operands,
-    MetaVariable *Capture, SourceRange Range, MetaVariable *ParentBlock,
-    PatternSettings Settings) {
-  return new (Context.pImpl->Alloc) Instruction(
-      InstructionID(0), Context.pImpl->Saver.save(ResultName),
-      Context.pImpl->copyArray<InstructionFlag>(Flags),
-      Context.pImpl->copyArray<MetaFlag *>(MetaFlags),
-      Context.pImpl->copyArray<MatcherOperand>(Operands), {}, 0, Capture, Range,
-      ParentBlock, Settings, Composite, Context.pImpl->Saver.save(OpcodeName));
+    ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
+    ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
+    MetaVariable *ParentBlock, PatternSettings Settings) {
+  return new (Context.pImpl->Alloc)
+      Instruction(InstructionID(0), Context.pImpl->Saver.save(ResultName),
+                  Context.pImpl->copyArray<InstructionFlag>(Flags),
+                  Context.pImpl->copyArray<MetaFlag *>(MetaFlags),
+                  Context.pImpl->copyArray<MatcherOperand>(Operands), {}, 0,
+                  Capture, Range, ParentBlock, Settings, Composite);
+}
+
+Instruction *
+Instruction::withOperands(MIRContext &Context, const Instruction *Orig,
+                          ArrayRef<MatcherOperand> NewUnkeyedOperands) {
+  auto *NewI = new (Context.pImpl->Alloc)
+      Instruction(Orig->ID, Orig->ResultName, Orig->Flags, Orig->MetaFlags,
+                  Context.pImpl->copyArray<MatcherOperand>(NewUnkeyedOperands),
+                  Orig->KeyedOperands, Orig->KeyedOperandMask, Orig->Capture,
+                  Orig->getSourceRange(), Orig->ParentBlock, Orig->Settings,
+                  Orig->Composite);
+  NewI->setOrSelfValue(Orig->OrSelfValue);
+  return NewI;
+}
+
+StringRef Instruction::getOpcodeName() const {
+  return isComposite() ? Composite->getName() : getOpcodeName(ID);
+}
+
+StringRef Instruction::getCustomOpcodeName() const {
+  return isComposite() ? Composite->getName() : "";
 }
 
 StringRef InstructionFlag::getName(FlagID ID) {

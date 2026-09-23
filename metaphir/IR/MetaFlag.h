@@ -4,6 +4,7 @@
 #include "metaphir/IR/MetaVariable.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <optional>
+#include <variant>
 
 namespace llvm {
 namespace metaphir {
@@ -41,25 +42,29 @@ public:
 
   static constexpr unsigned UnlimitedArgs = ~0u;
 
-  StringRef getName() const { return Name; }
-  MetaFlagID getMetaFlagID() const { return ID; }
+  StringRef getName() const;
+  MetaFlagID getMetaFlagID() const;
+  bool isUserDefined() const { return std::holds_alternative<StringRef>(Flag); }
   ArrayRef<Argument> getArguments() const { return Arguments; }
   SourceRange getSourceRange() const { return Range; }
 
   static std::optional<Schema> getSchema(MetaFlagID ID);
   static MetaFlagID getMetaFlagID(StringRef Name);
-  static MetaFlag *get(MIRContext &Context, StringRef Name,
-                       ArrayRef<Argument> Arguments, SourceRange Range);
+  static StringRef getMetaFlagName(MetaFlagID ID);
+  static MetaFlag *getBuiltin(MIRContext &Context, MetaFlagID ID,
+                              ArrayRef<Argument> Arguments, SourceRange Range);
+  static MetaFlag *getUserDefined(MIRContext &Context, StringRef Name,
+                                  ArrayRef<Argument> Arguments,
+                                  SourceRange Range);
 
 private:
-  MetaFlagID ID;
-  StringRef Name;
+  std::variant<MetaFlagID, StringRef> Flag;
   ArrayRef<Argument> Arguments;
   SourceRange Range;
 
-  MetaFlag(MetaFlagID ID, StringRef Name, ArrayRef<Argument> Arguments,
-           SourceRange Range)
-      : ID(ID), Name(Name), Arguments(Arguments), Range(Range) {}
+  MetaFlag(std::variant<MetaFlagID, StringRef> Flag,
+           ArrayRef<Argument> Arguments, SourceRange Range)
+      : Flag(Flag), Arguments(Arguments), Range(Range) {}
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const MetaFlag::Argument &A);

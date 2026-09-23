@@ -22,6 +22,7 @@ pr214541__div.ll	udiv_udiv_bounded	d2
 pr214541__div.ll	udiv_udiv_exact	d2
 pr214541__div.ll	udiv_udiv_exact_inner_only	d2
 pr214541__div.ll	udiv_udiv_exact_outer_only	d2
+pr214541__div.ll	udiv_udiv_vec	d2
 qemu__aspeed_scu.bc	aspeed_2500_scu_calc_hpll	27
 qemu__aspeed_scu.bc	aspeed_2600_scu_calc_hpll	28
 qemu__ufs.bc	ufs_wb_update_avail_buffer	13

@@ -1,3 +1,2 @@
-%scmp = call:?anch ?rty @llvm.scmp(i?bits ?x:apInt, i?bits 0)
-;; sge(?x, -1)
-;; sle(?x, 1)
+%scmp = call:?anch ?rty @llvm.scmp(?ity ?x, ?ity 0)
+;; inSignedRange(?x, -1, 1)

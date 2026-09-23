@@ -43,7 +43,7 @@ define i32 @bad_instruction_su(i32 %shared, i32 %single) {
 }
 ; CHECK-NEXT: target 2: @bad_instruction_su
 ; CHECK-NEXT:   no match
-; CHECK-NEXT:   constraint not satisfied: (hasOneUser ?_)
+; CHECK-NEXT:   constraint not satisfied: (hasOneUser %sum)
 
 define i32 @bad_operand_s(i32 %shared, i32 %single) {
   %sum = add i32 %shared, %shared
@@ -67,4 +67,4 @@ define i32 @bad_instruction_s(i32 %shared, i32 %single) {
 }
 ; CHECK-NEXT: target 4: @bad_instruction_s
 ; CHECK-NEXT:   no match
-; CHECK-NEXT:   constraint not satisfied: (hasOneUse ?_)
+; CHECK-NEXT:   constraint not satisfied: (hasOneUse %one)

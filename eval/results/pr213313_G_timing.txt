@@ -1,0 +1,3 @@
+modules=50839
+gt_seconds=1944.707
+G_anchors=15

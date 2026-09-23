@@ -457,5 +457,29 @@ evaluateMaskedValueIsZero(ArrayRef<ConstraintValue> Values,
       MaskedValueIsZero(*Value, MaskValue, Query));
 }
 
+Expected<ConstraintValue>
+evaluateInSignedRange(ArrayRef<ConstraintValue> Values,
+                      const SimplifyQuery &Query,
+                      const Constraint &Expression) {
+  Expected<const llvm::Value *> Value =
+      requireIntegerValue(Values[0], Expression);
+  if (!Value)
+    return Value.takeError();
+  Expected<APSInt> Min = requireInteger(Values[1], Expression);
+  if (!Min)
+    return Min.takeError();
+  Expected<APSInt> Max = requireInteger(Values[2], Expression);
+  if (!Max)
+    return Max.takeError();
+
+  ConstantRange Range = computeConstantRange(
+      const_cast<llvm::Value *>(*Value), /*ForSigned=*/true, Query);
+  unsigned BW = Range.getBitWidth();
+  APInt MinVal = Min->sextOrTrunc(BW);
+  APInt MaxVal = Max->sextOrTrunc(BW);
+  return ConstraintValue::getBoolean(
+      Range.getSignedMin().sge(MinVal) && Range.getSignedMax().sle(MaxVal));
+}
+
 } // namespace metaphir
 } // namespace llvm

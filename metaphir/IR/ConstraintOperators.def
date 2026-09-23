@@ -120,6 +120,8 @@ MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPowerOfTwo, "isKnownPowerOfTwo",
                                     Call, BooleanResult, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaskedValueIsZero, "maskedValueIsZero",
                                     Call, BooleanResult, 2)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(InSignedRange, "inSignedRange", Call,
+                                    BooleanResult, 3)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownZeros, "knownZeros", Call,
                                     IntegerResult, 1)

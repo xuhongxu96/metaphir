@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
 %rem = and:c i?bits ?x, 1
 %div = lshr i?bits ?x, 1
-%add = add:?anch:c i?bits %rem, %div
+%add = add:?anch:c nuw:?_ nsw:?_ i?bits %rem, %div
