@@ -833,6 +833,7 @@ bool MIRParser::parseArrayCapture(MatcherOperand &Result, bool WithTypes) {
 // Parsing is schema-driven here so the stored representation stays uniform
 // while syntax and arity remain instruction-specific.
 bool MIRParser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
+                                       unsigned Arity, StringRef OpName,
                                        SmallVectorImpl<MatcherOperand> &Ops) {
   auto Typed = [&](MetaType E = MetaType::Value) -> bool {
     MatcherOperand O;
@@ -846,8 +847,14 @@ bool MIRParser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
   };
 
   switch (Syntax) {
-  case Instruction::OperandSyntax::Unary:
-    return Typed();
+  case Instruction::OperandSyntax::Nary:
+    for (unsigned I = 0; I < Arity; ++I)
+      if ((I && Comma()) || Typed())
+        return true;
+    if (Lex.getKind() == tok::comma)
+      return error("'" + OpName + "' takes " + Twine(Arity) + " operand" +
+                   (Arity == 1 ? "" : "s"));
+    return false;
   case Instruction::OperandSyntax::Binary: {
     // The second operand repeats the first operand's type rather than spelling
     // it again.
@@ -864,8 +871,6 @@ bool MIRParser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
     Ops.push_back(B);
     return false;
   }
-  case Instruction::OperandSyntax::Ternary:
-    return Typed() || Comma() || Typed() || Comma() || Typed();
   case Instruction::OperandSyntax::Cast: {
     if (Typed())
       return true;
@@ -950,11 +955,11 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
   };
 
   switch (Instruction::getOperandSyntax(ID)) {
-  case Instruction::OperandSyntax::Unary:
+  case Instruction::OperandSyntax::Nary:
   case Instruction::OperandSyntax::Binary:
-  case Instruction::OperandSyntax::Ternary:
   case Instruction::OperandSyntax::Cast:
-    if (parseArchetypeOperands(Instruction::getOperandSyntax(ID), Ops))
+    if (parseArchetypeOperands(Instruction::getOperandSyntax(ID),
+                               Instruction::getOperandArity(ID), Op, Ops))
       return true;
     break;
   case Instruction::OperandSyntax::Custom:
@@ -1286,17 +1291,19 @@ bool MIRParser::parseMatchParameters(Instruction::OperandSyntax Syntax,
   };
 
   switch (Syntax) {
-  case Instruction::OperandSyntax::Unary:
-    return typeParameter() || operandParameter();
+  case Instruction::OperandSyntax::Nary:
+    // Any number of individually typed operands; the count becomes the
+    // matcher's arity.
+    if (Lex.getKind() == tok::rparen)
+      return error("Nary matcher needs at least one operand parameter");
+    do {
+      if (typeParameter() || operandParameter())
+        return true;
+    } while (consume(tok::comma));
+    return false;
   case Instruction::OperandSyntax::Binary:
     return typeParameter() || operandParameter() || comma() ||
            operandParameter();
-  case Instruction::OperandSyntax::Ternary:
-    // Each Ternary operand carries its own type ('select i1 ?c, i?n ?t,
-    // i?n ?f'), unlike Binary where one type is shared.
-    return typeParameter() || operandParameter() || comma() ||
-           typeParameter() || operandParameter() || comma() ||
-           typeParameter() || operandParameter();
   case Instruction::OperandSyntax::Cast:
     return typeParameter() || operandParameter() ||
            expect(tok::kw_to, "expected 'to' before the result type") ||
@@ -1485,17 +1492,20 @@ bool MIRParser::parseTopLevelMatch() {
   if (expect(tok::rsquare, "expected ']' after supported flags"))
     return true;
 
+  // 'Unary' is spelling sugar for a Nary matcher with exactly one operand.
   Instruction::OperandSyntax Syntax;
-  if (consume(tok::kw_Unary))
-    Syntax = Instruction::OperandSyntax::Unary;
+  bool IsUnary = false;
+  if (consume(tok::kw_Unary)) {
+    Syntax = Instruction::OperandSyntax::Nary;
+    IsUnary = true;
+  } else if (consume(tok::kw_Nary))
+    Syntax = Instruction::OperandSyntax::Nary;
   else if (consume(tok::kw_Binary))
     Syntax = Instruction::OperandSyntax::Binary;
-  else if (consume(tok::kw_Ternary))
-    Syntax = Instruction::OperandSyntax::Ternary;
   else if (consume(tok::kw_Cast))
     Syntax = Instruction::OperandSyntax::Cast;
   else
-    return error("expected archetype Unary, Binary, Ternary, or Cast");
+    return error("expected archetype Unary, Nary, Binary, or Cast");
 
   if (IsCommutative && Syntax != Instruction::OperandSyntax::Binary)
     return error("only Binary matchers can be declared commutative with ':c'");
@@ -1518,6 +1528,10 @@ bool MIRParser::parseTopLevelMatch() {
     return true;
   if (expect(tok::rparen, "expected ')' after parameter list"))
     return true;
+  unsigned Arity =
+      count_if(Parameters, [](const ParameterDef &P) { return !P.IsType; });
+  if (IsUnary && Arity != 1)
+    return error("Unary matcher takes exactly one operand parameter");
 
   StringSet<> SeenOperands;
   for (const ParameterDef &P : Parameters) {
@@ -1667,11 +1681,11 @@ bool MIRParser::parseTopLevelMatch() {
 
   } while (consume(tok::kw_or));
 
-  auto *CM = new (Context.pImpl->Alloc)
-      CompositeMatcher(Context.pImpl->Saver.save(MatcherName), IsCommutative,
-                       Context.pImpl->copyArray(ArrayRef(SupportedFlags)),
-                       Syntax, Context.pImpl->copyArray(ArrayRef(Parameters)),
-                       Context.pImpl->copyArray(ArrayRef(Branches)));
+  auto *CM = new (Context.pImpl->Alloc) CompositeMatcher(
+      Context.pImpl->Saver.save(MatcherName), IsCommutative,
+      Context.pImpl->copyArray(ArrayRef(SupportedFlags)), Syntax, Arity,
+      Context.pImpl->copyArray(ArrayRef(Parameters)),
+      Context.pImpl->copyArray(ArrayRef(Branches)));
   Context.registerCompositeMatcher(CM);
   return false;
 }
@@ -1698,7 +1712,7 @@ bool MIRParser::parseCompositeInstruction(Instruction *&Result,
   SmallVector<MatcherOperand, 8> Ops;
   if (CM->getSyntax() == Instruction::OperandSyntax::Custom)
     return error("custom syntax not supported for composite matchers");
-  if (parseArchetypeOperands(CM->getSyntax(), Ops))
+  if (parseArchetypeOperands(CM->getSyntax(), CM->getArity(), OpName, Ops))
     return true;
 
   SourceRange Range{Loc, Lex.getLoc()};

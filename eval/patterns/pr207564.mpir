@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
-%trunc = trunc i?big ?x to i?small
+%trunc = trunc nuw:?_ nsw:?_ i?big ?x to i?small
 %sub = neg i?small %trunc
-%zext = zext:?anch i?small %sub to i?big
+%zext = zext:?anch nneg:?_ i?small %sub to i?big

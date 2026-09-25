@@ -276,13 +276,27 @@ evaluateIsConstantSplat(ConstraintInterpreter &Interpreter,
     return Values.takeError();
   const ConstraintValue &V = (*Values)[0];
   if (V.getKind() == ConstraintValue::Value && V.getValue()) {
-    if (isa<llvm::ConstantInt>(V.getValue()))
-      return ConstraintValue::getBoolean(true);
     if (const auto *Constant = dyn_cast<llvm::Constant>(V.getValue()))
       if (Constant->getType()->isVectorTy())
-        return ConstraintValue::getBoolean(Constant->getSplatValue() !=
-                                           nullptr);
+        return ConstraintValue::getBoolean(
+            Constant->getSplatValue(/*AllowPoison=*/true) != nullptr);
   }
+  return ConstraintValue::getBoolean(false);
+}
+
+Expected<ConstraintValue> evaluateIsScalar(ConstraintInterpreter &Interpreter,
+                                           ArrayRef<Constraint *> Arguments,
+                                           const Instantiation &State,
+                                           const Constraint &) {
+  auto Values = evaluateArguments(Interpreter, Arguments, State);
+  if (!Values)
+    return Values.takeError();
+  const ConstraintValue &V = (*Values)[0];
+  if (V.getKind() == ConstraintValue::Value && V.getValue())
+    return ConstraintValue::getBoolean(!V.getValue()->getType()->isVectorTy());
+  if (V.getKind() == ConstraintValue::Integer ||
+      V.getKind() == ConstraintValue::Boolean)
+    return ConstraintValue::getBoolean(true);
   return ConstraintValue::getBoolean(false);
 }
 
@@ -408,6 +422,17 @@ evaluateIsKnownNegative(ArrayRef<ConstraintValue> Values,
 }
 
 Expected<ConstraintValue>
+evaluateIsGuaranteedNotToBeUndef(ArrayRef<ConstraintValue> Values,
+                                 const SimplifyQuery &Query,
+                                 const Constraint &Expression) {
+  Expected<const llvm::Value *> Value = requireValue(Values[0], Expression);
+  if (!Value)
+    return Value.takeError();
+  return ConstraintValue::getBoolean(
+      isGuaranteedNotToBeUndef(*Value, Query.AC, Query.CxtI, Query.DT));
+}
+
+Expected<ConstraintValue>
 evaluateIsKnownNonNegative(ArrayRef<ConstraintValue> Values,
                            const SimplifyQuery &Query,
                            const Constraint &Expression) {
@@ -472,13 +497,13 @@ evaluateInSignedRange(ArrayRef<ConstraintValue> Values,
   if (!Max)
     return Max.takeError();
 
-  ConstantRange Range = computeConstantRange(
-      const_cast<llvm::Value *>(*Value), /*ForSigned=*/true, Query);
+  ConstantRange Range = computeConstantRange(const_cast<llvm::Value *>(*Value),
+                                             /*ForSigned=*/true, Query);
   unsigned BW = Range.getBitWidth();
   APInt MinVal = Min->sextOrTrunc(BW);
   APInt MaxVal = Max->sextOrTrunc(BW);
-  return ConstraintValue::getBoolean(
-      Range.getSignedMin().sge(MinVal) && Range.getSignedMax().sle(MaxVal));
+  return ConstraintValue::getBoolean(Range.getSignedMin().sge(MinVal) &&
+                                     Range.getSignedMax().sle(MaxVal));
 }
 
 } // namespace metaphir

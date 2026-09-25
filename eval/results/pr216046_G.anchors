@@ -1,16 +1,2 @@
 abc__lucky.bc	compareWords	.0
-delta-rs__deltalake_core-1fa7f9344ca2d0c9.deltalake_core.c7669c1bd09fee8-cgu.14.bc	_RNvXs6_NtNtCs14kWLkQVSKO_14deltalake_core6writer5statsNtB5_11StatsScalarNtNtCsbvkFyIu7lgC_4core3cmp10PartialOrd11partial_cmp	99
-meilisearch-rs__dump-aabfeca2ed74a9fb.dump.2d0df727840c2dbc-cgu.0.bc	_ZN86_$LT$core..marker..PhantomData$LT$T$GT$$u20$as$u20$serde_core..de..DeserializeSeed$GT$11deserialize17h74563b9ee6ee587fE	491
-meilisearch-rs__index_scheduler-0c73470abd85ee5a.index_scheduler.34b94f085cb09947-cgu.0.bc	_ZN15index_scheduler12index_mapper9index_map8IndexMap3get17he2534f747d025f1aE	155
-meilisearch-rs__index_scheduler-0c73470abd85ee5a.index_scheduler.34b94f085cb09947-cgu.0.bc	_ZN15index_scheduler12index_mapper9index_map8IndexMap6create17hf47279a27093e486E	58
-meilisearch-rs__index_scheduler-0c73470abd85ee5a.index_scheduler.34b94f085cb09947-cgu.0.bc	_ZN5alloc11collections5btree3map25BTreeMap$LT$K$C$V$C$A$GT$6insert17hf2aaa0da2fd264c2E	36
-meilisearch-rs__index_scheduler-0c73470abd85ee5a.index_scheduler.34b94f085cb09947-cgu.0.bc	_ZN5alloc11collections5btree3map25BTreeMap$LT$K$C$V$C$A$GT$6remove17h42b88dc5c5fd893eE	32
-meilisearch-rs__index_scheduler-0c73470abd85ee5a.index_scheduler.34b94f085cb09947-cgu.0.bc	_ZN86_$LT$core..marker..PhantomData$LT$T$GT$$u20$as$u20$serde_core..de..DeserializeSeed$GT$11deserialize17h95e208ec07257720E	458
-meilisearch-rs__meilisearch-40df1108108d7559.meilisearch.66439a82a0d7f210-cgu.0.bc	_ZN5alloc11collections5btree3map25BTreeMap$LT$K$C$V$C$A$GT$6insert17h06ab695605013010E	34
-meilisearch-rs__meilisearch-40df1108108d7559.meilisearch.66439a82a0d7f210-cgu.0.bc	_ZN5alloc11collections5btree3map25BTreeMap$LT$K$C$V$C$A$GT$6remove17h1aa627d8d8fdb45fE	31
-meilisearch-rs__milli-dcad8bcf446596ae.milli.ae659b5d16487f95-cgu.0.bc	_ZN5alloc11collections5btree3map25BTreeMap$LT$K$C$V$C$A$GT$6insert17h907d580d8dd9a426E	29
-meilisearch-rs__uuid-1c60e6252c3b02f3.uuid.6fa1d9a388a54494-cgu.0.bc	_ZN4core5array74_$LT$impl$u20$core..cmp..PartialOrd$u20$for$u20$$u5b$T$u3b$$u20$N$u5d$$GT$11partial_cmp17h8e5b60bd5d28f6a5E	9
-meilisearch-rs__uuid-1c60e6252c3b02f3.uuid.6fa1d9a388a54494-cgu.0.bc	_ZN4uuid7non_nil95_$LT$impl$u20$core..cmp..PartialOrd$LT$uuid..non_nil..NonNilUuid$GT$$u20$for$u20$uuid..Uuid$GT$11partial_cmp17hf950dac662c8c4a2E	12
-meilisearch-rs__uuid-1c60e6252c3b02f3.uuid.6fa1d9a388a54494-cgu.0.bc	_ZN85_$LT$uuid..non_nil..NonNilUuid$u20$as$u20$core..cmp..PartialOrd$LT$uuid..Uuid$GT$$GT$11partial_cmp17h807f4920d76b1601E	12
 node__node_sockaddr.bc	_ZNK4node13SocketAddress7compareERKS0_	.sroa.0.0.i24
-node__node_sockaddr.bc	_ZNK4node13SocketAddress7compareERKS0_	65

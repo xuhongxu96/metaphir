@@ -83,8 +83,10 @@ private:
                      SmallVectorImpl<InstructionFlag> &Result);
 
   /// Parses the operands of one of the shared archetypes. Custom grammars are
-  /// specific to a built-in instruction and stay with the caller.
-  bool parseArchetypeOperands(Instruction::OperandSyntax Syntax,
+  /// specific to a built-in instruction and stay with the caller. Arity is the
+  /// number of operands a Nary matcher named OpName takes.
+  bool parseArchetypeOperands(Instruction::OperandSyntax Syntax, unsigned Arity,
+                              StringRef OpName,
                               SmallVectorImpl<MatcherOperand> &Ops);
 
   bool parseTopLevelMatch();

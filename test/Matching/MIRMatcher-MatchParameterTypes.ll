@@ -8,7 +8,7 @@
 ; RUN: %metaphir-match %t/open.mpir %t/input.ll | FileCheck %s --check-prefix=OPEN
 ; RUN: %metaphir-match %t/use-fixed.mpir %t/input.ll | FileCheck %s --check-prefix=USEFIX
 ; RUN: %metaphir-match %t/use-metaint.mpir %t/input.ll | FileCheck %s --check-prefix=USEBITS
-; RUN: %metaphir-match %t/ternary.mpir %t/select.ll | FileCheck %s --check-prefix=TERN
+; RUN: %metaphir-match %t/nary.mpir %t/select.ll | FileCheck %s --check-prefix=NARY
 
 ;--- fixed.mpir
 match addi8 [] Binary (i8 ?x, ?y) {
@@ -80,9 +80,9 @@ define i32 @wide(i32 %x, i32 %y) {
 ; USEBITS-NEXT:   match 0:
 ; USEBITS-NEXT:     {?a = %x, ?anch = %r, ?b = %y, ?bits = 32}
 
-; Ternary operands are typed individually, so the list has a type before each.
-;--- ternary.mpir
-match pick [] Ternary (i1 ?c, ?ty ?t, ?ty ?f) {
+; Nary operands are typed individually, so the list has a type before each.
+;--- nary.mpir
+match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
 	%ret = select i1 ?c, ?ty ?t, ?ty ?f
 }
 
@@ -93,6 +93,6 @@ define i32 @sel(i1 %c, i32 %a, i32 %b) {
   %r = select i1 %c, i32 %a, i32 %b
   ret i32 %r
 }
-; TERN: target 0: @sel
-; TERN-NEXT:   match 0:
-; TERN-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?cond = %c}
+; NARY: target 0: @sel
+; NARY-NEXT:   match 0:
+; NARY-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?cond = %c}

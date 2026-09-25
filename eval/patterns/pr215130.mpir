@@ -1,13 +1,7 @@
 ;; treatIntAsVec(true)
-match uaddSatFold [] Binary (i?bits ?sat, ?c) {
-	%ret = add nsw:?_ nuw:?_ i?bits ?sat, ?negc:or(:constantInt, :constantSplat)
-	;; add(?c, ?negc, ?bits) == 0
-} or {
-	%ret = sub nsw:?_ nuw:?_ i?bits ?sat, ?c:or(:constantInt, :constantSplat)
-}
-
 %sat = call:s i?bits @llvm.uadd.sat(i?bits ?x, i?bits ?c:or(:constantInt, :constantSplat))
-%res = uaddSatFold:?anch i?bits %sat, ?c
+%res = add:?anch:c nsw:?_ nuw:?_ i?bits %sat, ?negc:or(:constantInt, :constantSplat)
+;; add(?c, ?negc, ?bits) == 0
 
 
 

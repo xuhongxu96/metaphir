@@ -197,9 +197,19 @@ bool Instruction::isCommutative(InstructionID ID) {
 
 Instruction::OperandSyntax Instruction::getOperandSyntax(InstructionID ID) {
   switch (ID) {
-#define MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, Syntax)                   \
+#define MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, Syntax, Arity)            \
   case I_##Name:                                                               \
     return Instruction::OperandSyntax::Syntax;
+#include "metaphir/IR/InstructionMatchers.def"
+  }
+  llvm_unreachable("invalid instruction kind");
+}
+
+unsigned Instruction::getOperandArity(InstructionID ID) {
+  switch (ID) {
+#define MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, Syntax, Arity)            \
+  case I_##Name:                                                               \
+    return Arity;
 #include "metaphir/IR/InstructionMatchers.def"
   }
   llvm_unreachable("invalid instruction kind");

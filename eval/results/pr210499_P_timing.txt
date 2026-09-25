@@ -1,4 +1,4 @@
 modules=50839
-pattern_seconds=2476.900
+pattern_seconds=4547.927
 patterns=1
 P_anchors=11

@@ -11,10 +11,10 @@ match shr [exact] Binary (?ty ?x, ?y) {
 	%ret = ashr exact:?exact ?ty ?x, ?y
 }
 
-match:c bitwiseLogic [] Binary (?ty ?x, ?y) {
+match:c bitwiseLogic [disjoint] Binary (?ty ?x, ?y) {
 	%ret = and ?ty ?x, ?y
 } or {
-	%ret = or ?ty ?x, ?y
+	%ret = or disjoint:?disjoint ?ty ?x, ?y
 } or {
 	%ret = xor ?ty ?x, ?y
 }
@@ -79,6 +79,10 @@ metaflag :zeroFP(?v) {
 	isZeroFP(?v)
 }
 
+metaflag :scalar(?v) {
+	isScalar(?v)
+}
+
 metaflag :constantSplat(?v) {
 	isConstantSplat(?v)
 }
@@ -95,16 +99,14 @@ metaflag:i:o :su(?v) {
 	hasOneUser(?v)
 }
 
-constraint isKnownNegative(?v) {
-	isKnownNegative(?v)
-}
 metaflag :knownNegative(?v) {
 	isKnownNegative(?v)
 }
 
-constraint isKnownPowerOfTwo(?v) {
-	isKnownPowerOfTwo(?v)
+metaflag :notUndef(?v) {
+	isGuaranteedNotToBeUndef(?v)
 }
+
 metaflag :knownPowerOfTwo(?v) {
 	isKnownPowerOfTwo(?v)
 }
@@ -114,4 +116,20 @@ constraint isOdd(?v) {
 }
 metaflag :odd(?v) {
 	isOdd(?v)
+}
+
+match selectEq [] Nary (?cond_ty ?x, ?cond_ty ?y, ?val_ty ?a, ?val_ty ?b) {
+	%cmp = icmp eq ?cond_ty ?x, ?y
+	%ret = select i1 %cmp, ?val_ty ?a, ?val_ty ?b
+} or {
+	%cmp = icmp ne ?cond_ty ?x, ?y
+	%ret = select i1 %cmp, ?val_ty ?b, ?val_ty ?a
+}
+
+match selectEqZero [] Nary (?cond_ty ?x, ?val_ty ?a, ?val_ty ?b) {
+	%cmp = icmp eq ?cond_ty ?x, 0
+	%ret = select i1 %cmp, ?val_ty ?a, ?val_ty ?b
+} or {
+	%cmp = icmp ne ?cond_ty ?x, 0
+	%ret = select i1 %cmp, ?val_ty ?b, ?val_ty ?a
 }

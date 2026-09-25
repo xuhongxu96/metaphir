@@ -1,7 +1,0 @@
-modules_ok=50839
-gt_mode=llvm
-plugin_seconds=1721.910
-pattern_seconds=641.430
-patterns=1
-G_anchors=17
-P_anchors=16

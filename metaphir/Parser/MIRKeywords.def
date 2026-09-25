@@ -19,8 +19,8 @@ MIR_KEYWORD(constraint)
 MIR_KEYWORD(metaflag)
 
 MIR_KEYWORD(Unary)
+MIR_KEYWORD(Nary)
 MIR_KEYWORD(Binary)
-MIR_KEYWORD(Ternary)
 MIR_KEYWORD(Cast)
 
 #ifndef MIR_CONSTANT_KEYWORD

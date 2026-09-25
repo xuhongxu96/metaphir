@@ -91,11 +91,11 @@ public:
 
   CompositeMatcher(StringRef Name, bool IsCommutative,
                    ArrayRef<InstructionFlag::FlagID> SupportedFlags,
-                   Instruction::OperandSyntax Syntax,
+                   Instruction::OperandSyntax Syntax, unsigned Arity,
                    ArrayRef<ParameterDef> Parameters, ArrayRef<Branch> Branches)
       : Name(Name), IsCommutative(IsCommutative),
-        SupportedFlags(SupportedFlags), Syntax(Syntax), Parameters(Parameters),
-        Branches(Branches) {}
+        SupportedFlags(SupportedFlags), Syntax(Syntax), Arity(Arity),
+        Parameters(Parameters), Branches(Branches) {}
 
   StringRef getName() const { return Name; }
   bool isCommutative() const { return IsCommutative; }
@@ -106,6 +106,8 @@ public:
     return llvm::is_contained(SupportedFlags, ID);
   }
   Instruction::OperandSyntax getSyntax() const { return Syntax; }
+  // Number of value operands at a use site.
+  unsigned getArity() const { return Arity; }
   ArrayRef<ParameterDef> getParameters() const { return Parameters; }
   ArrayRef<Branch> getBranches() const { return Branches; }
 
@@ -114,6 +116,7 @@ private:
   bool IsCommutative;
   ArrayRef<InstructionFlag::FlagID> SupportedFlags;
   Instruction::OperandSyntax Syntax;
+  unsigned Arity;
   ArrayRef<ParameterDef> Parameters;
   ArrayRef<Branch> Branches;
 };

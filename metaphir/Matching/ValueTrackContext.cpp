@@ -1,5 +1,6 @@
 #include "metaphir/Matching/ValueTrackContext.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/TargetParser/Triple.h"
 
@@ -15,6 +16,7 @@ const DataLayout &ValueTrackContext::ensure(const llvm::Instruction *CtxI) {
     F = Fn;
     DT.reset();
     AC.reset();
+    DC.reset();
     TLII.reset();
     TLI.reset();
   }
@@ -28,12 +30,22 @@ const DataLayout &ValueTrackContext::ensure(const llvm::Instruction *CtxI) {
     AC.emplace(*Fn);
   if (!DT)
     DT.emplace(*Fn);
+  if (!DC) {
+    // Register every conditional branch up front, so facts implied by a
+    // dominating branch are visible like in InstCombine. Dominance is checked
+    // at query time, so non-dominating branches are harmless.
+    DC.emplace();
+    for (BasicBlock &BB : *Fn)
+      if (auto *BI = dyn_cast_or_null<CondBrInst>(BB.getTerminator()))
+        DC->registerBranch(BI);
+  }
   return DL;
 }
 
 SimplifyQuery ValueTrackContext::getQuery(const llvm::Instruction *CtxI) {
   const DataLayout &DL = ensure(CtxI);
-  return SimplifyQuery(DL, &*TLI, &*DT, &*AC, CtxI);
+  return SimplifyQuery(DL, &*TLI, &*DT, &*AC, CtxI, /*UseInstrInfo=*/true,
+                       /*CanUseUndef=*/true, &*DC);
 }
 
 } // namespace detail

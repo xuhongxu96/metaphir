@@ -7,6 +7,11 @@
 ; RUN: not %metaphir-parse %t/missing-to.ll 2>&1 | FileCheck %s --check-prefix=TO
 ; RUN: not %metaphir-parse %t/short-binary.ll 2>&1 | FileCheck %s --check-prefix=SHORT
 ; RUN: not %metaphir-parse %t/type-for-operand.ll 2>&1 | FileCheck %s --check-prefix=OPERAND
+; RUN: not %metaphir-parse %t/unary-two.ll 2>&1 | FileCheck %s --check-prefix=UNARY
+; RUN: not %metaphir-parse %t/nary-empty.ll 2>&1 | FileCheck %s --check-prefix=EMPTY
+; RUN: not %metaphir-parse %t/nary-few.ll 2>&1 | FileCheck %s --check-prefix=FEW
+; RUN: not %metaphir-parse %t/nary-many.ll 2>&1 | FileCheck %s --check-prefix=MANY
+; RUN: not %metaphir-parse %t/builtin-many.ll 2>&1 | FileCheck %s --check-prefix=BUILTIN
 
 ;--- missing-comma.ll
 match bad [] Binary (?ty ?x ?y) {
@@ -32,3 +37,37 @@ match bad [] Binary (?ty i32, ?y) {
 
 	%ret = add ?ty ?x, ?y
 }
+
+; 'Unary' is a Nary matcher that must declare exactly one operand.
+;--- unary-two.ll
+match bad [] Unary (?ty ?x, ?ty ?y) {
+; UNARY: Unary matcher takes exactly one operand parameter
+
+	%ret = add ?ty ?x, ?y
+}
+;--- nary-empty.ll
+match bad [] Nary () {
+; EMPTY: Nary matcher needs at least one operand parameter
+
+	%ret = freeze i32 0
+}
+
+; A Nary matcher's arity is the length of its parameter list, and every use
+; must spell exactly that many typed operands.
+;--- nary-few.ll
+match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
+	%ret = select i1 ?c, ?ty ?t, ?ty ?f
+}
+%r = pick i1 ?cond, i32 ?a
+; FEW: expected ',' between operands (got Newline)
+
+;--- nary-many.ll
+match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
+	%ret = select i1 ?c, ?ty ?t, ?ty ?f
+}
+%r = pick i1 ?cond, i32 ?a, i32 ?b, i32 ?d
+; MANY: 'pick' takes 3 operands
+
+;--- builtin-many.ll
+%r = select i1 ?c, i32 ?a, i32 ?b, i32 ?d
+; BUILTIN: 'select' takes 3 operands

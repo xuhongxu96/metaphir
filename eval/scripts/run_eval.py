@@ -96,29 +96,46 @@ def fold_id_matches(fold_id: str, pr: str) -> bool:
     return fold_id == pr or fold_id.startswith(pr + "_")
 
 
-def run_llvm_anchors(bc: Path, pr: str) -> set[Anchor]:
+def run_llvm_anchors(
+    bc: Path, prs: list[str], env: dict[str, str]
+) -> tuple[dict[str, set[Anchor]], str | None]:
     """Collect ground-truth anchors from LLVM's own fold sites.
 
     Runs a single instcombine pass with ``METAPHIR_EVAL_ANCHOR=1`` so the
     instrumented folds report every firing as ``ANCHOR <func> <ssa> <foldID>``
-    on stderr. Only anchors whose foldID matches ``pr`` (exact or ``_``-suffixed)
-    are kept.
+    on stderr. Only anchors whose foldID matches one of ``prs`` (exact or
+    ``_``-suffixed) are kept.
+
+    Fixpoint verification is disabled: when it fails, opt aborts mid-module and
+    every later function would silently lose its anchors. Returns the anchors
+    and, if opt still exits non-zero, the tail of its stderr.
     """
-    env = dict(os.environ)
-    env["METAPHIR_EVAL_ANCHOR"] = "1"
     proc = subprocess.run(
-        [str(OPT), "-passes=function(instcombine)", str(bc), "-o", "/dev/null"],
+        [
+            str(OPT),
+            "-passes=function(instcombine<no-verify-fixpoint>)",
+            str(bc),
+            "-o",
+            "/dev/null",
+        ],
         capture_output=True,
         text=True,
         check=False,
         env=env,
     )
-    anchors: set[Anchor] = set()
+    by_pr: dict[str, set[Anchor]] = {pr: set() for pr in prs}
     for line in proc.stderr.splitlines():
         m = ANCHOR_RE.match(line)
-        if m and fold_id_matches(m.group(3), pr):
-            anchors.add((bc.name, m.group(1), m.group(2)))
-    return anchors
+        if m:
+            fold_id = m.group(3)
+            for pr in prs:
+                if fold_id_matches(fold_id, pr):
+                    by_pr[pr].add((bc.name, m.group(1), m.group(2)))
+    error = None
+    if proc.returncode != 0:
+        tail = [l for l in proc.stderr.splitlines() if not ANCHOR_RE.match(l)][-3:]
+        error = f"rc={proc.returncode}: " + " | ".join(tail)
+    return by_pr, error
 
 
 def run_pattern(pattern: Path, bc: Path) -> set[Anchor]:
@@ -189,23 +206,6 @@ def load_anchors(path: Path) -> set[Anchor]:
     return anchors
 
 
-def normalize_anchors(anchors: set[Anchor]) -> set[Anchor]:
-    """Normalize unnamed numerical slot names per (file, func) by ascending numerical order.
-    Named SSA slots (e.g. %x, s, z) remain untouched.
-    """
-    by_func: dict[tuple[str, str], list[str]] = {}
-    for f, fn, a in anchors:
-        by_func.setdefault((f, fn), []).append(a)
-
-    normalized: set[Anchor] = set()
-    for (f, fn), slot_list in by_func.items():
-        unnamed = sorted({int(s) for s in slot_list if s.isdigit()})
-        unnamed_map = {str(val): f"anon#{idx}" for idx, val in enumerate(unnamed)}
-        for s in slot_list:
-            normalized.add((f, fn, unnamed_map.get(s, s)))
-    return normalized
-
-
 def func_keys(anchors: set[Anchor]) -> set[tuple[str, str]]:
     return {(f, fn) for (f, fn, _) in anchors}
 
@@ -230,24 +230,53 @@ def print_metrics(G: set[Anchor], P: set[Anchor], label: str) -> None:
 # Collection steps
 # --------------------------------------------------------------------------- #
 def collect_ground_truth(
-    files: list[Path], pr: str, outdir: Path, jobs: int = 1
+    files: list[Path], prs: list[str], outdir: Path, jobs: int = 1
 ) -> None:
-    print(f"== gt {pr}: {len(files)} modules ==")
-    G, t_gt = run_over_corpus(files, lambda bc: run_llvm_anchors(bc, pr), jobs=jobs)
+    label = prs[0] if len(prs) == 1 else f"[{', '.join(prs)}]"
+    print(f"== gt {label}: {len(files)} modules ==")
+    env = dict(os.environ)
+    env["METAPHIR_EVAL_ANCHOR"] = "1"
 
-    if not G:
+    from concurrent.futures import ThreadPoolExecutor
+
+    def worker(bc: Path) -> tuple[dict[str, set[Anchor]], str | None, float]:
+        t0 = time.time()
+        res, error = run_llvm_anchors(bc, prs, env)
+        return res, error, time.time() - t0
+
+    all_anchors: dict[str, set[Anchor]] = {pr: set() for pr in prs}
+    failed: list[tuple[Path, str]] = []
+    total_t = 0.0
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        for bc, (by_pr, error, t) in zip(files, pool.map(worker, files)):
+            total_t += t
+            if error:
+                failed.append((bc, error))
+            for pr, a in by_pr.items():
+                all_anchors[pr] |= a
+
+    if failed:
         print(
-            f"  warning: no LLVM ground-truth anchors for {pr}; the fold may be "
-            f"absent from this LLVM revision or never fires on the corpus"
+            f"  warning: opt failed on {len(failed)} module(s); their anchors may be incomplete:"
         )
+        for bc, error in failed:
+            print(f"    {bc.name}: {error}")
 
-    g_path = outdir / f"{pr}_G.anchors"
-    save_anchors(g_path, G)
-    (outdir / f"{pr}_G_timing.txt").write_text(
-        f"modules={len(files)}\ngt_seconds={t_gt:.3f}\nG_anchors={len(G)}\n"
-    )
-    print(f"  saved G anchors -> {g_path} ({len(G)})")
-    print(f"  gt {t_gt:.2f}s")
+    for pr in prs:
+        G = all_anchors[pr]
+        if not G:
+            print(
+                f"  warning: no LLVM ground-truth anchors for {pr}; the fold may be "
+                f"absent from this LLVM revision or never fires on the corpus"
+            )
+        g_path = outdir / f"{pr}_G.anchors"
+        save_anchors(g_path, G)
+        (outdir / f"{pr}_G_timing.txt").write_text(
+            f"modules={len(files)}\ngt_seconds={total_t / len(prs):.3f}\nG_anchors={len(G)}\n"
+        )
+        print(f"  saved G anchors -> {g_path} ({len(G)})")
+    if len(prs) > 1:
+        print(f"  gt total time {total_t:.2f}s across {len(prs)} PRs")
 
 
 def collect_patterns(
@@ -289,8 +318,8 @@ def setup_outdir(args: argparse.Namespace) -> tuple[Path, list[Path]]:
 
 def cmd_gt(args: argparse.Namespace) -> int:
     outdir, files = setup_outdir(args)
-    for pr in selected_prs(args.pr):
-        collect_ground_truth(files, pr, outdir, jobs=args.jobs)
+    prs = selected_prs(args.pr)
+    collect_ground_truth(files, prs, outdir, jobs=args.jobs)
     return 0
 
 
@@ -305,9 +334,7 @@ def cmd_pattern(args: argparse.Namespace) -> int:
         )
         missing = [str(p) for p in patterns if not p.is_file()]
         if missing:
-            sys.exit(
-                f"missing pattern file(s) for {pr}: {', '.join(missing)}"
-            )
+            sys.exit(f"missing pattern file(s) for {pr}: {', '.join(missing)}")
         collect_patterns(files, pr, patterns, outdir, jobs=args.jobs)
     return 0
 
@@ -336,10 +363,8 @@ def cmd_metrics(args: argparse.Namespace) -> int:
                 for line in timing.read_text().splitlines():
                     print(f"    {line}")
 
-        G_norm = normalize_anchors(G)
-        P_norm = normalize_anchors(P)
         print("  --- anchored-instruction level ---")
-        print_metrics(G_norm, P_norm, "anchor")
+        print_metrics(G, P, "anchor")
         print("  --- function level ---")
         print_metrics(func_keys(G), func_keys(P), "function")
     return 0

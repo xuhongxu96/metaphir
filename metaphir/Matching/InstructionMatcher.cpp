@@ -299,12 +299,13 @@ InstructionMatcher::matchValueOperand(const MatcherOperand &Matcher,
     return {};
 
   // Under treatIntAsVec, a scalar integer constant also matches a vector splat
-  // constant whose element equals it (e.g. 0 matches zeroinitializer).
+  // constant whose element equals it (e.g. 0 matches zeroinitializer). Poison
+  // lanes are allowed, like LLVM's m_One/m_Zero/m_APInt matchers.
   if (Settings.has(PatternSettings::treatIntAsVec)) {
     if (const auto *IC = dyn_cast<IntegerConstant>(Matcher.Val)) {
       if (const auto *CV = dyn_cast<llvm::Constant>(&Target))
         if (CV->getType()->isVectorTy())
-          if (const auto *Splat = CV->getSplatValue())
+          if (const auto *Splat = CV->getSplatValue(/*AllowPoison=*/true))
             if (const auto *CI = dyn_cast<ConstantInt>(Splat)) {
               APSInt TargetValue(CI->getValue(), IC->getValue().isUnsigned());
               if (APSInt::isSameValue(IC->getValue(), TargetValue))

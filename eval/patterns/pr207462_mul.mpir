@@ -1,7 +1,8 @@
 ;; treatIntAsVec(true)
 %div = udiv:s exact:?_ i?bits ?x, ?c0:constantInt
 %divshl = shl:s nuw:?_ nsw:?_ i?bits %div, ?k:constantInt
-%rem = urem i?bits ?x, ?c0
-%add = add:?anch:c nuw:?_ nsw:?_ i?bits %rem, %divshl
+%rem = urem:s i?bits ?x, ?c0
+%add = add:?anch nuw:?_ nsw:?_ i?bits %rem, %divshl
 ;; (?c0 != 0)
 ;; ((shl(1, ?k)) - ?c0) != 0
+;; isGuaranteedNotToBeUndef(?x)

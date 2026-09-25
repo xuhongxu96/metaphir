@@ -97,6 +97,8 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsForbidPoison, "isForbidPoison", Call,
                                     BooleanResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsConstantSplat, "isConstantSplat", Call,
                                     BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsScalar, "isScalar", Call, BooleanResult,
+                                    1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUse, "hasOneUse", Call, BooleanResult,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUser, "hasOneUser", Call,
@@ -111,6 +113,9 @@ MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(KnownBits, "knownBits", Call,
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonZero, "isKnownNonZero", Call,
                                     BooleanResult, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNegative, "isKnownNegative", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsGuaranteedNotToBeUndef,
+                                    "isGuaranteedNotToBeUndef", Call,
                                     BooleanResult, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonNegative, "isKnownNonNegative",
                                     Call, BooleanResult, 1)

@@ -16,7 +16,6 @@ pr215122__add-mask-neg.ll	align_up	r
 pr215122__add-mask-neg.ll	align_up_commuted	r
 pr215122__add-mask-neg.ll	align_up_commuted_and	r
 pr215122__add-mask-neg.ll	align_up_multiuse_neg	r
-pr215122__add-mask-neg.ll	align_up_nonsplat_vec	r
 pr215122__add-mask-neg.ll	align_up_nsw_nuw	r
 pr215122__add-mask-neg.ll	align_up_scalable_vec	r
 pr215122__add-mask-neg.ll	align_up_vec	r
@@ -25,7 +24,6 @@ pr216436__add-mask-neg.ll	align_up	r
 pr216436__add-mask-neg.ll	align_up_commuted	r
 pr216436__add-mask-neg.ll	align_up_commuted_and	r
 pr216436__add-mask-neg.ll	align_up_multiuse_neg	r
-pr216436__add-mask-neg.ll	align_up_nonsplat_vec	r
 pr216436__add-mask-neg.ll	align_up_nsw_nuw	r
 pr216436__add-mask-neg.ll	align_up_scalable_vec	r
 pr216436__add-mask-neg.ll	align_up_vec	r

@@ -2,6 +2,7 @@
 #define METAPHIR_MATCHING_VALUETRACKCONTEXT_H
 
 #include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/DomConditionCache.h"
 #include "llvm/Analysis/SimplifyQuery.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Dominators.h"
@@ -15,8 +16,8 @@ namespace detail {
 // Lazily-constructed, per-function analysis context for ValueTracking-backed
 // constraint operators. Nothing is materialized until a ValueTracking operator
 // is actually evaluated; each component (DataLayout, DominatorTree,
-// AssumptionCache, TargetLibraryInfo) is built on first use and memoized for
-// the enclosing function.
+// AssumptionCache, DomConditionCache, TargetLibraryInfo) is built on first use
+// and memoized for the enclosing function.
 class ValueTrackContext {
 public:
   // Returns a query anchored at CtxI, materializing the enclosing function's
@@ -27,6 +28,7 @@ public:
   bool hasMaterializedDominatorTree() const { return DT.has_value(); }
   bool hasMaterializedAssumptionCache() const { return AC.has_value(); }
   bool hasMaterializedTargetLibraryInfo() const { return TLI.has_value(); }
+  bool hasMaterializedDomConditionCache() const { return DC.has_value(); }
 
 private:
   // Resets per-function components when the context instruction's function
@@ -37,6 +39,7 @@ private:
   const llvm::Function *F = nullptr;
   std::optional<llvm::DominatorTree> DT;
   std::optional<llvm::AssumptionCache> AC;
+  std::optional<llvm::DomConditionCache> DC;
   std::optional<llvm::TargetLibraryInfoImpl> TLII;
   std::optional<llvm::TargetLibraryInfo> TLI;
 };

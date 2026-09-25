@@ -119,8 +119,10 @@ public:
 
   // How the parser spells this instruction's operands. Shared grammars are
   // dispatched by the parser from the .def (see getOperandSyntax); Custom
-  // instructions have bespoke per-ID parse code.
-  enum class OperandSyntax { Unary, Binary, Ternary, Cast, Custom };
+  // instructions have bespoke per-ID parse code. Nary spells a fixed number of
+  // individually typed operands; the number comes from getOperandArity (or the
+  // composite matcher's parameter list).
+  enum class OperandSyntax { Nary, Binary, Cast, Custom };
 
   static constexpr FlagMask NoFlags = 0;
 
@@ -198,6 +200,7 @@ public:
   static FlagMask getSupportedFlags(InstructionID ID);
   static bool isCommutative(InstructionID ID);
   static OperandSyntax getOperandSyntax(InstructionID ID);
+  static unsigned getOperandArity(InstructionID ID);
   bool isComposite() const { return Composite != nullptr; }
   CompositeMatcher *getCompositeMatcher() const { return Composite; }
   StringRef getCustomOpcodeName() const;

@@ -28,8 +28,8 @@ pr216436__add-mask-neg.ll	align_up_nsw_nuw	r
 pr216436__add-mask-neg.ll	align_up_scalable_vec	r
 pr216436__add-mask-neg.ll	align_up_vec	r
 pr216436__add-mask-neg.ll	align_up_vec_poison_elt	r
-raylib__rmodels.bc	Vox_LoadFromMemory	38
-raylib__rmodels.bc	Vox_LoadFromMemory	43
+raylib__rmodels.bc	Vox_LoadFromMemory	47
+raylib__rmodels.bc	Vox_LoadFromMemory	52
 ruff-rs__regex_automata-11449060322bc37b.regex_automata.6a733967971a138a-cgu.15.bc	_RNvMs2_NtNtCs98D8VPWzHuM_14regex_automata3dfa6sparseINtB5_3DFARShE20from_bytes_unchecked	22
 ruff-rs__regex_automata-11449060322bc37b.regex_automata.6a733967971a138a-cgu.15.bc	_RNvNtNtCs98D8VPWzHuM_14regex_automata4util4wire10read_label	19
 wireshark__erf.bc	erf_write_meta_record	63

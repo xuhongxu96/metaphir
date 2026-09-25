@@ -18,6 +18,7 @@ miniaudio__miniaudio.bc	ma_dr_wav_write_pcm_frames	34
 miniaudio__miniaudio.bc	ma_dr_wav_write_pcm_frames_be	121
 miniaudio__miniaudio.bc	ma_dr_wav_write_pcm_frames_le	34
 miniaudio__miniaudio.bc	ma_encoder__on_write_pcm_frames_wav	37
+ncnn__mxnet2ncnn.bc	main	3805
 pr214541__div.ll	udiv_udiv_bounded	d2
 pr214541__div.ll	udiv_udiv_exact	d2
 pr214541__div.ll	udiv_udiv_exact_inner_only	d2
@@ -33,4 +34,5 @@ raylib__raudio.bc	ExportWave	72
 raylib__raudio.bc	drwav_write_pcm_frames	32
 raylib__raudio.bc	drwav_write_pcm_frames_be	119
 raylib__raudio.bc	drwav_write_pcm_frames_le	32
+raylib__rmodels.bc	_m3dstbi__png_load	250
 wireshark__l24decode.bc	codec_l24_decode	68

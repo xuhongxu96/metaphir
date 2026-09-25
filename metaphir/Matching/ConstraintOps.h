@@ -78,6 +78,11 @@ Expected<ConstraintValue> evaluateIsConstantSplat(
     ConstraintInterpreter &Interpreter, ArrayRef<Constraint *> Arguments,
     const Instantiation &State, const Constraint &Expression);
 
+Expected<ConstraintValue> evaluateIsScalar(ConstraintInterpreter &Interpreter,
+                                           ArrayRef<Constraint *> Arguments,
+                                           const Instantiation &State,
+                                           const Constraint &Expression);
+
 Expected<ConstraintValue> evaluateHasOneUse(ConstraintInterpreter &Interpreter,
                                             ArrayRef<Constraint *> Arguments,
                                             const Instantiation &State,
@@ -122,6 +127,11 @@ evaluateIsKnownNegative(ArrayRef<ConstraintValue> Values,
                         const Constraint &Expression);
 
 Expected<ConstraintValue>
+evaluateIsGuaranteedNotToBeUndef(ArrayRef<ConstraintValue> Values,
+                                 const SimplifyQuery &Query,
+                                 const Constraint &Expression);
+
+Expected<ConstraintValue>
 evaluateIsKnownNonNegative(ArrayRef<ConstraintValue> Values,
                            const SimplifyQuery &Query,
                            const Constraint &Expression);
@@ -143,8 +153,7 @@ evaluateMaskedValueIsZero(ArrayRef<ConstraintValue> Values,
 
 Expected<ConstraintValue>
 evaluateInSignedRange(ArrayRef<ConstraintValue> Values,
-                      const SimplifyQuery &Query,
-                      const Constraint &Expression);
+                      const SimplifyQuery &Query, const Constraint &Expression);
 
 } // namespace metaphir
 } // namespace llvm

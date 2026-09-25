@@ -129,7 +129,6 @@ grpc__int128.bc	_ZN4absl12lts_20250512lsERSoNS0_6int128E	.neg4.z.i.i
 grpc__int128.bc	_ZNK4absl12lts_202505126int1288ToStringB5cxx11Ev	.neg4.z.i.i
 luanti__dungeongen.bc	_Z11random_turnR12PseudoRandomRN4core8vector3dIsEE	.sroa.0.0.insert.ext.i18
 luanti__dungeongen.bc	_Z11random_turnR12PseudoRandomRN4core8vector3dIsEE	.sroa.7.0.insert.ext.i
-luanti__dungeongen.bc	_Z7turn_xzN4core8vector3dIsEEi	6
 luanti__pathfinder.bc	_ZN10Pathfinder19updateCostHeuristicEN4core8vector3dIsEES2_	.sroa.01.0.insert.ext.i
 luanti__pathfinder.bc	_ZN10Pathfinder19updateCostHeuristicEN4core8vector3dIsEES2_	.sroa.6.0.insert.ext.i
 luanti__pathfinder.bc	_ZN10Pathfinder6invertEN4core8vector3dIsEE	.sroa.01.0.insert.ext

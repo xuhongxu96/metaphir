@@ -125,12 +125,16 @@ bool PatternLowering::bindParameters(InliningContext &Ctx) {
   };
 
   switch (Ctx.CM->getSyntax()) {
-  case Instruction::OperandSyntax::Unary:
-    if (Params.size() >= 2 && CallerOps.size() >= 1) {
-      mapTypeParam(Params[0], CallerOps[0].Ty);
-      mapValParam(Params[1].Name, CallerOps[0].Val);
-    }
+  case Instruction::OperandSyntax::Nary: {
+    // Parameters alternate type and operand: (T0 ?a0, T1 ?a1, ...).
+    unsigned Arity = Ctx.CM->getArity();
+    if (Params.size() >= 2 * Arity && CallerOps.size() >= Arity)
+      for (unsigned I = 0; I < Arity; ++I) {
+        mapTypeParam(Params[2 * I], CallerOps[I].Ty);
+        mapValParam(Params[2 * I + 1].Name, CallerOps[I].Val);
+      }
     break;
+  }
   case Instruction::OperandSyntax::Binary:
     if (Params.size() >= 3 && CallerOps.size() >= 2) {
       mapTypeParam(Params[0], CallerOps[0].Ty);
@@ -143,16 +147,6 @@ bool PatternLowering::bindParameters(InliningContext &Ctx) {
       mapTypeParam(Params[0], CallerOps[0].Ty);
       mapValParam(Params[1].Name, CallerOps[0].Val);
       mapTypeParam(Params[2], CallerOps[1].Ty);
-    }
-    break;
-  case Instruction::OperandSyntax::Ternary:
-    if (Params.size() >= 6 && CallerOps.size() >= 3) {
-      mapTypeParam(Params[0], CallerOps[0].Ty);
-      mapValParam(Params[1].Name, CallerOps[0].Val);
-      mapTypeParam(Params[2], CallerOps[1].Ty);
-      mapValParam(Params[3].Name, CallerOps[1].Val);
-      mapTypeParam(Params[4], CallerOps[2].Ty);
-      mapValParam(Params[5].Name, CallerOps[2].Val);
     }
     break;
   case Instruction::OperandSyntax::Custom:
@@ -290,6 +284,13 @@ Error PatternLowering::inlineBranchInstructions(InliningContext &Ctx) {
       NewOp.MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Op.MetaFlags);
       NewOps.push_back(NewOp);
     }
+    for (const MatcherOperand &Op : BI->getKeyedOperands()) {
+      MatcherOperand NewOp = Op;
+      NewOp.Ty = substituteType(Op.Ty, SubstCtx);
+      NewOp.Val = substituteValue(Op.Val, SubstCtx);
+      NewOp.MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Op.MetaFlags);
+      NewOps.push_back(NewOp);
+    }
 
     MetaVariable *Capture = BI->getCapture();
     SmallVector<MetaFlag *, 4> MetaFlags(BI->getMetaFlags().begin(),
@@ -298,7 +299,8 @@ Error PatternLowering::inlineBranchInstructions(InliningContext &Ctx) {
       if (Ctx.CompInst->getCapture())
         Capture = Ctx.CompInst->getCapture();
       for (const MetaFlag *MF : Ctx.CompInst->getMetaFlags())
-        if (MF->getMetaFlagID() == MetaFlag::MF_o)
+        if (MF->getMetaFlagID() != MetaFlag::MF_c &&
+            !llvm::is_contained(MetaFlags, MF))
           MetaFlags.push_back(const_cast<MetaFlag *>(MF));
     }
 

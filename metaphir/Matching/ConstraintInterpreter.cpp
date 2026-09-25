@@ -132,10 +132,17 @@ ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
   case Constraint::IntegerResult:
     if (const auto *Integer = std::get_if<APInt>(&Binding->Data))
       return ConstraintValue::getInteger(APSInt(*Integer, false));
+    if (const auto *Value = std::get_if<const llvm::Value *>(&Binding->Data))
+      if (const auto *CI = dyn_cast<ConstantInt>(*Value))
+        return ConstraintValue::getInteger(
+            APSInt(CI->getValue(), CI->isNegative()));
     break;
   case Constraint::BooleanResult:
     if (const auto *Boolean = std::get_if<bool>(&Binding->Data))
       return ConstraintValue::getBoolean(*Boolean);
+    if (const auto *Value = std::get_if<const llvm::Value *>(&Binding->Data))
+      if (const auto *CI = dyn_cast<ConstantInt>(*Value))
+        return ConstraintValue::getBoolean(CI->isOne());
     break;
   case Constraint::StringResult:
     if (const auto *Predicate = std::get_if<CmpInst::Predicate>(&Binding->Data))

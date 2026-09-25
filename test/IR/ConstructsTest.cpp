@@ -207,8 +207,9 @@ TEST(MetaphIRConstructs, InstructionCustomOpcodeAndKeyedOperands) {
   EXPECT_EQ(Inst->getKeyedOperand(MatcherOperand::Predicate), nullptr);
 
   // Composite instruction gets opcode name from CompositeMatcher:
-  auto *CM = new CompositeMatcher("myCompositeOp", false, {},
-                                  Instruction::OperandSyntax::Binary, {}, {});
+  auto *CM =
+      new CompositeMatcher("myCompositeOp", false, {},
+                           Instruction::OperandSyntax::Binary, 2, {}, {});
   Instruction *CompInst = Instruction::getComposite(Context, "cres", CM, {}, {},
                                                     {}, nullptr, Range, Block);
   EXPECT_TRUE(CompInst->isComposite());

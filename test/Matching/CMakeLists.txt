@@ -40,6 +40,9 @@ set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-SemanticFlags.ll
     MIRMatcher-Constraints.ll
     MIRMatcher-ValueTrack.ll
+    MIRMatcher-DomCondition.ll
+    MIRMatcher-NotUndef.ll
+    MIRMatcher-PoisonSplat.ll
     MIRMatcher-MetaFlags-OrSelf.ll
     MIRMatcher-CrossBasicBlock.ll
     MIRMatcher-MetaFlags-Uses.ll
@@ -50,11 +53,14 @@ set(METAPHIR_MATCHING_TEST_CASES
     MIRMatcher-ConstraintBodyOperators.ll
     MIRMatcher-MetaFlagsInMatchBody.ll
     MIRMatcher-MatchParameterTypes.ll
+    MIRMatcher-NaryArchetype.ll
     MIRMatcher-ConstraintContextInMatcher.ll
     MIRMatcher-SettingsInMatcher.ll
     MIRMatcher-MetaFlagParams.ll
     MIRMatcher-CompositeDownstreamKeyed.ll
-    MIRMatcher-CompositeMetaFlags.ll)
+    MIRMatcher-CompositeMetaFlags.ll
+    MIRMatcher-ScalarOrSplatMeta.ll
+    MIRMatcher-SelectEq.ll)
 
 foreach(test_case IN LISTS METAPHIR_MATCHING_TEST_CASES)
   get_filename_component(test_name ${test_case} NAME_WE)
