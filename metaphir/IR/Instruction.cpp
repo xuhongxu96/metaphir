@@ -46,7 +46,7 @@ void Instruction::setOperandMetaFlags(unsigned OpIdx, MIRContext &Context,
       .setMetaFlags(Context, Flags);
 }
 
-Instruction *Instruction::get(
+Instruction *Instruction::create(
     MIRContext &Context, InstructionID ID, StringRef ResultName,
     ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
     ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
@@ -79,7 +79,7 @@ Instruction *Instruction::get(
       KeyedOperandMask, Capture, Range, ParentBlock, Settings);
 }
 
-Instruction *Instruction::getComposite(
+Instruction *Instruction::createComposite(
     MIRContext &Context, StringRef ResultName, CompositeMatcher *Composite,
     ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
     ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
@@ -92,30 +92,17 @@ Instruction *Instruction::getComposite(
                   Capture, Range, ParentBlock, Settings, Composite);
 }
 
-Instruction *
-Instruction::withOperands(MIRContext &Context, const Instruction *Orig,
-                          ArrayRef<MatcherOperand> NewUnkeyedOperands) {
-  auto *NewI = new (Context.pImpl->Alloc)
-      Instruction(Orig->ID, Orig->ResultName, Orig->Flags, Orig->MetaFlags,
-                  Context.pImpl->copyArray<MatcherOperand>(NewUnkeyedOperands),
-                  Orig->KeyedOperands, Orig->KeyedOperandMask, Orig->Capture,
-                  Orig->getSourceRange(), Orig->ParentBlock, Orig->Settings,
-                  Orig->Composite);
-  NewI->setOrSelfValue(Orig->OrSelfValue);
-  return NewI;
-}
-
-Instruction *Instruction::getLike(
+Instruction *Instruction::createLike(
     MIRContext &Context, const Instruction &Proto, StringRef ResultName,
     ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
     ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
     MetaVariable *ParentBlock, PatternSettings Settings) {
   if (Proto.isComposite())
-    return getComposite(Context, ResultName, Proto.getCompositeMatcher(), Flags,
-                        MetaFlags, Operands, Capture, Range, ParentBlock,
-                        Settings);
-  return get(Context, Proto.getInstructionID(), ResultName, Flags, MetaFlags,
-             Operands, Capture, Range, ParentBlock, Settings);
+    return createComposite(Context, ResultName, Proto.getCompositeMatcher(),
+                           Flags, MetaFlags, Operands, Capture, Range,
+                           ParentBlock, Settings);
+  return create(Context, Proto.getInstructionID(), ResultName, Flags, MetaFlags,
+                Operands, Capture, Range, ParentBlock, Settings);
 }
 
 StringRef Instruction::getOpcodeName() const {

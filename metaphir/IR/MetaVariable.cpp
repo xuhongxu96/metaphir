@@ -6,8 +6,8 @@
 namespace llvm {
 namespace metaphir {
 
-MetaVariable *MetaVariable::get(MIRContext &Context, StringRef Name,
-                                MetaType Ty, SourceRange Range) {
+MetaVariable *MetaVariable::create(MIRContext &Context, StringRef Name,
+                                   MetaType Ty, SourceRange Range) {
   return new (Context.pImpl->Alloc)
       MetaVariable(Context.pImpl->Saver.save(Name), Ty, Range);
 }

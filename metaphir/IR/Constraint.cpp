@@ -6,45 +6,46 @@
 namespace llvm {
 namespace metaphir {
 
-IntegerConstraint *IntegerConstraint::get(MIRContext &Context, int64_t Number,
-                                          SourceRange Range) {
+IntegerConstraint *IntegerConstraint::create(MIRContext &Context,
+                                             int64_t Number,
+                                             SourceRange Range) {
   return new (Context.pImpl->Alloc) IntegerConstraint(Number, Range);
 }
 
-BooleanConstraint *BooleanConstraint::get(MIRContext &Context, bool State,
-                                          SourceRange Range) {
+BooleanConstraint *BooleanConstraint::create(MIRContext &Context, bool State,
+                                             SourceRange Range) {
   return new (Context.pImpl->Alloc) BooleanConstraint(State, Range);
 }
 
-StringConstraint *StringConstraint::get(MIRContext &Context, StringRef Value,
-                                        SourceRange Range) {
+StringConstraint *StringConstraint::create(MIRContext &Context, StringRef Value,
+                                           SourceRange Range) {
   return new (Context.pImpl->Alloc)
       StringConstraint(Context.pImpl->Saver.save(Value), Range);
 }
 
-ArrayConstraint *ArrayConstraint::get(MIRContext &Context, ResultType Type,
-                                      ArrayRef<Constraint *> Elements,
-                                      SourceRange Range) {
+ArrayConstraint *ArrayConstraint::create(MIRContext &Context, ResultType Type,
+                                         ArrayRef<Constraint *> Elements,
+                                         SourceRange Range) {
   return new (Context.pImpl->Alloc)
       ArrayConstraint(Type, Context.pImpl->copyArray(Elements), Range);
 }
 
-VariableConstraint *VariableConstraint::get(MIRContext &Context,
-                                            Value *Variable, ResultType Type,
-                                            SourceRange Range) {
+VariableConstraint *VariableConstraint::create(MIRContext &Context,
+                                               Value *Variable, ResultType Type,
+                                               SourceRange Range) {
   return new (Context.pImpl->Alloc) VariableConstraint(Variable, Type, Range);
 }
 
-ArrayAccessConstraint *ArrayAccessConstraint::get(MIRContext &Context,
-                                                  ResultType Type,
-                                                  Constraint *Array,
-                                                  Constraint *Index,
-                                                  SourceRange Range) {
+ArrayAccessConstraint *ArrayAccessConstraint::create(MIRContext &Context,
+                                                     ResultType Type,
+                                                     Constraint *Array,
+                                                     Constraint *Index,
+                                                     SourceRange Range) {
   return new (Context.pImpl->Alloc)
       ArrayAccessConstraint(Type, Array, Index, Range);
 }
 
-OperatorConstraint *OperatorConstraint::getBuiltin(
+OperatorConstraint *OperatorConstraint::createBuiltin(
     MIRContext &Context, ConstraintID ID, ResultType Type, OperatorID OpID,
     ArrayRef<Constraint *> Arguments, SourceRange Range) {
   assert(OpID != UnknownOperator &&
@@ -53,7 +54,7 @@ OperatorConstraint *OperatorConstraint::getBuiltin(
       ID, Type, OpID, Context.pImpl->copyArray<Constraint *>(Arguments), Range);
 }
 
-OperatorConstraint *OperatorConstraint::getUserDefined(
+OperatorConstraint *OperatorConstraint::createUserDefined(
     MIRContext &Context, ConstraintID ID, ResultType Type, StringRef Operator,
     ArrayRef<Constraint *> Arguments, SourceRange Range) {
   assert(Constraint::getOperatorID(Operator, ID) == UnknownOperator &&

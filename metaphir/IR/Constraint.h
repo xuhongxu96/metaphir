@@ -102,8 +102,8 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Integer;
   }
-  static IntegerConstraint *get(MIRContext &Context, int64_t Number,
-                                SourceRange Range);
+  static IntegerConstraint *create(MIRContext &Context, int64_t Number,
+                                   SourceRange Range);
 
 private:
   int64_t Number;
@@ -118,8 +118,8 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Boolean;
   }
-  static BooleanConstraint *get(MIRContext &Context, bool State,
-                                SourceRange Range);
+  static BooleanConstraint *create(MIRContext &Context, bool State,
+                                   SourceRange Range);
 
 private:
   bool State;
@@ -134,8 +134,8 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == String;
   }
-  static StringConstraint *get(MIRContext &Context, StringRef Value,
-                               SourceRange Range);
+  static StringConstraint *create(MIRContext &Context, StringRef Value,
+                                  SourceRange Range);
 
 private:
   StringRef Value;
@@ -150,9 +150,9 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Array;
   }
-  static ArrayConstraint *get(MIRContext &Context, ResultType Type,
-                              ArrayRef<Constraint *> Elements,
-                              SourceRange Range);
+  static ArrayConstraint *create(MIRContext &Context, ResultType Type,
+                                 ArrayRef<Constraint *> Elements,
+                                 SourceRange Range);
 
 private:
   ArrayRef<Constraint *> Elements;
@@ -168,8 +168,8 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Variable;
   }
-  static VariableConstraint *get(MIRContext &Context, Value *Variable,
-                                 ResultType Type, SourceRange Range);
+  static VariableConstraint *create(MIRContext &Context, Value *Variable,
+                                    ResultType Type, SourceRange Range);
 
 private:
   Value *VariableValue;
@@ -185,9 +185,9 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == ArrayAccess;
   }
-  static ArrayAccessConstraint *get(MIRContext &Context, ResultType Type,
-                                    Constraint *Array, Constraint *Index,
-                                    SourceRange Range);
+  static ArrayAccessConstraint *create(MIRContext &Context, ResultType Type,
+                                       Constraint *Array, Constraint *Index,
+                                       SourceRange Range);
 
 private:
   Constraint *Array;
@@ -208,15 +208,15 @@ public:
     return C->getConstraintID() == Unary || C->getConstraintID() == Binary ||
            C->getConstraintID() == Call;
   }
-  static OperatorConstraint *getBuiltin(MIRContext &Context, ConstraintID ID,
-                                        ResultType Type, OperatorID OpID,
-                                        ArrayRef<Constraint *> Arguments,
-                                        SourceRange Range);
-  static OperatorConstraint *getUserDefined(MIRContext &Context,
-                                            ConstraintID ID, ResultType Type,
-                                            StringRef Operator,
-                                            ArrayRef<Constraint *> Arguments,
-                                            SourceRange Range);
+  static OperatorConstraint *createBuiltin(MIRContext &Context, ConstraintID ID,
+                                           ResultType Type, OperatorID OpID,
+                                           ArrayRef<Constraint *> Arguments,
+                                           SourceRange Range);
+  static OperatorConstraint *createUserDefined(MIRContext &Context,
+                                               ConstraintID ID, ResultType Type,
+                                               StringRef Operator,
+                                               ArrayRef<Constraint *> Arguments,
+                                               SourceRange Range);
 
 private:
   std::variant<OperatorID, StringRef> Op;

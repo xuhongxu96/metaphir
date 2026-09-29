@@ -35,21 +35,21 @@ MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
                    SourceRange Range = {}) {
   MetaFlag::MetaFlagID ID = MetaFlag::getMetaFlagID(Name);
   if (ID != MetaFlag::UnknownMetaFlag)
-    return MetaFlag::getBuiltin(Context, ID, Arguments, Range);
-  return MetaFlag::getUserDefined(Context, Name, Arguments, Range);
+    return MetaFlag::createBuiltin(Context, ID, Arguments, Range);
+  return MetaFlag::createUserDefined(Context, Name, Arguments, Range);
 }
 
 Pattern *makePatternWithOperandFlag(MIRContext &Context, MetaFlag *Flag) {
-  auto *X = MetaVariable::get(Context, "x", MetaType::Value, {});
+  auto *X = MetaVariable::create(Context, "x", MetaType::Value, {});
   MatcherOperand Operand;
   Operand.Val = X;
   SmallVector<MetaFlag *, 1> Flags = {Flag};
   Operand.setMetaFlags(Context, Flags);
 
   SmallVector<MatcherOperand, 1> Operands = {Operand};
-  auto *Inst = MIRInstruction::get(Context, MIRInstruction::I_add, "", {}, {},
-                                   Operands, nullptr, {}, nullptr);
-  Pattern *P = Pattern::get(Context);
+  auto *Inst = MIRInstruction::create(Context, MIRInstruction::I_add, "", {},
+                                      {}, Operands, nullptr, {}, nullptr);
+  Pattern *P = Pattern::create(Context);
   P->addInstruction(Inst);
   return P;
 }
@@ -60,8 +60,8 @@ TEST(MetaFlagTest, InstructionHasMetaFlagSearchesByID) {
       makeFlag(Context, "c"),
       makeFlag(Context, "o", {{MetaFlag::Argument::Integer, 42}})};
   MIRInstruction *Inst =
-      MIRInstruction::get(Context, MIRInstruction::I_add, "", {}, Flags, {},
-                          nullptr, SourceRange{}, nullptr);
+      MIRInstruction::create(Context, MIRInstruction::I_add, "", {}, Flags, {},
+                             nullptr, SourceRange{}, nullptr);
   EXPECT_TRUE(Inst->hasMetaFlag(MetaFlag::MF_c));
   EXPECT_TRUE(Inst->hasMetaFlag(MetaFlag::MF_o));
   EXPECT_FALSE(Inst->hasMetaFlag(MetaFlag::MF_not));
@@ -72,9 +72,9 @@ TEST(MetaFlagTest, PreservesMatcherHandledFlagsDuringLowering) {
   MIRContext Context;
   SmallVector<MetaFlag *, 2> Flags = {makeFlag(Context, "c"),
                                       makeFlag(Context, "o")};
-  auto *Inst = MIRInstruction::get(Context, MIRInstruction::I_add, "", {},
-                                   Flags, {}, nullptr, {}, nullptr);
-  Pattern *P = Pattern::get(Context);
+  auto *Inst = MIRInstruction::create(Context, MIRInstruction::I_add, "", {},
+                                      Flags, {}, nullptr, {}, nullptr);
+  Pattern *P = Pattern::create(Context);
   P->addInstruction(Inst);
 
   Expected<PatternVariants> Lowered = PatternLowering(Context).lower(P);
@@ -87,9 +87,9 @@ TEST(MetaFlagTest, ReportsMalformedMetaFlagDefinition) {
   MIRContext Context;
   StringRef Parameters[] = {"subject"};
   MetaVariable *ParameterVars[] = {
-      MetaVariable::get(Context, "subject", MetaType::Unknown, {})};
-  auto *Def = new (Context.pImpl->Alloc) MetaFlagDef(
-      "broken", MetaFlag::OperandPlacement, Parameters, ParameterVars, nullptr);
+      MetaVariable::create(Context, "subject", MetaType::Unknown, {})};
+  auto *Def = MetaFlagDef::create(Context, "broken", MetaFlag::OperandPlacement,
+                                  Parameters, ParameterVars, nullptr);
   Context.registerMetaFlagDef(Def);
 
   Pattern *P = makePatternWithOperandFlag(Context, makeFlag(Context, "broken"));

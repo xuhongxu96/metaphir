@@ -86,7 +86,7 @@ bool MIRParser::makeOperator(Constraint *&Result, Constraint::ConstraintID Kind,
   SourceRange Range{Loc, Loc};
   Constraint::OperatorID ID = Constraint::getOperatorID(Spelling, Kind);
   assert(ID != Constraint::UnknownOperator && "operator token without an ID");
-  auto *Operator = OperatorConstraint::getBuiltin(
+  auto *Operator = OperatorConstraint::createBuiltin(
       Context, Kind, Constraint::getOperatorSchema(ID)->Result, ID, Args,
       Range);
   Result = Operator;
@@ -168,8 +168,8 @@ bool MIRParser::parseConstraintPostfix(Constraint *&Result) {
     if (Index->getResultType() != Constraint::IntegerResult)
       return Lex.ParseError(Index->getSourceRange().Begin,
                             "constraint array index must be an integer");
-    Result = ArrayAccessConstraint::get(Context, ElementType, Result, Index,
-                                        SourceRange{Loc, Loc});
+    Result = ArrayAccessConstraint::create(Context, ElementType, Result, Index,
+                                           SourceRange{Loc, Loc});
   }
   return false;
 }
@@ -210,7 +210,7 @@ bool MIRParser::parseConstraintCall(Constraint *&Result) {
           Constraint::getOperatorSchema(ID)) {
     if (Args.size() < Schema->MinArity || Args.size() > Schema->MaxArity)
       return ArityError(Schema->MinArity, Schema->MaxArity);
-    auto *Call = OperatorConstraint::getBuiltin(
+    auto *Call = OperatorConstraint::createBuiltin(
         Context, Constraint::Call, Schema->Result, ID, Args, Range);
     Result = Call;
     return checkOperands(*Call, Name);
@@ -227,9 +227,9 @@ bool MIRParser::parseConstraintCall(Constraint *&Result) {
   if (Args.size() != Arity)
     return ArityError(Arity, Arity);
   // The call has the type of the definition's body.
-  Result = OperatorConstraint::getUserDefined(Context, Constraint::Call,
-                                              Def->getBody()->getResultType(),
-                                              Name, Args, Range);
+  Result = OperatorConstraint::createUserDefined(
+      Context, Constraint::Call, Def->getBody()->getResultType(), Name, Args,
+      Range);
   return false;
 }
 
@@ -240,19 +240,19 @@ bool MIRParser::parseConstraintPrimary(Constraint *&Result) {
   case tok::APSInt: {
     if (!Lex.getAPSIntVal().isRepresentableByInt64())
       return error("constraint integer is too large");
-    Result = IntegerConstraint::get(Context, Lex.getAPSIntVal().getExtValue(),
-                                    Range);
+    Result = IntegerConstraint::create(Context,
+                                       Lex.getAPSIntVal().getExtValue(), Range);
     next();
     return false;
   }
   case tok::kw_true:
   case tok::kw_false:
-    Result =
-        BooleanConstraint::get(Context, Lex.getKind() == tok::kw_true, Range);
+    Result = BooleanConstraint::create(Context, Lex.getKind() == tok::kw_true,
+                                       Range);
     next();
     return false;
   case tok::StringConstant:
-    Result = StringConstraint::get(Context, Lex.getStrVal(), Range);
+    Result = StringConstraint::create(Context, Lex.getStrVal(), Range);
     next();
     return false;
   case tok::lsquare:
@@ -264,7 +264,7 @@ bool MIRParser::parseConstraintPrimary(Constraint *&Result) {
                    Lex.getStrVal() + "'");
     MetaVariable *M = It->second;
     next();
-    Result = VariableConstraint::get(
+    Result = VariableConstraint::create(
         Context, M, Constraint::getResultType(M->getType()), Range);
     return false;
   }
@@ -316,8 +316,8 @@ bool MIRParser::parseConstraintArray(Constraint *&Result) {
       }))
     return Lex.ParseError(
         Loc, "constraint array literal elements must have the same type");
-  Result =
-      ArrayConstraint::get(Context, ArrayType, Elements, SourceRange{Loc, Loc});
+  Result = ArrayConstraint::create(Context, ArrayType, Elements,
+                                   SourceRange{Loc, Loc});
   return false;
 }
 

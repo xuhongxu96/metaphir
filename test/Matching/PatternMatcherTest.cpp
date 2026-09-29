@@ -22,14 +22,14 @@ namespace {
 TEST(PatternMatcherTest, EnforcesRepeatedBindings) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   MatcherOperand PatternOperands[] = {{nullptr, X}, {nullptr, X}};
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
-                                          {}, {}, PatternOperands, nullptr,
-                                          Range, Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add, "",
+                                             {}, {}, PatternOperands, nullptr,
+                                             Range, Block));
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -57,19 +57,19 @@ TEST(PatternMatcherTest, EnforcesRepeatedBindings) {
 TEST(PatternMatcherTest, RequiresEveryRootAndFiltersPrograms) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, X}};
   MatcherOperand SubOperands[] = {{nullptr, Y}, {nullptr, Y}};
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
-                                          {}, {}, AddOperands, nullptr, Range,
-                                          Block));
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_sub, "",
-                                          {}, {}, SubOperands, nullptr, Range,
-                                          Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add, "",
+                                             {}, {}, AddOperands, nullptr,
+                                             Range, Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_sub, "",
+                                             {}, {}, SubOperands, nullptr,
+                                             Range, Block));
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -98,17 +98,17 @@ TEST(PatternMatcherTest, RequiresEveryRootAndFiltersPrograms) {
 TEST(PatternMatcherTest, MetaVariablesMatchTypeCompatibleInstructions) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *I =
-      MetaVariable::get(Context, "i", MetaType::Instruction, Range);
+      MetaVariable::create(Context, "i", MetaType::Instruction, Range);
   Pat->addMetaVariable(Block);
   Pat->addMetaVariable(I);
   MatcherOperand PatternOperands[] = {{nullptr, I}};
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_freeze, "",
-                                          {}, {}, PatternOperands, nullptr,
-                                          Range, Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_freeze,
+                                             "", {}, {}, PatternOperands,
+                                             nullptr, Range, Block));
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -130,19 +130,19 @@ TEST(PatternMatcherTest, MetaVariablesMatchTypeCompatibleInstructions) {
 TEST(PatternMatcherTest, ReportsIncompleteSuccessfulInstantiationAsUnexpected) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   MetaVariable *Unbound =
-      MetaVariable::get(Context, "unbound", MetaType::Value, Range);
+      MetaVariable::create(Context, "unbound", MetaType::Value, Range);
   Pat->addMetaVariable(Block);
   Pat->addMetaVariable(X);
   Pat->addMetaVariable(Unbound);
   MatcherOperand Operands[] = {{nullptr, X}};
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_freeze, "",
-                                          {}, {}, Operands, nullptr, Range,
-                                          Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_freeze,
+                                             "", {}, {}, Operands, nullptr,
+                                             Range, Block));
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -165,17 +165,17 @@ TEST(PatternMatcherTest, ReportsIncompleteSuccessfulInstantiationAsUnexpected) {
 TEST(PatternMatcherTest, EnforcesInstructionBlockMembership) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   MatcherOperand Operands[] = {{nullptr, X}, {nullptr, X}};
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
-                                          {}, {}, Operands, nullptr, Range,
-                                          Block));
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_sub, "",
-                                          {}, {}, Operands, nullptr, Range,
-                                          Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add, "",
+                                             {}, {}, Operands, nullptr, Range,
+                                             Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_sub, "",
+                                             {}, {}, Operands, nullptr, Range,
+                                             Block));
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -209,20 +209,20 @@ TEST(PatternMatcherTest, EnforcesInstructionBlockMembership) {
 TEST(PatternMatcherTest, AllowsInstructionOperandsFromOtherBlocks) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Entry =
-      MetaVariable::get(Context, "entry", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "entry", MetaType::BasicBlock, Range);
   MetaVariable *Next =
-      MetaVariable::get(Context, "next", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "next", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, X}};
   MIRInstruction *Add =
-      MIRInstruction::get(Context, MIRInstruction::I_add, "add", {}, {},
-                          AddOperands, nullptr, Range, Entry);
+      MIRInstruction::create(Context, MIRInstruction::I_add, "add", {}, {},
+                             AddOperands, nullptr, Range, Entry);
   MatcherOperand FreezeOperands[] = {{nullptr, Add}};
   MIRInstruction *Freeze =
-      MIRInstruction::get(Context, MIRInstruction::I_freeze, "", {}, {},
-                          FreezeOperands, nullptr, Range, Next);
+      MIRInstruction::create(Context, MIRInstruction::I_freeze, "", {}, {},
+                             FreezeOperands, nullptr, Range, Next);
   Pat->addInstruction(Add);
   Pat->addInstruction(Freeze);
 
@@ -249,19 +249,19 @@ TEST(PatternMatcherTest, AllowsInstructionOperandsFromOtherBlocks) {
 TEST(PatternMatcherTest, InstructionMatcherControlsCommutativeOperands) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   IntegerConstant *One =
-      IntegerConstant::get(Context, APSInt(APInt(32, 1), false), Range);
+      IntegerConstant::create(Context, APSInt(APInt(32, 1), false), Range);
   MatcherOperand Operands[] = {{nullptr, One}, {nullptr, X}};
   MetaFlag *Commutative =
-      MetaFlag::getBuiltin(Context, MetaFlag::MF_c, {}, Range);
+      MetaFlag::createBuiltin(Context, MetaFlag::MF_c, {}, Range);
   MetaFlag *MetaFlags[] = {Commutative};
-  Pat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
-                                          {}, MetaFlags, Operands, nullptr,
-                                          Range, Block));
+  Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add, "",
+                                             {}, MetaFlags, Operands, nullptr,
+                                             Range, Block));
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -282,26 +282,26 @@ TEST(PatternMatcherTest, InstructionMatcherControlsCommutativeOperands) {
 TEST(PatternMatcherTest, OrSelfAdmitsSelectedOperandAsRoot) {
   MIRContext Context;
   SourceRange Range;
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
 
   MatcherOperand SubOperands[] = {{nullptr, X}, {nullptr, Y}};
   MIRInstruction *Sub =
-      MIRInstruction::get(Context, MIRInstruction::I_sub, "sub", {}, {},
-                          SubOperands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_sub, "sub", {}, {},
+                             SubOperands, nullptr, Range, Block);
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, Sub}};
   MetaFlag::Argument OperandIndex;
   OperandIndex.K = MetaFlag::Argument::Integer;
   OperandIndex.IntegerValue = 1;
   MetaFlag *OrSelf =
-      MetaFlag::getBuiltin(Context, MetaFlag::MF_o, OperandIndex, Range);
+      MetaFlag::createBuiltin(Context, MetaFlag::MF_o, OperandIndex, Range);
   MetaFlag *MetaFlags[] = {OrSelf};
   MIRInstruction *Add =
-      MIRInstruction::get(Context, MIRInstruction::I_add, "", {}, MetaFlags,
-                          AddOperands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_add, "", {}, MetaFlags,
+                             AddOperands, nullptr, Range, Block);
   Pat->addInstruction(Sub);
   Pat->addInstruction(Add);
 
@@ -325,20 +325,20 @@ TEST(PatternMatcherTest, MatchesPatternVariants) {
   MIRContext Context;
   SourceRange Range;
 
-  Pattern *AddPat = Pattern::get(Context);
+  Pattern *AddPat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
   MatcherOperand Operands[] = {{nullptr, X}, {nullptr, Y}};
-  AddPat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_add, "",
-                                             {}, {}, Operands, nullptr, Range,
-                                             Block));
+  AddPat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add,
+                                                "", {}, {}, Operands, nullptr,
+                                                Range, Block));
 
-  Pattern *SubPat = Pattern::get(Context);
-  SubPat->addInstruction(MIRInstruction::get(Context, MIRInstruction::I_sub, "",
-                                             {}, {}, Operands, nullptr, Range,
-                                             Block));
+  Pattern *SubPat = Pattern::create(Context);
+  SubPat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_sub,
+                                                "", {}, {}, Operands, nullptr,
+                                                Range, Block));
 
   PatternVariants Variants;
   Variants.addVariant(AddPat);
@@ -366,24 +366,24 @@ TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
   MIRContext Context;
   SourceRange Range;
 
-  Pattern *Pat = Pattern::get(Context);
+  Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
 
   // %x = add i32 ?x, ?y
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, Y}};
   MIRInstruction *Add =
-      MIRInstruction::get(Context, MIRInstruction::I_add, "x", {}, {},
-                          AddOperands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_add, "x", {}, {},
+                             AddOperands, nullptr, Range, Block);
   Pat->addInstruction(Add);
 
   // %res = sub i32 %x, ?x
   MatcherOperand SubOperands[] = {{nullptr, Add}, {nullptr, X}};
   MIRInstruction *Sub =
-      MIRInstruction::get(Context, MIRInstruction::I_sub, "res", {}, {},
-                          SubOperands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_sub, "res", {}, {},
+                             SubOperands, nullptr, Range, Block);
   Pat->addInstruction(Sub);
 
   LLVMContext LLVMContext;

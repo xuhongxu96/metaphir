@@ -160,34 +160,30 @@ public:
   CompositeMatcher *getCompositeMatcher() const { return Composite; }
   StringRef getCustomOpcodeName() const;
 
-  static Instruction *get(MIRContext &Context, InstructionID ID,
-                          StringRef ResultName, ArrayRef<InstructionFlag> Flags,
-                          ArrayRef<MetaFlag *> MetaFlags,
-                          ArrayRef<MatcherOperand> Operands,
-                          MetaVariable *Capture, SourceRange Range,
-                          MetaVariable *ParentBlock,
-                          PatternSettings Settings = {});
-  static Instruction *getComposite(MIRContext &Context, StringRef ResultName,
-                                   CompositeMatcher *Composite,
-                                   ArrayRef<InstructionFlag> Flags,
-                                   ArrayRef<MetaFlag *> MetaFlags,
-                                   ArrayRef<MatcherOperand> Operands,
-                                   MetaVariable *Capture, SourceRange Range,
-                                   MetaVariable *ParentBlock,
-                                   PatternSettings Settings = {});
-
-  static Instruction *withOperands(MIRContext &Context, const Instruction *Orig,
-                                   ArrayRef<MatcherOperand> NewUnkeyedOperands);
+  static Instruction *
+  create(MIRContext &Context, InstructionID ID, StringRef ResultName,
+         ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
+         ArrayRef<MatcherOperand> Operands, MetaVariable *Capture,
+         SourceRange Range, MetaVariable *ParentBlock,
+         PatternSettings Settings = {});
+  static Instruction *createComposite(MIRContext &Context, StringRef ResultName,
+                                      CompositeMatcher *Composite,
+                                      ArrayRef<InstructionFlag> Flags,
+                                      ArrayRef<MetaFlag *> MetaFlags,
+                                      ArrayRef<MatcherOperand> Operands,
+                                      MetaVariable *Capture, SourceRange Range,
+                                      MetaVariable *ParentBlock,
+                                      PatternSettings Settings = {});
 
   /// Creates an instruction of the same kind as Proto -- the same built-in
   /// matcher, or the same composite -- with everything else given anew.
-  /// Operands holds keyed and unkeyed operands, as for get().
+  /// Operands holds keyed and unkeyed operands, as for create().
   static Instruction *
-  getLike(MIRContext &Context, const Instruction &Proto, StringRef ResultName,
-          ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
-          ArrayRef<MatcherOperand> Operands, MetaVariable *Capture,
-          SourceRange Range, MetaVariable *ParentBlock,
-          PatternSettings Settings);
+  createLike(MIRContext &Context, const Instruction &Proto,
+             StringRef ResultName, ArrayRef<InstructionFlag> Flags,
+             ArrayRef<MetaFlag *> MetaFlags, ArrayRef<MatcherOperand> Operands,
+             MetaVariable *Capture, SourceRange Range,
+             MetaVariable *ParentBlock, PatternSettings Settings);
 
 private:
   InstructionID ID;

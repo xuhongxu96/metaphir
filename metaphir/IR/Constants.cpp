@@ -7,23 +7,24 @@
 namespace llvm {
 namespace metaphir {
 
-GlobalValue *GlobalValue::get(MIRContext &Context, StringRef Name,
-                              SourceRange Range) {
+GlobalValue *GlobalValue::create(MIRContext &Context, StringRef Name,
+                                 SourceRange Range) {
   return new (Context.pImpl->Alloc)
       GlobalValue(Context.pImpl->Saver.save(Name), Range);
 }
 
-IntegerConstant *IntegerConstant::get(MIRContext &Context, const APSInt &Number,
-                                      SourceRange Range) {
+IntegerConstant *IntegerConstant::create(MIRContext &Context,
+                                         const APSInt &Number,
+                                         SourceRange Range) {
   auto *Result = new (Context.pImpl->Alloc) IntegerConstant(Number, Range);
   if (Number.needsCleanup())
     Context.pImpl->ValuesToDestroy.push_back(Result);
   return Result;
 }
 
-FloatingConstant *FloatingConstant::get(MIRContext &Context,
-                                        const APFloat &Number,
-                                        SourceRange Range) {
+FloatingConstant *FloatingConstant::create(MIRContext &Context,
+                                           const APFloat &Number,
+                                           SourceRange Range) {
   auto *Result = new (Context.pImpl->Alloc) FloatingConstant(Number, Range);
   if (Number.needsCleanup())
     Context.pImpl->ValuesToDestroy.push_back(Result);
@@ -40,15 +41,16 @@ StringRef KeywordConstant::getKeywordName(KeywordID ID) {
   llvm_unreachable("invalid keyword constant ID");
 }
 
-KeywordConstant *KeywordConstant::get(MIRContext &Context, KeywordID ID,
-                                      SourceRange Range) {
+KeywordConstant *KeywordConstant::create(MIRContext &Context, KeywordID ID,
+                                         SourceRange Range) {
   return new (Context.pImpl->Alloc) KeywordConstant(ID, Range);
 }
 
-AggregateConstant *AggregateConstant::get(MIRContext &Context,
-                                          ArrayRef<Type *> ElementTypes,
-                                          ArrayRef<Value *> Elements,
-                                          Delimiter Delim, SourceRange Range) {
+AggregateConstant *AggregateConstant::create(MIRContext &Context,
+                                             ArrayRef<Type *> ElementTypes,
+                                             ArrayRef<Value *> Elements,
+                                             Delimiter Delim,
+                                             SourceRange Range) {
   return new (Context.pImpl->Alloc) AggregateConstant(
       Context.pImpl->copyArray<Type *>(ElementTypes),
       Context.pImpl->copyArray<Value *>(Elements), Delim, Range);

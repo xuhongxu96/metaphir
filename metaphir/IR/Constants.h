@@ -14,8 +14,8 @@ public:
   StringRef getName() const { return Name; }
 
   static bool classof(const Value *V) { return V->getValueID() == GlobalVal; }
-  static GlobalValue *get(MIRContext &Context, StringRef Name,
-                          SourceRange Range);
+  static GlobalValue *create(MIRContext &Context, StringRef Name,
+                             SourceRange Range);
 
 private:
   StringRef Name;
@@ -30,8 +30,8 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == IntegerConstantVal;
   }
-  static IntegerConstant *get(MIRContext &Context, const APSInt &Number,
-                              SourceRange Range);
+  static IntegerConstant *create(MIRContext &Context, const APSInt &Number,
+                                 SourceRange Range);
 
 private:
   APSInt Number;
@@ -47,8 +47,8 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == FloatingConstantVal;
   }
-  static FloatingConstant *get(MIRContext &Context, const APFloat &Number,
-                               SourceRange Range);
+  static FloatingConstant *create(MIRContext &Context, const APFloat &Number,
+                                  SourceRange Range);
 
 private:
   APFloat Number;
@@ -70,8 +70,8 @@ public:
     return V->getValueID() == KeywordConstantVal;
   }
   static StringRef getKeywordName(KeywordID ID);
-  static KeywordConstant *get(MIRContext &Context, KeywordID ID,
-                              SourceRange Range);
+  static KeywordConstant *create(MIRContext &Context, KeywordID ID,
+                                 SourceRange Range);
 
 private:
   KeywordID ID;
@@ -91,10 +91,10 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == AggregateConstantVal;
   }
-  static AggregateConstant *get(MIRContext &Context,
-                                ArrayRef<Type *> ElementTypes,
-                                ArrayRef<Value *> Elements, Delimiter Delim,
-                                SourceRange Range);
+  static AggregateConstant *create(MIRContext &Context,
+                                   ArrayRef<Type *> ElementTypes,
+                                   ArrayRef<Value *> Elements, Delimiter Delim,
+                                   SourceRange Range);
 
 private:
   ArrayRef<Type *> Types;

@@ -21,7 +21,8 @@ static_assert(!std::is_copy_constructible_v<Pattern>,
 TEST(MetaphIRConstructs, UsesOneTypeHierarchy) {
   MIRContext Context;
   SourceRange Range;
-  MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Bits =
+      MetaVariable::create(Context, "bits", MetaType::Nat, Range);
   Value *BitsValue = Bits;
   EXPECT_EQ(BitsValue->getValueID(), Value::MetaVariableVal);
   EXPECT_EQ(cast<MetaVariable>(BitsValue), Bits);
@@ -38,10 +39,11 @@ TEST(MetaphIRConstructs, UsesOneTypeHierarchy) {
 TEST(MetaphIRConstructs, UniquesTypesByStructure) {
   MIRContext Context;
   SourceRange Range;
-  MetaVariable *Ty = MetaVariable::get(Context, "ty", MetaType::Type, Range);
-  MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Ty = MetaVariable::create(Context, "ty", MetaType::Type, Range);
+  MetaVariable *Bits =
+      MetaVariable::create(Context, "bits", MetaType::Nat, Range);
   MetaVariable *Count =
-      MetaVariable::get(Context, "count", MetaType::Nat, Range);
+      MetaVariable::create(Context, "count", MetaType::Nat, Range);
 
   Type *I8 = IntegerType::get(Context, 8);
   Type *I32 = IntegerType::get(Context, 32);
@@ -91,12 +93,14 @@ TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
   MIRContext Context;
   SourceRange Range;
   Type *I32 = IntegerType::get(Context, 32);
-  Value *LHS = KeywordConstant::get(Context, KeywordConstant::K_Poison, Range);
-  Value *RHS = KeywordConstant::get(Context, KeywordConstant::K_Undef, Range);
+  Value *LHS =
+      KeywordConstant::create(Context, KeywordConstant::K_Poison, Range);
+  Value *RHS =
+      KeywordConstant::create(Context, KeywordConstant::K_Undef, Range);
   Value *Predicate =
-      KeywordConstant::get(Context, KeywordConstant::K_EQ, Range);
+      KeywordConstant::create(Context, KeywordConstant::K_EQ, Range);
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MatcherOperand Operands[] = {
       {I32, LHS, false, true, nullptr, nullptr, MatcherOperand::NotKeyed, {}},
       {I32, RHS, false, true, nullptr, nullptr, MatcherOperand::NotKeyed, {}},
@@ -110,8 +114,9 @@ TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
        {}},
   };
 
-  Instruction *Matcher = Instruction::get(Context, Instruction::I_icmp, "", {},
-                                          {}, Operands, nullptr, Range, Block);
+  Instruction *Matcher =
+      Instruction::create(Context, Instruction::I_icmp, "", {}, {}, Operands,
+                          nullptr, Range, Block);
   Value *MatcherValue = Matcher;
   EXPECT_EQ(MatcherValue->getValueID(), Value::InstructionVal);
   EXPECT_EQ(cast<Instruction>(MatcherValue), Matcher);
@@ -152,10 +157,10 @@ TEST(MetaphIRConstructs, GeneratedExtensibilitySchemas) {
 TEST(MetaphIRConstructs, OperatorConstraintUniquesUserOperatorNames) {
   MIRContext Context;
   SourceRange Range;
-  OperatorConstraint *Op1 = OperatorConstraint::getUserDefined(
+  OperatorConstraint *Op1 = OperatorConstraint::createUserDefined(
       Context, Constraint::Call, Constraint::BooleanResult,
       "myCustomConstraint", {}, Range);
-  OperatorConstraint *Op2 = OperatorConstraint::getUserDefined(
+  OperatorConstraint *Op2 = OperatorConstraint::createUserDefined(
       Context, Constraint::Call, Constraint::BooleanResult,
       "myCustomConstraint", {}, Range);
 
@@ -168,7 +173,7 @@ TEST(MetaphIRConstructs, OperatorConstraintUniquesUserOperatorNames) {
   EXPECT_EQ(Op1->getOperator().data(), Op2->getOperator().data());
 
   // Built-in operator overload:
-  OperatorConstraint *Builtin = OperatorConstraint::getBuiltin(
+  OperatorConstraint *Builtin = OperatorConstraint::createBuiltin(
       Context, Constraint::Binary, Constraint::BooleanResult,
       Constraint::O_Equal, {}, Range);
   EXPECT_FALSE(Builtin->isUserDefined());
@@ -181,14 +186,17 @@ TEST(MetaphIRConstructs, MetaFlagBuiltinAndCustomVariants) {
   SourceRange Range;
 
   // Built-in MetaFlag:
-  MetaFlag *Builtin = MetaFlag::getBuiltin(Context, MetaFlag::MF_c, {}, Range);
+  MetaFlag *Builtin =
+      MetaFlag::createBuiltin(Context, MetaFlag::MF_c, {}, Range);
   EXPECT_FALSE(Builtin->isUserDefined());
   EXPECT_EQ(Builtin->getMetaFlagID(), MetaFlag::MF_c);
   EXPECT_EQ(Builtin->getName(), "c");
 
   // Custom / User-defined MetaFlags:
-  MetaFlag *Custom1 = MetaFlag::getUserDefined(Context, "userFlag", {}, Range);
-  MetaFlag *Custom2 = MetaFlag::getUserDefined(Context, "userFlag", {}, Range);
+  MetaFlag *Custom1 =
+      MetaFlag::createUserDefined(Context, "userFlag", {}, Range);
+  MetaFlag *Custom2 =
+      MetaFlag::createUserDefined(Context, "userFlag", {}, Range);
   EXPECT_TRUE(Custom1->isUserDefined());
   EXPECT_TRUE(Custom2->isUserDefined());
   EXPECT_EQ(Custom1->getMetaFlagID(), MetaFlag::UnknownMetaFlag);
@@ -203,11 +211,11 @@ TEST(MetaphIRConstructs, InstructionCustomOpcodeAndKeyedOperands) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
 
   // Instruction without keyed operands has 0 keyed operand allocations:
-  Instruction *Inst = Instruction::get(Context, Instruction::I_add, "res", {},
-                                       {}, {}, nullptr, Range, Block);
+  Instruction *Inst = Instruction::create(Context, Instruction::I_add, "res",
+                                          {}, {}, {}, nullptr, Range, Block);
   EXPECT_EQ(Inst->getOpcodeName(), "add");
   EXPECT_EQ(Inst->getCustomOpcodeName(), "");
   EXPECT_TRUE(Inst->getKeyedOperands().empty());
@@ -215,15 +223,14 @@ TEST(MetaphIRConstructs, InstructionCustomOpcodeAndKeyedOperands) {
 
   // Composite instruction gets opcode name from CompositeMatcher:
   auto *CM =
-      new CompositeMatcher("myCompositeOp", false, {},
-                           Instruction::OperandSyntax::Binary, 2, {}, {});
-  Instruction *CompInst = Instruction::getComposite(Context, "cres", CM, {}, {},
-                                                    {}, nullptr, Range, Block);
+      CompositeMatcher::create(Context, "myCompositeOp", false, {},
+                               Instruction::OperandSyntax::Binary, 2, {}, {});
+  Instruction *CompInst = Instruction::createComposite(
+      Context, "cres", CM, {}, {}, {}, nullptr, Range, Block);
   EXPECT_TRUE(CompInst->isComposite());
   EXPECT_EQ(CompInst->getOpcodeName(), "myCompositeOp");
   EXPECT_EQ(CompInst->getCustomOpcodeName(), "myCompositeOp");
   EXPECT_EQ(CompInst->getCompositeMatcher(), CM);
-  delete CM;
 }
 
 // Type::get only makes primitive types; derived types have their own factory.
@@ -237,10 +244,11 @@ TEST(MetaphIRConstructs, TypeGetRejectsDerivedTypeIDs) {
 // A use of a composite matcher has no built-in instruction ID.
 TEST(MetaphIRConstructs, CompositeUseHasNoInstructionID) {
   MIRContext Context;
-  CompositeMatcher Matcher("m", /*IsCommutative=*/false, {},
-                           Instruction::OperandSyntax::Binary, 2, {}, {});
-  Instruction *Use = Instruction::getComposite(Context, "r", &Matcher, {}, {},
-                                               {}, nullptr, {}, nullptr);
+  CompositeMatcher *Matcher =
+      CompositeMatcher::create(Context, "m", /*IsCommutative=*/false, {},
+                               Instruction::OperandSyntax::Binary, 2, {}, {});
+  Instruction *Use = Instruction::createComposite(Context, "r", Matcher, {}, {},
+                                                  {}, nullptr, {}, nullptr);
   EXPECT_EQ(Use->getOpcodeName(), "m");
   EXPECT_DEBUG_DEATH(Use->getInstructionID(), "composite");
 }

@@ -43,7 +43,7 @@ public:
   }
 
   /// Creates an empty pattern owned by Context.
-  static Pattern *get(MIRContext &Context);
+  static Pattern *create(MIRContext &Context);
 
   /// Creates a pattern owned by the context with the same contents as this
   /// one. Instructions and constraints are shared, not copied.
