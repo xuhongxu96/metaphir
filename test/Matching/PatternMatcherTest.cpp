@@ -408,4 +408,54 @@ TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
   }
 }
 
+// The value-tracking analyses are cached per function. A function freed
+// between matches can be reallocated at the same address for the next module;
+// its analyses must be rebuilt, or dominating conditions of the new function
+// are missed.
+TEST(PatternMatcherTest, RebuildsAnalysesForReallocatedFunction) {
+  MIRContext Context;
+  SourceMgr SM;
+  Pattern *Pat = test::parseAndLower(R"(
+    %r = udiv i32 ?x, ?y
+    ;; isKnownNegative(?y)
+  )",
+                                     SM, Context);
+  ASSERT_NE(Pat, nullptr);
+  PatternMatcher Matcher(&Context);
+
+  LLVMContext LLVMContext;
+  std::unique_ptr<Module> First = test::parseLLVMModule(
+      R"(
+        define i32 @f(i32 %x, i32 %y) {
+          %r = udiv i32 %x, %y
+          ret i32 %r
+        }
+      )",
+      LLVMContext);
+  ASSERT_NE(First, nullptr);
+  const Function *FirstFunction = First->getFunction("f");
+  EXPECT_TRUE(Matcher.match(*Pat, MIRTarget(*FirstFunction)).empty());
+  First.reset();
+
+  std::unique_ptr<Module> Second = test::parseLLVMModule(
+      R"(
+        define i32 @f(i32 %x, i32 %y) {
+        entry:
+          %c = icmp slt i32 %y, 0
+          br i1 %c, label %then, label %else
+        then:
+          %r = udiv i32 %x, %y
+          ret i32 %r
+        else:
+          ret i32 0
+        }
+      )",
+      LLVMContext);
+  ASSERT_NE(Second, nullptr);
+  const Function *SecondFunction = Second->getFunction("f");
+  if (SecondFunction != FirstFunction)
+    GTEST_SKIP() << "the allocator did not reuse the function's address";
+  EXPECT_EQ(Matcher.match(*Pat, MIRTarget(*SecondFunction)).size(), 1u);
+}
+
 } // namespace

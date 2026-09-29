@@ -31,6 +31,10 @@ public:
   Expected<ConstraintValue> evaluate(const Constraint &Expression,
                                      const Instantiation &State);
 
+  /// Drops the analyses cached for value-tracking operators. Call it before
+  /// the functions they were built for are freed.
+  void resetAnalyses();
+
 private:
   // Signature of a value-tracking operator's pure evaluator: given the
   // evaluated operand values, the query context, and the operator node,

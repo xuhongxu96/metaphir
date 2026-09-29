@@ -79,6 +79,8 @@ MatchResults PatternMatcher::applyConstraints(
 MatchResults
 PatternMatcher::match(const Pattern &Pattern, const Target &Program,
                       SmallVectorImpl<UnsatisfiedConstraint> *Unsatisfied) {
+  // Analyses cached for an earlier target may belong to a freed function.
+  Interpreter.resetAnalyses();
   SmallVector<UnsatisfiedConstraint, 4> Failed;
   MatchResults Matches =
       applyConstraints(Pattern, matchStructure(Pattern, Program), Failed);
@@ -91,6 +93,8 @@ MatchResults
 PatternMatcher::match(const PatternVariants &Variants, const Target &Program,
                       SmallVectorImpl<UnsatisfiedConstraint> *Unsatisfied,
                       bool *HadStructuralMatch) {
+  // Analyses cached for an earlier target may belong to a freed function.
+  Interpreter.resetAnalyses();
   MatchResults Combined;
   for (const Pattern *Variant : Variants) {
     MatchResults Structural = matchStructure(*Variant, Program);

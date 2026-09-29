@@ -24,6 +24,10 @@ public:
   // analyses on first use.
   SimplifyQuery getQuery(const llvm::Instruction *CtxI);
 
+  // Drops every analysis. The cache is keyed on the function's address, so it
+  // must be reset before that function is freed and the address reused.
+  void reset();
+
   // Test-only introspection for the lazy-initialization property.
   bool hasMaterializedDominatorTree() const { return DT.has_value(); }
   bool hasMaterializedAssumptionCache() const { return AC.has_value(); }

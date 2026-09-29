@@ -8,18 +8,23 @@ namespace llvm {
 namespace metaphir {
 namespace detail {
 
+void ValueTrackContext::reset() {
+  F = nullptr;
+  DT.reset();
+  AC.reset();
+  DC.reset();
+  TLII.reset();
+  TLI.reset();
+}
+
 const DataLayout &ValueTrackContext::ensure(const llvm::Instruction *CtxI) {
   // The module outlives the match, so the const-qualified function view is
   // safe to use for the (non-mutating) DominatorTree/AssumptionCache builders.
   auto *Fn = const_cast<llvm::Function *>(CtxI->getFunction());
   assert(Fn && "value tracking needs an instruction inside a function");
   if (Fn != F) {
+    reset();
     F = Fn;
-    DT.reset();
-    AC.reset();
-    DC.reset();
-    TLII.reset();
-    TLI.reset();
   }
 
   const DataLayout &DL = Fn->getParent()->getDataLayout();

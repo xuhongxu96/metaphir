@@ -23,6 +23,8 @@ ConstraintInterpreter::ConstraintInterpreter(MIRContext *Context)
 
 ConstraintInterpreter::~ConstraintInterpreter() = default;
 
+void ConstraintInterpreter::resetAnalyses() { Analysis->reset(); }
+
 SimplifyQuery
 ConstraintInterpreter::getValueTrackQuery(const llvm::Instruction *CtxI) {
   return Analysis->getQuery(CtxI);
