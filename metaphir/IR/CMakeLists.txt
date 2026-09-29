@@ -19,6 +19,8 @@ add_library(metaphir-ir
   Constraint.h
 
   Constraints.h
+  ConstraintCoercions.def
+  ConstraintOperators.def
 
   CompositeMatcher.cpp
   CompositeMatcher.h

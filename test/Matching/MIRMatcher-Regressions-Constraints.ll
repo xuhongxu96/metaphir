@@ -82,13 +82,14 @@ define i128 @h(i8 %a) {
 ; MASKED-NEXT:   no match
 ; MASKED-NEXT:   constraint not satisfied: (maskedValueIsZero ?anch (- 256))
 
-; A constraint whose value is not boolean is coerced, not crashed on.
+; A constraint whose value turns out not to be a boolean when evaluated is
+; coerced, not crashed on.
 ;--- non-boolean.mpir
-constraint seven(?v) {
-  7
+constraint id(?v) {
+  ?v
 }
 %r = add:?anch i32 ?x, ?y
-;; seven(?x)
+;; id(7)
 
 ; A Nat binding (here an element index) is unsigned.
 ;--- nat-unsigned.mpir

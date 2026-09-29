@@ -291,6 +291,14 @@ bool MIRParser::parseModule(Pattern *&Result) {
   return false;
 }
 
+bool MIRParser::requireBooleanConstraint(const Constraint &C) {
+  Constraint::ResultType Type = C.getResultType();
+  if (Type == Constraint::BooleanResult || Type == Constraint::Unknown)
+    return false;
+  return Lex.ParseError(C.getSourceRange().Begin,
+                        "constraint must have a boolean result");
+}
+
 bool MIRParser::expectEndOfLine(tok::Kind Terminator, const Twine &Message) {
   if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof &&
       Lex.getKind() != Terminator)
@@ -311,9 +319,8 @@ bool MIRParser::parseBodyLine(tok::Kind Terminator) {
     Constraint *C = nullptr;
     if (parseConstraint(C))
       return true;
-    if (C->getResultType() == Constraint::IntegerResult)
-      return Lex.ParseError(C->getSourceRange().Begin,
-                            "constraint must have a boolean result");
+    if (requireBooleanConstraint(*C))
+      return true;
     // A value-tracking operator defaults to the instruction the constraint
     // follows. In a match branch, expansion rewrites this to the inlined copy
     // of that instruction.
@@ -1332,11 +1339,21 @@ bool MIRParser::parseMatchParameters(Instruction::OperandSyntax Syntax,
 
 bool MIRParser::parseTopLevelConstraint() {
   next();
+  // Names of built-in operations, some of which lex as keywords ('ult'), are
+  // reserved.
+  if (Constraint::getOperatorID(Lex.getTokenText(), Constraint::Call) !=
+      Constraint::UnknownOperator)
+    return error(
+        "'" + Lex.getTokenText() +
+        "' is a built-in constraint operation and cannot be redefined");
   // A constraint name is an identifier, so a keyword token cannot name one.
   if (Lex.getKind() != tok::Identifier)
     return error("expected constraint name, which must be an identifier and "
                  "not a keyword");
   std::string Name = Lex.getStrVal();
+  LocTy NameLoc = Lex.getLoc();
+  if (Context.getConstraintDef(Name))
+    return Lex.ParseError(NameLoc, "redefinition of constraint '" + Name + "'");
   next();
   if (expect(tok::lparen, "expected '(' after constraint name"))
     return true;
@@ -1375,7 +1392,10 @@ bool MIRParser::parseTopLevelConstraint() {
   }
 
   Constraint *Body = nullptr;
-  if (parseConstraint(Body))
+  InDefinitionBody = true;
+  bool Failed = parseConstraint(Body);
+  InDefinitionBody = false;
+  if (Failed)
     return true;
   skipNewlines();
   if (expect(tok::rbrace, "expected '}' after constraint body"))
@@ -1417,6 +1437,12 @@ bool MIRParser::parseTopLevelMetaFlag() {
   if (Lex.getKind() != tok::MetaFlag)
     return error("expected ':' followed by a metaflag name");
   std::string Name = Lex.getStrVal();
+  LocTy NameLoc = Lex.getLoc();
+  if (MetaFlag::getMetaFlagID(Name) != MetaFlag::UnknownMetaFlag)
+    return error("':" + Name +
+                 "' is a built-in metaflag and cannot be redefined");
+  if (Context.getMetaFlagDef(Name))
+    return Lex.ParseError(NameLoc, "redefinition of metaflag ':" + Name + "'");
   next();
   if (expect(tok::lparen, "expected '(' after metaflag name"))
     return true;
@@ -1454,7 +1480,10 @@ bool MIRParser::parseTopLevelMetaFlag() {
   }
 
   Constraint *Body = nullptr;
-  if (parseConstraint(Body))
+  InDefinitionBody = true;
+  bool Failed = parseConstraint(Body);
+  InDefinitionBody = false;
+  if (Failed || requireBooleanConstraint(*Body))
     return true;
   skipNewlines();
   if (expect(tok::rbrace, "expected '}' after metaflag body"))
@@ -1506,6 +1535,8 @@ bool MIRParser::parseTopLevelMatch() {
     return error("expected matcher name in match declaration, which must be "
                  "an identifier and not a keyword");
   std::string MatcherName = Lex.getStrVal();
+  if (Context.getCompositeMatcher(MatcherName))
+    return error("redefinition of matcher '" + MatcherName + "'");
   next();
 
   if (expect(tok::lsquare, "expected '[' before supported flags"))

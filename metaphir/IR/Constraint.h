@@ -69,6 +69,16 @@ public:
   static OperatorID getOperatorID(StringRef Name, ConstraintID Kind);
   static ResultType getResultType(MetaType Type);
 
+  /// Whether a value of type From may be used where To is expected: the
+  /// types agree, one of them is unknown until evaluation, or From converts
+  /// to To (see ConstraintCoercions.def).
+  static bool canCoerce(ResultType From, ResultType To);
+  /// The type argument Index of a built-in operator must coerce to; Unknown
+  /// when any value is accepted.
+  static ResultType getArgumentType(OperatorID ID, unsigned Index);
+  /// A phrase naming a type for diagnostics, e.g. "an integer".
+  static StringRef describe(ResultType Type);
+
 protected:
   Constraint(ConstraintID ID, ResultType Ty, SourceRange R)
       : ID(ID), Ty(Ty), Range(R) {}

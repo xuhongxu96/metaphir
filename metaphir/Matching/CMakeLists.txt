@@ -2,7 +2,6 @@ add_library(
   metaphir-matching
   ConstraintCoercion.cpp
   ConstraintCoercion.h
-  Coercions.def
   ConstraintError.cpp
   ConstraintError.h
   ConstraintInterpreter.cpp

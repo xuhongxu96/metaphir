@@ -17,7 +17,7 @@ namespace {
 enum CoercionOp {
   UnknownCoercion = 0,
 #define MIR_COERCION(Src, Dst, Op) Coerce##Op,
-#include "metaphir/Matching/Coercions.def"
+#include "metaphir/IR/ConstraintCoercions.def"
 };
 } // namespace
 
@@ -34,7 +34,7 @@ static const std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
           Matrix{};
 #define MIR_COERCION(Src, Dst, Op)                                             \
   Matrix[ConstraintValue::Src][ConstraintValue::Dst] = Coerce##Op;
-#include "metaphir/Matching/Coercions.def"
+#include "metaphir/IR/ConstraintCoercions.def"
       return Matrix;
     }();
 
@@ -193,7 +193,7 @@ Expected<ConstraintValue> coerce(ConstraintValue V,
 #define MIR_COERCION(Src, Dst, Op)                                             \
   case Coerce##Op:                                                             \
     return coerce##Op(V, Expression);
-#include "metaphir/Matching/Coercions.def"
+#include "metaphir/IR/ConstraintCoercions.def"
     }
     llvm_unreachable("unknown coercion operator");
   }

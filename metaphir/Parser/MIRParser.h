@@ -45,12 +45,18 @@ private:
   Pattern *CurrentPattern = nullptr;
   MetaVariable *CurrentBlock = nullptr;
   PatternSettings Settings;
+  /// Set while parsing a 'constraint'/'metaflag' body, whose expression may
+  /// span lines.
+  bool InDefinitionBody = false;
 
   /// Parses the whole buffer: definitions and an optional pattern body.
   bool parseModule(Pattern *&Result);
 
   bool error(const Twine &Message) { return Lex.ParseError(Message); }
-  void next() { Lex.Lex(); }
+  void next() {
+    while (Lex.Lex() == tok::Newline && InDefinitionBody) {
+    }
+  }
   bool consume(tok::Kind K);
   bool expect(tok::Kind K, const Twine &Message);
   /// Describes the current token for a diagnostic: its source text, or "end
@@ -116,20 +122,24 @@ private:
                                  StringRef OpName, StringRef ResultName,
                                  LocTy Loc);
 
+  // Constraint expressions; see MIRParser.ParseConstraint.cpp.
   bool parseConstraint(Constraint *&Result);
-  bool parseConstraintOr(Constraint *&Result);
-  bool parseConstraintAnd(Constraint *&Result);
-  bool parseConstraintEquality(Constraint *&Result);
-  bool parseConstraintAdd(Constraint *&Result);
-  bool parseConstraintMul(Constraint *&Result);
+  /// Parses operators binding at least as tightly as MinPrecedence.
+  bool parseConstraintBinary(Constraint *&Result, unsigned MinPrecedence);
   bool parseConstraintUnary(Constraint *&Result);
   bool parseConstraintPostfix(Constraint *&Result);
   bool parseConstraintPrimary(Constraint *&Result);
-  Constraint *makeConstraint(Constraint::ConstraintID K,
-                             Constraint::ResultType Ty, StringRef Op,
-                             int64_t Integer, bool Boolean,
-                             MetaVariable *Variable,
-                             ArrayRef<Constraint *> Args, LocTy Loc);
+  bool parseConstraintArray(Constraint *&Result);
+  bool parseConstraintCall(Constraint *&Result);
+  bool parseConstraintArguments(SmallVectorImpl<Constraint *> &Args);
+  /// Builds the built-in unary or binary operator Spelling and checks its
+  /// operands.
+  bool makeOperator(Constraint *&Result, Constraint::ConstraintID Kind,
+                    StringRef Spelling, ArrayRef<Constraint *> Args, LocTy Loc);
+  /// Reports an operand of a built-in operator whose type cannot be used.
+  bool checkOperands(const OperatorConstraint &Operator, StringRef Spelling);
+  /// Reports C unless it is (or may be, once matched) a boolean.
+  bool requireBooleanConstraint(const Constraint &C);
 };
 
 } // namespace metaphir
