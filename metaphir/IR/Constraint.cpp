@@ -149,6 +149,119 @@ StringRef Constraint::getOperatorName(OperatorID ID) {
   llvm_unreachable("invalid constraint function ID");
 }
 
+bool Constraint::canCoerce(ResultType From, ResultType To) {
+  if (From == To || From == Unknown || To == Unknown)
+    return true;
+#define MIR_COERCION(Src, Dst, Op)                                             \
+  if (From == Src##Result && To == Dst##Result)                                \
+    return true;
+#include "metaphir/IR/ConstraintCoercions.def"
+  return false;
+}
+
+Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
+                                                   unsigned Index) {
+  switch (ID) {
+  case O_LogicalOr:
+  case O_LogicalAnd:
+  case O_Not:
+    return BooleanResult;
+  case O_Add:
+  case O_Subtract:
+  case O_Multiply:
+  case O_Negate:
+  case O_SLT:
+  case O_ULT:
+  case O_SLE:
+  case O_ULE:
+  case O_SGT:
+  case O_UGT:
+  case O_SGE:
+  case O_UGE:
+  case O_SDiv:
+  case O_UDiv:
+  case O_SRem:
+  case O_URem:
+  case O_Lshr:
+  case O_Ashr:
+  case O_Shl:
+  case O_And:
+  case O_Or:
+  case O_Xor:
+  case O_Log2:
+  case O_Popcount:
+    return IntegerResult;
+  case O_Isa:
+    return Index == 0 ? ValueResult : StringResult;
+  case O_Opcode:
+    return ValueResult;
+  case O_KnownZeros:
+  case O_KnownOnes:
+    return BitVectorResult;
+  // Value-tracking operators take values, then an optional context
+  // instruction.
+  case O_NoOverflow:
+    return Index == 0 ? StringResult : ValueResult;
+  case O_KnownBits:
+  case O_IsKnownNonZero:
+  case O_IsKnownNegative:
+  case O_IsGuaranteedNotToBeUndef:
+  case O_IsKnownNonNegative:
+  case O_IsKnownPositive:
+  case O_IsKnownPowerOfTwo:
+    return ValueResult;
+  case O_MaskedValueIsZero:
+    return Index == 1 ? IntegerResult : ValueResult;
+  case O_InSignedRange:
+    return Index == 1 || Index == 2 ? IntegerResult : ValueResult;
+  // These accept a value or a plain integer, or answer false for anything
+  // else.
+  case O_Equal:
+  case O_NotEqual:
+  case O_IsPowerOfTwo:
+  case O_IsZero:
+  case O_IsAllOnes:
+  case O_IsLowBitMask:
+  case O_IsZeroFP:
+  case O_IsIntegralConstant:
+  case O_IsPoison:
+  case O_IsForbidPoison:
+  case O_IsConstantSplat:
+  case O_IsScalar:
+  case O_HasOneUse:
+  case O_HasOneUser:
+  case UnknownOperator:
+    return Unknown;
+  }
+  llvm_unreachable("invalid constraint operator");
+}
+
+StringRef Constraint::describe(ResultType Type) {
+  switch (Type) {
+  case Unknown:
+    return "any value";
+  case IntegerResult:
+    return "an integer";
+  case BooleanResult:
+    return "a boolean";
+  case StringResult:
+    return "a string";
+  case TypeResult:
+    return "a type";
+  case ValueResult:
+    return "a value";
+  case TypeArrayResult:
+    return "a type array";
+  case ValueArrayResult:
+    return "a value array";
+  case StringArrayResult:
+    return "a string array";
+  case BitVectorResult:
+    return "a bit vector";
+  }
+  llvm_unreachable("invalid constraint result type");
+}
+
 Constraint::ResultType Constraint::getResultType(MetaType Type) {
   switch (Type) {
 #define MIR_META_TYPE_CONSTRAINT_RESULT(ID, Result)                            \

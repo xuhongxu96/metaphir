@@ -1,6 +1,6 @@
-//===------ Coercions.def - coercion lattice for constraint values ------*-===//
+//===- ConstraintCoercions.def - Coercion lattice of constraint values ---===//
 //
-// Admissible value coercions for the constraint interpreter. Each entry
+// Admissible value coercions of constraint expressions. Each entry
 // declares a directed conversion from a source ConstraintValue kind to a
 // destination kind, implemented by the converter function Coerce<Op>. The
 // table is the single source of truth for which cross-kind conversions are

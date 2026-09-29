@@ -349,13 +349,15 @@ tok::Kind MIRLexer::ReadString(tok::Kind Kind) {
 }
 
 /// ReadVarName - Read the rest of a token containing a variable name.
-bool MIRLexer::ReadVarName() {
+bool MIRLexer::ReadVarName(bool AllowHyphen) {
   const char *NameStart = CurPtr;
-  if (isalpha(static_cast<unsigned char>(CurPtr[0])) || CurPtr[0] == '-' ||
-      CurPtr[0] == '$' || CurPtr[0] == '.' || CurPtr[0] == '_') {
+  auto IsNameChar = [AllowHyphen](char C) {
+    return (C == '-' && AllowHyphen) || C == '$' || C == '.' || C == '_';
+  };
+  if (isalpha(static_cast<unsigned char>(CurPtr[0])) || IsNameChar(CurPtr[0])) {
     ++CurPtr;
-    while (isalnum(static_cast<unsigned char>(CurPtr[0])) || CurPtr[0] == '-' ||
-           CurPtr[0] == '$' || CurPtr[0] == '.' || CurPtr[0] == '_')
+    while (isalnum(static_cast<unsigned char>(CurPtr[0])) ||
+           IsNameChar(CurPtr[0]))
       ++CurPtr;
 
     StrVal.assign(NameStart, CurPtr);
@@ -415,7 +417,7 @@ tok::Kind MIRLexer::LexVar(tok::Kind Var, tok::Kind VarID) {
   }
 
   // Handle VarName: [-a-zA-Z$._][-a-zA-Z$._0-9]*
-  if (ReadVarName())
+  if (ReadVarName(/*AllowHyphen=*/true))
     return Var;
 
   // Handle VarID: [0-9]+
@@ -473,7 +475,7 @@ tok::Kind MIRLexer::LexIdentifier() {
   if (!IntOrByteEnd && CurPtr[0] == '?') {
     MetaIntPrefix = IntOrByteIdentifier;
     ++CurPtr;
-    if (ReadVarName()) {
+    if (ReadVarName(/*AllowHyphen=*/false)) {
       return tok::MetaIntVar;
     }
     LexError("invalid meta variable name for integer type");
@@ -730,7 +732,7 @@ tok::Kind MIRLexer::LexPositive() {
 
 /// Lex all tokens that start with an ? character.
 tok::Kind MIRLexer::LexQuestion() {
-  if (ReadVarName()) {
+  if (ReadVarName(/*AllowHyphen=*/false)) {
     return tok::MetaVar;
   }
   LexError("invalid meta variable name");
@@ -742,13 +744,13 @@ tok::Kind MIRLexer::LexColon() {
   switch (CurPtr[0]) {
   case '?':
     ++CurPtr;
-    if (ReadVarName()) {
+    if (ReadVarName(/*AllowHyphen=*/false)) {
       return tok::MetaCaptureVar;
     }
     LexError("invalid meta capture variable name");
     return tok::Error;
   default:
-    if (ReadVarName()) {
+    if (ReadVarName(/*AllowHyphen=*/false)) {
       return tok::MetaFlag;
     }
     return tok::colon;

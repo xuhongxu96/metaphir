@@ -140,7 +140,10 @@ private:
   void SkipLineComment();
   bool SkipCComment();
   tok::Kind ReadString(tok::Kind Kind);
-  bool ReadVarName();
+  /// Reads a variable name after its sigil. LLVM-style %/@ names may contain
+  /// '-'; meta variable and metaflag names may not, so '?bits-1' is always a
+  /// subtraction.
+  bool ReadVarName(bool AllowHyphen);
 
   tok::Kind LexIdentifier();
   tok::Kind LexDigitOrNegative();
