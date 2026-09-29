@@ -3,6 +3,7 @@
 
 #include "metaphir/Matching/ConstraintError.h"
 #include "metaphir/Matching/ConstraintValue.h"
+#include "metaphir/Matching/IntegerSemantics.h"
 #include "llvm/ADT/APSInt.h"
 
 namespace llvm {
@@ -11,14 +12,6 @@ namespace metaphir {
 class Constraint;
 
 namespace detail {
-
-// Integer promotion helpers (the numeric coercion lattice). widen() extends
-// both operands to a common bitwidth so that binary arithmetic never overflows
-// (the analog of C's usual arithmetic conversions).
-APSInt extend(const APSInt &Value, unsigned Width, bool IsUnsigned);
-std::pair<APSInt, APSInt> widen(const APSInt &Left, const APSInt &Right,
-                                unsigned ExtraBits = 0);
-APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth);
 
 // Coercion-class predicates. A value belongs to a class when it can be coerced
 // to the corresponding target kind (see Coercions.def). isNumeric() is
@@ -85,8 +78,6 @@ requireValue(Expected<ConstraintValue> Result, const Constraint &Expression) {
     return Result.takeError();
   return requireValue(*Result, Expression);
 }
-
-ConstraintValue integerResult(APInt Value, bool IsUnsigned);
 
 Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,
                                 const Constraint &Expression);

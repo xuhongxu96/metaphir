@@ -1,6 +1,6 @@
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/IR/Constraint.h"
-#include "metaphir/Matching/MatchersDetail.h"
+#include "metaphir/Matching/ConstantInteger.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -140,28 +140,6 @@ coerceValueArrayToStringArray(const ConstraintValue &V,
   return ConstraintValue::getStringArray(std::move(Strings));
 }
 
-APSInt extend(const APSInt &Value, unsigned Width, bool IsUnsigned) {
-  APSInt Result = Value.extend(Width);
-  Result.setIsUnsigned(IsUnsigned);
-  return Result;
-}
-
-std::pair<APSInt, APSInt> widen(const APSInt &Left, const APSInt &Right,
-                                unsigned ExtraBits) {
-  bool IsUnsigned = Left.isUnsigned() && Right.isUnsigned();
-  // When the result is signed, an unsigned operand needs one more bit so
-  // that a value with its top bit set stays positive.
-  auto Needed = [IsUnsigned](const APSInt &V) {
-    return V.getBitWidth() + (!IsUnsigned && V.isUnsigned() ? 1 : 0);
-  };
-  unsigned Width = std::max(Needed(Left), Needed(Right)) + ExtraBits;
-  return {extend(Left, Width, IsUnsigned), extend(Right, Width, IsUnsigned)};
-}
-
-APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth) {
-  return Value.extOrTrunc(BitWidth);
-}
-
 bool isNumeric(const ConstraintValue &V) {
   if (V.getKind() == ConstraintValue::Value)
     return getConstantInteger(*V.getValue()).has_value();
@@ -245,10 +223,6 @@ Expected<const llvm::Value *> requireValue(const ConstraintValue &Value,
     return make_error<ConstraintEvaluationError>(
         Expression, "expected an LLVM value operand");
   return Value.getValue();
-}
-
-ConstraintValue integerResult(APInt Value, bool IsUnsigned) {
-  return ConstraintValue::getInteger(APSInt(std::move(Value), IsUnsigned));
 }
 
 Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,

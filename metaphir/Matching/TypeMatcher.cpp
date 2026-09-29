@@ -1,7 +1,6 @@
 #include "metaphir/Matching/TypeMatcher.h"
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/MetaVariable.h"
-#include "metaphir/Matching/MatchersDetail.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -12,7 +11,7 @@ bool TypeMatcher::matchSequenceType(const SequenceType &Matcher,
                                     const llvm::Type &TargetElement,
                                     uint64_t TargetCount) const {
   if (MetaVariable *Count = Matcher.getCountVariable()) {
-    if (!detail::bind(State, *Count, APInt(64, TargetCount)))
+    if (!State.unify(*Count, APInt(64, TargetCount)))
       return false;
   } else if (Matcher.getCount() != TargetCount) {
     return false;
@@ -121,8 +120,7 @@ bool TypeMatcher::match() const {
         TargetVector->getElementCount().getKnownMinValue());
   }
   case Type::MetaTyID:
-    return detail::bind(State, *cast<MetaIRType>(Matcher).getVariable(),
-                        &Target);
+    return State.unify(*cast<MetaIRType>(Matcher).getVariable(), &Target);
   case Type::MetaIntegerTyID: {
     const auto &MetaInteger = cast<MetaIntegerType>(Matcher);
     const llvm::Type *Element = &Target;
@@ -140,8 +138,7 @@ bool TypeMatcher::match() const {
         return false;
       BitWidth = Element->getIntegerBitWidth();
     }
-    return detail::bind(State, *MetaInteger.getBitWidthVariable(),
-                        APInt(64, BitWidth));
+    return State.unify(*MetaInteger.getBitWidthVariable(), APInt(64, BitWidth));
   }
   }
   llvm_unreachable("invalid MetaphIR type ID");

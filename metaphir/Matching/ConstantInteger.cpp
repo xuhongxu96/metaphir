@@ -1,24 +1,8 @@
-#include "metaphir/Matching/MatchersDetail.h"
-#include "metaphir/IR/Constants.h"
+#include "metaphir/Matching/ConstantInteger.h"
 #include "llvm/IR/Constants.h"
 
 namespace llvm {
 namespace metaphir {
-namespace detail {
-
-MatchResults success(Instantiation State) {
-  MatchResults Results;
-  Results.push_back(std::move(State));
-  return Results;
-}
-
-bool bind(Instantiation &State, const Value &Matcher,
-          Instantiation::Binding Target) {
-  if (const Instantiation::Binding *Existing = State.lookup(Matcher))
-    return *Existing == Target;
-  State.bind(Matcher, std::move(Target));
-  return true;
-}
 
 std::optional<APInt> getConstantInteger(const llvm::Value &V) {
   if (const auto *Integer = dyn_cast<ConstantInt>(&V))
@@ -31,6 +15,5 @@ std::optional<APInt> getConstantInteger(const llvm::Value &V) {
   return std::nullopt;
 }
 
-} // namespace detail
 } // namespace metaphir
 } // namespace llvm

@@ -2,12 +2,16 @@
 #define METAPHIR_MATCHING_CONSTRAINTINTERPRETER_H
 
 #include "metaphir/Matching/ConstraintValue.h"
-#include "metaphir/Matching/ValueTrackContext.h"
 #include "llvm/Support/Error.h"
+#include <memory>
 #include <optional>
 
 namespace llvm {
+struct SimplifyQuery;
 namespace metaphir {
+namespace detail {
+class ValueTrackContext;
+} // namespace detail
 
 class Constraint;
 class Instantiation;
@@ -19,11 +23,10 @@ class MIRContext;
 
 class ConstraintInterpreter {
 public:
-  explicit ConstraintInterpreter(MIRContext *Context = nullptr)
-      : Context(Context) {}
-
-  void setContext(MIRContext *C) { Context = C; }
-  MIRContext *getContext() const { return Context; }
+  /// Context holds the 'constraint' definitions that calls refer to; without
+  /// one, only built-in operations can be evaluated.
+  explicit ConstraintInterpreter(MIRContext *Context = nullptr);
+  ~ConstraintInterpreter();
 
   Expected<ConstraintValue> evaluate(const Constraint &Expression,
                                      const Instantiation &State);
@@ -47,9 +50,7 @@ private:
 
   // Value-tracking operators build their query through this context. The
   // per-function analyses are materialized lazily on first use.
-  SimplifyQuery getValueTrackQuery(const llvm::Instruction *CtxI) {
-    return Analysis.getQuery(CtxI);
-  }
+  SimplifyQuery getValueTrackQuery(const llvm::Instruction *CtxI);
 
   // Resolves the use-point instruction for a value-tracking operator: the
   // explicit trailing ?ctx argument when present, otherwise the constraint's
@@ -71,6 +72,10 @@ private:
                                             const Instantiation &State);
   Expected<ConstraintValue> evalOperator(const OperatorConstraint &Operator,
                                          const Instantiation &State);
+  /// Evaluates a call to a 'constraint' definition: its body, with the
+  /// parameters bound to the evaluated arguments.
+  Expected<ConstraintValue> evalUserDefinedCall(const OperatorConstraint &Call,
+                                                const Instantiation &State);
   Expected<ConstraintValue> evalLogical(const OperatorConstraint &Operator,
                                         const Instantiation &State);
   Expected<ConstraintValue> evalUnary(const OperatorConstraint &Operator,
@@ -86,7 +91,7 @@ private:
                        unsigned ArgumentIndex, const Instantiation &State);
 
   // Lazily-constructed per-function analyses for value-tracking operators.
-  detail::ValueTrackContext Analysis;
+  std::unique_ptr<detail::ValueTrackContext> Analysis;
   MIRContext *Context = nullptr;
   /// Nesting of user-defined constraint calls being evaluated.
   unsigned CallDepth = 0;

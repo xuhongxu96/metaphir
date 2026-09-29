@@ -321,7 +321,7 @@ TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
   const Pattern *Variant = VariantsOrErr->getVariants().front();
 
   Target SingleTarget(*Module->getFunction("single_use"));
-  MatchResults SingleMatches = Matcher.match(*Variant, SingleTarget);
+  MatchResults SingleMatches = Matcher.matchStructure(*Variant, SingleTarget);
   ASSERT_EQ(SingleMatches.size(), 1u);
   // Verify constraints evaluate to true on single_use.
   for (const Constraint *C : Variant->getConstraints()) {
@@ -331,7 +331,7 @@ TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
   }
 
   Target MultiTarget(*Module->getFunction("multi_use"));
-  MatchResults MultiMatches = Matcher.match(*Variant, MultiTarget);
+  MatchResults MultiMatches = Matcher.matchStructure(*Variant, MultiTarget);
   ASSERT_EQ(MultiMatches.size(), 1u);
   // Verify constraint hasOneUse(%sat) evaluates to false on multi_use.
   bool ConstraintSatisfied = true;
@@ -341,6 +341,11 @@ TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
       ConstraintSatisfied = false;
   }
   EXPECT_FALSE(ConstraintSatisfied);
+
+  // match() applies the constraints itself.
+  PatternMatcher Filtering(&Context);
+  EXPECT_EQ(Filtering.match(*Variant, SingleTarget).size(), 1u);
+  EXPECT_TRUE(Filtering.match(*Variant, MultiTarget).empty());
 }
 
 // Lowering builds new patterns and leaves its input untouched, so lowering the

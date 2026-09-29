@@ -364,30 +364,36 @@ Expected<ConstraintValue> evaluateKnownBits(ArrayRef<ConstraintValue> Values,
   return ConstraintValue::getKnownBits(computeKnownBits(*Value, Query));
 }
 
-Expected<ConstraintValue> evaluateKnownZeros(ConstraintInterpreter &Interpreter,
-                                             ArrayRef<Constraint *> Arguments,
-                                             const Instantiation &State,
-                                             const Constraint &Expression) {
+/// The known zero (or one) bits of a knownBits(...) result, as an integer.
+static Expected<ConstraintValue>
+evaluateKnownBitsMask(ConstraintInterpreter &Interpreter,
+                      ArrayRef<Constraint *> Arguments,
+                      const Instantiation &State, const Constraint &Expression,
+                      bool Ones) {
   auto Values = evaluateArguments(Interpreter, Arguments, State);
   if (!Values)
     return Values.takeError();
   if ((*Values)[0].getKind() != ConstraintValue::BitVector)
     return make_error<ConstraintEvaluationError>(
         Expression, "expected a bit-vector operand");
-  return integerResult((*Values)[0].getKnownBits().Zero, true);
+  const KnownBits &Known = (*Values)[0].getKnownBits();
+  return integerResult(Ones ? Known.One : Known.Zero, true);
+}
+
+Expected<ConstraintValue> evaluateKnownZeros(ConstraintInterpreter &Interpreter,
+                                             ArrayRef<Constraint *> Arguments,
+                                             const Instantiation &State,
+                                             const Constraint &Expression) {
+  return evaluateKnownBitsMask(Interpreter, Arguments, State, Expression,
+                               /*Ones=*/false);
 }
 
 Expected<ConstraintValue> evaluateKnownOnes(ConstraintInterpreter &Interpreter,
                                             ArrayRef<Constraint *> Arguments,
                                             const Instantiation &State,
                                             const Constraint &Expression) {
-  auto Values = evaluateArguments(Interpreter, Arguments, State);
-  if (!Values)
-    return Values.takeError();
-  if ((*Values)[0].getKind() != ConstraintValue::BitVector)
-    return make_error<ConstraintEvaluationError>(
-        Expression, "expected a bit-vector operand");
-  return integerResult((*Values)[0].getKnownBits().One, true);
+  return evaluateKnownBitsMask(Interpreter, Arguments, State, Expression,
+                               /*Ones=*/true);
 }
 
 Expected<ConstraintValue>

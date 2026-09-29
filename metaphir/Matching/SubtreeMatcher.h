@@ -11,7 +11,6 @@ namespace metaphir {
 
 class AggregateConstant;
 class Value;
-class InstructionMatcher;
 
 // Matches a MetaphIR value matcher (constants, meta variables, and
 // instructions) against a single concrete LLVM value, recursively producing the
