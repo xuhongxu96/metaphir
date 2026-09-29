@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This report presents the current evaluation of MetaphIR against LLVM's `InstCombine` pass across all 20 pull requests on the evaluation corpus of **50,839 LLVM bitcode modules**.
+This report presents the current evaluation of MetaphIR against LLVM's `InstCombine` pass across all 20 pull requests on the evaluation corpus of **50,838 modules** (the preprocessed benchmark bitcode and the PRs' upstream test files).
 
 10 of the 20 PRs match exactly. Every discrepancy in the other 10 is either expected (an earlier InstCombine transformation changes or removes the shape first) or accepted (see *Evaluation Setup Notes*).
 
@@ -20,7 +20,8 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
 ## Evaluation Setup Notes
 
 1. **Ground truth runs `instcombine<no-verify-fixpoint>`.** With fixpoint verification on (the `opt` default), InstCombine aborts on some modules with `LLVM ERROR: Instruction Combining on <fn> did not reach a fixpoint` (e.g. `velox__DecimalFunctions.bc`, `abc__giaSimBase.bc`, `harfbuzz__harfbuzz.bc`, `node__sqlite3.bc`), and every later function in the module loses its anchors. `run_llvm_anchors` (`eval/scripts/run_eval.py`) disables the check and `gt` lists any module where `opt` still exits non-zero; the current run has none.
-2. **Accepted discrepancies.** These are kept as is and have no proposed fix:
+2. **Each upstream test file is in the corpus once.** `add-mask-neg.ll` exercises both pr216436 and pr215122; it is included once (as `pr216436__add-mask-neg.ll`) and counted for both PRs.
+3. **Accepted discrepancies.** These are kept as is and have no proposed fix:
    - **`optnone` functions**: the pass manager skips InstCombine on them, so no anchor can fire, but `metaphir-match` still matches them (all 16 FPs of pr204089).
    - **Anchors fired from simplify queries on operand combinations that are not in the IR**: `foldOpIntoPhi`/`FoldOpIntoSelect` translating a cast through a phi/select (pr204089 FNs), and `simplifyOrInst`'s internal reassociation/distribution attempts (pr213313 FNs).
 
@@ -40,7 +41,7 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
 | **pr214541** | 38 | 38 | 38 | 0 | 0 | 100.0% | 100.0% | **100.0%** | **100.0%** | Exact match |
 | **pr214517** | 17 | 17 | 17 | 0 | 0 | 100.0% | 100.0% | **100.0%** | **100.0%** | Exact match |
 | **pr207462** | 47 | 47 | 47 | 0 | 0 | 100.0% | 100.0% | **100.0%** | **100.0%** | Exact match |
-| **pr215122** | 38 | 39 | 38 | 1 | 0 | 100.0% | 97.44% | **98.70%** | **100.0%** | Overlapping instances of the same fold |
+| **pr215122** | 30 | 31 | 30 | 1 | 0 | 100.0% | 96.77% | **98.36%** | **100.0%** | Overlapping instances of the same fold |
 | **pr207564** | 158 | 159 | 158 | 1 | 0 | 100.0% | 99.37% | **99.68%** | **100.0%** | Use count changes; `canEvaluateZExtd` wins |
 | **pr204928** | 6949 | 6950 | 6949 | 1 | 0 | 100.0% | 99.99% | **99.99%** | **100.0%** | Reassociation by `reassociateForUses` |
 | **pr204927** | 8300 | 8301 | 8300 | 1 | 0 | 100.0% | 99.99% | **99.99%** | **100.0%** | Phi-cycle narrowing |
@@ -80,7 +81,7 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
     }
   ```
 
-- **Metrics**: |G|=38, |P|=39, TP=38, FP=1, FN=0 (Anchor F1: **98.70%**, Function F1: **100.0%**, 35/35 functions)
+- **Metrics**: |G|=30, |P|=31, TP=30, FP=1, FN=0 (Anchor F1: **98.36%**, Function F1: **100.0%**, 27/27 functions)
 
 #### False Positive (1/1): an earlier fold of the same PR destroys the second match
 - **Target File & Function**: `wireshark__packet-lustre.bc` @ `@lustre_opcode_process`, anchor `%834`

@@ -1,3 +1,4 @@
-modules=50839
-gt_seconds=2541.248
+modules=50838
+gt_seconds=84368.729
+gt_shared_prs=2
 G_anchors=42
