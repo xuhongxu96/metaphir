@@ -305,12 +305,13 @@ ConstraintInterpreter::evalArrayAccess(const ArrayAccessConstraint &Access,
 Expected<ConstraintValue>
 ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
                                     const Instantiation &State) {
-  ArrayRef<Constraint *> Arguments = Operator.getArguments();
+#ifndef NDEBUG
   if (std::optional<Constraint::OperatorSchema> Schema =
           Constraint::getOperatorSchema(Operator.getOperatorID()))
-    assert(Arguments.size() >= Schema->MinArity &&
-           Arguments.size() <= Schema->MaxArity &&
+    assert(Operator.getArguments().size() >= Schema->MinArity &&
+           Operator.getArguments().size() <= Schema->MaxArity &&
            "built-in constraint operator has invalid arity");
+#endif
 
   switch (Operator.getOperatorID()) {
   case Constraint::O_LogicalOr:
