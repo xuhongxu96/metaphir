@@ -44,5 +44,11 @@ bool MIRContext::markLibraryLoaded(StringRef Name) {
   return pImpl->LoadedLibraries.insert(Name).second;
 }
 
+SourceMgr &MIRContext::getLibrarySourceMgr() { return pImpl->LibrarySources; }
+
+const SourceMgr &MIRContext::getLibrarySourceMgr() const {
+  return pImpl->LibrarySources;
+}
+
 } // namespace metaphir
 } // namespace llvm

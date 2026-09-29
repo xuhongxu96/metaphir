@@ -5,9 +5,10 @@
 #include "metaphir/IR/MIRContextImpl.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"
-#include "metaphir/Parser/MIRParser.h"
 #include "metaphir/Matching/ConstraintInterpreter.h"
 #include "metaphir/Matching/PatternMatcher.h"
+#include "metaphir/Parser/MIRParser.h"
+#include "test/TestUtils.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -15,7 +16,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
-#include "test/TestUtils.h"
 
 // Built-in metaflags (:c, :o, :or, :not) are defined in MetaFlags.def.
 // Use count flags (:s, :su) and predicate flags (:zero, etc.) are standard
@@ -159,7 +159,8 @@ TEST(MetaFlagTest, LowersOrAndNotCombinatorsWithUseCountFlags) {
               C1Text.find("!") != std::string::npos);
 }
 
-TEST(MetaFlagTest, NonDestructiveDesugaringPreservesFlagsAndAvoidsSyntheticCapture) {
+TEST(MetaFlagTest,
+     NonDestructiveDesugaringPreservesFlagsAndAvoidsSyntheticCapture) {
   SourceMgr SM;
   MIRContext Context;
   Pattern *P = test::parsePattern(
@@ -185,7 +186,8 @@ TEST(MetaFlagTest, NonDestructiveDesugaringPreservesFlagsAndAvoidsSyntheticCaptu
   ASSERT_EQ(VariantsOrErr->getVariants().size(), 1u);
   Pattern *Variant = VariantsOrErr->getVariants().front();
 
-  // After lowering: instruction and operand metaflags MUST NOT be stripped or mutated.
+  // After lowering: instruction and operand metaflags MUST NOT be stripped or
+  // mutated.
   EXPECT_EQ(I->getCapture(), nullptr);
   EXPECT_EQ(I->getMetaFlags().size(), 1u);
   EXPECT_EQ(I->getMetaFlags()[0]->getName(), "s");
@@ -195,12 +197,14 @@ TEST(MetaFlagTest, NonDestructiveDesugaringPreservesFlagsAndAvoidsSyntheticCaptu
   // Constraints should have been generated and added to Variant.
   ASSERT_EQ(Variant->getConstraints().size(), 2u);
 
-  // Check that the constraint for :s directly targets Instruction *I as its subject.
+  // Check that the constraint for :s directly targets Instruction *I as its
+  // subject.
   bool FoundDirectInstSubject = false;
   for (const Constraint *C : Variant->getConstraints()) {
     if (const auto *OC = dyn_cast<OperatorConstraint>(C)) {
       if (OC->getOperator() == "hasOneUse" && !OC->getArguments().empty()) {
-        if (const auto *VC = dyn_cast<VariableConstraint>(OC->getArguments().front())) {
+        if (const auto *VC =
+                dyn_cast<VariableConstraint>(OC->getArguments().front())) {
           if (VC->getVariable() == I)
             FoundDirectInstSubject = true;
         }
@@ -242,20 +246,23 @@ TEST(MetaFlagTest, CompositeInliningSharesPrecedingAndCOWDownstream) {
   Pattern *V0 = VariantsOrErr->getVariants()[0];
   Pattern *V1 = VariantsOrErr->getVariants()[1];
 
-  // Each branch has: %prec, inlined branch inst (%r1 or %r2), %down_indep, %down_dep.
+  // Each branch has: %prec, inlined branch inst (%r1 or %r2), %down_indep,
+  // %down_dep.
   ASSERT_EQ(V0->getInstructions().size(), 4u);
   ASSERT_EQ(V1->getInstructions().size(), 4u);
 
-  // 1. Preceding instruction (%prec) is shared across all branches by raw pointer (0 copies).
+  // 1. Preceding instruction (%prec) is shared across all branches by raw
+  // pointer (0 copies).
   EXPECT_EQ(V0->getInstructions()[0], OrigPrec);
   EXPECT_EQ(V1->getInstructions()[0], OrigPrec);
 
-  // 2. Downstream independent instruction (%down_indep) doesn't use inlined insts,
-  // so it is also shared by raw pointer.
+  // 2. Downstream independent instruction (%down_indep) doesn't use inlined
+  // insts, so it is also shared by raw pointer.
   EXPECT_EQ(V0->getInstructions()[2], OrigDownIndep);
   EXPECT_EQ(V1->getInstructions()[2], OrigDownIndep);
 
-  // 3. Downstream dependent instruction (%down_dep) uses %mid, so it is COW duplicated.
+  // 3. Downstream dependent instruction (%down_dep) uses %mid, so it is COW
+  // duplicated.
   EXPECT_NE(V0->getInstructions()[3], OrigDownDep);
   EXPECT_NE(V1->getInstructions()[3], OrigDownDep);
   EXPECT_NE(V0->getInstructions()[3], V1->getInstructions()[3]);
@@ -336,4 +343,3 @@ TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
 }
 
 } // namespace
-

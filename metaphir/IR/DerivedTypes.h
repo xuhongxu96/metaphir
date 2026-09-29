@@ -12,6 +12,9 @@ class MetaVariable;
 
 class IntegerType : public Type {
 public:
+  /// The largest supported bit width; mirrors llvm::IntegerType::MAX_INT_BITS.
+  static constexpr unsigned MaxBits = 1u << 23;
+
   unsigned getNumBits() const { return NumBits; }
   static IntegerType *get(MIRContext &C, unsigned NumBits);
   static bool classof(const Type *T) { return T->getTypeID() == IntegerTyID; }

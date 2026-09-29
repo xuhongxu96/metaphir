@@ -94,4 +94,4 @@ entry:
 ;--- notvar.mpir
 %neg = sub i?bits 0, ?x
 %add = add i?bits %neg, %neg:constantInt
-; ERR: meta flag ':constantInt' can only be applied to a meta variable operand
+; ERR: metaflag ':constantInt' can only be applied to a meta variable operand

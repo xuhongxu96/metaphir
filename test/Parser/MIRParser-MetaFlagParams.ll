@@ -14,7 +14,7 @@ metaflag :between(?v, ?lo, ?hi) {
 }
 
 %r = add i32 ?x, ?c:between(5)
-; FEW: meta flag ':between' expects 2 argument(s), got 1
+; FEW: metaflag ':between' expects 2 arguments, got 1
 
 ;--- too-many.ll
 metaflag :atleast(?v, ?lo) {
@@ -22,7 +22,7 @@ metaflag :atleast(?v, ?lo) {
 }
 
 %r = add i32 ?x, ?c:atleast(5, 8)
-; MANY: meta flag ':atleast' expects 1 argument(s), got 2
+; MANY: metaflag ':atleast' expects 1 argument, got 2
 
 ; No mark means operand-only, so an instruction use is rejected.
 ;--- default-is-operand.ll
@@ -31,7 +31,7 @@ metaflag :onoperand(?v) {
 }
 
 %r = add:?anch:onoperand i32 ?x, ?y
-; DEFAULT: meta flag ':onoperand' is not valid in this position
+; DEFAULT: metaflag ':onoperand' is not valid in this position
 
 ; ':i' is the mirror case: instruction-only, so an operand use is rejected.
 ;--- instruction-only.ll
@@ -40,7 +40,7 @@ metaflag:i :oninstruction(?i) {
 }
 
 %r = add i32 ?x, ?y:oninstruction
-; IONLY: meta flag ':oninstruction' is not valid in this position
+; IONLY: metaflag ':oninstruction' is not valid in this position
 
 ; The subject of an instruction flag is named through the instruction's capture,
 ; but the pattern need not write one: lowering synthesizes a hidden capture.

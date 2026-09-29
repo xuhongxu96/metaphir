@@ -213,9 +213,9 @@ entry:
 ;--- too-many.mpir
 %add = add:?anch i?bits ?c1:constantInt, ?c2:constantInt
 ;; add(?c1, ?c2, ?bits, 1) == 0
-; TOOMANY: built-in constraint operation expects 2 to 3 arguments
+; TOOMANY: constraint operation 'add' expects 2 to 3 arguments, got 4
 
 ;--- cmp-bw.mpir
 %udiv = udiv:?anch i?bits ?x, ?c:constantInt
 ;; slt(?c, 0, ?bits)
-; CMPBW: built-in constraint operation expects 2 arguments
+; CMPBW: constraint operation 'slt' expects 2 arguments, got 3

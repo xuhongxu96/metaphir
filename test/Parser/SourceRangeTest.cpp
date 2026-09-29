@@ -9,9 +9,9 @@
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/Parser/MIRParser.h"
+#include "test/TestUtils.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
-#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -34,7 +34,7 @@ TEST(SourceRangeTest, ConstraintDefinitionParameters) {
 
 %r = add i32 ?x, ?y
 )",
-                            SM, Context);
+                                  SM, Context);
   ASSERT_NE(P, nullptr);
 
   ConstraintDef *Def = Context.getConstraintDef("pair");
@@ -59,7 +59,7 @@ TEST(SourceRangeTest, MetaFlagDefinitionParameters) {
 
 %r = add i32 ?x, ?c:between(1, 2)
 )",
-                            SM, Context);
+                                  SM, Context);
   ASSERT_NE(P, nullptr);
 
   MetaFlagDef *Def = Context.getMetaFlagDef("between");
@@ -81,7 +81,7 @@ TEST(SourceRangeTest, MatchParametersBoundPerBranch) {
 
 %r = addm i32 ?a, ?b
 )",
-                            SM, Context);
+                                  SM, Context);
   ASSERT_NE(P, nullptr);
 
   CompositeMatcher *CM = Context.getCompositeMatcher("addm");
@@ -102,7 +102,7 @@ TEST(SourceRangeTest, InstructionDirectSubjectConstraint) {
 
 %r = add:isaddop i32 ?x, ?y
 )",
-                            SM, Context);
+                                  SM, Context);
   ASSERT_NE(P, nullptr);
   ASSERT_EQ(P->getInstructions().size(), 1u);
 

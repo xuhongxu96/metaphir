@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/StringSaver.h"
 #include <new>
 #include <utility>
@@ -213,6 +214,8 @@ public:
   /// Names of the libraries whose definitions have been loaded into this
   /// context, so each is parsed at most once.
   StringSet<> LoadedLibraries;
+  /// Buffers of the loaded libraries; see MIRContext::getLibrarySourceMgr.
+  SourceMgr LibrarySources;
 
   explicit MIRContextImpl(MIRContext &C) : Context(C) {}
   ~MIRContextImpl();

@@ -18,7 +18,7 @@ add i32 ?x, ?y
 ;--- arity.ll
 add i?bits ?x, ?y
 ;; ult(?bits)
-; ARITY: built-in constraint operation expects 2 arguments
+; ARITY: constraint operation 'ult' expects 2 arguments, got 1
 
 ;--- integer-result.ll
 add i?bits ?x, ?y
@@ -35,11 +35,11 @@ add i?bits ?x, ?y
 
 ;--- o-negative.ll
 add:o(-1) i32 ?x, ?y
-; O-NEGATIVE: :o expects one non-negative operand index
+; O-NEGATIVE: metaflag ':o' expects one non-negative operand index
 
 ;--- o-range.ll
 add:o(2) i32 ?x, ?y
-; O-RANGE: :o operand index is out of range
+; O-RANGE: metaflag ':o' operand index is out of range
 
 ;--- non-array.ll
 add i?bits ?x, ?y

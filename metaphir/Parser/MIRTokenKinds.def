@@ -29,7 +29,6 @@ MIR_TOKEN_KIND(rparen)       // )
 MIR_TOKEN_KIND(exclaim)      // !
 MIR_TOKEN_KIND(bar)          // |
 MIR_TOKEN_KIND(colon)        // :
-MIR_TOKEN_KIND(hash)         // #
 MIR_TOKEN_KIND(plus)         // +
 MIR_TOKEN_KIND(minus)        // -
 MIR_TOKEN_KIND(slash)        // /
@@ -50,9 +49,7 @@ MIR_TOKEN_KIND_HAS_VALUE(GlobalID, UIntVal)   // @42
 MIR_TOKEN_KIND_HAS_VALUE(LabelStr, StrVal)       // foo:
 MIR_TOKEN_KIND_HAS_VALUE(LocalVar, StrVal)       // %foo %"foo"
 MIR_TOKEN_KIND_HAS_VALUE(GlobalVar, StrVal)      // @foo @"foo"
-MIR_TOKEN_KIND_HAS_VALUE(MetadataVar, StrVal)    // !foo
 MIR_TOKEN_KIND_HAS_VALUE(StringConstant, StrVal) // "foo"
-MIR_TOKEN_KIND_HAS_VALUE(FloatLiteral, StrVal)   // Unparsed float literal
 MIR_TOKEN_KIND_HAS_VALUE(MetaVar, StrVal)        // ?foo
 MIR_TOKEN_KIND_HAS_VALUE(MetaCaptureVar, StrVal) // :?foo
 MIR_TOKEN_KIND_HAS_VALUE(MetaIntVar, StrVal)     // i?foo
@@ -62,7 +59,6 @@ MIR_TOKEN_KIND_HAS_VALUE(Identifier, StrVal)     // extensible identifier
 // Type valued tokens (TyVal).
 MIR_TOKEN_KIND_HAS_VALUE(Type, TyVal)
 
-MIR_TOKEN_KIND_HAS_VALUE(FloatHexLiteral, APSIntVal) // f0x..., stored as APSInt
 MIR_TOKEN_KIND_HAS_VALUE(APFloat, APFloatVal)        // APFloatVal
 MIR_TOKEN_KIND_HAS_VALUE(APSInt, APSIntVal)          // APSInt
 

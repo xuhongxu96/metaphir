@@ -13,6 +13,11 @@ namespace metaphir {
 
 namespace {
 
+/// "1 argument", "2 arguments".
+std::string pluralize(uint64_t Count, StringRef Noun) {
+  return (Twine(Count) + " " + Noun + (Count == 1 ? "" : "s")).str();
+}
+
 bool isOpcode(tok::Kind K) {
   switch (K) {
 #define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Name) case tok::kw_##Name:
@@ -147,9 +152,19 @@ bool MIRParser::consume(tok::Kind K) {
 
 bool MIRParser::expect(tok::Kind K, const Twine &Message) {
   if (!consume(K))
-    return error(Message + " (got " + tok::getTokenKindName(Lex.getKind()) +
-                 ")");
+    return error(Message + " (got " + describeToken() + ")");
   return false;
+}
+
+std::string MIRParser::describeToken() const {
+  switch (Lex.getKind()) {
+  case tok::Newline:
+    return "end of line";
+  case tok::Eof:
+    return "end of file";
+  default:
+    return ("'" + Lex.getTokenText() + "'").str();
+  }
 }
 
 void MIRParser::skipNewlines() {
@@ -215,7 +230,7 @@ bool MIRParser::parsePatternSetting(PatternSettings::Setting Setting) {
              "expected '(' after '" + PatternSettings::getName(Setting) + "'"))
     return true;
   if (Lex.getKind() != tok::kw_true && Lex.getKind() != tok::kw_false)
-    return error("expected true or false in '" +
+    return error("expected 'true' or 'false' in '" +
                  PatternSettings::getName(Setting) + "'");
   bool Value = Lex.getKind() == tok::kw_true;
   if (Value)
@@ -231,30 +246,35 @@ bool MIRParser::parsePatternSetting(PatternSettings::Setting Setting) {
 #include "StdLibSource.inc"
 
 bool MIRParser::loadLibrary(MIRContext &Context, StringRef Name,
-                            StringRef Source) {
-  // Record the library before parsing it. This makes loading idempotent and
-  // keeps the parse below from re-entering this function, since parse() loads
-  // the standard library on demand.
-  if (!Context.markLibraryLoaded(Name))
+                            StringRef Source, SMDiagnostic &Diag) {
+  if (Context.isLibraryLoaded(Name))
     return false;
-  SourceMgr SM;
-  SMDiagnostic Error;
+  // Every library may use the standard library's definitions.
+  if (Name != StdLibName &&
+      loadLibrary(Context, StdLibName, StdLibSource, Diag))
+    return true;
+  SourceMgr &SM = Context.getLibrarySourceMgr();
   // The library name doubles as the buffer identifier, so diagnostics inside a
   // library are reported against it.
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Source, Name);
-  StringRef BufferRef = Buf->getBuffer();
-  SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
-  MIRParser Parser(BufferRef, SM, Error, Context);
+  unsigned BufferID = SM.AddNewSourceBuffer(
+      MemoryBuffer::getMemBufferCopy(Source, Name), SMLoc());
+  MIRParser Parser(SM.getMemoryBuffer(BufferID)->getBuffer(), SM, Diag,
+                   Context);
   Pattern *Unused = nullptr;
-  return Parser.parse(Unused);
+  if (Parser.parseModule(Unused))
+    return true;
+  Context.markLibraryLoaded(Name);
+  return false;
 }
 
 bool MIRParser::parse(Pattern *&Result) {
-  if (!Context.isLibraryLoaded(StdLibName)) {
-    if (loadLibrary(Context, StdLibName, StdLibSource))
-      return true;
-  }
+  Result = nullptr;
+  if (loadLibrary(Context, StdLibName, StdLibSource, Lex.getDiagnostic()))
+    return true;
+  return parseModule(Result);
+}
 
+bool MIRParser::parseModule(Pattern *&Result) {
   Result = nullptr;
   CurrentPattern = Pattern::get(Context);
   CurrentBlock = nullptr;
@@ -283,54 +303,13 @@ bool MIRParser::parse(Pattern *&Result) {
       skipNewlines();
       continue;
     }
-    if (consume(tok::ConstraintMarker)) {
-      if (std::optional<PatternSettings::Setting> Setting =
-              settingFromKeyword(Lex.getKind())) {
-        if (parsePatternSetting(*Setting))
-          return true;
-        if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
-          return error("unexpected token after pattern setting");
-        skipNewlines();
-        continue;
-      }
-      Constraint *C = nullptr;
-      if (parseConstraint(C))
-        return true;
-      if (C->getResultType() == Constraint::IntegerResult)
-        return error("constraint must have a boolean result");
-      const Instruction *ContextInst =
-          CurrentPattern->getInstructions().empty()
-              ? nullptr
-              : CurrentPattern->getInstructions().back();
-      setConstraintContext(*C, ContextInst);
-      CurrentPattern->addConstraint(C);
-      if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
-        return error("unexpected token after constraint");
-      skipNewlines();
-      continue;
-    }
-    if (Lex.getKind() == tok::LabelStr || Lex.getKind() == tok::LabelID ||
-        Lex.getKind() == tok::MetaVar) {
-      if (parseBlockLabel())
-        return true;
-      if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
-        return error("unexpected token after basic block label");
-      skipNewlines();
-      continue;
-    }
-    if (!CurrentPattern->getInstructions().empty() &&
-        CurrentPattern->getInstructions().back()->getParentBlock() ==
-            CurrentBlock &&
-        CurrentPattern->getInstructions().back()->getResultName().empty())
-      return error("only the final instruction may omit a result assignment");
-    Instruction *I = nullptr;
-    if (parseInstruction(I))
+    if (parseBodyLine(tok::Eof))
       return true;
-    CurrentPattern->addInstruction(I);
-    if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
-      return error("unexpected token after instruction");
-    skipNewlines();
   }
+  // Every lexer error yields an Error token that no production accepts, but a
+  // diagnostic recorded anywhere must fail the parse regardless.
+  if (Lex.hasError())
+    return true;
   if (CurrentPattern->getInstructions().empty()) {
     if (HasParsedTopLevelDefinition) {
       // A library may hold only 'match', 'constraint' and 'metaflag'
@@ -342,6 +321,59 @@ bool MIRParser::parse(Pattern *&Result) {
   }
   Result = CurrentPattern;
   return false;
+}
+
+bool MIRParser::expectEndOfLine(tok::Kind Terminator, const Twine &Message) {
+  if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof &&
+      Lex.getKind() != Terminator)
+    return error(Message);
+  skipNewlines();
+  return false;
+}
+
+bool MIRParser::parseBodyLine(tok::Kind Terminator) {
+  if (consume(tok::ConstraintMarker)) {
+    if (std::optional<PatternSettings::Setting> Setting =
+            settingFromKeyword(Lex.getKind())) {
+      if (parsePatternSetting(*Setting))
+        return true;
+      return expectEndOfLine(Terminator,
+                             "unexpected token after pattern setting");
+    }
+    Constraint *C = nullptr;
+    if (parseConstraint(C))
+      return true;
+    if (C->getResultType() == Constraint::IntegerResult)
+      return Lex.ParseError(C->getSourceRange().Begin,
+                            "constraint must have a boolean result");
+    // A value-tracking operator defaults to the instruction the constraint
+    // follows. In a match branch, expansion rewrites this to the inlined copy
+    // of that instruction.
+    const Instruction *ContextInst =
+        CurrentPattern->getInstructions().empty()
+            ? nullptr
+            : CurrentPattern->getInstructions().back();
+    setConstraintContext(*C, ContextInst);
+    CurrentPattern->addConstraint(C);
+    return expectEndOfLine(Terminator, "unexpected token after constraint");
+  }
+  if (Lex.getKind() == tok::LabelStr || Lex.getKind() == tok::LabelID ||
+      Lex.getKind() == tok::MetaVar) {
+    if (parseBlockLabel())
+      return true;
+    return expectEndOfLine(Terminator,
+                           "unexpected token after basic block label");
+  }
+  if (!CurrentPattern->getInstructions().empty() &&
+      CurrentPattern->getInstructions().back()->getParentBlock() ==
+          CurrentBlock &&
+      CurrentPattern->getInstructions().back()->getResultName().empty())
+    return error("only the final instruction may omit a result assignment");
+  Instruction *I = nullptr;
+  if (parseInstruction(I))
+    return true;
+  CurrentPattern->addInstruction(I);
+  return expectEndOfLine(Terminator, "unexpected token after instruction");
 }
 
 bool MIRParser::parseInstructionCapture(MetaVariable *&Capture) {
@@ -400,7 +432,7 @@ bool MIRParser::parseSemanticFlags(
 /// here, so callers need not look it up again.
 bool MIRParser::parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed) {
   if (Lex.getKind() != tok::MetaFlag)
-    return error("expected meta flag");
+    return error("expected metaflag");
   LocTy Loc = Lex.getLoc();
   SmallString<16> Name;
   Name = Lex.getStrVal();
@@ -419,21 +451,21 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed) {
           // A nested flag is tested against the operand its parent applies to.
           if (!(NestedAllowed & MetaFlag::OperandPlacement))
             return Lex.ParseError(Arg.FlagValue->getSourceRange().Begin,
-                                  "meta flag ':" + Arg.FlagValue->getName() +
-                                      "' is not valid as a nested meta flag");
+                                  "metaflag ':" + Arg.FlagValue->getName() +
+                                      "' is not valid as a nested metaflag");
         } else if (Lex.getKind() == tok::APSInt) {
-          if (!Lex.getAPSIntVal().isSignedIntN(64))
-            return error("meta flag integer argument is too large");
+          if (!Lex.getAPSIntVal().isRepresentableByInt64())
+            return error("metaflag integer argument is too large");
           Arg.K = MetaFlag::Argument::Integer;
           Arg.IntegerValue = Lex.getAPSIntVal().getExtValue();
           next();
         } else {
-          return error("expected integer or nested meta flag argument");
+          return error("expected integer or nested metaflag argument");
         }
         Args.push_back(Arg);
       } while (consume(tok::comma));
     }
-    if (expect(tok::rparen, "expected ')' after meta flag arguments"))
+    if (expect(tok::rparen, "expected ')' after metaflag arguments"))
       return true;
   }
   if (std::optional<MetaFlag::Schema> Schema = MetaFlag::getSchema(ID)) {
@@ -441,31 +473,32 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed) {
     if (Args.size() < Schema->MinArguments ||
         Args.size() > Schema->MaxArguments)
       return Lex.ParseError(
-          Loc, "invalid number of arguments for meta flag ':" + Name + "'");
+          Loc, "invalid number of arguments for metaflag ':" + Name + "'");
     for (const MetaFlag::Argument &Arg : Args) {
       if (Schema->Arguments == MetaFlag::IntegerArgument &&
           Arg.K != MetaFlag::Argument::Integer)
-        return Lex.ParseError(Loc, "meta flag ':" + Name +
+        return Lex.ParseError(Loc, "metaflag ':" + Name +
                                        "' expects integer arguments");
       if (Schema->Arguments == MetaFlag::FlagArgument &&
           Arg.K != MetaFlag::Argument::Flag)
-        return Lex.ParseError(Loc, "meta flag ':" + Name +
-                                       "' expects nested meta flags");
+        return Lex.ParseError(Loc, "metaflag ':" + Name +
+                                       "' expects nested metaflags");
     }
   } else if (MetaFlagDef *Def = Context.getMetaFlagDef(Name)) {
     Allowed = Def->getPlacement();
     // The first parameter is the subject the flag is written on, so a use
     // supplies every parameter but that one.
     if (Args.size() != Def->getNumArguments())
-      return Lex.ParseError(Loc, "meta flag ':" + Name + "' expects " +
-                                     Twine(Def->getNumArguments()) +
-                                     " argument(s), got " + Twine(Args.size()));
+      return Lex.ParseError(Loc,
+                            "metaflag ':" + Name + "' expects " +
+                                pluralize(Def->getNumArguments(), "argument") +
+                                ", got " + Twine(Args.size()));
   } else {
     // A flag is either built in or introduced by a 'metaflag' definition, which
     // is how the flag vocabulary is extended. An unknown name cannot be lowered
     // into a constraint and has no implementation in the matcher, so it is
     // reported here rather than silently failing to match.
-    return Lex.ParseError(Loc, "unknown meta flag ':" + Name + "'");
+    return Lex.ParseError(Loc, "unknown metaflag ':" + Name + "'");
   }
 
   if (ID != MetaFlag::UnknownMetaFlag)
@@ -486,7 +519,7 @@ bool MIRParser::parseMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
 
     if (!(Allowed & Placement))
       return Lex.ParseError(F->getSourceRange().Begin,
-                            "meta flag ':" + F->getName() +
+                            "metaflag ':" + F->getName() +
                                 "' is not valid in this position");
 
     Result.push_back(F);
@@ -593,8 +626,7 @@ bool MIRParser::parseType(Type *&Result, bool AllowVoid) {
           return true;
         next();
       } else
-        return error("expected vector size (got " +
-                     tok::getTokenKindName(Lex.getKind()) + ")");
+        return error("expected vector size (got " + describeToken() + ")");
       if (Lex.getKind() != tok::kw_x)
         return error("expected 'x' after vector size");
       next();
@@ -734,7 +766,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
   }
   if (Lex.getKind() == tok::kw_true || Lex.getKind() == tok::kw_false) {
     bool V = Lex.getKind() == tok::kw_true;
-    APSInt I(APInt(1, V), false);
+    APSInt I(APInt(1, V), /*isUnsigned=*/true);
     Result = IntegerConstant::get(Context, I, Range);
     next();
     return false;
@@ -802,7 +834,7 @@ bool MIRParser::parseOperandMetaFlags(MatcherOperand &Result) {
   if (!isa_and_nonnull<MetaVariable>(Result.Val))
     for (const MetaFlag *Flag : Flags)
       if (Context.getMetaFlagDef(Flag->getName()))
-        return error("meta flag ':" + Flag->getName() +
+        return error("metaflag ':" + Flag->getName() +
                      "' can only be applied to a meta variable operand");
   return false;
 }
@@ -852,8 +884,7 @@ bool MIRParser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
       if ((I && Comma()) || Typed())
         return true;
     if (Lex.getKind() == tok::comma)
-      return error("'" + OpName + "' takes " + Twine(Arity) + " operand" +
-                   (Arity == 1 ? "" : "s"));
+      return error("'" + OpName + "' takes " + pluralize(Arity, "operand"));
     return false;
   case Instruction::OperandSyntax::Binary: {
     // The second operand repeats the first operand's type rather than spelling
@@ -1014,7 +1045,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
         return true;
       if (consume(tok::comma)) {
         if (Lex.getKind() != tok::kw_align)
-          return error("expected align");
+          return error("expected 'align'");
         next();
         MatcherOperand O;
         O.IsInstructionOperand = false;
@@ -1029,7 +1060,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
         return true;
       if (consume(tok::comma)) {
         if (Lex.getKind() != tok::kw_align)
-          return error("expected align");
+          return error("expected 'align'");
         next();
         MatcherOperand O;
         O.IsInstructionOperand = false;
@@ -1199,7 +1230,8 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
           F->getArguments()[0].K != MetaFlag::Argument::Integer ||
           F->getArguments()[0].IntegerValue < 0)
         return Lex.ParseError(F->getSourceRange().Begin,
-                              ":o expects one non-negative operand index");
+                              "metaflag ':o' expects one non-negative operand "
+                              "index");
       Index = F->getArguments()[0].IntegerValue;
     }
     uint64_t OperandCount = 0;
@@ -1213,14 +1245,15 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     }
     if (!HasArray && Index >= OperandCount)
       return Lex.ParseError(F->getSourceRange().Begin,
-                            ":o operand index is out of range");
+                            "metaflag ':o' operand index is out of range");
   }
   for (MetaFlag *F : MFlags) {
     if (F->getMetaFlagID() == MetaFlag::MF_c && ID == Instruction::I_call) {
       unsigned ArgumentCount = Ops.size() >= 2 ? Ops.size() - 2 : 0;
       if (ArgumentCount != 2)
         return Lex.ParseError(F->getSourceRange().Begin,
-                              ":c requires a call with exactly two arguments");
+                              "metaflag ':c' requires a call with exactly two "
+                              "arguments");
     }
   }
   bool SeenKeyedOperand[MatcherOperand::NumKeyedOperandKinds] = {};
@@ -1295,7 +1328,7 @@ bool MIRParser::parseMatchParameters(Instruction::OperandSyntax Syntax,
     // Any number of individually typed operands; the count becomes the
     // matcher's arity.
     if (Lex.getKind() == tok::rparen)
-      return error("Nary matcher needs at least one operand parameter");
+      return error("'Nary' matcher needs at least one operand parameter");
     do {
       if (typeParameter() || operandParameter())
         return true;
@@ -1460,6 +1493,20 @@ bool MIRParser::parseTopLevelMetaFlag() {
   return false;
 }
 
+bool MIRParser::consumeBranchSeparator() {
+  skipNewlines();
+  if (Lex.getKind() != tok::kw_or)
+    return false;
+  LocTy OrLoc = Lex.getLoc();
+  next();
+  skipNewlines();
+  if (Lex.getKind() == tok::lbrace || Lex.getKind() == tok::lsquare)
+    return true;
+  // Not a branch: the 'or' is an instruction of the enclosing pattern.
+  Lex.resetTo(OrLoc);
+  return false;
+}
+
 bool MIRParser::parseTopLevelMatch() {
   next();
   bool IsCommutative = false;
@@ -1493,6 +1540,7 @@ bool MIRParser::parseTopLevelMatch() {
     return true;
 
   // 'Unary' is spelling sugar for a Nary matcher with exactly one operand.
+  LocTy ArchetypeLoc = Lex.getLoc();
   Instruction::OperandSyntax Syntax;
   bool IsUnary = false;
   if (consume(tok::kw_Unary)) {
@@ -1505,10 +1553,11 @@ bool MIRParser::parseTopLevelMatch() {
   else if (consume(tok::kw_Cast))
     Syntax = Instruction::OperandSyntax::Cast;
   else
-    return error("expected archetype Unary, Nary, Binary, or Cast");
+    return error("expected archetype 'Unary', 'Nary', 'Binary' or 'Cast'");
 
   if (IsCommutative && Syntax != Instruction::OperandSyntax::Binary)
-    return error("only Binary matchers can be declared commutative with ':c'");
+    return error(
+        "only 'Binary' matchers can be declared commutative with ':c'");
 
   if (expect(tok::lparen, "expected '(' before parameter list"))
     return true;
@@ -1531,15 +1580,22 @@ bool MIRParser::parseTopLevelMatch() {
   unsigned Arity =
       count_if(Parameters, [](const ParameterDef &P) { return !P.IsType; });
   if (IsUnary && Arity != 1)
-    return error("Unary matcher takes exactly one operand parameter");
+    return Lex.ParseError(
+        ArchetypeLoc, "'Unary' matcher takes exactly one operand parameter");
 
-  StringSet<> SeenOperands;
+  // Operand parameters are distinct values. A type parameter may repeat (so
+  // several operands can share a type), but one name cannot denote both a
+  // type and an operand.
+  StringSet<> TypeNames, OperandNames;
+  for (const ParameterDef &P : Parameters)
+    if (P.IsType && !P.Name.empty())
+      TypeNames.insert(P.Name);
   for (const ParameterDef &P : Parameters) {
-    if (!P.IsType && !P.Name.empty()) {
-      if (!SeenOperands.insert(P.Name).second)
-        return error("duplicate parameter '?" + P.Name +
-                     "' in match declaration");
-    }
+    if (P.IsType || P.Name.empty())
+      continue;
+    if (!OperandNames.insert(P.Name).second || TypeNames.contains(P.Name))
+      return Lex.ParseError(P.Range.Begin, "duplicate parameter '?" + P.Name +
+                                               "' in match declaration");
   }
 
   skipNewlines();
@@ -1584,8 +1640,6 @@ bool MIRParser::parseTopLevelMatch() {
       return true;
     skipNewlines();
 
-    SmallVector<Instruction *, 4> BranchInstructions;
-    SmallVector<Constraint *, 2> BranchConstraints;
     Pattern *OldPattern = CurrentPattern;
     MetaVariable *OldBlock = CurrentBlock;
     StringMap<Instruction *> OldInstructions = std::move(Instructions);
@@ -1594,12 +1648,15 @@ bool MIRParser::parseTopLevelMatch() {
     // A branch is a closed scope: a matcher is expanded at each of its uses, so
     // the only names its body may refer to are its parameters. Leaving the
     // enclosing pattern's locals and meta variables visible would let a body
-    // capture them and silently tie the matcher to one pattern.
+    // capture them and silently tie the matcher to one pattern. The body is
+    // parsed into a scratch pattern exactly like a top-level pattern body.
     CurrentPattern = Pattern::get(Context);
     CurrentBlock = nullptr;
     Instructions.clear();
     MetaVariables.clear();
     for (const ParameterDef &P : Parameters) {
+      if (P.Name.empty())
+        continue;
       MetaVariable *M =
           MetaVariable::get(Context, P.Name, MetaType::Unknown, P.Range);
       MetaVariables[P.Name] = M;
@@ -1612,50 +1669,20 @@ bool MIRParser::parseTopLevelMatch() {
     PatternSettings OldSettings = Settings;
     Settings = PatternSettings();
 
-    while (Lex.getKind() != tok::rbrace && Lex.getKind() != tok::Eof) {
-      if (consume(tok::ConstraintMarker)) {
-        if (std::optional<PatternSettings::Setting> Setting =
-                settingFromKeyword(Lex.getKind())) {
-          if (parsePatternSetting(*Setting))
-            return true;
-          if (Lex.getKind() != tok::Newline && Lex.getKind() != tok::Eof)
-            return error("unexpected token after pattern setting");
-          skipNewlines();
-          continue;
-        }
-        Constraint *C = nullptr;
-        if (parseConstraint(C))
-          return true;
-        // As at top level, a value-tracking operator defaults to the
-        // instruction the constraint follows. Expansion rewrites this to the
-        // inlined copy of that instruction.
-        const Instruction *ContextInst =
-            BranchInstructions.empty() ? nullptr : BranchInstructions.back();
-        setConstraintContext(*C, ContextInst);
-        BranchConstraints.push_back(C);
-        skipNewlines();
-        continue;
-      }
-      if (Lex.getKind() == tok::LabelStr || Lex.getKind() == tok::LabelID ||
-          Lex.getKind() == tok::MetaVar) {
-        if (parseBlockLabel())
-          return true;
-        skipNewlines();
-        continue;
-      }
-      Instruction *I = nullptr;
-      if (parseInstruction(I))
+    while (Lex.getKind() != tok::rbrace && Lex.getKind() != tok::Eof)
+      if (parseBodyLine(tok::rbrace))
         return true;
-      BranchInstructions.push_back(I);
-      skipNewlines();
-    }
+    ArrayRef<Instruction *> BranchInstructions =
+        CurrentPattern->getInstructions();
+    ArrayRef<Constraint *> BranchConstraints = CurrentPattern->getConstraints();
 
+    LocTy BranchEnd = Lex.getLoc();
     if (expect(tok::rbrace, "expected '}' to end match branch"))
       return true;
-    skipNewlines();
 
     if (BranchInstructions.empty())
-      return error("match branch must contain at least one instruction");
+      return Lex.ParseError(
+          BranchEnd, "match branch must contain at least one instruction");
 
     unsigned RetCount = 0;
     for (const Instruction *I : BranchInstructions) {
@@ -1663,7 +1690,8 @@ bool MIRParser::parseTopLevelMatch() {
         ++RetCount;
     }
     if (RetCount > 1)
-      return error("multiple '%ret' instructions in match branch");
+      return Lex.ParseError(BranchEnd,
+                            "multiple '%ret' instructions in match branch");
 
     CompositeMatcher::Branch StoredBranch;
     StoredBranch.Instructions =
@@ -1679,7 +1707,9 @@ bool MIRParser::parseTopLevelMatch() {
     MetaVariables = std::move(OldMetaVariables);
     Settings = OldSettings;
 
-  } while (consume(tok::kw_or));
+    // Another branch is introduced by 'or' followed by its '[flags]' or '{'.
+    // Any other 'or' is an instruction of the enclosing pattern.
+  } while (consumeBranchSeparator());
 
   auto *CM = new (Context.pImpl->Alloc) CompositeMatcher(
       Context.pImpl->Saver.save(MatcherName), IsCommutative,

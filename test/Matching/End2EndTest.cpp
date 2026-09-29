@@ -5,6 +5,7 @@
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
+#include "test/TestUtils.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -12,7 +13,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
-#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -88,4 +88,3 @@ define i32 @test(i32 %in1, i32 %in2) {
 }
 
 } // namespace
-

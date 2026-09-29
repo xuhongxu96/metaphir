@@ -4,13 +4,13 @@
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternVariants.h"
+#include "test/TestUtils.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
-#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -372,16 +372,16 @@ TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
 
   // %x = add i32 ?x, ?y
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, Y}};
-  MIRInstruction *Add = MIRInstruction::get(Context, MIRInstruction::I_add, "x",
-                                            {}, {}, AddOperands, nullptr, Range,
-                                            Block);
+  MIRInstruction *Add =
+      MIRInstruction::get(Context, MIRInstruction::I_add, "x", {}, {},
+                          AddOperands, nullptr, Range, Block);
   Pat->addInstruction(Add);
 
   // %res = sub i32 %x, ?x
   MatcherOperand SubOperands[] = {{nullptr, Add}, {nullptr, X}};
-  MIRInstruction *Sub = MIRInstruction::get(Context, MIRInstruction::I_sub, "res",
-                                            {}, {}, SubOperands, nullptr, Range,
-                                            Block);
+  MIRInstruction *Sub =
+      MIRInstruction::get(Context, MIRInstruction::I_sub, "res", {}, {},
+                          SubOperands, nullptr, Range, Block);
   Pat->addInstruction(Sub);
 
   LLVMContext LLVMContext;
@@ -405,4 +405,3 @@ TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
               Module->getFunction("f")->getArg(0));
   }
 }
-

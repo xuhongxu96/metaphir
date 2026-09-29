@@ -5,6 +5,7 @@
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Values.h"
 #include "metaphir/Matching/Instantiation.h"
+#include "test/TestUtils.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -12,7 +13,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
-#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
