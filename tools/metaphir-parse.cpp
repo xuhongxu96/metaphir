@@ -1,32 +1,37 @@
+//===- metaphir-parse.cpp - Parse a MetaphIR pattern and print it ---------===//
+
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/Parser/MIRParser.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
 
+static cl::OptionCategory Category("metaphir-parse options");
+static cl::opt<std::string> InputFilename(cl::Positional, cl::Required,
+                                          cl::desc("<pattern>"),
+                                          cl::cat(Category));
+
 int main(int Argc, char **Argv) {
-  if (Argc != 2) {
-    errs() << "usage: metaphir-parse <input>\n";
-    return 1;
-  }
-  auto Buffer = MemoryBuffer::getFile(Argv[1]);
-  if (!Buffer) {
-    errs() << Argv[1] << ": " << Buffer.getError().message() << '\n';
-    return 1;
-  }
+  InitLLVM X(Argc, Argv);
+  cl::HideUnrelatedOptions(Category);
+  cl::SetVersionPrinter(
+      [](raw_ostream &OS) { OS << "MetaphIR " METAPHIR_VERSION "\n"; });
+  StringRef ToolName = sys::path::filename(Argv[0]);
+  cl::ParseCommandLineOptions(Argc, Argv,
+                              "Parse a MetaphIR pattern and print it\n");
+
   SourceMgr SM;
-  SM.AddNewSourceBuffer(std::move(*Buffer), SMLoc());
-  SMDiagnostic Error;
+  SMDiagnostic Diag;
   MIRContext Context;
-  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
-                   Error, Context);
   Pattern *P = nullptr;
-  if (Parser.parse(P)) {
-    Error.print(Argv[0], errs());
+  if (parseMIRFile(InputFilename, SM, Context, P, Diag)) {
+    Diag.print(ToolName.data(), errs());
     return 1;
   }
   outs() << *P;

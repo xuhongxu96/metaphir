@@ -10,7 +10,10 @@
 
 ;--- specific.mpir
 %r = load:?anch i32, ptr addrspace(1) ?p
-; PRINT: %r = load:?anch i32, ptr addrspace(1) ?p
+; PRINT: pattern instructions=1 constraints=0
+; PRINT-NEXT: %r = load:?anch i32, ptr addrspace(1) ?p
+; PRINT-NEXT: meta ?anch type=Instruction
+; PRINT-NEXT: meta ?p type=Value
 
 ;--- input.ll
 define i32 @generic(ptr %p) {
@@ -19,6 +22,8 @@ define i32 @generic(ptr %p) {
 }
 ; ANY: target 0: @generic
 ; ANY-NEXT:   match 0:
+; ANY-NEXT:     {?anch = %r, ?p = %p}
+
 ; SPECIFIC: target 0: @generic
 ; SPECIFIC-NEXT:   no match
 
@@ -26,7 +31,10 @@ define i32 @global(ptr addrspace(1) %p) {
   %r = load i32, ptr addrspace(1) %p
   ret i32 %r
 }
-; ANY: target 1: @global
+; ANY-NEXT: target 1: @global
 ; ANY-NEXT:   match 0:
-; SPECIFIC: target 1: @global
+; ANY-NEXT:     {?anch = %r, ?p = %p}
+
+; SPECIFIC-NEXT: target 1: @global
 ; SPECIFIC-NEXT:   match 0:
+; SPECIFIC-NEXT:     {?anch = %r, ?p = %p}

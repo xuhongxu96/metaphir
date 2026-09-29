@@ -8,12 +8,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "metaphir/Parser/MIRParser.h"
 #include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/LibraryDefs.h"
 #include "metaphir/IR/MIRContext.h"
-#include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Twine.h"
 #include <deque>
@@ -24,8 +24,8 @@ namespace metaphir {
 MIRParser::ClosedScope::ClosedScope(MIRParser &Parser)
     : Parser(Parser), MetaVariables(std::move(Parser.MetaVariables)),
       Instructions(std::move(Parser.Instructions)),
-      CurrentPattern(Parser.CurrentPattern),
-      CurrentBlock(Parser.CurrentBlock), Settings(Parser.Settings) {
+      CurrentPattern(Parser.CurrentPattern), CurrentBlock(Parser.CurrentBlock),
+      Settings(Parser.Settings) {
   Parser.MetaVariables.clear();
   Parser.Instructions.clear();
   Parser.CurrentPattern = Pattern::create(Parser.Context);
@@ -209,9 +209,8 @@ bool MIRParser::parseMatchParameters(Instruction::OperandSyntax Syntax,
     // matcher's arity.
     if (Lex.getKind() == tok::rparen)
       return error("'Nary' matcher needs at least one operand parameter");
-    return parseCommaList(tok::rparen, [&] {
-      return TypeParameter() || OperandParameter();
-    });
+    return parseCommaList(
+        tok::rparen, [&] { return TypeParameter() || OperandParameter(); });
   case Instruction::OperandSyntax::Binary:
     return TypeParameter() || OperandParameter() || Comma() ||
            OperandParameter();
@@ -297,8 +296,8 @@ bool MIRParser::parseMatchHeader(MatchHeader &Header) {
   Header.Arity = count_if(Header.Parameters,
                           [](const ParameterDef &P) { return !P.IsType; });
   if (IsUnary && Header.Arity != 1)
-    return Lex.ParseError(ArchetypeLoc,
-                          "'Unary' matcher takes exactly one operand parameter");
+    return Lex.ParseError(
+        ArchetypeLoc, "'Unary' matcher takes exactly one operand parameter");
 
   // Operand parameters are distinct values. A type parameter may repeat (so
   // several operands can share a type), but one name cannot denote both a

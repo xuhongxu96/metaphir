@@ -10,6 +10,12 @@
 namespace llvm {
 namespace metaphir {
 
+/// Parses the MetaphIR file Filename into a pattern, adding its buffer to SM
+/// (which must outlive the pattern). Returns true on error, with the
+/// diagnostic in Diag.
+bool parseMIRFile(StringRef Filename, SourceMgr &SM, MIRContext &Context,
+                  Pattern *&Result, SMDiagnostic &Diag);
+
 class MIRParser {
 public:
   MIRParser(StringRef Buffer, SourceMgr &SM, SMDiagnostic &Error,

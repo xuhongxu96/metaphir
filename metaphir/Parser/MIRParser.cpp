@@ -174,6 +174,21 @@ bool MIRParser::loadLibrary(MIRContext &Context, StringRef Name,
   return false;
 }
 
+bool parseMIRFile(StringRef Filename, SourceMgr &SM, MIRContext &Context,
+                  Pattern *&Result, SMDiagnostic &Diag) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer =
+      MemoryBuffer::getFile(Filename);
+  if (!Buffer) {
+    Diag = SMDiagnostic(Filename, SourceMgr::DK_Error,
+                        "cannot read file: " + Buffer.getError().message());
+    return true;
+  }
+  unsigned BufferID = SM.AddNewSourceBuffer(std::move(*Buffer), SMLoc());
+  MIRParser Parser(SM.getMemoryBuffer(BufferID)->getBuffer(), SM, Diag,
+                   Context);
+  return Parser.parse(Result);
+}
+
 bool MIRParser::parse(Pattern *&Result) {
   Result = nullptr;
   if (loadLibrary(Context, StdLibName, StdLibSource, Lex.getDiagnostic()))

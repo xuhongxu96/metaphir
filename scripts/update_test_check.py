@@ -35,7 +35,7 @@ PARSER_INPUT_RE = re.compile(r"%metaphir-parse\s+(?P<input>%s|%t/\S+)")
 ERROR_RE = re.compile(r":(?P<line>[0-9]+):[0-9]+: error: (?P<message>.*)$")
 WARNING_RE = re.compile(r":(?P<line>[0-9]+):[0-9]+: warning: (?P<message>.*)$")
 TOOL_ERROR_HEAD_RE = re.compile(
-    r"^\s*(?:metaphir-[a-z0-9]+|opt):\s*\S+:\d+:\d+:\s*(?:error:)"
+    r"^\s*(?:\S*/)?(?:metaphir-[a-z0-9]+|opt):\s*\S+:\d+:\d+:\s*(?:error:)"
 )
 MATCH_TARGET_RE = re.compile(r"^target [0-9]+: @(?P<name>[-a-zA-Z$._0-9]+)$")
 LLVM_FUNCTION_RE = re.compile(r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\(")
@@ -45,6 +45,8 @@ DEFAULT_TEST_DIR = REPO_ROOT / "test"
 TOOLS = ("metaphir-lex", "metaphir-parse", "metaphir-match")
 # lit (test/lit.cfg.py) only runs .ll files.
 TEST_EXTENSIONS = {".ll"}
+# Tests whose CHECK lines are maintained by hand carry this marker.
+MANUAL_MARKER = "NOTE: CHECK lines are written by hand"
 
 
 # ---------------------------------------------------------------------------
@@ -819,6 +821,8 @@ def main() -> int:
 
     for path in collect_files(args.paths):
         original = path.read_text()
+        if MANUAL_MARKER in original:
+            continue
         lines = original.splitlines()
         try:
             kinds, comment = test_kinds(lines, path)

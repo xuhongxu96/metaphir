@@ -5,13 +5,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "metaphir/Parser/MIRParser.h"
 #include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/LibraryDefs.h"
 #include "metaphir/IR/MIRContext.h"
-#include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Twine.h"
@@ -68,8 +68,7 @@ static std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
   }
 }
 
-std::optional<InstructionFlag::FlagID>
-MIRParser::getSemanticFlag(tok::Kind K) {
+std::optional<InstructionFlag::FlagID> MIRParser::getSemanticFlag(tok::Kind K) {
   switch (K) {
 #define MIR_FLAG_TOKEN_KIND(Name)                                              \
   case tok::kw_##Name:                                                         \
@@ -247,7 +246,8 @@ bool MIRParser::parseBaseType(Type *&Result, bool AllowVoid) {
     MetaVariable *Width = getMeta(Lex.getStrVal(), MetaType::Nat, Loc);
     if (!Width)
       return true;
-    Result = MetaIntegerType::get(Context, Width, Lex.getMetaIntPrefix() == 'b');
+    Result =
+        MetaIntegerType::get(Context, Width, Lex.getMetaIntPrefix() == 'b');
     next();
     return false;
   }
@@ -329,10 +329,9 @@ bool MIRParser::parseSequenceType(Type *&Result, bool IsVector) {
   if (!consume(tok::kw_x))
     return error("expected 'x' after " + What + " size");
   Type *Element = nullptr;
-  if (parseType(Element) ||
-      expect(IsVector ? tok::greater : tok::rsquare,
-             "expected '" + Twine(IsVector ? '>' : ']') + "' after " + What +
-                 " type"))
+  if (parseType(Element) || expect(IsVector ? tok::greater : tok::rsquare,
+                                   "expected '" + Twine(IsVector ? '>' : ']') +
+                                       "' after " + What + " type"))
     return true;
   Result = IsVector ? static_cast<Type *>(VectorType::get(
                           Context, Scalable, Element, Count, CountVar))
@@ -342,9 +341,8 @@ bool MIRParser::parseSequenceType(Type *&Result, bool IsVector) {
 
 bool MIRParser::parseStructType(Type *&Result, bool Packed) {
   SmallVector<Type *, 8> Elements;
-  if (parseCommaList(tok::rbrace, [&] {
-        return parseType(Elements.emplace_back());
-      }))
+  if (parseCommaList(tok::rbrace,
+                     [&] { return parseType(Elements.emplace_back()); }))
     return true;
   if (Packed) {
     if (expect(tok::rbrace, "expected '}' after packed struct") ||
@@ -660,8 +658,8 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
   Instruction::OperandSyntax Syntax = Instruction::getOperandSyntax(ID);
   if (Syntax == Instruction::OperandSyntax::Custom
           ? parseCustomOperands(ID, Ops)
-          : parseArchetypeOperands(Syntax, Instruction::getOperandArity(ID),
-                                   Op, Ops))
+          : parseArchetypeOperands(Syntax, Instruction::getOperandArity(ID), Op,
+                                   Ops))
     return true;
   if (validateInstruction(ID, MFlags, Ops))
     return true;
@@ -899,8 +897,7 @@ bool MIRParser::parseCallOperands(SmallVectorImpl<MatcherOperand> &Ops) {
       if (parseArrayCapture(Array, /*WithTypes=*/true))
         return true;
       Ops.push_back(Array);
-    } else if (parseOperand(Ops) ||
-               parseTrailingOperands(Ops, TypedOperands)) {
+    } else if (parseOperand(Ops) || parseTrailingOperands(Ops, TypedOperands)) {
       return true;
     }
   }
