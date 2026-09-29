@@ -10,8 +10,9 @@ namespace metaphir {
 MIRContext::MIRContext() : pImpl(new MIRContextImpl(*this)) {}
 MIRContext::~MIRContext() { delete pImpl; }
 
-void MIRContext::registerCompositeMatcher(CompositeMatcher *Matcher) {
-  pImpl->CompositeMatchers[Matcher->getName()] = Matcher;
+bool MIRContext::registerCompositeMatcher(CompositeMatcher *Matcher) {
+  return pImpl->CompositeMatchers.try_emplace(Matcher->getName(), Matcher)
+      .second;
 }
 
 CompositeMatcher *MIRContext::getCompositeMatcher(StringRef Name) const {
@@ -19,8 +20,8 @@ CompositeMatcher *MIRContext::getCompositeMatcher(StringRef Name) const {
   return It == pImpl->CompositeMatchers.end() ? nullptr : It->second;
 }
 
-void MIRContext::registerConstraintDef(ConstraintDef *Def) {
-  pImpl->ConstraintDefs[Def->getName()] = Def;
+bool MIRContext::registerConstraintDef(ConstraintDef *Def) {
+  return pImpl->ConstraintDefs.try_emplace(Def->getName(), Def).second;
 }
 
 ConstraintDef *MIRContext::getConstraintDef(StringRef Name) const {
@@ -28,14 +29,16 @@ ConstraintDef *MIRContext::getConstraintDef(StringRef Name) const {
   return It == pImpl->ConstraintDefs.end() ? nullptr : It->second;
 }
 
-void MIRContext::registerMetaFlagDef(MetaFlagDef *Def) {
-  pImpl->MetaFlagDefs[Def->getName()] = Def;
+bool MIRContext::registerMetaFlagDef(MetaFlagDef *Def) {
+  return pImpl->MetaFlagDefs.try_emplace(Def->getName(), Def).second;
 }
 
 MetaFlagDef *MIRContext::getMetaFlagDef(StringRef Name) const {
   auto It = pImpl->MetaFlagDefs.find(Name);
   return It == pImpl->MetaFlagDefs.end() ? nullptr : It->second;
 }
+
+StringRef MIRContext::saveString(StringRef S) { return pImpl->Saver.save(S); }
 
 bool MIRContext::isLibraryLoaded(StringRef Name) const {
   return pImpl->LoadedLibraries.contains(Name);

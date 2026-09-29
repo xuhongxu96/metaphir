@@ -29,7 +29,7 @@ TEST(SubtreeMatcherTest, NonValueMetaTypesFailToMatchLLVMValues) {
   for (MetaType Type : {MetaType::Type, MetaType::CmpPredicate,
                         MetaType::TypeArray, MetaType::ValueArray}) {
     MetaVariable *Variable =
-        MetaVariable::get(Context, "variable", Type, Range);
+        MetaVariable::create(Context, "variable", Type, Range);
     Instantiation State;
     EXPECT_TRUE(
         SubtreeMatcher(*Variable, *Target, std::move(State)).match().empty());
@@ -41,7 +41,7 @@ TEST(SubtreeMatcherTest, RejectsUnknownMetaTypeAsUnexpected) {
   SourceRange Range;
   LLVMContext LLVMContext;
   MetaVariable *Variable =
-      MetaVariable::get(Context, "unknown", MetaType::Unknown, Range);
+      MetaVariable::create(Context, "unknown", MetaType::Unknown, Range);
   ConstantInt *Target =
       ConstantInt::get(llvm::Type::getInt32Ty(LLVMContext), 0);
 
@@ -57,7 +57,7 @@ TEST(SubtreeMatcherTest, InstantiationsRepresentNonValueBindings) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Pred =
-      MetaVariable::get(Context, "pred", MetaType::CmpPredicate, Range);
+      MetaVariable::create(Context, "pred", MetaType::CmpPredicate, Range);
   Instantiation::Binding Predicate(CmpInst::ICMP_EQ);
   Instantiation::Binding OtherPredicate(CmpInst::ICMP_NE);
   Instantiation::Binding Integer(APInt(32, 17));
@@ -79,11 +79,11 @@ TEST(SubtreeMatcherTest, AggregateConstantsRequireMatchingShape) {
   SourceRange Range;
   llvm::metaphir::Type *I32 = llvm::metaphir::IntegerType::get(Context, 32);
   llvm::metaphir::Value *Elements[] = {
-      IntegerConstant::get(Context, APSInt(APInt(32, 1), false), Range),
-      IntegerConstant::get(Context, APSInt(APInt(32, 2), false), Range),
+      IntegerConstant::create(Context, APSInt(APInt(32, 1), false), Range),
+      IntegerConstant::create(Context, APSInt(APInt(32, 2), false), Range),
   };
   llvm::metaphir::Type *Types[] = {I32, I32};
-  AggregateConstant *Array = AggregateConstant::get(
+  AggregateConstant *Array = AggregateConstant::create(
       Context, Types, Elements, AggregateConstant::Square, Range);
 
   LLVMContext LLVMContext;

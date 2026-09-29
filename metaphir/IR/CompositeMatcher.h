@@ -45,6 +45,15 @@ public:
     Instruction *Root = nullptr;
   };
 
+  /// Creates a matcher owned by Context, which keeps copies of the name and
+  /// of every array, including those of the branches.
+  static CompositeMatcher *
+  create(MIRContext &Context, StringRef Name, bool IsCommutative,
+         ArrayRef<InstructionFlag::FlagID> SupportedFlags,
+         Instruction::OperandSyntax Syntax, unsigned Arity,
+         ArrayRef<ParameterDef> Parameters, ArrayRef<Branch> Branches);
+
+private:
   CompositeMatcher(StringRef Name, bool IsCommutative,
                    ArrayRef<InstructionFlag::FlagID> SupportedFlags,
                    Instruction::OperandSyntax Syntax, unsigned Arity,
@@ -53,6 +62,7 @@ public:
         SupportedFlags(SupportedFlags), Syntax(Syntax), Arity(Arity),
         Parameters(Parameters), Branches(Branches) {}
 
+public:
   StringRef getName() const { return Name; }
   bool isCommutative() const { return IsCommutative; }
   ArrayRef<InstructionFlag::FlagID> getSupportedFlags() const {

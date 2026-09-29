@@ -43,13 +43,14 @@ protected:
 };
 
 TEST_F(ConstraintInterpreterTest, EvaluatesLiteralsAndVariables) {
-  MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Bits =
+      MetaVariable::create(Context, "bits", MetaType::Nat, Range);
   MetaVariable *Flag =
-      MetaVariable::get(Context, "flag", MetaType::Bool, Range);
-  VariableConstraint *BitsExpression =
-      VariableConstraint::get(Context, Bits, Constraint::IntegerResult, Range);
-  VariableConstraint *FlagExpression =
-      VariableConstraint::get(Context, Flag, Constraint::BooleanResult, Range);
+      MetaVariable::create(Context, "flag", MetaType::Bool, Range);
+  VariableConstraint *BitsExpression = VariableConstraint::create(
+      Context, Bits, Constraint::IntegerResult, Range);
+  VariableConstraint *FlagExpression = VariableConstraint::create(
+      Context, Flag, Constraint::BooleanResult, Range);
   State.bind(*Bits, APInt(16, 42));
   State.bind(*Flag, true);
 
@@ -110,12 +111,12 @@ TEST_F(ConstraintInterpreterTest, AccessesTypeAndValueArrays) {
   Constant *Two = ConstantInt::get(I32, 2);
 
   MetaVariable *Types =
-      MetaVariable::get(Context, "types", MetaType::TypeArray, Range);
+      MetaVariable::create(Context, "types", MetaType::TypeArray, Range);
   MetaVariable *Values =
-      MetaVariable::get(Context, "values", MetaType::ValueArray, Range);
-  VariableConstraint *TypesExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "values", MetaType::ValueArray, Range);
+  VariableConstraint *TypesExpression = VariableConstraint::create(
       Context, Types, Constraint::TypeArrayResult, Range);
-  VariableConstraint *ValuesExpression = VariableConstraint::get(
+  VariableConstraint *ValuesExpression = VariableConstraint::create(
       Context, Values, Constraint::ValueArrayResult, Range);
   State.bind(*Types, Instantiation::TypeArray{I8, I32});
   State.bind(*Values, Instantiation::ValueArray{One, Two});
@@ -135,12 +136,12 @@ TEST_F(ConstraintInterpreterTest, AccessesTypeAndValueArrays) {
       access(ValuesExpression, integer(1), Constraint::ValueResult))));
 
   MetaVariable *ElementType =
-      MetaVariable::get(Context, "element_type", MetaType::Type, Range);
+      MetaVariable::create(Context, "element_type", MetaType::Type, Range);
   MetaVariable *ElementValue =
-      MetaVariable::get(Context, "element_value", MetaType::Value, Range);
-  VariableConstraint *TypeExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "element_value", MetaType::Value, Range);
+  VariableConstraint *TypeExpression = VariableConstraint::create(
       Context, ElementType, Constraint::TypeResult, Range);
-  VariableConstraint *ValueExpression = VariableConstraint::get(
+  VariableConstraint *ValueExpression = VariableConstraint::create(
       Context, ElementValue, Constraint::ValueResult, Range);
   State.bind(*ElementType, I8);
   State.bind(*ElementValue, One);
@@ -155,12 +156,12 @@ TEST_F(ConstraintInterpreterTest, AccessesTypeAndValueArrays) {
 
   ArrayConstraint *TypeStrings =
       array(Constraint::StringArrayResult,
-            {StringConstraint::get(Context, "i8", Range),
-             StringConstraint::get(Context, "i32", Range)});
+            {StringConstraint::create(Context, "i8", Range),
+             StringConstraint::create(Context, "i32", Range)});
   ArrayConstraint *ValueStrings =
       array(Constraint::StringArrayResult,
-            {StringConstraint::get(Context, "1", Range),
-             StringConstraint::get(Context, "2", Range)});
+            {StringConstraint::create(Context, "1", Range),
+             StringConstraint::create(Context, "2", Range)});
   EXPECT_TRUE(evaluateBoolean(*binary("==", TypesExpression, TypeStrings)));
   EXPECT_TRUE(evaluateBoolean(*binary("==", ValuesExpression, ValueStrings)));
   EXPECT_EQ(evaluate(*access(TypeStrings, integer(1), Constraint::StringResult))
@@ -174,35 +175,35 @@ TEST_F(ConstraintInterpreterTest, EvaluatesIsaPredicates) {
   auto Add = std::unique_ptr<BinaryOperator>(BinaryOperator::CreateAdd(
       ConstantInt::get(I32, 1), ConstantInt::get(I32, 2), "sum"));
   MetaVariable *Value =
-      MetaVariable::get(Context, "value", MetaType::Value, Range);
-  VariableConstraint *ValueExpression =
-      VariableConstraint::get(Context, Value, Constraint::ValueResult, Range);
+      MetaVariable::create(Context, "value", MetaType::Value, Range);
+  VariableConstraint *ValueExpression = VariableConstraint::create(
+      Context, Value, Constraint::ValueResult, Range);
   State.bind(*Value, Add.get());
 
   EXPECT_TRUE(evaluateBoolean(
       *call("isa", ValueExpression,
-            StringConstraint::get(Context, "BinaryOperator", Range))));
+            StringConstraint::create(Context, "BinaryOperator", Range))));
   EXPECT_FALSE(evaluateBoolean(
       *call("isa", ValueExpression,
-            StringConstraint::get(Context, "CallInst", Range))));
+            StringConstraint::create(Context, "CallInst", Range))));
   std::string InstructionText;
   raw_string_ostream InstructionStream(InstructionText);
   Add->print(InstructionStream);
-  EXPECT_TRUE(evaluateBoolean(
-      *binary("==", ValueExpression,
-              StringConstraint::get(Context, InstructionStream.str(), Range))));
+  EXPECT_TRUE(evaluateBoolean(*binary(
+      "==", ValueExpression,
+      StringConstraint::create(Context, InstructionStream.str(), Range))));
   EXPECT_NE(InstructionText.find("add i32 1, 2"), std::string::npos);
   MetaVariable *TypeVariable =
-      MetaVariable::get(Context, "type", MetaType::Type, Range);
-  VariableConstraint *TypeExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "type", MetaType::Type, Range);
+  VariableConstraint *TypeExpression = VariableConstraint::create(
       Context, TypeVariable, Constraint::TypeResult, Range);
   State.bind(*TypeVariable, I32);
   EXPECT_TRUE(evaluateBoolean(*binary(
-      "==", TypeExpression, StringConstraint::get(Context, "i32", Range))));
+      "==", TypeExpression, StringConstraint::create(Context, "i32", Range))));
 
   OperatorConstraint *UnknownClass =
       call("isa", ValueExpression,
-           StringConstraint::get(Context, "ImaginaryValue", Range));
+           StringConstraint::create(Context, "ImaginaryValue", Range));
   Expected<ConstraintValue> Result = Interpreter.evaluate(*UnknownClass, State);
   ASSERT_FALSE(Result);
   EXPECT_EQ(toString(Result.takeError()),
@@ -229,12 +230,14 @@ TEST_F(ConstraintInterpreterTest, EvaluatesUsePredicates) {
   const llvm::Instruction *A = &*It++;
   const llvm::Instruction *B = &*It++;
 
-  MetaVariable *ValA = MetaVariable::get(Context, "a", MetaType::Value, Range);
-  MetaVariable *ValB = MetaVariable::get(Context, "b", MetaType::Value, Range);
+  MetaVariable *ValA =
+      MetaVariable::create(Context, "a", MetaType::Value, Range);
+  MetaVariable *ValB =
+      MetaVariable::create(Context, "b", MetaType::Value, Range);
   VariableConstraint *ExprA =
-      VariableConstraint::get(Context, ValA, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, ValA, Constraint::ValueResult, Range);
   VariableConstraint *ExprB =
-      VariableConstraint::get(Context, ValB, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, ValB, Constraint::ValueResult, Range);
   State.bind(*ValA, A);
   State.bind(*ValB, B);
 
@@ -254,21 +257,21 @@ TEST_F(ConstraintInterpreterTest, EvaluatesOpcodePredicates) {
       CastInst::Create(llvm::Instruction::ZExt, Add.get(),
                        llvm::Type::getInt64Ty(LLVMContext), "extended"));
   MetaVariable *Value =
-      MetaVariable::get(Context, "value", MetaType::Value, Range);
-  VariableConstraint *ValueExpression =
-      VariableConstraint::get(Context, Value, Constraint::ValueResult, Range);
+      MetaVariable::create(Context, "value", MetaType::Value, Range);
+  VariableConstraint *ValueExpression = VariableConstraint::create(
+      Context, Value, Constraint::ValueResult, Range);
   State.bind(*Value, Cast.get());
 
   EXPECT_TRUE(evaluateBoolean(
       *binary("==", operation(Constraint::Call, "opcode", {ValueExpression}),
-              StringConstraint::get(Context, "zext", Range))));
+              StringConstraint::create(Context, "zext", Range))));
   EXPECT_FALSE(evaluateBoolean(
       *binary("==", operation(Constraint::Call, "opcode", {ValueExpression}),
-              StringConstraint::get(Context, "add", Range))));
+              StringConstraint::create(Context, "add", Range))));
 
   MetaVariable *IntegerValue =
-      MetaVariable::get(Context, "integer_value", MetaType::Value, Range);
-  VariableConstraint *IntegerExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "integer_value", MetaType::Value, Range);
+  VariableConstraint *IntegerExpression = VariableConstraint::create(
       Context, IntegerValue, Constraint::ValueResult, Range);
   State.bind(*IntegerValue, ConstantInt::get(I32, 1));
   OperatorConstraint *NonInstruction =
@@ -283,30 +286,30 @@ TEST_F(ConstraintInterpreterTest, EvaluatesOpcodePredicates) {
 
 TEST_F(ConstraintInterpreterTest, ConvertsSymbolicBindingsToStrings) {
   MetaVariable *Predicate =
-      MetaVariable::get(Context, "predicate", MetaType::CmpPredicate, Range);
+      MetaVariable::create(Context, "predicate", MetaType::CmpPredicate, Range);
   MetaVariable *IntrinsicVariable =
-      MetaVariable::get(Context, "intrinsic", MetaType::IntrinsicID, Range);
-  VariableConstraint *PredicateExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "intrinsic", MetaType::IntrinsicID, Range);
+  VariableConstraint *PredicateExpression = VariableConstraint::create(
       Context, Predicate, Constraint::StringResult, Range);
-  VariableConstraint *IntrinsicExpression = VariableConstraint::get(
+  VariableConstraint *IntrinsicExpression = VariableConstraint::create(
       Context, IntrinsicVariable, Constraint::StringResult, Range);
   State.bind(*Predicate, CmpInst::ICMP_SLT);
   State.bind(*IntrinsicVariable, Intrinsic::abs);
 
   EXPECT_EQ(evaluate(*PredicateExpression).getString(), "slt");
   EXPECT_EQ(evaluate(*IntrinsicExpression).getString(), "llvm.abs");
-  EXPECT_TRUE(
-      evaluateBoolean(*binary("==", PredicateExpression,
-                              StringConstraint::get(Context, "slt", Range))));
+  EXPECT_TRUE(evaluateBoolean(
+      *binary("==", PredicateExpression,
+              StringConstraint::create(Context, "slt", Range))));
   EXPECT_TRUE(evaluateBoolean(
       *binary("==", IntrinsicExpression,
-              StringConstraint::get(Context, "llvm.abs", Range))));
+              StringConstraint::create(Context, "llvm.abs", Range))));
 }
 
 TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
   MetaVariable *Missing =
-      MetaVariable::get(Context, "missing", MetaType::Nat, Range);
-  VariableConstraint *MissingExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "missing", MetaType::Nat, Range);
+  VariableConstraint *MissingExpression = VariableConstraint::create(
       Context, Missing, Constraint::IntegerResult, Range);
   Expected<ConstraintValue> MissingResult =
       Interpreter.evaluate(*MissingExpression, State);
@@ -316,9 +319,9 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "is not instantiated");
 
   MetaVariable *Flag =
-      MetaVariable::get(Context, "flag", MetaType::Bool, Range);
-  VariableConstraint *FlagExpression =
-      VariableConstraint::get(Context, Flag, Constraint::BooleanResult, Range);
+      MetaVariable::create(Context, "flag", MetaType::Bool, Range);
+  VariableConstraint *FlagExpression = VariableConstraint::create(
+      Context, Flag, Constraint::BooleanResult, Range);
   State.bind(*Flag, APInt(1, 1));
   Expected<ConstraintValue> IncompatibleResult =
       Interpreter.evaluate(*FlagExpression, State);
@@ -328,9 +331,9 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "incompatible binding");
 
   metaphir::Instruction *InstSubject =
-      metaphir::Instruction::get(Context, metaphir::Instruction::I_add, "sum",
-                                 {}, {}, {}, nullptr, Range, nullptr);
-  VariableConstraint *UninstInstExpr = VariableConstraint::get(
+      metaphir::Instruction::create(Context, metaphir::Instruction::I_add,
+                                    "sum", {}, {}, {}, nullptr, Range, nullptr);
+  VariableConstraint *UninstInstExpr = VariableConstraint::create(
       Context, InstSubject, Constraint::ValueResult, Range);
   Expected<ConstraintValue> UninstInstRes =
       Interpreter.evaluate(*UninstInstExpr, State);
@@ -339,7 +342,7 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "cannot evaluate constraint '%sum': variable '%sum' "
             "is not instantiated");
 
-  VariableConstraint *IncompatInstExpr = VariableConstraint::get(
+  VariableConstraint *IncompatInstExpr = VariableConstraint::create(
       Context, InstSubject, Constraint::IntegerResult, Range);
   State.bind(*InstSubject, true);
   Expected<ConstraintValue> IncompatInstRes =
@@ -373,8 +376,8 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
       "cannot evaluate constraint '(custom 1)': unknown operator 'custom'");
 
   MetaVariable *Values =
-      MetaVariable::get(Context, "values", MetaType::ValueArray, Range);
-  VariableConstraint *ValuesExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "values", MetaType::ValueArray, Range);
+  VariableConstraint *ValuesExpression = VariableConstraint::create(
       Context, Values, Constraint::ValueArrayResult, Range);
   State.bind(*Values, Instantiation::ValueArray{});
   ArrayAccessConstraint *OutOfBounds =
@@ -408,8 +411,8 @@ TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   Constant *Value = ConstantInt::get(I32, 1);
   MetaVariable *ValueVariable =
-      MetaVariable::get(Context, "value", MetaType::Value, Range);
-  VariableConstraint *ValueExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "value", MetaType::Value, Range);
+  VariableConstraint *ValueExpression = VariableConstraint::create(
       Context, ValueVariable, Constraint::ValueResult, Range);
   State.bind(*ValueVariable, Value);
 
@@ -426,7 +429,7 @@ TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
             "boolean-coercible operand");
 
   Expected<ConstraintValue> EqualityResult = Interpreter.evaluate(
-      *binary("==", integer(1), StringConstraint::get(Context, "1", Range)),
+      *binary("==", integer(1), StringConstraint::create(Context, "1", Range)),
       State);
   ASSERT_FALSE(EqualityResult);
   EXPECT_EQ(toString(EqualityResult.takeError()),
@@ -434,7 +437,8 @@ TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
             "have different types");
 
   Expected<ConstraintValue> IsaValueResult = Interpreter.evaluate(
-      *call("isa", integer(1), StringConstraint::get(Context, "Value", Range)),
+      *call("isa", integer(1),
+            StringConstraint::create(Context, "Value", Range)),
       State);
   ASSERT_FALSE(IsaValueResult);
   EXPECT_EQ(toString(IsaValueResult.takeError()),
@@ -450,7 +454,7 @@ TEST_F(ConstraintInterpreterTest, RejectsInvalidCoercionsAndComparisons) {
 
   Expected<ConstraintValue> NegativeIndexResult = Interpreter.evaluate(
       *access(array(Constraint::StringArrayResult,
-                    {StringConstraint::get(Context, "value", Range)}),
+                    {StringConstraint::create(Context, "value", Range)}),
               integer(-1), Constraint::StringResult),
       State);
   ASSERT_FALSE(NegativeIndexResult);
@@ -478,52 +482,56 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
   auto *Root = BinaryOperator::CreateUDiv(Inner, Fn->getArg(2), "root", Block);
   ReturnInst::Create(LLVMContext, ConstantInt::get(I8, 0), Block);
 
-  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
-  MetaVariable *Z = MetaVariable::get(Context, "z", MetaType::Value, Range);
-  MetaVariable *Ctx = MetaVariable::get(Context, "ctx", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
+  MetaVariable *Z = MetaVariable::create(Context, "z", MetaType::Value, Range);
+  MetaVariable *Ctx =
+      MetaVariable::create(Context, "ctx", MetaType::Value, Range);
   VariableConstraint *YExpression =
-      VariableConstraint::get(Context, Y, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Y, Constraint::ValueResult, Range);
   VariableConstraint *ZExpression =
-      VariableConstraint::get(Context, Z, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Z, Constraint::ValueResult, Range);
   VariableConstraint *CtxExpression =
-      VariableConstraint::get(Context, Ctx, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Ctx, Constraint::ValueResult, Range);
   State.bind(*Y, Fn->getArg(1));
   State.bind(*Z, Fn->getArg(2));
   State.bind(*Ctx, Root);
 
   // y and z are constrained to [0, 15], so y*z fits in i8 without unsigned
   // overflow; signed overflow is possible (15*15 > 127).
-  EXPECT_TRUE(
-      evaluateBoolean(*operation(Constraint::Call, "noOverflow",
-                                 {StringConstraint::get(Context, "umul", Range),
-                                  YExpression, ZExpression, CtxExpression})));
-  EXPECT_FALSE(
-      evaluateBoolean(*operation(Constraint::Call, "noOverflow",
-                                 {StringConstraint::get(Context, "smul", Range),
-                                  YExpression, ZExpression, CtxExpression})));
+  EXPECT_TRUE(evaluateBoolean(
+      *operation(Constraint::Call, "noOverflow",
+                 {StringConstraint::create(Context, "umul", Range), YExpression,
+                  ZExpression, CtxExpression})));
+  EXPECT_FALSE(evaluateBoolean(
+      *operation(Constraint::Call, "noOverflow",
+                 {StringConstraint::create(Context, "smul", Range), YExpression,
+                  ZExpression, CtxExpression})));
 
   // 255 * 2 does not fit in i8.
-  MetaVariable *Big = MetaVariable::get(Context, "big", MetaType::Value, Range);
-  MetaVariable *Two = MetaVariable::get(Context, "two", MetaType::Value, Range);
+  MetaVariable *Big =
+      MetaVariable::create(Context, "big", MetaType::Value, Range);
+  MetaVariable *Two =
+      MetaVariable::create(Context, "two", MetaType::Value, Range);
   VariableConstraint *BigExpression =
-      VariableConstraint::get(Context, Big, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Big, Constraint::ValueResult, Range);
   VariableConstraint *TwoExpression =
-      VariableConstraint::get(Context, Two, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Two, Constraint::ValueResult, Range);
   State.bind(*Big, ConstantInt::get(I8, 255));
   State.bind(*Two, ConstantInt::get(I8, 2));
   EXPECT_FALSE(evaluateBoolean(
       *operation(Constraint::Call, "noOverflow",
-                 {StringConstraint::get(Context, "umul", Range), BigExpression,
-                  TwoExpression, CtxExpression})));
+                 {StringConstraint::create(Context, "umul", Range),
+                  BigExpression, TwoExpression, CtxExpression})));
 
   // Sign predicates on the range-constrained argument.
   EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownNonNegative",
                                          {YExpression, CtxExpression})));
 
   // Known bits of the constant 5 (0b00000101): ones mask 0x05, zeros 0xFA.
-  MetaVariable *Const = MetaVariable::get(Context, "c", MetaType::Value, Range);
-  VariableConstraint *ConstExpression =
-      VariableConstraint::get(Context, Const, Constraint::ValueResult, Range);
+  MetaVariable *Const =
+      MetaVariable::create(Context, "c", MetaType::Value, Range);
+  VariableConstraint *ConstExpression = VariableConstraint::create(
+      Context, Const, Constraint::ValueResult, Range);
   State.bind(*Const, ConstantInt::get(I8, 5));
   EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownNonZero",
                                          {ConstExpression, CtxExpression})));
@@ -536,9 +544,9 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
 
   // Constant 4 is a power of two.
   MetaVariable *Four =
-      MetaVariable::get(Context, "four", MetaType::Value, Range);
+      MetaVariable::create(Context, "four", MetaType::Value, Range);
   VariableConstraint *FourExpression =
-      VariableConstraint::get(Context, Four, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Four, Constraint::ValueResult, Range);
   State.bind(*Four, ConstantInt::get(I8, 4));
   EXPECT_TRUE(evaluateBoolean(*operation(Constraint::Call, "isKnownPowerOfTwo",
                                          {FourExpression, CtxExpression})));
@@ -581,8 +589,8 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
   // Unknown overflow kind.
   Expected<ConstraintValue> UnknownKind = Interpreter.evaluate(
       *operation(Constraint::Call, "noOverflow",
-                 {StringConstraint::get(Context, "foo", Range), ConstExpression,
-                  ConstExpression, CtxExpression}),
+                 {StringConstraint::create(Context, "foo", Range),
+                  ConstExpression, ConstExpression, CtxExpression}),
       State);
   ASSERT_FALSE(UnknownKind);
   EXPECT_EQ(toString(UnknownKind.takeError()),
@@ -591,8 +599,8 @@ TEST_F(ConstraintInterpreterTest, EvaluatesValueTrackingOperators) {
 
   // Non-integer operand.
   MetaVariable *FloatValue =
-      MetaVariable::get(Context, "float_value", MetaType::Value, Range);
-  VariableConstraint *FloatExpression = VariableConstraint::get(
+      MetaVariable::create(Context, "float_value", MetaType::Value, Range);
+  VariableConstraint *FloatExpression = VariableConstraint::create(
       Context, FloatValue, Constraint::ValueResult, Range);
   State.bind(*FloatValue, ConstantFP::get(Float, 1.0));
   Expected<ConstraintValue> NonInteger =
@@ -633,24 +641,24 @@ TEST_F(ConstraintInterpreterTest, ResolvesDefaultValueTrackContext) {
   auto *Root = BinaryOperator::CreateUDiv(Inner, Fn->getArg(2), "root", Block);
   ReturnInst::Create(LLVMContext, ConstantInt::get(I8, 0), Block);
 
-  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
-  MetaVariable *Z = MetaVariable::get(Context, "z", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
+  MetaVariable *Z = MetaVariable::create(Context, "z", MetaType::Value, Range);
   VariableConstraint *YExpression =
-      VariableConstraint::get(Context, Y, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Y, Constraint::ValueResult, Range);
   VariableConstraint *ZExpression =
-      VariableConstraint::get(Context, Z, Constraint::ValueResult, Range);
+      VariableConstraint::create(Context, Z, Constraint::ValueResult, Range);
   State.bind(*Y, Fn->getArg(1));
   State.bind(*Z, Fn->getArg(2));
 
   // The pattern instruction preceding the constraint supplies the context.
-  auto *PatternInst = metaphir::Instruction::get(
+  auto *PatternInst = metaphir::Instruction::create(
       Context, metaphir::Instruction::I_udiv, "root", /*Flags=*/{},
       /*MetaFlags=*/{},
       /*Operands=*/{}, /*Capture=*/nullptr, Range, /*ParentBlock=*/nullptr);
   State.bind(*PatternInst, Instantiation::Binding(Root));
   OperatorConstraint *NoOverflow =
       operation(Constraint::Call, "noOverflow",
-                {StringConstraint::get(Context, "umul", Range), YExpression,
+                {StringConstraint::create(Context, "umul", Range), YExpression,
                  ZExpression});
   NoOverflow->setContextInstruction(PatternInst);
 
@@ -659,7 +667,7 @@ TEST_F(ConstraintInterpreterTest, ResolvesDefaultValueTrackContext) {
   // Without a resolvable context instruction the operator reports an error.
   OperatorConstraint *Unanchored =
       operation(Constraint::Call, "noOverflow",
-                {StringConstraint::get(Context, "umul", Range), YExpression,
+                {StringConstraint::create(Context, "umul", Range), YExpression,
                  ZExpression});
   Expected<ConstraintValue> Result = Interpreter.evaluate(*Unanchored, State);
   ASSERT_FALSE(Result);
@@ -699,7 +707,7 @@ TEST_F(ConstraintInterpreterTest, IntegerPredicatesRejectNonIntegers) {
        {"isPowerOfTwo", "isZero", "isAllOnes", "isLowBitMask"}) {
     SCOPED_TRACE(Name);
     EXPECT_FALSE(evaluateBoolean(
-        *call(Name, StringConstraint::get(Context, "x", Range))));
+        *call(Name, StringConstraint::create(Context, "x", Range))));
   }
 }
 

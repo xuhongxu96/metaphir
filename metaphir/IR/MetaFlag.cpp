@@ -6,18 +6,18 @@
 namespace llvm {
 namespace metaphir {
 
-MetaFlag *MetaFlag::getBuiltin(MIRContext &Context, MetaFlagID ID,
-                               ArrayRef<Argument> Arguments,
-                               SourceRange Range) {
+MetaFlag *MetaFlag::createBuiltin(MIRContext &Context, MetaFlagID ID,
+                                  ArrayRef<Argument> Arguments,
+                                  SourceRange Range) {
   assert(ID != UnknownMetaFlag &&
          "built-in MetaFlag::getBuiltin requires a known MetaFlagID");
   return new (Context.pImpl->Alloc)
       MetaFlag(ID, Context.pImpl->copyArray<Argument>(Arguments), Range);
 }
 
-MetaFlag *MetaFlag::getUserDefined(MIRContext &Context, StringRef Name,
-                                   ArrayRef<Argument> Arguments,
-                                   SourceRange Range) {
+MetaFlag *MetaFlag::createUserDefined(MIRContext &Context, StringRef Name,
+                                      ArrayRef<Argument> Arguments,
+                                      SourceRange Range) {
   assert(
       getMetaFlagID(Name) == UnknownMetaFlag &&
       "custom MetaFlag::getUserDefined cannot be called with a built-in flag "

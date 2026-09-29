@@ -9,14 +9,14 @@ namespace metaphir {
 
 Pattern::~Pattern() { Context.pImpl->OwnedPatterns.erase(this); }
 
-Pattern *Pattern::get(MIRContext &Context) {
+Pattern *Pattern::create(MIRContext &Context) {
   auto *Result = new Pattern(Context);
   Context.pImpl->OwnedPatterns.insert(Result);
   return Result;
 }
 
 Pattern *Pattern::copy() const {
-  Pattern *Result = get(Context);
+  Pattern *Result = create(Context);
   Result->Instructions = Instructions;
   Result->Constraints = Constraints;
   Result->MetaVariables = MetaVariables;

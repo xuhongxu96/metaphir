@@ -91,9 +91,9 @@ Value *Substitution::value(Value *V) const {
       Changed |= Elements.back() != E;
     }
     if (Changed)
-      return AggregateConstant::get(Context, ElementTypes, Elements,
-                                    Aggregate->getDelimiter(),
-                                    Aggregate->getSourceRange());
+      return AggregateConstant::create(Context, ElementTypes, Elements,
+                                       Aggregate->getDelimiter(),
+                                       Aggregate->getSourceRange());
   }
   return V;
 }
@@ -202,8 +202,8 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
         return New.takeError();
       Elements.push_back(*New);
     }
-    Result = ArrayConstraint::get(Context, AC->getResultType(), Elements,
-                                  AC->getSourceRange());
+    Result = ArrayConstraint::create(Context, AC->getResultType(), Elements,
+                                     AC->getSourceRange());
     break;
   }
   case Constraint::ArrayAccess: {
@@ -215,8 +215,8 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
     if (!Index)
       return Index.takeError();
     Result =
-        ArrayAccessConstraint::get(Context, Access->getResultType(), *Array,
-                                   *Index, Access->getSourceRange());
+        ArrayAccessConstraint::create(Context, Access->getResultType(), *Array,
+                                      *Index, Access->getSourceRange());
     break;
   }
   case Constraint::Variable: {
@@ -229,24 +229,24 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
               ? Constraint::getResultType(Var->getType())
               : VC->getResultType();
       Result =
-          VariableConstraint::get(Context, Var, Type, VC->getSourceRange());
+          VariableConstraint::create(Context, Var, Type, VC->getSourceRange());
     } else if (isa<Instruction>(Target)) {
-      Result = VariableConstraint::get(Context, Target,
-                                       isa<Instruction>(Original)
-                                           ? VC->getResultType()
-                                           : Constraint::ValueResult,
-                                       VC->getSourceRange());
+      Result = VariableConstraint::create(Context, Target,
+                                          isa<Instruction>(Original)
+                                              ? VC->getResultType()
+                                              : Constraint::ValueResult,
+                                          VC->getSourceRange());
     } else if (auto *IC = dyn_cast<IntegerConstant>(Target)) {
       const APSInt &Number = IC->getValue();
       if (VC->getResultType() == Constraint::BooleanResult &&
           Number.getBitWidth() == 1)
-        return BooleanConstraint::get(Context, !Number.isZero(),
-                                      VC->getSourceRange());
+        return BooleanConstraint::create(Context, !Number.isZero(),
+                                         VC->getSourceRange());
       if (!Number.isRepresentableByInt64())
         return makeError("constant " + toString(Number) + " bound to '" +
                          toString(*C) + "' is too large for a constraint");
-      return IntegerConstraint::get(Context, Number.getExtValue(),
-                                    VC->getSourceRange());
+      return IntegerConstraint::create(Context, Number.getExtValue(),
+                                       VC->getSourceRange());
     } else {
       return makeError("'" + toString(*C) + "' is bound to '" +
                        toString(*Target) +
@@ -266,10 +266,10 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
       Arguments.push_back(*New);
     }
     Result = OC->isUserDefined()
-                 ? OperatorConstraint::getUserDefined(
+                 ? OperatorConstraint::createUserDefined(
                        Context, OC->getConstraintID(), OC->getResultType(),
                        OC->getOperator(), Arguments, OC->getSourceRange())
-                 : OperatorConstraint::getBuiltin(
+                 : OperatorConstraint::createBuiltin(
                        Context, OC->getConstraintID(), OC->getResultType(),
                        OC->getOperatorID(), Arguments, OC->getSourceRange());
     break;
@@ -323,7 +323,8 @@ private:
 
   MetaVariable *copyVariable(const MetaVariable &Original, StringRef UsePrefix);
   IntegerConstant *boolean(bool Value, SourceRange Range) {
-    return IntegerConstant::get(Context, APSInt(APInt(1, Value), true), Range);
+    return IntegerConstant::create(Context, APSInt(APInt(1, Value), true),
+                                   Range);
   }
 };
 
@@ -406,9 +407,9 @@ Expected<bool> Expander::bindParameters(const Instruction &Use,
       else if (auto *BT = dyn_cast<ByteType>(CallerTy))
         Width = BT->getNumBits();
       if (Width)
-        Subst.Values[Var] =
-            IntegerConstant::get(Context, APSInt(APInt(64, Width), true),
-                                 Op.Val ? Op.Val->getSourceRange() : P.Range);
+        Subst.Values[Var] = IntegerConstant::create(
+            Context, APSInt(APInt(64, Width), true),
+            Op.Val ? Op.Val->getSourceRange() : P.Range);
     }
     return true;
   };
@@ -466,8 +467,8 @@ MetaVariable *Expander::copyVariable(const MetaVariable &Original,
   StringRef Name = Original.getName();
   std::string CopyName =
       ((Name.starts_with("_") ? "_" : "") + UsePrefix + "$" + Name).str();
-  return MetaVariable::get(Context, Context.pImpl->Saver.save(CopyName),
-                           Original.getType(), Original.getSourceRange());
+  return MetaVariable::create(Context, Context.pImpl->Saver.save(CopyName),
+                              Original.getType(), Original.getSourceRange());
 }
 
 Expected<Pattern *>
@@ -528,7 +529,7 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
     } else if (!UseFlag->Capture) {
       FlagValue = boolean(true, Use.getSourceRange());
     } else if (isWildcardCapture(UseFlag->Capture)) {
-      FlagValue = MetaVariable::get(
+      FlagValue = MetaVariable::create(
           Context,
           Context.pImpl->Saver.save(
               ("_flag$" + UsePrefix + "$" + InstructionFlag::getName(FlagID))
@@ -543,7 +544,7 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
         Subst.Values[F.Capture] = FlagValue;
   }
 
-  auto *Variant = Pattern::get(Context);
+  auto *Variant = Pattern::create(Context);
   for (const auto &[Var, Val] : FixedFlags)
     Variant->addFixedFlag(Var, Val);
 
@@ -603,7 +604,7 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
           MetaFlags.push_back(MF);
     }
 
-    Instruction *New = Instruction::getLike(
+    Instruction *New = Instruction::createLike(
         Context, *BI, ResultName, Flags, MetaFlags, Subst.operands(*BI),
         Capture, BI->getSourceRange(), Use.getParentBlock(),
         BI->getSettings().inheritedFrom(Use.getSettings()));
@@ -644,7 +645,7 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
       Variant->addInstruction(I);
       continue;
     }
-    Instruction *New = Instruction::getLike(
+    Instruction *New = Instruction::createLike(
         Context, *I, I->getResultName(), I->getFlags(), I->getMetaFlags(),
         Operands, I->getCapture(), I->getSourceRange(), I->getParentBlock(),
         I->getSettings());
@@ -766,7 +767,7 @@ Expected<Constraint *> Desugarer::lowerNot(const MetaFlag &MF, Value *Subject) {
     return Inner.takeError();
   if (!*Inner)
     return makeError("metaflag ':not' contains a flag that cannot be lowered");
-  return OperatorConstraint::getBuiltin(
+  return OperatorConstraint::createBuiltin(
       Context, Constraint::Unary, Constraint::BooleanResult, Constraint::O_Not,
       {*Inner}, MF.getSourceRange());
 }
@@ -781,7 +782,7 @@ Expected<Constraint *> Desugarer::lowerOr(const MetaFlag &MF, Value *Subject) {
       return Inner.takeError();
     if (!*Inner)
       return makeError("metaflag ':or' contains a flag that cannot be lowered");
-    Result = Result ? OperatorConstraint::getBuiltin(
+    Result = Result ? OperatorConstraint::createBuiltin(
                           Context, Constraint::Binary,
                           Constraint::BooleanResult, Constraint::O_LogicalOr,
                           {Result, *Inner}, MF.getSourceRange())
@@ -811,7 +812,7 @@ Expected<Constraint *> Desugarer::lowerUserDefined(const MetaFlag &MF,
     if (Args[I].K != MetaFlag::Argument::Integer)
       return makeError("metaflag ':" + MF.getName() +
                        "' expects integer arguments");
-    Subst.Values[Params[I + 1]] = IntegerConstant::get(
+    Subst.Values[Params[I + 1]] = IntegerConstant::create(
         Context,
         APSInt(APInt(64, Args[I].IntegerValue, /*isSigned=*/true),
                /*isUnsigned=*/false),

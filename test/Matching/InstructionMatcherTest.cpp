@@ -37,18 +37,18 @@ TEST(InstructionMatcherTest, RecursivelyMatchesAndBindsOperandTypes) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *Element =
-      MetaVariable::get(Context, "element", MetaType::Type, Range);
+      MetaVariable::create(Context, "element", MetaType::Type, Range);
   MetaVariable *Count =
-      MetaVariable::get(Context, "count", MetaType::Nat, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "count", MetaType::Nat, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   llvm::metaphir::Type *Array = llvm::metaphir::ArrayType::get(
       Context, MetaIRType::get(Context, Element), 0, Count);
   MatcherOperand Operands[] = {{Array, X}};
   MIRInstruction *Freeze =
-      MIRInstruction::get(Context, MIRInstruction::I_freeze, "", {}, {},
-                          Operands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_freeze, "", {}, {},
+                             Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -76,17 +76,17 @@ TEST(InstructionMatcherTest, BindsStandaloneResultTypes) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *ResultType =
-      MetaVariable::get(Context, "result_type", MetaType::Type, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "result_type", MetaType::Type, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   MatcherOperand Operands[] = {
       {llvm::metaphir::IntegerType::get(Context, 8), X},
       {MetaIRType::get(Context, ResultType), nullptr, false, false},
   };
   MIRInstruction *ZExt =
-      MIRInstruction::get(Context, MIRInstruction::I_zext, "", {}, {}, Operands,
-                          nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_zext, "", {}, {},
+                             Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -114,15 +114,15 @@ TEST(InstructionMatcherTest, CommutativeFlagWithoutOperandPairMatchesOnce) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
   MetaFlag *Commutative =
-      MetaFlag::getBuiltin(Context, MetaFlag::MF_c, {}, Range);
+      MetaFlag::createBuiltin(Context, MetaFlag::MF_c, {}, Range);
   MetaFlag *Flags[] = {Commutative};
   MatcherOperand Operands[] = {{nullptr, X}};
   MIRInstruction *Freeze =
-      MIRInstruction::get(Context, MIRInstruction::I_freeze, "", {}, Flags,
-                          Operands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_freeze, "", {}, Flags,
+                             Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -145,13 +145,13 @@ TEST(InstructionMatcherTest, BindsPredicatesAndCapturedSemanticFlags) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::get(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::get(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
   MetaVariable *Predicate =
-      MetaVariable::get(Context, "predicate", MetaType::CmpPredicate, Range);
+      MetaVariable::create(Context, "predicate", MetaType::CmpPredicate, Range);
   MetaVariable *HasNSW =
-      MetaVariable::get(Context, "has_nsw", MetaType::Bool, Range);
+      MetaVariable::create(Context, "has_nsw", MetaType::Bool, Range);
 
   MatcherOperand CompareOperands[] = {
       {nullptr, Predicate, false, false, nullptr, nullptr,
@@ -160,13 +160,13 @@ TEST(InstructionMatcherTest, BindsPredicatesAndCapturedSemanticFlags) {
       {nullptr, Y},
   };
   MIRInstruction *Compare =
-      MIRInstruction::get(Context, MIRInstruction::I_icmp, "", {}, {},
-                          CompareOperands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_icmp, "", {}, {},
+                             CompareOperands, nullptr, Range, Block);
   InstructionFlag Flags[] = {{InstructionFlag::F_nsw, HasNSW}};
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, Y}};
   MIRInstruction *Add =
-      MIRInstruction::get(Context, MIRInstruction::I_add, "", Flags, {},
-                          AddOperands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_add, "", Flags, {},
+                             AddOperands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -203,11 +203,11 @@ TEST(InstructionMatcherTest, MatchesAndBindsKeyedIntegerOperands) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *Pointer =
-      MetaVariable::get(Context, "pointer", MetaType::Value, Range);
+      MetaVariable::create(Context, "pointer", MetaType::Value, Range);
   MetaVariable *Alignment =
-      MetaVariable::get(Context, "alignment", MetaType::Nat, Range);
+      MetaVariable::create(Context, "alignment", MetaType::Nat, Range);
 
   MatcherOperand TypeOnly;
   TypeOnly.Ty = llvm::metaphir::IntegerType::get(Context, 32);
@@ -220,8 +220,8 @@ TEST(InstructionMatcherTest, MatchesAndBindsKeyedIntegerOperands) {
   AlignmentOperand.Key = MatcherOperand::Alignment;
   MatcherOperand Operands[] = {TypeOnly, PointerOperand, AlignmentOperand};
   MIRInstruction *Load =
-      MIRInstruction::get(Context, MIRInstruction::I_load, "", {}, {}, Operands,
-                          nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_load, "", {}, {},
+                             Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -246,13 +246,13 @@ TEST(InstructionMatcherTest, MatchesFastMathFlagsThroughInstructionInterface) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *Condition =
-      MetaVariable::get(Context, "condition", MetaType::Bool, Range);
+      MetaVariable::create(Context, "condition", MetaType::Bool, Range);
   MetaVariable *TrueValue =
-      MetaVariable::get(Context, "true_value", MetaType::Value, Range);
+      MetaVariable::create(Context, "true_value", MetaType::Value, Range);
   MetaVariable *FalseValue =
-      MetaVariable::get(Context, "false_value", MetaType::Value, Range);
+      MetaVariable::create(Context, "false_value", MetaType::Value, Range);
   InstructionFlag Flags[] = {{InstructionFlag::F_nnan, nullptr}};
   MatcherOperand Operands[] = {
       {nullptr, Condition},
@@ -260,8 +260,8 @@ TEST(InstructionMatcherTest, MatchesFastMathFlagsThroughInstructionInterface) {
       {nullptr, FalseValue},
   };
   MIRInstruction *Select =
-      MIRInstruction::get(Context, MIRInstruction::I_select, "", Flags, {},
-                          Operands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_select, "", Flags, {},
+                             Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -293,23 +293,23 @@ TEST(InstructionMatcherTest, CapturesTrailingCallArgumentTypesAndValues) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *Prefix =
-      MetaVariable::get(Context, "prefix", MetaType::Value, Range);
+      MetaVariable::create(Context, "prefix", MetaType::Value, Range);
   MetaVariable *Types =
-      MetaVariable::get(Context, "types", MetaType::TypeArray, Range);
+      MetaVariable::create(Context, "types", MetaType::TypeArray, Range);
   MetaVariable *Values =
-      MetaVariable::get(Context, "values", MetaType::ValueArray, Range);
+      MetaVariable::create(Context, "values", MetaType::ValueArray, Range);
   llvm::metaphir::Type *I32 = llvm::metaphir::IntegerType::get(Context, 32);
   MatcherOperand Operands[] = {
       {I32, nullptr, false, false},
-      {nullptr, llvm::metaphir::GlobalValue::get(Context, "callee", Range)},
+      {nullptr, llvm::metaphir::GlobalValue::create(Context, "callee", Range)},
       {I32, Prefix},
       {nullptr, nullptr, true, true, Types, Values},
   };
   MIRInstruction *Call =
-      MIRInstruction::get(Context, MIRInstruction::I_call, "", {}, {}, Operands,
-                          nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_call, "", {}, {},
+                             Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(
@@ -343,11 +343,11 @@ TEST(InstructionMatcherTest, CapturesAggregateIndicesAsValueArray) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::get(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
   MetaVariable *Aggregate =
-      MetaVariable::get(Context, "aggregate", MetaType::Value, Range);
+      MetaVariable::create(Context, "aggregate", MetaType::Value, Range);
   MetaVariable *Indices =
-      MetaVariable::get(Context, "indices", MetaType::ValueArray, Range);
+      MetaVariable::create(Context, "indices", MetaType::ValueArray, Range);
   llvm::metaphir::Type *I8 = llvm::metaphir::IntegerType::get(Context, 8);
   llvm::metaphir::Type *I16 = llvm::metaphir::IntegerType::get(Context, 16);
   llvm::metaphir::Type *I32 = llvm::metaphir::IntegerType::get(Context, 32);
@@ -362,8 +362,8 @@ TEST(InstructionMatcherTest, CapturesAggregateIndicesAsValueArray) {
       {nullptr, nullptr, true, true, nullptr, Indices},
   };
   MIRInstruction *Extract =
-      MIRInstruction::get(Context, MIRInstruction::I_extractvalue, "", {}, {},
-                          Operands, nullptr, Range, Block);
+      MIRInstruction::create(Context, MIRInstruction::I_extractvalue, "", {},
+                             {}, Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
   std::unique_ptr<Module> Module = test::parseLLVMModule(

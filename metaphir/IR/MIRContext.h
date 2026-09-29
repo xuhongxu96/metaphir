@@ -22,14 +22,19 @@ public:
   MIRContext &operator=(const MIRContext &) = delete;
   ~MIRContext();
 
-  void registerCompositeMatcher(CompositeMatcher *Matcher);
+  /// Registers a definition under its name. Returns false, leaving the
+  /// existing definition in place, if the name is already taken.
+  bool registerCompositeMatcher(CompositeMatcher *Matcher);
   CompositeMatcher *getCompositeMatcher(StringRef Name) const;
 
-  void registerConstraintDef(ConstraintDef *Def);
+  bool registerConstraintDef(ConstraintDef *Def);
   ConstraintDef *getConstraintDef(StringRef Name) const;
 
-  void registerMetaFlagDef(MetaFlagDef *Def);
+  bool registerMetaFlagDef(MetaFlagDef *Def);
   MetaFlagDef *getMetaFlagDef(StringRef Name) const;
+
+  /// Returns a copy of S owned by this context.
+  StringRef saveString(StringRef S);
 
   /// Whether the library named Name has been loaded into this context.
   bool isLibraryLoaded(StringRef Name) const;

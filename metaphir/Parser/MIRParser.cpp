@@ -5,9 +5,10 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/LibraryDefs.h"
 #include "metaphir/IR/MIRContext.h"
-#include "metaphir/IR/MIRContextImpl.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Twine.h"
+#include <deque>
 
 namespace llvm {
 namespace metaphir {
@@ -159,7 +160,8 @@ MetaVariable *MIRParser::getMeta(StringRef Name, MetaType Expected, LocTy Loc) {
       return nullptr;
     return It->second;
   }
-  auto *M = MetaVariable::get(Context, Name, Expected, SourceRange{Loc, Loc});
+  auto *M =
+      MetaVariable::create(Context, Name, Expected, SourceRange{Loc, Loc});
   MetaVariables[M->getName()] = M;
   if (Instructions.count(Name))
     Lex.Warning(Loc, "meta variable '?" + Name +
@@ -245,7 +247,7 @@ bool MIRParser::parse(Pattern *&Result) {
 
 bool MIRParser::parseModule(Pattern *&Result) {
   Result = nullptr;
-  CurrentPattern = Pattern::get(Context);
+  CurrentPattern = Pattern::create(Context);
   CurrentBlock = nullptr;
   bool HasParsedTopLevelDefinition = false;
   next();
@@ -390,7 +392,7 @@ bool MIRParser::parseSemanticFlags(
     if (Lex.getKind() == tok::MetaCaptureVar) {
       StringRef CaptureName = Lex.getStrVal();
       if (CaptureName == "_") {
-        CaptureName = Context.pImpl->Saver.save(
+        CaptureName = Context.saveString(
             (Twine("_flag$") + Twine(WildcardCaptureCounter++)).str());
       }
       Capture = getMeta(CaptureName, MetaType::Bool, Lex.getLoc());
@@ -478,10 +480,10 @@ bool MIRParser::parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed) {
   }
 
   if (ID != MetaFlag::UnknownMetaFlag)
-    Result = MetaFlag::getBuiltin(Context, ID, Args, SourceRange{Loc, Loc});
+    Result = MetaFlag::createBuiltin(Context, ID, Args, SourceRange{Loc, Loc});
   else
     Result =
-        MetaFlag::getUserDefined(Context, Name, Args, SourceRange{Loc, Loc});
+        MetaFlag::createUserDefined(Context, Name, Args, SourceRange{Loc, Loc});
   return false;
 }
 
@@ -668,7 +670,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       APSInt Number = Lex.getAPSIntVal();
       if (Negative)
         Number = -Number;
-      Result = IntegerConstant::get(Context, Number, Range);
+      Result = IntegerConstant::create(Context, Number, Range);
       next();
       return false;
     }
@@ -676,7 +678,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       APFloat Number = Lex.getAPFloatVal();
       if (Negative)
         Number.changeSign();
-      Result = FloatingConstant::get(Context, Number, Range);
+      Result = FloatingConstant::create(Context, Number, Range);
       next();
       return false;
     }
@@ -724,7 +726,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
       SmallString<32> Name("llvm.");
       Name += Lex.getStrVal();
       next();
-      Result = GlobalValue::get(Context, Name, Range);
+      Result = GlobalValue::create(Context, Name, Range);
       return false;
     }
     return error("expected intrinsic ID meta variable or intrinsic name");
@@ -737,31 +739,31 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     else
       Twine(Lex.getUIntVal()).toVector(NameStorage);
     next();
-    Result = GlobalValue::get(Context, NameStorage, Range);
+    Result = GlobalValue::create(Context, NameStorage, Range);
     return false;
   }
   if (Lex.getKind() == tok::APSInt) {
     APSInt V = Lex.getAPSIntVal();
-    Result = IntegerConstant::get(Context, V, Range);
+    Result = IntegerConstant::create(Context, V, Range);
     next();
     return false;
   }
   if (Lex.getKind() == tok::APFloat) {
     APFloat V = Lex.getAPFloatVal();
-    Result = FloatingConstant::get(Context, V, Range);
+    Result = FloatingConstant::create(Context, V, Range);
     next();
     return false;
   }
   if (Lex.getKind() == tok::kw_true || Lex.getKind() == tok::kw_false) {
     bool V = Lex.getKind() == tok::kw_true;
     APSInt I(APInt(1, V), /*isUnsigned=*/true);
-    Result = IntegerConstant::get(Context, I, Range);
+    Result = IntegerConstant::create(Context, I, Range);
     next();
     return false;
   }
 #define MIR_CONSTANT_KEYWORD(ID, Kind)                                         \
   if (Lex.getKind() == tok::kw_##Kind) {                                       \
-    Result = KeywordConstant::get(Context, KeywordConstant::K_##ID, Range);    \
+    Result = KeywordConstant::create(Context, KeywordConstant::K_##ID, Range); \
     next();                                                                    \
     return false;                                                              \
   }
@@ -790,7 +792,8 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
         Open == tok::lsquare ? AggregateConstant::Square
         : Open == tok::less  ? AggregateConstant::Angle
                              : AggregateConstant::Brace;
-    Result = AggregateConstant::get(Context, Types, Values, Delimiter, Range);
+    Result =
+        AggregateConstant::create(Context, Types, Values, Delimiter, Range);
     return false;
   }
   return error("expected value");
@@ -930,7 +933,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
     // Anything that is not a built-in matcher must name a composite one, and
     // matcher names are plain identifiers.
     if (Lex.getKind() == tok::Identifier) {
-      StringRef OpName = Context.pImpl->Saver.save(Lex.getStrVal());
+      StringRef OpName = Context.saveString(Lex.getStrVal());
       if (CompositeMatcher *CM = Context.getCompositeMatcher(OpName))
         return parseCompositeInstruction(Result, CM, OpName, ResultName, Loc);
     }
@@ -1134,7 +1137,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
         next();
       } else if (std::optional<KeywordConstant::KeywordID> Predicate =
                      predicateKeywordID(Lex.getKind())) {
-        Pred.Val = KeywordConstant::get(
+        Pred.Val = KeywordConstant::create(
             Context, *Predicate, SourceRange{Lex.getLoc(), Lex.getLoc()});
         next();
       } else
@@ -1256,9 +1259,9 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
                             "duplicate keyed operand");
     SeenKeyedOperand[Operand.Key] = true;
   }
-  Result =
-      Instruction::get(Context, ID, ResultName, Flags, MFlags, Ops, Capture,
-                       SourceRange{Loc, Lex.getLoc()}, CurrentBlock, Settings);
+  Result = Instruction::create(Context, ID, ResultName, Flags, MFlags, Ops,
+                               Capture, SourceRange{Loc, Lex.getLoc()},
+                               CurrentBlock, Settings);
   if (!ResultName.empty()) {
     if (MetaVariables.count(ResultName)) {
       MetaVariable *SameName = MetaVariables[ResultName];
@@ -1292,10 +1295,10 @@ bool MIRParser::parseMatchParameters(Instruction::OperandSyntax Syntax,
     // A name is bound only where the declaration leaves the type open; a
     // concrete type is recorded in P.Ty and matched against the caller's.
     if (auto *MetaTy = dyn_cast<MetaIRType>(P.Ty))
-      P.Name = Context.pImpl->Saver.save(MetaTy->getVariable()->getName());
+      P.Name = Context.saveString(MetaTy->getVariable()->getName());
     else if (auto *MetaInt = dyn_cast<MetaIntegerType>(P.Ty))
       if (MetaVariable *BitWidth = MetaInt->getBitWidthVariable())
-        P.Name = Context.pImpl->Saver.save(BitWidth->getName());
+        P.Name = Context.saveString(BitWidth->getName());
     Result.push_back(std::move(P));
     return false;
   };
@@ -1305,7 +1308,7 @@ bool MIRParser::parseMatchParameters(Instruction::OperandSyntax Syntax,
     ParameterDef P;
     LocTy Loc = Lex.getLoc();
     P.Range = SourceRange{Loc, Loc};
-    P.Name = Context.pImpl->Saver.save(Lex.getStrVal());
+    P.Name = Context.saveString(Lex.getStrVal());
     Result.push_back(std::move(P));
     next();
     return false;
@@ -1386,8 +1389,8 @@ bool MIRParser::parseTopLevelConstraint() {
   MetaVariables.clear();
   SmallVector<MetaVariable *, 4> ParamVars;
   for (unsigned I = 0; I != Params.size(); ++I) {
-    MetaVariable *M = MetaVariable::get(Context, Params[I], MetaType::Unknown,
-                                        ParamRanges[I]);
+    MetaVariable *M = MetaVariable::create(Context, Params[I],
+                                           MetaType::Unknown, ParamRanges[I]);
     MetaVariables[Params[I]] = M;
     ParamVars.push_back(M);
   }
@@ -1404,16 +1407,10 @@ bool MIRParser::parseTopLevelConstraint() {
 
   MetaVariables = std::move(OldMetaVariables);
 
-  SmallVector<StringRef, 4> ArenaParams;
-  ArenaParams.reserve(Params.size());
-  for (const auto &P : Params)
-    ArenaParams.push_back(Context.pImpl->Saver.save(P));
-
-  auto *Def = new (Context.pImpl->Alloc)
-      ConstraintDef(Context.pImpl->Saver.save(Name),
-                    Context.pImpl->copyArray(ArrayRef(ArenaParams)),
-                    Context.pImpl->copyArray(ArrayRef(ParamVars)), Body);
-  Context.registerConstraintDef(Def);
+  SmallVector<StringRef, 4> ParamNames(Params.begin(), Params.end());
+  auto *Def = ConstraintDef::create(Context, Name, ParamNames, ParamVars, Body);
+  [[maybe_unused]] bool Registered = Context.registerConstraintDef(Def);
+  assert(Registered && "redefinition was checked above");
   return false;
 }
 
@@ -1474,8 +1471,8 @@ bool MIRParser::parseTopLevelMetaFlag() {
   MetaVariables.clear();
   SmallVector<MetaVariable *, 2> ParamVars;
   for (unsigned I = 0; I != Params.size(); ++I) {
-    MetaVariable *M = MetaVariable::get(Context, Params[I], MetaType::Unknown,
-                                        ParamRanges[I]);
+    MetaVariable *M = MetaVariable::create(Context, Params[I],
+                                           MetaType::Unknown, ParamRanges[I]);
     MetaVariables[Params[I]] = M;
     ParamVars.push_back(M);
   }
@@ -1492,17 +1489,12 @@ bool MIRParser::parseTopLevelMetaFlag() {
 
   MetaVariables = std::move(OldMetaVariables);
 
-  SmallVector<StringRef, 2> ArenaParams;
-  ArenaParams.reserve(Params.size());
-  for (const auto &P : Params)
-    ArenaParams.push_back(Context.pImpl->Saver.save(P));
-
-  auto *Def = new (Context.pImpl->Alloc)
-      MetaFlagDef(Context.pImpl->Saver.save(Name),
-                  static_cast<MetaFlag::Placement>(Placement),
-                  Context.pImpl->copyArray(ArrayRef(ArenaParams)),
-                  Context.pImpl->copyArray(ArrayRef(ParamVars)), Body);
-  Context.registerMetaFlagDef(Def);
+  SmallVector<StringRef, 2> ParamNames(Params.begin(), Params.end());
+  auto *Def = MetaFlagDef::create(Context, Name,
+                                  static_cast<MetaFlag::Placement>(Placement),
+                                  ParamNames, ParamVars, Body);
+  [[maybe_unused]] bool Registered = Context.registerMetaFlagDef(Def);
+  assert(Registered && "redefinition was checked above");
   return false;
 }
 
@@ -1584,7 +1576,7 @@ bool MIRParser::parseTopLevelMatch() {
   StringMap<MetaVariable *> OuterMetaVariables = std::move(MetaVariables);
   Pattern *OuterPattern = CurrentPattern;
   MetaVariables.clear();
-  CurrentPattern = Pattern::get(Context);
+  CurrentPattern = Pattern::create(Context);
   bool ParametersFailed = parseMatchParameters(Syntax, Parameters);
   MetaVariables = std::move(OuterMetaVariables);
   CurrentPattern = OuterPattern;
@@ -1616,10 +1608,14 @@ bool MIRParser::parseTopLevelMatch() {
   skipNewlines();
 
   SmallVector<CompositeMatcher::Branch, 2> Branches;
+  // Storage the branches refer to until CompositeMatcher::create copies it.
+  std::deque<SmallVector<std::pair<InstructionFlag::FlagID, bool>, 2>>
+      FlagStorage;
+  std::deque<SmallVector<MetaVariable *, 4>> ParameterVarStorage;
   do {
     skipNewlines();
 
-    SmallVector<std::pair<InstructionFlag::FlagID, bool>, 2> BranchFlags;
+    auto &BranchFlags = FlagStorage.emplace_back();
     if (Lex.getKind() == tok::lsquare) {
       next();
       if (Lex.getKind() != tok::rsquare) {
@@ -1665,11 +1661,11 @@ bool MIRParser::parseTopLevelMatch() {
     // enclosing pattern's locals and meta variables visible would let a body
     // capture them and silently tie the matcher to one pattern. The body is
     // parsed into a scratch pattern exactly like a top-level pattern body.
-    CurrentPattern = Pattern::get(Context);
+    CurrentPattern = Pattern::create(Context);
     CurrentBlock = nullptr;
     Instructions.clear();
     MetaVariables.clear();
-    SmallVector<MetaVariable *, 4> ParameterVars;
+    auto &ParameterVars = ParameterVarStorage.emplace_back();
     for (const ParameterDef &P : Parameters) {
       if (P.Name.empty()) {
         ParameterVars.push_back(nullptr);
@@ -1678,7 +1674,7 @@ bool MIRParser::parseTopLevelMatch() {
       // A type parameter may be repeated to give operands the same type.
       MetaVariable *&M = MetaVariables[P.Name];
       if (!M)
-        M = MetaVariable::get(Context, P.Name, MetaType::Unknown, P.Range);
+        M = MetaVariable::create(Context, P.Name, MetaType::Unknown, P.Range);
       ParameterVars.push_back(M);
     }
 
@@ -1718,15 +1714,12 @@ bool MIRParser::parseTopLevelMatch() {
       Root = BranchInstructions.back();
 
     CompositeMatcher::Branch StoredBranch;
-    StoredBranch.Instructions =
-        Context.pImpl->copyArray(ArrayRef(BranchInstructions));
-    StoredBranch.Constraints =
-        Context.pImpl->copyArray(ArrayRef(BranchConstraints));
-    StoredBranch.FixedFlags = Context.pImpl->copyArray(ArrayRef(BranchFlags));
-    StoredBranch.ParameterVars =
-        Context.pImpl->copyArray(ArrayRef(ParameterVars));
-    StoredBranch.LocalVariables =
-        Context.pImpl->copyArray(CurrentPattern->getMetaVariables());
+    // CompositeMatcher::create copies the arrays into the context.
+    StoredBranch.Instructions = BranchInstructions;
+    StoredBranch.Constraints = BranchConstraints;
+    StoredBranch.FixedFlags = BranchFlags;
+    StoredBranch.ParameterVars = ParameterVars;
+    StoredBranch.LocalVariables = CurrentPattern->getMetaVariables();
     StoredBranch.Root = Root;
     Branches.push_back(StoredBranch);
 
@@ -1740,12 +1733,11 @@ bool MIRParser::parseTopLevelMatch() {
     // Any other 'or' is an instruction of the enclosing pattern.
   } while (consumeBranchSeparator());
 
-  auto *CM = new (Context.pImpl->Alloc) CompositeMatcher(
-      Context.pImpl->Saver.save(MatcherName), IsCommutative,
-      Context.pImpl->copyArray(ArrayRef(SupportedFlags)), Syntax, Arity,
-      Context.pImpl->copyArray(ArrayRef(Parameters)),
-      Context.pImpl->copyArray(ArrayRef(Branches)));
-  Context.registerCompositeMatcher(CM);
+  auto *CM = CompositeMatcher::create(Context, MatcherName, IsCommutative,
+                                      SupportedFlags, Syntax, Arity, Parameters,
+                                      Branches);
+  [[maybe_unused]] bool Registered = Context.registerCompositeMatcher(CM);
+  assert(Registered && "redefinition was checked above");
   return false;
 }
 
@@ -1776,8 +1768,8 @@ bool MIRParser::parseCompositeInstruction(Instruction *&Result,
 
   SourceRange Range{Loc, Lex.getLoc()};
   Result =
-      Instruction::getComposite(Context, ResultName, CM, Flags, MFlags, Ops,
-                                Capture, Range, CurrentBlock, Settings);
+      Instruction::createComposite(Context, ResultName, CM, Flags, MFlags, Ops,
+                                   Capture, Range, CurrentBlock, Settings);
   if (!ResultName.empty())
     Instructions[ResultName] = Result;
   return false;

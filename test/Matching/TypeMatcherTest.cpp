@@ -113,14 +113,15 @@ TEST(TypeMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
   expectNoMatch(Function, llvm::FunctionType::get(I32, Parameters, true));
 
   MetaVariable *Element =
-      MetaVariable::get(Context, "element", MetaType::Type, Range);
+      MetaVariable::create(Context, "element", MetaType::Type, Range);
   Instantiation ElementState;
   EXPECT_TRUE(TypeMatcher(*llvm::metaphir::MetaIRType::get(Context, Element),
                           *I32, ElementState)
                   .match());
   EXPECT_EQ(*ElementState.lookup(*Element), Instantiation::Binding(I32));
 
-  MetaVariable *Bits = MetaVariable::get(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Bits =
+      MetaVariable::create(Context, "bits", MetaType::Nat, Range);
   Instantiation BitsState;
   EXPECT_TRUE(
       TypeMatcher(*llvm::metaphir::MetaIntegerType::get(Context, Bits, false),
@@ -129,7 +130,7 @@ TEST(TypeMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
   EXPECT_EQ(*BitsState.lookup(*Bits), Instantiation::Binding(APInt(64, 32)));
 
   MetaVariable *ByteBits =
-      MetaVariable::get(Context, "byte_bits", MetaType::Nat, Range);
+      MetaVariable::create(Context, "byte_bits", MetaType::Nat, Range);
   Instantiation ByteBitsState;
   EXPECT_TRUE(TypeMatcher(*llvm::metaphir::MetaIntegerType::get(Context,
                                                                 ByteBits, true),
@@ -139,7 +140,7 @@ TEST(TypeMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
             Instantiation::Binding(APInt(64, 8)));
 
   MetaVariable *Count =
-      MetaVariable::get(Context, "count", MetaType::Nat, Range);
+      MetaVariable::create(Context, "count", MetaType::Nat, Range);
   auto *CountedArray = llvm::metaphir::ArrayType::get(
       Context, llvm::metaphir::IntegerType::get(Context, 8), 0, Count);
   Instantiation CountState;

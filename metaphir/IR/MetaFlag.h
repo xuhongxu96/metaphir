@@ -51,11 +51,12 @@ public:
   static std::optional<Schema> getSchema(MetaFlagID ID);
   static MetaFlagID getMetaFlagID(StringRef Name);
   static StringRef getMetaFlagName(MetaFlagID ID);
-  static MetaFlag *getBuiltin(MIRContext &Context, MetaFlagID ID,
-                              ArrayRef<Argument> Arguments, SourceRange Range);
-  static MetaFlag *getUserDefined(MIRContext &Context, StringRef Name,
-                                  ArrayRef<Argument> Arguments,
-                                  SourceRange Range);
+  static MetaFlag *createBuiltin(MIRContext &Context, MetaFlagID ID,
+                                 ArrayRef<Argument> Arguments,
+                                 SourceRange Range);
+  static MetaFlag *createUserDefined(MIRContext &Context, StringRef Name,
+                                     ArrayRef<Argument> Arguments,
+                                     SourceRange Range);
 
 private:
   std::variant<MetaFlagID, StringRef> Flag;

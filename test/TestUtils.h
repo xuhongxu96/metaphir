@@ -83,11 +83,11 @@ protected:
   SourceRange Range;
 
   IntegerConstraint *integer(int64_t Value) {
-    return IntegerConstraint::get(Context, Value, Range);
+    return IntegerConstraint::create(Context, Value, Range);
   }
 
   BooleanConstraint *boolean(bool Value) {
-    return BooleanConstraint::get(Context, Value, Range);
+    return BooleanConstraint::create(Context, Value, Range);
   }
 
   /// Builds a builtin operator when \p Name is one, and a call to a
@@ -100,10 +100,10 @@ protected:
     Constraint::ResultType Result =
         Schema ? Schema->Result : Constraint::BooleanResult;
     if (ID != Constraint::UnknownOperator)
-      return OperatorConstraint::getBuiltin(Context, Kind, Result, ID,
-                                            Arguments, Range);
-    return OperatorConstraint::getUserDefined(Context, Kind, Result, Name,
-                                              Arguments, Range);
+      return OperatorConstraint::createBuiltin(Context, Kind, Result, ID,
+                                               Arguments, Range);
+    return OperatorConstraint::createUserDefined(Context, Kind, Result, Name,
+                                                 Arguments, Range);
   }
 
   OperatorConstraint *unary(StringRef Name, Constraint *Operand) {
@@ -126,12 +126,12 @@ protected:
 
   ArrayConstraint *array(Constraint::ResultType Type,
                          std::initializer_list<Constraint *> Elements) {
-    return ArrayConstraint::get(Context, Type, Elements, Range);
+    return ArrayConstraint::create(Context, Type, Elements, Range);
   }
 
   ArrayAccessConstraint *access(Constraint *Array, Constraint *Index,
                                 Constraint::ResultType Type) {
-    return ArrayAccessConstraint::get(Context, Type, Array, Index, Range);
+    return ArrayAccessConstraint::create(Context, Type, Array, Index, Range);
   }
 };
 
