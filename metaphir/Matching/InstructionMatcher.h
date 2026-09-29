@@ -9,8 +9,6 @@ namespace llvm {
 class Value;
 namespace metaphir {
 
-class SubtreeMatcher;
-
 // Matches a single MetaphIR instruction matcher against a concrete LLVM value.
 class InstructionMatcher {
 public:

@@ -78,85 +78,6 @@ static bool collectLLVMIRFiles(StringRef Input,
   return true;
 }
 
-namespace {
-struct UnsatisfiedConstraint {
-  const Constraint *Expression;
-  std::string Reason; // empty unless the constraint could not be evaluated
-};
-} // namespace
-
-static MatchResults
-applyConstraints(const Pattern &Pattern, MatchResults Matches,
-                 SmallVectorImpl<UnsatisfiedConstraint> &Unsatisfied,
-                 MIRContext &Context) {
-  ConstraintInterpreter Interpreter(&Context);
-  MatchResults Filtered;
-  for (Instantiation &Match : Matches) {
-    bool Satisfies = true;
-    for (const Constraint *Expression : Pattern.getConstraints()) {
-      Expected<ConstraintValue> Result =
-          Interpreter.evaluate(*Expression, Match);
-      if (!Result) {
-        // A constraint that cannot be evaluated for a particular binding
-        // (e.g. arithmetic on a non-constant value) is recorded as
-        // unsatisfied, carrying the evaluation reason (the constraint itself
-        // indicates the error position).
-        std::string Reason = "constraint could not be evaluated";
-        handleAllErrors(
-            Result.takeError(),
-            [&](const metaphir::detail::ConstraintEvaluationError &E) {
-              Reason = E.Message;
-            },
-            [&](const ErrorInfoBase &E) { Reason = E.message(); });
-        Satisfies = false;
-        if (llvm::find_if(Unsatisfied, [&](const UnsatisfiedConstraint &U) {
-              return U.Expression == Expression;
-            }) == Unsatisfied.end())
-          Unsatisfied.push_back({Expression, std::move(Reason)});
-        break;
-      }
-      Expected<bool> Holds =
-          metaphir::detail::requireBoolean(*Result, *Expression);
-      if (!Holds || !*Holds) {
-        std::string Reason;
-        if (!Holds)
-          Reason = toString(Holds.takeError());
-        Satisfies = false;
-        if (llvm::find_if(Unsatisfied, [&](const UnsatisfiedConstraint &U) {
-              return U.Expression == Expression;
-            }) == Unsatisfied.end())
-          Unsatisfied.push_back({Expression, std::move(Reason)});
-      }
-    }
-    if (Satisfies)
-      Filtered.push_back(std::move(Match));
-  }
-  return Filtered;
-}
-
-static MatchResults
-matchAndFilterPattern(const PatternVariants &Variants, const Target &Program,
-                      PatternMatcher &Matcher, MIRContext &Context,
-                      SmallVectorImpl<UnsatisfiedConstraint> &Unsatisfied,
-                      bool &HadGraphMatch) {
-  MatchResults Combined;
-  for (const Pattern *Variant : Variants) {
-    MatchResults VarMatches = Matcher.match(*Variant, Program);
-    if (!VarMatches.empty())
-      HadGraphMatch = true;
-    SmallVector<UnsatisfiedConstraint, 4> VarUnsatisfied;
-    VarMatches = applyConstraints(*Variant, std::move(VarMatches),
-                                  VarUnsatisfied, Context);
-    // Variants for the operand orders of a ':c' use can find the same match.
-    appendUnique(Combined, std::move(VarMatches));
-    if (Combined.empty()) {
-      for (const auto &U : VarUnsatisfied)
-        Unsatisfied.push_back(U);
-    }
-  }
-  return Combined;
-}
-
 int main(int Argc, char **Argv) {
   if (Argc < 3) {
     errs() << "usage: metaphir-match <pattern> <llvm-ir>...\n";
@@ -182,7 +103,7 @@ int main(int Argc, char **Argv) {
     if (!collectLLVMIRFiles(Argv[Argument], InputFiles))
       return 1;
 
-  PatternMatcher Matcher;
+  PatternMatcher Matcher(&Context);
   unsigned TargetIndex = 0;
   for (const std::string &InputFile : InputFiles) {
     LLVMContext LLVMContext;
@@ -199,8 +120,8 @@ int main(int Argc, char **Argv) {
       Target Program(Function);
       bool HadGraphMatch = false;
       SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
-      MatchResults Matches = matchAndFilterPattern(
-          Patterns, Program, Matcher, Context, Unsatisfied, HadGraphMatch);
+      MatchResults Matches =
+          Matcher.match(Patterns, Program, &Unsatisfied, &HadGraphMatch);
       outs() << "target " << TargetIndex++ << ": @" << Function.getName()
              << '\n';
       if (Matches.empty()) {

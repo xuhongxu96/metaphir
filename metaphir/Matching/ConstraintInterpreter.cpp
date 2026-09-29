@@ -8,6 +8,7 @@
 #include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Instantiation.h"
+#include "metaphir/Matching/ValueTrackContext.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
@@ -16,6 +17,16 @@ namespace llvm {
 namespace metaphir {
 
 using namespace detail;
+
+ConstraintInterpreter::ConstraintInterpreter(MIRContext *Context)
+    : Analysis(std::make_unique<ValueTrackContext>()), Context(Context) {}
+
+ConstraintInterpreter::~ConstraintInterpreter() = default;
+
+SimplifyQuery
+ConstraintInterpreter::getValueTrackQuery(const llvm::Instruction *CtxI) {
+  return Analysis->getQuery(CtxI);
+}
 
 Expected<ConstraintValue>
 ConstraintInterpreter::evaluate(const Constraint &Expression,
@@ -312,64 +323,8 @@ ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
   case Constraint::O_Ashr:
   case Constraint::O_Shl:
     return evalShift(Operator, State);
-  case Constraint::UnknownOperator: {
-    if (Context) {
-      if (const ConstraintDef *Def =
-              Context->getConstraintDef(Operator.getOperator())) {
-        if (Arguments.size() != Def->getParameters().size())
-          return make_error<ConstraintEvaluationError>(
-              Operator,
-              "wrong number of arguments to user-defined constraint '" +
-                  Operator.getOperator() + "'");
-        // Definitions can only call earlier ones, so calls cannot recurse;
-        // the limit guards against contexts built by hand.
-        if (CallDepth == MaxCallDepth)
-          return make_error<ConstraintEvaluationError>(
-              Operator, "user-defined constraints are nested too deeply");
-        Instantiation SubState = State;
-        for (size_t I = 0; I < Arguments.size(); ++I) {
-          Expected<ConstraintValue> ArgVal = evaluate(*Arguments[I], State);
-          if (!ArgVal)
-            return ArgVal.takeError();
-          MetaVariable *ParamVar = Def->getParameterVars()[I];
-          std::optional<Instantiation::Binding> ArgBinding;
-          switch (ArgVal->getKind()) {
-          case ConstraintValue::Integer:
-            ArgBinding = Instantiation::Binding(ArgVal->getInteger());
-            break;
-          case ConstraintValue::Boolean:
-            ArgBinding = Instantiation::Binding(ArgVal->getBoolean());
-            break;
-          case ConstraintValue::Type:
-            ArgBinding = Instantiation::Binding(ArgVal->getType());
-            break;
-          case ConstraintValue::Value:
-            ArgBinding = Instantiation::Binding(ArgVal->getValue());
-            break;
-          case ConstraintValue::TypeArray:
-            ArgBinding = Instantiation::Binding(ArgVal->getTypeArray());
-            break;
-          case ConstraintValue::ValueArray:
-            ArgBinding = Instantiation::Binding(ArgVal->getValueArray());
-            break;
-          default:
-            break;
-          }
-          if (!ArgBinding)
-            return make_error<ConstraintEvaluationError>(
-                Operator,
-                "unsupported argument type for user-defined constraint");
-          SubState.bind(*ParamVar, std::move(*ArgBinding));
-        }
-        ++CallDepth;
-        Expected<ConstraintValue> Result = evaluate(*Def->getBody(), SubState);
-        --CallDepth;
-        return Result;
-      }
-    }
-    return make_error<ConstraintEvaluationError>(
-        Operator, Twine("unknown operator '") + Operator.getOperator() + "'");
-  }
+  case Constraint::UnknownOperator:
+    return evalUserDefinedCall(Operator, State);
   default:
     break;
   }
@@ -391,6 +346,65 @@ ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
   }
 
   return evalArithmetic(Operator, State);
+}
+
+Expected<ConstraintValue>
+ConstraintInterpreter::evalUserDefinedCall(const OperatorConstraint &Operator,
+                                           const Instantiation &State) {
+  ArrayRef<Constraint *> Arguments = Operator.getArguments();
+  const ConstraintDef *Def =
+      Context ? Context->getConstraintDef(Operator.getOperator()) : nullptr;
+  if (!Def)
+    return make_error<ConstraintEvaluationError>(
+        Operator, Twine("unknown operator '") + Operator.getOperator() + "'");
+
+  if (Arguments.size() != Def->getParameters().size())
+    return make_error<ConstraintEvaluationError>(
+        Operator, "wrong number of arguments to user-defined constraint '" +
+                      Operator.getOperator() + "'");
+  // Definitions can only call earlier ones, so calls cannot recurse;
+  // the limit guards against contexts built by hand.
+  if (CallDepth == MaxCallDepth)
+    return make_error<ConstraintEvaluationError>(
+        Operator, "user-defined constraints are nested too deeply");
+  Instantiation SubState = State;
+  for (size_t I = 0; I < Arguments.size(); ++I) {
+    Expected<ConstraintValue> ArgVal = evaluate(*Arguments[I], State);
+    if (!ArgVal)
+      return ArgVal.takeError();
+    MetaVariable *ParamVar = Def->getParameterVars()[I];
+    std::optional<Instantiation::Binding> ArgBinding;
+    switch (ArgVal->getKind()) {
+    case ConstraintValue::Integer:
+      ArgBinding = Instantiation::Binding(ArgVal->getInteger());
+      break;
+    case ConstraintValue::Boolean:
+      ArgBinding = Instantiation::Binding(ArgVal->getBoolean());
+      break;
+    case ConstraintValue::Type:
+      ArgBinding = Instantiation::Binding(ArgVal->getType());
+      break;
+    case ConstraintValue::Value:
+      ArgBinding = Instantiation::Binding(ArgVal->getValue());
+      break;
+    case ConstraintValue::TypeArray:
+      ArgBinding = Instantiation::Binding(ArgVal->getTypeArray());
+      break;
+    case ConstraintValue::ValueArray:
+      ArgBinding = Instantiation::Binding(ArgVal->getValueArray());
+      break;
+    default:
+      break;
+    }
+    if (!ArgBinding)
+      return make_error<ConstraintEvaluationError>(
+          Operator, "unsupported argument type for user-defined constraint");
+    SubState.bind(*ParamVar, std::move(*ArgBinding));
+  }
+  ++CallDepth;
+  Expected<ConstraintValue> Result = evaluate(*Def->getBody(), SubState);
+  --CallDepth;
+  return Result;
 }
 
 Expected<std::optional<unsigned>>

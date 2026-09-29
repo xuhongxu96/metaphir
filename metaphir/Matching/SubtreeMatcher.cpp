@@ -1,8 +1,8 @@
 #include "metaphir/Matching/SubtreeMatcher.h"
 #include "metaphir/IR/Constants.h"
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/Matching/ConstantInteger.h"
 #include "metaphir/Matching/InstructionMatcher.h"
-#include "metaphir/Matching/MatchersDetail.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -13,9 +13,6 @@
 
 namespace llvm {
 namespace metaphir {
-
-using detail::bind;
-using detail::success;
 
 static bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
   const auto *Global = dyn_cast<llvm::GlobalValue>(&Target);
@@ -72,7 +69,7 @@ SubtreeMatcher::getMetaVariableBinding(const MetaVariable &Matcher) {
     return &Target;
   case MetaType::Nat:
     // A vector splat constant binds its scalar element value.
-    if (std::optional<APInt> Integer = detail::getConstantInteger(Target))
+    if (std::optional<APInt> Integer = getConstantInteger(Target))
       return Instantiation::Binding(*Integer);
     return std::nullopt;
   case MetaType::Bool:
@@ -143,10 +140,10 @@ MatchResults SubtreeMatcher::matchAggregate(const AggregateConstant &Matcher) {
     break;
   }
   if (NumElements != Matcher.getElements().size() ||
-      !bind(State, Matcher, Constant))
+      !State.unify(Matcher, Constant))
     return {};
 
-  MatchResults States = success(std::move(State));
+  MatchResults States = singleResult(std::move(State));
   for (unsigned Index = 0; Index != NumElements; ++Index) {
     const llvm::Constant *Element = Constant->getAggregateElement(Index);
     if (!Element)
@@ -169,7 +166,7 @@ MatchResults SubtreeMatcher::match() {
   if (!TargetBinding)
     return {};
   if (const Instantiation::Binding *Existing = State.lookup(Matcher))
-    return *Existing == *TargetBinding ? success(std::move(State))
+    return *Existing == *TargetBinding ? singleResult(std::move(State))
                                        : MatchResults();
 
   switch (Matcher.getValueID()) {
@@ -199,7 +196,7 @@ MatchResults SubtreeMatcher::match() {
     break;
   }
   State.bind(Matcher, std::move(*TargetBinding));
-  return success(std::move(State));
+  return singleResult(std::move(State));
 }
 
 } // namespace metaphir

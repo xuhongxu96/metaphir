@@ -1,7 +1,7 @@
 #include "metaphir/Matching/InstructionMatcher.h"
 #include "metaphir/IR/Constants.h"
 #include "metaphir/IR/Instruction.h"
-#include "metaphir/Matching/MatchersDetail.h"
+#include "metaphir/Matching/ConstantInteger.h"
 #include "metaphir/Matching/SubtreeMatcher.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
@@ -13,9 +13,6 @@
 
 namespace llvm {
 namespace metaphir {
-
-using detail::bind;
-using detail::success;
 
 static bool hasSemanticFlag(InstructionFlag::FlagID ID,
                             const llvm::Instruction &Target) {
@@ -207,7 +204,7 @@ bool InstructionMatcher::matchIntegerKeyedOperand(const MatcherOperand &Matcher,
                                                   const APSInt &Target) {
   assert(Matcher.Val && "keyed integer operand has no value");
   if (const auto *Variable = dyn_cast<MetaVariable>(Matcher.Val))
-    return bind(State, *Variable, Target);
+    return State.unify(*Variable, Target);
   const auto *Constant = dyn_cast<IntegerConstant>(Matcher.Val);
   assert(Constant && "keyed integer operand is not an integer matcher");
   return APSInt::isSameValue(Constant->getValue(), Target);
@@ -225,7 +222,7 @@ bool InstructionMatcher::matchPredicate() {
 
   const auto &Compare = cast<CmpInst>(Target);
   if (const auto *Variable = dyn_cast<MetaVariable>(Predicate->Val))
-    return bind(State, *Variable, Compare.getPredicate());
+    return State.unify(*Variable, Compare.getPredicate());
 
   const auto *Keyword = dyn_cast<KeywordConstant>(Predicate->Val);
   assert(Keyword && "predicate is neither a variable nor a keyword");
@@ -274,7 +271,7 @@ bool InstructionMatcher::matchSemanticFlags() {
       if (Present)
         return false;
     } else if (Flag->Capture) {
-      if (!bind(State, *Flag->Capture, Present))
+      if (!State.unify(*Flag->Capture, Present))
         return false;
     } else if (!Present) {
       return false;
@@ -287,9 +284,8 @@ MatchResults
 InstructionMatcher::matchValueOperand(const MatcherOperand &Matcher,
                                       const llvm::Value &Target,
                                       Instantiation State) {
-  assert(Matcher.IsInstructionOperand && "expected a value operand");
-  if (Matcher.IsArray)
-    return {};
+  assert(Matcher.IsInstructionOperand && !Matcher.IsArray &&
+         "expected a single value operand");
   assert(Matcher.Val && "matcher operand has no value");
   if (Matcher.Ty && !TypeMatcher(*Matcher.Ty, *Target.getType(), State,
                                  Settings.has(PatternSettings::treatIntAsVec))
@@ -302,10 +298,10 @@ InstructionMatcher::matchValueOperand(const MatcherOperand &Matcher,
   if (Settings.has(PatternSettings::treatIntAsVec)) {
     if (const auto *IC = dyn_cast<IntegerConstant>(Matcher.Val))
       if (Target.getType()->isVectorTy())
-        if (std::optional<APInt> Splat = detail::getConstantInteger(Target))
+        if (std::optional<APInt> Splat = getConstantInteger(Target))
           if (APSInt::isSameValue(IC->getValue(),
                                   APSInt(*Splat, IC->getValue().isUnsigned())))
-            return success(std::move(State));
+            return singleResult(std::move(State));
   }
   return SubtreeMatcher(*Matcher.Val, Target, std::move(State)).match();
 }
@@ -314,7 +310,7 @@ MatchResults InstructionMatcher::matchOperandOrder(ArrayRef<unsigned> Order,
                                                    Instantiation State) {
   assert(TargetOperands.size() == Order.size() &&
          "target operand order has inconsistent sizes");
-  MatchResults States = success(std::move(State));
+  MatchResults States = singleResult(std::move(State));
   for (unsigned Index = 0; Index != PatternOperands.size(); ++Index) {
     const MatcherOperand &Operand = PatternOperands[Index];
     if (Operand.IsArray) {
@@ -336,9 +332,9 @@ MatchResults InstructionMatcher::matchOperandOrder(ArrayRef<unsigned> Order,
 
       MatchResults Bound;
       for (Instantiation &Candidate : States) {
-        if (!bind(Candidate, *Operand.ValueArray, Values))
+        if (!Candidate.unify(*Operand.ValueArray, Values))
           continue;
-        if (Operand.TypeArray && !bind(Candidate, *Operand.TypeArray, Types))
+        if (Operand.TypeArray && !Candidate.unify(*Operand.TypeArray, Types))
           continue;
         Bound.push_back(std::move(Candidate));
       }
@@ -393,11 +389,11 @@ MatchResults InstructionMatcher::matchOrSelf(unsigned OperandIndex) {
   MatchResults Results = SubtreeMatcher(*OrSelfValue, Target, State).match();
   MatchResults BoundResults;
   for (Instantiation &Candidate : Results) {
-    if (!bind(Candidate, Matcher, &Target))
+    if (!Candidate.unify(Matcher, &Target))
       continue;
     if (Matcher.getCapture() &&
         (!isa<llvm::Instruction>(Target) ||
-         !bind(Candidate, *Matcher.getCapture(), &Target)))
+         !Candidate.unify(*Matcher.getCapture(), &Target)))
       continue;
     BoundResults.push_back(std::move(Candidate));
   }
@@ -424,16 +420,16 @@ MatchResults InstructionMatcher::match() {
   if (!TargetInstruction || !matchInstructionTarget())
     return Results;
 
-  if (!bind(State, Matcher, TargetInstruction) ||
+  if (!State.unify(Matcher, TargetInstruction) ||
       (Matcher.getParentBlock() != nullptr &&
-       !bind(State, *Matcher.getParentBlock(),
-             TargetInstruction->getParent())) ||
+       !State.unify(*Matcher.getParentBlock(),
+                    TargetInstruction->getParent())) ||
       !matchTypeOnlyOperands() || !matchSemanticFlags() ||
       !matchKeyedOperands())
     return Results;
 
   if (Matcher.getCapture() &&
-      !bind(State, *Matcher.getCapture(), TargetInstruction))
+      !State.unify(*Matcher.getCapture(), TargetInstruction))
     return Results;
 
   TargetOperands = getTargetOperands();

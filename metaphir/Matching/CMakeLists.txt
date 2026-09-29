@@ -10,16 +10,18 @@ add_library(
   ConstraintOps.h
   ConstraintValue.cpp
   ConstraintValue.h
+  ConstantInteger.cpp
+  ConstantInteger.h
   Instantiation.cpp
+  IntegerSemantics.cpp
+  IntegerSemantics.h
   Instantiation.h
-  MatchersDetail.cpp
-  MatchersDetail.h
   TypeMatcher.cpp
   TypeMatcher.h
   SubtreeMatcher.cpp
   SubtreeMatcher.h
   InstructionMatcher.cpp
-  InstructionMatcher.Matchers.cpp
+  OpcodePredicates.cpp
   InstructionMatcher.h
   LLVMValueClasses.def
   PatternMatcher.cpp

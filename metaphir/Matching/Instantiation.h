@@ -60,8 +60,16 @@ public:
     return It == Bindings.end() ? nullptr : &It->second;
   }
 
+  /// Binds Matcher to Target, replacing any binding it has.
   void bind(const metaphir::Value &Matcher, Binding Target) {
     Bindings[&Matcher] = std::move(Target);
+  }
+
+  /// Binds Matcher to Target if it is unbound; otherwise returns whether its
+  /// binding equals Target.
+  bool unify(const metaphir::Value &Matcher, Binding Target) {
+    auto [It, Inserted] = Bindings.try_emplace(&Matcher, std::move(Target));
+    return Inserted || It->second == Target;
   }
 
   void requireComplete(const Pattern &Pattern) const;
@@ -80,6 +88,13 @@ private:
 };
 
 using MatchResults = SmallVector<Instantiation, 4>;
+
+/// The result list holding just State.
+inline MatchResults singleResult(Instantiation State) {
+  MatchResults Results;
+  Results.push_back(std::move(State));
+  return Results;
+}
 
 /// Appends the results in From that Into does not already contain.
 void appendUnique(MatchResults &Into, MatchResults &&From);
