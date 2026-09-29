@@ -24,9 +24,11 @@ public:
   using ValueArray = SmallVector<const llvm::Value *, 4>;
 
   struct Binding {
+    /// Integers keep their signedness: a Nat binding (a count, width, index
+    /// or alignment) is unsigned; see ConstraintValue for how it is used.
     using Storage =
         std::variant<std::monostate, const llvm::Value *, const llvm::Type *,
-                     CmpInst::Predicate, Intrinsic::ID, APInt, bool, TypeArray,
+                     CmpInst::Predicate, Intrinsic::ID, APSInt, bool, TypeArray,
                      ValueArray>;
 
     Storage Data;
@@ -36,15 +38,18 @@ public:
     Binding(const llvm::Type *Type) : Data(Type) {}
     Binding(CmpInst::Predicate Predicate) : Data(Predicate) {}
     Binding(Intrinsic::ID ID) : Data(ID) {}
-    Binding(const APInt &Integer) : Data(Integer) {}
+    Binding(const APSInt &Integer) : Data(Integer) {}
+    /// A natural number, i.e. an unsigned integer.
+    Binding(const APInt &Natural)
+        : Data(APSInt(Natural, /*isUnsigned=*/true)) {}
     Binding(bool Flag) : Data(Flag) {}
     Binding(TypeArray Types) : Data(std::move(Types)) {}
     Binding(ValueArray Values) : Data(std::move(Values)) {}
 
     bool operator==(const Binding &Other) const {
-      if (const auto *Left = std::get_if<APInt>(&Data))
-        if (const auto *Right = std::get_if<APInt>(&Other.Data))
-          return APSInt::isSameValue(APSInt(*Left, true), APSInt(*Right, true));
+      if (const auto *Left = std::get_if<APSInt>(&Data))
+        if (const auto *Right = std::get_if<APSInt>(&Other.Data))
+          return APSInt::isSameValue(*Left, *Right);
       return Data == Other.Data;
     }
     bool operator!=(const Binding &Other) const { return !(*this == Other); }
@@ -61,6 +66,12 @@ public:
 
   void requireComplete(const Pattern &Pattern) const;
 
+  /// Whether both bind the same matchers to the same targets.
+  bool operator==(const Instantiation &Other) const;
+  bool operator!=(const Instantiation &Other) const {
+    return !(*this == Other);
+  }
+
 private:
   DenseMap<const metaphir::Value *, Binding> Bindings;
 
@@ -69,6 +80,9 @@ private:
 };
 
 using MatchResults = SmallVector<Instantiation, 4>;
+
+/// Appends the results in From that Into does not already contain.
+void appendUnique(MatchResults &Into, MatchResults &&From);
 
 raw_ostream &operator<<(raw_ostream &OS, const Instantiation::Binding &Binding);
 raw_ostream &operator<<(raw_ostream &OS, const Instantiation &Instantiation);

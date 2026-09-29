@@ -127,8 +127,9 @@ Type *Substitution::type(Type *T) const {
   case Type::PointerTyID: {
     auto *PT = cast<PointerType>(T);
     Type *Element = type(PT->getElementType());
-    return Element == PT->getElementType() ? T
-                                           : PointerType::get(Context, Element);
+    return Element == PT->getElementType()
+               ? T
+               : PointerType::get(Context, Element, PT->getAddressSpace());
   }
   case Type::ArrayTyID:
   case Type::FixedVectorTyID:

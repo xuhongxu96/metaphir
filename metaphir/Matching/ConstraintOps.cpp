@@ -139,72 +139,70 @@ Expected<ConstraintValue> evaluatePopcount(ConstraintInterpreter &Interpreter,
                        true);
 }
 
-Expected<ConstraintValue>
-evaluateIsPowerOfTwo(ConstraintInterpreter &Interpreter,
-                     ArrayRef<Constraint *> Arguments,
-                     const Instantiation &State, const Constraint &Expression) {
+namespace {
+
+// A predicate on an integer: an LLVM value is tested with MatchValue (a
+// PatternMatch matcher, which accepts splats), anything else is coerced to an
+// integer and tested with MatchInteger. An operand that is not an integer
+// does not satisfy the predicate.
+template <typename ValueMatcher, typename IntegerPredicate>
+Expected<ConstraintValue> evaluateIntegerPredicate(
+    ConstraintInterpreter &Interpreter, ArrayRef<Constraint *> Arguments,
+    const Instantiation &State, const Constraint &Expression,
+    ValueMatcher MatchValue, IntegerPredicate MatchInteger) {
   auto Values = evaluateArguments(Interpreter, Arguments, State);
   if (!Values)
     return Values.takeError();
   const ConstraintValue &V = (*Values)[0];
-  if (V.getKind() == ConstraintValue::Value && V.getValue())
+  if (V.getKind() == ConstraintValue::Value)
     return ConstraintValue::getBoolean(
-        PatternMatch::match(V.getValue(), PatternMatch::m_Power2()));
-  auto Operand = requireInteger(V, Expression);
-  if (!Operand)
+        PatternMatch::match(V.getValue(), MatchValue));
+  Expected<APSInt> Operand = requireInteger(V, Expression);
+  if (!Operand) {
+    consumeError(Operand.takeError());
     return ConstraintValue::getBoolean(false);
-  return ConstraintValue::getBoolean(Operand->isPowerOf2());
+  }
+  return ConstraintValue::getBoolean(MatchInteger(*Operand));
+}
+
+} // namespace
+
+Expected<ConstraintValue>
+evaluateIsPowerOfTwo(ConstraintInterpreter &Interpreter,
+                     ArrayRef<Constraint *> Arguments,
+                     const Instantiation &State, const Constraint &Expression) {
+  return evaluateIntegerPredicate(
+      Interpreter, Arguments, State, Expression, PatternMatch::m_Power2(),
+      [](const APSInt &V) { return V.isPowerOf2(); });
 }
 
 Expected<ConstraintValue> evaluateIsZero(ConstraintInterpreter &Interpreter,
                                          ArrayRef<Constraint *> Arguments,
                                          const Instantiation &State,
                                          const Constraint &Expression) {
-  auto Values = evaluateArguments(Interpreter, Arguments, State);
-  if (!Values)
-    return Values.takeError();
-  const ConstraintValue &V = (*Values)[0];
-  if (V.getKind() == ConstraintValue::Value && V.getValue())
-    return ConstraintValue::getBoolean(
-        PatternMatch::match(V.getValue(), PatternMatch::m_Zero()));
-  auto Operand = requireInteger(V, Expression);
-  if (!Operand)
-    return ConstraintValue::getBoolean(false);
-  return ConstraintValue::getBoolean(Operand->isZero());
+  return evaluateIntegerPredicate(Interpreter, Arguments, State, Expression,
+                                  PatternMatch::m_Zero(),
+                                  [](const APSInt &V) { return V.isZero(); });
 }
 
 Expected<ConstraintValue> evaluateIsAllOnes(ConstraintInterpreter &Interpreter,
                                             ArrayRef<Constraint *> Arguments,
                                             const Instantiation &State,
                                             const Constraint &Expression) {
-  auto Values = evaluateArguments(Interpreter, Arguments, State);
-  if (!Values)
-    return Values.takeError();
-  const ConstraintValue &V = (*Values)[0];
-  if (V.getKind() == ConstraintValue::Value && V.getValue())
-    return ConstraintValue::getBoolean(
-        PatternMatch::match(V.getValue(), PatternMatch::m_AllOnes()));
-  auto Operand = requireInteger(V, Expression);
-  if (!Operand)
-    return ConstraintValue::getBoolean(false);
-  return ConstraintValue::getBoolean(Operand->isAllOnes());
+  return evaluateIntegerPredicate(
+      Interpreter, Arguments, State, Expression, PatternMatch::m_AllOnes(),
+      [](const APSInt &V) { return V.isAllOnes(); });
 }
 
 Expected<ConstraintValue>
 evaluateIsLowBitMask(ConstraintInterpreter &Interpreter,
                      ArrayRef<Constraint *> Arguments,
                      const Instantiation &State, const Constraint &Expression) {
-  auto Values = evaluateArguments(Interpreter, Arguments, State);
-  if (!Values)
-    return Values.takeError();
-  const ConstraintValue &V = (*Values)[0];
-  if (V.getKind() == ConstraintValue::Value && V.getValue())
-    return ConstraintValue::getBoolean(
-        PatternMatch::match(V.getValue(), PatternMatch::m_LowBitMask()));
-  auto Operand = requireInteger(V, Expression);
-  if (!Operand)
-    return ConstraintValue::getBoolean(false);
-  return ConstraintValue::getBoolean((*Operand + 1).isPowerOf2());
+  // A low bit mask is a non-empty run of ones starting at bit 0, as matched
+  // by m_LowBitMask.
+  return evaluateIntegerPredicate(Interpreter, Arguments, State, Expression,
+                                  PatternMatch::m_LowBitMask(),
+                                  [](const APSInt &V) { return V.isMask(); });
 }
 
 Expected<ConstraintValue> evaluateIsZeroFP(ConstraintInterpreter &Interpreter,
@@ -477,7 +475,8 @@ evaluateMaskedValueIsZero(ArrayRef<ConstraintValue> Values,
   Expected<APSInt> Mask = requireInteger(Values[1], Expression);
   if (!Mask)
     return Mask.takeError();
-  APInt MaskValue = Mask->zextOrTrunc(integerElementWidth(**Value));
+  // A negative mask sign-extends, so -256 covers every bit above bit 7.
+  APInt MaskValue = Mask->extOrTrunc(integerElementWidth(**Value));
   return ConstraintValue::getBoolean(
       MaskedValueIsZero(*Value, MaskValue, Query));
 }
@@ -499,11 +498,17 @@ evaluateInSignedRange(ArrayRef<ConstraintValue> Values,
 
   ConstantRange Range = computeConstantRange(const_cast<llvm::Value *>(*Value),
                                              /*ForSigned=*/true, Query);
-  unsigned BW = Range.getBitWidth();
-  APInt MinVal = Min->sextOrTrunc(BW);
-  APInt MaxVal = Max->sextOrTrunc(BW);
-  return ConstraintValue::getBoolean(Range.getSignedMin().sge(MinVal) &&
-                                     Range.getSignedMax().sle(MaxVal));
+  // Compare at a width that holds the value and both bounds exactly; bounds
+  // outside the value's range must not wrap into it.
+  auto Needed = [](const APSInt &V) {
+    return V.getBitWidth() + (V.isUnsigned() ? 1 : 0);
+  };
+  unsigned Width = std::max({Range.getBitWidth(), Needed(*Min), Needed(*Max)});
+  APInt Lower = Min->extend(Width);
+  APInt Upper = Max->extend(Width);
+  return ConstraintValue::getBoolean(
+      Range.getSignedMin().sext(Width).sge(Lower) &&
+      Range.getSignedMax().sext(Width).sle(Upper));
 }
 
 } // namespace metaphir

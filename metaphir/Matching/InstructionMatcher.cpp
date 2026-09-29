@@ -28,38 +28,40 @@ bool hasSemanticFlag(InstructionFlag::FlagID ID,
     if (const auto *GEP = dyn_cast<GEPOperator>(&Target))
       return GEP->hasNoUnsignedWrap();
     return Target.hasNoUnsignedWrap();
+  // A flag the instruction cannot carry is absent. (The supported flags of
+  // each matcher are declared in InstructionMatchers.def.)
   case InstructionFlag::F_exact:
-    assert(isa<PossiblyExactOperator>(Target) &&
-           "exact flag used with an incompatible instruction");
-    return cast<PossiblyExactOperator>(Target).isExact();
+    if (const auto *Exact = dyn_cast<PossiblyExactOperator>(&Target))
+      return Exact->isExact();
+    return false;
   case InstructionFlag::F_disjoint:
-    assert(isa<PossiblyDisjointInst>(Target) &&
-           "disjoint flag used with an incompatible instruction");
-    return cast<PossiblyDisjointInst>(Target).isDisjoint();
+    if (const auto *Disjoint = dyn_cast<PossiblyDisjointInst>(&Target))
+      return Disjoint->isDisjoint();
+    return false;
   case InstructionFlag::F_inalloca:
-    assert(isa<AllocaInst>(Target) &&
-           "inalloca flag used with an incompatible instruction");
-    return cast<AllocaInst>(Target).isUsedWithInAlloca();
+    if (const auto *Alloca = dyn_cast<AllocaInst>(&Target))
+      return Alloca->isUsedWithInAlloca();
+    return false;
   case InstructionFlag::F_volatile:
     if (const auto *Load = dyn_cast<LoadInst>(&Target))
       return Load->isVolatile();
     if (const auto *Store = dyn_cast<StoreInst>(&Target))
       return Store->isVolatile();
-    llvm_unreachable("volatile flag used with an incompatible instruction");
+    return false;
   case InstructionFlag::F_inbounds:
-    assert(isa<GetElementPtrInst>(Target) &&
-           "inbounds flag used with an incompatible instruction");
-    return cast<GetElementPtrInst>(Target).isInBounds();
+    if (const auto *GEP = dyn_cast<GetElementPtrInst>(&Target))
+      return GEP->isInBounds();
+    return false;
   case InstructionFlag::F_nusw:
-    assert(isa<GetElementPtrInst>(Target) &&
-           "nusw flag used with an incompatible instruction");
-    return cast<GetElementPtrInst>(Target).hasNoUnsignedSignedWrap();
+    if (const auto *GEP = dyn_cast<GetElementPtrInst>(&Target))
+      return GEP->hasNoUnsignedSignedWrap();
+    return false;
   case InstructionFlag::F_nneg:
     return Target.hasNonNeg();
   case InstructionFlag::F_samesign:
-    assert(isa<ICmpInst>(Target) &&
-           "samesign flag used with an incompatible instruction");
-    return cast<ICmpInst>(Target).hasSameSign();
+    if (const auto *Compare = dyn_cast<ICmpInst>(&Target))
+      return Compare->hasSameSign();
+    return false;
   case InstructionFlag::F_fast:
   case InstructionFlag::F_nnan:
   case InstructionFlag::F_ninf:
@@ -209,7 +211,7 @@ bool InstructionMatcher::matchIntegerKeyedOperand(const MatcherOperand &Matcher,
                                                   const APSInt &Target) {
   assert(Matcher.Val && "keyed integer operand has no value");
   if (const auto *Variable = dyn_cast<MetaVariable>(Matcher.Val))
-    return bind(State, *Variable, static_cast<const APInt &>(Target));
+    return bind(State, *Variable, Target);
   const auto *Constant = dyn_cast<IntegerConstant>(Matcher.Val);
   assert(Constant && "keyed integer operand is not an integer matcher");
   return APSInt::isSameValue(Constant->getValue(), Target);
@@ -302,16 +304,12 @@ InstructionMatcher::matchValueOperand(const MatcherOperand &Matcher,
   // constant whose element equals it (e.g. 0 matches zeroinitializer). Poison
   // lanes are allowed, like LLVM's m_One/m_Zero/m_APInt matchers.
   if (Settings.has(PatternSettings::treatIntAsVec)) {
-    if (const auto *IC = dyn_cast<IntegerConstant>(Matcher.Val)) {
-      if (const auto *CV = dyn_cast<llvm::Constant>(&Target))
-        if (CV->getType()->isVectorTy())
-          if (const auto *Splat = CV->getSplatValue(/*AllowPoison=*/true))
-            if (const auto *CI = dyn_cast<ConstantInt>(Splat)) {
-              APSInt TargetValue(CI->getValue(), IC->getValue().isUnsigned());
-              if (APSInt::isSameValue(IC->getValue(), TargetValue))
-                return success(std::move(State));
-            }
-    }
+    if (const auto *IC = dyn_cast<IntegerConstant>(Matcher.Val))
+      if (Target.getType()->isVectorTy())
+        if (std::optional<APInt> Splat = detail::getConstantInteger(Target))
+          if (APSInt::isSameValue(IC->getValue(),
+                                  APSInt(*Splat, IC->getValue().isUnsigned())))
+            return success(std::move(State));
   }
   return SubtreeMatcher(*Matcher.Val, Target, std::move(State)).match();
 }
@@ -396,8 +394,7 @@ MatchResults InstructionMatcher::matchOrSelf(unsigned OperandIndex) {
     OrSelfValue = PatternOperands[OperandIndex].Val;
   }
 
-  MatchResults Results =
-      SubtreeMatcher(*OrSelfValue, Target, State).match();
+  MatchResults Results = SubtreeMatcher(*OrSelfValue, Target, State).match();
   MatchResults BoundResults;
   for (Instantiation &Candidate : Results) {
     if (!bind(Candidate, Matcher, &Target))
@@ -466,6 +463,8 @@ MatchResults InstructionMatcher::match() {
                  std::make_move_iterator(Natural.end()));
 
   if (HasCommutativeFlag) {
+    // The parser admits ':c' only where there are two operands to swap: a
+    // binary operator's, or a two-argument call's (after the callee).
     SmallVector<unsigned, 4> SwappedIndices = NaturalOrder;
     if (Matcher.getInstructionID() == Instruction::I_call &&
         SwappedIndices.size() == 3)
@@ -473,13 +472,10 @@ MatchResults InstructionMatcher::match() {
     else if (SwappedIndices.size() == 2)
       std::swap(SwappedIndices[0], SwappedIndices[1]);
     else
-      report_fatal_error(
-          Twine("commutative matcher '") + Matcher.getOpcodeName() +
-          "' has unsupported operand count " + Twine(SwappedIndices.size()));
+      return Results;
 
-    MatchResults Swapped = matchOperandOrder(SwappedIndices, std::move(State));
-    Results.append(std::make_move_iterator(Swapped.begin()),
-                   std::make_move_iterator(Swapped.end()));
+    // Equal operands match both ways; report each match once.
+    appendUnique(Results, matchOperandOrder(SwappedIndices, std::move(State)));
   }
   return Results;
 }

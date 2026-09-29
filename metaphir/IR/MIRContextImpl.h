@@ -200,7 +200,7 @@ public:
   DenseMap<unsigned, Type *> PrimitiveTypes;
   DenseMap<MetaVariable *, MetaIRType *> MetaIRTypes;
   MetaIntegerTypeSet MetaIntegerTypes;
-  DenseMap<Type *, PointerType *> PointerTypes;
+  DenseMap<std::pair<Type *, unsigned>, PointerType *> PointerTypes;
   ArrayTypeSet ArrayTypes;
   VectorTypeSet VectorTypes;
   StructTypeSet StructTypes;

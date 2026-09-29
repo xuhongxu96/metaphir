@@ -21,6 +21,25 @@ void Instantiation::requireComplete(const Pattern &Pattern) const {
   }
 }
 
+bool Instantiation::operator==(const Instantiation &Other) const {
+  if (Bindings.size() != Other.Bindings.size())
+    return false;
+  for (const auto &[Matcher, Binding] : Bindings) {
+    auto It = Other.Bindings.find(Matcher);
+    if (It == Other.Bindings.end() || It->second != Binding)
+      return false;
+  }
+  return true;
+}
+
+void appendUnique(MatchResults &Into, MatchResults &&From) {
+  size_t Existing = Into.size();
+  for (Instantiation &Candidate : From)
+    if (llvm::none_of(ArrayRef(Into).take_front(Existing),
+                      [&](const Instantiation &I) { return I == Candidate; }))
+      Into.push_back(std::move(Candidate));
+}
+
 raw_ostream &operator<<(raw_ostream &OS,
                         const Instantiation::Binding &Binding) {
   std::visit(
@@ -36,8 +55,8 @@ raw_ostream &operator<<(raw_ostream &OS,
           OS << CmpInst::getPredicateName(Value);
         } else if constexpr (std::is_same_v<T, Intrinsic::ID>) {
           OS << Intrinsic::getBaseName(Value);
-        } else if constexpr (std::is_same_v<T, APInt>) {
-          Value.print(OS, false);
+        } else if constexpr (std::is_same_v<T, APSInt>) {
+          Value.print(OS, Value.isSigned());
         } else if constexpr (std::is_same_v<T, bool>) {
           OS << (Value ? "true" : "false");
         } else {

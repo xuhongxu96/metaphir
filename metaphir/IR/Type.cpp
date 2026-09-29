@@ -57,12 +57,16 @@ raw_ostream &operator<<(raw_ostream &OS, const Type &T) {
     OS << ')';
     break;
   }
-  case Type::PointerTyID:
-    if (cast<PointerType>(T).isOpaque())
+  case Type::PointerTyID: {
+    const auto &P = cast<PointerType>(T);
+    if (P.isOpaque())
       OS << "ptr";
     else
-      OS << *cast<PointerType>(T).getElementType() << '*';
+      OS << *P.getElementType() << '*';
+    if (P.getAddressSpace() != PointerType::AnyAddressSpace)
+      OS << " addrspace(" << P.getAddressSpace() << ')';
     break;
+  }
   case Type::StructTyID: {
     const auto &S = cast<StructType>(T);
     if (S.isPacked())

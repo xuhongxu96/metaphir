@@ -88,6 +88,9 @@ private:
   // Lazily-constructed per-function analyses for value-tracking operators.
   detail::ValueTrackContext Analysis;
   MIRContext *Context = nullptr;
+  /// Nesting of user-defined constraint calls being evaluated.
+  unsigned CallDepth = 0;
+  static constexpr unsigned MaxCallDepth = 256;
 };
 
 } // namespace metaphir

@@ -3,6 +3,7 @@
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/IR/PatternVariants.h"
+#include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/ConstraintInterpreter.h"
 #include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/PatternMatcher.h"
@@ -112,12 +113,17 @@ applyConstraints(const Pattern &Pattern, MatchResults Matches,
           Unsatisfied.push_back({Expression, std::move(Reason)});
         break;
       }
-      if (!Result->getBoolean()) {
+      Expected<bool> Holds =
+          metaphir::detail::requireBoolean(*Result, *Expression);
+      if (!Holds || !*Holds) {
+        std::string Reason;
+        if (!Holds)
+          Reason = toString(Holds.takeError());
         Satisfies = false;
         if (llvm::find_if(Unsatisfied, [&](const UnsatisfiedConstraint &U) {
               return U.Expression == Expression;
             }) == Unsatisfied.end())
-          Unsatisfied.push_back({Expression, ""});
+          Unsatisfied.push_back({Expression, std::move(Reason)});
       }
     }
     if (Satisfies)
@@ -139,7 +145,8 @@ matchAndFilterPattern(const PatternVariants &Variants, const Target &Program,
     SmallVector<UnsatisfiedConstraint, 4> VarUnsatisfied;
     VarMatches = applyConstraints(*Variant, std::move(VarMatches),
                                   VarUnsatisfied, Context);
-    Combined.append(VarMatches.begin(), VarMatches.end());
+    // Variants for the operand orders of a ':c' use can find the same match.
+    appendUnique(Combined, std::move(VarMatches));
     if (Combined.empty()) {
       for (const auto &U : VarUnsatisfied)
         Unsatisfied.push_back(U);
