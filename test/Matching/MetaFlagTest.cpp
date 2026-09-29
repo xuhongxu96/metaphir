@@ -15,6 +15,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 // Built-in metaflags (:c, :o, :or, :not) are defined in MetaFlags.def.
 // Use count flags (:s, :su) and predicate flags (:zero, etc.) are standard
@@ -36,42 +37,6 @@ MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
   if (ID != MetaFlag::UnknownMetaFlag)
     return MetaFlag::getBuiltin(Context, ID, Arguments, Range);
   return MetaFlag::getUserDefined(Context, Name, Arguments, Range);
-}
-
-static Pattern *parseAndLowerPattern(StringRef IR, MIRContext &Context) {
-  SourceMgr SM;
-  SMDiagnostic Error;
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(IR);
-  SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
-  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
-                   Error, Context);
-  Pattern *Result = nullptr;
-  if (!Parser.parse(Result)) {
-    Expected<PatternVariants> Lowered = PatternLowering(Context).lower(Result);
-    if (!Lowered)
-      return nullptr;
-    return Result;
-  }
-  return nullptr;
-}
-
-static Pattern *parsePatternOnly(StringRef IR, SourceMgr &SM,
-                                  MIRContext &Context) {
-  SMDiagnostic Error;
-  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(IR);
-  SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
-  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
-                   Error, Context);
-  Pattern *Result = nullptr;
-  if (!Parser.parse(Result))
-    return Result;
-  return nullptr;
-}
-
-static std::unique_ptr<Module> parseLLVMModule(StringRef IR,
-                                               LLVMContext &Context) {
-  SMDiagnostic Error;
-  return parseAssemblyString(IR, Error, Context);
 }
 
 static Pattern *makePatternWithOperandFlag(MIRContext &Context,
@@ -149,11 +114,12 @@ TEST(MetaFlagTest, ReportsUnlowerableNotChild) {
 
 TEST(MetaFlagTest, LowersUseCountFlagsToConstraints) {
   MIRContext Context;
-  Pattern *P = parseAndLowerPattern(
+  SourceMgr SM;
+  Pattern *P = test::parseAndLower(
       R"(
         %r = add:s i32 ?x:su, ?y
       )",
-      Context);
+      SM, Context);
   ASSERT_NE(P, nullptr);
   // :s on the instruction lowers to hasOneUse(%r), :su on ?x lowers to
   // hasOneUser(?x).
@@ -171,11 +137,12 @@ TEST(MetaFlagTest, LowersUseCountFlagsToConstraints) {
 
 TEST(MetaFlagTest, LowersOrAndNotCombinatorsWithUseCountFlags) {
   MIRContext Context;
-  Pattern *P = parseAndLowerPattern(
+  SourceMgr SM;
+  Pattern *P = test::parseAndLower(
       R"(
         %r = add i32 ?x:or(:s, :su), ?y:not(:s)
       )",
-      Context);
+      SM, Context);
   ASSERT_NE(P, nullptr);
   // :or(:s, :su) lowers to (|| (hasoneuse ?x) (hasoneuser ?x))
   // :not(:s) lowers to (! (hasoneuse ?y))
@@ -195,7 +162,7 @@ TEST(MetaFlagTest, LowersOrAndNotCombinatorsWithUseCountFlags) {
 TEST(MetaFlagTest, NonDestructiveDesugaringPreservesFlagsAndAvoidsSyntheticCapture) {
   SourceMgr SM;
   MIRContext Context;
-  Pattern *P = parsePatternOnly(
+  Pattern *P = test::parsePattern(
       R"(
         %r = add:s i32 ?x:su, ?y
       )",
@@ -246,7 +213,7 @@ TEST(MetaFlagTest, NonDestructiveDesugaringPreservesFlagsAndAvoidsSyntheticCaptu
 TEST(MetaFlagTest, CompositeInliningSharesPrecedingAndCOWDownstream) {
   SourceMgr SM;
   MIRContext Context;
-  Pattern *P = parsePatternOnly(
+  Pattern *P = test::parsePattern(
       R"(
         match foldTest [] Binary (?ty ?a, ?b) {
           %r1 = add ?ty ?a, ?b
@@ -309,7 +276,7 @@ TEST(MetaFlagTest, CompositeInliningSharesPrecedingAndCOWDownstream) {
 TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
   SourceMgr SM;
   MIRContext Context;
-  Pattern *P = parsePatternOnly(
+  Pattern *P = test::parsePattern(
       R"(
         %sat = call:s i32 @llvm.uadd.sat(i32 ?x, i32 ?c)
         %res = add i32 %sat, ?c
@@ -321,7 +288,7 @@ TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
   ASSERT_TRUE(static_cast<bool>(VariantsOrErr));
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseLLVMModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         declare i32 @llvm.uadd.sat.i32(i32, i32)
 

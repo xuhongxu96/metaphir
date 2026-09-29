@@ -22,6 +22,7 @@ add_library(
   InstructionMatcher.cpp
   InstructionMatcher.Matchers.cpp
   InstructionMatcher.h
+  LLVMValueClasses.def
   PatternMatcher.cpp
   PatternMatcher.h
   Target.cpp

@@ -13,17 +13,13 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
 using MIRInstruction = llvm::metaphir::Instruction;
 
 namespace {
-
-std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
-  SMDiagnostic Error;
-  return parseAssemblyString(IR, Error, Context);
-}
 
 // Matches a single instruction matcher against a target instruction by
 // constructing an InstructionMatcher directly (backed by a fresh
@@ -55,7 +51,7 @@ TEST(InstructionMatcherTest, RecursivelyMatchesAndBindsOperandTypes) {
                           Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define [4 x i32] @f([4 x i32] %x) {
           %result = freeze [4 x i32] %x
@@ -93,7 +89,7 @@ TEST(InstructionMatcherTest, BindsStandaloneResultTypes) {
                           nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(i8 %x) {
           %result = zext i8 %x to i32
@@ -127,7 +123,7 @@ TEST(InstructionMatcherTest, ReportsUnsupportedCommutativeLayout) {
                           Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(i32 %x) {
           %result = freeze i32 %x
@@ -175,7 +171,7 @@ TEST(InstructionMatcherTest, BindsPredicatesAndCapturedSemanticFlags) {
                           AddOperands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i1 @compare(i32 %x, i32 %y) {
           %result = icmp slt i32 %x, %y
@@ -230,7 +226,7 @@ TEST(InstructionMatcherTest, MatchesAndBindsKeyedIntegerOperands) {
                           nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(ptr %pointer) {
           %result = load i32, ptr %pointer, align 8
@@ -270,7 +266,7 @@ TEST(InstructionMatcherTest, MatchesFastMathFlagsThroughInstructionInterface) {
                           Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define float @with_flag(i1 %condition, float %x, float %y) {
           %result = select nnan i1 %condition, float %x, float %y
@@ -318,7 +314,7 @@ TEST(InstructionMatcherTest, CapturesTrailingCallArgumentTypesAndValues) {
                           nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         declare i32 @callee(i32, i8, ptr)
         define i32 @caller(i32 %x, i8 %y, ptr %p) {
@@ -372,7 +368,7 @@ TEST(InstructionMatcherTest, CapturesAggregateIndicesAsValueArray) {
                           Operands, nullptr, Range, Block);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i8 @extract({i32, {i8, i16}} %aggregate) {
           %result = extractvalue {i32, {i8, i16}} %aggregate, 1, 0

@@ -11,25 +11,12 @@
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
 
 namespace {
-
-// Parses Source, returning the pattern and leaving the definitions registered
-// in Context.
-Pattern *parsePattern(StringRef Source, SourceMgr &SM, MIRContext &Context) {
-  MemoryBufferRef Buffer(Source, "<test>");
-  SM.AddNewSourceBuffer(MemoryBuffer::getMemBuffer(Buffer), SMLoc());
-  SMDiagnostic Error;
-  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
-                   Error, Context);
-  Pattern *Result = nullptr;
-  if (Parser.parse(Result))
-    return nullptr;
-  return Result;
-}
 
 // Line and column the range points at, one-based, as SourceMgr reports them.
 std::pair<unsigned, unsigned> lineAndColumn(const SourceMgr &SM,
@@ -41,7 +28,7 @@ std::pair<unsigned, unsigned> lineAndColumn(const SourceMgr &SM,
 TEST(SourceRangeTest, ConstraintDefinitionParameters) {
   SourceMgr SM;
   MIRContext Context;
-  Pattern *P = parsePattern(R"(constraint pair(?a, ?b) {
+  Pattern *P = test::parsePattern(R"(constraint pair(?a, ?b) {
 	?a == ?b
 }
 
@@ -66,7 +53,7 @@ TEST(SourceRangeTest, ConstraintDefinitionParameters) {
 TEST(SourceRangeTest, MetaFlagDefinitionParameters) {
   SourceMgr SM;
   MIRContext Context;
-  Pattern *P = parsePattern(R"(metaflag :between(?v, ?lo, ?hi) {
+  Pattern *P = test::parsePattern(R"(metaflag :between(?v, ?lo, ?hi) {
 	sle(?lo, ?v) && sle(?v, ?hi)
 }
 
@@ -88,7 +75,7 @@ TEST(SourceRangeTest, MetaFlagDefinitionParameters) {
 TEST(SourceRangeTest, MatchParametersBoundPerBranch) {
   SourceMgr SM;
   MIRContext Context;
-  Pattern *P = parsePattern(R"(match addm [] Binary (?ty ?x, ?y) {
+  Pattern *P = test::parsePattern(R"(match addm [] Binary (?ty ?x, ?y) {
 	%ret = add ?ty ?x, ?y
 }
 
@@ -109,7 +96,7 @@ TEST(SourceRangeTest, MatchParametersBoundPerBranch) {
 TEST(SourceRangeTest, InstructionDirectSubjectConstraint) {
   SourceMgr SM;
   MIRContext Context;
-  Pattern *P = parsePattern(R"(metaflag:i :isaddop(?i) {
+  Pattern *P = test::parsePattern(R"(metaflag:i :isaddop(?i) {
 	opcode(?i) == "add"
 }
 
@@ -122,7 +109,7 @@ TEST(SourceRangeTest, InstructionDirectSubjectConstraint) {
   // The pattern named no capture. Lowering does not mutate or synthesize a
   // capture on the instruction; instead, the constraint directly targets the
   // instruction node.
-  Instruction *I = P->getInstructions().front();
+  metaphir::Instruction *I = P->getInstructions().front();
   ASSERT_EQ(I->getCapture(), nullptr);
   auto VariantsOrErr = PatternLowering(Context).lower(P);
   ASSERT_TRUE(static_cast<bool>(VariantsOrErr));

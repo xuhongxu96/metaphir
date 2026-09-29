@@ -20,6 +20,10 @@ Ground truth (G): anchors (file, function, anchor-ssa-name) where LLVM's own
 fold fires, captured by running an instrumented InstCombine with
 ``METAPHIR_EVAL_ANCHOR=1``. Prediction (P): anchors where the MetaphIR
 pattern(s) match. Both run on the same corpus IR.
+
+The tools default to ``llvm-project/build/bin/opt`` and
+``build/tools/metaphir-match``; set ``METAPHIR_OPT`` / ``METAPHIR_MATCH`` to
+override them.
 """
 
 from __future__ import annotations
@@ -31,44 +35,20 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
-OPT = REPO / "llvm-project" / "build" / "bin" / "opt"
-METAPHIR_MATCH = REPO / "build" / "tools" / "metaphir-match"
+from prs import PRS
 
-# PR -> MetaphIR pattern files (relative to the repo root).
-PR_PATTERNS: dict[str, list[str]] = {
-    "pr216436": ["eval/patterns/pr216436.mpir"],
-    "pr215122": ["eval/patterns/pr215122.mpir"],
-    "pr215130": ["eval/patterns/pr215130.mpir"],
-    "pr214541": ["eval/patterns/pr214541.mpir"],
-    "pr214517": ["eval/patterns/pr214517.mpir"],
-    "pr214381": ["eval/patterns/pr214381.mpir"],
-    "pr214376": ["eval/patterns/pr214376.mpir"],
-    "pr213709": ["eval/patterns/pr213709.mpir"],
-    "pr213313": ["eval/patterns/pr213313.mpir"],
-    "pr212132": [
-        "eval/patterns/pr212132_case1.mpir",
-        "eval/patterns/pr212132_case2.mpir",
-    ],
-    "pr210499": ["eval/patterns/pr210499.mpir"],
-    "pr209322": ["eval/patterns/pr209322.mpir"],
-    "pr207564": ["eval/patterns/pr207564.mpir"],
-    "pr207462": [
-        "eval/patterns/pr207462.mpir",
-        "eval/patterns/pr207462_mul.mpir",
-    ],
-    "pr205383": [
-        "eval/patterns/pr205383_sub.mpir",
-        "eval/patterns/pr205383_xor.mpir",
-    ],
-    "pr204928": ["eval/patterns/pr204928.mpir"],
-    "pr204927": ["eval/patterns/pr204927.mpir"],
-    "pr216470": ["eval/patterns/pr216470.mpir"],
-    "pr216046": ["eval/patterns/pr216046.mpir"],
-    "pr204089": ["eval/patterns/pr204089.mpir"],
-}
+REPO = Path(__file__).resolve().parents[2]
+OPT = Path(
+    os.environ.get("METAPHIR_OPT", REPO / "llvm-project" / "build" / "bin" / "opt")
+)
+METAPHIR_MATCH = Path(
+    os.environ.get("METAPHIR_MATCH", REPO / "build" / "tools" / "metaphir-match")
+)
+
+PR_PATTERNS: dict[str, tuple[str, ...]] = {pr: e.patterns for pr, e in PRS.items()}
 
 ANCHOR_RE = re.compile(r"^ANCHOR (\S+) (\S+)(?: (\S+))?$")
 TARGET_RE = re.compile(r"^target \d+: @(\S+)$")
@@ -133,9 +113,13 @@ def run_llvm_anchors(
                     by_pr[pr].add((bc.name, m.group(1), m.group(2)))
     error = None
     if proc.returncode != 0:
-        tail = [l for l in proc.stderr.splitlines() if not ANCHOR_RE.match(l)][-3:]
+        tail = [ln for ln in proc.stderr.splitlines() if not ANCHOR_RE.match(ln)][-3:]
         error = f"rc={proc.returncode}: " + " | ".join(tail)
     return by_pr, error
+
+
+class PatternRunError(RuntimeError):
+    """metaphir-match failed; its predictions for the module are unknown."""
 
 
 def run_pattern(pattern: Path, bc: Path) -> set[Anchor]:
@@ -146,7 +130,10 @@ def run_pattern(pattern: Path, bc: Path) -> set[Anchor]:
         check=False,
     )
     if proc.returncode != 0:
-        return set()
+        tail = " | ".join(proc.stderr.splitlines()[-3:])
+        raise PatternRunError(
+            f"metaphir-match {pattern.name} {bc.name}: rc={proc.returncode}: {tail}"
+        )
 
     anchors: set[Anchor] = set()
     func = None
@@ -165,23 +152,18 @@ def run_pattern(pattern: Path, bc: Path) -> set[Anchor]:
 def run_over_corpus(
     files: list[Path], run: Callable[[Path], set[Anchor]], jobs: int = 1
 ) -> tuple[set[Anchor], float]:
-    """Apply ``run(bc) -> anchors`` to every corpus file, accumulating anchors and wall time."""
-    anchors: set[Anchor] = set()
-    elapsed = 0.0
-    if jobs <= 1:
-        for bc in files:
-            t0 = time.time()
-            anchors |= run(bc)
-            elapsed += time.time() - t0
-        return anchors, elapsed
+    """Apply ``run(bc) -> anchors`` to every corpus file.
 
-    from concurrent.futures import ThreadPoolExecutor
+    Returns the union of the anchors and the summed per-module run time.
+    """
 
     def worker(bc: Path) -> tuple[set[Anchor], float]:
-        t0 = time.time()
+        t0 = time.perf_counter()
         res = run(bc)
-        return res, time.time() - t0
+        return res, time.perf_counter() - t0
 
+    anchors: set[Anchor] = set()
+    elapsed = 0.0
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         for res, t in pool.map(worker, files):
             anchors |= res
@@ -201,8 +183,10 @@ def load_anchors(path: Path) -> set[Anchor]:
     for line in path.read_text().splitlines():
         if not line.strip():
             continue
-        f, fn, a = line.split("\t", 2)
-        anchors.add((f, fn, a))
+        fields = line.split("\t")
+        if len(fields) != 3:
+            sys.exit(f"{path}: malformed anchor line: {line!r}")
+        anchors.add((fields[0], fields[1], fields[2]))
     return anchors
 
 
@@ -218,7 +202,7 @@ def print_metrics(G: set[Anchor], P: set[Anchor], label: str) -> None:
     recall = tp / len(G) if G else 1.0
     precision = tp / len(P) if P else 1.0
     f1 = 2 * tp / (len(G) + len(P)) if (len(G) + len(P)) else 1.0
-    diff_rate = 1 - (tp / union) if union else 1.0
+    diff_rate = 1 - (tp / union) if union else 0.0
     print(f"  [{label}] |G|={len(G)} |P|={len(P)} TP={tp} FP={fp} FN={fn}")
     print(
         f"  [{label}] recall={recall:.4f} precision={precision:.4f} "
@@ -237,18 +221,16 @@ def collect_ground_truth(
     env = dict(os.environ)
     env["METAPHIR_EVAL_ANCHOR"] = "1"
 
-    from concurrent.futures import ThreadPoolExecutor
-
     def worker(bc: Path) -> tuple[dict[str, set[Anchor]], str | None, float]:
-        t0 = time.time()
+        t0 = time.perf_counter()
         res, error = run_llvm_anchors(bc, prs, env)
-        return res, error, time.time() - t0
+        return res, error, time.perf_counter() - t0
 
     all_anchors: dict[str, set[Anchor]] = {pr: set() for pr in prs}
     failed: list[tuple[Path, str]] = []
     total_t = 0.0
     with ThreadPoolExecutor(max_workers=jobs) as pool:
-        for bc, (by_pr, error, t) in zip(files, pool.map(worker, files)):
+        for bc, (by_pr, error, t) in zip(files, pool.map(worker, files), strict=True):
             total_t += t
             if error:
                 failed.append((bc, error))
@@ -257,7 +239,8 @@ def collect_ground_truth(
 
     if failed:
         print(
-            f"  warning: opt failed on {len(failed)} module(s); their anchors may be incomplete:"
+            f"  warning: opt failed on {len(failed)} module(s); "
+            "their anchors may be incomplete:"
         )
         for bc, error in failed:
             print(f"    {bc.name}: {error}")
@@ -272,7 +255,10 @@ def collect_ground_truth(
         g_path = outdir / f"{pr}_G.anchors"
         save_anchors(g_path, G)
         (outdir / f"{pr}_G_timing.txt").write_text(
-            f"modules={len(files)}\ngt_seconds={total_t / len(prs):.3f}\nG_anchors={len(G)}\n"
+            f"modules={len(files)}\n"
+            f"gt_seconds={total_t:.3f}\n"
+            f"gt_shared_prs={len(prs)}\n"
+            f"G_anchors={len(G)}\n"
         )
         print(f"  saved G anchors -> {g_path} ({len(G)})")
     if len(prs) > 1:
@@ -281,9 +267,24 @@ def collect_ground_truth(
 
 def collect_patterns(
     files: list[Path], pr: str, patterns: list[Path], outdir: Path, jobs: int = 1
-) -> None:
+) -> bool:
+    """Collect predictions for ``pr``. Returns False if any module failed.
+
+    A module on which ``metaphir-match`` fails contributes no anchors; it is
+    listed in ``<pr>_P_failures.txt`` so the gap is never silent.
+    """
     print(f"== pattern {pr}: {len(files)} modules, {len(patterns)} pattern(s) ==")
-    run = lambda bc: set().union(*(run_pattern(p, bc) for p in patterns))
+    failures: list[str] = []
+
+    def run(bc: Path) -> set[Anchor]:
+        anchors: set[Anchor] = set()
+        for pattern in patterns:
+            try:
+                anchors |= run_pattern(pattern, bc)
+            except PatternRunError as err:
+                failures.append(str(err))
+        return anchors
+
     P, t_pat = run_over_corpus(files, run, jobs=jobs)
 
     p_path = outdir / f"{pr}_P.anchors"
@@ -294,8 +295,18 @@ def collect_patterns(
         f"patterns={len(patterns)}\n"
         f"P_anchors={len(P)}\n"
     )
+    failures_path = outdir / f"{pr}_P_failures.txt"
+    if failures:
+        failures_path.write_text("".join(f + "\n" for f in sorted(failures)))
+        print(
+            f"  error: metaphir-match failed {len(failures)} time(s); "
+            f"see {failures_path}"
+        )
+    elif failures_path.exists():
+        failures_path.unlink()
     print(f"  saved P anchors -> {p_path} ({len(P)})")
     print(f"  pattern {t_pat:.2f}s")
+    return not failures
 
 
 # --------------------------------------------------------------------------- #
@@ -310,13 +321,21 @@ def selected_prs(prs_arg: list[str] | None) -> list[str]:
     return list(PR_PATTERNS)
 
 
+def require_executable(path: Path, hint: str) -> None:
+    if not (path.is_file() and os.access(path, os.X_OK)):
+        sys.exit(f"{path} not found or not executable ({hint})")
+
+
 def setup_outdir(args: argparse.Namespace) -> tuple[Path, list[Path]]:
+    if args.jobs < 1:
+        sys.exit("--jobs must be at least 1")
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     return outdir, collect_corpus(args.corpus)
 
 
 def cmd_gt(args: argparse.Namespace) -> int:
+    require_executable(OPT, "run scripts/prepare_llvm.sh or set METAPHIR_OPT")
     outdir, files = setup_outdir(args)
     prs = selected_prs(args.pr)
     collect_ground_truth(files, prs, outdir, jobs=args.jobs)
@@ -324,10 +343,12 @@ def cmd_gt(args: argparse.Namespace) -> int:
 
 
 def cmd_pattern(args: argparse.Namespace) -> int:
+    require_executable(METAPHIR_MATCH, "build MetaphIR or set METAPHIR_MATCH")
     outdir, files = setup_outdir(args)
     prs = selected_prs(args.pr)
     if args.patterns and len(prs) != 1:
         sys.exit("--patterns overrides the patterns for exactly one --pr")
+    ok = True
     for pr in prs:
         patterns = (
             args.patterns if args.patterns else [REPO / p for p in PR_PATTERNS[pr]]
@@ -335,8 +356,8 @@ def cmd_pattern(args: argparse.Namespace) -> int:
         missing = [str(p) for p in patterns if not p.is_file()]
         if missing:
             sys.exit(f"missing pattern file(s) for {pr}: {', '.join(missing)}")
-        collect_patterns(files, pr, patterns, outdir, jobs=args.jobs)
-    return 0
+        ok &= collect_patterns(files, pr, patterns, outdir, jobs=args.jobs)
+    return 0 if ok else 1
 
 
 def cmd_metrics(args: argparse.Namespace) -> int:

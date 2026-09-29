@@ -10,16 +10,12 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
 using MIRInstruction = llvm::metaphir::Instruction;
 using MIRTarget = llvm::metaphir::Target;
-
-static std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
-  SMDiagnostic Error;
-  return parseAssemblyString(IR, Error, Context);
-}
 
 TEST(PatternMatcherTest, EnforcesRepeatedBindings) {
   MIRContext Context;
@@ -34,7 +30,7 @@ TEST(PatternMatcherTest, EnforcesRepeatedBindings) {
                                           Range, Block));
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @same(i32 %x) {
           %r = add i32 %x, %x
@@ -74,7 +70,7 @@ TEST(PatternMatcherTest, RequiresEveryRootAndFiltersPrograms) {
                                           Block));
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @complete(i32 %x) {
           %a = add i32 %x, %x
@@ -113,7 +109,7 @@ TEST(PatternMatcherTest, MetaVariablesMatchTypeCompatibleInstructions) {
                                           Range, Block));
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(i32 %x) {
           %sum = add i32 %x, %x
@@ -147,7 +143,7 @@ TEST(PatternMatcherTest, ReportsIncompleteSuccessfulInstantiationAsUnexpected) {
                                           Block));
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(i32 %x) {
           %result = freeze i32 %x
@@ -180,7 +176,7 @@ TEST(PatternMatcherTest, EnforcesInstructionBlockMembership) {
                                           Block));
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @same_block(i32 %x) {
         entry:
@@ -229,7 +225,7 @@ TEST(PatternMatcherTest, AllowsInstructionOperandsFromOtherBlocks) {
   Pat->addInstruction(Freeze);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @cross_block(i32 %x) {
         entry:
@@ -266,7 +262,7 @@ TEST(PatternMatcherTest, InstructionMatcherControlsCommutativeOperands) {
                                           Range, Block));
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(i32 %x) {
           %result = add i32 %x, 1
@@ -308,7 +304,7 @@ TEST(PatternMatcherTest, OrSelfAdmitsSelectedOperandAsRoot) {
   Pat->addInstruction(Add);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(i32 %x, i32 %y) {
           %result = sub i32 %x, %y
@@ -347,7 +343,7 @@ TEST(PatternMatcherTest, MatchesPatternVariants) {
   Variants.addVariant(SubPat);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @both(i32 %a, i32 %b) {
           %1 = add i32 %a, %b
@@ -389,7 +385,7 @@ TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
   Pat->addInstruction(Sub);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         define i32 @f(i32 %a, i32 %b) {
           %1 = add i32 %a, %b

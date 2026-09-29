@@ -5,6 +5,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Error.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -12,15 +13,7 @@ using namespace llvm::metaphir::detail;
 
 namespace {
 
-class ConstraintCoercionTest : public testing::Test {
-protected:
-  MIRContext Context;
-  SourceRange Range;
-
-  IntegerConstraint *integer(int64_t Value) {
-    return IntegerConstraint::get(Context, Value, Range);
-  }
-};
+using ConstraintCoercionTest = test::ConstraintTest;
 
 // Coercion of a value into the same kind is the identity coercion.
 TEST_F(ConstraintCoercionTest, IdentityCoercionReturnsTheValue) {
@@ -70,7 +63,7 @@ TEST_F(ConstraintCoercionTest, CoercesBooleanAndInteger) {
 // A Value binding is coercible to an integer only when it is a constant int.
 TEST_F(ConstraintCoercionTest, CoercesConstantIntegerValueToInteger) {
   LLVMContext LLVMContext;
-  Type *I32 = Type::getInt32Ty(LLVMContext);
+  llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   ConstraintValue Constant =
       ConstraintValue::getValue(ConstantInt::get(I32, 42));
 
@@ -97,7 +90,7 @@ TEST_F(ConstraintCoercionTest, CoercesConstantIntegerValueToInteger) {
 // Types and values stringify to their printed representation.
 TEST_F(ConstraintCoercionTest, CoercesTypesAndValuesToStrings) {
   LLVMContext LLVMContext;
-  Type *I32 = Type::getInt32Ty(LLVMContext);
+  llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   auto Add = std::unique_ptr<BinaryOperator>(BinaryOperator::CreateAdd(
       ConstantInt::get(I32, 1), ConstantInt::get(I32, 2), "sum"));
 
@@ -119,8 +112,8 @@ TEST_F(ConstraintCoercionTest, CoercesTypesAndValuesToStrings) {
 // Arrays of types and values stringify elementwise.
 TEST_F(ConstraintCoercionTest, CoercesArraysToStringArrays) {
   LLVMContext LLVMContext;
-  Type *I8 = Type::getInt8Ty(LLVMContext);
-  Type *I32 = Type::getInt32Ty(LLVMContext);
+  llvm::Type *I8 = llvm::Type::getInt8Ty(LLVMContext);
+  llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   Constant *One = ConstantInt::get(I32, 1);
   Constant *Two = ConstantInt::get(I32, 2);
 

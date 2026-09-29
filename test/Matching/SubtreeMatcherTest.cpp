@@ -12,14 +12,10 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
-
-static std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
-  SMDiagnostic Error;
-  return parseAssemblyString(IR, Error, Context);
-}
 
 TEST(SubtreeMatcherTest, NonValueMetaTypesFailToMatchLLVMValues) {
   MIRContext Context;
@@ -89,7 +85,7 @@ TEST(SubtreeMatcherTest, AggregateConstantsRequireMatchingShape) {
       Context, Types, Elements, AggregateConstant::Square, Range);
 
   LLVMContext LLVMContext;
-  std::unique_ptr<Module> Module = parseModule(
+  std::unique_ptr<Module> Module = test::parseLLVMModule(
       R"(
         @array = constant [2 x i32] [i32 1, i32 2]
         @wrong_elements = constant [2 x i32] [i32 1, i32 3]

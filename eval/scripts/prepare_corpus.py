@@ -13,70 +13,67 @@ rerunning this script rather than checked in:
    (and negatives) in the corpus.
 
 A fresh clone rebuilds the corpus with
-`python3 eval/scripts/prepare_corpus.py`.
+`eval/scripts/prepare_corpus.py --bench-root <llvm-opt-benchmark>/local`.
 """
 
 from __future__ import annotations
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from prs import PRS
+
 REPO = Path(__file__).resolve().parents[2]
-OPT = REPO / "llvm-project" / "build" / "bin" / "opt"
-BENCH_ROOT = Path("/ssd/h445xu/llvm-opt-benchmark-nightly/local")
+OPT = Path(
+    os.environ.get("METAPHIR_OPT", REPO / "llvm-project" / "build" / "bin" / "opt")
+)
+# Local checkout of dtcxzyw/llvm-opt-benchmark (the directory holding one
+# sub-directory per project, each with an `original/` folder of .bc files).
+BENCH_ROOT_ENV = "METAPHIR_BENCH_ROOT"
 LLVM_TEST_DIR = REPO / "llvm-project" / "llvm" / "test" / "Transforms"
 PASSES = "default<O2>"
 
-# Upstream test file(s) that exercise each PR's fold (paths under LLVM_TEST_DIR).
-PR_TEST_FILES: dict[str, list[str]] = {
-    "pr216436": ["InstCombine/add-mask-neg.ll"],
-    "pr215122": ["InstCombine/add-mask-neg.ll"],
-    "pr215130": ["InstCombine/saturating-add-sub.ll"],
-    "pr214541": ["InstCombine/div.ll"],
-    "pr214517": ["InstCombine/shift.ll"],
-    "pr214381": ["InstCombine/icmp-floor-align.ll"],
-    "pr214376": ["InstCombine/cttz.ll"],
-    "pr213709": ["InstCombine/icmp-lowbit.ll"],
-    "pr213313": ["InstCombine/fold-and-zext-sext.ll",
-                 "InstCombine/fold-or-zext-sext.ll"],
-    "pr212132": ["InstCombine/select-and-or-powerof2.ll"],
-    "pr210499": ["InstCombine/trunc.ll"],
-    "pr207564": ["InstCombine/zext-sub-trunc.ll"],
-    "pr207462": ["InstCombine/add4.ll"],
-    "pr205383": ["InstCombine/select-ctlz-to-cttz.ll"],
-    "pr204928": ["InstCombine/set.ll"],
-    "pr204927": ["InstCombine/zext.ll"],
-    "pr216470": ["InstCombine/add.ll"],
-    "pr216046": ["InstCombine/scmp.ll"],
-    "pr209322": ["InstCombine/udiv-isknownnegative.ll"],
-    "pr204089": ["InstSimplify/cast.ll"],
-}
+PR_TEST_PREFIX = "pr"
 
 
 def collect_pr_tests(corpus: Path) -> int:
-    """Copy each PR's upstream test file(s) into the corpus."""
+    """Copy each PR's upstream test file(s) into the corpus.
+
+    A test file shared by several PRs is copied once, named after the first PR
+    that lists it, so its functions are not counted twice.
+    """
     count = 0
-    for pr, rels in PR_TEST_FILES.items():
-        for rel in rels:
+    copied: dict[str, str] = {}
+    for pr, entry in PRS.items():
+        for rel in entry.tests:
+            if rel in copied:
+                print(f"  {pr}: {Path(rel).name} (shared with {copied[rel]})")
+                continue
             source = LLVM_TEST_DIR / rel
             if not source.is_file():
                 print(f"  WARN {pr}: missing test {rel}", file=sys.stderr)
                 continue
             dst = corpus / f"{pr}__{Path(rel).name}"
-            shutil.copy(str(source), str(dst))
+            shutil.copy(source, dst)
+            copied[rel] = pr
             count += 1
             print(f"  {pr}: {Path(rel).name} -> {dst.name}")
     return count
 
 
-def preprocess_benchmark(bench_root: Path, corpus: Path, passes: str,
-                         jobs: int, opt: Path) -> tuple[int, int]:
+def is_pr_test(path: Path) -> bool:
+    return path.suffix == ".ll" and path.name.startswith(PR_TEST_PREFIX)
+
+
+def preprocess_benchmark(
+    bench_root: Path, corpus: Path, passes: str, jobs: int, opt: Path
+) -> tuple[int, int]:
     """Preprocess every `original/*.bc` module into the corpus directory."""
     entries: list[tuple[str, Path]] = []
     for proj_dir in sorted(bench_root.iterdir()):
@@ -97,12 +94,14 @@ def preprocess_benchmark(bench_root: Path, corpus: Path, passes: str,
         env.pop("METAPHIR_EVAL_ANCHOR", None)  # ensure folds stay disabled
         proc = subprocess.run(
             [str(opt), f"-passes={passes}", str(src), "-o", str(tmp_bc)],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
+            check=False,
             env=env,
         )
         if proc.returncode != 0:
-            return False, (f"  PREPROCESS FAILED {src}: "
-                           f"{proc.stderr.splitlines()[:1]}")
+            first = next(iter(proc.stderr.splitlines()), "")
+            return False, f"  PREPROCESS FAILED {src}: {first}"
         shutil.move(str(tmp_bc), corpus / name)
         return True, ""
 
@@ -110,8 +109,7 @@ def preprocess_benchmark(bench_root: Path, corpus: Path, passes: str,
     with tempfile.TemporaryDirectory(prefix="metaphir-prep-") as tmp:
         tmp_path = Path(tmp)
         with ThreadPoolExecutor(max_workers=jobs) as pool:
-            results = pool.map(lambda item: one(item, tmp_path),
-                               enumerate(entries))
+            results = pool.map(lambda item: one(item, tmp_path), enumerate(entries))
             for success, message in results:
                 if success:
                     ok += 1
@@ -123,13 +121,21 @@ def preprocess_benchmark(bench_root: Path, corpus: Path, passes: str,
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--bench-root", type=Path, default=BENCH_ROOT)
+    ap.add_argument(
+        "--bench-root",
+        type=Path,
+        default=os.environ.get(BENCH_ROOT_ENV),
+        help=f"llvm-opt-benchmark root (default: ${BENCH_ROOT_ENV})",
+    )
     ap.add_argument("--opt", type=Path, default=OPT)
     ap.add_argument("--passes", default=PASSES)
     ap.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1)
-    ap.add_argument("--skip-benchmark", action="store_true",
-                    help="only copy the PR test cases into the corpus")
+    ap.add_argument(
+        "--skip-benchmark",
+        action="store_true",
+        help="only copy the PR test cases into the corpus",
+    )
     args = ap.parse_args()
 
     if args.jobs < 1:
@@ -137,10 +143,17 @@ def main() -> int:
     if not args.opt.is_file():
         sys.exit(f"opt not found: {args.opt} (is the Release LLVM built?)")
 
-    # Fresh corpus: drop any previous contents.
+    if not args.skip_benchmark:
+        if args.bench_root is None:
+            ap.error(f"--bench-root or ${BENCH_ROOT_ENV} is required")
+        if not args.bench_root.is_dir():
+            sys.exit(f"benchmark root not found: {args.bench_root}")
+
+    # Fresh corpus: drop previous contents. With --skip-benchmark only the PR
+    # test copies are replaced; the preprocessed modules are kept.
     if args.corpus.is_dir():
         for old in args.corpus.iterdir():
-            if old.is_file():
+            if old.is_file() and (not args.skip_benchmark or is_pr_test(old)):
                 old.unlink()
     args.corpus.mkdir(parents=True, exist_ok=True)
 
@@ -150,8 +163,9 @@ def main() -> int:
     if args.skip_benchmark:
         return 0
 
-    ok, fail = preprocess_benchmark(args.bench_root, args.corpus,
-                                    args.passes, args.jobs, args.opt)
+    ok, fail = preprocess_benchmark(
+        args.bench_root, args.corpus, args.passes, args.jobs, args.opt
+    )
     print(f"  preprocessed {ok} benchmark modules, {fail} failed")
     print(f"  corpus: {args.corpus}")
     return 0 if fail == 0 else 1

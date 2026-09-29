@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(METAPHIR_WERROR "Treat compiler warnings as errors" ON)
+
 add_compile_options(-fno-rtti)
 
 set(LLVM_DIR
@@ -37,8 +39,14 @@ function(add_metaphir_test test_name)
     gtest_discover_tests(${test_name})
 endfunction()
 
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR})
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+
+# Project targets (but not the vendored gtest above) build warning-clean.
+add_compile_options(-Wall -Wextra -Wno-unused-parameter)
+if(METAPHIR_WERROR)
+  add_compile_options(-Werror)
+endif()
 
 add_subdirectory(metaphir)
 add_subdirectory(test)
