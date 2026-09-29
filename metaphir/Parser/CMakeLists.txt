@@ -18,14 +18,13 @@ add_library(metaphir-parser
   MIRToken.cpp
   MIRToken.h
 
-  MIRConstraintLexer.cpp
-  MIRConstraintLexer.h
-
   MIRLexer.cpp
   MIRLexer.h
 
   MIRParser.cpp
   MIRParser.ParseConstraint.cpp
+  MIRParser.ParseDefinition.cpp
+  MIRParser.ParseInstruction.cpp
   MIRParser.h
 
   "${METAPHIR_STDLIB_OUTPUT}"

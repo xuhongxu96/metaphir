@@ -1,6 +1,7 @@
 #ifndef METAPHIR_PARSER_MIR_PARSER_H
 #define METAPHIR_PARSER_MIR_PARSER_H
 
+#include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/Parser/MIRLexer.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
@@ -8,9 +9,6 @@
 
 namespace llvm {
 namespace metaphir {
-
-class CompositeMatcher;
-struct ParameterDef;
 
 class MIRParser {
 public:
@@ -70,7 +68,52 @@ private:
   bool parsePatternSetting(PatternSettings::Setting Setting);
 
   bool parseInstruction(Instruction *&Result);
+  /// Parses an optional '%name =' into Name.
+  bool parseInstructionResult(SmallVectorImpl<char> &Name);
+  /// Checks what the operand grammar cannot: ':o' and ':c' against the
+  /// operands, and that no keyed operand is given twice.
+  bool validateInstruction(Instruction::InstructionID ID,
+                           ArrayRef<MetaFlag *> MFlags,
+                           ArrayRef<MatcherOperand> Ops);
+
+  // Operand grammars. Each appends what it parses to Ops.
+  bool parseCustomOperands(Instruction::InstructionID ID,
+                           SmallVectorImpl<MatcherOperand> &Ops);
+  /// A typed operand, 'i32 ?x'.
+  bool parseOperand(SmallVectorImpl<MatcherOperand> &Ops,
+                    MetaType Expected = MetaType::Value);
+  /// A bare type that is not an operand, e.g. a load's result type.
+  bool parseTypeOperand(SmallVectorImpl<MatcherOperand> &Ops);
+  /// A value stored under Key, e.g. an alignment.
+  bool parseKeyedOperand(SmallVectorImpl<MatcherOperand> &Ops,
+                         MatcherOperand::KeyedOperandKind Key,
+                         MetaType Expected);
+  bool parseOperandComma();
+  /// An optional ', align N'.
+  bool parseAlign(SmallVectorImpl<MatcherOperand> &Ops);
+  enum TrailingOperandKind {
+    NatIndices,   ///< ', 0, 1' (extractvalue), or ', ...?values'
+    TypedOperands ///< ', i64 ?i, ...' (GEP, call), or ', ...?types ?values'
+  };
+  /// Operands after a comma until the list ends, or an array capture.
+  bool parseTrailingOperands(SmallVectorImpl<MatcherOperand> &Ops,
+                             TrailingOperandKind Kind);
+  bool parseAllocaOperands(SmallVectorImpl<MatcherOperand> &Ops);
+  bool parseGEPOperands(SmallVectorImpl<MatcherOperand> &Ops);
+  bool parseBranchOperands(SmallVectorImpl<MatcherOperand> &Ops);
+  bool parseCompareOperands(SmallVectorImpl<MatcherOperand> &Ops);
+  bool parsePhiOperands(SmallVectorImpl<MatcherOperand> &Ops);
+  bool parseCallOperands(SmallVectorImpl<MatcherOperand> &Ops);
   bool parseType(Type *&Result, bool AllowVoid = false);
+  bool parseBaseType(Type *&Result, bool AllowVoid);
+  bool parsePointerType(Type *&Result);
+  /// '[N x T]' or '<N x T>' after the opening bracket.
+  bool parseSequenceType(Type *&Result, bool IsVector);
+  /// '{T, ...}' after the opening brace; '<{...}>' when Packed.
+  bool parseStructType(Type *&Result, bool Packed);
+  /// Pointer ('*') and function ('(T, ...)') type suffixes.
+  bool parseTypeSuffixes(Type *&Result);
+  bool parseAggregateConstant(Value *&Result);
   bool parseValue(Value *&Result, MetaType Expected = MetaType::Value);
   bool parseTypedOperand(MatcherOperand &Result,
                          MetaType Expected = MetaType::Value);
@@ -111,13 +154,69 @@ private:
   bool parseBodyLine(tok::Kind Terminator);
   bool expectEndOfLine(tok::Kind Terminator, const Twine &Message);
 
-  bool parseTopLevelMatch();
-  /// Consumes an 'or' that introduces another match branch.
-  bool consumeBranchSeparator();
-  bool parseMatchParameters(Instruction::OperandSyntax Syntax,
-                            SmallVectorImpl<ParameterDef> &Result);
+  /// Parses 'Element (, Element)*' unless the current token is Close, which
+  /// is left for the caller.
+  bool parseCommaList(tok::Kind Close, function_ref<bool()> Element);
+
+  /// Saves the parser's naming state and opens a closed scope in its place:
+  /// no meta variables, locals or block, a scratch pattern, and default
+  /// settings. The saved state is restored when the scope ends.
+  class ClosedScope {
+  public:
+    explicit ClosedScope(MIRParser &Parser);
+    ~ClosedScope();
+    ClosedScope(const ClosedScope &) = delete;
+    ClosedScope &operator=(const ClosedScope &) = delete;
+
+  private:
+    MIRParser &Parser;
+    StringMap<MetaVariable *> MetaVariables;
+    StringMap<Instruction *> Instructions;
+    Pattern *CurrentPattern;
+    MetaVariable *CurrentBlock;
+    PatternSettings Settings;
+  };
+
+  // 'constraint' and 'metaflag' definitions.
   bool parseTopLevelConstraint();
   bool parseTopLevelMetaFlag();
+  bool parseDefinitionParameters(StringRef Kind,
+                                 SmallVectorImpl<StringRef> &Names,
+                                 SmallVectorImpl<SourceRange> &Ranges);
+  bool parseDefinitionBody(StringRef Kind, ArrayRef<StringRef> Names,
+                           ArrayRef<SourceRange> Ranges,
+                           SmallVectorImpl<MetaVariable *> &Vars,
+                           Constraint *&Body);
+
+  // 'match' definitions.
+  struct MatchHeader {
+    std::string Name;
+    bool IsCommutative = false;
+    SmallVector<InstructionFlag::FlagID, 4> SupportedFlags;
+    Instruction::OperandSyntax Syntax = Instruction::OperandSyntax::Nary;
+    unsigned Arity = 0;
+    SmallVector<ParameterDef, 4> Parameters;
+  };
+  /// A parsed branch and the arrays it refers to.
+  struct BranchStorage {
+    CompositeMatcher::Branch Branch;
+    SmallVector<std::pair<InstructionFlag::FlagID, bool>, 2> FixedFlags;
+    SmallVector<MetaVariable *, 4> ParameterVars;
+  };
+  bool parseTopLevelMatch();
+  bool parseMatchHeader(MatchHeader &Header);
+  bool parseMatchParameters(Instruction::OperandSyntax Syntax,
+                            SmallVectorImpl<ParameterDef> &Result);
+  bool parseMatchBranch(const MatchHeader &Header, BranchStorage &Storage);
+  bool parseBranchFlags(
+      ArrayRef<InstructionFlag::FlagID> SupportedFlags,
+      SmallVectorImpl<std::pair<InstructionFlag::FlagID, bool>> &Result);
+  /// Consumes an 'or' that introduces another match branch.
+  bool consumeBranchSeparator();
+
+  /// The semantic flag a token names, if any.
+  static std::optional<InstructionFlag::FlagID> getSemanticFlag(tok::Kind K);
+  bool parseSemanticFlagName(InstructionFlag::FlagID &Result);
   bool parseCompositeInstruction(Instruction *&Result, CompositeMatcher *CM,
                                  StringRef OpName, StringRef ResultName,
                                  LocTy Loc);

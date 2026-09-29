@@ -16,8 +16,6 @@ namespace metaphir {
 
 class Type;
 class MIRContext;
-class MIRLexer;
-class MIRConstraintLexer;
 
 class MIRLexer {
 public:
@@ -33,6 +31,8 @@ public:
     return Lex();
   }
   LocTy getLoc() const { return SMLoc::getFromPointer(TokStart); }
+  /// The end (exclusive) of the previous token.
+  LocTy getPrevTokEnd() const { return SMLoc::getFromPointer(PrevTokEnd); }
   tok::Kind getKind() const { return CurKind; }
   const std::string &getStrVal() const { return StrVal; }
   Type *getTyVal() const { return TyVal; }
@@ -40,19 +40,6 @@ public:
   char getMetaIntPrefix() const { return MetaIntPrefix; }
   const APSInt &getAPSIntVal() const { return APSIntVal; }
   const APFloat &getAPFloatVal() const { return APFloatVal; }
-
-  /// Get the line, column position of the start of the current token,
-  /// zero-indexed
-  std::pair<unsigned, unsigned> getTokLineColumnPos() {
-    auto LC = SM.getLineAndColumn(SMLoc::getFromPointer(TokStart));
-    return {LC.first - 1, LC.second - 1};
-  }
-  /// Get the line, column position of the end of the previous token,
-  /// zero-indexed exclusive
-  std::pair<unsigned, unsigned> getPrevTokEndLineColumnPos() {
-    auto LC = SM.getLineAndColumn(SMLoc::getFromPointer(PrevTokEnd));
-    return {LC.first - 1, LC.second - 1};
-  }
 
   // This returns true as a convenience for the parser functions that return
   // true on error.
@@ -66,10 +53,10 @@ public:
   void Warning(const Twine &Msg) const { return Warning(getLoc(), Msg); }
 
   /// The diagnostic that receives this lexer's (and its parser's) errors.
-  SMDiagnostic &getDiagnostic() const { return ErrorInfo.Error; }
+  SMDiagnostic &getDiagnostic() const { return Diag.Error; }
 
   /// Whether an error has been reported, by the lexer or the parser.
-  bool hasError() const { return ErrorInfo.Priority != ErrorPriority::None; }
+  bool hasError() const { return Diag.Priority != ErrorPriority::None; }
 
   /// The source text of the current token.
   StringRef getTokenText() const {
@@ -77,19 +64,17 @@ public:
   }
 
 private:
-  friend class MIRConstraintLexer;
-
   enum class ErrorPriority {
     None,   // No error message present.
     Parser, // Errors issued by parser.
     Lexer,  // Errors issued by lexer.
   };
 
-  struct ErrorInfo {
+  struct DiagnosticState {
     ErrorPriority Priority = ErrorPriority::None;
     SMDiagnostic &Error;
 
-    explicit ErrorInfo(SMDiagnostic &Error) : Error(Error) {}
+    explicit DiagnosticState(SMDiagnostic &Error) : Error(Error) {}
   };
 
   const char *CurPtr;
@@ -98,12 +83,12 @@ private:
   /// The end (exclusive) of the previous token.
   const char *PrevTokEnd = nullptr;
 
-  ErrorInfo ErrorInfo;
+  DiagnosticState Diag;
   SourceMgr &SM;
   MIRContext &Context;
 
   /// Constraint expressions use a different token set than pattern syntax
-  /// (see MIRConstraintLexer), so the lexer tracks which sublanguage it is
+  /// (see LexConstraintToken), so the lexer tracks which sublanguage it is
   /// in. Two contexts select it, with different lifetimes:
   ///
   ///   ;; <expr>                 -- a marker introduces a single line
@@ -135,6 +120,7 @@ private:
   APSInt APSIntVal{0};
 
   tok::Kind LexToken();
+  tok::Kind LexConstraintToken();
 
   int getNextChar();
   void SkipLineComment();
@@ -150,7 +136,6 @@ private:
   tok::Kind LexPositive();
   tok::Kind LexAt();
   tok::Kind LexDollar();
-  tok::Kind LexExclaim();
   tok::Kind LexPercent();
   tok::Kind LexUIntID(tok::Kind Token);
   tok::Kind LexVar(tok::Kind Var, tok::Kind VarID);
