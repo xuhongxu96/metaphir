@@ -17,9 +17,7 @@ namespace metaphir {
 using detail::bind;
 using detail::success;
 
-namespace {
-
-bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
+static bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
   const auto *Global = dyn_cast<llvm::GlobalValue>(&Target);
   if (!Global)
     return false;
@@ -36,7 +34,7 @@ bool matches(const GlobalValue &Matcher, const llvm::Value &Target) {
   return MatcherName == Global->getName();
 }
 
-bool matches(const IntegerConstant &Matcher, const llvm::Value &Target) {
+static bool matches(const IntegerConstant &Matcher, const llvm::Value &Target) {
   const auto *Integer = dyn_cast<ConstantInt>(&Target);
   if (!Integer)
     return false;
@@ -44,7 +42,8 @@ bool matches(const IntegerConstant &Matcher, const llvm::Value &Target) {
   return APSInt::isSameValue(Matcher.getValue(), TargetValue);
 }
 
-bool matches(const FloatingConstant &Matcher, const llvm::Value &Target) {
+static bool matches(const FloatingConstant &Matcher,
+                    const llvm::Value &Target) {
   const auto *Floating = dyn_cast<ConstantFP>(&Target);
   if (!Floating)
     return false;
@@ -55,7 +54,7 @@ bool matches(const FloatingConstant &Matcher, const llvm::Value &Target) {
   return Converted.bitwiseIsEqual(Floating->getValueAPF());
 }
 
-bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
+static bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
   switch (Matcher.getKeywordID()) {
 #define MIR_MATCHABLE_CONSTANT_KEYWORD(ID, Spelling, LLVMClass)                \
   case KeywordConstant::K_##ID:                                                \
@@ -65,8 +64,6 @@ bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
     llvm_unreachable("invalid keyword constant ID");
   }
 }
-
-} // namespace
 
 std::optional<Instantiation::Binding>
 SubtreeMatcher::getMetaVariableBinding(const MetaVariable &Matcher) {

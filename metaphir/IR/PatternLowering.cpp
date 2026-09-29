@@ -11,26 +11,26 @@
 namespace llvm {
 namespace metaphir {
 
-namespace {
-
-bool isWildcardCapture(const MetaVariable *Capture) {
+static bool isWildcardCapture(const MetaVariable *Capture) {
   return Capture && (Capture->getName() == "_" ||
                      Capture->getName().starts_with("_flag$"));
 }
 
-bool isMetaType(const Type *T) {
+static bool isMetaType(const Type *T) {
   return isa<MetaIRType>(T) || isa<MetaIntegerType>(T);
 }
 
-template <typename T> std::string toString(const T &Object) {
+template <typename T> static std::string toString(const T &Object) {
   std::string Result;
   raw_string_ostream(Result) << Object;
   return Result;
 }
 
-Error makeError(const Twine &Message) {
+static Error makeError(const Twine &Message) {
   return createStringError(inconvertibleErrorCode(), Message);
 }
+
+namespace {
 
 /// A substitution of pattern entities, applied to a matcher branch when it is
 /// inlined at a use and to a metaflag body when it is desugared. Meta
@@ -66,6 +66,8 @@ public:
 private:
   MIRContext &Context;
 };
+
+} // namespace
 
 Value *Substitution::value(Value *V) const {
   if (!V)
@@ -294,6 +296,8 @@ Substitution::operands(const Instruction &I) const {
   return Result;
 }
 
+namespace {
+
 /// Phase 1: expands every composite matcher use into leaf patterns.
 class Expander {
 public:
@@ -321,6 +325,8 @@ private:
     return IntegerConstant::get(Context, APSInt(APInt(1, Value), true), Range);
   }
 };
+
+} // namespace
 
 Error Expander::expand(const Pattern &Cur,
                        SmallVectorImpl<const Pattern *> &Leaves) {
@@ -670,6 +676,8 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
   return Variant;
 }
 
+namespace {
+
 /// Phase 2: desugars metaflags into constraints.
 class Desugarer {
 public:
@@ -686,6 +694,8 @@ private:
   Expected<Constraint *>
   lowerUserDefined(const MetaFlag &MF, const MetaFlagDef &Def, Value *Subject);
 };
+
+} // namespace
 
 Error Desugarer::desugar(Pattern &P) {
   // Collect first: adding constraints must not disturb the iteration.
@@ -808,8 +818,6 @@ Expected<Constraint *> Desugarer::lowerUserDefined(const MetaFlag &MF,
   }
   return Subst.constraint(Def.getBody());
 }
-
-} // namespace
 
 Expected<PatternVariants> PatternLowering::lower(const Pattern *P) {
   if (!P)

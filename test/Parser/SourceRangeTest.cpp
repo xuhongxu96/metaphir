@@ -1,9 +1,3 @@
-// Every meta variable carries a source range. MetaVariable::get requires one,
-// so the interesting cases are the ones a caller could previously have left
-// empty by omission: the parameters of a 'constraint' or 'metaflag' definition,
-// the parameters bound per branch of a 'match', and the variables
-// PatternLowering synthesizes.
-
 #include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
@@ -12,6 +6,11 @@
 #include "test/TestUtils.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+// Every meta variable carries a source range. MetaVariable::get requires one,
+// so the interesting cases are the ones a caller could previously have left
+// empty by omission: the parameters of a 'constraint' or 'metaflag' definition,
+// the parameters bound per branch of a 'match', and the variables
+// PatternLowering synthesizes.
 
 using namespace llvm;
 using namespace llvm::metaphir;

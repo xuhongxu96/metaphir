@@ -78,10 +78,12 @@ static bool collectLLVMIRFiles(StringRef Input,
   return true;
 }
 
+namespace {
 struct UnsatisfiedConstraint {
   const Constraint *Expression;
   std::string Reason; // empty unless the constraint could not be evaluated
 };
+} // namespace
 
 static MatchResults
 applyConstraints(const Pattern &Pattern, MatchResults Matches,

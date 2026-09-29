@@ -25,9 +25,9 @@
 using namespace llvm;
 using namespace llvm::metaphir;
 
-namespace {
-
 using MIRInstruction = llvm::metaphir::Instruction;
+
+namespace {
 
 MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
                    ArrayRef<MetaFlag::Argument> Arguments = {},
@@ -52,8 +52,6 @@ Pattern *makePatternWithOperandFlag(MIRContext &Context, MetaFlag *Flag) {
   P->addInstruction(Inst);
   return P;
 }
-
-} // namespace
 
 TEST(MetaFlagTest, InstructionHasMetaFlagSearchesByID) {
   MIRContext Context;
@@ -361,3 +359,5 @@ TEST(MetaFlagTest, LoweringLeavesItsInputUnchanged) {
   }
   EXPECT_TRUE(P->getConstraints().empty());
 }
+
+} // namespace

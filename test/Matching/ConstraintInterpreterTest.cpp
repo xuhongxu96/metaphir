@@ -691,10 +691,6 @@ TEST_F(ConstraintInterpreterTest, ValueTrackContextBuildsLazily) {
   EXPECT_TRUE(Context.hasMaterializedTargetLibraryInfo());
 }
 
-} // namespace
-
-namespace {
-
 // The integer predicates answer false for an operand that is not an integer;
 // the failed coercion must be consumed (an unchecked llvm::Error aborts in
 // builds with LLVM_ENABLE_ABI_BREAKING_CHECKS).
