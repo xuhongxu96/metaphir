@@ -1,4 +1,4 @@
-modules=50839
-pattern_seconds=3843.785
+modules=50838
+pattern_seconds=4402.680
 patterns=1
-P_anchors=39
+P_anchors=31
