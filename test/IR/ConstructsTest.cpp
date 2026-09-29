@@ -1,12 +1,11 @@
 #include "metaphir/IR/CompositeMatcher.h"
+#include "metaphir/IR/Constants.h"
 #include "metaphir/IR/Constraint.h"
-#include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MetaFlag.h"
 #include "metaphir/IR/Pattern.h"
-#include "metaphir/IR/Values.h"
 #include "gtest/gtest.h"
 #include <type_traits>
 

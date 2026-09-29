@@ -1,5 +1,5 @@
 #include "metaphir/Matching/ConstraintCoercion.h"
-#include "metaphir/IR/Constraints.h"
+#include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/MIRContext.h"
 #include "test/TestUtils.h"
 #include "llvm/IR/Constants.h"

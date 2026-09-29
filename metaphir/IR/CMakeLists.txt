@@ -18,19 +18,25 @@ add_library(metaphir-ir
   Constraint.cpp
   Constraint.h
 
-  Constraints.h
   ConstraintCoercions.def
   ConstraintOperators.def
 
   CompositeMatcher.cpp
   CompositeMatcher.h
 
+  LibraryDefs.h
+
+  PatternSettings.cpp
+  PatternSettings.h
+
+  SourceRange.h
+
   PatternLowering.cpp
   PatternLowering.h
 
   Value.h
-  Values.h
-  Values.cpp
+  Constants.h
+  Constants.cpp
 
   Instruction.cpp
   Instruction.h

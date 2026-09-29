@@ -1,5 +1,5 @@
-#ifndef METAPHIR_IR_VALUES_H
-#define METAPHIR_IR_VALUES_H
+#ifndef METAPHIR_IR_CONSTANTS_H
+#define METAPHIR_IR_CONSTANTS_H
 
 #include "metaphir/IR/Type.h"
 #include "metaphir/IR/Value.h"

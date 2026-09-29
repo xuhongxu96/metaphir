@@ -1,5 +1,5 @@
 #include "metaphir/Matching/ConstraintInterpreter.h"
-#include "metaphir/IR/Constraints.h"
+#include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/Matching/Instantiation.h"

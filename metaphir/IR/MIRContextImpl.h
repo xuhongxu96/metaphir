@@ -3,6 +3,7 @@
 
 #include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/DerivedTypes.h"
+#include "metaphir/IR/LibraryDefs.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Type.h"
 #include "llvm/ADT/ArrayRef.h"

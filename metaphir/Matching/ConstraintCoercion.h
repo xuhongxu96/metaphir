@@ -68,8 +68,7 @@ inline Expected<std::string> requireString(Expected<ConstraintValue> Result,
 }
 
 Expected<ConstraintValue::StringArrayStorage>
-requireStringArray(const ConstraintValue &Value,
-                   const Constraint &Expression);
+requireStringArray(const ConstraintValue &Value, const Constraint &Expression);
 inline Expected<ConstraintValue::StringArrayStorage>
 requireStringArray(Expected<ConstraintValue> Result,
                    const Constraint &Expression) {
@@ -80,8 +79,8 @@ requireStringArray(Expected<ConstraintValue> Result,
 
 Expected<const llvm::Value *> requireValue(const ConstraintValue &Value,
                                            const Constraint &Expression);
-inline Expected<const llvm::Value *> requireValue(Expected<ConstraintValue> Result,
-                                                  const Constraint &Expression) {
+inline Expected<const llvm::Value *>
+requireValue(Expected<ConstraintValue> Result, const Constraint &Expression) {
   if (!Result)
     return Result.takeError();
   return requireValue(*Result, Expression);

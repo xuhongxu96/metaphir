@@ -1,6 +1,7 @@
 #include "metaphir/IR/MetaFlag.h"
 #include "metaphir/IR/CompositeMatcher.h"
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/IR/LibraryDefs.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MIRContextImpl.h"
 #include "metaphir/IR/Pattern.h"
