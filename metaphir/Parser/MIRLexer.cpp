@@ -1,10 +1,10 @@
 #include "metaphir/Parser/MIRLexer.h"
 #include "metaphir/IR/DerivedTypes.h"
-#include "metaphir/Parser/MIRConstraintLexer.h"
 #include "metaphir/Parser/MIRToken.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SourceMgr.h"
@@ -61,6 +61,28 @@ static const char *isLabelTail(const char *CurPtr) {
   }
 }
 
+/// The keyword spelled Keyword, or tok::Identifier if it is none.
+static tok::Kind lookupKeyword(StringRef Keyword) {
+  static const StringMap<tok::Kind> Keywords = [] {
+    StringMap<tok::Kind> Map;
+#define KEYWORD(Spelling) Map[#Spelling] = tok::kw_##Spelling;
+#define MIR_KEYWORD_TOKEN_KIND(Kind) KEYWORD(Kind)
+#include "metaphir/Parser/MIRKeywords.def"
+#define MIR_PREDICATE_KEYWORD(ID, Spelling) KEYWORD(Spelling)
+#include "metaphir/IR/KeywordConstants.def"
+#define MIR_TYPE_TOKEN_KIND(Kind) KEYWORD(Kind)
+#include "metaphir/IR/Types.def"
+#define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Kind) KEYWORD(Kind)
+#include "metaphir/IR/InstructionMatchers.def"
+#define MIR_FLAG_TOKEN_KIND(Kind) KEYWORD(Kind)
+#include "metaphir/IR/Flags.def"
+#undef KEYWORD
+    return Map;
+  }();
+  auto It = Keywords.find(Keyword);
+  return It == Keywords.end() ? tok::Identifier : It->second;
+}
+
 /// Describes a character for a diagnostic: printable characters are quoted,
 /// others are written as a hexadecimal escape.
 static std::string describeChar(int C) {
@@ -84,10 +106,10 @@ static std::string describeChar(int C) {
 // errors, and keeps the first (most specific) error of a given priority.
 void MIRLexer::Error(LocTy ErrorLoc, const Twine &Msg,
                      MIRLexer::ErrorPriority Priority) {
-  if (Priority <= ErrorInfo.Priority)
+  if (Priority <= Diag.Priority)
     return;
-  ErrorInfo.Error = SM.GetMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
-  ErrorInfo.Priority = Priority;
+  Diag.Error = SM.GetMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
+  Diag.Priority = Priority;
 }
 
 void MIRLexer::Warning(LocTy WarningLoc, const Twine &Msg) const {
@@ -100,7 +122,7 @@ void MIRLexer::Warning(LocTy WarningLoc, const Twine &Msg) const {
 
 MIRLexer::MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &Err,
                    MIRContext &C)
-    : CurBuf(StartBuf), ErrorInfo(Err), SM(SM), Context(C) {
+    : CurBuf(StartBuf), Diag(Err), SM(SM), Context(C) {
   // The lexer reads one character past a token to classify it, and relies on
   // the NUL terminator that MemoryBuffer guarantees to stop at the end.
   assert(*CurBuf.end() == '\0' && "lexer buffer must be NUL-terminated");
@@ -125,8 +147,7 @@ int MIRLexer::getNextChar() {
 }
 
 tok::Kind MIRLexer::Lex() {
-  tok::Kind Kind =
-      inConstraint() ? MIRConstraintLexer(*this).Lex() : LexToken();
+  tok::Kind Kind = inConstraint() ? LexConstraintToken() : LexToken();
   updateConstraintContext(Kind);
   return CurKind = Kind;
 }
@@ -221,7 +242,7 @@ tok::Kind MIRLexer::LexToken() {
       SkipLineComment();
       continue;
     case '!':
-      return LexExclaim();
+      return LexUnexpected(CurChar);
     case ':':
       return LexColon();
     case '0':
@@ -259,7 +280,7 @@ tok::Kind MIRLexer::LexToken() {
     case '*':
       return tok::star;
     case '|':
-      return tok::bar;
+      return LexUnexpected(CurChar);
     case '&':
       return LexUnexpected(CurChar);
     case '/':
@@ -453,9 +474,6 @@ tok::Kind MIRLexer::LexQuote() {
   return kind;
 }
 
-/// Lex all tokens that start with a ! character.
-tok::Kind MIRLexer::LexExclaim() { return tok::exclaim; }
-
 /// Lex a label, integer or byte types, keyword, or hexadecimal integer
 /// constant.
 ///    Label           [-a-zA-Z$._0-9]+:
@@ -531,28 +549,8 @@ tok::Kind MIRLexer::LexIdentifier() {
   --StartChar;
   StringRef Keyword(StartChar, CurPtr - StartChar);
 
-#define KEYWORD(STR)                                                           \
-  do {                                                                         \
-    if (Keyword == #STR)                                                       \
-      return tok::kw_##STR;                                                    \
-  } while (false)
-
-#define MIR_KEYWORD_TOKEN_KIND(Kind) KEYWORD(Kind);
-#include "metaphir/Parser/MIRKeywords.def"
-
-#define MIR_PREDICATE_KEYWORD(ID, Spelling) KEYWORD(Spelling);
-#include "metaphir/IR/KeywordConstants.def"
-
-#define MIR_TYPE_TOKEN_KIND(Kind) KEYWORD(Kind);
-#include "metaphir/IR/Types.def"
-
-#define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Kind) KEYWORD(Kind);
-#include "metaphir/IR/InstructionMatchers.def"
-
-#define MIR_FLAG_TOKEN_KIND(Kind) KEYWORD(Kind);
-#include "metaphir/IR/Flags.def"
-
-#undef KEYWORD
+  if (tok::Kind Kind = lookupKeyword(Keyword); Kind != tok::Identifier)
+    return Kind;
 
   // [us]0x[0-9A-Fa-f]+ is an integer written as a hexadecimal bit pattern:
   // 'u' reads the digits as an unsigned number, 's' as a two's complement
@@ -754,6 +752,133 @@ tok::Kind MIRLexer::LexColon() {
       return tok::MetaFlag;
     }
     return tok::colon;
+  }
+}
+
+/// Lexes a token of a constraint expression. Its operators differ from
+/// pattern syntax: '-' is subtraction rather than a sign, and '&&', '==',
+/// '!=' and friends are operators.
+tok::Kind MIRLexer::LexConstraintToken() {
+  PrevTokEnd = CurPtr;
+  while (true) {
+    TokStart = CurPtr;
+    int CurChar = getNextChar();
+    switch (CurChar) {
+    default:
+      if (isalpha(static_cast<unsigned char>(CurChar)) || CurChar == '_') {
+        // Operator names may contain hyphens (e.g. user-defined names); a '-'
+        // is only part of the identifier when immediately followed by an
+        // alphanumeric character, so "a - b" still lexes as subtraction.
+        while (isalnum(static_cast<unsigned char>(CurPtr[0])) ||
+               CurPtr[0] == '_' ||
+               (CurPtr[0] == '-' &&
+                isalnum(static_cast<unsigned char>(CurPtr[1]))))
+          ++CurPtr;
+        StrVal.assign(TokStart, CurPtr);
+        if (StrVal == "true")
+          return tok::kw_true;
+        if (StrVal == "false")
+          return tok::kw_false;
+#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
+  if (StrVal == #Name)                                                         \
+    return tok::kw_##Name;
+#include "metaphir/IR/PatternSettings.def"
+        return tok::Identifier;
+      }
+      return LexUnexpected(CurChar);
+    case EOF:
+      return tok::Eof;
+    case 0:
+    case ' ':
+    case '\t':
+      continue;
+    case '\n':
+      return tok::Newline;
+    case '\r':
+      if (CurPtr[0] == '\n')
+        ++CurPtr;
+      return tok::Newline;
+    case ';':
+      SkipLineComment();
+      continue;
+    case '+':
+      return tok::plus;
+    case '-':
+      return tok::minus;
+    case '*':
+      return tok::star;
+    case '/':
+      return tok::slash;
+    case '%':
+      return tok::percent;
+    case '!':
+      if (CurPtr[0] == '=') {
+        ++CurPtr;
+        return tok::notequal;
+      }
+      return tok::exclaim;
+    case '=':
+      if (CurPtr[0] == '=') {
+        ++CurPtr;
+        return tok::equalequal;
+      }
+      return tok::equal;
+    case '|':
+      if (CurPtr[0] == '|') {
+        ++CurPtr;
+        return tok::barbar;
+      }
+      return LexUnexpected(CurChar);
+    case '&':
+      if (CurPtr[0] == '&') {
+        ++CurPtr;
+        return tok::ampamp;
+      }
+      return LexUnexpected(CurChar);
+    case '<':
+      if (CurPtr[0] == '=') {
+        ++CurPtr;
+        return tok::lessequal;
+      }
+      return tok::less;
+    case '>':
+      if (CurPtr[0] == '=') {
+        ++CurPtr;
+        return tok::greaterequal;
+      }
+      return tok::greater;
+    case '(':
+      return tok::lparen;
+    case ')':
+      return tok::rparen;
+    case ',':
+      return tok::comma;
+    case '"':
+      return LexQuote();
+    case '[':
+      return tok::lsquare;
+    case ']':
+      return tok::rsquare;
+    // Braces delimit the body of a top-level 'constraint'/'metaflag'
+    // definition, which is lexed entirely in constraint mode.
+    case '{':
+      return tok::lbrace;
+    case '}':
+      return tok::rbrace;
+    case '?':
+      return LexQuestion();
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      return LexDigitOrNegative();
+    }
   }
 }
 
