@@ -115,7 +115,6 @@ Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
   else if (OperatorKind == Constraint::Call)                                   \
     M.Call[OperatorName] = Constraint::O_##OperatorID;
 #include "metaphir/IR/ConstraintOperators.def"
-#undef MIR_CONSTRAINT_OPERATOR_ALIAS
     return M;
   }();
 

@@ -7,7 +7,7 @@ namespace metaphir {
 
 // Libraries are loaded lazily by the parser (see MIRParser::loadLibrary): the
 // IR library cannot call into the parser, which links against it.
-MIRContext::MIRContext() : pImpl(new MIRContextImpl(*this)) {}
+MIRContext::MIRContext() : pImpl(new MIRContextImpl()) {}
 MIRContext::~MIRContext() { delete pImpl; }
 
 bool MIRContext::registerCompositeMatcher(CompositeMatcher *Matcher) {

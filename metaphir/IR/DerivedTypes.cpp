@@ -36,11 +36,10 @@ MetaIRType *MetaIRType::get(MIRContext &C, MetaVariable *Variable) {
 
 MetaIntegerType *MetaIntegerType::get(MIRContext &C, MetaVariable *BitWidth,
                                       bool Byte) {
-  const MetaIntegerTypeKeyInfo::KeyTy Key(BitWidth, Byte);
-  auto Insertion = C.pImpl->MetaIntegerTypes.insert_as(nullptr, Key);
-  if (Insertion.second)
-    *Insertion.first = new (C.pImpl->Alloc) MetaIntegerType(C, BitWidth, Byte);
-  return *Insertion.first;
+  MetaIntegerType *&Entry = C.pImpl->MetaIntegerTypes[{BitWidth, Byte}];
+  if (!Entry)
+    Entry = new (C.pImpl->Alloc) MetaIntegerType(C, BitWidth, Byte);
+  return Entry;
 }
 
 PointerType *PointerType::get(MIRContext &C, Type *Element,
@@ -53,42 +52,43 @@ PointerType *PointerType::get(MIRContext &C, Type *Element,
 
 ArrayType *ArrayType::get(MIRContext &C, Type *Element, uint64_t Count,
                           MetaVariable *CountVar) {
-  const ArrayTypeKeyInfo::KeyTy Key(Element, Count, CountVar);
-  auto Insertion = C.pImpl->ArrayTypes.insert_as(nullptr, Key);
-  if (Insertion.second)
-    *Insertion.first =
-        new (C.pImpl->Alloc) ArrayType(C, Element, Count, CountVar);
-  return *Insertion.first;
+  ArrayType *&Entry = C.pImpl->ArrayTypes[{Element, Count, CountVar}];
+  if (!Entry)
+    Entry = new (C.pImpl->Alloc) ArrayType(C, Element, Count, CountVar);
+  return Entry;
 }
 
 VectorType *VectorType::get(MIRContext &C, bool Scalable, Type *Element,
                             uint64_t Count, MetaVariable *CountVar) {
-  const VectorTypeKeyInfo::KeyTy Key(Element, Count, CountVar, Scalable);
-  auto Insertion = C.pImpl->VectorTypes.insert_as(nullptr, Key);
-  if (Insertion.second)
-    *Insertion.first =
+  VectorType *&Entry =
+      C.pImpl->VectorTypes[{Element, Count, CountVar, Scalable}];
+  if (!Entry)
+    Entry =
         new (C.pImpl->Alloc) VectorType(C, Scalable, Element, Count, CountVar);
-  return *Insertion.first;
+  return Entry;
 }
 
+// Aggregate types own a copy of their element array, and their map key refers
+// to that copy rather than to the caller's array.
 StructType *StructType::get(MIRContext &C, ArrayRef<Type *> Elements,
                             bool Packed) {
-  const StructTypeKeyInfo::KeyTy Key(Elements, Packed);
-  auto Insertion = C.pImpl->StructTypes.insert_as(nullptr, Key);
-  if (Insertion.second)
-    *Insertion.first = new (C.pImpl->Alloc)
-        StructType(C, C.pImpl->copyArray<Type *>(Elements), Packed);
-  return *Insertion.first;
+  if (StructType *Existing = C.pImpl->StructTypes.lookup({Elements, Packed}))
+    return Existing;
+  auto *New =
+      new (C.pImpl->Alloc) StructType(C, C.pImpl->copyArray(Elements), Packed);
+  C.pImpl->StructTypes[{New->getElementTypes(), Packed}] = New;
+  return New;
 }
 
 FunctionType *FunctionType::get(MIRContext &C, Type *ReturnType,
                                 ArrayRef<Type *> Parameters, bool VarArg) {
-  const FunctionTypeKeyInfo::KeyTy Key(ReturnType, Parameters, VarArg);
-  auto Insertion = C.pImpl->FunctionTypes.insert_as(nullptr, Key);
-  if (Insertion.second)
-    *Insertion.first = new (C.pImpl->Alloc) FunctionType(
-        C, ReturnType, C.pImpl->copyArray<Type *>(Parameters), VarArg);
-  return *Insertion.first;
+  if (FunctionType *Existing =
+          C.pImpl->FunctionTypes.lookup({ReturnType, Parameters, VarArg}))
+    return Existing;
+  auto *New = new (C.pImpl->Alloc)
+      FunctionType(C, ReturnType, C.pImpl->copyArray(Parameters), VarArg);
+  C.pImpl->FunctionTypes[{ReturnType, New->getParameterTypes(), VarArg}] = New;
+  return New;
 }
 
 } // namespace metaphir

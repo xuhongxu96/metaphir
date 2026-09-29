@@ -20,27 +20,11 @@ Type *Type::get(MIRContext &C, TypeID ID) {
 
 raw_ostream &operator<<(raw_ostream &OS, const Type &T) {
   switch (T.getTypeID()) {
-  case Type::HalfTyID:
-    OS << "half";
+#define MIR_TYPE(TypeID, Spelling)                                             \
+  case Type::TypeID:                                                           \
+    OS << #Spelling;                                                           \
     break;
-  case Type::BFloatTyID:
-    OS << "bfloat";
-    break;
-  case Type::FloatTyID:
-    OS << "float";
-    break;
-  case Type::DoubleTyID:
-    OS << "double";
-    break;
-  case Type::FP128TyID:
-    OS << "fp128";
-    break;
-  case Type::VoidTyID:
-    OS << "void";
-    break;
-  case Type::LabelTyID:
-    OS << "label";
-    break;
+#include "metaphir/IR/Types.def"
   case Type::IntegerTyID:
     OS << "i" << cast<IntegerType>(T).getNumBits();
     break;
@@ -72,11 +56,8 @@ raw_ostream &operator<<(raw_ostream &OS, const Type &T) {
     if (S.isPacked())
       OS << '<';
     OS << '{';
-    for (unsigned I = 0; I != S.getElementTypes().size(); ++I) {
-      if (I)
-        OS << ", ";
-      OS << *S.getElementTypes()[I];
-    }
+    interleaveComma(S.getElementTypes(), OS,
+                    [&OS](const Type *E) { OS << *E; });
     OS << '}';
     if (S.isPacked())
       OS << '>';
