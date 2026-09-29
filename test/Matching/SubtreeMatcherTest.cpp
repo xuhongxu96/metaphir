@@ -17,6 +17,8 @@
 using namespace llvm;
 using namespace llvm::metaphir;
 
+namespace {
+
 TEST(SubtreeMatcherTest, NonValueMetaTypesFailToMatchLLVMValues) {
   MIRContext Context;
   SourceRange Range;
@@ -117,3 +119,5 @@ TEST(SubtreeMatcherTest, AggregateConstantsRequireMatchingShape) {
           .match()
           .empty());
 }
+
+} // namespace

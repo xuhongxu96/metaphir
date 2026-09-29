@@ -17,6 +17,8 @@ using namespace llvm::metaphir;
 using MIRInstruction = llvm::metaphir::Instruction;
 using MIRTarget = llvm::metaphir::Target;
 
+namespace {
+
 TEST(PatternMatcherTest, EnforcesRepeatedBindings) {
   MIRContext Context;
   SourceRange Range;
@@ -405,3 +407,5 @@ TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
               Module->getFunction("f")->getArg(0));
   }
 }
+
+} // namespace

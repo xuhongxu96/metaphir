@@ -17,12 +17,10 @@ namespace metaphir {
 
 using namespace detail;
 
-namespace {
-
 // Evaluates every argument in order, collecting the results into a vector so
 // that an interpreted built-in can coerce them with the shared require*
 // helpers.
-Expected<SmallVector<ConstraintValue, 2>>
+static Expected<SmallVector<ConstraintValue, 2>>
 evaluateArguments(ConstraintInterpreter &Interpreter,
                   ArrayRef<Constraint *> Arguments,
                   const Instantiation &State) {
@@ -37,8 +35,8 @@ evaluateArguments(ConstraintInterpreter &Interpreter,
   return Values;
 }
 
-std::optional<bool> matchesLLVMValueClass(StringRef ClassName,
-                                          const llvm::Value &Value) {
+static std::optional<bool> matchesLLVMValueClass(StringRef ClassName,
+                                                 const llvm::Value &Value) {
 #define MIR_LLVM_VALUE_CLASS(Class)                                            \
   if (ClassName == #Class)                                                     \
     return isa<llvm::Class>(Value);
@@ -48,7 +46,7 @@ std::optional<bool> matchesLLVMValueClass(StringRef ClassName,
 
 // Value with an integer (or vector-of-integer) type, as required by the
 // integer value-tracking queries.
-Expected<const llvm::Value *>
+static Expected<const llvm::Value *>
 requireIntegerValue(const ConstraintValue &Value,
                     const Constraint &Expression) {
   Expected<const llvm::Value *> Val = requireValue(Value, Expression);
@@ -63,14 +61,12 @@ requireIntegerValue(const ConstraintValue &Value,
       Expression, "expected an integer-typed value operand");
 }
 
-unsigned integerElementWidth(const llvm::Value &Value) {
+static unsigned integerElementWidth(const llvm::Value &Value) {
   const llvm::Type *Type = Value.getType();
   if (const auto *Vector = dyn_cast<llvm::VectorType>(Type))
     Type = Vector->getElementType();
   return cast<llvm::IntegerType>(Type)->getBitWidth();
 }
-
-} // namespace
 
 Expected<ConstraintValue> evaluateIsa(ConstraintInterpreter &Interpreter,
                                       ArrayRef<Constraint *> Arguments,
@@ -139,8 +135,6 @@ Expected<ConstraintValue> evaluatePopcount(ConstraintInterpreter &Interpreter,
                        true);
 }
 
-namespace {
-
 // A predicate on an integer: an LLVM value is tested with MatchValue (a
 // PatternMatch matcher, which accepts splats), anything else is coerced to an
 // integer and tested with MatchInteger. An operand that is not an integer
@@ -164,8 +158,6 @@ Expected<ConstraintValue> evaluateIntegerPredicate(
   }
   return ConstraintValue::getBoolean(MatchInteger(*Operand));
 }
-
-} // namespace
 
 Expected<ConstraintValue>
 evaluateIsPowerOfTwo(ConstraintInterpreter &Interpreter,

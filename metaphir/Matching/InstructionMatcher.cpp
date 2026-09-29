@@ -17,10 +17,8 @@ namespace metaphir {
 using detail::bind;
 using detail::success;
 
-namespace {
-
-bool hasSemanticFlag(InstructionFlag::FlagID ID,
-                     const llvm::Instruction &Target) {
+static bool hasSemanticFlag(InstructionFlag::FlagID ID,
+                            const llvm::Instruction &Target) {
   switch (ID) {
   case InstructionFlag::F_nsw:
     return Target.hasNoSignedWrap();
@@ -97,8 +95,6 @@ bool hasSemanticFlag(InstructionFlag::FlagID ID,
   }
   llvm_unreachable("invalid instruction flag ID");
 }
-
-} // namespace
 
 std::optional<APSInt> InstructionMatcher::getKeyedIntegerTarget(
     MatcherOperand::KeyedOperandKind Kind) {

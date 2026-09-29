@@ -13,6 +13,8 @@
 using namespace llvm;
 using namespace llvm::metaphir;
 
+namespace {
+
 // Patterns are owned by their context; copying one would bypass that.
 static_assert(!std::is_copy_constructible_v<Pattern>,
               "Pattern must not be copyable");
@@ -243,3 +245,5 @@ TEST(MetaphIRConstructs, CompositeUseHasNoInstructionID) {
   EXPECT_EQ(Use->getOpcodeName(), "m");
   EXPECT_DEBUG_DEATH(Use->getInstructionID(), "composite");
 }
+
+} // namespace

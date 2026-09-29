@@ -9,12 +9,10 @@
 namespace llvm {
 namespace metaphir {
 
-namespace {
-
 // The setting mask is a uint64_t; verify the .def never assigns a bit index
 // beyond 63 so the mask cannot overflow. Adding a setting past bit 63 fails to
 // compile here rather than silently truncating the mask.
-constexpr unsigned getMaxSettingBit() {
+static constexpr unsigned getMaxSettingBit() {
   unsigned Max = 0;
 #define MIR_PATTERN_SETTING_ID(Name, Bit, Comment)                             \
   Max = std::max(Max, static_cast<unsigned>(Bit));
@@ -24,7 +22,7 @@ constexpr unsigned getMaxSettingBit() {
 static_assert(getMaxSettingBit() < 64,
               "pattern settings exceed the 64-bit mask");
 
-void printWithoutType(raw_ostream &OS, const MatcherOperand &O) {
+static void printWithoutType(raw_ostream &OS, const MatcherOperand &O) {
   if (O.IsArray) {
     OS << O;
     return;
@@ -35,16 +33,14 @@ void printWithoutType(raw_ostream &OS, const MatcherOperand &O) {
     OS << *F;
 }
 
-void printSeparated(raw_ostream &OS, ArrayRef<MatcherOperand> Ops,
-                    unsigned Begin = 0) {
+static void printSeparated(raw_ostream &OS, ArrayRef<MatcherOperand> Ops,
+                           unsigned Begin = 0) {
   for (unsigned Index = Begin; Index != Ops.size(); ++Index) {
     if (Index != Begin)
       OS << ", ";
     OS << Ops[Index];
   }
 }
-
-} // namespace
 
 void MatcherOperand::setMetaFlags(MIRContext &Context,
                                   ArrayRef<MetaFlag *> Flags) {

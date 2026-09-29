@@ -11,9 +11,9 @@ using namespace llvm;
 using namespace llvm::metaphir;
 using namespace llvm::metaphir::detail;
 
-namespace {
-
 using ConstraintCoercionTest = test::ConstraintTest;
+
+namespace {
 
 // Coercion of a value into the same kind is the identity coercion.
 TEST_F(ConstraintCoercionTest, IdentityCoercionReturnsTheValue) {

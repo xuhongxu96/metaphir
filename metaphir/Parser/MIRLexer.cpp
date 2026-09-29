@@ -15,11 +15,9 @@
 namespace llvm {
 namespace metaphir {
 
-namespace {
-
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
 // appropriate character.
-void UnEscapeLexed(std::string &Str) {
+static void UnEscapeLexed(std::string &Str) {
   if (Str.empty())
     return;
 
@@ -47,13 +45,13 @@ void UnEscapeLexed(std::string &Str) {
 }
 
 /// isLabelChar - Return true for [-a-zA-Z$._0-9].
-bool isLabelChar(char C) {
+static bool isLabelChar(char C) {
   return isalnum(static_cast<unsigned char>(C)) || C == '-' || C == '$' ||
          C == '.' || C == '_';
 }
 
 /// isLabelTail - Return true if this pointer points to a valid end of a label.
-const char *isLabelTail(const char *CurPtr) {
+static const char *isLabelTail(const char *CurPtr) {
   while (true) {
     if (CurPtr[0] == ':')
       return CurPtr + 1;
@@ -62,8 +60,6 @@ const char *isLabelTail(const char *CurPtr) {
     ++CurPtr;
   }
 }
-
-} // namespace
 
 /// Describes a character for a diagnostic: printable characters are quoted,
 /// others are written as a hexadecimal escape.

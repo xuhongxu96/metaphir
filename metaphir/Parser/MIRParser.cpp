@@ -11,14 +11,12 @@
 namespace llvm {
 namespace metaphir {
 
-namespace {
-
 /// "1 argument", "2 arguments".
-std::string pluralize(uint64_t Count, StringRef Noun) {
+static std::string pluralize(uint64_t Count, StringRef Noun) {
   return (Twine(Count) + " " + Noun + (Count == 1 ? "" : "s")).str();
 }
 
-bool isOpcode(tok::Kind K) {
+static bool isOpcode(tok::Kind K) {
   switch (K) {
 #define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Name) case tok::kw_##Name:
 #include "metaphir/IR/InstructionMatchers.def"
@@ -28,7 +26,7 @@ bool isOpcode(tok::Kind K) {
   }
 }
 
-Instruction::InstructionID instructionID(tok::Kind K) {
+static Instruction::InstructionID instructionID(tok::Kind K) {
   switch (K) {
 #define MIR_INSTRUCTION_MATCHER_NAME(Name)                                     \
   case tok::kw_##Name:                                                         \
@@ -39,7 +37,8 @@ Instruction::InstructionID instructionID(tok::Kind K) {
   }
 }
 
-std::optional<KeywordConstant::KeywordID> predicateKeywordID(tok::Kind K) {
+static std::optional<KeywordConstant::KeywordID>
+predicateKeywordID(tok::Kind K) {
   switch (K) {
 #define MIR_PREDICATE_KEYWORD(ID, Spelling)                                    \
   case tok::kw_##Spelling:                                                     \
@@ -50,7 +49,7 @@ std::optional<KeywordConstant::KeywordID> predicateKeywordID(tok::Kind K) {
   }
 }
 
-std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
+static std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
   switch (K) {
 #define MIR_TYPE(TypeID, TokenKind)                                            \
   case tok::kw_##TokenKind:                                                    \
@@ -61,7 +60,7 @@ std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
   }
 }
 
-bool isSemanticFlag(tok::Kind K) {
+static bool isSemanticFlag(tok::Kind K) {
   switch (K) {
 #define MIR_FLAG(Flag) case tok::kw_##Flag:
 #define MIR_FAST_MATH_FLAG(Flag) case tok::kw_##Flag:
@@ -72,7 +71,7 @@ bool isSemanticFlag(tok::Kind K) {
   }
 }
 
-InstructionFlag::FlagID semanticFlagID(tok::Kind K) {
+static InstructionFlag::FlagID semanticFlagID(tok::Kind K) {
   switch (K) {
 #define MIR_FLAG(Name)                                                         \
   case tok::kw_##Name:                                                         \
@@ -86,7 +85,7 @@ InstructionFlag::FlagID semanticFlagID(tok::Kind K) {
   }
 }
 
-bool compatibleMeta(MetaType A, MetaType B) {
+static bool compatibleMeta(MetaType A, MetaType B) {
   if (A == B || A == MetaType::Unknown || B == MetaType::Unknown)
     return true;
   auto IsValue = [](MetaType T) {
@@ -100,7 +99,8 @@ bool compatibleMeta(MetaType A, MetaType B) {
          (A == MetaType::Bool && B == MetaType::Nat);
 }
 
-std::optional<PatternSettings::Setting> settingFromKeyword(tok::Kind Kind) {
+static std::optional<PatternSettings::Setting>
+settingFromKeyword(tok::Kind Kind) {
   switch (Kind) {
 #define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
   case tok::kw_##Name:                                                         \
@@ -110,8 +110,6 @@ std::optional<PatternSettings::Setting> settingFromKeyword(tok::Kind Kind) {
     return std::nullopt;
   }
 }
-
-} // namespace
 
 bool MIRParser::consume(tok::Kind K) {
   if (Lex.getKind() != K)

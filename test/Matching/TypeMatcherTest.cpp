@@ -11,6 +11,8 @@
 using namespace llvm;
 using namespace llvm::metaphir;
 
+namespace {
+
 TEST(TypeMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
   MIRContext Context;
   SourceRange Range;
@@ -146,3 +148,5 @@ TEST(TypeMatcherTest, MatchesDerivedTypesAndCapturesShapeParameters) {
           .match());
   EXPECT_EQ(*CountState.lookup(*Count), Instantiation::Binding(APInt(64, 6)));
 }
+
+} // namespace

@@ -5,17 +5,14 @@
 namespace llvm {
 namespace metaphir {
 
-namespace {
-
-template <unsigned Opcode> bool matchOpcode(const llvm::Instruction &Target) {
+template <unsigned Opcode>
+static bool matchOpcode(const llvm::Instruction &Target) {
   return Target.getOpcode() == Opcode;
 }
 
-bool matchBranch(const llvm::Instruction &Target) {
+static bool matchBranch(const llvm::Instruction &Target) {
   return isa<CondBrInst, UncondBrInst>(Target);
 }
-
-} // namespace
 
 bool InstructionMatcher::matchInstructionTarget() {
   switch (Matcher.getInstructionID()) {

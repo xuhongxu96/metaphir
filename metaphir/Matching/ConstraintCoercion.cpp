@@ -14,32 +14,20 @@ namespace metaphir {
 namespace detail {
 
 namespace {
-
-// The integer that a constant operand contributes, if any: either a scalar
-// integer constant, or the repeated element of a vector constant. Operands
-// carrying ':constantsplat' are vector constants, so both forms have to be
-// accepted for them to take part in arithmetic. isNumeric and
-// coerceValueToInteger share this so they cannot disagree.
-std::optional<APInt> constantIntegerValue(const llvm::Value *Operand) {
-  return getConstantInteger(*Operand);
-}
-
-// Identifiers for each admissible coercion. This enum is the set of
-// converters named by the Coercions.def entries; each enumerator is a single
-// edge of the coercion lattice. UnknownCoercion marks an absent edge.
 enum CoercionOp {
   UnknownCoercion = 0,
 #define MIR_COERCION(Src, Dst, Op) Coerce##Op,
 #include "metaphir/Matching/Coercions.def"
 };
+} // namespace
 
 // The coercion lattice as a dense [Src][Dst] matrix. Each cell holds the
 // coercion operator converting a source kind into a destination kind, or
 // UnknownCoercion when no such conversion exists. The matrix is zero-filled
 // (UnknownCoercion) and the admissible edges are stamped in from
 // Coercions.def, so lookup is O(1) and the whole lattice stays explicit.
-const std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
-                 ConstraintValue::NumValueKinds>
+static const std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
+                        ConstraintValue::NumValueKinds>
     CoercionMatrix = [] {
       std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
                  ConstraintValue::NumValueKinds>
@@ -50,15 +38,15 @@ const std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
       return Matrix;
     }();
 
-std::optional<CoercionOp> lookupRule(ConstraintValue::ValueKind Src,
-                                     ConstraintValue::ValueKind Dst) {
+static std::optional<CoercionOp> lookupRule(ConstraintValue::ValueKind Src,
+                                            ConstraintValue::ValueKind Dst) {
   CoercionOp Op = CoercionMatrix[Src][Dst];
   return Op == UnknownCoercion ? std::nullopt : std::optional<CoercionOp>(Op);
 }
 
 // Name of a coercion target with its indefinite article, used in the
 // "expected a/an <name>-coercible operand" diagnostics.
-StringRef targetName(ConstraintValue::ValueKind Target) {
+static StringRef targetName(ConstraintValue::ValueKind Target) {
   switch (Target) {
   case ConstraintValue::Boolean:
     return "a boolean";
@@ -87,36 +75,36 @@ StringRef targetName(ConstraintValue::ValueKind Target) {
 // Low-level converters. Each implements one edge of the coercion lattice and
 // is responsible for both producing the destination value and reporting the
 // precise reason a value cannot be converted.
-Expected<ConstraintValue> coerceBooleanToInteger(const ConstraintValue &V,
-                                                 const Constraint &) {
+static Expected<ConstraintValue>
+coerceBooleanToInteger(const ConstraintValue &V, const Constraint &) {
   return integerResult(APInt(1, V.getBoolean()), true);
 }
 
-Expected<ConstraintValue> coerceIntegerToBoolean(const ConstraintValue &V,
-                                                 const Constraint &) {
+static Expected<ConstraintValue>
+coerceIntegerToBoolean(const ConstraintValue &V, const Constraint &) {
   return ConstraintValue::getBoolean(!V.getInteger().isZero());
 }
 
-Expected<ConstraintValue> coerceValueToInteger(const ConstraintValue &V,
-                                               const Constraint &Expression) {
+static Expected<ConstraintValue>
+coerceValueToInteger(const ConstraintValue &V, const Constraint &Expression) {
   // Constants are treated as signed, so that 'slt' on a negative constant is
   // correct; the unsigned operators still compare the bit pattern.
-  if (std::optional<APInt> Integer = constantIntegerValue(V.getValue()))
+  if (std::optional<APInt> Integer = getConstantInteger(*V.getValue()))
     return integerResult(*Integer, false);
   return make_error<ConstraintEvaluationError>(
       Expression, "expected an integer-valued constant operand");
 }
 
-Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
-                                             const Constraint &) {
+static Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
+                                                    const Constraint &) {
   std::string Text;
   raw_string_ostream OS(Text);
   V.getType()->print(OS);
   return ConstraintValue::getString(OS.str());
 }
 
-Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
-                                              const Constraint &) {
+static Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
+                                                     const Constraint &) {
   std::string Text;
   raw_string_ostream OS(Text);
   if (const auto *Instruction = dyn_cast<llvm::Instruction>(V.getValue()))
@@ -126,8 +114,8 @@ Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
   return ConstraintValue::getString(OS.str());
 }
 
-Expected<ConstraintValue> coerceTypeArrayToStringArray(const ConstraintValue &V,
-                                                       const Constraint &) {
+static Expected<ConstraintValue>
+coerceTypeArrayToStringArray(const ConstraintValue &V, const Constraint &) {
   ConstraintValue::StringArrayStorage Strings;
   for (const llvm::Type *Type : V.getTypeArray()) {
     std::string Text;
@@ -138,7 +126,7 @@ Expected<ConstraintValue> coerceTypeArrayToStringArray(const ConstraintValue &V,
   return ConstraintValue::getStringArray(std::move(Strings));
 }
 
-Expected<ConstraintValue>
+static Expected<ConstraintValue>
 coerceValueArrayToStringArray(const ConstraintValue &V,
                               const Constraint &Expression) {
   ConstraintValue::StringArrayStorage Strings;
@@ -151,8 +139,6 @@ coerceValueArrayToStringArray(const ConstraintValue &V,
   }
   return ConstraintValue::getStringArray(std::move(Strings));
 }
-
-} // namespace
 
 APSInt extend(const APSInt &Value, unsigned Width, bool IsUnsigned) {
   APSInt Result = Value.extend(Width);
@@ -178,7 +164,7 @@ APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth) {
 
 bool isNumeric(const ConstraintValue &V) {
   if (V.getKind() == ConstraintValue::Value)
-    return constantIntegerValue(V.getValue()).has_value();
+    return getConstantInteger(*V.getValue()).has_value();
   return canCoerceTo(V, ConstraintValue::Integer);
 }
 
