@@ -10,6 +10,7 @@ namespace llvm {
 namespace metaphir {
 
 class Constraint;
+class FeatureQuery;
 class MIRContext;
 class Pattern;
 class PatternVariants;
@@ -30,6 +31,11 @@ public:
   explicit PatternMatcher(MIRContext *Context = nullptr)
       : Interpreter(Context) {}
 
+  /// See ConstraintInterpreter::setUseListCompleter.
+  void setUseListCompleter(std::function<void()> Completer) {
+    Interpreter.setUseListCompleter(std::move(Completer));
+  }
+
   /// The instantiations of Pattern's instructions in Program, before its
   /// constraints are checked.
   MatchResults matchStructure(const Pattern &Pattern, const Target &Program);
@@ -43,10 +49,13 @@ public:
   /// The matches of any of Variants, each reported once. If there are none,
   /// the constraints that rejected structural matches are added to
   /// Unsatisfied; HadStructuralMatch tells whether there were any.
+  /// Filter, computed from Variants, skips the variants Program lacks the
+  /// features for; the results are the same without it.
   MatchResults
   match(const PatternVariants &Variants, const Target &Program,
         SmallVectorImpl<UnsatisfiedConstraint> *Unsatisfied = nullptr,
-        bool *HadStructuralMatch = nullptr);
+        bool *HadStructuralMatch = nullptr,
+        const FeatureQuery *Filter = nullptr);
 
 private:
   /// Keeps the matches that satisfy Pattern's constraints.

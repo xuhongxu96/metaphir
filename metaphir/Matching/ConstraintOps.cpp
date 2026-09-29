@@ -298,8 +298,10 @@ Expected<ConstraintValue> evaluateHasOneUse(ConstraintInterpreter &Interpreter,
   if (!Values)
     return Values.takeError();
   const ConstraintValue &V = (*Values)[0];
-  if (V.getKind() == ConstraintValue::Value && V.getValue())
+  if (V.getKind() == ConstraintValue::Value && V.getValue()) {
+    Interpreter.requireCompleteUses(*V.getValue());
     return ConstraintValue::getBoolean(V.getValue()->hasOneUse());
+  }
   return ConstraintValue::getBoolean(false);
 }
 
@@ -311,8 +313,10 @@ Expected<ConstraintValue> evaluateHasOneUser(ConstraintInterpreter &Interpreter,
   if (!Values)
     return Values.takeError();
   const ConstraintValue &V = (*Values)[0];
-  if (V.getKind() == ConstraintValue::Value && V.getValue())
+  if (V.getKind() == ConstraintValue::Value && V.getValue()) {
+    Interpreter.requireCompleteUses(*V.getValue());
     return ConstraintValue::getBoolean(V.getValue()->hasOneUser());
+  }
   return ConstraintValue::getBoolean(false);
 }
 

@@ -9,6 +9,7 @@
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Instantiation.h"
 #include "metaphir/Matching/ValueTrackContext.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
@@ -24,6 +25,12 @@ ConstraintInterpreter::ConstraintInterpreter(MIRContext *Context)
 ConstraintInterpreter::~ConstraintInterpreter() = default;
 
 void ConstraintInterpreter::resetAnalyses() { Analysis->reset(); }
+
+void ConstraintInterpreter::requireCompleteUses(const llvm::Value &V) {
+  // Only constants other than plain data are used across functions.
+  if (UseListCompleter && isa<llvm::Constant>(V) && !isa<ConstantData>(V))
+    UseListCompleter();
+}
 
 SimplifyQuery
 ConstraintInterpreter::getValueTrackQuery(const llvm::Instruction *CtxI) {

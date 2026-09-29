@@ -16,23 +16,34 @@ patterns does not force re-running the (slower) ground-truth collection:
   metrics   Load the saved anchor sets and compute precision/recall/F1 for
             every PR (use ``--pr`` to select a subset).
 
+  index     Index the corpus with ``metaphir-index``. ``pattern --index`` then
+            runs each pattern once over the whole corpus, skipping the modules
+            and functions the index shows it cannot match.
+
+  check-index
+            Check that ``pattern --index`` finds the anchors the per-module
+            run finds, on a sample of the corpus and every module with
+            ground-truth anchors.
+
 Ground truth (G): anchors (file, function, anchor-ssa-name) where LLVM's own
 fold fires, captured by running an instrumented InstCombine with
 ``METAPHIR_EVAL_ANCHOR=1``. Prediction (P): anchors where the MetaphIR
 pattern(s) match. Both run on the same corpus IR.
 
-The tools default to ``llvm-project/build/bin/opt`` and
-``build/tools/metaphir-match``; set ``METAPHIR_OPT`` / ``METAPHIR_MATCH`` to
-override them.
+The tools default to ``llvm-project/build/bin/opt``,
+``build/tools/metaphir-match`` and ``build/tools/metaphir-index``; set
+``METAPHIR_OPT`` / ``METAPHIR_MATCH`` / ``METAPHIR_INDEX`` to override them.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import random
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -47,12 +58,16 @@ OPT = Path(
 METAPHIR_MATCH = Path(
     os.environ.get("METAPHIR_MATCH", REPO / "build" / "tools" / "metaphir-match")
 )
+METAPHIR_INDEX = Path(
+    os.environ.get("METAPHIR_INDEX", REPO / "build" / "tools" / "metaphir-index")
+)
+DEFAULT_INDEX = REPO / "eval" / "corpus.mpidx"
 
 PR_PATTERNS: dict[str, tuple[str, ...]] = {pr: e.patterns for pr, e in PRS.items()}
 
 ANCHOR_RE = re.compile(r"^ANCHOR (\S+) (\S+)(?: (\S+))?$")
 TARGET_RE = re.compile(r"^target \d+: @(\S+)$")
-BINDING_RE = re.compile(r"\?anch = (%[^,\s]+)")
+BINDING_RE = re.compile(r"\?anch = (%[^,\s}]+)")
 
 Anchor = tuple[str, str, str]
 
@@ -147,6 +162,56 @@ def run_pattern(pattern: Path, bc: Path) -> set[Anchor]:
             if bm:
                 anchors.add((bc.name, func, bm.group(1).lstrip("%")))
     return anchors
+
+
+def response_file_line(path: Path) -> str:
+    """``path`` quoted for an LLVM response file."""
+    return '"' + str(path).replace("\\", "\\\\").replace('"', '\\"') + '"\n'
+
+
+def run_pattern_indexed(
+    pattern: Path, files: list[Path], index: Path, jobs: int
+) -> tuple[set[Anchor], list[str]]:
+    """Match ``pattern`` against all ``files`` in one run, using ``index``.
+
+    Returns the anchors and the errors reported for single modules, whose
+    anchors are missing. Raises PatternRunError when the run as a whole fails.
+    """
+    with tempfile.NamedTemporaryFile("w", suffix=".rsp") as response:
+        response.writelines(response_file_line(f) for f in files)
+        response.flush()
+        proc = subprocess.run(
+            [
+                str(METAPHIR_MATCH),
+                "--matches-only",
+                "-j",
+                str(jobs),
+                "--index",
+                str(index),
+                str(pattern),
+                f"@{response.name}",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    errors = [ln for ln in proc.stderr.splitlines() if ": error: " in ln]
+    if proc.returncode < 0 or (proc.returncode != 0 and not errors):
+        tail = " | ".join(proc.stderr.splitlines()[-3:])
+        raise PatternRunError(
+            f"metaphir-match {pattern.name}: rc={proc.returncode}: {tail}"
+        )
+    for line in proc.stderr.splitlines():
+        if ": warning: " in line:
+            print(f"  {line}")
+
+    anchors: set[Anchor] = set()
+    for line in proc.stdout.splitlines():
+        path, func, bindings = line.split("\t", 2)
+        bm = BINDING_RE.search(bindings)
+        if bm:
+            anchors.add((Path(path).name, func.removeprefix("@"), bm.group(1)[1:]))
+    return anchors, [f"metaphir-match {pattern.name}: {e}" for e in errors]
 
 
 def run_over_corpus(
@@ -266,31 +331,53 @@ def collect_ground_truth(
 
 
 def collect_patterns(
-    files: list[Path], pr: str, patterns: list[Path], outdir: Path, jobs: int = 1
+    files: list[Path],
+    pr: str,
+    patterns: list[Path],
+    outdir: Path,
+    *,
+    jobs: int = 1,
+    index: Path | None = None,
 ) -> bool:
     """Collect predictions for ``pr``. Returns False if any module failed.
 
     A module on which ``metaphir-match`` fails contributes no anchors; it is
-    listed in ``<pr>_P_failures.txt`` so the gap is never silent.
+    listed in ``<pr>_P_failures.txt`` so the gap is never silent. With an
+    ``index``, each pattern runs once over all modules and the time recorded
+    is wall-clock time; otherwise it is the sum of the per-module times.
     """
     print(f"== pattern {pr}: {len(files)} modules, {len(patterns)} pattern(s) ==")
     failures: list[str] = []
 
-    def run(bc: Path) -> set[Anchor]:
-        anchors: set[Anchor] = set()
+    if index:
+        P: set[Anchor] = set()
+        t0 = time.perf_counter()
         for pattern in patterns:
             try:
-                anchors |= run_pattern(pattern, bc)
+                anchors, errors = run_pattern_indexed(pattern, files, index, jobs)
+                P |= anchors
+                failures += errors
             except PatternRunError as err:
                 failures.append(str(err))
-        return anchors
+        t_pat = time.perf_counter() - t0
+    else:
 
-    P, t_pat = run_over_corpus(files, run, jobs=jobs)
+        def run(bc: Path) -> set[Anchor]:
+            anchors: set[Anchor] = set()
+            for pattern in patterns:
+                try:
+                    anchors |= run_pattern(pattern, bc)
+                except PatternRunError as err:
+                    failures.append(str(err))
+            return anchors
+
+        P, t_pat = run_over_corpus(files, run, jobs=jobs)
 
     p_path = outdir / f"{pr}_P.anchors"
     save_anchors(p_path, P)
     (outdir / f"{pr}_P_timing.txt").write_text(
         f"modules={len(files)}\n"
+        f"pattern_mode={'indexed' if index else 'per-module'}\n"
         f"pattern_seconds={t_pat:.3f}\n"
         f"patterns={len(patterns)}\n"
         f"P_anchors={len(P)}\n"
@@ -342,21 +429,88 @@ def cmd_gt(args: argparse.Namespace) -> int:
     return 0
 
 
+def pr_patterns(pr: str, override: list[Path] | None) -> list[Path]:
+    patterns = override if override else [REPO / p for p in PR_PATTERNS[pr]]
+    missing = [str(p) for p in patterns if not p.is_file()]
+    if missing:
+        sys.exit(f"missing pattern file(s) for {pr}: {', '.join(missing)}")
+    return patterns
+
+
+def require_index(index: Path) -> None:
+    if not index.is_file():
+        sys.exit(f"{index} not found; run `index` first")
+
+
+def cmd_index(args: argparse.Namespace) -> int:
+    require_executable(METAPHIR_INDEX, "build MetaphIR or set METAPHIR_INDEX")
+    if args.jobs < 1:
+        sys.exit("--jobs must be at least 1")
+    t0 = time.perf_counter()
+    proc = subprocess.run(
+        [
+            str(METAPHIR_INDEX),
+            "build",
+            "-j",
+            str(args.jobs),
+            str(args.corpus),
+            "-o",
+            str(args.index),
+        ],
+        check=False,
+    )
+    if proc.returncode == 0:
+        print(f"  indexed -> {args.index} in {time.perf_counter() - t0:.2f}s")
+    return proc.returncode
+
+
+def cmd_check_index(args: argparse.Namespace) -> int:
+    """Compares indexed with per-module predictions on part of the corpus."""
+    require_executable(METAPHIR_MATCH, "build MetaphIR or set METAPHIR_MATCH")
+    require_index(args.index)
+    outdir, files = setup_outdir(args)
+    rng = random.Random(args.seed)
+    differences = 0
+    for pr in selected_prs(args.pr):
+        sample = set(rng.sample(files, min(args.sample, len(files))))
+        g_path = outdir / f"{pr}_G.anchors"
+        if g_path.is_file():
+            with_anchors = {a[0] for a in load_anchors(g_path)}
+            sample |= {f for f in files if f.name in with_anchors}
+        checked = sorted(sample)
+        print(f"== check-index {pr}: {len(checked)} modules ==")
+        for pattern in pr_patterns(pr, None):
+            expected, _ = run_over_corpus(
+                checked, lambda bc, p=pattern: run_pattern(p, bc), jobs=args.jobs
+            )
+            actual, errors = run_pattern_indexed(
+                pattern, checked, args.index, args.jobs
+            )
+            for error in errors:
+                print(f"  {error}")
+            for anchor in sorted(expected - actual):
+                print(f"  {pattern.name}: missed with the index: {anchor}")
+            for anchor in sorted(actual - expected):
+                print(f"  {pattern.name}: only with the index: {anchor}")
+            differences += len(expected ^ actual) + len(errors)
+    print(f"{differences} difference(s)")
+    return 1 if differences else 0
+
+
 def cmd_pattern(args: argparse.Namespace) -> int:
     require_executable(METAPHIR_MATCH, "build MetaphIR or set METAPHIR_MATCH")
+    if args.index:
+        require_index(args.index)
     outdir, files = setup_outdir(args)
     prs = selected_prs(args.pr)
     if args.patterns and len(prs) != 1:
         sys.exit("--patterns overrides the patterns for exactly one --pr")
     ok = True
     for pr in prs:
-        patterns = (
-            args.patterns if args.patterns else [REPO / p for p in PR_PATTERNS[pr]]
+        patterns = pr_patterns(pr, args.patterns)
+        ok &= collect_patterns(
+            files, pr, patterns, outdir, jobs=args.jobs, index=args.index
         )
-        missing = [str(p) for p in patterns if not p.is_file()]
-        if missing:
-            sys.exit(f"missing pattern file(s) for {pr}: {', '.join(missing)}")
-        ok &= collect_patterns(files, pr, patterns, outdir, jobs=args.jobs)
     return 0 if ok else 1
 
 
@@ -437,8 +591,36 @@ def main() -> int:
         help="override the patterns for exactly one --pr (otherwise patterns "
         "come from the built-in PR_PATTERNS map)",
     )
+    p.add_argument(
+        "--index",
+        type=Path,
+        nargs="?",
+        const=DEFAULT_INDEX,
+        help="match each pattern once over the corpus, using this index "
+        f"(default when given without a path: {DEFAULT_INDEX.relative_to(REPO)})",
+    )
     add_common_args(p)
     p.set_defaults(func=cmd_pattern)
+
+    x = sub.add_parser("index", help="index the corpus for `pattern --index`")
+    x.add_argument("--index", type=Path, default=DEFAULT_INDEX, help="index to write")
+    add_common_args(x)
+    x.set_defaults(func=cmd_index)
+
+    c = sub.add_parser(
+        "check-index", help="check indexed predictions against per-module ones"
+    )
+    c.add_argument("--pr", nargs="*", help="only check the given PRs (default: all)")
+    c.add_argument("--index", type=Path, default=DEFAULT_INDEX, help="index to use")
+    c.add_argument(
+        "--sample",
+        type=int,
+        default=200,
+        help="random modules to check besides those with ground-truth anchors",
+    )
+    c.add_argument("--seed", type=int, default=0, help="seed for the sample")
+    add_common_args(c)
+    c.set_defaults(func=cmd_check_index)
 
     m = sub.add_parser("metrics", help="compute metrics from saved anchors")
     m.add_argument(

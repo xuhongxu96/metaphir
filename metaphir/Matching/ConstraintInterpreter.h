@@ -3,6 +3,7 @@
 
 #include "metaphir/Matching/ConstraintValue.h"
 #include "llvm/Support/Error.h"
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -34,6 +35,15 @@ public:
   /// Drops the analyses cached for value-tracking operators. Call it before
   /// the functions they were built for are freed.
   void resetAnalyses();
+
+  /// Sets what makes the use lists of constants complete, for a module whose
+  /// functions are not all materialized: uses of a global or constant
+  /// expression can be in any function.
+  void setUseListCompleter(std::function<void()> Completer) {
+    UseListCompleter = std::move(Completer);
+  }
+  /// Makes V's use list complete before it is inspected.
+  void requireCompleteUses(const llvm::Value &V);
 
 private:
   // Signature of a value-tracking operator's pure evaluator: given the
@@ -94,6 +104,7 @@ private:
   evalOptionalBitWidth(const OperatorConstraint &Operator,
                        unsigned ArgumentIndex, const Instantiation &State);
 
+  std::function<void()> UseListCompleter;
   // Lazily-constructed per-function analyses for value-tracking operators.
   std::unique_ptr<detail::ValueTrackContext> Analysis;
   MIRContext *Context = nullptr;

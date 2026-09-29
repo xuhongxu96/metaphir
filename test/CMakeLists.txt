@@ -17,6 +17,7 @@ configure_file(lit.site.cfg.py.in ${METAPHIR_TEST_DIR}/lit.site.cfg.py @ONLY)
 add_subdirectory(Parser)
 add_subdirectory(IR)
 add_subdirectory(Matching)
+add_subdirectory(Index)
 
 # A single lit invocation discovers and runs every .ll test under test/.
 add_test(
@@ -26,6 +27,7 @@ add_test(
     -D "metaphir_lex=$<TARGET_FILE:metaphir-lex>"
     -D "metaphir_parse=$<TARGET_FILE:metaphir-parse>"
     -D "metaphir_match=$<TARGET_FILE:metaphir-match>"
+    -D "metaphir_index=$<TARGET_FILE:metaphir-index>"
     ${METAPHIR_TEST_DIR})
 set_tests_properties(MetaphIR.lit PROPERTIES ENVIRONMENT
                      "${METAPHIR_TEST_ENVIRONMENT}")
@@ -33,6 +35,16 @@ set_tests_properties(MetaphIR.lit PROPERTIES ENVIRONMENT
 # Unit tests for the evaluation harness scripts.
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_FOUND)
+  # metaphir-match's faster modes must not change what it prints.
+  add_test(
+    NAME MetaphIR.differential
+    COMMAND
+      ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/differential.py
+      --match $<TARGET_FILE:metaphir-match> --index
+      $<TARGET_FILE:metaphir-index> --split-file
+      ${METAPHIR_LLVM_UTILS_DIR}/split-file --llvm-as
+      ${METAPHIR_LLVM_UTILS_DIR}/llvm-as ${CMAKE_CURRENT_SOURCE_DIR}/Matching)
+
   add_test(
     NAME MetaphIR.eval-scripts
     COMMAND ${Python3_EXECUTABLE} -m unittest discover -s

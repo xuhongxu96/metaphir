@@ -176,22 +176,6 @@ SmallVector<const llvm::Value *, 4> InstructionMatcher::getTargetOperands() {
   }
 }
 
-std::optional<unsigned> InstructionMatcher::getOrSelfOperand() {
-  for (const MetaFlag *Flag : Matcher.getMetaFlags()) {
-    assert(Flag && "null instruction meta flag");
-    if (Flag->getMetaFlagID() != MetaFlag::MF_o)
-      continue;
-    if (Flag->getArguments().empty())
-      return 0;
-    assert(Flag->getArguments().size() == 1 &&
-           Flag->getArguments().front().K == MetaFlag::Argument::Integer &&
-           Flag->getArguments().front().IntegerValue >= 0 &&
-           "':o' requires one non-negative integer argument");
-    return static_cast<unsigned>(Flag->getArguments().front().IntegerValue);
-  }
-  return std::nullopt;
-}
-
 const llvm::Type &InstructionMatcher::getTypeOnlyOperandTarget() {
   if (Matcher.getInstructionID() == Instruction::I_alloca)
     return *cast<AllocaInst>(Target).getAllocatedType();
@@ -413,7 +397,7 @@ MatchResults InstructionMatcher::match() {
     }
 
   MatchResults Results;
-  if (std::optional<unsigned> OperandIndex = getOrSelfOperand())
+  if (std::optional<unsigned> OperandIndex = Matcher.getOrSelfOperandIndex())
     Results = matchOrSelf(*OperandIndex);
 
   TargetInstruction = dyn_cast<llvm::Instruction>(&Target);

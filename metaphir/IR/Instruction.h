@@ -5,6 +5,7 @@
 #include "metaphir/IR/MetaFlag.h"
 #include "metaphir/IR/PatternSettings.h"
 #include <cstdint>
+#include <optional>
 
 namespace llvm {
 namespace metaphir {
@@ -147,6 +148,10 @@ public:
   void setCapture(MetaVariable *V) { Capture = V; }
 
   Value *getOrSelfValue() const { return OrSelfValue; }
+
+  /// The index, among the value operands, of the operand that ':o' lets match
+  /// in place of this instruction; none without ':o'.
+  std::optional<unsigned> getOrSelfOperandIndex() const;
   void setOrSelfValue(Value *V) { OrSelfValue = V; }
 
   static bool classof(const Value *V) {

@@ -2,6 +2,7 @@ add_metaphir_test(
   metaphir-matching-test
   ConstraintCoercionTest.cpp
   ConstraintInterpreterTest.cpp
+  FeaturesTest.cpp
   PatternMatcherTest.cpp
   SubtreeMatcherTest.cpp
   InstructionMatcherTest.cpp

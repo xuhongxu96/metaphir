@@ -14,3 +14,8 @@ src = ["eval/scripts", "scripts"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "PL", "EXE"]
 ignore = ["PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR2004"]
+
+[dependency-groups]
+dev = [
+    "clang-format>=23.1.1",
+]

@@ -8,7 +8,7 @@ config.suffixes = [".ll"]
 config.test_source_root = os.path.dirname(__file__)
 config.test_exec_root = os.path.join(config.metaphir_obj_root, "lit")
 
-for tool in ("metaphir-lex", "metaphir-parse", "metaphir-match"):
+for tool in ("metaphir-lex", "metaphir-parse", "metaphir-match", "metaphir-index"):
     param = tool.replace("-", "_")
     path = lit_config.params.get(param)
     if path is None:

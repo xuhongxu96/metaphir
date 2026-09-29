@@ -101,6 +101,22 @@ Instruction *Instruction::createLike(
                 Operands, Capture, Range, ParentBlock, Settings);
 }
 
+std::optional<unsigned> Instruction::getOrSelfOperandIndex() const {
+  for (const MetaFlag *Flag : MetaFlags) {
+    assert(Flag && "null instruction meta flag");
+    if (Flag->getMetaFlagID() != MetaFlag::MF_o)
+      continue;
+    if (Flag->getArguments().empty())
+      return 0;
+    assert(Flag->getArguments().size() == 1 &&
+           Flag->getArguments().front().K == MetaFlag::Argument::Integer &&
+           Flag->getArguments().front().IntegerValue >= 0 &&
+           "':o' requires one non-negative integer argument");
+    return static_cast<unsigned>(Flag->getArguments().front().IntegerValue);
+  }
+  return std::nullopt;
+}
+
 StringRef Instruction::getOpcodeName() const {
   return isComposite() ? Composite->getName() : getOpcodeName(ID);
 }

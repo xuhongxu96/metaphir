@@ -23,7 +23,6 @@ public:
   MatchResults match();
 
 private:
-  std::optional<unsigned> getOrSelfOperand();
   MatchResults matchOrSelf(unsigned OperandIndex);
 
   bool matchInstructionTarget();
