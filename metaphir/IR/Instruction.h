@@ -47,8 +47,7 @@ struct MatcherOperand {
 
 struct InstructionFlag {
   enum FlagID {
-#define MIR_FLAG(Name) F_##Name,
-#define MIR_FAST_MATH_FLAG(Name) F_##Name,
+#define MIR_FLAG_TOKEN_KIND(Name) F_##Name,
 #include "metaphir/IR/Flags.def"
     NumFlagIDs,
   };
@@ -77,15 +76,11 @@ public:
 
   static constexpr FlagMask NoFlags = 0;
 
-  static constexpr FlagMask FastMathFlags =
-      (FlagMask(1) << InstructionFlag::F_fast) |
-      (FlagMask(1) << InstructionFlag::F_nnan) |
-      (FlagMask(1) << InstructionFlag::F_ninf) |
-      (FlagMask(1) << InstructionFlag::F_nsz) |
-      (FlagMask(1) << InstructionFlag::F_arcp) |
-      (FlagMask(1) << InstructionFlag::F_contract) |
-      (FlagMask(1) << InstructionFlag::F_afn) |
-      (FlagMask(1) << InstructionFlag::F_reassoc);
+  static constexpr FlagMask FastMathFlags = 0
+#define MIR_FLAG(Name)
+#define MIR_FAST_MATH_FLAG(Name) | (FlagMask(1) << InstructionFlag::F_##Name)
+#include "metaphir/IR/Flags.def"
+      ;
 
   static constexpr FlagMask NSWNUWFlags =
       (FlagMask(1) << InstructionFlag::F_nsw) |
@@ -151,11 +146,19 @@ public:
   static constexpr FlagMask mask(InstructionFlag::FlagID ID) {
     return FlagMask(1) << ID;
   }
-  static StringRef getOpcodeName(InstructionID ID);
-  static FlagMask getSupportedFlags(InstructionID ID);
-  static bool isCommutative(InstructionID ID);
-  static OperandSyntax getOperandSyntax(InstructionID ID);
-  static unsigned getOperandArity(InstructionID ID);
+  static StringRef getOpcodeName(InstructionID ID) { return getInfo(ID).Name; }
+  static FlagMask getSupportedFlags(InstructionID ID) {
+    return getInfo(ID).SupportedFlags;
+  }
+  static bool isCommutative(InstructionID ID) {
+    return getInfo(ID).Commutative;
+  }
+  static OperandSyntax getOperandSyntax(InstructionID ID) {
+    return getInfo(ID).Syntax;
+  }
+  static unsigned getOperandArity(InstructionID ID) {
+    return getInfo(ID).Arity;
+  }
   bool isComposite() const { return Composite != nullptr; }
   CompositeMatcher *getCompositeMatcher() const { return Composite; }
   StringRef getCustomOpcodeName() const;
@@ -186,6 +189,17 @@ public:
              MetaVariable *ParentBlock, PatternSettings Settings);
 
 private:
+  /// Properties of a built-in instruction matcher, from
+  /// InstructionMatchers.def.
+  struct Info {
+    StringRef Name;
+    FlagMask SupportedFlags;
+    bool Commutative;
+    OperandSyntax Syntax;
+    unsigned Arity;
+  };
+  static const Info &getInfo(InstructionID ID);
+
   InstructionID ID;
   StringRef ResultName;
   ArrayRef<InstructionFlag> Flags;

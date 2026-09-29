@@ -1,6 +1,7 @@
 #include "metaphir/IR/MetaFlag.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MIRContextImpl.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -52,11 +53,10 @@ StringRef MetaFlag::getMetaFlagName(MetaFlagID ID) {
 }
 
 MetaFlag::MetaFlagID MetaFlag::getMetaFlagID(StringRef Name) {
-#define MIR_META_FLAG_ID(FlagName)                                             \
-  if (Name == #FlagName)                                                       \
-    return MF_##FlagName;
+  return StringSwitch<MetaFlagID>(Name)
+#define MIR_META_FLAG_ID(FlagName) .Case(#FlagName, MF_##FlagName)
 #include "metaphir/IR/MetaFlags.def"
-  return UnknownMetaFlag;
+      .Default(UnknownMetaFlag);
 }
 
 std::optional<MetaFlag::Schema> MetaFlag::getSchema(MetaFlagID ID) {
@@ -82,11 +82,7 @@ raw_ostream &operator<<(raw_ostream &OS, const MetaFlag &F) {
   OS << ':' << F.getName();
   if (!F.getArguments().empty()) {
     OS << '(';
-    for (unsigned I = 0; I != F.getArguments().size(); ++I) {
-      if (I)
-        OS << ',';
-      OS << F.getArguments()[I];
-    }
+    interleave(F.getArguments(), OS, ",");
     OS << ')';
   }
   return OS;

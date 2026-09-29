@@ -2,6 +2,7 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MIRContextImpl.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -86,11 +87,10 @@ raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
     const char Open[] = {'[', '{', '<'};
     const char Close[] = {']', '}', '>'};
     OS << Open[A.getDelimiter()];
-    for (unsigned I = 0; I != A.getElements().size(); ++I) {
-      if (I)
-        OS << ", ";
-      OS << *A.getElementTypes()[I] << ' ' << *A.getElements()[I];
-    }
+    interleaveComma(
+        zip(A.getElementTypes(), A.getElements()), OS, [&OS](auto Element) {
+          OS << *std::get<0>(Element) << ' ' << *std::get<1>(Element);
+        });
     OS << Close[A.getDelimiter()];
     break;
   }

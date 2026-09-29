@@ -22,11 +22,7 @@ static void printWithoutType(raw_ostream &OS, const MatcherOperand &O) {
 
 static void printSeparated(raw_ostream &OS, ArrayRef<MatcherOperand> Ops,
                            unsigned Begin = 0) {
-  for (unsigned Index = Begin; Index != Ops.size(); ++Index) {
-    if (Index != Begin)
-      OS << ", ";
-    OS << Ops[Index];
-  }
+  interleaveComma(Ops.drop_front(Begin), OS);
 }
 
 void MatcherOperand::setMetaFlags(MIRContext &Context,
@@ -115,10 +111,7 @@ StringRef Instruction::getCustomOpcodeName() const {
 
 StringRef InstructionFlag::getName(FlagID ID) {
   switch (ID) {
-#define MIR_FLAG(Name)                                                         \
-  case F_##Name:                                                               \
-    return #Name;
-#define MIR_FAST_MATH_FLAG(Name)                                               \
+#define MIR_FLAG_TOKEN_KIND(Name)                                              \
   case F_##Name:                                                               \
     return #Name;
 #include "metaphir/IR/Flags.def"
@@ -148,54 +141,16 @@ Instruction::getKeyedOperand(MatcherOperand::KeyedOperandKind Kind) const {
   return &KeyedOperands[Kind];
 }
 
-StringRef Instruction::getOpcodeName(InstructionID ID) {
-  switch (ID) {
-#define MIR_INSTRUCTION_MATCHER_NAME(Name)                                     \
-  case I_##Name:                                                               \
-    return #Name;
+const Instruction::Info &Instruction::getInfo(InstructionID ID) {
+  static const Info Table[] = {
+#define MIR_INSTRUCTION_MATCHER(Name, TargetMatcher, Flags, Commutative,       \
+                                Syntax, Arity)                                 \
+  {#Name, Flags, Commutative, OperandSyntax::Syntax, Arity},
 #include "metaphir/IR/InstructionMatchers.def"
-  }
-  llvm_unreachable("invalid instruction kind");
-}
-
-Instruction::FlagMask Instruction::getSupportedFlags(InstructionID ID) {
-  switch (ID) {
-#define MIR_INSTRUCTION_MATCHER_SUPPORTED_FLAGS(Name, Flags)                   \
-  case I_##Name:                                                               \
-    return Flags;
-#include "metaphir/IR/InstructionMatchers.def"
-  }
-  llvm_unreachable("invalid instruction kind");
-}
-
-bool Instruction::isCommutative(InstructionID ID) {
-  switch (ID) {
-#define MIR_INSTRUCTION_MATCHER_COMMUTATIVE(Name, Commutative)                 \
-  case I_##Name:                                                               \
-    return Commutative;
-#include "metaphir/IR/InstructionMatchers.def"
-  }
-  llvm_unreachable("invalid instruction kind");
-}
-
-Instruction::OperandSyntax Instruction::getOperandSyntax(InstructionID ID) {
-  switch (ID) {
-#define MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, Syntax, Arity)            \
-  case I_##Name:                                                               \
-    return Instruction::OperandSyntax::Syntax;
-#include "metaphir/IR/InstructionMatchers.def"
-  }
-  llvm_unreachable("invalid instruction kind");
-}
-
-unsigned Instruction::getOperandArity(InstructionID ID) {
-  switch (ID) {
-#define MIR_INSTRUCTION_MATCHER_OPERAND_SYNTAX(Name, Syntax, Arity)            \
-  case I_##Name:                                                               \
-    return Arity;
-#include "metaphir/IR/InstructionMatchers.def"
-  }
-  llvm_unreachable("invalid instruction kind");
+  };
+  assert(static_cast<size_t>(ID) < std::size(Table) &&
+         "invalid instruction kind");
+  return Table[ID];
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F) {
@@ -239,53 +194,34 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
     if (Ops.empty())
       return OS;
     OS << ' ' << Ops[0];
-    for (unsigned Index = 1; Index != Ops.size(); ++Index) {
+    for (const MatcherOperand &Op : Ops.drop_front()) {
       OS << ", ";
-      printWithoutType(OS, Ops[Index]);
+      printWithoutType(OS, Op);
     }
     return OS;
   }
 
   using ID = Instruction::InstructionID;
-  switch (I.getInstructionID()) {
-  case ID::I_add:
-  case ID::I_fadd:
-  case ID::I_sub:
-  case ID::I_fsub:
-  case ID::I_mul:
-  case ID::I_fmul:
-  case ID::I_udiv:
-  case ID::I_sdiv:
-  case ID::I_fdiv:
-  case ID::I_urem:
-  case ID::I_srem:
-  case ID::I_frem:
-  case ID::I_shl:
-  case ID::I_lshr:
-  case ID::I_ashr:
-  case ID::I_and:
-  case ID::I_or:
-  case ID::I_xor:
+  switch (Instruction::getOperandSyntax(I.getInstructionID())) {
+  case Instruction::OperandSyntax::Binary:
+    // The second operand shares the first's type, which is written once.
     OS << ' ' << Ops[0] << ", ";
     printWithoutType(OS, Ops[1]);
     return OS;
-  case ID::I_trunc:
-  case ID::I_zext:
-  case ID::I_sext:
-  case ID::I_fptrunc:
-  case ID::I_fpext:
-  case ID::I_fptoui:
-  case ID::I_fptosi:
-  case ID::I_uitofp:
-  case ID::I_sitofp:
-  case ID::I_ptrtoint:
-  case ID::I_ptrtoaddr:
-  case ID::I_inttoptr:
-  case ID::I_bitcast:
+  case Instruction::OperandSyntax::Cast:
     OS << ' ' << Ops[0];
     if (Ops.size() > 1 && Ops[1].Ty)
       OS << " to " << *Ops[1].Ty;
     return OS;
+  case Instruction::OperandSyntax::Nary:
+    OS << ' ';
+    printSeparated(OS, Ops);
+    return OS;
+  case Instruction::OperandSyntax::Custom:
+    break;
+  }
+
+  switch (I.getInstructionID()) {
   case ID::I_icmp:
   case ID::I_fcmp:
     if (const MatcherOperand *Predicate =
