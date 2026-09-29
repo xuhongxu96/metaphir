@@ -55,6 +55,11 @@ static cl::opt<std::string> IndexFile(
     cl::desc("Skip the files and functions this index (from metaphir-index) "
              "shows cannot match; needs --matches-only"),
     cl::value_desc("file"), cl::cat(Category));
+static cl::opt<bool> TrustIndex(
+    "trust-index",
+    cl::desc("Match only the indexed files the index shows may match, without "
+             "looking for other files or changes to those (needs --index)"),
+    cl::cat(Category));
 static cl::opt<bool>
     PrintSummary("summary",
                  cl::desc("Print how many functions and files were matched "
@@ -104,6 +109,26 @@ struct Candidate {
   std::optional<FunctionFeatures> Features;
 };
 
+/// The corpus index a pattern is matched with, and the functions its
+/// postings show may match.
+struct IndexUse {
+  const CorpusIndex &Index;
+  /// The ordinals of the candidate functions of each entry, by entry index;
+  /// none if the postings do not narrow the functions down.
+  std::optional<DenseMap<size_t, SmallVector<unsigned, 4>>> Candidates;
+
+  /// The candidates of Entry, if the postings narrow them down.
+  std::optional<ArrayRef<unsigned>>
+  candidatesOf(const IndexEntry &Entry) const {
+    if (!Candidates)
+      return std::nullopt;
+    auto It = Candidates->find(Index.getEntryIndex(Entry));
+    if (It == Candidates->end())
+      return ArrayRef<unsigned>();
+    return ArrayRef<unsigned>(It->second);
+  }
+};
+
 /// What matching one file printed, to be shown in the order of the files.
 struct FileOutput {
   std::string Out;
@@ -143,8 +168,8 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
 /// may match, or, when it does not cover the file as it is, all of them. The
 /// module of the file is loaded into Context, lazily when the index is used.
 static Expected<std::unique_ptr<Module>>
-loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
-              StringRef File, StringRef ToolName, LLVMContext &Context,
+loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
+              StringRef ToolName, LLVMContext &Context,
               SmallVectorImpl<Candidate> &Functions, raw_ostream &Err,
               MatchStats &Stats) {
   auto LoadAll = [&]() -> Expected<std::unique_ptr<Module>> {
@@ -164,9 +189,10 @@ loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
     return M;
   };
 
-  if (!Index)
+  if (!Use)
     return LoadAll();
-  const IndexEntry *Entry = Index->lookup(File);
+  const CorpusIndex &Index = Use->Index;
+  const IndexEntry *Entry = Index.lookup(File);
   if (!Entry || FileStamp::of(File) != Entry->Stamp) {
     Err << ToolName << ": warning: " << File << ": "
         << (Entry ? "changed since indexed" : "not indexed")
@@ -177,17 +203,29 @@ loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
   if (!Entry->Parsed)
     return LoadAll();
   Stats.Functions += Entry->NumFunctions;
-  // The fine features are read only where the coarse ones may match.
+  // The postings leave out the functions whose coarse features cannot match;
+  // without them, the module's summary is checked.
+  std::optional<ArrayRef<unsigned>> Listed = Use->candidatesOf(*Entry);
+  if (Listed && Listed->empty())
+    return nullptr;
   auto MayMatch = [&](const FunctionFeatures &Features) {
     return Pattern.Query.mayMatch(Features);
   };
-  Expected<FunctionFeatures> Summary = Index->readSummary(*Entry, MayMatch);
-  if (!Summary)
-    return Summary.takeError();
-  if (!Summary->Fine || !Pattern.Query.mayMatch(*Summary))
-    return nullptr;
+  if (!Listed) {
+    Expected<FunctionFeatures> Summary = Index.readSummary(*Entry, MayMatch);
+    if (!Summary)
+      return Summary.takeError();
+    if (!Summary->Fine || !Pattern.Query.mayMatch(*Summary))
+      return nullptr;
+  }
+  // The fine features are read only where the coarse ones may match.
+  unsigned NextOrdinal = 0;
   Expected<std::vector<IndexedFunction>> Indexed =
-      Index->readFunctions(*Entry, MayMatch);
+      Index.readFunctions(*Entry, [&](const FunctionFeatures &Features) {
+        unsigned Ordinal = NextOrdinal++;
+        return (!Listed || llvm::binary_search(*Listed, Ordinal)) &&
+               MayMatch(Features);
+      });
   if (!Indexed)
     return Indexed.takeError();
   // The ordinals, among the module's defined functions, of those to match.
@@ -253,9 +291,36 @@ loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
   return M;
 }
 
+/// With a trusted index, adds the indexed files under Input that may match:
+/// those with candidate functions, and those that do not parse, to report
+/// them. Returns false if Input is not under the index's root.
+static bool collectIndexedFiles(StringRef Input, const IndexUse &Use,
+                                SmallVectorImpl<std::string> &Files) {
+  std::optional<std::string> Prefix = Use.Index.getRelativePath(Input);
+  if (!Prefix)
+    return false;
+  for (size_t I = 0; I != Use.Index.size(); ++I) {
+    const IndexEntry &Entry = Use.Index.getEntry(I);
+    StringRef Path = Entry.Path;
+    // Input itself, or a file under it.
+    if (!Path.consume_front(*Prefix) ||
+        !(Path.empty() || Prefix->empty() ||
+          Path.consume_front(sys::path::get_separator())))
+      continue;
+    std::optional<ArrayRef<unsigned>> Listed = Use.candidatesOf(Entry);
+    if (Entry.Parsed && Listed && Listed->empty())
+      continue;
+    SmallString<256> File(Input);
+    if (!Path.empty())
+      sys::path::append(File, Path);
+    Files.push_back(std::string(File));
+  }
+  return true;
+}
+
 /// Matches the pattern against the functions of one file. Unless only matches
 /// are printed, each function is reported as the next target.
-static void matchFile(LoadedPattern &Pattern, const CorpusIndex *Index,
+static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
                       StringRef File, StringRef ToolName, raw_ostream &Out,
                       raw_ostream &Err, MatchStats &Stats,
                       unsigned &TargetIndex) {
@@ -263,7 +328,7 @@ static void matchFile(LoadedPattern &Pattern, const CorpusIndex *Index,
   LLVMContext IRContext;
   SmallVector<Candidate, 64> Functions;
   Expected<std::unique_ptr<Module>> M = loadFunctions(
-      Pattern, Index, File, ToolName, IRContext, Functions, Err, Stats);
+      Pattern, Use, File, ToolName, IRContext, Functions, Err, Stats);
   if (!M) {
     // Report the module and go on with the others.
     Out.flush();
@@ -345,21 +410,33 @@ static void matchFile(LoadedPattern &Pattern, const CorpusIndex *Index,
 /// Matches the files on Threads threads, printing each file's output in the
 /// order of Files as soon as it and the ones before it are done.
 static MatchStats matchInParallel(ArrayRef<std::string> Files,
-                                  const CorpusIndex *Index, unsigned Threads,
+                                  const IndexUse *Use, unsigned Threads,
                                   StringRef ToolName) {
   std::vector<FileOutput> Outputs(Files.size());
   std::vector<bool> Done(Files.size());
   std::mutex Mutex;
   std::condition_variable FileDone;
   std::atomic<size_t> NextFile{0};
-  // The largest files go first, so that none is left for the end, alone.
+  // The largest files to load go first, so that none is left for the end,
+  // alone; the files are looked up in the index on all threads.
   std::vector<size_t> Order(Files.size());
   std::iota(Order.begin(), Order.end(), 0);
-  if (Index) {
+  if (Use) {
     std::vector<uint64_t> Sizes(Files.size());
-    for (size_t I = 0; I != Files.size(); ++I)
-      if (const IndexEntry *Entry = Index->lookup(Files[I]))
-        Sizes[I] = Entry->Stamp.Size;
+    std::atomic<size_t> NextLookup{0};
+    auto LookUp = [&] {
+      for (size_t I; (I = NextLookup++) < Files.size();)
+        if (const IndexEntry *Entry = Use->Index.lookup(Files[I])) {
+          std::optional<ArrayRef<unsigned>> Listed = Use->candidatesOf(*Entry);
+          if (!Listed || !Listed->empty())
+            Sizes[I] = Entry->Stamp.Size;
+        }
+    };
+    std::vector<std::thread> LookUps;
+    for (unsigned I = 0; I != Threads; ++I)
+      LookUps.emplace_back(LookUp);
+    for (std::thread &LookUpThread : LookUps)
+      LookUpThread.join();
     llvm::stable_sort(Order,
                       [&](size_t L, size_t R) { return Sizes[L] > Sizes[R]; });
   }
@@ -377,7 +454,7 @@ static MatchStats matchInParallel(ArrayRef<std::string> Files,
       if (Pattern) {
         raw_string_ostream Out(Output.Out), Err(Output.Err);
         unsigned TargetIndex = 0;
-        matchFile(*Pattern, Index, Files[FileIndex], ToolName, Out, Err,
+        matchFile(*Pattern, Use, Files[FileIndex], ToolName, Out, Err,
                   Output.Stats, TargetIndex);
       } else {
         Output.Err = PatternErrors;
@@ -430,6 +507,10 @@ int main(int Argc, char **Argv) {
     errs() << ToolName << ": error: --index needs --matches-only\n";
     return 1;
   }
+  if (TrustIndex && IndexFile.empty()) {
+    errs() << ToolName << ": error: --trust-index needs --index\n";
+    return 1;
+  }
 
   std::unique_ptr<LoadedPattern> Pattern = loadPattern(ToolName, errs());
   if (!Pattern)
@@ -445,22 +526,39 @@ int main(int Argc, char **Argv) {
     }
     Index = std::move(*Read);
   }
-  const CorpusIndex *IndexPtr = Index ? &*Index : nullptr;
+  std::optional<IndexUse> Use;
+  if (Index) {
+    Expected<std::optional<std::vector<FunctionLocation>>> Found =
+        Index->findCandidates(Pattern->Query);
+    if (!Found) {
+      logAllUnhandledErrors(Found.takeError(), errs(),
+                            Twine(ToolName) + ": error: ");
+      return 1;
+    }
+    Use.emplace(IndexUse{*Index, std::nullopt});
+    if (*Found) {
+      Use->Candidates.emplace();
+      for (const FunctionLocation &Location : **Found)
+        (*Use->Candidates)[Location.Entry].push_back(Location.Ordinal);
+    }
+  }
+  const IndexUse *UsePtr = Use ? &*Use : nullptr;
 
   SmallVector<std::string, 16> InputFiles;
   for (const std::string &Input : InputPaths)
-    if (!collectLLVMIRFiles(Input, InputFiles, errs()))
+    if (!(TrustIndex && collectIndexedFiles(Input, *Use, InputFiles)) &&
+        !collectLLVMIRFiles(Input, InputFiles, errs()))
       return 1;
 
   unsigned Threads =
       Jobs ? Jobs.getValue() : hardware_concurrency().compute_thread_count();
   MatchStats Stats;
   if (Threads > 1) {
-    Stats = matchInParallel(InputFiles, IndexPtr, Threads, ToolName);
+    Stats = matchInParallel(InputFiles, UsePtr, Threads, ToolName);
   } else {
     unsigned TargetIndex = 0;
     for (const std::string &InputFile : InputFiles)
-      matchFile(*Pattern, IndexPtr, InputFile, ToolName, outs(), errs(), Stats,
+      matchFile(*Pattern, UsePtr, InputFile, ToolName, outs(), errs(), Stats,
                 TargetIndex);
   }
   if (PrintSummary)

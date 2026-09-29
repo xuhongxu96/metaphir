@@ -13,6 +13,9 @@
 ; RUN: FileCheck %s --check-prefix=MATCH < %t/indexed
 ; RUN: FileCheck %s --check-prefix=SUMMARY < %t/summary
 ; RUN: %metaphir-match --matches-only -j 3 --index %t/corpus.mpidx %t/pattern.mpir %t/corpus | diff %t/plain -
+; RUN: %metaphir-match --matches-only --trust-index --summary --index %t/corpus.mpidx %t/pattern.mpir %t/corpus > %t/trusted 2> %t/trusted-summary
+; RUN: diff %t/plain %t/trusted
+; RUN: FileCheck %s --check-prefix=TRUSTED-SUMMARY < %t/trusted-summary
 
 ; A file changed since indexing, and one never indexed, are matched in full.
 ; RUN: llvm-as %t/src/adds-changed.ll -o %t/corpus/adds.bc
@@ -21,7 +24,14 @@
 ; RUN: FileCheck %s --check-prefix=STALE < %t/stale
 ; RUN: FileCheck %s --check-prefix=STALE-ERR < %t/stale-err
 
+; Trusting the index, a changed candidate file is still matched in full, but
+; files that are not indexed are not looked for.
+; RUN: %metaphir-match --matches-only --trust-index --index %t/corpus.mpidx %t/pattern.mpir %t/corpus > %t/trusted-stale 2> %t/trusted-stale-err
+; RUN: FileCheck %s --check-prefix=TRUSTED-STALE < %t/trusted-stale
+; RUN: FileCheck %s --check-prefix=TRUSTED-STALE-ERR < %t/trusted-stale-err
+
 ; RUN: not %metaphir-match --index %t/corpus.mpidx %t/pattern.mpir %t/corpus 2>&1 | FileCheck %s --check-prefix=NEEDS-MATCHES-ONLY
+; RUN: not %metaphir-match --matches-only --trust-index %t/pattern.mpir %t/corpus 2>&1 | FileCheck %s --check-prefix=NEEDS-INDEX
 ; RUN: not %metaphir-match --matches-only --index %t/missing.mpidx %t/pattern.mpir %t/corpus 2>&1 | FileCheck %s --check-prefix=NO-INDEX
 
 ;--- pattern.mpir
@@ -98,6 +108,17 @@ define i32 @extra(i32 %x) {
 ; STALE-ERR-DAG: warning: {{.*}}adds.bc: changed since indexed; matching it in full
 ; STALE-ERR-DAG: warning: {{.*}}extra.ll: not indexed; matching it in full
 
+; TRUSTED-SUMMARY: matched 2 of 4 functions (in 2 of 2 files)
+
+; TRUSTED-STALE:      {{.*}}adds.bc	@renamed	{?anch = %a, ?x = %x, ?y = %y, ?z = %x}
+; TRUSTED-STALE-NEXT: {{.*}}mixed.bc	@second
+; TRUSTED-STALE-NOT:  extra.ll
+
+; TRUSTED-STALE-ERR: warning: {{.*}}adds.bc: changed since indexed; matching it in full
+; TRUSTED-STALE-ERR-NOT: extra.ll
+
 ; NEEDS-MATCHES-ONLY: error: --index needs --matches-only
+
+; NEEDS-INDEX: error: --trust-index needs --index
 
 ; NO-INDEX: error: '{{.*}}missing.mpidx': No such file or directory

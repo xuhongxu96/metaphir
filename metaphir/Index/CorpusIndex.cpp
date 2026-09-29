@@ -1,5 +1,6 @@
 #include "metaphir/Index/CorpusIndex.h"
 #include "metaphir/IR/Instruction.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Config/llvm-config.h"
@@ -22,7 +23,7 @@ namespace llvm {
 namespace metaphir {
 
 static constexpr StringLiteral Magic = "MPIRIDX";
-static constexpr uint32_t FormatVersion = 6;
+static constexpr uint32_t FormatVersion = 7;
 
 bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
                         raw_ostream &Err) {
@@ -241,6 +242,61 @@ static void writeFunction(raw_ostream &OS, const IndexedFunction &Function,
   writeFine(OS, Function.Features);
 }
 
+/// A posting key record: the key's kind (1 byte) and value (8), its list's
+/// length (4) and offset among the lists (8), little-endian, so that keys
+/// are looked up where they lie.
+static constexpr uint64_t PostingKeySize = 21;
+
+/// The coarse posting keys of a function's features.
+template <typename Callback>
+static void forEachPostingKey(const FunctionFeatures &Features, Callback Add) {
+  for (uint64_t IDs = Features.Instructions; IDs; IDs &= IDs - 1)
+    Add(PostingKey{PostingKey::Instruction, uint64_t(llvm::countr_zero(IDs))});
+  for (uint16_t Edge : Features.Edges)
+    Add(PostingKey{PostingKey::Edge, Edge});
+  for (uint16_t Sibling : Features.Siblings)
+    Add(PostingKey{PostingKey::Sibling, Sibling});
+  for (uint64_t Global : Features.Globals)
+    Add(PostingKey{PostingKey::Global, Global});
+}
+
+/// Writes the posting keys and lists of the modules' functions, numbered in
+/// order across them.
+static void writePostings(raw_ostream &OS, ArrayRef<IndexedModule> Modules) {
+  DenseMap<std::pair<uint8_t, uint64_t>, std::vector<uint32_t>> Postings;
+  uint32_t Number = 0;
+  for (const IndexedModule &Module : Modules)
+    for (const IndexedFunction &Function : Module.Functions) {
+      forEachPostingKey(Function.Features, [&](const PostingKey &Key) {
+        Postings[{Key.Kind, Key.Value}].push_back(Number);
+      });
+      ++Number;
+    }
+  std::vector<std::pair<uint8_t, uint64_t>> Keys;
+  Keys.reserve(Postings.size());
+  for (const auto &Posting : Postings)
+    Keys.push_back(Posting.first);
+  llvm::sort(Keys);
+
+  std::string Lists;
+  raw_string_ostream ListsOS(Lists);
+  encodeULEB128(Keys.size(), OS);
+  support::endian::Writer W(OS, llvm::endianness::little);
+  for (const auto &Key : Keys) {
+    const std::vector<uint32_t> &Numbers = Postings[Key];
+    W.write<uint8_t>(Key.first);
+    W.write<uint64_t>(Key.second);
+    W.write<uint32_t>(Numbers.size());
+    W.write<uint64_t>(Lists.size());
+    uint32_t Previous = 0;
+    for (uint32_t N : Numbers) {
+      encodeULEB128(N - Previous, ListsOS);
+      Previous = N;
+    }
+  }
+  OS << Lists;
+}
+
 Error CorpusIndex::write(StringRef File, StringRef Root,
                          ArrayRef<IndexedModule> Modules) {
   std::string Directory, Summaries, Functions;
@@ -274,7 +330,9 @@ Error CorpusIndex::write(StringRef File, StringRef Root,
     OS << Directory;
     encodeULEB128(Summaries.size(), OS);
     OS << Summaries;
+    encodeULEB128(Functions.size(), OS);
     OS << Functions;
+    writePostings(OS, Modules);
     return Error::success();
   });
 }
@@ -417,10 +475,45 @@ Expected<CorpusIndex> CorpusIndex::read(StringRef File) {
   uint64_t SummariesSize = Data.getULEB128(C);
   Index.SummariesStart = C.tell();
   Data.skip(C, SummariesSize);
+  uint64_t FunctionsSize = Data.getULEB128(C);
   Index.FunctionsStart = C.tell();
+  Data.skip(C, FunctionsSize);
+  Index.NumPostingKeys = Data.getULEB128(C);
+  Index.PostingKeysStart = C.tell();
+  if (C && Index.NumPostingKeys >
+               (Data.size() - Index.PostingKeysStart) / PostingKeySize)
+    return malformed(File, "posting keys past the end");
+  Data.skip(C, Index.NumPostingKeys * PostingKeySize);
+  Index.PostingListsStart = C.tell();
   if (!C)
     return malformed(File, toString(C.takeError()));
+
+  uint64_t First = 0;
+  for (const IndexEntry &Entry : Index.Entries) {
+    Index.FirstFunction.push_back(First);
+    First += Entry.NumFunctions;
+  }
+  if (First > UINT32_MAX)
+    return malformed(File, "too many functions");
+  Index.NumFunctions = First;
   return Index;
+}
+
+std::optional<std::string> CorpusIndex::getRelativePath(StringRef Path) const {
+  auto Relative = [&](StringRef Absolute) -> std::optional<std::string> {
+    if (!Absolute.consume_front(Root))
+      return std::nullopt;
+    if (Absolute.empty())
+      return std::string();
+    if (!Absolute.consume_front(sys::path::get_separator()))
+      return std::nullopt;
+    return Absolute.str();
+  };
+  // Resolving symbolic links costs a system call per path component, so the
+  // lexical path is tried first.
+  if (std::optional<std::string> Lexical = Relative(absolutePath(Path)))
+    return Lexical;
+  return Relative(canonicalPath(Path));
 }
 
 const IndexEntry *CorpusIndex::lookup(StringRef Path) const {
@@ -431,11 +524,129 @@ const IndexEntry *CorpusIndex::lookup(StringRef Path) const {
     auto It = ByPath.find(Absolute);
     return It == ByPath.end() ? nullptr : &Entries[It->second];
   };
-  // Resolving symbolic links costs a system call per path component, so the
-  // lexical path is tried first.
   if (const IndexEntry *Entry = Find(absolutePath(Path)))
     return Entry;
   return Find(canonicalPath(Path));
+}
+
+/// The key of the posting key record at Index.
+static PostingKey postingKeyAt(StringRef Buffer, uint64_t Start,
+                               uint64_t Index) {
+  const char *Record = Buffer.data() + Start + Index * PostingKeySize;
+  return PostingKey{PostingKey::KeyKind(uint8_t(Record[0])),
+                    support::endian::read64le(Record + 1)};
+}
+
+/// The record of Key, if the index has it.
+static std::optional<uint64_t> findPostingKey(StringRef Buffer, uint64_t Start,
+                                              uint64_t NumKeys,
+                                              const PostingKey &Key) {
+  uint64_t Low = 0, High = NumKeys;
+  while (Low < High) {
+    uint64_t Middle = Low + (High - Low) / 2;
+    if (postingKeyAt(Buffer, Start, Middle) < Key)
+      Low = Middle + 1;
+    else
+      High = Middle;
+  }
+  if (Low == NumKeys || !(postingKeyAt(Buffer, Start, Low) == Key))
+    return std::nullopt;
+  return Low;
+}
+
+uint64_t CorpusIndex::getPostingCount(const PostingKey &Key) const {
+  std::optional<uint64_t> Record = findPostingKey(
+      Buffer->getBuffer(), PostingKeysStart, NumPostingKeys, Key);
+  if (!Record)
+    return 0;
+  return support::endian::read32le(Buffer->getBufferStart() + PostingKeysStart +
+                                   *Record * PostingKeySize + 9);
+}
+
+Expected<std::vector<uint32_t>>
+CorpusIndex::readPostings(const PostingKey &Key) const {
+  std::optional<uint64_t> Record = findPostingKey(
+      Buffer->getBuffer(), PostingKeysStart, NumPostingKeys, Key);
+  if (!Record)
+    return std::vector<uint32_t>();
+  const char *Fields =
+      Buffer->getBufferStart() + PostingKeysStart + *Record * PostingKeySize;
+  uint32_t Count = support::endian::read32le(Fields + 9);
+  uint64_t Offset = support::endian::read64le(Fields + 13);
+  DataExtractor Data(Buffer->getBuffer(), /*IsLittleEndian=*/true);
+  DataExtractor::Cursor C(PostingListsStart + Offset);
+  std::vector<uint32_t> Numbers;
+  Numbers.reserve(Count);
+  uint64_t Number = 0;
+  for (uint32_t I = 0; I != Count && C; ++I) {
+    Number += Data.getULEB128(C);
+    Numbers.push_back(Number);
+  }
+  if (!C)
+    return malformed(Buffer->getBufferIdentifier(), toString(C.takeError()));
+  if (!Numbers.empty() && Numbers.back() >= NumFunctions)
+    return malformed(Buffer->getBufferIdentifier(),
+                     "posting past the last function");
+  return Numbers;
+}
+
+FunctionLocation CorpusIndex::locate(uint32_t Number) const {
+  size_t Entry =
+      llvm::upper_bound(FirstFunction, Number) - FirstFunction.begin() - 1;
+  return {Entry, Number - FirstFunction[Entry]};
+}
+
+Expected<std::optional<std::vector<FunctionLocation>>>
+CorpusIndex::findCandidates(const FeatureQuery &Query) const {
+  // The lists intersected per variant: the shortest few narrow the most.
+  constexpr size_t MaxIntersected = 3;
+  std::vector<uint32_t> Candidates;
+  for (unsigned Variant = 0; Variant != Query.size(); ++Variant) {
+    FunctionFeatures Required;
+    const FeatureRequirement &Requirement = Query.getRequirement(Variant);
+    Required.Instructions = Requirement.Instructions;
+    for (auto [User, Operand] : Requirement.Edges)
+      Required.Edges.push_back(FunctionFeatures::getEdgeKey(User, Operand));
+    Required.Siblings.assign(Requirement.Siblings.begin(),
+                             Requirement.Siblings.end());
+    Required.Globals.assign(Requirement.Globals.begin(),
+                            Requirement.Globals.end());
+    SmallVector<std::pair<uint64_t, PostingKey>, 8> Keys;
+    forEachPostingKey(Required, [&](const PostingKey &Key) {
+      Keys.push_back({getPostingCount(Key), Key});
+    });
+    if (Keys.empty())
+      return std::nullopt;
+    llvm::sort(Keys,
+               [](const auto &L, const auto &R) { return L.first < R.first; });
+    if (Keys.front().first == 0)
+      continue;
+
+    std::vector<uint32_t> Matching;
+    for (size_t I = 0; I != std::min(Keys.size(), MaxIntersected); ++I) {
+      Expected<std::vector<uint32_t>> Numbers = readPostings(Keys[I].second);
+      if (!Numbers)
+        return Numbers.takeError();
+      if (I == 0) {
+        Matching = std::move(*Numbers);
+        continue;
+      }
+      std::vector<uint32_t> Common;
+      std::set_intersection(Matching.begin(), Matching.end(), Numbers->begin(),
+                            Numbers->end(), std::back_inserter(Common));
+      Matching = std::move(Common);
+    }
+    std::vector<uint32_t> Union;
+    std::set_union(Candidates.begin(), Candidates.end(), Matching.begin(),
+                   Matching.end(), std::back_inserter(Union));
+    Candidates = std::move(Union);
+  }
+
+  std::vector<FunctionLocation> Locations;
+  Locations.reserve(Candidates.size());
+  for (uint32_t Number : Candidates)
+    Locations.push_back(locate(Number));
+  return Locations;
 }
 
 Expected<FunctionFeatures> CorpusIndex::readSummary(

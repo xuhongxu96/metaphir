@@ -1,6 +1,7 @@
 #ifndef METAPHIR_INDEX_CORPUSINDEX_H
 #define METAPHIR_INDEX_CORPUSINDEX_H
 
+#include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/Features.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -12,6 +13,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace llvm {
@@ -71,6 +73,26 @@ struct IndexEntry {
   uint64_t FunctionsOffset = 0;
 };
 
+/// A coarse feature the index lists the functions of: an instruction kind, an
+/// edge or sibling key (see FunctionFeatures), or a global's hash.
+struct PostingKey {
+  enum KeyKind : uint8_t { Instruction, Edge, Sibling, Global };
+  KeyKind Kind;
+  uint64_t Value;
+
+  auto tie() const { return std::make_tuple(Kind, Value); }
+  bool operator<(const PostingKey &Other) const { return tie() < Other.tie(); }
+  bool operator==(const PostingKey &Other) const {
+    return tie() == Other.tie();
+  }
+};
+
+/// Where functions are: each by its entry's index and its ordinal there.
+struct FunctionLocation {
+  size_t Entry;
+  unsigned Ordinal;
+};
+
 /// Features of the modules under a corpus directory, for skipping the modules
 /// and functions a pattern cannot match.
 ///
@@ -97,6 +119,25 @@ public:
   /// The entry of the file at Path, absolute or relative to the working
   /// directory, if it is under the root and was indexed.
   const IndexEntry *lookup(StringRef Path) const;
+  /// Path relative to the root, if it is under it ("" for the root itself).
+  std::optional<std::string> getRelativePath(StringRef Path) const;
+  size_t getEntryIndex(const IndexEntry &Entry) const {
+    return &Entry - Entries.data();
+  }
+
+  /// The number of functions with Key.
+  uint64_t getPostingCount(const PostingKey &Key) const;
+  /// The functions with Key, numbered in the order of the entries and of
+  /// their functions.
+  Expected<std::vector<uint32_t>> readPostings(const PostingKey &Key) const;
+  /// Where the function numbered Number is.
+  FunctionLocation locate(uint32_t Number) const;
+
+  /// The functions whose coarse features may match Query, sorted by entry
+  /// and ordinal; none if the query needs no coarse feature, so that any
+  /// function may match.
+  Expected<std::optional<std::vector<FunctionLocation>>>
+  findCandidates(const FeatureQuery &Query) const;
 
   /// Reads the summary of the functions of Entry, an entry of this index.
   /// Its fine features (see FunctionFeatures::Fine) are read only if
@@ -105,7 +146,7 @@ public:
       const IndexEntry &Entry,
       function_ref<bool(const FunctionFeatures &)> NeedsFine = nullptr) const;
   /// Reads the functions of Entry, an entry of this index; their fine
-  /// features as readSummary does.
+  /// features as readSummary does, calling NeedsFine for them in order.
   Expected<std::vector<IndexedFunction>> readFunctions(
       const IndexEntry &Entry,
       function_ref<bool(const FunctionFeatures &)> NeedsFine = nullptr) const;
@@ -115,9 +156,16 @@ private:
   std::string Root;
   std::vector<IndexEntry> Entries;
   StringMap<size_t> ByPath;
-  /// Where the summaries and the functions start in Buffer.
+  /// The number of the first function of each entry, and of all functions.
+  std::vector<uint32_t> FirstFunction;
+  uint32_t NumFunctions = 0;
+  /// Where the summaries, the functions, the posting keys and the posting
+  /// lists start in Buffer.
   uint64_t SummariesStart = 0;
   uint64_t FunctionsStart = 0;
+  uint64_t PostingKeysStart = 0;
+  uint64_t NumPostingKeys = 0;
+  uint64_t PostingListsStart = 0;
 };
 
 } // namespace metaphir

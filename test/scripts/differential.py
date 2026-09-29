@@ -33,6 +33,7 @@ BITCODE_GROUPS = [
         ["--matches-only", "--index", INDEX],
         ["--matches-only", "--index", INDEX, "-j", "4"],
         ["--matches-only", "--index", INDEX, "--no-prefilter"],
+        ["--matches-only", "--index", INDEX, "--trust-index", "-j", "4"],
     ],
 ]
 

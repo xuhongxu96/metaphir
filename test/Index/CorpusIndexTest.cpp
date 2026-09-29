@@ -7,6 +7,7 @@
 
 using namespace llvm;
 using namespace llvm::metaphir;
+using MIRInstruction = llvm::metaphir::Instruction;
 
 namespace {
 
@@ -95,6 +96,50 @@ TEST_F(CorpusIndexTest, RoundTrips) {
   EXPECT_EQ(Index->lookup("/elsewhere/a.ll"), nullptr);
 }
 
+TEST_F(CorpusIndexTest, ListsFunctionsByFeature) {
+  writeFile("a.ll", R"(
+    declare i32 @g(i32)
+    define i32 @calls(i32 %x) {
+      %r = call i32 @g(i32 %x)
+      ret i32 %r
+    }
+    define i32 @adds(i32 %x) {
+      %r = add i32 %x, 1
+      ret i32 %r
+    }
+  )");
+  writeFile("b.ll", R"(
+    define i32 @muls(i32 %x) {
+      %r = mul i32 %x, 3
+      ret i32 %r
+    }
+    define i32 @adds_and_muls(i32 %x) {
+      %a = add i32 %x, 1
+      %r = mul i32 %a, 3
+      ret i32 %r
+    }
+  )");
+  ASSERT_FALSE(static_cast<bool>(
+      CorpusIndex::write(IndexFile, Root, {index("a.ll"), index("b.ll")})));
+  Expected<CorpusIndex> Index = CorpusIndex::read(IndexFile);
+  ASSERT_TRUE(static_cast<bool>(Index)) << toString(Index.takeError());
+
+  PostingKey Add{PostingKey::Instruction, MIRInstruction::I_add};
+  EXPECT_EQ(Index->getPostingCount(Add), 2u);
+  Expected<std::vector<uint32_t>> Adds = Index->readPostings(Add);
+  ASSERT_TRUE(static_cast<bool>(Adds)) << toString(Adds.takeError());
+  EXPECT_EQ(*Adds, (std::vector<uint32_t>{1, 3}));
+  FunctionLocation Last = Index->locate(3);
+  EXPECT_EQ(Last.Entry, 1u);
+  EXPECT_EQ(Last.Ordinal, 1u);
+  EXPECT_EQ(Index->getPostingCount(
+                PostingKey{PostingKey::Global, hashGlobalName("g")}),
+            1u);
+  EXPECT_EQ(Index->getPostingCount(
+                PostingKey{PostingKey::Instruction, MIRInstruction::I_udiv}),
+            0u);
+}
+
 TEST_F(CorpusIndexTest, LooksUpThroughSymbolicLinks) {
   writeFile("a.ll", "define void @f() {\n  ret void\n}\n");
   ASSERT_FALSE(
@@ -136,15 +181,18 @@ TEST_F(CorpusIndexTest, RejectsOtherFiles) {
       MemoryBuffer::getFile(IndexFile);
   ASSERT_TRUE(static_cast<bool>(Buffer));
 
-  // Cut inside the function's features: only reading them fails.
-  writeFile("cut-function", (*Buffer)->getBuffer().drop_back(1));
-  Expected<CorpusIndex> CutFunction = CorpusIndex::read(path("cut-function"));
-  ASSERT_TRUE(static_cast<bool>(CutFunction))
-      << toString(CutFunction.takeError());
-  Expected<std::vector<IndexedFunction>> Functions =
-      CutFunction->readFunctions(CutFunction->getEntry(0));
-  ASSERT_FALSE(static_cast<bool>(Functions));
-  consumeError(Functions.takeError());
+  // Cut inside the last posting list, the ret-ret siblings': only reading it
+  // fails.
+  writeFile("cut-postings", (*Buffer)->getBuffer().drop_back(1));
+  Expected<CorpusIndex> CutPostings = CorpusIndex::read(path("cut-postings"));
+  ASSERT_TRUE(static_cast<bool>(CutPostings))
+      << toString(CutPostings.takeError());
+  Expected<std::vector<uint32_t>> Postings = CutPostings->readPostings(
+      PostingKey{PostingKey::Sibling,
+                 FunctionFeatures::getEdgeKey(MIRInstruction::I_ret,
+                                              MIRInstruction::I_ret)});
+  ASSERT_FALSE(static_cast<bool>(Postings));
+  consumeError(Postings.takeError());
 
   // Cut inside the header: reading the index fails.
   writeFile("cut-header", (*Buffer)->getBuffer().take_front(20));

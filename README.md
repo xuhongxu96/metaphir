@@ -68,10 +68,15 @@ index cannot tell is unknown; each operator's IR, recording and index
 semantics sit together in `metaphir/Matching/Operators/`.
 
 `metaphir-index build` stores the features of a whole corpus
-(`--no-value-facts` skips value tracking, for a faster build), and `--index`
-uses them to skip files and functions without reading them: matching files are
-loaded lazily, with only the candidate functions materialized. Files changed
-since indexing are matched in full. `--summary` prints how much was matched.
+(`--no-value-facts` skips value tracking, for a faster build), with posting
+lists from each coarse feature (instruction kind, edge, sibling pair, global)
+to the functions that have it. `--index` intersects the pattern's shortest
+lists to find its candidate functions, then checks those alone: other files
+are skipped without being read, and matching files are loaded lazily, with
+only the candidate functions materialized. Files changed since indexing, or
+not indexed, are matched in full; `--trust-index` instead matches only the
+indexed candidates, without listing the input directories or checking the
+other files for changes. `--summary` prints how much was matched.
 
 ```sh
 metaphir-index build -j 32 corpus -o corpus.mpidx
