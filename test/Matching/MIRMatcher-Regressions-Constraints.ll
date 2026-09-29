@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; Constraint evaluation regressions. Each pattern matches only if its
 ; constraint holds.
 ; RUN: split-file %s %t

@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; Diagnostics point at the construct at fault, not at the token after it.
 ; RUN: split-file %s %t
 ; RUN: not %metaphir-parse %t/boolean.ll 2>&1 | FileCheck %s --check-prefix=BOOLEAN

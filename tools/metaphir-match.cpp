@@ -1,46 +1,32 @@
 #include "metaphir/IR/MIRContext.h"
-#include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/IR/PatternVariants.h"
-#include "metaphir/Matching/ConstraintCoercion.h"
-#include "metaphir/Matching/ConstraintInterpreter.h"
-#include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cassert>
 #include <string>
 #include <utility>
 
 using namespace llvm;
 using namespace llvm::metaphir;
 
-static bool parsePattern(StringRef Filename, SourceMgr &SM, MIRContext &Context,
-                         Pattern *&Result) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer =
-      MemoryBuffer::getFile(Filename);
-  if (!Buffer) {
-    errs() << Filename << ": " << Buffer.getError().message() << '\n';
-    return false;
-  }
-  SM.AddNewSourceBuffer(std::move(*Buffer), SMLoc());
-  SMDiagnostic Error;
-  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
-                   Error, Context);
-  if (!Parser.parse(Result))
-    return true;
-  Error.print("metaphir-match", errs());
-  return false;
-}
+static cl::OptionCategory Category("metaphir-match options");
+static cl::opt<std::string> PatternFilename(cl::Positional, cl::Required,
+                                            cl::desc("<pattern>"),
+                                            cl::cat(Category));
+static cl::list<std::string>
+    InputPaths(cl::Positional, cl::OneOrMore,
+               cl::desc("<llvm-ir file or directory>..."), cl::cat(Category));
 
 static bool collectLLVMIRFiles(StringRef Input,
                                SmallVectorImpl<std::string> &Files) {
@@ -79,54 +65,63 @@ static bool collectLLVMIRFiles(StringRef Input,
 }
 
 int main(int Argc, char **Argv) {
-  if (Argc < 3) {
-    errs() << "usage: metaphir-match <pattern> <llvm-ir>...\n";
-    return 1;
-  }
+  InitLLVM X(Argc, Argv);
+  cl::HideUnrelatedOptions(Category);
+  cl::SetVersionPrinter(
+      [](raw_ostream &OS) { OS << "MetaphIR " METAPHIR_VERSION "\n"; });
+  StringRef ToolName = sys::path::filename(Argv[0]);
+  cl::ParseCommandLineOptions(
+      Argc, Argv,
+      "Match a MetaphIR pattern against the functions of LLVM IR modules\n");
 
   SourceMgr PatternSource;
   MIRContext Context;
   Pattern *RawPattern = nullptr;
-  if (!parsePattern(Argv[1], PatternSource, Context, RawPattern))
+  SMDiagnostic Diag;
+  if (parseMIRFile(PatternFilename, PatternSource, Context, RawPattern, Diag)) {
+    Diag.print(ToolName.data(), errs());
     return 1;
+  }
   Expected<PatternVariants> Lowered =
       PatternLowering(Context).lower(RawPattern);
   if (!Lowered) {
     logAllUnhandledErrors(Lowered.takeError(), errs(),
-                          "metaphir-match: error: ");
+                          Twine(ToolName) + ": error: ");
     return 1;
   }
-  PatternVariants Patterns = std::move(*Lowered);
 
   SmallVector<std::string, 16> InputFiles;
-  for (int Argument = 2; Argument != Argc; ++Argument)
-    if (!collectLLVMIRFiles(Argv[Argument], InputFiles))
+  for (const std::string &Input : InputPaths)
+    if (!collectLLVMIRFiles(Input, InputFiles))
       return 1;
 
   PatternMatcher Matcher(&Context);
   unsigned TargetIndex = 0;
+  int ExitCode = 0;
   for (const std::string &InputFile : InputFiles) {
-    LLVMContext LLVMContext;
-    SMDiagnostic Error;
-    std::unique_ptr<Module> Module = parseIRFile(InputFile, Error, LLVMContext);
-    if (!Module) {
-      Error.print(Argv[0], errs());
-      return 1;
+    LLVMContext IRContext;
+    SMDiagnostic IRDiag;
+    std::unique_ptr<Module> M = parseIRFile(InputFile, IRDiag, IRContext);
+    if (!M) {
+      // Report the module and go on with the others.
+      outs().flush();
+      IRDiag.print(ToolName.data(), errs());
+      ExitCode = 1;
+      continue;
     }
 
-    for (const Function &Function : *Module) {
-      if (Function.isDeclaration())
+    for (const Function &F : *M) {
+      if (F.isDeclaration())
         continue;
-      Target Program(Function);
-      bool HadGraphMatch = false;
+      Target Program(F);
+      bool HadStructuralMatch = false;
       SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
       MatchResults Matches =
-          Matcher.match(Patterns, Program, &Unsatisfied, &HadGraphMatch);
-      outs() << "target " << TargetIndex++ << ": @" << Function.getName()
-             << '\n';
+          Matcher.match(*Lowered, Program, &Unsatisfied, &HadStructuralMatch);
+      outs() << "target " << TargetIndex++ << ": @" << F.getName() << '\n';
       if (Matches.empty()) {
         outs() << "  no match\n";
-        if (HadGraphMatch)
+        if (HadStructuralMatch)
           for (const UnsatisfiedConstraint &U : Unsatisfied) {
             outs() << "  constraint not satisfied: " << *U.Expression;
             if (!U.Reason.empty())
@@ -135,12 +130,9 @@ int main(int Argc, char **Argv) {
           }
         continue;
       }
-      for (unsigned MatchIndex = 0; MatchIndex != Matches.size();
-           ++MatchIndex) {
-        outs() << "  match " << MatchIndex << ":\n";
-        outs() << "    " << Matches[MatchIndex] << '\n';
-      }
+      for (auto [Index, Match] : enumerate(Matches))
+        outs() << "  match " << Index << ":\n    " << Match << '\n';
     }
   }
-  return 0;
+  return ExitCode;
 }

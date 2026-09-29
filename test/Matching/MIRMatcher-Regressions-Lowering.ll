@@ -34,16 +34,20 @@ define i32 @nonzero(i32 %a, i32 %b) {
 ; NESTED-CONTEXT: target 0: @nonzero
 ; NESTED-CONTEXT-NEXT:   match 0:
 ; NESTED-CONTEXT-NEXT:     {?anch = %r, ?x = %x, ?y = %b}
+
 ; NOT-CONTEXT: target 0: @nonzero
 ; NOT-CONTEXT-NEXT:   no match
+; NOT-CONTEXT-NEXT:   constraint not satisfied: (! (isKnownNonZero ?x))
 
 define i32 @unknown(i32 %a, i32 %b) {
   %r = add i32 %a, %b
   ret i32 %r
 }
-; NESTED-CONTEXT: target 1: @unknown
+; NESTED-CONTEXT-NEXT: target 1: @unknown
 ; NESTED-CONTEXT-NEXT:   no match
-; NOT-CONTEXT: target 1: @unknown
+; NESTED-CONTEXT-NEXT:   constraint not satisfied: (&& (isKnownNonZero ?x) true)
+
+; NOT-CONTEXT-NEXT: target 1: @unknown
 ; NOT-CONTEXT-NEXT:   match 0:
 ; NOT-CONTEXT-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
 
@@ -137,8 +141,6 @@ match addi8 [] Binary (i8 ?x, ?y) {
   %ret = add i8 ?x, ?y
 }
 %r = addi8 i?n ?a, ?b
-; META-FOR-FIXED: metaphir-match: error: matcher 'addi8' requires type 'i8' for a parameter, but this use passes 'i?n'
-
 ;--- nested-composite.mpir
 ; A matcher's body may itself use a matcher.
 match addmul [] Binary (?t ?x, ?y) {
@@ -165,9 +167,13 @@ define i32 @add(i32 %a, i32 %b) {
 ; ARRAY-PARAM: target 0: @add
 ; ARRAY-PARAM-NEXT:   match 0:
 ; ARRAY-PARAM-NEXT:     {?a = %a, ?anch = %r, ?b = %b}
+
 ; FLAG-NO-CAPTURE: target 0: @add
 ; FLAG-NO-CAPTURE-NEXT:   match 0:
 ; FLAG-NO-CAPTURE-NEXT:     {?a = %a, ?anch = %r, ?b = %b}
+
 ; FLAG-RENAMED: target 0: @add
 ; FLAG-RENAMED-NEXT:   match 0:
 ; FLAG-RENAMED-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?c = true}
+
+; META-FOR-FIXED: metaphir-match: error: matcher 'addi8' requires type 'i8' for a parameter, but this use passes 'i?n'

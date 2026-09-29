@@ -12,3 +12,8 @@ target_link_libraries(metaphir-match
     LLVMAsmParser
     LLVMIRReader
 )
+
+foreach(tool metaphir-lex metaphir-parse metaphir-match)
+  target_compile_definitions(${tool}
+    PRIVATE METAPHIR_VERSION="${PROJECT_VERSION}")
+endforeach()

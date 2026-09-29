@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; Definitions, constraint lexing and constraint type checking.
 ; RUN: split-file %s %t
 ; RUN: not %metaphir-parse %t/redefine-stdlib-constraint.ll 2>&1 | FileCheck %s --check-prefix=REDEF-CONSTRAINT

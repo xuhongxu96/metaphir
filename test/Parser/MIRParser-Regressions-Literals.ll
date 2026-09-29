@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; Literals the lexer cannot represent are diagnosed rather than truncated,
 ; wrapped or asserted on.
 ; RUN: split-file %s %t
