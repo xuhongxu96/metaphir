@@ -11,6 +11,9 @@ namespace metaphir {
 
 class MIRContext;
 
+/// A MetaphIR type, mirroring LLVM's type system plus meta types. Types are
+/// uniqued and owned by the MIRContext. This class represents the primitive
+/// types; see DerivedTypes.h for the others.
 class Type {
 public:
   enum TypeID {

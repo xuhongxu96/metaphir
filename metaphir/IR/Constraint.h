@@ -11,6 +11,9 @@ namespace metaphir {
 
 class Instruction;
 
+/// A node of a constraint expression ('?x == 1 && isZero(?y)'). Nodes are
+/// created by the factories of the subclasses, are owned by the MIRContext,
+/// and are not uniqued.
 class Constraint {
 public:
   enum ConstraintID {
@@ -96,6 +99,7 @@ raw_ostream &operator<<(raw_ostream &OS, const Constraint &C);
 
 // Kinds of constraint expression nodes.
 
+/// An integer literal.
 class IntegerConstraint : public Constraint {
 public:
   int64_t getValue() const { return Number; }
@@ -112,6 +116,7 @@ private:
       : Constraint(Integer, IntegerResult, R), Number(N) {}
 };
 
+/// 'true' or 'false'.
 class BooleanConstraint : public Constraint {
 public:
   bool getValue() const { return State; }
@@ -128,6 +133,7 @@ private:
       : Constraint(Boolean, BooleanResult, R), State(S) {}
 };
 
+/// A string literal.
 class StringConstraint : public Constraint {
 public:
   StringRef getValue() const { return Value; }
@@ -144,6 +150,7 @@ private:
       : Constraint(String, StringResult, Range), Value(Value) {}
 };
 
+/// An array literal of types, values or strings, '[a, b]'.
 class ArrayConstraint : public Constraint {
 public:
   ArrayRef<Constraint *> getElements() const { return Elements; }
@@ -162,6 +169,7 @@ private:
       : Constraint(Array, Type, Range), Elements(Elements) {}
 };
 
+/// A reference to a meta variable, or to a pattern instruction once lowered.
 class VariableConstraint : public Constraint {
 public:
   Value *getVariable() const { return VariableValue; }
@@ -178,6 +186,7 @@ private:
       : Constraint(Variable, T, R), VariableValue(V) {}
 };
 
+/// An element of an array, 'a[i]'.
 class ArrayAccessConstraint : public Constraint {
 public:
   Constraint *getArray() const { return Array; }
@@ -198,6 +207,8 @@ private:
       : Constraint(ArrayAccess, Type, Range), Array(Array), Index(Index) {}
 };
 
+/// A unary or binary operator, or a call of a built-in operation or of a
+/// 'constraint' definition.
 class OperatorConstraint : public Constraint {
 public:
   OperatorID getOperatorID() const;

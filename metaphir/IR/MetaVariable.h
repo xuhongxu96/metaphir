@@ -20,6 +20,9 @@ enum class MetaType {
 StringRef getMetaTypeName(MetaType Type);
 raw_ostream &operator<<(raw_ostream &OS, MetaType Type);
 
+/// A meta variable ('?x'): a name bound when a pattern matches. Its MetaType
+/// is inferred from where it is used. Not uniqued: each create() makes a new
+/// variable, and matching binds variables by object, not by name.
 class MetaVariable : public Value {
 public:
   StringRef getName() const { return Name; }

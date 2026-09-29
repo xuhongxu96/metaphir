@@ -15,6 +15,7 @@ namespace metaphir {
 class MIRContext;
 class MetaVariable;
 
+/// A parameter of a 'match' declaration: a type position or an operand.
 struct ParameterDef {
   /// Name this parameter binds. Empty when a type parameter is written as a
   /// concrete type, which fixes the type instead of binding a name for it.
@@ -27,6 +28,9 @@ struct ParameterDef {
   bool IsType = false;
 };
 
+/// A 'match' definition: a named matcher, used like a built-in instruction
+/// matcher, that matches any of its branches. Owned by the MIRContext;
+/// PatternLowering expands every use into one pattern per branch.
 class CompositeMatcher {
 public:
   struct Branch {

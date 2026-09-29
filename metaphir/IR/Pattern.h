@@ -9,6 +9,9 @@ namespace llvm {
 class raw_ostream;
 namespace metaphir {
 
+/// A pattern: instruction matchers (whose roots are those no other
+/// instruction uses), constraints, the meta variables it binds, and flags
+/// fixed by lowering. Created by create()/copy() and owned by the context.
 class Pattern {
 public:
   ~Pattern();

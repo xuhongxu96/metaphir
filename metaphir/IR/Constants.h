@@ -9,6 +9,7 @@
 namespace llvm {
 namespace metaphir {
 
+/// A named global ('@f'), or an intrinsic ('@llvm.ctlz').
 class GlobalValue : public Value {
 public:
   StringRef getName() const { return Name; }
@@ -23,6 +24,7 @@ private:
   GlobalValue(StringRef N, SourceRange R) : Value(GlobalVal, R), Name(N) {}
 };
 
+/// An integer literal. Its signedness is that of the literal as written.
 class IntegerConstant : public Value {
 public:
   const APSInt &getValue() const { return Number; }
@@ -40,6 +42,7 @@ private:
       : Value(IntegerConstantVal, R), Number(N) {}
 };
 
+/// A floating-point literal.
 class FloatingConstant : public Value {
 public:
   const APFloat &getValue() const { return Number; }
@@ -57,6 +60,7 @@ private:
       : Value(FloatingConstantVal, R), Number(N) {}
 };
 
+/// A keyword constant ('null', 'poison', ...) or comparison predicate.
 class KeywordConstant : public Value {
 public:
   enum KeywordID {
@@ -80,6 +84,8 @@ private:
       : Value(KeywordConstantVal, R), ID(ID) {}
 };
 
+/// An array ('[...]'), struct ('{...}') or vector ('<...>') constant of typed
+/// elements; getElementTypes() and getElements() are parallel.
 class AggregateConstant : public Value {
 public:
   enum Delimiter { Square, Brace, Angle };
