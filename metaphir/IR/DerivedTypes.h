@@ -10,6 +10,8 @@ namespace metaphir {
 class MIRContext;
 class MetaVariable;
 
+/// 'iN'. Types are uniqued by the MIRContext: get() returns the same object
+/// for the same structure.
 class IntegerType : public Type {
 public:
   /// The largest supported bit width; mirrors llvm::IntegerType::MAX_INT_BITS.
@@ -26,6 +28,7 @@ private:
       : Type(C, IntegerTyID), NumBits(NumBits) {}
 };
 
+/// 'bN'.
 class ByteType : public Type {
 public:
   unsigned getNumBits() const { return NumBits; }
@@ -39,6 +42,7 @@ private:
       : Type(C, ByteTyID), NumBits(NumBits) {}
 };
 
+/// 'R (P, ...)'.
 class FunctionType : public Type {
 public:
   Type *getReturnType() const { return ReturnType; }
@@ -61,6 +65,7 @@ private:
         VarArg(VarArg) {}
 };
 
+/// 'ptr', 'ptr addrspace(N)', or a typed pointer 'T*'.
 class PointerType : public Type {
 public:
   /// The address space of a 'ptr' written without 'addrspace(N)': any.
@@ -84,6 +89,7 @@ private:
       : Type(C, PointerTyID), Element(Element), AddressSpace(AddressSpace) {}
 };
 
+/// '{T, ...}', or '<{T, ...}>' when packed.
 class StructType : public Type {
 public:
   ArrayRef<Type *> getElementTypes() const { return Elements; }
@@ -102,6 +108,8 @@ private:
       : Type(C, StructTyID), Elements(Elements), Packed(Packed) {}
 };
 
+/// An array or vector. Its element count is a number, or the meta variable
+/// getCountVariable() when written as '?n'.
 class SequenceType : public Type {
 public:
   Type *getElementType() const { return Element; }
@@ -125,6 +133,7 @@ private:
   MetaVariable *CountVariable;
 };
 
+/// '[N x T]'.
 class ArrayType : public SequenceType {
 public:
   static ArrayType *get(MIRContext &C, Type *Element, uint64_t Count,
@@ -138,6 +147,7 @@ private:
       : SequenceType(C, ArrayTyID, Element, Count, CountVar) {}
 };
 
+/// '<N x T>' or '<vscale x N x T>'.
 class VectorType : public SequenceType {
 public:
   bool isScalable() const { return getTypeID() == ScalableVectorTyID; }
@@ -157,6 +167,7 @@ private:
                      Element, Count, CountVar) {}
 };
 
+/// A type meta variable, '?T', matching any type.
 class MetaIRType : public Type {
 public:
   MetaVariable *getVariable() const { return Variable; }
@@ -171,6 +182,7 @@ private:
       : Type(C, MetaTyID), Variable(Variable) {}
 };
 
+/// 'i?n' (or 'b?n'): an integer (byte) type of any width, bound to ?n.
 class MetaIntegerType : public Type {
 public:
   MetaVariable *getBitWidthVariable() const { return BitWidth; }

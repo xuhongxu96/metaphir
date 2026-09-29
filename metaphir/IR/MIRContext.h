@@ -13,6 +13,9 @@ class CompositeMatcher;
 class ConstraintDef;
 class MetaFlagDef;
 
+/// Owns everything MetaphIR IR is made of -- types, values, constraints,
+/// patterns and library definitions -- and the registry of definitions by
+/// name. Objects live as long as their context.
 class MIRContext {
 public:
   MIRContextImpl *const pImpl;

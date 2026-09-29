@@ -9,6 +9,8 @@
 namespace llvm {
 namespace metaphir {
 
+/// A metaflag written on an operand or instruction (':c', ':or(:zero, ...)',
+/// ':s'): built in, or defined by a 'metaflag' definition.
 class MetaFlag {
 public:
   enum MetaFlagID {

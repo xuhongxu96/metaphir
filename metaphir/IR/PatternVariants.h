@@ -8,6 +8,7 @@
 namespace llvm {
 namespace metaphir {
 
+/// The patterns a lowered pattern stands for; a match of any one is a match.
 class PatternVariants {
 public:
   PatternVariants() = default;
@@ -17,10 +18,10 @@ public:
       Variants.push_back(P);
   }
 
-  PatternVariants(ArrayRef<Pattern *> Patterns)
+  explicit PatternVariants(ArrayRef<Pattern *> Patterns)
       : Variants(Patterns.begin(), Patterns.end()) {}
 
-  PatternVariants(SmallVector<Pattern *, 2> &&Patterns)
+  explicit PatternVariants(SmallVector<Pattern *, 2> &&Patterns)
       : Variants(std::move(Patterns)) {}
 
   ArrayRef<Pattern *> getVariants() const { return Variants; }

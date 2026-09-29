@@ -6,6 +6,8 @@
 namespace llvm {
 namespace metaphir {
 
+/// The base of everything a pattern operand can be: meta variables,
+/// instruction matchers and constants. Uses LLVM-style RTTI (isa/cast).
 class Value {
 public:
   enum ValueID {

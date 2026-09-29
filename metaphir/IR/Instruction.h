@@ -12,6 +12,10 @@ namespace metaphir {
 class CompositeMatcher;
 class MetaVariable;
 
+/// An operand of an instruction matcher. Most are typed values ('i32 ?x');
+/// others are bare types (a cast's destination, IsInstructionOperand false),
+/// array captures of the remaining operands ('...?types ?values', IsArray),
+/// or keyed operands such as a predicate or alignment (Key).
 struct MatcherOperand {
   enum KeyedOperandKind {
     NotKeyed,
@@ -45,6 +49,9 @@ struct MatcherOperand {
   void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
 };
 
+/// A semantic flag written on an instruction matcher ('nsw'). Without a
+/// Capture the flag must be present; with one it is optional and Capture is
+/// bound to whether it is.
 struct InstructionFlag {
   enum FlagID {
 #define MIR_FLAG_TOKEN_KIND(Name) F_##Name,
@@ -58,6 +65,9 @@ struct InstructionFlag {
   static StringRef getName(FlagID ID);
 };
 
+/// An instruction matcher: a built-in one (an InstructionID from
+/// InstructionMatchers.def) or a use of a composite ('match') matcher.
+/// Created by the factories, owned by the MIRContext, not uniqued.
 class Instruction : public Value {
 public:
   enum InstructionID {
