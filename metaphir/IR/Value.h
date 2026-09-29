@@ -1,15 +1,10 @@
 #ifndef METAPHIR_IR_VALUE_H
 #define METAPHIR_IR_VALUE_H
 
-#include "llvm/Support/SMLoc.h"
+#include "metaphir/IR/SourceRange.h"
 
 namespace llvm {
 namespace metaphir {
-
-struct SourceRange {
-  SMLoc Begin;
-  SMLoc End;
-};
 
 class Value {
 public:

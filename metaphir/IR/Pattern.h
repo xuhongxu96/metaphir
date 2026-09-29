@@ -1,7 +1,7 @@
 #ifndef METAPHIR_IR_PATTERN_H
 #define METAPHIR_IR_PATTERN_H
 
-#include "metaphir/IR/Constraints.h"
+#include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/Instruction.h"
 #include "llvm/ADT/SmallVector.h"
 

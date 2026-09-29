@@ -8,7 +8,7 @@
 #ifndef METAPHIR_TEST_TESTUTILS_H
 #define METAPHIR_TEST_TESTUTILS_H
 
-#include "metaphir/IR/Constraints.h"
+#include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"

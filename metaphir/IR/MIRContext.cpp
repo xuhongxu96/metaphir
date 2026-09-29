@@ -1,4 +1,5 @@
 #include "metaphir/IR/MIRContext.h"
+#include "metaphir/IR/LibraryDefs.h"
 #include "metaphir/IR/MIRContextImpl.h"
 
 namespace llvm {

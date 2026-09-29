@@ -17,7 +17,8 @@
 
 #include "metaphir/Parser/MIRParser.h"
 #include "metaphir/IR/CompositeMatcher.h"
-#include "metaphir/IR/Constraints.h"
+#include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/LibraryDefs.h"
 #include "metaphir/IR/MIRContext.h"
 
 namespace llvm {
