@@ -1,11 +1,11 @@
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/IR/Constraints.h"
 #include "metaphir/IR/MIRContext.h"
+#include "test/TestUtils.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Error.h"
 #include "gtest/gtest.h"
-#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;

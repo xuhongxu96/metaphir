@@ -153,8 +153,9 @@ bool MIRParser::parseConstraintUnary(Constraint *&R) {
 bool MIRParser::parseConstraintPostfix(Constraint *&R) {
   if (parseConstraintPrimary(R))
     return true;
-  while (consume(tok::lsquare)) {
+  while (Lex.getKind() == tok::lsquare) {
     LocTy L = Lex.getLoc();
+    next();
     Constraint *Index = nullptr;
     if (parseConstraint(Index) ||
         expect(tok::rsquare, "expected ']' after array index"))
@@ -167,9 +168,11 @@ bool MIRParser::parseConstraintPostfix(Constraint *&R) {
     else if (R->getResultType() == Constraint::StringArrayResult)
       ElementType = Constraint::StringResult;
     else
-      return error("constraint subscript requires an array operand");
+      return Lex.ParseError(L,
+                            "constraint subscript requires an array operand");
     if (Index->getResultType() != Constraint::IntegerResult)
-      return error("constraint array index must be an integer");
+      return Lex.ParseError(Index->getSourceRange().Begin,
+                            "constraint array index must be an integer");
     R = ArrayAccessConstraint::get(Context, ElementType, R, Index,
                                    SourceRange{L, L});
   }
@@ -179,7 +182,7 @@ bool MIRParser::parseConstraintPostfix(Constraint *&R) {
 bool MIRParser::parseConstraintPrimary(Constraint *&R) {
   LocTy L = Lex.getLoc();
   if (Lex.getKind() == tok::APSInt) {
-    if (!Lex.getAPSIntVal().isSignedIntN(64))
+    if (!Lex.getAPSIntVal().isRepresentableByInt64())
       return error("constraint integer is too large");
     int64_t V = Lex.getAPSIntVal().getExtValue();
     next();
@@ -202,7 +205,7 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
   if (consume(tok::lsquare)) {
     SmallVector<Constraint *, 4> Elements;
     if (Lex.getKind() == tok::rsquare)
-      return error("constraint array literal must not be empty");
+      return Lex.ParseError(L, "constraint array literal must not be empty");
     do {
       Constraint *Element = nullptr;
       if (parseConstraint(Element))
@@ -221,12 +224,14 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
     else if (ElementType == Constraint::StringResult)
       ArrayType = Constraint::StringArrayResult;
     else
-      return error(
+      return Lex.ParseError(
+          L,
           "constraint array literal requires type, value, or string elements");
     if (!llvm::all_of(Elements, [ElementType](const Constraint *Element) {
           return Element->getResultType() == ElementType;
         }))
-      return error("constraint array literal elements must have the same type");
+      return Lex.ParseError(
+          L, "constraint array literal elements must have the same type");
     R = ArrayConstraint::get(Context, ArrayType, Elements, SourceRange{L, L});
     return false;
   }
@@ -270,12 +275,15 @@ bool MIRParser::parseConstraintPrimary(Constraint *&R) {
         Constraint::getOperatorSchema(ID);
     if (Schema &&
         (Args.size() < Schema->MinArity || Args.size() > Schema->MaxArity)) {
-      std::string Expected =
-          Schema->MinArity == Schema->MaxArity
-              ? std::to_string(Schema->MinArity) + " arguments"
-              : std::to_string(Schema->MinArity) + " to " +
-                    std::to_string(Schema->MaxArity) + " arguments";
-      return error("built-in constraint operation expects " + Expected);
+      std::string Expected = Schema->MinArity == Schema->MaxArity
+                                 ? (Twine(Schema->MinArity) + " argument" +
+                                    (Schema->MinArity == 1 ? "" : "s"))
+                                       .str()
+                                 : (Twine(Schema->MinArity) + " to " +
+                                    Twine(Schema->MaxArity) + " arguments")
+                                       .str();
+      return Lex.ParseError(L, "constraint operation '" + Name + "' expects " +
+                                   Expected + ", got " + Twine(Args.size()));
     }
     // A call names either a built-in operation or a 'constraint' definition,
     // which is how the operation vocabulary is extended. Reporting an unknown

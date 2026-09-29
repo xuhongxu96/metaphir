@@ -18,17 +18,21 @@ public:
             MIRContext &Context)
       : Lex(Buffer, SM, Error, Context), Context(Context) {}
 
-  /// Parse a complete pattern. Returns true on error.
+  /// Parses a complete pattern, loading the standard library into the context
+  /// first if needed. Returns true on error, with the diagnostic in the
+  /// SMDiagnostic given to the constructor.
   bool parse(Pattern *&Result);
 
   /// Name under which the embedded standard library is recorded in a context.
   static constexpr StringRef StdLibName = "stdlib";
 
   /// Parses Source as the library named Name into Context, registering its
-  /// definitions. Does nothing if a library of that name is already loaded.
-  /// Returns true on error.
-  static bool loadLibrary(MIRContext &Context, StringRef Name,
-                          StringRef Source);
+  /// definitions; the standard library is loaded first. The context keeps a
+  /// copy of Source. Does nothing if a library of that name is already
+  /// loaded. Returns true on error, with the diagnostic in Diag; the library
+  /// is then not recorded as loaded.
+  static bool loadLibrary(MIRContext &Context, StringRef Name, StringRef Source,
+                          SMDiagnostic &Diag);
 
 private:
   using LocTy = MIRLexer::LocTy;
@@ -42,10 +46,16 @@ private:
   MetaVariable *CurrentBlock = nullptr;
   PatternSettings Settings;
 
+  /// Parses the whole buffer: definitions and an optional pattern body.
+  bool parseModule(Pattern *&Result);
+
   bool error(const Twine &Message) { return Lex.ParseError(Message); }
   void next() { Lex.Lex(); }
   bool consume(tok::Kind K);
   bool expect(tok::Kind K, const Twine &Message);
+  /// Describes the current token for a diagnostic: its source text, or "end
+  /// of line" / "end of file".
+  std::string describeToken() const;
   void skipNewlines();
 
   MetaVariable *getMeta(StringRef Name, MetaType Expected, LocTy Loc);
@@ -89,7 +99,15 @@ private:
                               StringRef OpName,
                               SmallVectorImpl<MatcherOperand> &Ops);
 
+  /// Parses one line of a pattern body -- a ';;' setting or constraint, a
+  /// block label, or an instruction -- into CurrentPattern. The line must end
+  /// at a newline, the end of input, or Terminator (left unconsumed).
+  bool parseBodyLine(tok::Kind Terminator);
+  bool expectEndOfLine(tok::Kind Terminator, const Twine &Message);
+
   bool parseTopLevelMatch();
+  /// Consumes an 'or' that introduces another match branch.
+  bool consumeBranchSeparator();
   bool parseMatchParameters(Instruction::OperandSyntax Syntax,
                             SmallVectorImpl<ParameterDef> &Result);
   bool parseTopLevelConstraint();

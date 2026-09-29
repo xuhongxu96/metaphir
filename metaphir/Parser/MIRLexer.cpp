@@ -65,79 +65,16 @@ const char *isLabelTail(const char *CurPtr) {
 
 } // namespace
 
-//===----------------------------------------------------------------------===//
-// Helper functions.
-//===----------------------------------------------------------------------===//
-
-// atoull - Convert an ascii string of decimal digits into the unsigned long
-// long representation... this does not have to do input error checking,
-// because we know that the input will be matched by a suitable regex...
-//
-uint64_t MIRLexer::atoull(const char *Buffer, const char *End) {
-  uint64_t Result = 0;
-  for (; Buffer != End; Buffer++) {
-    uint64_t OldRes = Result;
-    Result *= 10;
-    Result += *Buffer - '0';
-    if (Result < OldRes) { // overflow detected.
-      LexError("constant bigger than 64 bits detected");
-      return 0;
-    }
-  }
+/// Describes a character for a diagnostic: printable characters are quoted,
+/// others are written as a hexadecimal escape.
+static std::string describeChar(int C) {
+  if (isprint(C))
+    return (Twine("'") + Twine(static_cast<char>(C)) + "'").str();
+  std::string Result = "'\\x";
+  Result += hexdigit((C >> 4) & 0xF, /*LowerCase=*/false);
+  Result += hexdigit(C & 0xF, /*LowerCase=*/false);
+  Result += "'";
   return Result;
-}
-
-uint64_t MIRLexer::HexIntToVal(const char *Buffer, const char *End) {
-  uint64_t Result = 0;
-  for (; Buffer != End; ++Buffer) {
-    uint64_t OldRes = Result;
-    Result *= 16;
-    Result += hexDigitValue(*Buffer);
-
-    if (Result < OldRes) { // overflow detected.
-      LexError("constant bigger than 64 bits detected");
-      return 0;
-    }
-  }
-  return Result;
-}
-
-void MIRLexer::HexToIntPair(const char *Buffer, const char *End,
-                            uint64_t Pair[2]) {
-  Pair[0] = 0;
-  if (End - Buffer >= 16) {
-    for (int i = 0; i < 16; i++, Buffer++) {
-      assert(Buffer != End);
-      Pair[0] *= 16;
-      Pair[0] += hexDigitValue(*Buffer);
-    }
-  }
-  Pair[1] = 0;
-  for (int i = 0; i < 16 && Buffer != End; i++, Buffer++) {
-    Pair[1] *= 16;
-    Pair[1] += hexDigitValue(*Buffer);
-  }
-  if (Buffer != End)
-    LexError("constant bigger than 128 bits detected");
-}
-
-/// FP80HexToIntPair - translate an 80 bit FP80 number (20 hexits) into
-/// { low64, high16 } as usual for an APInt.
-void MIRLexer::FP80HexToIntPair(const char *Buffer, const char *End,
-                                uint64_t Pair[2]) {
-  Pair[1] = 0;
-  for (int i = 0; i < 4 && Buffer != End; i++, Buffer++) {
-    assert(Buffer != End);
-    Pair[1] *= 16;
-    Pair[1] += hexDigitValue(*Buffer);
-  }
-  Pair[0] = 0;
-  for (int i = 0; i < 16 && Buffer != End; i++, Buffer++) {
-    Pair[0] *= 16;
-    Pair[0] += hexDigitValue(*Buffer);
-  }
-  if (Buffer != End)
-    LexError("constant bigger than 128 bits detected");
 }
 
 // Both the lexer and parser can issue error messages. If the lexer issues a
@@ -146,12 +83,12 @@ void MIRLexer::FP80HexToIntPair(const char *Buffer, const char *End,
 // by the lexer is more relevant in that case as opposed to potentially more
 // generic parser error. So instead of always recording the last error message
 // use the `Priority` to establish a priority, with Lexer > Parser > None. We
-// record the issued message only if the message has same or higher priority
-// than the existing one. This prevents lexer errors from being overwritten by
-// parser errors.
+// record the issued message only if the message has higher priority than the
+// existing one. This prevents lexer errors from being overwritten by parser
+// errors, and keeps the first (most specific) error of a given priority.
 void MIRLexer::Error(LocTy ErrorLoc, const Twine &Msg,
                      MIRLexer::ErrorPriority Priority) {
-  if (Priority < ErrorInfo.Priority)
+  if (Priority <= ErrorInfo.Priority)
     return;
   ErrorInfo.Error = SM.GetMessage(ErrorLoc, SourceMgr::DK_Error, Msg);
   ErrorInfo.Priority = Priority;
@@ -168,7 +105,10 @@ void MIRLexer::Warning(LocTy WarningLoc, const Twine &Msg) const {
 MIRLexer::MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &Err,
                    MIRContext &C)
     : CurBuf(StartBuf), ErrorInfo(Err), SM(SM), Context(C) {
-  CurPtr = CurBuf.begin();
+  // The lexer reads one character past a token to classify it, and relies on
+  // the NUL terminator that MemoryBuffer guarantees to stop at the end.
+  assert(*CurBuf.end() == '\0' && "lexer buffer must be NUL-terminated");
+  CurPtr = TokStart = CurBuf.begin();
 }
 
 int MIRLexer::getNextChar() {
@@ -243,7 +183,7 @@ tok::Kind MIRLexer::LexToken() {
       // Handle letters: [a-zA-Z_]
       if (isalpha(static_cast<unsigned char>(CurChar)) || CurChar == '_')
         return LexIdentifier();
-      return tok::Error;
+      return LexUnexpected(CurChar);
     case EOF:
       return tok::Eof;
     case 0:
@@ -276,7 +216,7 @@ tok::Kind MIRLexer::LexToken() {
         CurPtr += 2;
         return tok::dotdotdot;
       }
-      return tok::Error;
+      return LexUnexpected(CurChar);
     case ';':
       if (CurPtr[0] == ';') {
         ++CurPtr;
@@ -325,10 +265,10 @@ tok::Kind MIRLexer::LexToken() {
     case '|':
       return tok::bar;
     case '&':
-      return tok::Error;
+      return LexUnexpected(CurChar);
     case '/':
       if (CurPtr[0] != '*')
-        return tok::Error;
+        return LexUnexpected(CurChar);
       ++CurPtr;
       if (SkipCComment())
         return tok::Error;
@@ -337,6 +277,11 @@ tok::Kind MIRLexer::LexToken() {
       return LexQuestion();
     }
   }
+}
+
+tok::Kind MIRLexer::LexUnexpected(int CurChar) {
+  LexError(getLoc(), "unexpected character " + describeChar(CurChar));
+  return tok::Error;
 }
 
 void MIRLexer::SkipLineComment() {
@@ -386,7 +331,7 @@ tok::Kind MIRLexer::LexDollar() {
     return tok::LabelStr;
   }
 
-  return tok::Error;
+  return LexUnexpected('$');
 }
 
 /// ReadString - Read a string until the closing quote.
@@ -426,17 +371,27 @@ bool MIRLexer::ReadVarName() {
 // Lex an ID: [0-9]+. On success, the ID is stored in UIntVal and Token is
 // returned, otherwise the Error token is returned.
 tok::Kind MIRLexer::LexUIntID(tok::Kind Token) {
-  if (!isdigit(static_cast<unsigned char>(CurPtr[0])))
+  if (!isdigit(static_cast<unsigned char>(CurPtr[0]))) {
+    LexError("expected a name or a number after '" + Twine(TokStart[0]) + "'");
     return tok::Error;
+  }
 
   for (++CurPtr; isdigit(static_cast<unsigned char>(CurPtr[0])); ++CurPtr)
     /*empty*/;
 
-  uint64_t Val = atoull(TokStart + 1, CurPtr);
-  if ((unsigned)Val != Val)
-    LexError("invalid value number (too large)");
-  UIntVal = unsigned(Val);
+  if (!lexValueNumber(StringRef(TokStart + 1, CurPtr - TokStart - 1)))
+    return tok::Error;
   return Token;
+}
+
+bool MIRLexer::lexValueNumber(StringRef Digits) {
+  unsigned Val = 0;
+  if (Digits.getAsInteger(10, Val)) {
+    LexError("value number is too large");
+    return false;
+  }
+  UIntVal = Val;
+  return true;
 }
 
 tok::Kind MIRLexer::LexVar(tok::Kind Var, tok::Kind VarID) {
@@ -484,7 +439,7 @@ tok::Kind MIRLexer::LexPercent() {
 ///   StringConstant    "[^"]*"
 tok::Kind MIRLexer::LexQuote() {
   tok::Kind kind = ReadString(tok::StringConstant);
-  if (kind == tok::Error || kind == tok::Eof)
+  if (kind == tok::Error)
     return kind;
 
   if (CurPtr[0] == ':') {
@@ -501,25 +456,7 @@ tok::Kind MIRLexer::LexQuote() {
 }
 
 /// Lex all tokens that start with a ! character.
-///    !foo
-///    !
-tok::Kind MIRLexer::LexExclaim() {
-  // Lex a metadata name as a MetadataVar.
-  if (isalpha(static_cast<unsigned char>(CurPtr[0])) || CurPtr[0] == '-' ||
-      CurPtr[0] == '$' || CurPtr[0] == '.' || CurPtr[0] == '_' ||
-      CurPtr[0] == '\\') {
-    ++CurPtr;
-    while (isalnum(static_cast<unsigned char>(CurPtr[0])) || CurPtr[0] == '-' ||
-           CurPtr[0] == '$' || CurPtr[0] == '.' || CurPtr[0] == '_' ||
-           CurPtr[0] == '\\')
-      ++CurPtr;
-
-    StrVal.assign(TokStart + 1, CurPtr); // Skip !
-    UnEscapeLexed(StrVal);
-    return tok::MetadataVar;
-  }
-  return tok::exclaim;
-}
+tok::Kind MIRLexer::LexExclaim() { return tok::exclaim; }
 
 /// Lex a label, integer or byte types, keyword, or hexadecimal integer
 /// constant.
@@ -573,9 +510,12 @@ tok::Kind MIRLexer::LexIdentifier() {
     IntOrByteEnd = CurPtr;
   if (IntOrByteEnd != StartChar) {
     CurPtr = IntOrByteEnd;
-    uint64_t NumBits = atoull(StartChar, CurPtr);
-    if (NumBits < 1) {
-      LexError("bitwidth for integer or byte type out of range");
+    unsigned NumBits = 0;
+    if (StringRef(StartChar, CurPtr - StartChar).getAsInteger(10, NumBits) ||
+        NumBits < 1 || NumBits > IntegerType::MaxBits) {
+      LexError((IntOrByteIdentifier == 'i' ? "integer" : "byte") +
+               Twine(" bit width must be between 1 and ") +
+               Twine(IntegerType::MaxBits));
       return tok::Error;
     }
     if (IntOrByteIdentifier == 'i')
@@ -616,27 +556,23 @@ tok::Kind MIRLexer::LexIdentifier() {
 
 #undef KEYWORD
 
-  // Check for [us]0x[0-9A-Fa-f]+ which are Hexadecimal constant generated by
-  // the CFE to avoid forcing it to deal with 64-bit numbers. Also check for
-  // f0x[0-9A-Fa-f]+, which is the floating-point hexadecimal literal constant.
-  if ((TokStart[0] == 'u' || TokStart[0] == 's' || TokStart[0] == 'f') &&
-      TokStart[1] == '0' && TokStart[2] == 'x' &&
-      isxdigit(static_cast<unsigned char>(TokStart[3]))) {
-    bool IsFloatConst = TokStart[0] == 'f';
-    size_t Len = CurPtr - TokStart - 3;
-    uint32_t Bits = Len * 4;
-    StringRef HexStr(TokStart + 3, Len);
+  // [us]0x[0-9A-Fa-f]+ is an integer written as a hexadecimal bit pattern:
+  // 'u' reads the digits as an unsigned number, 's' as a two's complement
+  // number of 4 bits per digit (so s0x7F is 127 and s0xFF is -1).
+  if ((TokStart[0] == 'u' || TokStart[0] == 's') && TokStart[1] == '0' &&
+      TokStart[2] == 'x' && isxdigit(static_cast<unsigned char>(TokStart[3]))) {
+    bool IsSigned = TokStart[0] == 's';
+    StringRef HexStr(TokStart + 3, CurPtr - TokStart - 3);
     if (!all_of(HexStr, isxdigit)) {
-      // Bad token, return it as an error.
-      CurPtr = TokStart + 3;
+      LexError("invalid hexadecimal integer constant");
       return tok::Error;
     }
-    APInt Tmp(Bits, HexStr, 16);
-    uint32_t ActiveBits = Tmp.getActiveBits();
-    if (!IsFloatConst && ActiveBits > 0 && ActiveBits < Bits)
-      Tmp = Tmp.trunc(ActiveBits);
-    APSIntVal = APSInt(Tmp, TokStart[0] != 's');
-    return IsFloatConst ? tok::FloatHexLiteral : tok::APSInt;
+    APInt Tmp(HexStr.size() * 4, HexStr, 16);
+    // Keep the value, but drop the redundant leading bits of the pattern.
+    unsigned Bits =
+        std::max(1u, IsSigned ? Tmp.getSignificantBits() : Tmp.getActiveBits());
+    APSIntVal = APSInt(Tmp.trunc(Bits), /*isUnsigned=*/!IsSigned);
+    return tok::APSInt;
   }
 
   StrVal.assign(TokStart, CurPtr);
@@ -645,27 +581,21 @@ tok::Kind MIRLexer::LexIdentifier() {
 
 /// Lex all tokens that start with a 0x prefix, knowing they match and are not
 /// labels.
-///    HexFPLiteral      [-+]?0x[0-9A-Fa-f]+.[0-9A-Fa-f]*[pP][-+]?[0-9]+
 ///    HexFPConstant     0x[0-9A-Fa-f]+
-///    HexFP80Constant   0xK[0-9A-Fa-f]+
-///    HexFP128Constant  0xL[0-9A-Fa-f]+
-///    HexPPC128Constant 0xM[0-9A-Fa-f]+
-///    HexHalfConstant   0xH[0-9A-Fa-f]+
-///    HexBFloatConstant 0xR[0-9A-Fa-f]+
+/// This is a double constant written as its IEEE bit pattern, as LLVM prints
+/// doubles that have no exact decimal form.
 tok::Kind MIRLexer::Lex0x() {
   CurPtr = TokStart + 2;
 
-  char Kind;
   if ((CurPtr[0] >= 'K' && CurPtr[0] <= 'M') || CurPtr[0] == 'H' ||
       CurPtr[0] == 'R') {
-    Kind = *CurPtr++;
-  } else {
-    Kind = 'J';
+    LexError("0x" + Twine(CurPtr[0]) +
+             " floating-point constants are not supported");
+    return tok::Error;
   }
 
   if (!isxdigit(static_cast<unsigned char>(CurPtr[0]))) {
-    // Bad token, return it as an error.
-    CurPtr = TokStart + 1;
+    LexError("expected hexadecimal digits after '0x'");
     return tok::Error;
   }
 
@@ -673,58 +603,18 @@ tok::Kind MIRLexer::Lex0x() {
     ++CurPtr;
 
   if (*CurPtr == '.') {
-    // HexFPLiteral, following C's %a syntax
-    return LexFloatStr();
+    LexError("hexadecimal floating-point literals are not supported; write "
+             "the IEEE bit pattern as 0x<hex digits>");
+    return tok::Error;
   }
 
-  if (Kind == 'J') {
-    // HexFPConstant - Floating point constant represented in IEEE format as a
-    // hexadecimal number for when exponential notation is not precise enough.
-    // Half, BFloat, Float, and double only.
-    APFloatVal = APFloat(APFloat::IEEEdouble(),
-                         APInt(64, HexIntToVal(TokStart + 2, CurPtr)));
-    return tok::APFloat;
+  uint64_t Bits = 0;
+  if (StringRef(TokStart + 2, CurPtr - TokStart - 2).getAsInteger(16, Bits)) {
+    LexError("hexadecimal constant is too large (more than 64 bits)");
+    return tok::Error;
   }
-
-  uint64_t Pair[2];
-  switch (Kind) {
-  default:
-    llvm_unreachable("Unknown kind!");
-  case 'K':
-    // F80HexFPConstant - x87 long double in hexadecimal format (10 bytes)
-    FP80HexToIntPair(TokStart + 3, CurPtr, Pair);
-    APSIntVal = APInt(80, Pair);
-    return tok::FloatHexLiteral;
-  case 'L':
-    // F128HexFPConstant - IEEE 128-bit in hexadecimal format (16 bytes)
-    HexToIntPair(TokStart + 3, CurPtr, Pair);
-    APSIntVal = APInt(128, Pair);
-    return tok::FloatHexLiteral;
-  case 'M':
-    // PPC128HexFPConstant - PowerPC 128-bit in hexadecimal format (16 bytes)
-    HexToIntPair(TokStart + 3, CurPtr, Pair);
-    APSIntVal = APInt(128, Pair);
-    return tok::FloatHexLiteral;
-  case 'H': {
-    uint64_t Val = HexIntToVal(TokStart + 3, CurPtr);
-    if (!llvm::isUInt<16>(Val)) {
-      LexError("hexadecimal constant too large for half (16-bit)");
-      return tok::Error;
-    }
-    APSIntVal = APInt(16, Val);
-    return tok::FloatHexLiteral;
-  }
-  case 'R': {
-    // Brain floating point
-    uint64_t Val = HexIntToVal(TokStart + 3, CurPtr);
-    if (!llvm::isUInt<16>(Val)) {
-      LexError("hexadecimal constant too large for bfloat (16-bit)");
-      return tok::Error;
-    }
-    APSIntVal = APInt(16, Val);
-    return tok::FloatHexLiteral;
-  }
-  }
+  APFloatVal = APFloat(APFloat::IEEEdouble(), APInt(64, Bits));
+  return tok::APFloat;
 }
 
 /// Lex tokens for a label or a numeric constant, possibly starting with -.
@@ -737,7 +627,7 @@ tok::Kind MIRLexer::Lex0x() {
 ///    HexFP128Constant  0xL[0-9A-Fa-f]+
 ///    HexPPC128Constant 0xM[0-9A-Fa-f]+
 tok::Kind MIRLexer::LexDigitOrNegative() {
-  // If the letter after the negative is not a number, this is probably a label.
+  // If the character after the '-' is not a digit, this is probably a label.
   if (!isdigit(static_cast<unsigned char>(TokStart[0])) &&
       !isdigit(static_cast<unsigned char>(CurPtr[0]))) {
     // Okay, this is not a number after the -, it's probably a label.
@@ -747,7 +637,7 @@ tok::Kind MIRLexer::LexDigitOrNegative() {
       return tok::LabelStr;
     }
 
-    return tok::Error;
+    return LexUnexpected('-');
   }
 
   // At this point, it is either a label, int or fp constant.
@@ -757,12 +647,11 @@ tok::Kind MIRLexer::LexDigitOrNegative() {
     /*empty*/;
 
   // Check if this is a fully-numeric label:
-  if (isdigit(TokStart[0]) && CurPtr[0] == ':') {
-    uint64_t Val = atoull(TokStart, CurPtr);
+  if (isdigit(static_cast<unsigned char>(TokStart[0])) && CurPtr[0] == ':') {
+    StringRef Digits(TokStart, CurPtr - TokStart);
     ++CurPtr; // Skip the colon.
-    if ((unsigned)Val != Val)
-      LexError("invalid value number (too large)");
-    UIntVal = unsigned(Val);
+    if (!lexValueNumber(Digits))
+      return tok::Error;
     return tok::LabelID;
   }
 
@@ -808,10 +697,9 @@ tok::Kind MIRLexer::LexDigitOrNegative() {
 /// Lex a floating point constant starting with +.
 ///    FPConstant  [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
 tok::Kind MIRLexer::LexPositive() {
-  // If the letter after the negative is a number, this is probably not a
-  // label.
+  // A '+' only starts a floating-point constant.
   if (!isdigit(static_cast<unsigned char>(CurPtr[0])))
-    return tok::Error;
+    return LexUnexpected('+');
 
   // Skip digits.
   for (++CurPtr; isdigit(static_cast<unsigned char>(CurPtr[0])); ++CurPtr)
@@ -820,7 +708,7 @@ tok::Kind MIRLexer::LexPositive() {
   // At this point, we need a '.'.
   if (CurPtr[0] != '.') {
     CurPtr = TokStart + 1;
-    return tok::Error;
+    return LexUnexpected('+');
   }
 
   ++CurPtr;
@@ -842,113 +730,6 @@ tok::Kind MIRLexer::LexPositive() {
   APFloatVal =
       APFloat(APFloat::IEEEdouble(), StringRef(TokStart, CurPtr - TokStart));
   return tok::APFloat;
-}
-
-/// Lex all tokens that start with a + or - that could be a float literal.
-///    HexFPLiteral      [-+]?0x[0-9A-Fa-f]+.[0-9A-Fa-f]*[pP][-+]?[0-9]+
-///    HexFPSpecial      [-+](inf|qnan|s?nan\(0x[0-9A-Fa-f]+\))
-tok::Kind MIRLexer::LexFloatStr() {
-  // At the point we enter this function, we may have seen a few characters
-  // already, but how many differs based on the entry point. Rewind to the
-  // beginning just in case.
-  CurPtr = TokStart;
-
-  // Check for optional sign.
-  if (*CurPtr == '-' || *CurPtr == '+')
-    ++CurPtr;
-
-  if (*CurPtr != '0') {
-    // Check for keywords.
-    const char *LabelStart = CurPtr;
-    while (isLabelChar(*CurPtr))
-      ++CurPtr;
-    StringRef Label(LabelStart, CurPtr - LabelStart);
-
-    // Basic special values.
-    if (Label == "inf") {
-      // Copy from the beginning, to include the sign.
-      StrVal.assign(TokStart, CurPtr - TokStart);
-      return tok::FloatLiteral;
-    }
-
-    // APFloat::convertFromString doesn't support qnan, so translate it to a
-    // nan payload string it does support.
-    if (Label == "qnan") {
-      StrVal = *TokStart == '-' ? "-nan(0)" : "nan(0)";
-      return tok::FloatLiteral;
-    }
-
-    // NaN with payload.
-    if ((Label == "nan" || Label == "snan") && *CurPtr == '(') {
-      const char *Payload = ++CurPtr;
-      while (*CurPtr && *CurPtr != ')')
-        ++CurPtr;
-
-      // If no close parenthesis, it's a bad token, return it as an error.
-      if (*CurPtr++ != ')') {
-        CurPtr = TokStart + 1;
-        LexError("unclosed nan literal");
-        return tok::Error;
-      }
-
-      StringRef PayloadStr(Payload, CurPtr - Payload);
-      APInt Val;
-      if (PayloadStr.consume_front("0x") && PayloadStr.getAsInteger(16, Val)) {
-        StrVal.assign(TokStart, CurPtr - TokStart);
-        // Drop the leading + from the string, as APFloat::convertFromString
-        // doesn't support leading + sign.
-        if (StrVal[0] == '+')
-          StrVal.erase(0, 1);
-        return tok::FloatLiteral;
-      }
-    }
-
-    // Bad token, return it as an error.
-    LexError("bad payload format for nan literal");
-    CurPtr = TokStart + 1;
-    return tok::Error;
-  }
-  ++CurPtr;
-
-  if (*CurPtr++ != 'x') {
-    // Bad token, return it as an error.
-    CurPtr = TokStart + 1;
-    return tok::Error;
-  }
-
-  if (!isxdigit(static_cast<unsigned char>(CurPtr[0]))) {
-    // Bad token, return it as an error.
-    CurPtr = TokStart + 1;
-    return tok::Error;
-  }
-
-  while (isxdigit(static_cast<unsigned char>(CurPtr[0])))
-    ++CurPtr;
-
-  if (*CurPtr != '.') {
-    // Bad token, return it as an error.
-    CurPtr = TokStart + 1;
-    return tok::Error;
-  }
-
-  ++CurPtr; // Eat the .
-  while (isxdigit(static_cast<unsigned char>(CurPtr[0])))
-    ++CurPtr;
-
-  if (*CurPtr != 'p' && *CurPtr != 'P') {
-    // Bad token, return it as an error.
-    CurPtr = TokStart + 1;
-    return tok::Error;
-  }
-
-  ++CurPtr;
-  if (*CurPtr == '+' || *CurPtr == '-')
-    ++CurPtr;
-  while (isdigit(static_cast<unsigned char>(CurPtr[0])))
-    ++CurPtr;
-
-  StrVal.assign(TokStart, CurPtr - TokStart);
-  return tok::FloatLiteral;
 }
 
 /// Lex all tokens that start with an ? character.

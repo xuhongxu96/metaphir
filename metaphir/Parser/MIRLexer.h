@@ -26,6 +26,12 @@ public:
   explicit MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &,
                     MIRContext &C);
   tok::Kind Lex();
+  /// Rewinds to Loc, the start of a token previously returned in pattern
+  /// syntax, and lexes it again. Gives the parser one-token lookahead.
+  tok::Kind resetTo(LocTy Loc) {
+    CurPtr = Loc.getPointer();
+    return Lex();
+  }
   LocTy getLoc() const { return SMLoc::getFromPointer(TokStart); }
   tok::Kind getKind() const { return CurKind; }
   const std::string &getStrVal() const { return StrVal; }
@@ -58,6 +64,17 @@ public:
 
   void Warning(LocTy WarningLoc, const Twine &Msg) const;
   void Warning(const Twine &Msg) const { return Warning(getLoc(), Msg); }
+
+  /// The diagnostic that receives this lexer's (and its parser's) errors.
+  SMDiagnostic &getDiagnostic() const { return ErrorInfo.Error; }
+
+  /// Whether an error has been reported, by the lexer or the parser.
+  bool hasError() const { return ErrorInfo.Priority != ErrorPriority::None; }
+
+  /// The source text of the current token.
+  StringRef getTokenText() const {
+    return StringRef(TokStart, CurPtr - TokStart);
+  }
 
 private:
   friend class MIRConstraintLexer;
@@ -108,8 +125,8 @@ private:
   void updateConstraintContext(tok::Kind Kind);
 
   // Information about the current token.
-  const char *TokStart;
-  tok::Kind CurKind;
+  const char *TokStart = nullptr;
+  tok::Kind CurKind = tok::Error;
   std::string StrVal;
   unsigned UIntVal = 0;
   char MetaIntPrefix = 'i';
@@ -136,14 +153,14 @@ private:
   tok::Kind LexVar(tok::Kind Var, tok::Kind VarID);
   tok::Kind LexQuote();
   tok::Kind Lex0x();
-  tok::Kind LexFloatStr();
   tok::Kind LexColon();
   tok::Kind LexQuestion();
+  /// Reports CurChar as not starting any token and returns tok::Error.
+  tok::Kind LexUnexpected(int CurChar);
 
-  uint64_t atoull(const char *Buffer, const char *End);
-  uint64_t HexIntToVal(const char *Buffer, const char *End);
-  void HexToIntPair(const char *Buffer, const char *End, uint64_t Pair[2]);
-  void FP80HexToIntPair(const char *Buffer, const char *End, uint64_t Pair[2]);
+  /// Stores the decimal Digits in UIntVal; reports an error and returns false
+  /// if they do not fit.
+  bool lexValueNumber(StringRef Digits);
 
   void Error(LocTy ErrorLoc, const Twine &Msg, ErrorPriority Origin);
 

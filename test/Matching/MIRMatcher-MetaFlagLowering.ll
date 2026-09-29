@@ -38,14 +38,14 @@ define i32 @nested_flags_no_match(i32 %x, i32 %y) {
 ;--- invalid-nested.mpir
 %r = add i32 ?x:or(:c), ?y
 
-; NOT-ERROR: error: invalid number of arguments for meta flag ':not'
+; NOT-ERROR: error: invalid number of arguments for metaflag ':not'
 ; NOT-ERROR-NEXT: %r = add i32 ?x:not(), ?y
 ; NOT-ERROR-NEXT:                ^
 
-; OR-ERROR: error: invalid number of arguments for meta flag ':or'
+; OR-ERROR: error: invalid number of arguments for metaflag ':or'
 ; OR-ERROR-NEXT: %r = add i32 ?x:or(), ?y
 ; OR-ERROR-NEXT:                ^
 
-; NESTED-ERROR: error: meta flag ':c' is not valid as a nested meta flag
+; NESTED-ERROR: error: metaflag ':c' is not valid as a nested metaflag
 ; NESTED-ERROR-NEXT: %r = add i32 ?x:or(:c), ?y
 ; NESTED-ERROR-NEXT:                    ^

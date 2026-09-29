@@ -4,6 +4,8 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace llvm {
+class SourceMgr;
+
 namespace metaphir {
 
 class MIRContextImpl;
@@ -33,9 +35,14 @@ public:
   bool isLibraryLoaded(StringRef Name) const;
 
   /// Records Name as loaded, returning false if it already was. A loader marks
-  /// its library before parsing it, so parsing the library cannot re-enter the
-  /// loader.
+  /// its library once it has parsed successfully.
   bool markLibraryLoaded(StringRef Name);
+
+  /// The source manager holding the text of every library loaded into this
+  /// context. Library definitions keep source ranges into these buffers, so
+  /// they live as long as the context.
+  SourceMgr &getLibrarySourceMgr();
+  const SourceMgr &getLibrarySourceMgr() const;
 };
 
 } // namespace metaphir

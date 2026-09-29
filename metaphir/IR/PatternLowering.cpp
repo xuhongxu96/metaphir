@@ -439,7 +439,7 @@ PatternLowering::buildMetaFlagConstraint(const MetaFlag *MF, Value *OperandVal,
   if (!OperandVal) {
     if (!Context.getMetaFlagDef(MF->getName()))
       return static_cast<Constraint *>(nullptr);
-    return createStringError((Twine("meta flag ':") + MF->getName() +
+    return createStringError((Twine("metaflag ':") + MF->getName() +
                               "' has no value to use as its subject")
                                  .str());
   }
@@ -459,7 +459,7 @@ PatternLowering::lowerBuiltinLogicalFlag(const MetaFlag *MF, Value *Subject,
                                          const DesugarContext &Ctx) {
   if (MF->getMetaFlagID() == MetaFlag::MF_not) {
     if (MF->getArguments().empty() || !MF->getArguments()[0].FlagValue)
-      return createStringError("meta flag ':not' requires one nested flag");
+      return createStringError("metaflag ':not' requires one nested flag");
     Expected<Constraint *> InnerOrErr =
         buildMetaFlagConstraint(MF->getArguments()[0].FlagValue, Subject, Ctx);
     if (!InnerOrErr)
@@ -467,7 +467,7 @@ PatternLowering::lowerBuiltinLogicalFlag(const MetaFlag *MF, Value *Subject,
     Constraint *Inner = *InnerOrErr;
     if (!Inner)
       return createStringError(
-          "meta flag ':not' contains a flag that cannot be lowered");
+          "metaflag ':not' contains a flag that cannot be lowered");
     return OperatorConstraint::getBuiltin(
         Context, Constraint::Unary, Constraint::BooleanResult,
         Constraint::O_Not, {Inner}, MF->getSourceRange());
@@ -477,7 +477,7 @@ PatternLowering::lowerBuiltinLogicalFlag(const MetaFlag *MF, Value *Subject,
     SmallVector<Constraint *, 4> Inner;
     for (const auto &Arg : MF->getArguments()) {
       if (!Arg.FlagValue)
-        return createStringError("meta flag ':or' requires nested flags");
+        return createStringError("metaflag ':or' requires nested flags");
       Expected<Constraint *> COrErr =
           buildMetaFlagConstraint(Arg.FlagValue, Subject, Ctx);
       if (!COrErr)
@@ -486,10 +486,10 @@ PatternLowering::lowerBuiltinLogicalFlag(const MetaFlag *MF, Value *Subject,
         Inner.push_back(C);
       else
         return createStringError(
-            "meta flag ':or' contains a flag that cannot be lowered");
+            "metaflag ':or' contains a flag that cannot be lowered");
     }
     if (Inner.empty())
-      return createStringError("meta flag ':or' requires at least one flag");
+      return createStringError("metaflag ':or' requires at least one flag");
     Constraint *Cur = Inner[0];
     for (size_t I = 1; I < Inner.size(); ++I) {
       Cur = OperatorConstraint::getBuiltin(
@@ -507,18 +507,18 @@ PatternLowering::lowerUserDefinedFlag(const MetaFlag *MF, Value *Subject,
                                       const DesugarContext &Ctx) {
   (void)Ctx;
   MetaFlagDef *Def = Context.getMetaFlagDef(MF->getName());
-  assert(Def && "expected valid meta flag definition");
+  assert(Def && "expected valid metaflag definition");
 
   ArrayRef<StringRef> Params = Def->getParameters();
   ArrayRef<MetaFlag::Argument> Args = MF->getArguments();
   if (Args.size() != Def->getNumArguments())
-    return createStringError((Twine("meta flag ':") + MF->getName() +
+    return createStringError((Twine("metaflag ':") + MF->getName() +
                               "' expects " + Twine(Def->getNumArguments()) +
                               " argument(s), got " + Twine(Args.size()))
                                  .str());
   if (!Def->getBody())
     return createStringError(
-        (Twine("meta flag ':") + MF->getName() + "' has an empty body").str());
+        (Twine("metaflag ':") + MF->getName() + "' has an empty body").str());
 
   MetaValueMap MetaValues;
   TypeMap TyMap;
@@ -526,9 +526,9 @@ PatternLowering::lowerUserDefinedFlag(const MetaFlag *MF, Value *Subject,
   MetaValues[Params.front()] = Subject;
   for (unsigned I = 0; I != Args.size(); ++I) {
     if (Args[I].K != MetaFlag::Argument::Integer)
-      return createStringError((Twine("meta flag ':") + MF->getName() +
-                                "' expects integer arguments")
-                                   .str());
+      return createStringError(
+          (Twine("metaflag ':") + MF->getName() + "' expects integer arguments")
+              .str());
     MetaValues[Params[I + 1]] = IntegerConstant::get(
         Context, APSInt(APInt(64, Args[I].IntegerValue, true), false),
         MF->getSourceRange());

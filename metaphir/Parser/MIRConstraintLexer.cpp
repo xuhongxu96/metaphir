@@ -32,7 +32,7 @@ tok::Kind MIRConstraintLexer::Lex() {
 #include "metaphir/IR/PatternSettings.def"
         return tok::Identifier;
       }
-      return tok::Error;
+      return Lexer.LexUnexpected(CurChar);
     case EOF:
       return tok::Eof;
     case 0:
@@ -81,7 +81,7 @@ tok::Kind MIRConstraintLexer::Lex() {
         ++Lexer.CurPtr;
         return tok::ampamp;
       }
-      return tok::Error;
+      return Lexer.LexUnexpected(CurChar);
     case '<':
       if (Lexer.CurPtr[0] == '=') {
         ++Lexer.CurPtr;

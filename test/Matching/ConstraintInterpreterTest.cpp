@@ -4,6 +4,7 @@
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/Matching/Instantiation.h"
 #include "metaphir/Matching/ValueTrackContext.h"
+#include "test/TestUtils.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
@@ -17,7 +18,6 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
-#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -327,9 +327,9 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "cannot evaluate constraint '?flag': meta variable '?flag' has an "
             "incompatible binding");
 
-  metaphir::Instruction *InstSubject = metaphir::Instruction::get(
-      Context, metaphir::Instruction::I_add, "sum", {}, {}, {}, nullptr, Range,
-      nullptr);
+  metaphir::Instruction *InstSubject =
+      metaphir::Instruction::get(Context, metaphir::Instruction::I_add, "sum",
+                                 {}, {}, {}, nullptr, Range, nullptr);
   VariableConstraint *UninstInstExpr = VariableConstraint::get(
       Context, InstSubject, Constraint::ValueResult, Range);
   Expected<ConstraintValue> UninstInstRes =

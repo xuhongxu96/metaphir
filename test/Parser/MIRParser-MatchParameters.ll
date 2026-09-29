@@ -15,19 +15,19 @@
 
 ;--- missing-comma.ll
 match bad [] Binary (?ty ?x ?y) {
-; COMMA: expected ',' between operand parameters (got MetaVar)
+; COMMA: expected ',' between operand parameters (got '?y')
 
 	%ret = add ?ty ?x, ?y
 }
 ;--- missing-to.ll
 match bad [] Cast (?t1 ?x ?t2) {
-; TO: expected 'to' before the result type (got MetaVar)
+; TO: expected 'to' before the result type (got '?t2')
 
 	%ret = zext ?t1 ?x to ?t2
 }
 ;--- short-binary.ll
 match bad [] Binary (?ty ?x) {
-; SHORT: expected ',' between operand parameters (got rparen)
+; SHORT: expected ',' between operand parameters (got ')')
 
 	%ret = add ?ty ?x, ?x
 }
@@ -41,13 +41,13 @@ match bad [] Binary (?ty i32, ?y) {
 ; 'Unary' is a Nary matcher that must declare exactly one operand.
 ;--- unary-two.ll
 match bad [] Unary (?ty ?x, ?ty ?y) {
-; UNARY: Unary matcher takes exactly one operand parameter
+; UNARY: 'Unary' matcher takes exactly one operand parameter
 
 	%ret = add ?ty ?x, ?y
 }
 ;--- nary-empty.ll
 match bad [] Nary () {
-; EMPTY: Nary matcher needs at least one operand parameter
+; EMPTY: 'Nary' matcher needs at least one operand parameter
 
 	%ret = freeze i32 0
 }
@@ -59,7 +59,7 @@ match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
 	%ret = select i1 ?c, ?ty ?t, ?ty ?f
 }
 %r = pick i1 ?cond, i32 ?a
-; FEW: expected ',' between operands (got Newline)
+; FEW: expected ',' between operands (got end of line)
 
 ;--- nary-many.ll
 match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {

@@ -28,7 +28,7 @@ add i?bits ?x:future_pred:not(:poison), ?y
 
 ;--- unknown-flag.ll
 add i?bits ?x:no_such_pred, ?y
-; FLAG: unknown meta flag ':no_such_pred'
+; FLAG: unknown metaflag ':no_such_pred'
 
 ;--- unknown-op.ll
 add i?bits ?x, ?y
