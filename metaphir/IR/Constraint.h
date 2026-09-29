@@ -60,6 +60,9 @@ public:
   void setContextInstruction(const Instruction *Context) {
     this->Context = Context;
   }
+  /// Sets the context instruction of this node and of every node below it
+  /// that has none yet.
+  void setDefaultContextInstruction(const Instruction *Context);
 
   static std::optional<OperatorSchema> getOperatorSchema(OperatorID ID);
   static StringRef getOperatorName(OperatorID ID);

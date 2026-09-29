@@ -3,12 +3,15 @@
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MIRContextImpl.h"
 #include "metaphir/IR/MetaVariable.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace metaphir {
 
 Type *Type::get(MIRContext &C, TypeID ID) {
+  assert(ID < IntegerTyID &&
+         "not a primitive type; use the derived type's get");
   Type *&Entry = C.pImpl->PrimitiveTypes[static_cast<unsigned>(ID)];
   if (!Entry)
     Entry = new (C.pImpl->Alloc) Type(C, ID);
@@ -44,18 +47,16 @@ raw_ostream &operator<<(raw_ostream &OS, const Type &T) {
   case Type::ByteTyID:
     OS << "b" << cast<ByteType>(T).getNumBits();
     break;
-  case Type::FunctionTyID:
-    OS << *cast<FunctionType>(T).getReturnType() << '(';
-    for (unsigned I = 0; I != cast<FunctionType>(T).getParameterTypes().size();
-         ++I) {
-      if (I)
-        OS << ", ";
-      OS << *cast<FunctionType>(T).getParameterTypes()[I];
-    }
-    if (cast<FunctionType>(T).isVarArg())
-      OS << "...";
+  case Type::FunctionTyID: {
+    const auto &F = cast<FunctionType>(T);
+    OS << *F.getReturnType() << " (";
+    interleaveComma(F.getParameterTypes(), OS,
+                    [&OS](const Type *P) { OS << *P; });
+    if (F.isVarArg())
+      OS << (F.getParameterTypes().empty() ? "..." : ", ...");
     OS << ')';
     break;
+  }
   case Type::PointerTyID:
     if (cast<PointerType>(T).isOpaque())
       OS << "ptr";

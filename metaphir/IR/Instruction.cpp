@@ -122,6 +122,19 @@ Instruction::withOperands(MIRContext &Context, const Instruction *Orig,
   return NewI;
 }
 
+Instruction *Instruction::getLike(
+    MIRContext &Context, const Instruction &Proto, StringRef ResultName,
+    ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
+    ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
+    MetaVariable *ParentBlock, PatternSettings Settings) {
+  if (Proto.isComposite())
+    return getComposite(Context, ResultName, Proto.getCompositeMatcher(), Flags,
+                        MetaFlags, Operands, Capture, Range, ParentBlock,
+                        Settings);
+  return get(Context, Proto.getInstructionID(), ResultName, Flags, MetaFlags,
+             Operands, Capture, Range, ParentBlock, Settings);
+}
+
 StringRef Instruction::getOpcodeName() const {
   return isComposite() ? Composite->getName() : getOpcodeName(ID);
 }
@@ -238,7 +251,9 @@ raw_ostream &operator<<(raw_ostream &OS, const MatcherOperand &O) {
     OS << "...";
     if (O.TypeArray)
       OS << *O.TypeArray << ' ';
-    return OS << *O.ValueArray;
+    if (O.ValueArray)
+      OS << *O.ValueArray;
+    return OS;
   }
   if (O.Ty)
     OS << *O.Ty << (O.Val ? " " : "");
@@ -308,27 +323,44 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
   case ID::I_ptrtoaddr:
   case ID::I_inttoptr:
   case ID::I_bitcast:
-    return OS << ' ' << Ops[0] << " to " << *Ops[1].Ty;
+    OS << ' ' << Ops[0];
+    if (Ops.size() > 1 && Ops[1].Ty)
+      OS << " to " << *Ops[1].Ty;
+    return OS;
   case ID::I_icmp:
   case ID::I_fcmp:
-    OS << ' ';
-    printWithoutType(OS, *I.getKeyedOperand(MatcherOperand::Predicate));
+    if (const MatcherOperand *Predicate =
+            I.getKeyedOperand(MatcherOperand::Predicate)) {
+      OS << ' ';
+      printWithoutType(OS, *Predicate);
+    }
     OS << ' ' << Ops[0] << ", ";
     printWithoutType(OS, Ops[1]);
     return OS;
   case ID::I_phi:
-    OS << ' ' << *Ops[0].Ty << ' ';
-    for (unsigned Index = 0; Index != Ops.size(); Index += 2) {
+    if (Ops.empty())
+      return OS;
+    if (Ops[0].Ty)
+      OS << ' ' << *Ops[0].Ty;
+    OS << ' ';
+    for (unsigned Index = 0; Index < Ops.size(); Index += 2) {
       if (Index)
         OS << ", ";
       OS << '[';
       printWithoutType(OS, Ops[Index]);
-      OS << ", ";
-      printWithoutType(OS, Ops[Index + 1]);
+      if (Index + 1 < Ops.size()) {
+        OS << ", ";
+        printWithoutType(OS, Ops[Index + 1]);
+      }
       OS << ']';
     }
     return OS;
   case ID::I_call:
+    if (Ops.size() < 2 || !Ops[0].Ty) {
+      OS << ' ';
+      printSeparated(OS, Ops);
+      return OS;
+    }
     OS << ' ' << *Ops[0].Ty << ' ';
     printWithoutType(OS, Ops[1]);
     OS << '(';
@@ -339,8 +371,11 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
             I.getKeyedOperand(MatcherOperand::InRangeLower)) {
       OS << " inrange(";
       printWithoutType(OS, *Lower);
-      OS << ", ";
-      printWithoutType(OS, *I.getKeyedOperand(MatcherOperand::InRangeUpper));
+      if (const MatcherOperand *Upper =
+              I.getKeyedOperand(MatcherOperand::InRangeUpper)) {
+        OS << ", ";
+        printWithoutType(OS, *Upper);
+      }
       OS << ')';
     }
     OS << ' ';
@@ -360,6 +395,8 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
       OS << ", addrspace(" << *AddressSpace << ')';
     return OS;
   case ID::I_ret:
+    if (Ops.empty() || !Ops[0].Ty)
+      return OS;
     OS << ' ' << *Ops[0].Ty;
     if (Ops[0].Val)
       OS << ' ' << *Ops[0].Val;

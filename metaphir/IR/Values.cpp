@@ -15,13 +15,19 @@ GlobalValue *GlobalValue::get(MIRContext &Context, StringRef Name,
 
 IntegerConstant *IntegerConstant::get(MIRContext &Context, const APSInt &Number,
                                       SourceRange Range) {
-  return new (Context.pImpl->Alloc) IntegerConstant(Number, Range);
+  auto *Result = new (Context.pImpl->Alloc) IntegerConstant(Number, Range);
+  if (Number.needsCleanup())
+    Context.pImpl->ValuesToDestroy.push_back(Result);
+  return Result;
 }
 
 FloatingConstant *FloatingConstant::get(MIRContext &Context,
                                         const APFloat &Number,
                                         SourceRange Range) {
-  return new (Context.pImpl->Alloc) FloatingConstant(Number, Range);
+  auto *Result = new (Context.pImpl->Alloc) FloatingConstant(Number, Range);
+  if (Number.needsCleanup())
+    Context.pImpl->ValuesToDestroy.push_back(Result);
+  return Result;
 }
 
 StringRef KeywordConstant::getKeywordName(KeywordID ID) {

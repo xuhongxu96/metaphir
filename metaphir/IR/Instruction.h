@@ -52,7 +52,7 @@ struct InstructionFlag {
     NumFlagIDs,
   };
 
-  FlagID ID;
+  FlagID ID = NumFlagIDs;
   MetaVariable *Capture = nullptr;
 
   static StringRef getName(FlagID ID);
@@ -159,7 +159,11 @@ public:
 
   static constexpr FlagMask FastMathNNegFlags = FastMathFlags | NNegFlag;
 
-  InstructionID getInstructionID() const { return ID; }
+  InstructionID getInstructionID() const {
+    assert(!isComposite() &&
+           "a composite matcher use has no built-in instruction ID");
+    return ID;
+  }
   StringRef getOpcodeName() const;
   StringRef getResultName() const { return ResultName; }
   ArrayRef<InstructionFlag> getFlags() const { return Flags; }
@@ -223,6 +227,16 @@ public:
 
   static Instruction *withOperands(MIRContext &Context, const Instruction *Orig,
                                    ArrayRef<MatcherOperand> NewUnkeyedOperands);
+
+  /// Creates an instruction of the same kind as Proto -- the same built-in
+  /// matcher, or the same composite -- with everything else given anew.
+  /// Operands holds keyed and unkeyed operands, as for get().
+  static Instruction *
+  getLike(MIRContext &Context, const Instruction &Proto, StringRef ResultName,
+          ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
+          ArrayRef<MatcherOperand> Operands, MetaVariable *Capture,
+          SourceRange Range, MetaVariable *ParentBlock,
+          PatternSettings Settings);
 
 private:
   InstructionID ID;

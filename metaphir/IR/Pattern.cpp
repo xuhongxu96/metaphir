@@ -15,6 +15,15 @@ Pattern *Pattern::get(MIRContext &Context) {
   return Result;
 }
 
+Pattern *Pattern::copy() const {
+  Pattern *Result = get(Context);
+  Result->Instructions = Instructions;
+  Result->Constraints = Constraints;
+  Result->MetaVariables = MetaVariables;
+  Result->FixedFlags = FixedFlags;
+  return Result;
+}
+
 SmallVector<Instruction *, 4> Pattern::getRoots() const {
   SmallPtrSet<Instruction *, 16> Children;
   for (Instruction *I : Instructions)

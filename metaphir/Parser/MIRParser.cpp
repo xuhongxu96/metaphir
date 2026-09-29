@@ -111,36 +111,6 @@ std::optional<PatternSettings::Setting> settingFromKeyword(tok::Kind Kind) {
   }
 }
 
-// Records the pattern instruction that lexically precedes a constraint as the
-// default context (use-point) for value-tracking operators on every node of the
-// constraint expression tree.
-void setConstraintContext(Constraint &C, const Instruction *Context) {
-  C.setContextInstruction(Context);
-  switch (C.getConstraintID()) {
-  case Constraint::Array:
-    for (Constraint *Element : cast<ArrayConstraint>(C).getElements())
-      setConstraintContext(*Element, Context);
-    break;
-  case Constraint::ArrayAccess: {
-    const ArrayAccessConstraint &Access = cast<ArrayAccessConstraint>(C);
-    setConstraintContext(*Access.getArray(), Context);
-    setConstraintContext(*Access.getIndex(), Context);
-    break;
-  }
-  case Constraint::Unary:
-  case Constraint::Binary:
-  case Constraint::Call:
-    for (Constraint *Argument : cast<OperatorConstraint>(C).getArguments())
-      setConstraintContext(*Argument, Context);
-    break;
-  case Constraint::Integer:
-  case Constraint::Boolean:
-  case Constraint::String:
-  case Constraint::Variable:
-    break;
-  }
-}
-
 } // namespace
 
 bool MIRParser::consume(tok::Kind K) {
@@ -353,7 +323,7 @@ bool MIRParser::parseBodyLine(tok::Kind Terminator) {
         CurrentPattern->getInstructions().empty()
             ? nullptr
             : CurrentPattern->getInstructions().back();
-    setConstraintContext(*C, ContextInst);
+    C->setDefaultContextInstruction(ContextInst);
     CurrentPattern->addConstraint(C);
     return expectEndOfLine(Terminator, "unexpected token after constraint");
   }
@@ -1654,12 +1624,17 @@ bool MIRParser::parseTopLevelMatch() {
     CurrentBlock = nullptr;
     Instructions.clear();
     MetaVariables.clear();
+    SmallVector<MetaVariable *, 4> ParameterVars;
     for (const ParameterDef &P : Parameters) {
-      if (P.Name.empty())
+      if (P.Name.empty()) {
+        ParameterVars.push_back(nullptr);
         continue;
-      MetaVariable *M =
-          MetaVariable::get(Context, P.Name, MetaType::Unknown, P.Range);
-      MetaVariables[P.Name] = M;
+      }
+      // A type parameter may be repeated to give operands the same type.
+      MetaVariable *&M = MetaVariables[P.Name];
+      if (!M)
+        M = MetaVariable::get(Context, P.Name, MetaType::Unknown, P.Range);
+      ParameterVars.push_back(M);
     }
 
     // Settings written in a body override the use site; anything the body
@@ -1684,14 +1659,18 @@ bool MIRParser::parseTopLevelMatch() {
       return Lex.ParseError(
           BranchEnd, "match branch must contain at least one instruction");
 
-    unsigned RetCount = 0;
-    for (const Instruction *I : BranchInstructions) {
-      if (I->getResultName() == "ret")
-        ++RetCount;
+    // The branch's result is '%ret', or else its last instruction.
+    Instruction *Root = nullptr;
+    for (Instruction *I : BranchInstructions) {
+      if (I->getResultName() != "ret")
+        continue;
+      if (Root)
+        return Lex.ParseError(BranchEnd,
+                              "multiple '%ret' instructions in match branch");
+      Root = I;
     }
-    if (RetCount > 1)
-      return Lex.ParseError(BranchEnd,
-                            "multiple '%ret' instructions in match branch");
+    if (!Root)
+      Root = BranchInstructions.back();
 
     CompositeMatcher::Branch StoredBranch;
     StoredBranch.Instructions =
@@ -1699,6 +1678,11 @@ bool MIRParser::parseTopLevelMatch() {
     StoredBranch.Constraints =
         Context.pImpl->copyArray(ArrayRef(BranchConstraints));
     StoredBranch.FixedFlags = Context.pImpl->copyArray(ArrayRef(BranchFlags));
+    StoredBranch.ParameterVars =
+        Context.pImpl->copyArray(ArrayRef(ParameterVars));
+    StoredBranch.LocalVariables =
+        Context.pImpl->copyArray(CurrentPattern->getMetaVariables());
+    StoredBranch.Root = Root;
     Branches.push_back(StoredBranch);
 
     CurrentPattern = OldPattern;

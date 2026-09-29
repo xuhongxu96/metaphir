@@ -3,9 +3,10 @@
 #include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MIRContextImpl.h"
-#include "llvm/ADT/StringMap.h"
+#include "metaphir/IR/Pattern.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/Error.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace metaphir {
@@ -17,641 +18,817 @@ bool isWildcardCapture(const MetaVariable *Capture) {
                      Capture->getName().starts_with("_flag$"));
 }
 
-using InliningContext = PatternLowering::InliningContext;
-using DesugarContext = PatternLowering::DesugarContext;
-using SubstitutionContext = PatternLowering::SubstitutionContext;
-
-} // namespace
-
-Expected<PatternVariants> PatternLowering::lower(Pattern *P) {
-  if (!P)
-    return PatternVariants();
-
-  // Phase 1: Expand composite matchers into flattened leaf patterns.
-  Expected<SmallVector<Pattern *, 2>> VariantsOrErr = expandComposites(P);
-  if (!VariantsOrErr)
-    return VariantsOrErr.takeError();
-
-  // Phase 2: Desugar metaflags on each flattened leaf pattern variant.
-  for (Pattern *Variant : *VariantsOrErr) {
-    if (Error E = desugarMetaFlags(Variant))
-      return E;
-  }
-
-  return PatternVariants(std::move(*VariantsOrErr));
+bool isMetaType(const Type *T) {
+  return isa<MetaIRType>(T) || isa<MetaIntegerType>(T);
 }
 
-Expected<SmallVector<Pattern *, 2>>
-PatternLowering::expandComposites(Pattern *P) {
-  SmallVector<Pattern *, 2> Leaves;
-  if (Error E = expandPattern(P, Leaves))
-    return E;
-  return Leaves;
+template <typename T> std::string toString(const T &Object) {
+  std::string Result;
+  raw_string_ostream(Result) << Object;
+  return Result;
 }
 
-Error PatternLowering::expandPattern(Pattern *Cur,
-                                     SmallVectorImpl<Pattern *> &Results) {
-  ArrayRef<Instruction *> Insts = Cur->getInstructions();
-  int CompIdx = -1;
-  for (size_t I = 0; I < Insts.size(); ++I) {
-    if (Insts[I]->isComposite()) {
-      CompIdx = I;
-      break;
-    }
-  }
-
-  // If no composite instructions remain, this pattern is a leaf variant.
-  if (CompIdx == -1) {
-    Results.push_back(Cur);
-    return Error::success();
-  }
-
-  Instruction *CompInst = Insts[CompIdx];
-  CompositeMatcher *CM = CompInst->getCompositeMatcher();
-  ArrayRef<MatcherOperand> OriginalCallerOps = CompInst->getUnkeyedOperands();
-  bool IsCommutative =
-      llvm::any_of(CompInst->getMetaFlags(), [](const MetaFlag *MF) {
-        return MF->getMetaFlagID() == MetaFlag::MF_c;
-      });
-
-  for (const auto &Branch : CM->getBranches()) {
-    unsigned NumOrders = IsCommutative ? 2 : 1;
-    for (unsigned Order = 0; Order != NumOrders; ++Order) {
-      SmallVector<MatcherOperand, 8> CallerOps(OriginalCallerOps.begin(),
-                                               OriginalCallerOps.end());
-      if (Order == 1)
-        std::swap(CallerOps[0], CallerOps[1]);
-
-      Expected<Pattern *> VariantOrErr =
-          inlineBranch(Cur, CompIdx, CM, Branch, CallerOps);
-      if (!VariantOrErr)
-        return VariantOrErr.takeError();
-
-      Pattern *Variant = *VariantOrErr;
-      if (!Variant)
-        continue; // Statically incompatible branch pruned
-
-      // Recurse to expand any remaining composite instructions in Variant.
-      if (Error E = expandPattern(Variant, Results))
-        return E;
-    }
-  }
-
-  return Error::success();
+Error makeError(const Twine &Message) {
+  return createStringError(inconvertibleErrorCode(), Message);
 }
 
-bool PatternLowering::bindParameters(InliningContext &Ctx) {
-  ArrayRef<ParameterDef> Params = Ctx.CM->getParameters();
-  ArrayRef<MatcherOperand> CallerOps = Ctx.CallerOps;
-  bool TypeMismatch = false;
+/// A substitution of pattern entities, applied to a matcher branch when it is
+/// inlined at a use and to a metaflag body when it is desugared. Meta
+/// variables are identified by object, never by name, so a substitution can
+/// not capture an unrelated variable that happens to share a spelling.
+class Substitution {
+public:
+  explicit Substitution(MIRContext &Context) : Context(Context) {}
 
-  auto mapTypeParam = [&](const ParameterDef &P, Type *CallerTy) {
-    if (!CallerTy)
-      return;
-    if (P.Name.empty()) {
-      if (P.Ty != CallerTy)
-        TypeMismatch = true;
-      return;
-    }
-    Ctx.Types[P.Name] = CallerTy;
-    if (auto *MIT = dyn_cast<MetaIntegerType>(CallerTy))
-      if (MIT->getBitWidthVariable())
-        Ctx.MetaValues[P.Name] = MIT->getBitWidthVariable();
-  };
+  /// Replacement values of meta variables. A type variable (of a MetaIRType
+  /// or the width of a MetaIntegerType) may be mapped to another meta
+  /// variable here, which renames it.
+  DenseMap<const MetaVariable *, Value *> Values;
+  /// Replacement types of type variables.
+  DenseMap<const MetaVariable *, Type *> Types;
+  /// Replacement instructions.
+  DenseMap<const Instruction *, Instruction *> Instructions;
 
-  auto mapValParam = [&](StringRef ParamName, Value *CallerVal) {
-    if (CallerVal)
-      Ctx.MetaValues[ParamName] = CallerVal;
-  };
-
-  switch (Ctx.CM->getSyntax()) {
-  case Instruction::OperandSyntax::Nary: {
-    // Parameters alternate type and operand: (T0 ?a0, T1 ?a1, ...).
-    unsigned Arity = Ctx.CM->getArity();
-    if (Params.size() >= 2 * Arity && CallerOps.size() >= Arity)
-      for (unsigned I = 0; I < Arity; ++I) {
-        mapTypeParam(Params[2 * I], CallerOps[I].Ty);
-        mapValParam(Params[2 * I + 1].Name, CallerOps[I].Val);
-      }
-    break;
-  }
-  case Instruction::OperandSyntax::Binary:
-    if (Params.size() >= 3 && CallerOps.size() >= 2) {
-      mapTypeParam(Params[0], CallerOps[0].Ty);
-      mapValParam(Params[1].Name, CallerOps[0].Val);
-      mapValParam(Params[2].Name, CallerOps[1].Val);
-    }
-    break;
-  case Instruction::OperandSyntax::Cast:
-    if (Params.size() >= 3 && CallerOps.size() >= 2) {
-      mapTypeParam(Params[0], CallerOps[0].Ty);
-      mapValParam(Params[1].Name, CallerOps[0].Val);
-      mapTypeParam(Params[2], CallerOps[1].Ty);
-    }
-    break;
-  case Instruction::OperandSyntax::Custom:
-    for (size_t I = 0; I < Params.size() && I < CallerOps.size(); ++I) {
-      if (CallerOps[I].Val)
-        mapValParam(Params[I].Name, CallerOps[I].Val);
-      if (CallerOps[I].Ty)
-        mapTypeParam(Params[I], CallerOps[I].Ty);
-    }
-    break;
-  }
-  return !TypeMismatch;
-}
-
-bool PatternLowering::bindFlags(InliningContext &Ctx) {
-  for (InstructionFlag::FlagID FlagID : Ctx.CM->getSupportedFlags()) {
-    StringRef FlagName = InstructionFlag::getName(FlagID);
-    const InstructionFlag *CallerFlag = nullptr;
-    for (const InstructionFlag &F : Ctx.CompInst->getFlags()) {
-      if (F.ID == FlagID) {
-        CallerFlag = &F;
-        break;
-      }
-    }
-
-    const auto *FixedIt =
-        llvm::find_if(Ctx.Branch.FixedFlags,
-                      [&](const auto &P) { return P.first == FlagID; });
-    bool HasFixedVal = (FixedIt != Ctx.Branch.FixedFlags.end());
-
-    if (HasFixedVal) {
-      bool FixedVal = FixedIt->second;
-      if (!CallerFlag) {
-        if (FixedVal != false)
-          return false;
-      } else if (!CallerFlag->Capture) {
-        if (FixedVal != true)
-          return false;
-      } else {
-        if (!isWildcardCapture(CallerFlag->Capture)) {
-          Ctx.Variant->addFixedFlag(CallerFlag->Capture, FixedVal);
-          Ctx.MetaValues[FlagName] = CallerFlag->Capture;
-        }
-      }
-      continue;
-    }
-
-    if (CallerFlag && CallerFlag->Capture) {
-      if (isWildcardCapture(CallerFlag->Capture)) {
-        std::string SyntheticName =
-            (Twine("_flag$") + Ctx.CompInst->getResultName() + "$" + FlagName)
-                .str();
-        auto *FlagVar =
-            MetaVariable::get(Context, SyntheticName, MetaType::Bool,
-                              Ctx.CompInst->getSourceRange());
-        Ctx.MetaValues[FlagName] = FlagVar;
-      } else {
-        Ctx.MetaValues[FlagName] = CallerFlag->Capture;
-      }
-    } else if (CallerFlag) {
-      Ctx.MetaValues[FlagName] = nullptr;
-    } else {
-      Ctx.OmittedFlags.push_back(FlagID);
-    }
-  }
-  return true;
-}
-
-Expected<Pattern *>
-PatternLowering::inlineBranch(Pattern *Cur, size_t CompIdx,
-                              CompositeMatcher *CM,
-                              const CompositeMatcher::Branch &Branch,
-                              ArrayRef<MatcherOperand> CallerOps) {
-  auto *Variant = Pattern::get(Context);
-  InliningContext Ctx(Cur, CompIdx, CM, Branch, CallerOps, Variant);
-
-  if (!bindParameters(Ctx))
-    return nullptr;
-
-  if (!bindFlags(Ctx))
-    return nullptr;
-
-  // 1. Share preceding instructions (0..CompIdx - 1) across all branches by raw
-  // pointer.
-  for (size_t I = 0; I < CompIdx; ++I)
-    Variant->addInstruction(Cur->getInstructions()[I]);
-
-  // 2. Inline branch instructions.
-  if (Error E = inlineBranchInstructions(Ctx))
-    return E;
-
-  // 3. Rewrite downstream instructions (CompIdx + 1..) with Copy-on-Write.
-  rewriteDownstreamInstructions(Ctx);
-
-  // 4. Transfer constraints from inlined branch and caller.
-  transferConstraints(Ctx);
-
-  // 5. Forward pattern metadata.
-  for (MetaVariable *M : Cur->getMetaVariables())
-    Variant->addMetaVariable(M);
-  for (const auto &[Var, Val] : Cur->getFixedFlags())
-    Variant->addFixedFlag(Var, Val);
-
-  return Variant;
-}
-
-Error PatternLowering::inlineBranchInstructions(InliningContext &Ctx) {
-  const Instruction *RootBI = nullptr;
-  for (Instruction *BI : Ctx.Branch.Instructions) {
-    if (BI->getResultName() == "ret") {
-      RootBI = BI;
-      break;
-    }
-  }
-  if (!RootBI && !Ctx.Branch.Instructions.empty())
-    RootBI = Ctx.Branch.Instructions.back();
-
-  Instruction *RootInst = nullptr;
-  SubstitutionContext SubstCtx = Ctx.getSubstCtx();
-
-  for (Instruction *BI : Ctx.Branch.Instructions) {
-    bool IsRoot = (BI == RootBI);
-    StringRef ResultName =
-        IsRoot
-            ? Ctx.CompInst->getResultName()
-            : Context.pImpl->Saver.save((Twine(Ctx.CompInst->getResultName()) +
-                                         "$" + BI->getResultName())
-                                            .str());
-
-    SmallVector<MatcherOperand, 8> NewOps;
-    for (const MatcherOperand &Op : BI->getUnkeyedOperands()) {
-      MatcherOperand NewOp = Op;
-      NewOp.Ty = substituteType(Op.Ty, SubstCtx);
-      NewOp.Val = substituteValue(Op.Val, SubstCtx);
-      NewOp.MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Op.MetaFlags);
-      NewOps.push_back(NewOp);
-    }
-    for (const MatcherOperand &Op : BI->getKeyedOperands()) {
-      MatcherOperand NewOp = Op;
-      NewOp.Ty = substituteType(Op.Ty, SubstCtx);
-      NewOp.Val = substituteValue(Op.Val, SubstCtx);
-      NewOp.MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Op.MetaFlags);
-      NewOps.push_back(NewOp);
-    }
-
-    MetaVariable *Capture = BI->getCapture();
-    SmallVector<MetaFlag *, 4> MetaFlags(BI->getMetaFlags().begin(),
-                                         BI->getMetaFlags().end());
-    if (IsRoot) {
-      if (Ctx.CompInst->getCapture())
-        Capture = Ctx.CompInst->getCapture();
-      for (const MetaFlag *MF : Ctx.CompInst->getMetaFlags())
-        if (MF->getMetaFlagID() != MetaFlag::MF_c &&
-            !llvm::is_contained(MetaFlags, MF))
-          MetaFlags.push_back(const_cast<MetaFlag *>(MF));
-    }
-
-    SmallVector<InstructionFlag, 4> NewFlags;
-    for (const InstructionFlag &BF : BI->getFlags()) {
-      if (llvm::is_contained(Ctx.OmittedFlags, BF.ID))
-        continue;
-      if (IsRoot && Ctx.CM->hasSupportedFlag(BF.ID)) {
-        StringRef FlagName = InstructionFlag::getName(BF.ID);
-        MetaVariable *Cap = nullptr;
-        if (auto *V = Ctx.MetaValues.lookup(FlagName))
-          Cap = dyn_cast<MetaVariable>(V);
-        NewFlags.push_back(InstructionFlag{BF.ID, Cap});
-      } else {
-        NewFlags.push_back(BF);
-      }
-    }
-
-    Instruction *NewInst = Instruction::get(
-        Context, BI->getInstructionID(), ResultName, NewFlags, MetaFlags,
-        NewOps, Capture, BI->getSourceRange(), Ctx.CompInst->getParentBlock(),
-        BI->getSettings().inheritedFrom(Ctx.CompInst->getSettings()));
-
-    if (IsRoot) {
-      for (const MetaFlag *MF : Ctx.CompInst->getMetaFlags()) {
-        if (MF->getMetaFlagID() == MetaFlag::MF_o) {
-          unsigned Index = 0;
-          if (!MF->getArguments().empty())
-            Index = MF->getArguments().front().IntegerValue;
-          NewInst->setOrSelfValue(
-              substituteValue(Ctx.CallerOps[Index].Val, SubstCtx));
-          break;
-        }
-      }
-      RootInst = NewInst;
-    }
-
-    Ctx.Variant->addInstruction(NewInst);
-    Ctx.InlinedInstructions[BI] = NewInst;
+  Value *value(Value *V) const;
+  Type *type(Type *T) const;
+  /// For positions that must hold a meta variable (captures, operand arrays):
+  /// V's replacement if that is a meta variable, V otherwise.
+  MetaVariable *variable(MetaVariable *V) const;
+  Expected<Constraint *> constraint(Constraint *C) const;
+  const Instruction *contextInstruction(const Instruction *I) const {
+    return I ? Instructions.lookup_or(I, const_cast<Instruction *>(I))
+             : nullptr;
   }
 
-  if (RootInst)
-    Ctx.InlinedInstructions[Ctx.CompInst] = RootInst;
+  /// The operands of I with this substitution applied, keyed and unkeyed.
+  SmallVector<MatcherOperand, 8> operands(const Instruction &I) const;
 
-  return Error::success();
-}
+private:
+  MIRContext &Context;
+};
 
-void PatternLowering::rewriteDownstreamInstructions(InliningContext &Ctx) {
-  for (size_t I = Ctx.CompIdx + 1; I < Ctx.Cur->getInstructions().size(); ++I) {
-    Instruction *Orig = Ctx.Cur->getInstructions()[I];
-    bool NeedsNewNode = false;
-    for (const MatcherOperand &Op : Orig->getUnkeyedOperands()) {
-      if (Op.Val &&
-          Ctx.InlinedInstructions.count(dyn_cast<Instruction>(Op.Val))) {
-        NeedsNewNode = true;
-        break;
-      }
-    }
-    if (!NeedsNewNode) {
-      Ctx.Variant->addInstruction(Orig);
-      continue;
-    }
-
-    SmallVector<MatcherOperand, 8> NewOperands;
-    NewOperands.reserve(Orig->getUnkeyedOperands().size());
-    for (const MatcherOperand &Op : Orig->getUnkeyedOperands()) {
-      MatcherOperand NewOp = Op;
-      if (NewOp.Val) {
-        if (auto *OldI = dyn_cast<Instruction>(NewOp.Val)) {
-          if (auto *NewTarget = Ctx.InlinedInstructions.lookup(OldI))
-            NewOp.Val = NewTarget;
-        }
-      }
-      NewOperands.push_back(NewOp);
-    }
-    Instruction *NewI = Instruction::withOperands(Context, Orig, NewOperands);
-    Ctx.InlinedInstructions[Orig] = NewI;
-    Ctx.Variant->addInstruction(NewI);
-  }
-}
-
-void PatternLowering::transferConstraints(InliningContext &Ctx) {
-  // 1. Inlined branch constraints.
-  SubstitutionContext BranchSubstCtx = Ctx.getSubstCtx();
-  for (Constraint *C : Ctx.Branch.Constraints) {
-    if (Constraint *Subst = substituteConstraint(C, BranchSubstCtx))
-      Ctx.Variant->addConstraint(Subst);
-  }
-
-  // 2. Caller constraints (remapping context instruction to inlined copies).
-  MetaValueMap EmptyValues;
-  TypeMap EmptyTypes;
-  SubstitutionContext CallerSubstCtx(EmptyValues, EmptyTypes,
-                                     Ctx.InlinedInstructions);
-  for (Constraint *C : Ctx.Cur->getConstraints()) {
-    if (Constraint *Copy = substituteConstraint(C, CallerSubstCtx))
-      Ctx.Variant->addConstraint(Copy);
-  }
-}
-
-Error PatternLowering::desugarMetaFlags(Pattern *P) {
-  for (Instruction *I : P->getInstructions()) {
-    DesugarContext Ctx(P, I);
-    Value *Subject = I->getCapture() ? static_cast<Value *>(I->getCapture())
-                                     : static_cast<Value *>(I);
-    if (Error E = lowerMetaFlags(I->getMetaFlags(), Subject, Ctx))
-      return E;
-
-    for (const MatcherOperand &Op : I->getUnkeyedOperands()) {
-      if (Error E = lowerMetaFlags(Op.MetaFlags, Op.Val, Ctx))
-        return E;
-    }
-  }
-  return Error::success();
-}
-
-Error PatternLowering::lowerMetaFlags(ArrayRef<const MetaFlag *> Flags,
-                                      Value *Subject,
-                                      const DesugarContext &Ctx) {
-  for (const MetaFlag *MF : Flags) {
-    Expected<Constraint *> COrErr = buildMetaFlagConstraint(MF, Subject, Ctx);
-    if (!COrErr)
-      return COrErr.takeError();
-    if (Constraint *C = *COrErr) {
-      if (Ctx.CxtI && !C->getContextInstruction())
-        C->setContextInstruction(Ctx.CxtI);
-      Ctx.TargetPattern->addConstraint(C);
-    }
-  }
-  return Error::success();
-}
-
-Expected<Constraint *>
-PatternLowering::buildMetaFlagConstraint(const MetaFlag *MF, Value *OperandVal,
-                                         const DesugarContext &Ctx) {
-  if (!OperandVal) {
-    if (!Context.getMetaFlagDef(MF->getName()))
-      return static_cast<Constraint *>(nullptr);
-    return createStringError((Twine("metaflag ':") + MF->getName() +
-                              "' has no value to use as its subject")
-                                 .str());
-  }
-
-  if (MF->getMetaFlagID() == MetaFlag::MF_not ||
-      MF->getMetaFlagID() == MetaFlag::MF_or)
-    return lowerBuiltinLogicalFlag(MF, OperandVal, Ctx);
-
-  if (Context.getMetaFlagDef(MF->getName()))
-    return lowerUserDefinedFlag(MF, OperandVal, Ctx);
-
-  return static_cast<Constraint *>(nullptr);
-}
-
-Expected<Constraint *>
-PatternLowering::lowerBuiltinLogicalFlag(const MetaFlag *MF, Value *Subject,
-                                         const DesugarContext &Ctx) {
-  if (MF->getMetaFlagID() == MetaFlag::MF_not) {
-    if (MF->getArguments().empty() || !MF->getArguments()[0].FlagValue)
-      return createStringError("metaflag ':not' requires one nested flag");
-    Expected<Constraint *> InnerOrErr =
-        buildMetaFlagConstraint(MF->getArguments()[0].FlagValue, Subject, Ctx);
-    if (!InnerOrErr)
-      return InnerOrErr.takeError();
-    Constraint *Inner = *InnerOrErr;
-    if (!Inner)
-      return createStringError(
-          "metaflag ':not' contains a flag that cannot be lowered");
-    return OperatorConstraint::getBuiltin(
-        Context, Constraint::Unary, Constraint::BooleanResult,
-        Constraint::O_Not, {Inner}, MF->getSourceRange());
-  }
-
-  if (MF->getMetaFlagID() == MetaFlag::MF_or) {
-    SmallVector<Constraint *, 4> Inner;
-    for (const auto &Arg : MF->getArguments()) {
-      if (!Arg.FlagValue)
-        return createStringError("metaflag ':or' requires nested flags");
-      Expected<Constraint *> COrErr =
-          buildMetaFlagConstraint(Arg.FlagValue, Subject, Ctx);
-      if (!COrErr)
-        return COrErr.takeError();
-      if (Constraint *C = *COrErr)
-        Inner.push_back(C);
-      else
-        return createStringError(
-            "metaflag ':or' contains a flag that cannot be lowered");
-    }
-    if (Inner.empty())
-      return createStringError("metaflag ':or' requires at least one flag");
-    Constraint *Cur = Inner[0];
-    for (size_t I = 1; I < Inner.size(); ++I) {
-      Cur = OperatorConstraint::getBuiltin(
-          Context, Constraint::Binary, Constraint::BooleanResult,
-          Constraint::O_LogicalOr, {Cur, Inner[I]}, MF->getSourceRange());
-    }
-    return Cur;
-  }
-
-  return static_cast<Constraint *>(nullptr);
-}
-
-Expected<Constraint *>
-PatternLowering::lowerUserDefinedFlag(const MetaFlag *MF, Value *Subject,
-                                      const DesugarContext &Ctx) {
-  (void)Ctx;
-  MetaFlagDef *Def = Context.getMetaFlagDef(MF->getName());
-  assert(Def && "expected valid metaflag definition");
-
-  ArrayRef<StringRef> Params = Def->getParameters();
-  ArrayRef<MetaFlag::Argument> Args = MF->getArguments();
-  if (Args.size() != Def->getNumArguments())
-    return createStringError((Twine("metaflag ':") + MF->getName() +
-                              "' expects " + Twine(Def->getNumArguments()) +
-                              " argument(s), got " + Twine(Args.size()))
-                                 .str());
-  if (!Def->getBody())
-    return createStringError(
-        (Twine("metaflag ':") + MF->getName() + "' has an empty body").str());
-
-  MetaValueMap MetaValues;
-  TypeMap TyMap;
-  InstrValueMap EmptyInstrMap;
-  MetaValues[Params.front()] = Subject;
-  for (unsigned I = 0; I != Args.size(); ++I) {
-    if (Args[I].K != MetaFlag::Argument::Integer)
-      return createStringError(
-          (Twine("metaflag ':") + MF->getName() + "' expects integer arguments")
-              .str());
-    MetaValues[Params[I + 1]] = IntegerConstant::get(
-        Context, APSInt(APInt(64, Args[I].IntegerValue, true), false),
-        MF->getSourceRange());
-  }
-
-  SubstitutionContext SubstCtx(MetaValues, TyMap, EmptyInstrMap);
-  return substituteConstraint(Def->getBody(), SubstCtx);
-}
-
-Value *PatternLowering::substituteValue(Value *V,
-                                        const SubstitutionContext &Ctx) {
+Value *Substitution::value(Value *V) const {
   if (!V)
     return nullptr;
-  if (const auto *MV = dyn_cast<MetaVariable>(V)) {
-    auto It = Ctx.MetaValues.find(MV->getName());
-    if (It != Ctx.MetaValues.end())
-      V = It->second;
-  }
-  if (const auto *I = dyn_cast_or_null<Instruction>(V)) {
-    auto It = Ctx.InstrValues.find(I);
-    if (It != Ctx.InstrValues.end())
-      return It->second;
+  if (auto *MV = dyn_cast<MetaVariable>(V))
+    if (Value *Replacement = Values.lookup(MV))
+      V = Replacement;
+  if (auto *I = dyn_cast<Instruction>(V))
+    return Instructions.lookup_or(I, I);
+  if (auto *Aggregate = dyn_cast<AggregateConstant>(V)) {
+    SmallVector<Type *, 8> ElementTypes;
+    SmallVector<Value *, 8> Elements;
+    bool Changed = false;
+    for (Type *T : Aggregate->getElementTypes()) {
+      ElementTypes.push_back(type(T));
+      Changed |= ElementTypes.back() != T;
+    }
+    for (Value *E : Aggregate->getElements()) {
+      Elements.push_back(value(E));
+      Changed |= Elements.back() != E;
+    }
+    if (Changed)
+      return AggregateConstant::get(Context, ElementTypes, Elements,
+                                    Aggregate->getDelimiter(),
+                                    Aggregate->getSourceRange());
   }
   return V;
 }
 
-Type *PatternLowering::substituteType(Type *Ty,
-                                      const SubstitutionContext &Ctx) {
-  if (!Ty)
+MetaVariable *Substitution::variable(MetaVariable *V) const {
+  if (!V)
     return nullptr;
-  if (auto *MIT = dyn_cast<MetaIntegerType>(Ty)) {
-    if (MIT->getBitWidthVariable()) {
-      auto It = Ctx.Types.find(MIT->getBitWidthVariable()->getName());
-      if (It != Ctx.Types.end())
-        return It->second;
-    }
-  }
-  if (auto *MRT = dyn_cast<MetaIRType>(Ty)) {
-    if (MRT->getVariable()) {
-      auto It = Ctx.Types.find(MRT->getVariable()->getName());
-      if (It != Ctx.Types.end())
-        return It->second;
-    }
-  }
-  return Ty;
+  if (auto *Replacement = dyn_cast_or_null<MetaVariable>(Values.lookup(V)))
+    return Replacement;
+  return V;
 }
 
-Constraint *
-PatternLowering::substituteConstraint(Constraint *C,
-                                      const SubstitutionContext &Ctx) {
+Type *Substitution::type(Type *T) const {
+  if (!T)
+    return nullptr;
+  switch (T->getTypeID()) {
+  case Type::MetaIntegerTyID: {
+    auto *MIT = cast<MetaIntegerType>(T);
+    MetaVariable *Width = MIT->getBitWidthVariable();
+    if (Type *Replacement = Types.lookup(Width))
+      return Replacement;
+    if (MetaVariable *Renamed = variable(Width); Renamed != Width)
+      return MetaIntegerType::get(Context, Renamed, MIT->isByte());
+    return T;
+  }
+  case Type::MetaTyID: {
+    MetaVariable *Var = cast<MetaIRType>(T)->getVariable();
+    if (Type *Replacement = Types.lookup(Var))
+      return Replacement;
+    if (MetaVariable *Renamed = variable(Var); Renamed != Var)
+      return MetaIRType::get(Context, Renamed);
+    return T;
+  }
+  case Type::PointerTyID: {
+    auto *PT = cast<PointerType>(T);
+    Type *Element = type(PT->getElementType());
+    return Element == PT->getElementType() ? T
+                                           : PointerType::get(Context, Element);
+  }
+  case Type::ArrayTyID:
+  case Type::FixedVectorTyID:
+  case Type::ScalableVectorTyID: {
+    auto *ST = cast<SequenceType>(T);
+    Type *Element = type(ST->getElementType());
+    uint64_t Count = ST->getCount();
+    MetaVariable *CountVar = ST->getCountVariable();
+    if (CountVar) {
+      Value *Replacement = Values.lookup(CountVar);
+      if (auto *Renamed = dyn_cast_or_null<MetaVariable>(Replacement)) {
+        CountVar = Renamed;
+      } else if (auto *Constant =
+                     dyn_cast_or_null<IntegerConstant>(Replacement)) {
+        Count = Constant->getValue().getZExtValue();
+        CountVar = nullptr;
+      }
+    }
+    if (Element == ST->getElementType() && Count == ST->getCount() &&
+        CountVar == ST->getCountVariable())
+      return T;
+    if (auto *VT = dyn_cast<VectorType>(T))
+      return VectorType::get(Context, VT->isScalable(), Element, Count,
+                             CountVar);
+    return ArrayType::get(Context, Element, Count, CountVar);
+  }
+  case Type::StructTyID: {
+    auto *ST = cast<StructType>(T);
+    SmallVector<Type *, 8> Elements;
+    for (Type *E : ST->getElementTypes())
+      Elements.push_back(type(E));
+    if (ArrayRef<Type *>(Elements) == ST->getElementTypes())
+      return T;
+    return StructType::get(Context, Elements, ST->isPacked());
+  }
+  case Type::FunctionTyID: {
+    auto *FT = cast<FunctionType>(T);
+    Type *Return = type(FT->getReturnType());
+    SmallVector<Type *, 8> Parameters;
+    for (Type *P : FT->getParameterTypes())
+      Parameters.push_back(type(P));
+    if (Return == FT->getReturnType() &&
+        ArrayRef<Type *>(Parameters) == FT->getParameterTypes())
+      return T;
+    return FunctionType::get(Context, Return, Parameters, FT->isVarArg());
+  }
+  default:
+    return T;
+  }
+}
+
+Expected<Constraint *> Substitution::constraint(Constraint *C) const {
   if (!C)
     return nullptr;
-
+  Constraint *Result = nullptr;
   switch (C->getConstraintID()) {
   case Constraint::Integer:
   case Constraint::Boolean:
   case Constraint::String:
     return C;
+  case Constraint::Array: {
+    auto *AC = cast<ArrayConstraint>(C);
+    SmallVector<Constraint *, 4> Elements;
+    for (Constraint *Element : AC->getElements()) {
+      Expected<Constraint *> New = constraint(Element);
+      if (!New)
+        return New.takeError();
+      Elements.push_back(*New);
+    }
+    Result = ArrayConstraint::get(Context, AC->getResultType(), Elements,
+                                  AC->getSourceRange());
+    break;
+  }
+  case Constraint::ArrayAccess: {
+    auto *Access = cast<ArrayAccessConstraint>(C);
+    Expected<Constraint *> Array = constraint(Access->getArray());
+    if (!Array)
+      return Array.takeError();
+    Expected<Constraint *> Index = constraint(Access->getIndex());
+    if (!Index)
+      return Index.takeError();
+    Result =
+        ArrayAccessConstraint::get(Context, Access->getResultType(), *Array,
+                                   *Index, Access->getSourceRange());
+    break;
+  }
   case Constraint::Variable: {
     auto *VC = cast<VariableConstraint>(C);
-    if (auto *Inst = dyn_cast<Instruction>(VC->getVariable())) {
-      if (auto *NewInst = Ctx.InstrValues.lookup(Inst))
-        return VariableConstraint::get(Context, NewInst, VC->getResultType(),
+    Value *Original = VC->getVariable();
+    Value *Target = value(Original);
+    if (auto *Var = dyn_cast<MetaVariable>(Target)) {
+      Constraint::ResultType Type =
+          Var != Original && Var->getType() != MetaType::Unknown
+              ? Constraint::getResultType(Var->getType())
+              : VC->getResultType();
+      Result =
+          VariableConstraint::get(Context, Var, Type, VC->getSourceRange());
+    } else if (isa<Instruction>(Target)) {
+      Result = VariableConstraint::get(Context, Target,
+                                       isa<Instruction>(Original)
+                                           ? VC->getResultType()
+                                           : Constraint::ValueResult,
                                        VC->getSourceRange());
-      return C;
+    } else if (auto *IC = dyn_cast<IntegerConstant>(Target)) {
+      const APSInt &Number = IC->getValue();
+      if (VC->getResultType() == Constraint::BooleanResult &&
+          Number.getBitWidth() == 1)
+        return BooleanConstraint::get(Context, !Number.isZero(),
+                                      VC->getSourceRange());
+      if (!Number.isRepresentableByInt64())
+        return makeError("constant " + toString(Number) + " bound to '" +
+                         toString(*C) + "' is too large for a constraint");
+      return IntegerConstraint::get(Context, Number.getExtValue(),
+                                    VC->getSourceRange());
+    } else {
+      return makeError("'" + toString(*C) + "' is bound to '" +
+                       toString(*Target) +
+                       "', which a constraint cannot refer to");
     }
-    if (auto *MV = dyn_cast<MetaVariable>(VC->getVariable())) {
-      auto It = Ctx.MetaValues.find(MV->getName());
-      if (It != Ctx.MetaValues.end()) {
-        if (auto *TargetVar = dyn_cast<MetaVariable>(It->second)) {
-          Constraint::ResultType ResTy =
-              TargetVar->getType() != MetaType::Unknown
-                  ? Constraint::getResultType(TargetVar->getType())
-                  : VC->getResultType();
-          return VariableConstraint::get(Context, TargetVar, ResTy,
-                                         VC->getSourceRange());
-        }
-        if (auto *TargetInst = dyn_cast<Instruction>(It->second)) {
-          if (auto *NewI = Ctx.InstrValues.lookup(TargetInst))
-            TargetInst = NewI;
-          return VariableConstraint::get(Context, TargetInst,
-                                         Constraint::ValueResult,
-                                         VC->getSourceRange());
-        }
-        if (auto *IC = dyn_cast<IntegerConstant>(It->second))
-          return IntegerConstraint::get(Context, IC->getValue().getExtValue(),
-                                        VC->getSourceRange());
-      }
-    }
-    return C;
+    break;
   }
   case Constraint::Unary:
   case Constraint::Binary:
   case Constraint::Call: {
     auto *OC = cast<OperatorConstraint>(C);
-    SmallVector<Constraint *, 4> NewArgs;
-    for (Constraint *Arg : OC->getArguments())
-      NewArgs.push_back(substituteConstraint(Arg, Ctx));
-    OperatorConstraint *New = nullptr;
-    if (OC->isUserDefined())
-      New = OperatorConstraint::getUserDefined(
-          Context, OC->getConstraintID(), OC->getResultType(),
-          OC->getOperator(), NewArgs, OC->getSourceRange());
-    else
-      New = OperatorConstraint::getBuiltin(
-          Context, OC->getConstraintID(), OC->getResultType(),
-          OC->getOperatorID(), NewArgs, OC->getSourceRange());
-    New->setContextInstruction(
-        remapContextInstruction(OC->getContextInstruction(), Ctx));
-    return New;
+    SmallVector<Constraint *, 4> Arguments;
+    for (Constraint *Argument : OC->getArguments()) {
+      Expected<Constraint *> New = constraint(Argument);
+      if (!New)
+        return New.takeError();
+      Arguments.push_back(*New);
+    }
+    Result = OC->isUserDefined()
+                 ? OperatorConstraint::getUserDefined(
+                       Context, OC->getConstraintID(), OC->getResultType(),
+                       OC->getOperator(), Arguments, OC->getSourceRange())
+                 : OperatorConstraint::getBuiltin(
+                       Context, OC->getConstraintID(), OC->getResultType(),
+                       OC->getOperatorID(), Arguments, OC->getSourceRange());
+    break;
   }
-  default:
-    return C;
   }
+  Result->setContextInstruction(contextInstruction(C->getContextInstruction()));
+  return Result;
 }
 
-const Instruction *
-PatternLowering::remapContextInstruction(const Instruction *CxtI,
-                                         const SubstitutionContext &Ctx) const {
-  if (!CxtI)
+SmallVector<MatcherOperand, 8>
+Substitution::operands(const Instruction &I) const {
+  SmallVector<MatcherOperand, 8> Result;
+  auto Add = [&](const MatcherOperand &Op) {
+    MatcherOperand New = Op;
+    New.Ty = type(Op.Ty);
+    New.Val = value(Op.Val);
+    New.TypeArray = variable(Op.TypeArray);
+    New.ValueArray = variable(Op.ValueArray);
+    Result.push_back(New);
+  };
+  for (const MatcherOperand &Op : I.getUnkeyedOperands())
+    Add(Op);
+  for (const MatcherOperand &Op : I.getKeyedOperands())
+    Add(Op);
+  return Result;
+}
+
+/// Phase 1: expands every composite matcher use into leaf patterns.
+class Expander {
+public:
+  explicit Expander(MIRContext &Context) : Context(Context) {}
+
+  /// Appends to Leaves the patterns Cur expands to. Cur itself is appended
+  /// when it has no composite use.
+  Error expand(const Pattern &Cur, SmallVectorImpl<const Pattern *> &Leaves);
+
+private:
+  MIRContext &Context;
+  /// Numbers uses without a result name, to name their local copies.
+  unsigned NextAnonymousUse = 0;
+
+  Expected<Pattern *> inlineBranch(const Pattern &Cur, size_t UseIndex,
+                                   const CompositeMatcher::Branch &Branch,
+                                   ArrayRef<MatcherOperand> CallerOps);
+  Expected<bool> bindParameters(const Instruction &Use,
+                                const CompositeMatcher::Branch &Branch,
+                                ArrayRef<MatcherOperand> CallerOps,
+                                Substitution &Subst);
+
+  MetaVariable *copyVariable(const MetaVariable &Original, StringRef UsePrefix);
+  IntegerConstant *boolean(bool Value, SourceRange Range) {
+    return IntegerConstant::get(Context, APSInt(APInt(1, Value), true), Range);
+  }
+};
+
+Error Expander::expand(const Pattern &Cur,
+                       SmallVectorImpl<const Pattern *> &Leaves) {
+  ArrayRef<Instruction *> Instructions = Cur.getInstructions();
+  auto It = find_if(Instructions,
+                    [](const Instruction *I) { return I->isComposite(); });
+  if (It == Instructions.end()) {
+    Leaves.push_back(&Cur);
+    return Error::success();
+  }
+
+  size_t UseIndex = It - Instructions.begin();
+  const Instruction &Use = **It;
+  ArrayRef<MatcherOperand> CallerOps = Use.getUnkeyedOperands();
+  unsigned NumOrders = Use.hasMetaFlag(MetaFlag::MF_c) ? 2 : 1;
+
+  for (const CompositeMatcher::Branch &Branch :
+       Use.getCompositeMatcher()->getBranches()) {
+    for (unsigned Order = 0; Order != NumOrders; ++Order) {
+      SmallVector<MatcherOperand, 8> Ops(CallerOps.begin(), CallerOps.end());
+      if (Order == 1)
+        std::swap(Ops[0], Ops[1]);
+      Expected<Pattern *> Variant = inlineBranch(Cur, UseIndex, Branch, Ops);
+      if (!Variant)
+        return Variant.takeError();
+      // A branch the use cannot satisfy is dropped.
+      if (!*Variant)
+        continue;
+      // The inlined branch may itself use composite matchers.
+      if (Error E = expand(**Variant, Leaves))
+        return E;
+    }
+  }
+  return Error::success();
+}
+
+Expected<bool> Expander::bindParameters(const Instruction &Use,
+                                        const CompositeMatcher::Branch &Branch,
+                                        ArrayRef<MatcherOperand> CallerOps,
+                                        Substitution &Subst) {
+  const CompositeMatcher &CM = *Use.getCompositeMatcher();
+  ArrayRef<ParameterDef> Params = CM.getParameters();
+  assert(Branch.ParameterVars.size() == Params.size() &&
+         "branch parameter variables do not match the declaration");
+
+  auto BindType = [&](unsigned ParamIndex,
+                      const MatcherOperand &Op) -> Expected<bool> {
+    const ParameterDef &P = Params[ParamIndex];
+    MetaVariable *Var = Branch.ParameterVars[ParamIndex];
+    Type *CallerTy = Op.Ty;
+    if (!CallerTy)
+      return true;
+    if (!Var) {
+      // The declaration fixes this type. A use's meta type could only be
+      // compared once matched, so the use must spell the type as well.
+      if (isMetaType(CallerTy))
+        return makeError("matcher '" + CM.getName() + "' requires type '" +
+                         toString(*P.Ty) +
+                         "' for a parameter, but this use "
+                         "passes '" +
+                         toString(*CallerTy) + "'");
+      return P.Ty == CallerTy;
+    }
+    // A type parameter repeated for several operands must get one type.
+    if (Type *Bound = Subst.Types.lookup(Var))
+      return Bound == CallerTy || isMetaType(Bound) || isMetaType(CallerTy);
+    Subst.Types[Var] = CallerTy;
+    // The width of an 'i?bits' parameter is also a value, usable in the
+    // branch's constraints.
+    if (isa<MetaIntegerType>(P.Ty)) {
+      unsigned Width = 0;
+      if (auto *MIT = dyn_cast<MetaIntegerType>(CallerTy))
+        Subst.Values[Var] = MIT->getBitWidthVariable();
+      else if (auto *IT = dyn_cast<IntegerType>(CallerTy))
+        Width = IT->getNumBits();
+      else if (auto *BT = dyn_cast<ByteType>(CallerTy))
+        Width = BT->getNumBits();
+      if (Width)
+        Subst.Values[Var] =
+            IntegerConstant::get(Context, APSInt(APInt(64, Width), true),
+                                 Op.Val ? Op.Val->getSourceRange() : P.Range);
+    }
+    return true;
+  };
+  auto BindValue = [&](unsigned ParamIndex, const MatcherOperand &Op) {
+    if (MetaVariable *Var = Branch.ParameterVars[ParamIndex])
+      if (Op.Val)
+        Subst.Values[Var] = Op.Val;
+  };
+
+  // Each archetype lays its parameters out as (type, operand) pairs; see
+  // MIRParser::parseMatchParameters.
+  SmallVector<std::pair<unsigned, unsigned>, 8> TypePositions, ValuePositions;
+  switch (CM.getSyntax()) {
+  case Instruction::OperandSyntax::Nary:
+    for (unsigned I = 0; I != CM.getArity(); ++I) {
+      TypePositions.push_back({2 * I, I});
+      ValuePositions.push_back({2 * I + 1, I});
+    }
+    break;
+  case Instruction::OperandSyntax::Binary:
+    TypePositions.push_back({0, 0});
+    ValuePositions.push_back({1, 0});
+    ValuePositions.push_back({2, 1});
+    break;
+  case Instruction::OperandSyntax::Cast:
+    TypePositions.push_back({0, 0});
+    ValuePositions.push_back({1, 0});
+    TypePositions.push_back({2, 1});
+    break;
+  case Instruction::OperandSyntax::Custom:
+    llvm_unreachable("composite matchers use a shared archetype");
+  }
+
+  for (auto [ParamIndex, OpIndex] : TypePositions) {
+    assert(ParamIndex < Params.size() && OpIndex < CallerOps.size() &&
+           "use does not match the matcher's archetype");
+    Expected<bool> Fits = BindType(ParamIndex, CallerOps[OpIndex]);
+    if (!Fits)
+      return Fits.takeError();
+    if (!*Fits)
+      return false;
+  }
+  for (auto [ParamIndex, OpIndex] : ValuePositions) {
+    assert(ParamIndex < Params.size() && OpIndex < CallerOps.size() &&
+           "use does not match the matcher's archetype");
+    BindValue(ParamIndex, CallerOps[OpIndex]);
+  }
+  return true;
+}
+
+MetaVariable *Expander::copyVariable(const MetaVariable &Original,
+                                     StringRef UsePrefix) {
+  // Copies are named after the use, e.g. '?r$k' for '?k' in the use '%r'.
+  // Hidden variables ('_'-prefixed) stay hidden.
+  StringRef Name = Original.getName();
+  std::string CopyName =
+      ((Name.starts_with("_") ? "_" : "") + UsePrefix + "$" + Name).str();
+  return MetaVariable::get(Context, Context.pImpl->Saver.save(CopyName),
+                           Original.getType(), Original.getSourceRange());
+}
+
+Expected<Pattern *>
+Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
+                       const CompositeMatcher::Branch &Branch,
+                       ArrayRef<MatcherOperand> CallerOps) {
+  const Instruction &Use = *Cur.getInstructions()[UseIndex];
+  const CompositeMatcher &CM = *Use.getCompositeMatcher();
+  const Instruction &Root = *Branch.Root;
+  Substitution Subst(Context);
+
+  Expected<bool> Fits = bindParameters(Use, Branch, CallerOps, Subst);
+  if (!Fits)
+    return Fits.takeError();
+  if (!*Fits)
     return nullptr;
-  auto It = Ctx.InstrValues.find(CxtI);
-  return It == Ctx.InstrValues.end() ? CxtI : It->second;
+
+  std::string UsePrefix = Use.getResultName().empty()
+                              ? ("#" + Twine(NextAnonymousUse++)).str()
+                              : Use.getResultName().str();
+
+  // Bind the matcher's supported flags. For each one, the use either omits
+  // it (the flag must be absent), requires it, or captures it; a branch may
+  // also fix its value. FlagValue is what the root's capture of the flag
+  // stands for: a boolean constant or a meta variable.
+  SmallVector<std::pair<const MetaVariable *, bool>, 4> FixedFlags;
+  DenseMap<unsigned, Value *> FlagValues;
+  for (InstructionFlag::FlagID FlagID : CM.getSupportedFlags()) {
+    auto HasID = [FlagID](const InstructionFlag &F) { return F.ID == FlagID; };
+    const InstructionFlag *UseFlag = find_if(Use.getFlags(), HasID);
+    if (UseFlag == Use.getFlags().end())
+      UseFlag = nullptr;
+    const auto *Fixed = find_if(Branch.FixedFlags, [FlagID](const auto &F) {
+      return F.first == FlagID;
+    });
+    if (Fixed == Branch.FixedFlags.end())
+      Fixed = nullptr;
+
+    Value *FlagValue = nullptr;
+    if (Fixed) {
+      bool Val = Fixed->second;
+      if (!UseFlag) {
+        if (Val)
+          return nullptr;
+        FlagValue = boolean(false, Use.getSourceRange());
+      } else if (!UseFlag->Capture) {
+        if (!Val)
+          return nullptr;
+        FlagValue = boolean(true, Use.getSourceRange());
+      } else if (isWildcardCapture(UseFlag->Capture)) {
+        FlagValue = boolean(Val, Use.getSourceRange());
+      } else {
+        FixedFlags.push_back({UseFlag->Capture, Val});
+        FlagValue = UseFlag->Capture;
+      }
+    } else if (!UseFlag) {
+      FlagValue = boolean(false, Use.getSourceRange());
+    } else if (!UseFlag->Capture) {
+      FlagValue = boolean(true, Use.getSourceRange());
+    } else if (isWildcardCapture(UseFlag->Capture)) {
+      FlagValue = MetaVariable::get(
+          Context,
+          Context.pImpl->Saver.save(
+              ("_flag$" + UsePrefix + "$" + InstructionFlag::getName(FlagID))
+                  .str()),
+          MetaType::Bool, Use.getSourceRange());
+    } else {
+      FlagValue = UseFlag->Capture;
+    }
+    FlagValues[FlagID] = FlagValue;
+    for (const InstructionFlag &F : Root.getFlags())
+      if (F.ID == FlagID && F.Capture)
+        Subst.Values[F.Capture] = FlagValue;
+  }
+
+  auto *Variant = Pattern::get(Context);
+  for (const auto &[Var, Val] : FixedFlags)
+    Variant->addFixedFlag(Var, Val);
+
+  // The root's capture is the use's capture, when the use names one.
+  if (Root.getCapture() && Use.getCapture())
+    Subst.Values[Root.getCapture()] = Use.getCapture();
+
+  // Every other local of the branch gets a fresh copy for this use.
+  SmallVector<MetaVariable *, 8> LocalCopies;
+  for (MetaVariable *Local : Branch.LocalVariables) {
+    if (Subst.Values.count(Local))
+      continue;
+    MetaVariable *Copy = copyVariable(*Local, UsePrefix);
+    Subst.Values[Local] = Copy;
+    // Block labels in a body are dropped (the body is placed in the use's
+    // block), so their variables are never bound.
+    if (Local->getType() != MetaType::BasicBlock)
+      LocalCopies.push_back(Copy);
+  }
+
+  // Instructions before the use are shared by every variant.
+  for (Instruction *I : Cur.getInstructions().take_front(UseIndex))
+    Variant->addInstruction(I);
+
+  // Inline the branch body.
+  for (Instruction *BI : Branch.Instructions) {
+    bool IsRoot = BI == &Root;
+    StringRef ResultName =
+        IsRoot ? Use.getResultName()
+               : Context.pImpl->Saver.save(
+                     (UsePrefix + "$" + BI->getResultName()).str());
+
+    SmallVector<MetaFlag *, 4> MetaFlags(BI->getMetaFlags());
+    MetaVariable *Capture = Subst.variable(BI->getCapture());
+    SmallVector<InstructionFlag, 4> Flags;
+    for (const InstructionFlag &F : BI->getFlags()) {
+      if (!IsRoot || !CM.hasSupportedFlag(F.ID)) {
+        Flags.push_back({F.ID, Subst.variable(F.Capture)});
+        continue;
+      }
+      // A supported flag on the root takes the use's flag: absent (false),
+      // required (true), or captured.
+      Value *FlagValue = FlagValues.lookup(F.ID);
+      if (auto *Var = dyn_cast<MetaVariable>(FlagValue))
+        Flags.push_back({F.ID, Var});
+      else if (!cast<IntegerConstant>(FlagValue)->getValue().isZero())
+        Flags.push_back({F.ID, nullptr});
+    }
+    if (IsRoot) {
+      if (Use.getCapture())
+        Capture = Use.getCapture();
+      // The use's metaflags apply to the root, except ':c', which was
+      // expanded above.
+      for (MetaFlag *MF : Use.getMetaFlags())
+        if (MF->getMetaFlagID() != MetaFlag::MF_c &&
+            !is_contained(MetaFlags, MF))
+          MetaFlags.push_back(MF);
+    }
+
+    Instruction *New = Instruction::getLike(
+        Context, *BI, ResultName, Flags, MetaFlags, Subst.operands(*BI),
+        Capture, BI->getSourceRange(), Use.getParentBlock(),
+        BI->getSettings().inheritedFrom(Use.getSettings()));
+
+    if (IsRoot) {
+      // ':o(N)' lets the use match the root or, alternatively, its Nth
+      // operand.
+      for (const MetaFlag *MF : Use.getMetaFlags()) {
+        if (MF->getMetaFlagID() != MetaFlag::MF_o)
+          continue;
+        uint64_t Index = MF->getArguments().empty()
+                             ? 0
+                             : MF->getArguments().front().IntegerValue;
+        assert(Index < CallerOps.size() && "':o' index checked by the parser");
+        New->setOrSelfValue(Subst.value(CallerOps[Index].Val));
+        break;
+      }
+    }
+    Variant->addInstruction(New);
+    Subst.Instructions[BI] = New;
+  }
+  Subst.Instructions[&Use] = Subst.Instructions.lookup(&Root);
+
+  // Instructions after the use are copied when they refer to it.
+  for (Instruction *I : Cur.getInstructions().drop_front(UseIndex + 1)) {
+    SmallVector<MatcherOperand, 8> Operands = Subst.operands(*I);
+    Value *OrSelf = Subst.value(I->getOrSelfValue());
+    bool Changed = OrSelf != I->getOrSelfValue();
+    ArrayRef<MatcherOperand> Unkeyed = I->getUnkeyedOperands();
+    SmallVector<MatcherOperand, 4> Keyed = I->getKeyedOperands();
+    for (size_t Index = 0; Index != Operands.size(); ++Index) {
+      const MatcherOperand &Old = Index < Unkeyed.size()
+                                      ? Unkeyed[Index]
+                                      : Keyed[Index - Unkeyed.size()];
+      Changed |= Operands[Index].Val != Old.Val;
+    }
+    if (!Changed) {
+      Variant->addInstruction(I);
+      continue;
+    }
+    Instruction *New = Instruction::getLike(
+        Context, *I, I->getResultName(), I->getFlags(), I->getMetaFlags(),
+        Operands, I->getCapture(), I->getSourceRange(), I->getParentBlock(),
+        I->getSettings());
+    New->setOrSelfValue(OrSelf);
+    Subst.Instructions[I] = New;
+    Variant->addInstruction(New);
+  }
+
+  // The branch's constraints, then the use site's, which may refer to the
+  // use (now the root) or to instructions after it.
+  for (Constraint *C : Branch.Constraints) {
+    Expected<Constraint *> New = Subst.constraint(C);
+    if (!New)
+      return New.takeError();
+    Variant->addConstraint(*New);
+  }
+  for (Constraint *C : Cur.getConstraints()) {
+    Expected<Constraint *> New = Subst.constraint(C);
+    if (!New)
+      return New.takeError();
+    Variant->addConstraint(*New);
+  }
+
+  for (MetaVariable *M : Cur.getMetaVariables())
+    Variant->addMetaVariable(M);
+  for (MetaVariable *M : LocalCopies)
+    Variant->addMetaVariable(M);
+  for (const auto &[Var, Val] : Cur.getFixedFlags())
+    Variant->addFixedFlag(Var, Val);
+  return Variant;
+}
+
+/// Phase 2: desugars metaflags into constraints.
+class Desugarer {
+public:
+  explicit Desugarer(MIRContext &Context) : Context(Context) {}
+
+  Error desugar(Pattern &P);
+
+private:
+  MIRContext &Context;
+
+  Expected<Constraint *> lower(const MetaFlag &MF, Value *Subject);
+  Expected<Constraint *> lowerNot(const MetaFlag &MF, Value *Subject);
+  Expected<Constraint *> lowerOr(const MetaFlag &MF, Value *Subject);
+  Expected<Constraint *>
+  lowerUserDefined(const MetaFlag &MF, const MetaFlagDef &Def, Value *Subject);
+};
+
+Error Desugarer::desugar(Pattern &P) {
+  // Collect first: adding constraints must not disturb the iteration.
+  SmallVector<Constraint *, 8> Lowered;
+  auto LowerAll = [&](ArrayRef<MetaFlag *> Flags, Value *Subject,
+                      const Instruction *CxtI) -> Error {
+    for (const MetaFlag *MF : Flags) {
+      Expected<Constraint *> C = lower(*MF, Subject);
+      if (!C)
+        return C.takeError();
+      if (!*C)
+        continue;
+      // A value-tracking operator anywhere in the flag's body is evaluated at
+      // the instruction the flag is written on.
+      (*C)->setDefaultContextInstruction(CxtI);
+      Lowered.push_back(*C);
+    }
+    return Error::success();
+  };
+
+  for (Instruction *I : P.getInstructions()) {
+    Value *Subject = I->getCapture() ? static_cast<Value *>(I->getCapture())
+                                     : static_cast<Value *>(I);
+    if (Error E = LowerAll(I->getMetaFlags(), Subject, I))
+      return E;
+    for (const MatcherOperand &Op : I->getUnkeyedOperands())
+      if (Error E = LowerAll(Op.MetaFlags, Op.Val, I))
+        return E;
+  }
+  for (Constraint *C : Lowered)
+    P.addConstraint(C);
+  return Error::success();
+}
+
+/// Returns the constraint MF stands for on Subject, or null for a builtin
+/// flag that is not a constraint (':c', ':o').
+Expected<Constraint *> Desugarer::lower(const MetaFlag &MF, Value *Subject) {
+  const MetaFlagDef *Def = Context.getMetaFlagDef(MF.getName());
+  if (!Subject) {
+    if (!Def)
+      return nullptr;
+    return makeError("metaflag ':" + MF.getName() +
+                     "' has no value to use as its subject");
+  }
+  switch (MF.getMetaFlagID()) {
+  case MetaFlag::MF_not:
+    return lowerNot(MF, Subject);
+  case MetaFlag::MF_or:
+    return lowerOr(MF, Subject);
+  case MetaFlag::MF_c:
+  case MetaFlag::MF_o:
+    return nullptr;
+  case MetaFlag::UnknownMetaFlag:
+    break;
+  }
+  if (!Def)
+    return makeError("unknown metaflag ':" + MF.getName() + "'");
+  return lowerUserDefined(MF, *Def, Subject);
+}
+
+Expected<Constraint *> Desugarer::lowerNot(const MetaFlag &MF, Value *Subject) {
+  if (MF.getArguments().size() != 1 || !MF.getArguments()[0].FlagValue)
+    return makeError("metaflag ':not' requires one nested flag");
+  Expected<Constraint *> Inner =
+      lower(*MF.getArguments()[0].FlagValue, Subject);
+  if (!Inner)
+    return Inner.takeError();
+  if (!*Inner)
+    return makeError("metaflag ':not' contains a flag that cannot be lowered");
+  return OperatorConstraint::getBuiltin(
+      Context, Constraint::Unary, Constraint::BooleanResult, Constraint::O_Not,
+      {*Inner}, MF.getSourceRange());
+}
+
+Expected<Constraint *> Desugarer::lowerOr(const MetaFlag &MF, Value *Subject) {
+  Constraint *Result = nullptr;
+  for (const MetaFlag::Argument &Arg : MF.getArguments()) {
+    if (!Arg.FlagValue)
+      return makeError("metaflag ':or' requires nested flags");
+    Expected<Constraint *> Inner = lower(*Arg.FlagValue, Subject);
+    if (!Inner)
+      return Inner.takeError();
+    if (!*Inner)
+      return makeError("metaflag ':or' contains a flag that cannot be lowered");
+    Result = Result ? OperatorConstraint::getBuiltin(
+                          Context, Constraint::Binary,
+                          Constraint::BooleanResult, Constraint::O_LogicalOr,
+                          {Result, *Inner}, MF.getSourceRange())
+                    : *Inner;
+  }
+  if (!Result)
+    return makeError("metaflag ':or' requires at least one flag");
+  return Result;
+}
+
+Expected<Constraint *> Desugarer::lowerUserDefined(const MetaFlag &MF,
+                                                   const MetaFlagDef &Def,
+                                                   Value *Subject) {
+  ArrayRef<MetaFlag::Argument> Args = MF.getArguments();
+  ArrayRef<MetaVariable *> Params = Def.getParameterVars();
+  if (Args.size() != Def.getNumArguments())
+    return makeError("metaflag ':" + MF.getName() + "' expects " +
+                     Twine(Def.getNumArguments()) + " arguments, got " +
+                     Twine(Args.size()));
+  if (!Def.getBody())
+    return makeError("metaflag ':" + MF.getName() + "' has an empty body");
+
+  // The first parameter is the subject; the rest are the flag's arguments.
+  Substitution Subst(Context);
+  Subst.Values[Params.front()] = Subject;
+  for (unsigned I = 0; I != Args.size(); ++I) {
+    if (Args[I].K != MetaFlag::Argument::Integer)
+      return makeError("metaflag ':" + MF.getName() +
+                       "' expects integer arguments");
+    Subst.Values[Params[I + 1]] = IntegerConstant::get(
+        Context,
+        APSInt(APInt(64, Args[I].IntegerValue, /*isSigned=*/true),
+               /*isUnsigned=*/false),
+        MF.getSourceRange());
+  }
+  return Subst.constraint(Def.getBody());
+}
+
+} // namespace
+
+Expected<PatternVariants> PatternLowering::lower(const Pattern *P) {
+  if (!P)
+    return PatternVariants();
+
+  SmallVector<const Pattern *, 2> Expanded;
+  if (Error E = Expander(Context).expand(*P, Expanded))
+    return E;
+
+  SmallVector<Pattern *, 2> Leaves;
+  Desugarer Desugar(Context);
+  for (const Pattern *Leaf : Expanded) {
+    // Leaves other than P were created by the expansion and may be extended
+    // in place; P is copied so that lowering leaves it untouched.
+    Pattern *Owned = Leaf == P ? P->copy() : const_cast<Pattern *>(Leaf);
+    if (Error E = Desugar.desugar(*Owned))
+      return E;
+    Leaves.push_back(Owned);
+  }
+  return PatternVariants(std::move(Leaves));
 }
 
 } // namespace metaphir

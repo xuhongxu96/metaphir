@@ -5,11 +5,17 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MetaFlag.h"
+#include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/Values.h"
 #include "gtest/gtest.h"
+#include <type_traits>
 
 using namespace llvm;
 using namespace llvm::metaphir;
+
+// Patterns are owned by their context; copying one would bypass that.
+static_assert(!std::is_copy_constructible_v<Pattern>,
+              "Pattern must not be copyable");
 
 TEST(MetaphIRConstructs, UsesOneTypeHierarchy) {
   MIRContext Context;
@@ -217,4 +223,23 @@ TEST(MetaphIRConstructs, InstructionCustomOpcodeAndKeyedOperands) {
   EXPECT_EQ(CompInst->getCustomOpcodeName(), "myCompositeOp");
   EXPECT_EQ(CompInst->getCompositeMatcher(), CM);
   delete CM;
+}
+
+// Type::get only makes primitive types; derived types have their own factory.
+TEST(MetaphIRConstructs, TypeGetRejectsDerivedTypeIDs) {
+  MIRContext Context;
+  EXPECT_NE(Type::get(Context, Type::DoubleTyID), nullptr);
+  EXPECT_DEBUG_DEATH(Type::get(Context, Type::IntegerTyID),
+                     "not a primitive type");
+}
+
+// A use of a composite matcher has no built-in instruction ID.
+TEST(MetaphIRConstructs, CompositeUseHasNoInstructionID) {
+  MIRContext Context;
+  CompositeMatcher Matcher("m", /*IsCommutative=*/false, {},
+                           Instruction::OperandSyntax::Binary, 2, {}, {});
+  Instruction *Use = Instruction::getComposite(Context, "r", &Matcher, {}, {},
+                                               {}, nullptr, {}, nullptr);
+  EXPECT_EQ(Use->getOpcodeName(), "m");
+  EXPECT_DEBUG_DEATH(Use->getInstructionID(), "composite");
 }

@@ -52,7 +52,11 @@ public:
               ArrayRef<StringRef> Parameters,
               ArrayRef<MetaVariable *> ParameterVars, Constraint *Body)
       : Name(Name), Placement(Placement), Parameters(Parameters),
-        ParameterVars(ParameterVars), Body(Body) {}
+        ParameterVars(ParameterVars), Body(Body) {
+    assert(!Parameters.empty() && "a metaflag has at least its subject");
+    assert(Parameters.size() == ParameterVars.size() &&
+           "one variable per parameter");
+  }
 
   StringRef getName() const { return Name; }
 
@@ -87,6 +91,16 @@ public:
     ArrayRef<Instruction *> Instructions;
     ArrayRef<Constraint *> Constraints;
     ArrayRef<std::pair<InstructionFlag::FlagID, bool>> FixedFlags;
+    /// The branch's own meta variable for each matcher parameter, parallel to
+    /// CompositeMatcher::getParameters(); null for a type parameter written as
+    /// a concrete type. Parameters repeated by name share one variable.
+    ArrayRef<MetaVariable *> ParameterVars;
+    /// Meta variables the branch body introduces besides its parameters. Each
+    /// use of the matcher gets fresh copies of them.
+    ArrayRef<MetaVariable *> LocalVariables;
+    /// The instruction standing for the matcher's result: the one named
+    /// '%ret', or else the last one.
+    Instruction *Root = nullptr;
   };
 
   CompositeMatcher(StringRef Name, bool IsCommutative,

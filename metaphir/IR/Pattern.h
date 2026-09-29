@@ -42,7 +42,15 @@ public:
     MetaVariables.push_back(MetaVariable);
   }
 
+  /// Creates an empty pattern owned by Context.
   static Pattern *get(MIRContext &Context);
+
+  /// Creates a pattern owned by the context with the same contents as this
+  /// one. Instructions and constraints are shared, not copied.
+  Pattern *copy() const;
+
+  Pattern(const Pattern &) = delete;
+  Pattern &operator=(const Pattern &) = delete;
 
 private:
   MIRContext &Context;

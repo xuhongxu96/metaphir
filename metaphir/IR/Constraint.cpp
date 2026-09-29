@@ -159,6 +159,34 @@ Constraint::ResultType Constraint::getResultType(MetaType Type) {
   llvm_unreachable("invalid meta type");
 }
 
+void Constraint::setDefaultContextInstruction(const Instruction *CxtI) {
+  if (!Context)
+    Context = CxtI;
+  switch (ID) {
+  case Array:
+    for (Constraint *Element : cast<ArrayConstraint>(this)->getElements())
+      Element->setDefaultContextInstruction(CxtI);
+    break;
+  case ArrayAccess: {
+    auto *Access = cast<ArrayAccessConstraint>(this);
+    Access->getArray()->setDefaultContextInstruction(CxtI);
+    Access->getIndex()->setDefaultContextInstruction(CxtI);
+    break;
+  }
+  case Unary:
+  case Binary:
+  case Call:
+    for (Constraint *Argument : cast<OperatorConstraint>(this)->getArguments())
+      Argument->setDefaultContextInstruction(CxtI);
+    break;
+  case Integer:
+  case Boolean:
+  case String:
+  case Variable:
+    break;
+  }
+}
+
 raw_ostream &operator<<(raw_ostream &OS, const Constraint &C) {
   switch (C.getConstraintID()) {
   case Constraint::Integer:
