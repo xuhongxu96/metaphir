@@ -1,18 +1,19 @@
-set(METAPHIR_STDLIB_INPUT "${CMAKE_SOURCE_DIR}/metaphir/StdLib/stdlib.mpir")
+set(METAPHIR_STDLIB_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/../StdLib/stdlib.mpir")
 set(METAPHIR_STDLIB_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/StdLibSource.inc")
 
 add_custom_command(
   OUTPUT "${METAPHIR_STDLIB_OUTPUT}"
   COMMAND ${CMAKE_COMMAND}
-    -DINPUT=${METAPHIR_STDLIB_INPUT}
-    -DOUTPUT=${METAPHIR_STDLIB_OUTPUT}
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/EmbedStdLib.cmake
+    "-DINPUT=${METAPHIR_STDLIB_INPUT}"
+    "-DOUTPUT=${METAPHIR_STDLIB_OUTPUT}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/EmbedStdLib.cmake"
   DEPENDS "${METAPHIR_STDLIB_INPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/EmbedStdLib.cmake"
   COMMENT "Embedding stdlib.mpir into StdLibSource.inc"
 )
 
 add_library(metaphir-parser
   MIRKeywords.def
+  MIRTokenKinds.def
 
   MIRToken.cpp
   MIRToken.h

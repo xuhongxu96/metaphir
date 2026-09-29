@@ -17,68 +17,17 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
 
 namespace {
 
-class ConstraintInterpreterTest : public testing::Test {
+class ConstraintInterpreterTest : public test::ConstraintTest {
 protected:
-  MIRContext Context;
-  SourceRange Range;
   ConstraintInterpreter Interpreter;
   Instantiation State;
-
-  IntegerConstraint *integer(int64_t Value) {
-    return IntegerConstraint::get(Context, Value, Range);
-  }
-
-  BooleanConstraint *boolean(bool Value) {
-    return BooleanConstraint::get(Context, Value, Range);
-  }
-
-  OperatorConstraint *operation(Constraint::ConstraintID Kind, StringRef Name,
-                                std::initializer_list<Constraint *> Arguments) {
-    Constraint::OperatorID ID = Constraint::getOperatorID(Name, Kind);
-    std::optional<Constraint::OperatorSchema> Schema =
-        Constraint::getOperatorSchema(ID);
-    Constraint::ResultType Result =
-        Schema ? Schema->Result : Constraint::BooleanResult;
-    if (ID != Constraint::UnknownOperator)
-      return OperatorConstraint::getBuiltin(Context, Kind, Result, ID,
-                                            Arguments, Range);
-    return OperatorConstraint::getUserDefined(Context, Kind, Result, Name,
-                                              Arguments, Range);
-  }
-
-  OperatorConstraint *unary(StringRef Name, Constraint *Operand) {
-    return operation(Constraint::Unary, Name, {Operand});
-  }
-
-  OperatorConstraint *binary(StringRef Name, Constraint *Left,
-                             Constraint *Right) {
-    return operation(Constraint::Binary, Name, {Left, Right});
-  }
-
-  OperatorConstraint *call(StringRef Name, Constraint *Operand) {
-    return operation(Constraint::Call, Name, {Operand});
-  }
-
-  OperatorConstraint *call(StringRef Name, Constraint *Left,
-                           Constraint *Right) {
-    return operation(Constraint::Call, Name, {Left, Right});
-  }
-
-  ArrayAccessConstraint *access(Constraint *Array, Constraint *Index,
-                                Constraint::ResultType Type) {
-    return ArrayAccessConstraint::get(Context, Type, Array, Index, Range);
-  }
-
-  ArrayConstraint *array(Constraint::ResultType Type,
-                         std::initializer_list<Constraint *> Elements) {
-    return ArrayConstraint::get(Context, Type, Elements, Range);
-  }
 
   ConstraintValue evaluate(const Constraint &Expression) {
     return cantFail(Interpreter.evaluate(Expression, State));

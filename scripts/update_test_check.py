@@ -26,7 +26,9 @@ CHECK_RE = re.compile(
 CHECK_HEAD_RE = re.compile(
     r"^\s*(?:;|#|//)\s*([A-Za-z0-9_.-]+?)(?::|-NEXT|-SAME|-NOT|-DAG)"
 )
-CHECK_PREFIX_RE = re.compile(r"--check-prefix(?:=|\s+)(?P<prefix>[A-Z0-9_-]+)")
+CHECK_PREFIX_RE = re.compile(
+    r"--check-prefix(?:es)?(?:=|\s+)(?P<prefix>[A-Za-z0-9_-]+)"
+)
 POINTER_RE = re.compile(r"\b0x[0-9A-Fa-f]+\b")
 SPLIT_RE = re.compile(r"^\s*(?:;|#|//)---\s+(?P<name>\S+)\s*$")
 PARSER_INPUT_RE = re.compile(r"%metaphir-parse\s+(?P<input>%s|%t/\S+)")
@@ -41,7 +43,8 @@ LLVM_FUNCTION_RE = re.compile(r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\(")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_TEST_DIR = REPO_ROOT / "test"
 TOOLS = ("metaphir-lex", "metaphir-parse", "metaphir-match")
-TEST_EXTENSIONS = {".ll", ".mpir"}
+# lit (test/lit.cfg.py) only runs .ll files.
+TEST_EXTENSIONS = {".ll"}
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +101,7 @@ def directive_prefix(directive: str) -> str:
 
 
 def get_check_prefix(command: str) -> str:
+    """The prefix generated checks use: the first --check-prefix(es) value."""
     match = CHECK_PREFIX_RE.search(command)
     return match["prefix"] if match else "CHECK"
 
@@ -108,6 +112,39 @@ def substitute_vars(text: str, path: Path, temp_path: Path) -> str:
         .replace("%S", str(path.parent))
         .replace("%s", str(path))
     )
+
+
+def substitute_shell_vars(text: str, path: Path, temp_path: Path) -> str:
+    """Like substitute_vars, but quotes the paths for use in a shell command."""
+    return (
+        text.replace("%t", shlex.quote(str(temp_path)))
+        .replace("%S", shlex.quote(str(path.parent)))
+        .replace("%s", shlex.quote(str(path)))
+    )
+
+
+def first_pipeline_stage(command: str) -> str:
+    """Return the command before the first unquoted pipe (`|`, not `||`)."""
+    quote: str | None = None
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if quote:
+            if char == "\\" and quote == '"':
+                index += 1
+            elif char == quote:
+                quote = None
+        elif char in "'\"":
+            quote = char
+        elif char == "\\":
+            index += 1
+        elif char == "|":
+            if command.startswith("||", index):
+                index += 2
+                continue
+            return command[:index].strip()
+        index += 1
+    return command.strip()
 
 
 def sanitize_pointers(text: str) -> str:
@@ -129,8 +166,9 @@ def strip_error_prefix(lines: list[str]) -> list[str]:
     result: list[str] = []
     for line in lines:
         if TOOL_ERROR_HEAD_RE.match(line):
-            line = line[line.find("error:") :]
-        result.append(line)
+            result.append(line[line.find("error:") :])
+        else:
+            result.append(line)
     return result
 
 
@@ -319,8 +357,8 @@ def run_setup_commands(lines: list[str], temporary_path: Path, path: Path) -> No
             continue
         if command.strip().startswith("split-file"):
             continue
-        command = command.split("|", 1)[0].strip()
-        command = substitute_vars(command, path, temporary_path).removeprefix("not ")
+        command = first_pipeline_stage(command).removeprefix("not ")
+        command = substitute_shell_vars(command, path, temporary_path)
         proc = subprocess.run(
             command,
             shell=True,
@@ -333,6 +371,16 @@ def run_setup_commands(lines: list[str], temporary_path: Path, path: Path) -> No
             raise ValueError(
                 f"{path}: setup command failed: {command}\n{proc.stderr.rstrip()}"
             )
+
+
+def find_llvm_tool(name: str) -> str:
+    """Locate an LLVM tool on PATH or in the pinned llvm-project build."""
+    if found := shutil.which(name):
+        return found
+    candidate = REPO_ROOT / "llvm-project" / "build" / "bin" / name
+    if candidate.is_file() and os.access(candidate, os.X_OK):
+        return str(candidate)
+    raise ValueError(f"could not find {name} on PATH or in {candidate.parent}")
 
 
 def functions_in_input(
@@ -348,7 +396,7 @@ def functions_in_input(
     for input_file in inputs:
         if input_file.suffix == ".bc":
             proc = subprocess.run(
-                ["llvm-dis", str(input_file), "-o", "-"],
+                [find_llvm_tool("llvm-dis"), str(input_file), "-o", "-"],
                 text=True,
                 capture_output=True,
                 check=False,
@@ -369,7 +417,7 @@ def functions_in_input(
 
 
 def find_declaration_lines(lines: list[str], start: int, end: int) -> set[int]:
-    """Find line indices belonging to top-level declarations (match, constraint, metaflag)."""
+    """Find line indices of top-level declarations (match/constraint/metaflag)."""
     decl_keywords = ("match", "constraint", "metaflag")
     decl_lines: set[int] = set()
     inside_decl = False
@@ -539,16 +587,17 @@ def gen_parser_checks(
             constraint_lines = [
                 i
                 for i in range(start, end)
-                if i not in decl_lines
-                and clean_lines[i].lstrip().startswith(";;")
+                if i not in decl_lines and clean_lines[i].lstrip().startswith(";;")
             ]
-            pattern_output = [l for l in run.output if l.startswith("pattern ")]
-            constraint_output = [l for l in run.output if l.startswith("constraint ")]
-            meta_output = [l for l in run.output if l.startswith("meta ")]
+            pattern_output = [ln for ln in run.output if ln.startswith("pattern ")]
+            constraint_output = [
+                ln for ln in run.output if ln.startswith("constraint ")
+            ]
+            meta_output = [ln for ln in run.output if ln.startswith("meta ")]
             instruction_output = [
-                l
-                for l in run.output
-                if not l.startswith(("pattern ", "constraint ", "meta "))
+                ln
+                for ln in run.output
+                if not ln.startswith(("pattern ", "constraint ", "meta "))
             ]
             if len(instruction_output) != len(instruction_lines):
                 raise ValueError(f"{path}: cannot map parser instructions to input")
@@ -561,14 +610,14 @@ def gen_parser_checks(
             )
             placed = (
                 [(instruction_lines[0], line) for line in pattern_output]
-                + list(zip(instruction_lines, instruction_output))
-                + list(zip(constraint_lines, constraint_output))
+                + list(zip(instruction_lines, instruction_output, strict=True))
+                + list(zip(constraint_lines, constraint_output, strict=True))
                 + [(trailing_target, line) for line in meta_output]
             )
             targets = [t for t, _ in placed]
-            run_output = [l for _, l in placed]
+            run_output = [ln for _, ln in placed]
 
-        for i, (target, line) in enumerate(zip(targets, run_output)):
+        for i, (target, line) in enumerate(zip(targets, run_output, strict=True)):
             directive = run.prefix if i == 0 else f"{run.prefix}-NEXT"
             checks_by_line[target].append(f"{comment} {directive}: {line}")
 
@@ -593,7 +642,7 @@ def gen_matcher_checks(
             continue
         command = run["command"]
         expected_failure = bool(re.search(r"\bnot\s+%metaphir-match\b", command))
-        invocation = command.split("|", 1)[0].strip()
+        invocation = first_pipeline_stage(command)
         invocation = (
             re.sub(r"\bnot\s+%metaphir-match\b", "%metaphir-match", invocation)
             .replace("2>&1", "")
@@ -602,9 +651,17 @@ def gen_matcher_checks(
         arguments = shlex.split(invocation)
         tool_index = arguments.index("%metaphir-match")
         raw_args = arguments[tool_index + 1 :]
-        target_args = raw_args[1:]
+        # Options are passed through; positional arguments are the pattern
+        # followed by the target inputs.
+        positional = [arg for arg in raw_args if not arg.startswith("-")]
+        if not positional:
+            raise ValueError(f"{path}: %metaphir-match RUN line has no pattern")
+        target_args = positional[1:]
         substituted_args = [
             substitute_vars(arg, path, temporary_path) for arg in raw_args
+        ]
+        substituted_targets = [
+            substitute_vars(arg, path, temporary_path) for arg in target_args
         ]
 
         result = subprocess.run(
@@ -618,7 +675,7 @@ def gen_matcher_checks(
             output = (result.stdout + result.stderr).splitlines()
             if not output:
                 raise ValueError(f"{path}: metaphir-match error run produced no output")
-            cleaned = strip_error_prefix([sanitize_pointers(l) for l in output])
+            cleaned = strip_error_prefix([sanitize_pointers(ln) for ln in output])
             error_directives.extend(format_directives(cleaned, prefix, comment))
             continue
 
@@ -634,7 +691,7 @@ def gen_matcher_checks(
             arg[3:] if arg.startswith("%t/") else None for arg in target_args
         ]
         section_functions: list[SectionFunction] = []
-        for section_name, arg in zip(target_sections, substituted_args[1:]):
+        for section_name, arg in zip(target_sections, substituted_targets, strict=True):
             input_path = path if section_name is None else temporary_path / section_name
             if not input_path.exists():
                 raise ValueError(f"{path}: matcher input {arg} does not exist")
@@ -652,7 +709,9 @@ def gen_matcher_checks(
         if len(target_groups) != len(section_functions):
             raise ValueError(f"{path}: cannot map matcher targets to LLVM functions")
 
-        for idx, (group, expected) in enumerate(zip(target_groups, section_functions)):
+        for idx, (group, expected) in enumerate(
+            zip(target_groups, section_functions, strict=True)
+        ):
             if group.name != expected.function:
                 raise ValueError(
                     f"{path}: matcher target @{group.name} does not correspond to "
@@ -766,20 +825,23 @@ def main() -> int:
             if not kinds:
                 continue
             if kinds == {"metaphir-lex"}:
-                lexer = lexer or find_tool(
-                    "metaphir-lex", args.metaphir_lex, "METAPHIR_LEX"
-                )
+                if lexer is None:
+                    lexer = find_tool("metaphir-lex", args.metaphir_lex, "METAPHIR_LEX")
                 updated = update_lexer_test(path, lines, comment, lexer)
             else:
                 tools: dict[str, Path] = {}
                 if "metaphir-parse" in kinds:
-                    tools["parser"] = parser or find_tool(
-                        "metaphir-parse", args.metaphir_parse, "METAPHIR_PARSE"
-                    )
+                    if parser is None:
+                        parser = find_tool(
+                            "metaphir-parse", args.metaphir_parse, "METAPHIR_PARSE"
+                        )
+                    tools["parser"] = parser
                 if "metaphir-match" in kinds:
-                    tools["matcher"] = matcher or find_tool(
-                        "metaphir-match", args.metaphir_match, "METAPHIR_MATCH"
-                    )
+                    if matcher is None:
+                        matcher = find_tool(
+                            "metaphir-match", args.metaphir_match, "METAPHIR_MATCH"
+                        )
+                    tools["matcher"] = matcher
                 if "metaphir-lex" in kinds:
                     raise ValueError(
                         f"{path}: lexer tests cannot be combined with other tools"

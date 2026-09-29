@@ -1,12 +1,43 @@
 #!/bin/bash
-set -e
+# Fetch, patch, build and install the pinned llvm-project checkout that
+# MetaphIR builds against.
+#
+# Usage: scripts/prepare_llvm.sh [debug|release] [--force]
+#
+# Environment:
+#   LLVM_BUILD_TYPE  default build type when none is given (Release)
+#   LLVM_BUILD_DIR   build directory (llvm-project/build-<type>)
+#   CACHE_DIR        ccache directory (ccache default when unset)
+#   JOBS             parallel build jobs (nproc)
+#
+# The selected build directory is linked as llvm-project/build, which is where
+# the MetaphIR CMake build and the eval scripts look for LLVM.
+set -euo pipefail
 
-BASE_DIR=$(pwd)
-CACHE_DIR=${CACHE_DIR:-/data/h445xu/ccache}
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LLVM_COMMIT="53a7028134738d799d8b758a5675873e325dd9e0"
 LLVM_DIR="$BASE_DIR/llvm-project"
-# Parse optional build type argument (default: Release)
-BUILD_TYPE_ARG="${1:-${LLVM_BUILD_TYPE:-Release}}"
+JOBS="${JOBS:-$(nproc)}"
+
+usage() {
+    echo "Usage: $0 [debug|release] [--force]"
+}
+
+BUILD_TYPE_ARG="${LLVM_BUILD_TYPE:-Release}"
+FORCE=0
+for arg in "$@"; do
+    case "${arg,,}" in
+        release|--release|debug|--debug) BUILD_TYPE_ARG="$arg" ;;
+        -f|--force) FORCE=1 ;;
+        -h|--help|help) usage; exit 0 ;;
+        *)
+            echo "Error: unknown argument '$arg'." >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+
 case "${BUILD_TYPE_ARG,,}" in
     release|--release)
         LLVM_BUILD_TYPE="Release"
@@ -16,13 +47,9 @@ case "${BUILD_TYPE_ARG,,}" in
         LLVM_BUILD_TYPE="Debug"
         DEFAULT_BUILD_DIR="$LLVM_DIR/build-debug"
         ;;
-    -h|--help|help)
-        echo "Usage: $0 [debug|release]"
-        exit 0
-        ;;
     *)
-        echo "Error: Invalid build type '$1'. Expected 'debug' or 'release'." >&2
-        echo "Usage: $0 [debug|release]" >&2
+        echo "Error: invalid build type '$BUILD_TYPE_ARG'. Expected 'debug' or 'release'." >&2
+        usage >&2
         exit 1
         ;;
 esac
@@ -45,30 +72,63 @@ if ! git -C "$LLVM_DIR" cat-file -e "$LLVM_COMMIT^{commit}" 2>/dev/null; then
     git -C "$LLVM_DIR" fetch --depth 1 origin "$LLVM_COMMIT"
 fi
 
-# Reset and patch
+shopt -s nullglob
+PATCHES=("$BASE_DIR"/eval/patches/*.patch)
+shopt -u nullglob
+
+# Resetting discards local edits. The applied eval patches are expected (they
+# are generated with `git -C llvm-project diff HEAD`); any other change, e.g.
+# instrumentation work not yet saved to eval/patches, stops the script unless
+# --force is given.
+if [ "$FORCE" -eq 0 ] && git -C "$LLVM_DIR" rev-parse -q --verify HEAD >/dev/null; then
+    EXPECTED_DIFF="$(cat /dev/null "${PATCHES[@]}")"
+    if [ "$(git -C "$LLVM_DIR" diff HEAD)" != "$EXPECTED_DIFF" ] ||
+        [ -n "$(git -C "$LLVM_DIR" ls-files --others --exclude-standard)" ]; then
+        echo "Error: $LLVM_DIR has local changes beyond eval/patches that the reset would discard." >&2
+        echo "Save them (git -C llvm-project diff HEAD > eval/patches/<name>.patch) or rerun with --force." >&2
+        exit 1
+    fi
+fi
+
 echo "[$(date)] Resetting to $LLVM_COMMIT and applying patches..."
 git -C "$LLVM_DIR" reset --hard "$LLVM_COMMIT"
 git -C "$LLVM_DIR" clean -fd
-git -C "$LLVM_DIR" apply $BASE_DIR/eval/patches/*.patch
+if [ "${#PATCHES[@]}" -gt 0 ]; then
+    git -C "$LLVM_DIR" apply "${PATCHES[@]}"
+fi
 
 # Configure LLVM
 echo "[$(date)] Building LLVM..."
 mkdir -p "$LLVM_BUILD_DIR"
-cd "$LLVM_BUILD_DIR"
-cmake -G Ninja "$LLVM_DIR/llvm" \
-    -DLLVM_ENABLE_PROJECTS="llvm" \
-    -DLLVM_TARGETS_TO_BUILD="X86" \
-    -DCMAKE_BUILD_TYPE=$LLVM_BUILD_TYPE \
-    -DLLVM_INCLUDE_TESTS=ON \
-    -DLLVM_INCLUDE_BENCHMARKS=OFF \
-    -DLLVM_INCLUDE_EXAMPLES=OFF \
-    -DLLVM_ENABLE_RTTI=OFF \
-    -DLLVM_CCACHE_BUILD=ON \
-    -DLLVM_CCACHE_MAXSIZE=10GB \
-    -DLLVM_CCACHE_DIR=$CACHE_DIR
+CMAKE_ARGS=(
+    -DLLVM_ENABLE_PROJECTS="llvm"
+    -DLLVM_TARGETS_TO_BUILD="X86"
+    -DCMAKE_BUILD_TYPE="$LLVM_BUILD_TYPE"
+    -DLLVM_INCLUDE_TESTS=ON
+    -DLLVM_INCLUDE_BENCHMARKS=OFF
+    -DLLVM_INCLUDE_EXAMPLES=OFF
+    -DLLVM_ENABLE_RTTI=OFF
+    -DLLVM_CCACHE_BUILD=ON
+    -DLLVM_CCACHE_MAXSIZE=10GB
+)
+if [ -n "${CACHE_DIR:-}" ]; then
+    CMAKE_ARGS+=(-DLLVM_CCACHE_DIR="$CACHE_DIR")
+fi
+cmake -G Ninja -S "$LLVM_DIR/llvm" -B "$LLVM_BUILD_DIR" "${CMAKE_ARGS[@]}"
 
 # Build
-cmake --build . --target all -- -j8
+cmake --build "$LLVM_BUILD_DIR" --target all -- -j"$JOBS"
 
 # Install
-cmake --install . --prefix "$LLVM_BUILD_DIR/install"
+cmake --install "$LLVM_BUILD_DIR" --prefix "$LLVM_BUILD_DIR/install"
+
+# Point llvm-project/build at the selected build.
+if [ "$(dirname "$LLVM_BUILD_DIR")" = "$LLVM_DIR" ]; then
+    LINK_TARGET="$(basename "$LLVM_BUILD_DIR")"
+else
+    LINK_TARGET="$LLVM_BUILD_DIR"
+fi
+if [ "$LINK_TARGET" != "build" ]; then
+    ln -sfn "$LINK_TARGET" "$LLVM_DIR/build"
+fi
+echo "[$(date)] Done. $LLVM_DIR/build -> $LINK_TARGET"

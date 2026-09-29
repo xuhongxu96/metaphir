@@ -12,6 +12,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+#include "test/TestUtils.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -20,43 +21,20 @@ using MIRTarget = llvm::metaphir::Target;
 
 namespace {
 
-std::unique_ptr<Module> parseModule(StringRef IR, LLVMContext &Context) {
-  SMDiagnostic Error;
-  return parseAssemblyString(IR, Error, Context);
-}
-
-Pattern *parsePattern(StringRef IR, MIRContext &Context) {
-  SourceMgr SM;
-  MemoryBufferRef F(IR, "<string>");
-  SM.AddNewSourceBuffer(MemoryBuffer::getMemBuffer(F), SMLoc());
-  SMDiagnostic Error;
-  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
-                   Error, Context);
-  Pattern *Result = nullptr;
-  if (!Parser.parse(Result)) {
-    // Operand metaflags are defined in the standard library, so matching
-    // requires lowering to desugar them into constraints.
-    Expected<PatternVariants> Lowered = PatternLowering(Context).lower(Result);
-    if (!Lowered)
-      llvm_unreachable("Failed to lower pattern");
-    return Result;
-  }
-  llvm_unreachable("Failed to parse pattern");
-}
-
 TEST(End2EndTest, VectorTypeMatching) {
   LLVMContext LContext;
   MIRContext MContext;
-  auto Pattern = parsePattern(
+  SourceMgr SM;
+  Pattern *Pattern = test::parseAndLower(
       R"(
         %trunc = trunc <?n x i?big> ?x to <?n x i?small>
         %sub = sub <?n x i?small> ?zero:zero, %trunc
         %zext = zext:?anch <?n x i?small> %sub to <?n x i?big>
       )",
-      MContext);
+      SM, MContext);
   ASSERT_NE(Pattern, nullptr);
 
-  auto Module = parseModule(
+  auto Module = test::parseLLVMModule(
       R"(
 define <2 x i128> @vec(<2 x i128> %x) {
   %t = trunc <2 x i128> %x to <2 x i64>
@@ -81,23 +59,17 @@ TEST(End2EndTest, LocalInstructionAndMetaVarSameName) {
   MIRContext MContext;
 
   SourceMgr SM;
-  StringRef IR = R"(
+  Pattern *Parsed = test::parsePattern(R"(
     %foo = add i32 ?foo, ?y
     %bar = sub:?anch i32 %foo, ?foo
-  )";
-  MemoryBufferRef F(IR, "<string>");
-  SM.AddNewSourceBuffer(MemoryBuffer::getMemBuffer(F), SMLoc());
-  SMDiagnostic Error;
-  MIRParser Parser(SM.getMemoryBuffer(SM.getMainFileID())->getBuffer(), SM,
-                   Error, MContext);
-  Pattern *Parsed = nullptr;
-  ASSERT_FALSE(Parser.parse(Parsed));
+  )",
+                                       SM, MContext);
   ASSERT_NE(Parsed, nullptr);
 
   Expected<PatternVariants> Lowered = PatternLowering(MContext).lower(Parsed);
   ASSERT_TRUE(static_cast<bool>(Lowered));
 
-  auto Module = parseModule(
+  auto Module = test::parseLLVMModule(
       R"(
 define i32 @test(i32 %in1, i32 %in2) {
   %1 = add i32 %in1, %in2
