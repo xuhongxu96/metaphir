@@ -10,6 +10,16 @@
 namespace llvm {
 namespace metaphir {
 
+/// The value of a constraint expression.
+///
+/// Integers are APSInts: they carry a width and a signedness and denote a
+/// mathematical number.
+///  - A literal is signed if negative, unsigned otherwise.
+///  - An LLVM constant is read as signed at its type's width.
+///  - A Nat binding (a count, width, index or alignment) is unsigned.
+/// Arithmetic and comparisons widen their operands until both values fit
+/// (see detail::widen), so no operation wraps unless an explicit bitwidth
+/// argument asks for modular arithmetic at that width.
 class ConstraintValue {
 public:
   enum ValueKind {

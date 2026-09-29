@@ -7,6 +7,7 @@
 #include "metaphir/Matching/ConstraintOps.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Instantiation.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
 
@@ -130,12 +131,13 @@ ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
 
   switch (Expression.getResultType()) {
   case Constraint::IntegerResult:
-    if (const auto *Integer = std::get_if<APInt>(&Binding->Data))
-      return ConstraintValue::getInteger(APSInt(*Integer, false));
+    if (const auto *Integer = std::get_if<APSInt>(&Binding->Data))
+      return ConstraintValue::getInteger(*Integer);
+    // An IR constant is read as a signed number, as in coerceValueToInteger.
     if (const auto *Value = std::get_if<const llvm::Value *>(&Binding->Data))
       if (const auto *CI = dyn_cast<ConstantInt>(*Value))
         return ConstraintValue::getInteger(
-            APSInt(CI->getValue(), CI->isNegative()));
+            APSInt(CI->getValue(), /*isUnsigned=*/false));
     break;
   case Constraint::BooleanResult:
     if (const auto *Boolean = std::get_if<bool>(&Binding->Data))
@@ -176,8 +178,8 @@ ConstraintInterpreter::evalVariable(const VariableConstraint &Expression,
             return ConstraintValue::getValue(Val);
           else if constexpr (std::is_same_v<T, const llvm::Type *>)
             return ConstraintValue::getType(Val);
-          else if constexpr (std::is_same_v<T, APInt>)
-            return ConstraintValue::getInteger(APSInt(Val, false));
+          else if constexpr (std::is_same_v<T, APSInt>)
+            return ConstraintValue::getInteger(Val);
           else if constexpr (std::is_same_v<T, bool>)
             return ConstraintValue::getBoolean(Val);
           else if constexpr (std::is_same_v<T, CmpInst::Predicate>)
@@ -318,6 +320,11 @@ ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
               Operator,
               "wrong number of arguments to user-defined constraint '" +
                   Operator.getOperator() + "'");
+        // Definitions can only call earlier ones, so calls cannot recurse;
+        // the limit guards against contexts built by hand.
+        if (CallDepth == MaxCallDepth)
+          return make_error<ConstraintEvaluationError>(
+              Operator, "user-defined constraints are nested too deeply");
         Instantiation SubState = State;
         for (size_t I = 0; I < Arguments.size(); ++I) {
           Expected<ConstraintValue> ArgVal = evaluate(*Arguments[I], State);
@@ -353,7 +360,10 @@ ConstraintInterpreter::evalOperator(const OperatorConstraint &Operator,
                 "unsupported argument type for user-defined constraint");
           SubState.bind(*ParamVar, std::move(*ArgBinding));
         }
-        return evaluate(*Def->getBody(), SubState);
+        ++CallDepth;
+        Expected<ConstraintValue> Result = evaluate(*Def->getBody(), SubState);
+        --CallDepth;
+        return Result;
       }
     }
     return make_error<ConstraintEvaluationError>(
@@ -393,10 +403,12 @@ ConstraintInterpreter::evalOptionalBitWidth(const OperatorConstraint &Operator,
       requireInteger(evaluate(*Arguments[ArgumentIndex], State), Operator);
   if (!Width)
     return Width.takeError();
-  if (Width->isNegative() || Width->isZero())
-    return make_error<ConstraintEvaluationError>(Operator,
-                                                 "bitwidth must be positive");
-  return static_cast<unsigned>(Width->getLimitedValue());
+  if (Width->isNegative() || Width->isZero() ||
+      Width->ugt(llvm::IntegerType::MAX_INT_BITS))
+    return make_error<ConstraintEvaluationError>(
+        Operator, "bitwidth must be between 1 and " +
+                      Twine(llvm::IntegerType::MAX_INT_BITS));
+  return static_cast<unsigned>(Width->getZExtValue());
 }
 
 Expected<ConstraintValue>
@@ -469,6 +481,11 @@ ConstraintInterpreter::evalShift(const OperatorConstraint &Operator,
       Amount->uge(Value->getBitWidth()))
     return make_error<ConstraintEvaluationError>(
         Operator, "shift amount is out of range");
+  // Without an explicit width, shl keeps the bits shifted out of the
+  // operand's width, like the other arithmetic operators.
+  if (!*BitWidth && Operator.getOperatorID() == Constraint::O_Shl)
+    *Value = extend(*Value, Value->getBitWidth() + Amount->getZExtValue(),
+                    Value->isUnsigned());
   const APInt &Integer = *Value;
   APInt Result;
   switch (Operator.getOperatorID()) {
@@ -537,6 +554,8 @@ ConstraintInterpreter::evalArithmetic(const OperatorConstraint &Operator,
       break;
     case Constraint::O_Add:
     case Constraint::O_Subtract:
+    // The most negative value divided by -1 needs one more bit.
+    case Constraint::O_SDiv:
       ExtraBits = 1;
       break;
     default:

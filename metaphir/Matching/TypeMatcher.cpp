@@ -78,10 +78,14 @@ bool TypeMatcher::match() const {
         return false;
     return true;
   }
-  case Type::PointerTyID:
+  case Type::PointerTyID: {
     // LLVM opaque pointers do not retain a pointee type to match recursively.
-    return cast<PointerType>(Matcher).isOpaque() &&
-           isa<llvm::PointerType>(Target);
+    const auto &Pointer = cast<PointerType>(Matcher);
+    const auto *TargetPointer = dyn_cast<llvm::PointerType>(&Target);
+    return Pointer.isOpaque() && TargetPointer &&
+           (Pointer.getAddressSpace() == PointerType::AnyAddressSpace ||
+            Pointer.getAddressSpace() == TargetPointer->getAddressSpace());
+  }
   case Type::StructTyID: {
     const auto *TargetStruct = dyn_cast<llvm::StructType>(&Target);
     if (!TargetStruct || TargetStruct->isOpaque())

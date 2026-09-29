@@ -5,6 +5,7 @@
 ; RUN: not %metaphir-parse %t/trailing-constraint.ll 2>&1 | FileCheck %s --check-prefix=TRAILING-CONSTRAINT
 ; RUN: not %metaphir-parse %t/unnamed-not-last.ll 2>&1 | FileCheck %s --check-prefix=UNNAMED-NOT-LAST
 ; RUN: not %metaphir-parse %t/type-and-operand-same-name.ll 2>&1 | FileCheck %s --check-prefix=SAME-NAME
+; RUN: not %metaphir-parse %t/commutative-call-array.ll 2>&1 | FileCheck %s --check-prefix=COMMUTATIVE-CALL-ARRAY
 ; RUN: %metaphir-parse %t/or-after-match.ll | FileCheck %s --check-prefix=OR-AFTER-MATCH
 
 ;--- integer-constraint.ll
@@ -51,3 +52,9 @@ match m [] Unary (?t ?x) {
 }
 or i32 ?a, ?b
 ; OR-AFTER-MATCH: or i32 ?a, ?b
+
+; ':c' swaps exactly two call arguments; an argument array could hold any
+; number.
+;--- commutative-call-array.ll
+%r = call:c i32 ?f(i32 ?a, ...?tys ?rest)
+; COMMUTATIVE-CALL-ARRAY: error: metaflag ':c' requires a call with exactly two arguments

@@ -108,7 +108,9 @@ TEST(InstructionMatcherTest, BindsStandaloneResultTypes) {
             Instantiation::Binding(llvm::Type::getInt32Ty(LLVMContext)));
 }
 
-TEST(InstructionMatcherTest, ReportsUnsupportedCommutativeLayout) {
+// ':c' on a matcher without an operand pair to swap (the parser rejects this)
+// matches in the written order only, rather than aborting.
+TEST(InstructionMatcherTest, CommutativeFlagWithoutOperandPairMatchesOnce) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
@@ -135,12 +137,8 @@ TEST(InstructionMatcherTest, ReportsUnsupportedCommutativeLayout) {
   const llvm::Instruction &Target =
       Module->getFunction("f")->getEntryBlock().front();
 
-  EXPECT_DEATH(
-      {
-        Instantiation State;
-        (void)matchesInstruction(*Freeze, Target, State);
-      },
-      "commutative matcher 'freeze' has unsupported operand count 1");
+  Instantiation State;
+  EXPECT_EQ(InstructionMatcher(*Freeze, Target, State).match().size(), 1u);
 }
 
 TEST(InstructionMatcherTest, BindsPredicatesAndCapturedSemanticFlags) {

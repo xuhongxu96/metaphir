@@ -43,10 +43,11 @@ MetaIntegerType *MetaIntegerType::get(MIRContext &C, MetaVariable *BitWidth,
   return *Insertion.first;
 }
 
-PointerType *PointerType::get(MIRContext &C, Type *Element) {
-  PointerType *&Entry = C.pImpl->PointerTypes[Element];
+PointerType *PointerType::get(MIRContext &C, Type *Element,
+                              unsigned AddressSpace) {
+  PointerType *&Entry = C.pImpl->PointerTypes[{Element, AddressSpace}];
   if (!Entry)
-    Entry = new (C.pImpl->Alloc) PointerType(C, Element);
+    Entry = new (C.pImpl->Alloc) PointerType(C, Element, AddressSpace);
   return Entry;
 }
 

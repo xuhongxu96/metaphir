@@ -63,18 +63,25 @@ private:
 
 class PointerType : public Type {
 public:
+  /// The address space of a 'ptr' written without 'addrspace(N)': any.
+  static constexpr unsigned AnyAddressSpace = ~0u;
+
   Type *getElementType() const { return Element; }
   bool isOpaque() const { return Element == nullptr; }
+  /// The required address space, or AnyAddressSpace.
+  unsigned getAddressSpace() const { return AddressSpace; }
 
-  static PointerType *get(MIRContext &C, Type *Element = nullptr);
+  static PointerType *get(MIRContext &C, Type *Element = nullptr,
+                          unsigned AddressSpace = AnyAddressSpace);
 
   static bool classof(const Type *T) { return T->getTypeID() == PointerTyID; }
 
 private:
   Type *Element;
+  unsigned AddressSpace;
 
-  PointerType(MIRContext &C, Type *Element)
-      : Type(C, PointerTyID), Element(Element) {}
+  PointerType(MIRContext &C, Type *Element, unsigned AddressSpace)
+      : Type(C, PointerTyID), Element(Element), AddressSpace(AddressSpace) {}
 };
 
 class StructType : public Type {

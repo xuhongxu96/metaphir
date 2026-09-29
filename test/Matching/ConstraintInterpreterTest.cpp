@@ -692,3 +692,19 @@ TEST_F(ConstraintInterpreterTest, ValueTrackContextBuildsLazily) {
 }
 
 } // namespace
+
+namespace {
+
+// The integer predicates answer false for an operand that is not an integer;
+// the failed coercion must be consumed (an unchecked llvm::Error aborts in
+// builds with LLVM_ENABLE_ABI_BREAKING_CHECKS).
+TEST_F(ConstraintInterpreterTest, IntegerPredicatesRejectNonIntegers) {
+  for (StringRef Name :
+       {"isPowerOfTwo", "isZero", "isAllOnes", "isLowBitMask"}) {
+    SCOPED_TRACE(Name);
+    EXPECT_FALSE(evaluateBoolean(
+        *call(Name, StringConstraint::get(Context, "x", Range))));
+  }
+}
+
+} // namespace

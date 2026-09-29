@@ -12,6 +12,7 @@ const DataLayout &ValueTrackContext::ensure(const llvm::Instruction *CtxI) {
   // The module outlives the match, so the const-qualified function view is
   // safe to use for the (non-mutating) DominatorTree/AssumptionCache builders.
   auto *Fn = const_cast<llvm::Function *>(CtxI->getFunction());
+  assert(Fn && "value tracking needs an instruction inside a function");
   if (Fn != F) {
     F = Fn;
     DT.reset();

@@ -520,8 +520,20 @@ bool MIRParser::parseType(Type *&Result, bool AllowVoid) {
     Result = Type::get(Context, *ID);
     next();
   } else if (Lex.getKind() == tok::kw_ptr) {
-    Result = PointerType::get(Context);
     next();
+    unsigned AddressSpace = PointerType::AnyAddressSpace;
+    if (consume(tok::kw_addrspace)) {
+      if (expect(tok::lparen, "expected '(' after 'addrspace'"))
+        return true;
+      if (Lex.getKind() != tok::APSInt || Lex.getAPSIntVal().isNegative() ||
+          !Lex.getAPSIntVal().isIntN(24))
+        return error("expected an address space number");
+      AddressSpace = Lex.getAPSIntVal().getZExtValue();
+      next();
+      if (expect(tok::rparen, "expected ')' after address space"))
+        return true;
+    }
+    Result = PointerType::get(Context, nullptr, AddressSpace);
   } else if (consume(tok::lsquare)) {
     uint64_t Count = 0;
     MetaVariable *CountVar = nullptr;
@@ -1219,8 +1231,11 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
   }
   for (MetaFlag *F : MFlags) {
     if (F->getMetaFlagID() == MetaFlag::MF_c && ID == Instruction::I_call) {
+      // Operands are the return type, the callee and the arguments.
       unsigned ArgumentCount = Ops.size() >= 2 ? Ops.size() - 2 : 0;
-      if (ArgumentCount != 2)
+      bool HasArray =
+          any_of(Ops, [](const MatcherOperand &O) { return O.IsArray; });
+      if (ArgumentCount != 2 || HasArray)
         return Lex.ParseError(F->getSourceRange().Begin,
                               "metaflag ':c' requires a call with exactly two "
                               "arguments");

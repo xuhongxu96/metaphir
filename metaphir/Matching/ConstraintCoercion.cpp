@@ -1,5 +1,6 @@
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/IR/Constraints.h"
+#include "metaphir/Matching/MatchersDetail.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -20,14 +21,7 @@ namespace {
 // accepted for them to take part in arithmetic. isNumeric and
 // coerceValueToInteger share this so they cannot disagree.
 std::optional<APInt> constantIntegerValue(const llvm::Value *Operand) {
-  if (const auto *Integer = dyn_cast<ConstantInt>(Operand))
-    return Integer->getValue();
-  if (const auto *Constant = dyn_cast<llvm::Constant>(Operand))
-    if (Constant->getType()->isVectorTy())
-      if (const auto *Splat = Constant->getSplatValue())
-        if (const auto *Integer = dyn_cast<ConstantInt>(Splat))
-          return Integer->getValue();
-  return std::nullopt;
+  return getConstantInteger(*Operand);
 }
 
 // Identifiers for each admissible coercion. This enum is the set of
@@ -168,14 +162,18 @@ APSInt extend(const APSInt &Value, unsigned Width, bool IsUnsigned) {
 
 std::pair<APSInt, APSInt> widen(const APSInt &Left, const APSInt &Right,
                                 unsigned ExtraBits) {
-  unsigned Width =
-      std::max(Left.getBitWidth(), Right.getBitWidth()) + ExtraBits;
   bool IsUnsigned = Left.isUnsigned() && Right.isUnsigned();
+  // When the result is signed, an unsigned operand needs one more bit so
+  // that a value with its top bit set stays positive.
+  auto Needed = [IsUnsigned](const APSInt &V) {
+    return V.getBitWidth() + (!IsUnsigned && V.isUnsigned() ? 1 : 0);
+  };
+  unsigned Width = std::max(Needed(Left), Needed(Right)) + ExtraBits;
   return {extend(Left, Width, IsUnsigned), extend(Right, Width, IsUnsigned)};
 }
 
 APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth) {
-  return APSInt(Value.zextOrTrunc(BitWidth), Value.isUnsigned());
+  return Value.extOrTrunc(BitWidth);
 }
 
 bool isNumeric(const ConstraintValue &V) {
@@ -295,37 +293,34 @@ Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,
     llvm_unreachable("invalid constraint value kind");
   }
 
-  if (isNumeric(Left) && isNumeric(Right)) {
-    Expected<APSInt> L = requireInteger(std::move(Left), Expression);
-    Expected<APSInt> R = requireInteger(std::move(Right), Expression);
-    if (!L)
-      return L.takeError();
-    if (!R)
-      return R.takeError();
-    return APSInt::isSameValue(*L, *R);
-  }
+  // Coerces both operands with Require and compares the results. Both
+  // coercions are checked, so neither error is dropped.
+  auto Compare = [&](auto Require) -> Expected<bool> {
+    auto L = Require(Left, Expression);
+    auto R = Require(Right, Expression);
+    if (!L || !R)
+      return joinErrors(L.takeError(), R.takeError());
+    if constexpr (std::is_same_v<std::decay_t<decltype(*L)>, APSInt>)
+      return APSInt::isSameValue(*L, *R);
+    else
+      return *L == *R;
+  };
+  auto RequireInteger = [](const ConstraintValue &V, const Constraint &E) {
+    return requireInteger(V, E);
+  };
+  auto RequireString = [](const ConstraintValue &V, const Constraint &E) {
+    return requireString(V, E);
+  };
+  auto RequireStringArray = [](const ConstraintValue &V, const Constraint &E) {
+    return requireStringArray(V, E);
+  };
 
-  if (isStringLike(Left) && isStringLike(Right)) {
-    Expected<std::string> L = requireString(std::move(Left), Expression);
-    Expected<std::string> R = requireString(std::move(Right), Expression);
-    if (!L)
-      return L.takeError();
-    if (!R)
-      return R.takeError();
-    return *L == *R;
-  }
-
-  if (isStringArrayLike(Left) && isStringArrayLike(Right)) {
-    Expected<ConstraintValue::StringArrayStorage> L =
-        requireStringArray(std::move(Left), Expression);
-    Expected<ConstraintValue::StringArrayStorage> R =
-        requireStringArray(std::move(Right), Expression);
-    if (!L)
-      return L.takeError();
-    if (!R)
-      return R.takeError();
-    return *L == *R;
-  }
+  if (isNumeric(Left) && isNumeric(Right))
+    return Compare(RequireInteger);
+  if (isStringLike(Left) && isStringLike(Right))
+    return Compare(RequireString);
+  if (isStringArrayLike(Left) && isStringArrayLike(Right))
+    return Compare(RequireStringArray);
 
   return make_error<ConstraintEvaluationError>(
       Expression, "equality operands have different types");

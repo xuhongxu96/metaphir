@@ -73,17 +73,11 @@ SubtreeMatcher::getMetaVariableBinding(const MetaVariable &Matcher) {
   switch (Matcher.getType()) {
   case MetaType::Value:
     return &Target;
-  case MetaType::Nat: {
-    if (const auto *Integer = dyn_cast<ConstantInt>(&Target))
-      return Integer->getValue();
+  case MetaType::Nat:
     // A vector splat constant binds its scalar element value.
-    if (const auto *Constant = dyn_cast<llvm::Constant>(&Target))
-      if (Constant->getType()->isVectorTy())
-        if (const auto *Splat = Constant->getSplatValue())
-          if (const auto *Integer = dyn_cast<ConstantInt>(Splat))
-            return Integer->getValue();
+    if (std::optional<APInt> Integer = detail::getConstantInteger(Target))
+      return Instantiation::Binding(*Integer);
     return std::nullopt;
-  }
   case MetaType::Bool:
     if (!Target.getType()->isIntegerTy(1))
       return std::nullopt;
