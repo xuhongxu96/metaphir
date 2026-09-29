@@ -6,12 +6,26 @@ add_library(
   ConstraintError.h
   ConstraintInterpreter.cpp
   ConstraintInterpreter.h
-  ConstraintOps.cpp
-  ConstraintOps.h
+  ConcreteDomain.cpp
+  ConcreteDomain.h
+  ConstraintEvaluator.h
+  Operators/Arithmetic.cpp
+  Operators/AbstractCall.cpp
+  Operators/AbstractCall.h
+  Operators/Arithmetic.h
+  Operators/Facts.cpp
+  Operators/Facts.h
+  Operators/OperatorCall.h
+  Operators/ValuePredicates.cpp
+  Operators/ValuePredicates.h
+  Operators/ValueTracking.cpp
+  Operators/ValueTracking.h
   ConstraintValue.cpp
   ConstraintValue.h
   ConstantInteger.cpp
   ConstantInteger.h
+  FeatureQuery.cpp
+  FeatureQuery.h
   Features.cpp
   Features.h
   Instantiation.cpp
@@ -22,6 +36,8 @@ add_library(
   TypeMatcher.h
   SubtreeMatcher.cpp
   SubtreeMatcher.h
+  IndexDomain.cpp
+  IndexDomain.h
   InstructionMatcher.cpp
   OpcodePredicates.cpp
   OpcodePredicates.h
@@ -31,6 +47,8 @@ add_library(
   PatternMatcher.h
   Target.cpp
   Target.h
+  TypeCode.cpp
+  TypeCode.h
   ValueTrackContext.cpp
   ValueTrackContext.h)
 

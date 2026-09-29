@@ -3,7 +3,7 @@
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Index/CorpusIndex.h"
-#include "metaphir/Matching/Features.h"
+#include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
@@ -135,7 +135,7 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
     return nullptr;
   }
   Loaded->Variants = std::move(*Lowered);
-  Loaded->Query = FeatureQuery::compute(*Loaded->Variants);
+  Loaded->Query = FeatureQuery::compute(*Loaded->Variants, &Loaded->Context);
   return Loaded;
 }
 
@@ -177,18 +177,23 @@ loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
   if (!Entry->Parsed)
     return LoadAll();
   Stats.Functions += Entry->NumFunctions;
-  Expected<FunctionFeatures> Summary = Index->readSummary(*Entry);
+  // The fine features are read only where the coarse ones may match.
+  auto MayMatch = [&](const FunctionFeatures &Features) {
+    return Pattern.Query.mayMatch(Features);
+  };
+  Expected<FunctionFeatures> Summary = Index->readSummary(*Entry, MayMatch);
   if (!Summary)
     return Summary.takeError();
-  if (!Pattern.Query.mayMatch(*Summary))
+  if (!Summary->Fine || !Pattern.Query.mayMatch(*Summary))
     return nullptr;
-  Expected<std::vector<IndexedFunction>> Indexed = Index->readFunctions(*Entry);
+  Expected<std::vector<IndexedFunction>> Indexed =
+      Index->readFunctions(*Entry, MayMatch);
   if (!Indexed)
     return Indexed.takeError();
   // The ordinals, among the module's defined functions, of those to match.
   SmallVector<size_t, 8> Candidates;
   for (auto [Ordinal, Function] : enumerate(*Indexed))
-    if (Pattern.Query.mayMatch(Function.Features))
+    if (Function.Features.Fine && Pattern.Query.mayMatch(Function.Features))
       Candidates.push_back(Ordinal);
   if (Candidates.empty())
     return nullptr;
@@ -304,9 +309,11 @@ static void matchFile(LoadedPattern &Pattern, const CorpusIndex *Index,
     Target Program(*F, Function.Features ? &*Function.Features : nullptr);
     bool HadStructuralMatch = false;
     SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
-    MatchResults Matches =
-        Matcher.match(*Pattern.Variants, Program, &Unsatisfied,
-                      &HadStructuralMatch, Pattern.getFilter());
+    // Only the full output reports the constraints rejecting structural
+    // matches; without it, the filter can skip variants by them too.
+    MatchResults Matches = Matcher.match(
+        *Pattern.Variants, Program, MatchesOnly ? nullptr : &Unsatisfied,
+        MatchesOnly ? nullptr : &HadStructuralMatch, Pattern.getFilter());
     if (MatchesOnly) {
       for (const Instantiation &Match : Matches) {
         Out << File << "\t@" << F->getName() << '\t';

@@ -3,7 +3,7 @@
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Index/CorpusIndex.h"
-#include "metaphir/Matching/Features.h"
+#include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
@@ -41,6 +41,11 @@ static cl::opt<unsigned>
                   "thread)"),
          cl::init(0), cl::sub(Build), cl::cat(Category));
 
+static cl::opt<bool> NoValueFacts(
+    "no-value-facts",
+    cl::desc("Do not record value-tracking facts (faster, prunes less)"),
+    cl::sub(Build), cl::cat(Category));
+
 static cl::SubCommand Dump("dump", "Print the features in an index");
 static cl::opt<std::string> DumpIndex(cl::Positional, cl::Required,
                                       cl::desc("<index>"), cl::sub(Dump),
@@ -69,7 +74,8 @@ static int build(StringRef ToolName) {
       SmallString<256> Relative(Files[Index]);
       sys::path::replace_path_prefix(Relative, CorpusDir, "");
       StringRef Path = sys::path::relative_path(Relative);
-      Expected<IndexedModule> Module = CorpusIndex::indexFile(CorpusDir, Path);
+      Expected<IndexedModule> Module = CorpusIndex::indexFile(
+          CorpusDir, Path, FeatureOptions{/*ValueFacts=*/!NoValueFacts});
       if (!Module) {
         logAllUnhandledErrors(Module.takeError(), errs(),
                               Twine(ToolName) + ": error: ");
@@ -109,13 +115,17 @@ static int build(StringRef ToolName) {
 static void printFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
   for (unsigned ID = 0; ID != 64; ++ID)
     if (Features.Instructions >> ID & 1)
-      OS << ' ' << Instruction::getOpcodeName(Instruction::InstructionID(ID));
+      OS << ' '
+         << metaphir::Instruction::getOpcodeName(
+                metaphir::Instruction::InstructionID(ID));
   OS << ';';
   for (uint16_t Edge : Features.Edges)
     OS << ' '
-       << Instruction::getOpcodeName(Instruction::InstructionID(Edge / 64))
+       << metaphir::Instruction::getOpcodeName(
+              metaphir::Instruction::InstructionID(Edge / 64))
        << '-'
-       << Instruction::getOpcodeName(Instruction::InstructionID(Edge % 64));
+       << metaphir::Instruction::getOpcodeName(
+              metaphir::Instruction::InstructionID(Edge % 64));
   OS << "; " << Features.Globals.size() << " globals\n";
 }
 
@@ -179,7 +189,7 @@ static int stats(StringRef ToolName) {
                           Twine(ToolName) + ": error: ");
     return 1;
   }
-  FeatureQuery Query = FeatureQuery::compute(*Lowered);
+  FeatureQuery Query = FeatureQuery::compute(*Lowered, &Context);
 
   Expected<CorpusIndex> Index = CorpusIndex::read(StatsIndex);
   if (!Index) {
@@ -194,22 +204,27 @@ static int stats(StringRef ToolName) {
     ++Modules;
     Bytes += Entry.Stamp.Size;
     Functions += Entry.NumFunctions;
-    Expected<FunctionFeatures> Summary = Index->readSummary(Entry);
+    // As metaphir-match reads them: the fine features only where the coarse
+    // ones may match.
+    auto MayMatch = [&](const FunctionFeatures &Features) {
+      return Query.mayMatch(Features);
+    };
+    Expected<FunctionFeatures> Summary = Index->readSummary(Entry, MayMatch);
     Expected<std::vector<IndexedFunction>> ModuleFunctions =
-        Index->readFunctions(Entry);
+        Index->readFunctions(Entry, MayMatch);
     if (!Summary || !ModuleFunctions) {
       logError(joinErrors(Summary.takeError(), ModuleFunctions.takeError()),
                ToolName);
       return 1;
     }
     // A module that does not parse is matched, to report the error.
-    if (Entry.Parsed && !Query.mayMatch(*Summary))
+    if (Entry.Parsed && (!Summary->Fine || !Query.mayMatch(*Summary)))
       continue;
     ++MatchedModules;
     MatchedBytes += Entry.Stamp.Size;
     MatchedFunctions +=
         count_if(*ModuleFunctions, [&](const IndexedFunction &Function) {
-          return Query.mayMatch(Function.Features);
+          return Function.Features.Fine && Query.mayMatch(Function.Features);
         });
   }
   printShare("modules", MatchedModules, Modules);

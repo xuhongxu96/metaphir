@@ -1,5 +1,7 @@
 #include "metaphir/Matching/OpcodePredicates.h"
 #include "metaphir/Matching/InstructionMatcher.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Operator.h"
@@ -23,12 +25,14 @@ bool matchesInstructionID(Instruction::InstructionID ID,
   case Instruction::I_##Name:                                                  \
     return TargetMatcher(Target);
 #include "metaphir/IR/InstructionMatchers.def"
+  case Instruction::NumInstructionIDs:
+    break;
   }
   llvm_unreachable("invalid instruction matcher ID");
 }
 
 bool hasSemanticFlag(InstructionFlag::FlagID ID,
-                            const llvm::Instruction &Target) {
+                     const llvm::Instruction &Target) {
   switch (ID) {
   case InstructionFlag::F_nsw:
     return Target.hasNoSignedWrap();
@@ -104,6 +108,55 @@ bool hasSemanticFlag(InstructionFlag::FlagID ID,
     llvm_unreachable("invalid instruction flag ID");
   }
   llvm_unreachable("invalid instruction flag ID");
+}
+
+void collectMatcherOperands(const llvm::Instruction &Target,
+                            SmallVectorImpl<const llvm::Value *> &Operands) {
+  Operands.clear();
+  switch (Target.getOpcode()) {
+  case llvm::Instruction::CondBr: {
+    const auto &Branch = cast<CondBrInst>(Target);
+    Operands.push_back(Branch.getCondition());
+    Operands.push_back(Branch.getSuccessor(0));
+    Operands.push_back(Branch.getSuccessor(1));
+    return;
+  }
+  case llvm::Instruction::UncondBr:
+    Operands.push_back(cast<UncondBrInst>(Target).getSuccessor(0));
+    return;
+  case llvm::Instruction::Call: {
+    const auto &Call = cast<CallBase>(Target);
+    Operands.push_back(Call.getCalledOperand());
+    for (const llvm::Use &Argument : Call.args())
+      Operands.push_back(Argument.get());
+    return;
+  }
+  case llvm::Instruction::PHI: {
+    const auto &Phi = cast<PHINode>(Target);
+    for (unsigned Index = 0; Index != Phi.getNumIncomingValues(); ++Index) {
+      Operands.push_back(Phi.getIncomingValue(Index));
+      Operands.push_back(Phi.getIncomingBlock(Index));
+    }
+    return;
+  }
+  case llvm::Instruction::ExtractValue:
+  case llvm::Instruction::InsertValue: {
+    for (const llvm::Use &Operand : Target.operands())
+      Operands.push_back(Operand.get());
+    llvm::Type *IndexType = llvm::Type::getInt64Ty(Target.getContext());
+    ArrayRef<unsigned> Indices =
+        Target.getOpcode() == llvm::Instruction::ExtractValue
+            ? cast<ExtractValueInst>(Target).getIndices()
+            : cast<InsertValueInst>(Target).getIndices();
+    for (unsigned Index : Indices)
+      Operands.push_back(ConstantInt::get(IndexType, Index));
+    return;
+  }
+  default:
+    for (const llvm::Use &Operand : Target.operands())
+      Operands.push_back(Operand.get());
+    return;
+  }
 }
 
 bool InstructionMatcher::matchInstructionTarget() {

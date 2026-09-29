@@ -50,7 +50,9 @@ public:
   /// the constraints that rejected structural matches are added to
   /// Unsatisfied; HadStructuralMatch tells whether there were any.
   /// Filter, computed from Variants, skips the variants Program lacks the
-  /// features for; the results are the same without it.
+  /// features for; the results are the same without it. When Unsatisfied or
+  /// HadStructuralMatch is asked for, only the variants' instructions are
+  /// checked, so structural matches are still found.
   MatchResults
   match(const PatternVariants &Variants, const Target &Program,
         SmallVectorImpl<UnsatisfiedConstraint> *Unsatisfied = nullptr,

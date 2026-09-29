@@ -3,7 +3,7 @@
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
-#include "metaphir/Matching/Features.h"
+#include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/SubtreeMatcher.h"
 #include "llvm/IR/Instruction.h"
 
@@ -94,14 +94,19 @@ MatchResults
 PatternMatcher::match(const PatternVariants &Variants, const Target &Program,
                       SmallVectorImpl<UnsatisfiedConstraint> *Unsatisfied,
                       bool *HadStructuralMatch, const FeatureQuery *Filter) {
-  assert((!Filter || Filter->getVariants().size() == Variants.size()) &&
+  assert((!Filter || Filter->size() == Variants.size()) &&
          "filter computed from other variants");
   // Analyses cached for an earlier target may belong to a freed function.
   Interpreter.resetAnalyses();
   MatchResults Combined;
   for (auto [Index, Variant] : enumerate(Variants)) {
     // Without the features, the variant has no structural match.
-    if (Filter && !Filter->mayMatchVariant(Index, Program.getFeatures()))
+    // A variant whose constraints cannot hold has no matches, but its
+    // structural matches are reported when asked for.
+    if (Filter &&
+        !(Unsatisfied || HadStructuralMatch
+              ? Filter->mayMatchStructure(Index, Program.getFeatures())
+              : Filter->mayMatchVariant(Index, Program.getFeatures())))
       continue;
     MatchResults Structural = matchStructure(*Variant, Program);
     if (!Structural.empty() && HadStructuralMatch)

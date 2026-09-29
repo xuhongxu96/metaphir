@@ -73,6 +73,14 @@ public:
     return Inserted || It->second == Target;
   }
 
+  /// Unifies every binding of Other; returns whether all agree.
+  bool unifyAll(const Instantiation &Other) {
+    for (const auto &[Matcher, Target] : Other.Bindings)
+      if (!unify(*Matcher, Target))
+        return false;
+    return true;
+  }
+
   void requireComplete(const Pattern &Pattern) const;
 
   /// Prints the named meta variables' bindings, sorted by name. Slots, when

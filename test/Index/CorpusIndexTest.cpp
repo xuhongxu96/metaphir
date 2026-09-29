@@ -146,11 +146,11 @@ TEST_F(CorpusIndexTest, RejectsOtherFiles) {
   ASSERT_FALSE(static_cast<bool>(Functions));
   consumeError(Functions.takeError());
 
-  // Cut before the functions: reading the index fails.
-  writeFile("cut-summary", (*Buffer)->getBuffer().drop_back(30));
-  Expected<CorpusIndex> CutSummary = CorpusIndex::read(path("cut-summary"));
-  ASSERT_FALSE(static_cast<bool>(CutSummary));
-  consumeError(CutSummary.takeError());
+  // Cut inside the header: reading the index fails.
+  writeFile("cut-header", (*Buffer)->getBuffer().take_front(20));
+  Expected<CorpusIndex> CutHeader = CorpusIndex::read(path("cut-header"));
+  ASSERT_FALSE(static_cast<bool>(CutHeader));
+  consumeError(CutHeader.takeError());
 }
 
 } // namespace

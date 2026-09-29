@@ -2,6 +2,7 @@
 #define METAPHIR_INDEX_CORPUSINDEX_H
 
 #include "metaphir/Matching/Features.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -56,7 +57,8 @@ struct IndexedModule {
   std::vector<IndexedFunction> Functions;
 
   /// Indexes Module, read from the file at Path (relative to the corpus).
-  static IndexedModule compute(StringRef Path, const Module &Module);
+  static IndexedModule compute(StringRef Path, const Module &Module,
+                               const FeatureOptions &Options = {});
 };
 
 /// A file's entry in a read index. Its features are read when asked for.
@@ -84,7 +86,9 @@ public:
 
   /// Indexes the file at Path, relative to Root: its stamp, and, when it
   /// parses, its functions.
-  static Expected<IndexedModule> indexFile(StringRef Root, StringRef Path);
+  static Expected<IndexedModule> indexFile(StringRef Root, StringRef Path,
+                                           const FeatureOptions &Options = {
+                                               /*ValueFacts=*/true});
 
   StringRef getRoot() const { return Root; }
   size_t size() const { return Entries.size(); }
@@ -95,10 +99,16 @@ public:
   const IndexEntry *lookup(StringRef Path) const;
 
   /// Reads the summary of the functions of Entry, an entry of this index.
-  Expected<FunctionFeatures> readSummary(const IndexEntry &Entry) const;
-  /// Reads the functions of Entry, an entry of this index.
-  Expected<std::vector<IndexedFunction>>
-  readFunctions(const IndexEntry &Entry) const;
+  /// Its fine features (see FunctionFeatures::Fine) are read only if
+  /// NeedsFine, when given, asks for them, given the others.
+  Expected<FunctionFeatures> readSummary(
+      const IndexEntry &Entry,
+      function_ref<bool(const FunctionFeatures &)> NeedsFine = nullptr) const;
+  /// Reads the functions of Entry, an entry of this index; their fine
+  /// features as readSummary does.
+  Expected<std::vector<IndexedFunction>> readFunctions(
+      const IndexEntry &Entry,
+      function_ref<bool(const FunctionFeatures &)> NeedsFine = nullptr) const;
 
 private:
   std::unique_ptr<MemoryBuffer> Buffer;

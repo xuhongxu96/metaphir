@@ -1,7 +1,7 @@
-#include "metaphir/Matching/Features.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/IR/PatternVariants.h"
+#include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Matching/Target.h"
 #include "test/TestUtils.h"
@@ -32,7 +32,7 @@ protected:
     Expected<PatternVariants> Lowered = PatternLowering(Context).lower(Parsed);
     ASSERT_TRUE(static_cast<bool>(Lowered)) << toString(Lowered.takeError());
     Variants = std::move(*Lowered);
-    Query = FeatureQuery::compute(Variants);
+    Query = FeatureQuery::compute(Variants, &Context);
     M = test::parseLLVMModule(IR, IRContext);
     ASSERT_NE(M, nullptr);
     expectSound();
@@ -46,21 +46,33 @@ protected:
     return Query.mayMatch(FunctionFeatures::compute(*M->getFunction(Name)));
   }
 
+  /// Whether the function passes with value-tracking facts recorded.
+  bool passesWithValueFacts(StringRef Name) {
+    return Query.mayMatch(
+        FunctionFeatures::compute(*M->getFunction(Name), ValueFacts));
+  }
+
+  static constexpr FeatureOptions ValueFacts{/*ValueFacts=*/true};
+
   // Every function with a match, and every variant with a match there, must
-  // pass the filter.
+  // pass the filter, with or without value-tracking facts.
   void expectSound() {
     for (const Function &F : *M) {
       if (F.isDeclaration())
         continue;
       SCOPED_TRACE(F.getName());
-      FunctionFeatures Features = FunctionFeatures::compute(F);
       Target Program(F);
       PatternMatcher Matcher(&Context);
       EXPECT_EQ(Matcher.match(Variants, Program, nullptr, nullptr, &Query),
                 Matcher.match(Variants, Program));
-      for (auto [Index, Variant] : enumerate(Variants)) {
-        if (!PatternMatcher(&Context).match(*Variant, Target(F)).empty()) {
-          EXPECT_TRUE(Query.mayMatchVariant(Index, Features));
+      for (const FeatureOptions &Options : {FeatureOptions(), ValueFacts}) {
+        FunctionFeatures Features = FunctionFeatures::compute(F, Options);
+        for (auto [Index, Variant] : enumerate(Variants)) {
+          if (!PatternMatcher(&Context).match(*Variant, Target(F)).empty()) {
+            EXPECT_TRUE(Query.mayMatchVariant(Index, Features))
+                << "variant " << Index << " pruned with value facts "
+                << Options.ValueFacts;
+          }
         }
       }
     }
@@ -81,9 +93,9 @@ TEST_F(FeaturesTest, RequiresTheInstructions) {
       ret i32 %r
     }
   )");
-  ASSERT_EQ(Query.getVariants().size(), 1u);
-  EXPECT_EQ(Query.getVariants()[0].Instructions, uint64_t(1)
-                                                     << MIRInstruction::I_udiv);
+  ASSERT_EQ(Query.size(), 1u);
+  EXPECT_EQ(Query.getRequirement(0).Instructions,
+            uint64_t(1) << MIRInstruction::I_udiv);
   EXPECT_TRUE(passes("udiv"));
   EXPECT_FALSE(passes("add"));
 }
@@ -129,7 +141,7 @@ TEST_F(FeaturesTest, AnyVariantSuffices) {
       ret i8 %r
     }
   )");
-  EXPECT_EQ(Query.getVariants().size(), 2u);
+  EXPECT_EQ(Query.size(), 2u);
   EXPECT_TRUE(matches(*M->getFunction("zext")));
   EXPECT_TRUE(matches(*M->getFunction("sext")));
   EXPECT_TRUE(passes("zext"));
@@ -290,7 +302,11 @@ TEST_F(FeaturesTest, BothBranchKindsAreBranches) {
     }
   )");
   EXPECT_TRUE(passes("unconditional"));
-  EXPECT_TRUE(passes("conditional"));
+  // A conditional branch is a br too, though its operands differ.
+  EXPECT_FALSE(matches(*M->getFunction("conditional")));
+  EXPECT_TRUE(
+      FunctionFeatures::compute(*M->getFunction("conditional")).Instructions &
+      uint64_t(1) << MIRInstruction::I_br);
 }
 
 TEST_F(FeaturesTest, RequiresNamedFlags) {
@@ -463,6 +479,364 @@ TEST_F(FeaturesTest, PhiBlocksAreNotSiblings) {
     }
   )");
   EXPECT_TRUE(passes("loop"));
+}
+
+TEST_F(FeaturesTest, RequiresNamedLiterals) {
+  parse(R"(
+    ;; treatIntAsVec(true)
+    %r = and i32 ?x, 1
+  )",
+        R"(
+    define i32 @one(i32 %x) {
+      %r = and i32 %x, 1
+      ret i32 %r
+    }
+    define <2 x i32> @splat(<2 x i32> %x) {
+      %r = and <2 x i32> %x, <i32 1, i32 poison>
+      ret <2 x i32> %r
+    }
+    define i32 @two(i32 %x) {
+      %r = and i32 %x, 2
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("splat")));
+  EXPECT_TRUE(passes("one"));
+  EXPECT_TRUE(passes("splat"));
+  EXPECT_FALSE(passes("two"));
+}
+
+// A literal matches the constants of its value, however they are read.
+TEST_F(FeaturesTest, LiteralsMatchEitherReading) {
+  parse(R"(
+    %r = add i8 ?x, -1
+  )",
+        R"(
+    define i8 @all_ones(i8 %x) {
+      %r = add i8 %x, 255
+      ret i8 %r
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("all_ones")));
+  EXPECT_TRUE(passes("all_ones"));
+}
+
+TEST_F(FeaturesTest, RequiresComparedLiterals) {
+  parse(R"(
+    %c = icmp eq i32 ?x, ?k
+    ;; (?k == 0 || ?k == 1)
+  )",
+        R"(
+    define i1 @one(i32 %x) {
+      %c = icmp eq i32 %x, 1
+      ret i1 %c
+    }
+    define i1 @five(i32 %x) {
+      %c = icmp eq i32 %x, 5
+      ret i1 %c
+    }
+    define i1 @variable(i32 %x, i32 %y) {
+      %c = icmp eq i32 %x, %y
+      ret i1 %c
+    }
+  )");
+  EXPECT_TRUE(passes("one"));
+  EXPECT_FALSE(passes("five"));
+  EXPECT_FALSE(passes("variable"));
+}
+
+TEST_F(FeaturesTest, RequiresConstantClasses) {
+  parse(R"(
+    %r = and:c i32 ?x, ?m:lowBitMask
+  )",
+        R"(
+    define i32 @mask(i32 %x) {
+      %r = and i32 %x, 7
+      ret i32 %r
+    }
+    define i32 @swapped(i32 %x) {
+      %r = and i32 7, %x
+      ret i32 %r
+    }
+    define i32 @not_mask(i32 %x) {
+      %r = and i32 %x, 6
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("mask"));
+  EXPECT_TRUE(passes("swapped"));
+  EXPECT_FALSE(passes("not_mask"));
+}
+
+// ':constantInt' is a user-defined constraint around isa.
+TEST_F(FeaturesTest, EvaluatesUserDefinedConstraints) {
+  parse(R"(
+    %r = and i32 ?x, ?m:constantInt
+  )",
+        R"(
+    define i32 @constant(i32 %x) {
+      %r = and i32 %x, 3
+      ret i32 %r
+    }
+    define i32 @variable(i32 %x, i32 %y) {
+      %r = and i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("constant"));
+  EXPECT_FALSE(passes("variable"));
+}
+
+TEST_F(FeaturesTest, RequiresOneUse) {
+  parse(R"(
+    %a = add:s i32 ?x, ?y
+    %r = mul i32 %a, ?z
+  )",
+        R"(
+    define i32 @once(i32 %x, i32 %y, i32 %z) {
+      %a = add i32 %x, %y
+      %r = mul i32 %a, %z
+      ret i32 %r
+    }
+    define i32 @twice(i32 %x, i32 %y, i32 %z) {
+      %a = add i32 %x, %y
+      %r = mul i32 %a, %z
+      %s = sub i32 %r, %a
+      ret i32 %s
+    }
+  )");
+  EXPECT_TRUE(passes("once"));
+  EXPECT_FALSE(passes("twice"));
+}
+
+// With ':o', the instruction may be its operand, whose uses count.
+TEST_F(FeaturesTest, OrSelfConstraintsApplyToTheOperand) {
+  parse(R"(
+    %d = sub i32 ?x, ?y
+    %r = add:s:o i32 %d, 1
+  )",
+        R"(
+    define i32 @self(i32 %x, i32 %y) {
+      %d = sub i32 %x, %y
+      ret i32 %d
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("self")));
+  EXPECT_TRUE(passes("self"));
+}
+
+TEST_F(FeaturesTest, RequiresValueTrackingFacts) {
+  parse(R"(
+    %d = udiv i32 ?x, ?y:knownNegative
+  )",
+        R"(
+    define i32 @constant(i32 %x) {
+      %d = udiv i32 %x, -2
+      ret i32 %d
+    }
+    define i32 @sign_bit(i32 %x, i32 %n) {
+      %y = or i32 %n, -2147483648
+      %d = udiv i32 %x, %y
+      ret i32 %d
+    }
+    define i32 @assumed(i32 %x, i32 %n) {
+      %c = icmp slt i32 %n, 0
+      call void @llvm.assume(i1 %c)
+      %d = udiv i32 %x, %n
+      ret i32 %d
+    }
+    define i32 @dominated(i32 %x, i32 %n) {
+    entry:
+      %c = icmp slt i32 %n, 0
+      br i1 %c, label %negative, label %other
+    negative:
+      %d = udiv i32 %x, %n
+      ret i32 %d
+    other:
+      ret i32 0
+    }
+    define i32 @unknown(i32 %x, i32 %n) {
+      %d = udiv i32 %x, %n
+      ret i32 %d
+    }
+    define i32 @dividend(i32 %n) {
+      %d = udiv i32 -1, %n
+      ret i32 %d
+    }
+    declare void @llvm.assume(i1)
+  )");
+  for (StringRef Name : {"constant", "sign_bit", "assumed", "dominated"}) {
+    EXPECT_TRUE(matches(*M->getFunction(Name))) << Name;
+    EXPECT_TRUE(passesWithValueFacts(Name)) << Name;
+  }
+  EXPECT_FALSE(passesWithValueFacts("unknown"));
+  EXPECT_FALSE(passesWithValueFacts("dividend"));
+  // Without the facts, value tracking is unknown.
+  EXPECT_TRUE(passes("unknown"));
+}
+
+TEST_F(FeaturesTest, RequiresKnownZeroBits) {
+  parse(R"(
+    %r = add i32 ?x, ?y
+    ;; maskedValueIsZero(?x, 3)
+  )",
+        R"(
+    define i32 @by4(i32 %v, i32 %y) {
+      %x = shl i32 %v, 2
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @by2(i32 %v, i32 %y) {
+      %x = shl i32 %v, 1
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("by4")));
+  EXPECT_TRUE(passesWithValueFacts("by4"));
+  EXPECT_FALSE(passesWithValueFacts("by2"));
+}
+
+TEST_F(FeaturesTest, RequiresKnownLeadingZeros) {
+  parse(R"(
+    %r = add i32 ?x, ?y
+    ;; maskedValueIsZero(?x, -256)
+  )",
+        R"(
+    define i32 @byte(i32 %v, i32 %y) {
+      %x = and i32 %v, 255
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @nine_bits(i32 %v, i32 %y) {
+      %x = and i32 %v, 511
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("byte")));
+  EXPECT_TRUE(passesWithValueFacts("byte"));
+  EXPECT_FALSE(passesWithValueFacts("nine_bits"));
+}
+
+TEST_F(FeaturesTest, RequiresSignedRanges) {
+  parse(R"(
+    %r = add i32 ?x, ?y
+    ;; inSignedRange(?x, -1, 1)
+  )",
+        R"(
+    define i32 @sign(i32 %v, i32 %y) {
+      %x = ashr i32 %v, 31
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @byte(i32 %v, i32 %y) {
+      %x = ashr i32 %v, 24
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("sign")));
+  EXPECT_TRUE(passesWithValueFacts("sign"));
+  EXPECT_FALSE(passesWithValueFacts("byte"));
+}
+
+// Type variables are bound from the signatures of the instructions.
+TEST_F(FeaturesTest, BindsTypeVariables) {
+  parse(R"(
+    ;; treatIntAsVec(true)
+    %r = add i?bits ?x, ?y
+    ;; sgt(?bits, 8)
+  )",
+        R"(
+    define i8 @narrow(i8 %x, i8 %y) {
+      %r = add i8 %x, %y
+      ret i8 %r
+    }
+    define i32 @wide(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define <2 x i32> @vector(<2 x i32> %x, <2 x i32> %y) {
+      %r = add <2 x i32> %x, %y
+      ret <2 x i32> %r
+    }
+  )");
+  EXPECT_FALSE(passes("narrow"));
+  EXPECT_TRUE(passes("wide"));
+  EXPECT_TRUE(matches(*M->getFunction("vector")));
+  EXPECT_TRUE(passes("vector"));
+}
+
+// The types of different instructions must agree on shared variables.
+TEST_F(FeaturesTest, JoinsSignatures) {
+  parse(R"(
+    %t = trunc i?big ?x to i?small
+    %z = zext i?small %t to i?big
+  )",
+        R"(
+    define i64 @agree(i64 %x) {
+      %t = trunc i64 %x to i32
+      %z = zext i32 %t to i64
+      ret i64 %z
+    }
+    define i128 @disagree(i64 %x) {
+      %t = trunc i64 %x to i32
+      %z = zext i32 %t to i128
+      ret i128 %z
+    }
+  )");
+  EXPECT_TRUE(passes("agree"));
+  EXPECT_FALSE(matches(*M->getFunction("disagree")));
+  EXPECT_FALSE(passes("disagree"));
+}
+
+TEST_F(FeaturesTest, JoinsWidthConstraints) {
+  parse(R"(
+    %s = ashr i?bits ?x, ?bm1
+    ;; ?bm1 == ?bits - 1
+  )",
+        R"(
+    define i32 @sign(i32 %x) {
+      %s = ashr i32 %x, 31
+      ret i32 %s
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("sign")));
+  EXPECT_TRUE(passes("sign"));
+}
+
+// A type the index does not encode binds nothing.
+TEST_F(FeaturesTest, OpaqueTypesMatchAnything) {
+  parse(R"(
+    %f = freeze ?ty ?x
+    ;; ?ty == ?ty
+  )",
+        R"(
+    define { i32, i32 } @aggregate({ i32, i32 } %x) {
+      %f = freeze { i32, i32 } %x
+      ret { i32, i32 } %f
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("aggregate")));
+  EXPECT_TRUE(passes("aggregate"));
+}
+
+// ':c' matches operands in either order, so types bind either way.
+TEST_F(FeaturesTest, BindsSwappedOperandTypes) {
+  parse(R"(
+    %r = call:c i?n @llvm.umax(i?n ?x, i?n 1)
+    ;; sgt(?n, 8)
+  )",
+        R"(
+    define i32 @umax(i32 %x) {
+      %r = call i32 @llvm.umax.i32(i32 1, i32 %x)
+      ret i32 %r
+    }
+    declare i32 @llvm.umax.i32(i32, i32)
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("umax")));
+  EXPECT_TRUE(passes("umax"));
 }
 
 TEST_F(FeaturesTest, MergedFeaturesAdmitEveryFunction) {

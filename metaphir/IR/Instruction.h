@@ -74,6 +74,7 @@ public:
   enum InstructionID {
 #define MIR_INSTRUCTION_MATCHER_ID(Name) I_##Name,
 #include "metaphir/IR/InstructionMatchers.def"
+    NumInstructionIDs,
   };
 
   using FlagMask = uint64_t;

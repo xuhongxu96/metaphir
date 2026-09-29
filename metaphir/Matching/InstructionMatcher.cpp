@@ -50,54 +50,6 @@ std::optional<APSInt> InstructionMatcher::getKeyedIntegerTarget(
   llvm_unreachable("invalid keyed operand kind");
 }
 
-SmallVector<const llvm::Value *, 4> InstructionMatcher::getTargetOperands() {
-  SmallVector<const llvm::Value *, 4> Operands;
-  switch (TargetInstruction->getOpcode()) {
-  case llvm::Instruction::CondBr: {
-    const auto &Branch = cast<CondBrInst>(Target);
-    Operands.push_back(Branch.getCondition());
-    Operands.push_back(Branch.getSuccessor(0));
-    Operands.push_back(Branch.getSuccessor(1));
-    return Operands;
-  }
-  case llvm::Instruction::UncondBr:
-    Operands.push_back(cast<UncondBrInst>(Target).getSuccessor(0));
-    return Operands;
-  case llvm::Instruction::Call: {
-    const auto &Call = cast<CallBase>(Target);
-    Operands.push_back(Call.getCalledOperand());
-    for (const llvm::Use &Argument : Call.args())
-      Operands.push_back(Argument.get());
-    return Operands;
-  }
-  case llvm::Instruction::PHI: {
-    const auto &Phi = cast<PHINode>(Target);
-    for (unsigned Index = 0; Index != Phi.getNumIncomingValues(); ++Index) {
-      Operands.push_back(Phi.getIncomingValue(Index));
-      Operands.push_back(Phi.getIncomingBlock(Index));
-    }
-    return Operands;
-  }
-  case llvm::Instruction::ExtractValue:
-  case llvm::Instruction::InsertValue: {
-    for (const llvm::Use &Operand : TargetInstruction->operands())
-      Operands.push_back(Operand.get());
-    llvm::Type *IndexType = llvm::Type::getInt64Ty(Target.getContext());
-    ArrayRef<unsigned> Indices =
-        TargetInstruction->getOpcode() == llvm::Instruction::ExtractValue
-            ? cast<ExtractValueInst>(Target).getIndices()
-            : cast<InsertValueInst>(Target).getIndices();
-    for (unsigned Index : Indices)
-      Operands.push_back(ConstantInt::get(IndexType, Index));
-    return Operands;
-  }
-  default:
-    for (const llvm::Use &Operand : TargetInstruction->operands())
-      Operands.push_back(Operand.get());
-    return Operands;
-  }
-}
-
 const llvm::Type &InstructionMatcher::getTypeOnlyOperandTarget() {
   if (Matcher.getInstructionID() == Instruction::I_alloca)
     return *cast<AllocaInst>(Target).getAllocatedType();
@@ -338,7 +290,7 @@ MatchResults InstructionMatcher::match() {
       !State.unify(*Matcher.getCapture(), TargetInstruction))
     return Results;
 
-  TargetOperands = getTargetOperands();
+  collectMatcherOperands(*TargetInstruction, TargetOperands);
 
   unsigned ArrayCount = count_if(
       PatternOperands, [](const MatcherOperand &Op) { return Op.IsArray; });

@@ -53,13 +53,25 @@ ABI-breaking checks, which catch unchecked `llvm::Error`s.
 
 `metaphir-match --matches-only` prints one tab-separated line per match (file,
 `@function`, bindings), and `-j N` then matches N files at once. Each
-function is first summarized by the instructions it contains, the operand
-edges between them and the globals it uses; a pattern variant is only matched
-where the function has all it needs. `metaphir-index build` stores these
-features for a whole corpus, and `--index` uses them to skip files and
-functions without reading them: matching files are loaded lazily, with only
-the candidate functions materialized. Files changed since indexing are
-matched in full. `--summary` prints how much was matched.
+function is first summarized by its features: the signatures of its
+instructions (kind, flags and types), the operand edges between them, the
+values they share, the globals they use, and facts about the values at each
+instruction kind's operands, such as small constants, constant classes, use
+counts and, when indexing, value-tracking facts. A pattern variant is only
+matched where the function can have a match: its instructions must be there,
+their types must agree on the pattern's type variables, and no constraint may
+be false on the facts.
+
+Constraints are checked with the same evaluator as on the IR
+(`metaphir/Matching/ConstraintEvaluator.h`), in a domain where anything the
+index cannot tell is unknown; each operator's IR, recording and index
+semantics sit together in `metaphir/Matching/Operators/`.
+
+`metaphir-index build` stores the features of a whole corpus
+(`--no-value-facts` skips value tracking, for a faster build), and `--index`
+uses them to skip files and functions without reading them: matching files are
+loaded lazily, with only the candidate functions materialized. Files changed
+since indexing are matched in full. `--summary` prints how much was matched.
 
 ```sh
 metaphir-index build -j 32 corpus -o corpus.mpidx

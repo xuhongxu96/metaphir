@@ -40,8 +40,6 @@ private:
   bool matchIntegerKeyedOperand(const MatcherOperand &Matcher,
                                 const APSInt &Target);
 
-  SmallVector<const llvm::Value *, 4> getTargetOperands();
-
   MatchResults matchValueOperand(const MatcherOperand &Operand,
                                  const llvm::Value &Target,
                                  Instantiation State);

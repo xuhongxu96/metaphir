@@ -12,6 +12,7 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/VCSRevision.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/xxhash.h"
 #include <algorithm>
@@ -21,7 +22,7 @@ namespace llvm {
 namespace metaphir {
 
 static constexpr StringLiteral Magic = "MPIRIDX";
-static constexpr uint32_t FormatVersion = 4;
+static constexpr uint32_t FormatVersion = 6;
 
 bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
                         raw_ostream &Err) {
@@ -63,14 +64,26 @@ bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
   return true;
 }
 
-/// The instruction matcher names, in ID order: features are only meaningful
-/// for the matchers they were computed with.
-static SmallVector<StringRef, 64> getSchema() {
-  SmallVector<StringRef, 64> Names;
+/// What the recorded features mean: the instruction matcher names in ID
+/// order, the fact and measure vocabulary, the type encoding, and the LLVM
+/// revision, whose value tracking the facts come from.
+static SmallVector<std::string, 96> getSchema() {
+  SmallVector<std::string, 96> Schema;
 #define MIR_INSTRUCTION_MATCHER_ID(Name)                                       \
-  Names.push_back(Instruction::getOpcodeName(Instruction::I_##Name));
+  Schema.push_back(Instruction::getOpcodeName(Instruction::I_##Name).str());
 #include "metaphir/IR/InstructionMatchers.def"
-  return Names;
+  for (unsigned P = 0; P != Atom::NumPredicates; ++P)
+    Schema.push_back(("atom:" + Atom::getName(Atom::Predicate(P))).str());
+#define MIR_LLVM_VALUE_CLASS(Class) Schema.push_back("class:" #Class);
+#include "metaphir/Matching/LLVMValueClasses.def"
+  for (unsigned M = 0; M != unsigned(Measure::NumMeasures); ++M)
+    Schema.push_back(("measure:" + getMeasureName(Measure(M))).str());
+  Schema.push_back(
+      ("literals:" + Twine(Atom::MinLiteral) + ".." + Twine(Atom::MaxLiteral))
+          .str());
+  Schema.push_back("types:1");
+  Schema.push_back("llvm:" LLVM_REVISION);
+  return Schema;
 }
 
 /// Path made absolute and without dots.
@@ -105,22 +118,26 @@ std::optional<FileStamp> FileStamp::of(StringRef Path) {
 
 uint64_t IndexedFunction::hashName(StringRef Name) { return xxh3_64bits(Name); }
 
-IndexedModule IndexedModule::compute(StringRef Path, const Module &Module) {
+IndexedModule IndexedModule::compute(StringRef Path, const Module &Module,
+                                     const FeatureOptions &Options) {
   IndexedModule Indexed;
   Indexed.Path = Path.str();
   Indexed.Parsed = true;
+  // Merging ands whether each function has value facts.
+  Indexed.Summary.HasValueFacts = Options.ValueFacts;
   for (const Function &F : Module) {
     if (F.isDeclaration())
       continue;
     IndexedFunction Function{IndexedFunction::hashName(F.getName()),
-                             FunctionFeatures::compute(F)};
+                             FunctionFeatures::compute(F, Options)};
     Indexed.Summary.merge(Function.Features);
     Indexed.Functions.push_back(std::move(Function));
   }
   return Indexed;
 }
 
-Expected<IndexedModule> CorpusIndex::indexFile(StringRef Root, StringRef Path) {
+Expected<IndexedModule> CorpusIndex::indexFile(StringRef Root, StringRef Path,
+                                               const FeatureOptions &Options) {
   SmallString<256> FullPath(Root);
   sys::path::append(FullPath, Path);
   sys::fs::file_status Status;
@@ -132,20 +149,23 @@ Expected<IndexedModule> CorpusIndex::indexFile(StringRef Root, StringRef Path) {
   std::unique_ptr<Module> M = parseIRFile(FullPath, Diag, Context);
   IndexedModule Indexed;
   if (M)
-    Indexed = IndexedModule::compute(Path, *M);
+    Indexed = IndexedModule::compute(Path, *M, Options);
   else
     Indexed.Path = Path.str();
   Indexed.Stamp = stampOf(Status);
   return Indexed;
 }
 
-// Encoding. Numbers are ULEB128 unless noted. A feature set is its
-// instruction mask; its shapes (a count, then for each the difference of its
-// instruction matcher from the one before, and its flags and width); its edge
-// and sibling keys (each a count, then each key as the difference from the
-// one before); and its globals: a module summary lists their hashes (8 bytes
-// each), and a function the positions of its own in its module's list (a
-// count, then differences).
+// Encoding. Numbers are ULEB128 unless noted. A feature set is its coarse
+// features, which every query reads, then its fine ones, behind their size.
+// The coarse ones are its instruction mask; its edge and sibling keys (each a
+// count, then each key as the difference from the one before); and its
+// globals: a module summary lists their hashes (8 bytes each), and a function
+// the positions of its own in its module's list (a count, then differences).
+// The fine ones are its signatures (a count, then for each the difference of
+// its instruction matcher from the one before, its flags, and its result and
+// operand type codes); its fact and measure keys (like the edge keys); and
+// whether it has value facts (a byte).
 
 static void writeString(raw_ostream &OS, StringRef String) {
   encodeULEB128(String.size(), OS);
@@ -162,40 +182,51 @@ static void writeSortedKeys(raw_ostream &OS, ArrayRef<T> Keys) {
   }
 }
 
-static void writeShapes(raw_ostream &OS, ArrayRef<uint32_t> Shapes) {
-  encodeULEB128(Shapes.size(), OS);
+static void writeSignatures(raw_ostream &OS, ArrayRef<Signature> Signatures) {
+  encodeULEB128(Signatures.size(), OS);
   unsigned PreviousID = 0;
-  for (uint32_t Shape : Shapes) {
-    unsigned ID = FunctionFeatures::getShapeID(Shape);
-    encodeULEB128(ID - PreviousID, OS);
-    encodeULEB128(Shape - FunctionFeatures::getShapeKey(
-                              Instruction::InstructionID(ID), 0, 0),
-                  OS);
-    PreviousID = ID;
+  for (const Signature &Sig : Signatures) {
+    encodeULEB128(Sig.ID - PreviousID, OS);
+    encodeULEB128(Sig.Flags, OS);
+    encodeULEB128(Sig.Result, OS);
+    for (TypeCode Operand : Sig.Operands)
+      encodeULEB128(Operand, OS);
+    PreviousID = Sig.ID;
   }
 }
 
-static void writeInstructionsAndEdges(raw_ostream &OS,
-                                      const FunctionFeatures &Features) {
+static void writeCoarse(raw_ostream &OS, const FunctionFeatures &Features) {
   encodeULEB128(Features.Instructions, OS);
-  writeShapes(OS, Features.Shapes);
   writeSortedKeys<uint16_t>(OS, Features.Edges);
   writeSortedKeys<uint16_t>(OS, Features.Siblings);
 }
 
+/// Writes the fine features behind their size, so readers can skip them.
+static void writeFine(raw_ostream &OS, const FunctionFeatures &Features) {
+  std::string Fine;
+  raw_string_ostream FineOS(Fine);
+  writeSignatures(FineOS, Features.Signatures);
+  writeSortedKeys<uint32_t>(FineOS, Features.Facts);
+  writeSortedKeys<uint32_t>(FineOS, Features.Measures);
+  FineOS << char(Features.HasValueFacts);
+  encodeULEB128(Fine.size(), OS);
+  OS << Fine;
+}
+
 static void writeSummary(raw_ostream &OS, const FunctionFeatures &Summary) {
-  writeInstructionsAndEdges(OS, Summary);
+  writeCoarse(OS, Summary);
   encodeULEB128(Summary.Globals.size(), OS);
   support::endian::Writer W(OS, llvm::endianness::little);
   for (uint64_t Global : Summary.Globals)
     W.write<uint64_t>(Global);
+  writeFine(OS, Summary);
 }
 
 static void writeFunction(raw_ostream &OS, const IndexedFunction &Function,
                           ArrayRef<uint64_t> ModuleGlobals) {
   support::endian::Writer(OS, llvm::endianness::little)
       .write<uint64_t>(Function.NameHash);
-  writeInstructionsAndEdges(OS, Function.Features);
+  writeCoarse(OS, Function.Features);
   encodeULEB128(Function.Features.Globals.size(), OS);
   uint64_t Previous = 0;
   for (uint64_t Global : Function.Features.Globals) {
@@ -207,6 +238,7 @@ static void writeFunction(raw_ostream &OS, const IndexedFunction &Function,
     encodeULEB128(Position - Previous, OS);
     Previous = Position;
   }
+  writeFine(OS, Function.Features);
 }
 
 Error CorpusIndex::write(StringRef File, StringRef Root,
@@ -232,9 +264,9 @@ Error CorpusIndex::write(StringRef File, StringRef Root,
     support::endian::Writer(OS, llvm::endianness::little)
         .write<uint32_t>(FormatVersion);
     writeString(OS, LLVM_VERSION_STRING);
-    SmallVector<StringRef, 64> Schema = getSchema();
+    SmallVector<std::string, 96> Schema = getSchema();
     encodeULEB128(Schema.size(), OS);
-    for (StringRef Name : Schema)
+    for (const std::string &Name : Schema)
       writeString(OS, Name);
     writeString(OS, canonicalPath(Root));
     encodeULEB128(Modules.size(), OS);
@@ -267,32 +299,57 @@ static bool readSortedKeys(DataExtractor &Data, DataExtractor::Cursor &C,
   return true;
 }
 
-/// Reads what writeShapes wrote. Returns false if a shape is not valid.
-static bool readShapes(DataExtractor &Data, DataExtractor::Cursor &C,
-                       SmallVectorImpl<uint32_t> &Shapes) {
-  uint64_t NumShapes = Data.getULEB128(C);
+/// Reads what writeSignatures wrote. Returns false if a signature is not
+/// valid.
+static bool readSignatures(DataExtractor &Data, DataExtractor::Cursor &C,
+                           SmallVectorImpl<Signature> &Signatures) {
+  uint64_t NumSignatures = Data.getULEB128(C);
   uint64_t ID = 0;
-  for (uint64_t I = 0; I != NumShapes && C; ++I) {
+  for (uint64_t I = 0; I != NumSignatures && C; ++I) {
     ID += Data.getULEB128(C);
-    uint64_t FlagsAndWidth = Data.getULEB128(C);
-    if (ID >= 64 || FlagsAndWidth >= (uint64_t(1) << 26))
+    if (ID >= Instruction::NumInstructionIDs)
       return false;
-    Shapes.push_back(
-        FunctionFeatures::getShapeKey(Instruction::InstructionID(ID), 0, 0) +
-        FlagsAndWidth);
+    Signature Sig;
+    Sig.ID = Instruction::InstructionID(ID);
+    uint64_t Flags = Data.getULEB128(C);
+    if (Flags > UINT32_MAX)
+      return false;
+    Sig.Flags = Flags;
+    Sig.Result = Data.getULEB128(C);
+    for (TypeCode &Operand : Sig.Operands)
+      Operand = Data.getULEB128(C);
+    Signatures.push_back(Sig);
   }
   return true;
 }
 
-/// Reads what writeInstructionsAndEdges wrote. Returns false if the keys are
-/// not valid.
-static bool readInstructionsAndEdges(DataExtractor &Data,
-                                     DataExtractor::Cursor &C,
-                                     FunctionFeatures &Features) {
+/// Reads what writeCoarse wrote. Returns false if the keys are not valid.
+static bool readCoarse(DataExtractor &Data, DataExtractor::Cursor &C,
+                       FunctionFeatures &Features) {
   Features.Instructions = Data.getULEB128(C);
-  return readShapes(Data, C, Features.Shapes) &&
-         readSortedKeys(Data, C, Features.Edges) &&
+  return readSortedKeys(Data, C, Features.Edges) &&
          readSortedKeys(Data, C, Features.Siblings);
+}
+
+/// Reads what writeFine wrote if NeedsFine, given the coarse features, asks
+/// for it; otherwise skips it. Returns false if the features are not valid.
+static bool readFine(DataExtractor &Data, DataExtractor::Cursor &C,
+                     FunctionFeatures &Features,
+                     function_ref<bool(const FunctionFeatures &)> NeedsFine) {
+  uint64_t Size = Data.getULEB128(C);
+  uint64_t End = C.tell() + Size;
+  Features.Fine = false;
+  if (NeedsFine && !NeedsFine(Features)) {
+    Data.skip(C, Size);
+    return true;
+  }
+  Features.Fine = true;
+  if (!readSignatures(Data, C, Features.Signatures) ||
+      !readSortedKeys(Data, C, Features.Facts) ||
+      !readSortedKeys(Data, C, Features.Measures))
+    return false;
+  Features.HasValueFacts = Data.getU8(C);
+  return !C || C.tell() == End;
 }
 
 static Error malformed(StringRef File, const Twine &Message) {
@@ -330,7 +387,7 @@ Expected<CorpusIndex> CorpusIndex::read(StringRef File) {
       C && Version != LLVM_VERSION_STRING)
     return malformed(File, "index built with LLVM " + Version +
                                ", expected " LLVM_VERSION_STRING);
-  SmallVector<StringRef, 64> Schema = getSchema();
+  SmallVector<std::string, 96> Schema = getSchema();
   uint64_t NumNames = Data.getULEB128(C);
   bool SameSchema = C && NumNames == Schema.size();
   for (uint64_t I = 0; I != NumNames && C; ++I)
@@ -381,24 +438,28 @@ const IndexEntry *CorpusIndex::lookup(StringRef Path) const {
   return Find(canonicalPath(Path));
 }
 
-Expected<FunctionFeatures>
-CorpusIndex::readSummary(const IndexEntry &Entry) const {
+Expected<FunctionFeatures> CorpusIndex::readSummary(
+    const IndexEntry &Entry,
+    function_ref<bool(const FunctionFeatures &)> NeedsFine) const {
   DataExtractor Data(Buffer->getBuffer().slice(0, FunctionsStart),
                      /*IsLittleEndian=*/true);
   DataExtractor::Cursor C(SummariesStart + Entry.SummaryOffset);
   FunctionFeatures Summary;
-  bool Valid = readInstructionsAndEdges(Data, C, Summary);
+  bool Valid = readCoarse(Data, C, Summary);
   uint64_t NumGlobals = Data.getULEB128(C);
   for (uint64_t I = 0; I != NumGlobals && C; ++I)
     Summary.Globals.push_back(Data.getU64(C));
+  Valid = Valid && readFine(Data, C, Summary, NeedsFine);
   if (!C || !Valid)
     return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   return Summary;
 }
 
-Expected<std::vector<IndexedFunction>>
-CorpusIndex::readFunctions(const IndexEntry &Entry) const {
-  Expected<FunctionFeatures> Summary = readSummary(Entry);
+Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
+    const IndexEntry &Entry,
+    function_ref<bool(const FunctionFeatures &)> NeedsFine) const {
+  Expected<FunctionFeatures> Summary =
+      readSummary(Entry, [](const FunctionFeatures &) { return false; });
   if (!Summary)
     return Summary.takeError();
   DataExtractor Data(Buffer->getBuffer(), /*IsLittleEndian=*/true);
@@ -407,7 +468,7 @@ CorpusIndex::readFunctions(const IndexEntry &Entry) const {
   bool Valid = true;
   for (IndexedFunction &Function : Functions) {
     Function.NameHash = Data.getU64(C);
-    Valid &= readInstructionsAndEdges(Data, C, Function.Features);
+    Valid &= readCoarse(Data, C, Function.Features);
     uint64_t NumGlobals = Data.getULEB128(C);
     uint64_t Position = 0;
     for (uint64_t I = 0; I != NumGlobals && C && Valid; ++I) {
@@ -416,6 +477,7 @@ CorpusIndex::readFunctions(const IndexEntry &Entry) const {
       if (Valid)
         Function.Features.Globals.push_back(Summary->Globals[Position]);
     }
+    Valid = Valid && readFine(Data, C, Function.Features, NeedsFine);
     if (!C || !Valid)
       return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   }
