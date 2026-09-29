@@ -10,6 +10,7 @@
 #include <variant>
 
 namespace llvm {
+class ModuleSlotTracker;
 class raw_ostream;
 class Type;
 class Value;
@@ -74,6 +75,11 @@ public:
 
   void requireComplete(const Pattern &Pattern) const;
 
+  /// Prints the named meta variables' bindings, sorted by name. Slots, when
+  /// given, numbers the unnamed values; it must have incorporated their
+  /// function. Without it, each unnamed value numbers its whole function.
+  void print(raw_ostream &OS, ModuleSlotTracker *Slots = nullptr) const;
+
   /// Whether both bind the same matchers to the same targets.
   bool operator==(const Instantiation &Other) const;
   bool operator!=(const Instantiation &Other) const {
@@ -82,9 +88,6 @@ public:
 
 private:
   DenseMap<const metaphir::Value *, Binding> Bindings;
-
-  friend raw_ostream &operator<<(raw_ostream &OS,
-                                 const Instantiation &Instantiation);
 };
 
 using MatchResults = SmallVector<Instantiation, 4>;

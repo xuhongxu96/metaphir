@@ -4,6 +4,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <type_traits>
@@ -40,15 +41,21 @@ void appendUnique(MatchResults &Into, MatchResults &&From) {
       Into.push_back(std::move(Candidate));
 }
 
-raw_ostream &operator<<(raw_ostream &OS,
-                        const Instantiation::Binding &Binding) {
+static void printBinding(raw_ostream &OS, const Instantiation::Binding &Binding,
+                         ModuleSlotTracker *Slots) {
+  auto PrintValue = [&](const llvm::Value &Value) {
+    if (Slots)
+      Value.printAsOperand(OS, false, *Slots);
+    else
+      Value.printAsOperand(OS, false);
+  };
   std::visit(
-      [&OS](const auto &Value) {
+      [&](const auto &Value) {
         using T = std::decay_t<decltype(Value)>;
         if constexpr (std::is_same_v<T, std::monostate>) {
           llvm_unreachable("cannot print an empty instantiation binding");
         } else if constexpr (std::is_same_v<T, const llvm::Value *>) {
-          Value->printAsOperand(OS, false);
+          PrintValue(*Value);
         } else if constexpr (std::is_same_v<T, const llvm::Type *>) {
           Value->print(OS, false, true);
         } else if constexpr (std::is_same_v<T, CmpInst::Predicate>) {
@@ -69,34 +76,45 @@ raw_ostream &operator<<(raw_ostream &OS,
             else if (Value[Index]->hasName())
               OS << '%' << Value[Index]->getName();
             else
-              Value[Index]->printAsOperand(OS, false);
+              PrintValue(*Value[Index]);
           }
           OS << ']';
         }
       },
       Binding.Data);
+}
+
+raw_ostream &operator<<(raw_ostream &OS,
+                        const Instantiation::Binding &Binding) {
+  printBinding(OS, Binding, nullptr);
   return OS;
 }
 
-raw_ostream &operator<<(raw_ostream &OS, const Instantiation &Instantiation) {
-  SmallVector<std::pair<StringRef, const Instantiation::Binding *>, 8> Bindings;
+void Instantiation::print(raw_ostream &OS, ModuleSlotTracker *Slots) const {
+  SmallVector<std::pair<StringRef, const Binding *>, 8> Named;
   StringSet<> SeenNames;
-  for (const auto &[Matcher, Binding] : Instantiation.Bindings)
+  for (const auto &[Matcher, Binding] : Bindings)
     if (const auto *Variable = dyn_cast<MetaVariable>(Matcher))
       if (!Variable->getName().empty() && !Variable->getName().starts_with("_"))
         if (SeenNames.insert(Variable->getName()).second)
-          Bindings.emplace_back(Variable->getName(), &Binding);
-  llvm::sort(Bindings, [](const auto &Left, const auto &Right) {
+          Named.emplace_back(Variable->getName(), &Binding);
+  llvm::sort(Named, [](const auto &Left, const auto &Right) {
     return Left.first < Right.first;
   });
 
   OS << '{';
-  for (unsigned Index = 0; Index != Bindings.size(); ++Index) {
+  for (unsigned Index = 0; Index != Named.size(); ++Index) {
     if (Index)
       OS << ", ";
-    OS << '?' << Bindings[Index].first << " = " << *Bindings[Index].second;
+    OS << '?' << Named[Index].first << " = ";
+    printBinding(OS, *Named[Index].second, Slots);
   }
-  return OS << '}';
+  OS << '}';
+}
+
+raw_ostream &operator<<(raw_ostream &OS, const Instantiation &Instantiation) {
+  Instantiation.print(OS);
+  return OS;
 }
 
 } // namespace metaphir

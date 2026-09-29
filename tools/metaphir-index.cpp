@@ -110,7 +110,17 @@ static void printFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
   for (unsigned ID = 0; ID != 64; ++ID)
     if (Features.Instructions >> ID & 1)
       OS << ' ' << Instruction::getOpcodeName(Instruction::InstructionID(ID));
+  OS << ';';
+  for (uint16_t Edge : Features.Edges)
+    OS << ' '
+       << Instruction::getOpcodeName(Instruction::InstructionID(Edge / 64))
+       << '-'
+       << Instruction::getOpcodeName(Instruction::InstructionID(Edge % 64));
   OS << "; " << Features.Globals.size() << " globals\n";
+}
+
+static void logError(Error E, StringRef ToolName) {
+  logAllUnhandledErrors(std::move(E), errs(), Twine(ToolName) + ": error: ");
 }
 
 static int dump(StringRef ToolName) {
@@ -121,23 +131,27 @@ static int dump(StringRef ToolName) {
     return 1;
   }
   for (size_t I = 0; I != Index->size(); ++I) {
-    const IndexedModule &Module = Index->getModule(I);
-    outs() << "module " << Module.Path;
-    if (!Module.Parsed) {
+    const IndexEntry &Entry = Index->getEntry(I);
+    outs() << "module " << Entry.Path;
+    if (!Entry.Parsed) {
       outs() << ": does not parse\n";
       continue;
     }
-    outs() << ':';
-    printFeatures(outs(), Module.Summary);
-    Expected<std::vector<IndexedFunction>> Functions =
-        Index->readFunctions(Module);
-    if (!Functions) {
-      logAllUnhandledErrors(Functions.takeError(), errs(),
-                            Twine(ToolName) + ": error: ");
+    Expected<FunctionFeatures> Summary = Index->readSummary(Entry);
+    if (!Summary) {
+      logError(Summary.takeError(), ToolName);
       return 1;
     }
-    for (const IndexedFunction &Function : *Functions) {
-      outs() << "  " << Function.Ordinal << " @" << Function.Name << ':';
+    outs() << ':';
+    printFeatures(outs(), *Summary);
+    Expected<std::vector<IndexedFunction>> Functions =
+        Index->readFunctions(Entry);
+    if (!Functions) {
+      logError(Functions.takeError(), ToolName);
+      return 1;
+    }
+    for (auto [Ordinal, Function] : enumerate(*Functions)) {
+      outs() << "  " << Ordinal << ':';
       printFeatures(outs(), Function.Features);
     }
   }
@@ -176,22 +190,23 @@ static int stats(StringRef ToolName) {
   uint64_t Modules = 0, Bytes = 0, Functions = 0;
   uint64_t MatchedModules = 0, MatchedBytes = 0, MatchedFunctions = 0;
   for (size_t I = 0; I != Index->size(); ++I) {
-    const IndexedModule &Module = Index->getModule(I);
+    const IndexEntry &Entry = Index->getEntry(I);
+    ++Modules;
+    Bytes += Entry.Stamp.Size;
+    Functions += Entry.NumFunctions;
+    Expected<FunctionFeatures> Summary = Index->readSummary(Entry);
     Expected<std::vector<IndexedFunction>> ModuleFunctions =
-        Index->readFunctions(Module);
-    if (!ModuleFunctions) {
-      logAllUnhandledErrors(ModuleFunctions.takeError(), errs(),
-                            Twine(ToolName) + ": error: ");
+        Index->readFunctions(Entry);
+    if (!Summary || !ModuleFunctions) {
+      logError(joinErrors(Summary.takeError(), ModuleFunctions.takeError()),
+               ToolName);
       return 1;
     }
-    ++Modules;
-    Bytes += Module.Size;
-    Functions += ModuleFunctions->size();
     // A module that does not parse is matched, to report the error.
-    if (Module.Parsed && !Query.mayMatch(Module.Summary))
+    if (Entry.Parsed && !Query.mayMatch(*Summary))
       continue;
     ++MatchedModules;
-    MatchedBytes += Module.Size;
+    MatchedBytes += Entry.Stamp.Size;
     MatchedFunctions +=
         count_if(*ModuleFunctions, [&](const IndexedFunction &Function) {
           return Query.mayMatch(Function.Features);

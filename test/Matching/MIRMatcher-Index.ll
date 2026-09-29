@@ -76,14 +76,14 @@ define i32 @extra(i32 %x) {
 
 ; BUILD: indexed 3 files
 
-; DUMP:      module adds.bc: add mul ret; 0 globals
-; DUMP-NEXT:   0 @add_mul: add mul ret; 0 globals
-; DUMP-NEXT:   1 @add_only: add ret; 0 globals
-; DUMP-NEXT: module mixed.bc: add sub mul ret; 0 globals
-; DUMP-NEXT:   0 @apart: add sub mul ret; 0 globals
-; DUMP-NEXT:   1 @second: add mul ret; 0 globals
-; DUMP-NEXT: module subs.bc: sub ret; 0 globals
-; DUMP-NEXT:   0 @sub_only: sub ret; 0 globals
+; DUMP:      module adds.bc: add mul ret; mul-add ret-add ret-mul; 0 globals
+; DUMP-NEXT:   0: add mul ret; mul-add ret-mul; 0 globals
+; DUMP-NEXT:   1: add ret; ret-add; 0 globals
+; DUMP-NEXT: module mixed.bc: add sub mul ret; sub-add sub-mul mul-add ret-sub ret-mul; 0 globals
+; DUMP-NEXT:   0: add sub mul ret; sub-add sub-mul ret-sub; 0 globals
+; DUMP-NEXT:   1: add mul ret; mul-add ret-mul; 0 globals
+; DUMP-NEXT: module subs.bc: sub ret; ret-sub; 0 globals
+; DUMP-NEXT:   0: sub ret; ret-sub; 0 globals
 
 ; MATCH:      {{.*}}adds.bc	@add_mul	{?anch = %a, ?x = %x, ?y = %y, ?z = %y}
 ; MATCH-NEXT: {{.*}}mixed.bc	@second	{?anch = %a, ?x = %y, ?y = %x, ?z = %a}

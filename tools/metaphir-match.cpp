@@ -7,7 +7,9 @@
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Error.h"
@@ -21,6 +23,7 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <thread>
@@ -95,6 +98,12 @@ struct MatchStats {
   }
 };
 
+/// A function to match, and its features when the index has them.
+struct Candidate {
+  Function *F;
+  std::optional<FunctionFeatures> Features;
+};
+
 /// What matching one file printed, to be shown in the order of the files.
 struct FileOutput {
   std::string Out;
@@ -136,7 +145,7 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
 static Expected<std::unique_ptr<Module>>
 loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
               StringRef File, StringRef ToolName, LLVMContext &Context,
-              SmallVectorImpl<Function *> &Functions, raw_ostream &Err,
+              SmallVectorImpl<Candidate> &Functions, raw_ostream &Err,
               MatchStats &Stats) {
   auto LoadAll = [&]() -> Expected<std::unique_ptr<Module>> {
     SMDiagnostic Diag;
@@ -150,15 +159,15 @@ loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
     ++Stats.ReadFiles;
     for (Function &F : *M)
       if (!F.isDeclaration())
-        Functions.push_back(&F);
+        Functions.push_back({&F, std::nullopt});
     Stats.Functions += Functions.size();
     return M;
   };
 
   if (!Index)
     return LoadAll();
-  const IndexedModule *Entry = Index->lookup(File);
-  if (!Entry || !CorpusIndex::isCurrent(*Entry, File)) {
+  const IndexEntry *Entry = Index->lookup(File);
+  if (!Entry || FileStamp::of(File) != Entry->Stamp) {
     Err << ToolName << ": warning: " << File << ": "
         << (Entry ? "changed since indexed" : "not indexed")
         << "; matching it in full\n";
@@ -167,26 +176,49 @@ loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
   // A file that does not parse is read, to report why.
   if (!Entry->Parsed)
     return LoadAll();
-  Stats.Functions += Index->getNumFunctions(*Entry);
-  if (!Pattern.Query.mayMatch(Entry->Summary))
+  Stats.Functions += Entry->NumFunctions;
+  Expected<FunctionFeatures> Summary = Index->readSummary(*Entry);
+  if (!Summary)
+    return Summary.takeError();
+  if (!Pattern.Query.mayMatch(*Summary))
     return nullptr;
   Expected<std::vector<IndexedFunction>> Indexed = Index->readFunctions(*Entry);
   if (!Indexed)
     return Indexed.takeError();
-  SmallVector<const IndexedFunction *, 8> Candidates;
-  for (const IndexedFunction &Function : *Indexed)
+  // The ordinals, among the module's defined functions, of those to match.
+  SmallVector<size_t, 8> Candidates;
+  for (auto [Ordinal, Function] : enumerate(*Indexed))
     if (Pattern.Query.mayMatch(Function.Features))
-      Candidates.push_back(&Function);
+      Candidates.push_back(Ordinal);
   if (Candidates.empty())
     return nullptr;
 
-  SMDiagnostic Diag;
-  std::unique_ptr<Module> M = getLazyIRFileModule(File, Diag, Context);
-  if (!M) {
-    std::string Message;
-    raw_string_ostream OS(Message);
-    Diag.print(ToolName.data(), OS);
-    return createStringError(inconvertibleErrorCode(), Message);
+  std::unique_ptr<Module> M;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer =
+      MemoryBuffer::getFile(File, /*IsText=*/false,
+                            /*RequiresNullTerminator=*/false);
+  if (!Buffer)
+    return createFileError(File, Buffer.getError());
+  if (isBitcode(
+          reinterpret_cast<const unsigned char *>((*Buffer)->getBufferStart()),
+          reinterpret_cast<const unsigned char *>((*Buffer)->getBufferEnd()))) {
+    // Loaded as for importing, module metadata (mostly debug information) is
+    // read only as the materialized functions refer to it.
+    Expected<std::unique_ptr<Module>> Lazy = getOwningLazyBitcodeModule(
+        std::move(*Buffer), Context, /*ShouldLazyLoadMetadata=*/true,
+        /*IsImporting=*/true);
+    if (!Lazy)
+      return Lazy.takeError();
+    M = std::move(*Lazy);
+  } else {
+    SMDiagnostic Diag;
+    M = parseIR((*Buffer)->getMemBufferRef(), Diag, Context);
+    if (!M) {
+      std::string Message;
+      raw_string_ostream OS(Message);
+      Diag.print(ToolName.data(), OS);
+      return createStringError(inconvertibleErrorCode(), Message);
+    }
   }
   ++Stats.ReadFiles;
   // Before a function is materialized, it is defined but empty.
@@ -194,22 +226,24 @@ loadFunctions(const LoadedPattern &Pattern, const CorpusIndex *Index,
   for (Function &F : *M)
     if (!F.isDeclaration())
       Defined.push_back(&F);
-  for (const IndexedFunction *Candidate : Candidates) {
-    if (Candidate->Ordinal >= Defined.size() ||
-        Defined[Candidate->Ordinal]->getName() != Candidate->Name) {
-      // The file is not what was indexed after all.
-      Err << ToolName << ": warning: " << File
-          << ": differs from its index entry; matching it in full\n";
-      Stats.Functions -= Index->getNumFunctions(*Entry);
-      --Stats.ReadFiles;
-      Functions.clear();
-      M.reset();
-      return LoadAll();
-    }
-    Functions.push_back(Defined[Candidate->Ordinal]);
+  if (Defined.size() != Indexed->size() ||
+      any_of(Candidates, [&](size_t Ordinal) {
+        return IndexedFunction::hashName(Defined[Ordinal]->getName()) !=
+               (*Indexed)[Ordinal].NameHash;
+      })) {
+    // The file is not what was indexed after all.
+    Err << ToolName << ": warning: " << File
+        << ": differs from its index entry; matching it in full\n";
+    Stats.Functions -= Entry->NumFunctions;
+    --Stats.ReadFiles;
+    M.reset();
+    return LoadAll();
   }
-  for (Function *F : Functions)
-    if (Error E = F->materialize())
+  for (size_t Ordinal : Candidates)
+    Functions.push_back(
+        {Defined[Ordinal], std::move((*Indexed)[Ordinal].Features)});
+  for (Candidate &Function : Functions)
+    if (Error E = Function.F->materialize())
       return E;
   return M;
 }
@@ -222,7 +256,7 @@ static void matchFile(LoadedPattern &Pattern, const CorpusIndex *Index,
                       unsigned &TargetIndex) {
   ++Stats.Files;
   LLVMContext IRContext;
-  SmallVector<Function *, 64> Functions;
+  SmallVector<Candidate, 64> Functions;
   Expected<std::unique_ptr<Module>> M = loadFunctions(
       Pattern, Index, File, ToolName, IRContext, Functions, Err, Stats);
   if (!M) {
@@ -254,17 +288,31 @@ static void matchFile(LoadedPattern &Pattern, const CorpusIndex *Index,
       if (Error E = (**M).materializeAll())
         report_fatal_error(Twine(File) + ": " + toString(std::move(E)));
     });
-  for (const Function *F : Functions) {
+  // Numbers the unnamed values of the function whose matches are printed; one
+  // per module, as numbering the module's globals is costly.
+  std::optional<ModuleSlotTracker> Slots;
+  auto PrintMatch = [&](const Function &F, const Instantiation &Match) {
+    if (!Slots)
+      Slots.emplace(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
+    if (Slots->getCurrentFunction() != &F)
+      Slots->incorporateFunction(F);
+    Match.print(Out, &*Slots);
+  };
+  for (const Candidate &Function : Functions) {
+    const llvm::Function *F = Function.F;
     ++Stats.MatchedFunctions;
-    Target Program(*F);
+    Target Program(*F, Function.Features ? &*Function.Features : nullptr);
     bool HadStructuralMatch = false;
     SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
     MatchResults Matches =
         Matcher.match(*Pattern.Variants, Program, &Unsatisfied,
                       &HadStructuralMatch, Pattern.getFilter());
     if (MatchesOnly) {
-      for (const Instantiation &Match : Matches)
-        Out << File << "\t@" << F->getName() << '\t' << Match << '\n';
+      for (const Instantiation &Match : Matches) {
+        Out << File << "\t@" << F->getName() << '\t';
+        PrintMatch(*F, Match);
+        Out << '\n';
+      }
       continue;
     }
     Out << "target " << TargetIndex++ << ": @" << F->getName() << '\n';
@@ -279,8 +327,11 @@ static void matchFile(LoadedPattern &Pattern, const CorpusIndex *Index,
         }
       continue;
     }
-    for (auto [Index, Match] : enumerate(Matches))
-      Out << "  match " << Index << ":\n    " << Match << '\n';
+    for (auto [Index, Match] : enumerate(Matches)) {
+      Out << "  match " << Index << ":\n    ";
+      PrintMatch(*F, Match);
+      Out << '\n';
+    }
   }
 }
 
@@ -294,6 +345,17 @@ static MatchStats matchInParallel(ArrayRef<std::string> Files,
   std::mutex Mutex;
   std::condition_variable FileDone;
   std::atomic<size_t> NextFile{0};
+  // The largest files go first, so that none is left for the end, alone.
+  std::vector<size_t> Order(Files.size());
+  std::iota(Order.begin(), Order.end(), 0);
+  if (Index) {
+    std::vector<uint64_t> Sizes(Files.size());
+    for (size_t I = 0; I != Files.size(); ++I)
+      if (const IndexEntry *Entry = Index->lookup(Files[I]))
+        Sizes[I] = Entry->Stamp.Size;
+    llvm::stable_sort(Order,
+                      [&](size_t L, size_t R) { return Sizes[L] > Sizes[R]; });
+  }
 
   auto Work = [&] {
     std::string PatternErrors;
@@ -302,7 +364,8 @@ static MatchStats matchInParallel(ArrayRef<std::string> Files,
     // it parses here too.
     std::unique_ptr<LoadedPattern> Pattern =
         loadPattern(ToolName, PatternErr, /*Quiet=*/true);
-    for (size_t FileIndex; (FileIndex = NextFile++) < Files.size();) {
+    for (size_t Next; (Next = NextFile++) < Files.size();) {
+      size_t FileIndex = Order[Next];
       FileOutput Output;
       if (Pattern) {
         raw_string_ostream Out(Output.Out), Err(Output.Err);

@@ -293,6 +293,178 @@ TEST_F(FeaturesTest, BothBranchKindsAreBranches) {
   EXPECT_TRUE(passes("conditional"));
 }
 
+TEST_F(FeaturesTest, RequiresNamedFlags) {
+  parse(R"(
+    %r = lshr exact i32 ?x, ?y
+  )",
+        R"(
+    define i32 @exact(i32 %x, i32 %y) {
+      %r = lshr exact i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @inexact(i32 %x, i32 %y) {
+      %r = lshr i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("exact"));
+  EXPECT_FALSE(passes("inexact"));
+}
+
+// A supported flag the pattern does not name must be absent, unless it is
+// captured.
+TEST_F(FeaturesTest, OmittedFlagsMustBeAbsent) {
+  parse(R"(
+    %r = add i32 ?x, ?y
+  )",
+        R"(
+    define i32 @plain(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @nsw(i32 %x, i32 %y) {
+      %r = add nsw i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("plain"));
+  EXPECT_FALSE(matches(*M->getFunction("nsw")));
+  EXPECT_FALSE(passes("nsw"));
+}
+
+TEST_F(FeaturesTest, CapturedFlagsMayBeEither) {
+  parse(R"(
+    %r = add nsw:?nsw i32 ?x, ?y
+  )",
+        R"(
+    define i32 @plain(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @nsw(i32 %x, i32 %y) {
+      %r = add nsw i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @nuw(i32 %x, i32 %y) {
+      %r = add nuw i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("plain"));
+  EXPECT_TRUE(passes("nsw"));
+  EXPECT_FALSE(passes("nuw"));
+}
+
+TEST_F(FeaturesTest, RequiresCastResultWidths) {
+  parse(R"(
+    ;; treatIntAsVec(true)
+    %t = trunc i32 ?x to i1
+  )",
+        R"(
+    define i1 @to_i1(i32 %x) {
+      %t = trunc i32 %x to i1
+      ret i1 %t
+    }
+    define <2 x i1> @to_v2i1(<2 x i32> %x) {
+      %t = trunc <2 x i32> %x to <2 x i1>
+      ret <2 x i1> %t
+    }
+    define i8 @to_i8(i32 %x) {
+      %t = trunc i32 %x to i8
+      ret i8 %t
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("to_v2i1")));
+  EXPECT_TRUE(passes("to_i1"));
+  EXPECT_TRUE(passes("to_v2i1"));
+  EXPECT_FALSE(passes("to_i8"));
+}
+
+TEST_F(FeaturesTest, RequiresBinaryResultWidths) {
+  parse(R"(
+    %r = mul i8 ?x, ?y
+  )",
+        R"(
+    define i8 @i8(i8 %x, i8 %y) {
+      %r = mul i8 %x, %y
+      ret i8 %r
+    }
+    define i32 @i32(i32 %x, i32 %y) {
+      %r = mul i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("i8"));
+  EXPECT_FALSE(passes("i32"));
+}
+
+// Instructions using the same value are siblings. A variable can stand for a
+// constant, so instructions using the same constant are siblings too.
+TEST_F(FeaturesTest, RequiresSiblings) {
+  parse(R"(
+    %rem = and i32 ?x, 1
+    %div = lshr i32 ?x, 2
+    %add = add i32 %rem, %div
+  )",
+        R"(
+    define i32 @shared(i32 %x) {
+      %rem = and i32 %x, 1
+      %div = lshr i32 %x, 2
+      %add = add i32 %rem, %div
+      ret i32 %add
+    }
+    define i32 @separate(i32 %x, i32 %y) {
+      %rem = and i32 %x, 1
+      %div = lshr i32 %y, 2
+      %add = add i32 %rem, %div
+      ret i32 %add
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("shared")));
+  EXPECT_TRUE(passes("shared"));
+  EXPECT_FALSE(passes("separate"));
+}
+
+// An instruction whose ':o' alternative may match instead uses nothing.
+TEST_F(FeaturesTest, OrSelfInstructionsAreNotSiblings) {
+  parse(R"(
+    %a = add:o i32 ?x, 1
+    %m = mul i32 ?x, %a
+  )",
+        R"(
+    define i32 @self(i32 %x) {
+      %m = mul i32 %x, %x
+      ret i32 %m
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("self")));
+  EXPECT_TRUE(passes("self"));
+}
+
+// A phi's incoming blocks are not among its operands.
+TEST_F(FeaturesTest, PhiBlocksAreNotSiblings) {
+  parse(R"(
+    ?loop:
+    %v = phi i32 [?init, ?entry], [?next, ?loop]
+    ?entry:
+    br label ?loop
+  )",
+        R"(
+    define i32 @loop(i32 %n) {
+    entry:
+      br label %loop
+    loop:
+      %v = phi i32 [0, %entry], [%v2, %loop]
+      %v2 = add i32 %v, 1
+      %c = icmp slt i32 %v2, %n
+      br i1 %c, label %loop, label %exit
+    exit:
+      ret i32 %v
+    }
+  )");
+  EXPECT_TRUE(passes("loop"));
+}
+
 TEST_F(FeaturesTest, MergedFeaturesAdmitEveryFunction) {
   parse(R"(
     %a = add i32 ?x, ?y
