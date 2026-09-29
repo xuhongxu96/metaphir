@@ -207,6 +207,10 @@ public:
   FunctionTypeSet FunctionTypes;
 
   SmallPtrSet<Pattern *, 4> OwnedPatterns;
+  /// Arena-allocated values that own heap memory (wide APInt/APFloat
+  /// storage). The arena releases memory without running destructors, so
+  /// these are destroyed explicitly with the context.
+  SmallVector<Value *, 0> ValuesToDestroy;
 
   StringMap<CompositeMatcher *> CompositeMatchers;
   StringMap<ConstraintDef *> ConstraintDefs;

@@ -27,6 +27,8 @@ add_test(
     -D "metaphir_parse=$<TARGET_FILE:metaphir-parse>"
     -D "metaphir_match=$<TARGET_FILE:metaphir-match>"
     ${METAPHIR_TEST_DIR})
+set_tests_properties(MetaphIR.lit PROPERTIES ENVIRONMENT
+                     "${METAPHIR_TEST_ENVIRONMENT}")
 
 # Unit tests for the evaluation harness scripts.
 find_package(Python3 COMPONENTS Interpreter)

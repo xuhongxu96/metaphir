@@ -159,9 +159,11 @@ int main(int Argc, char **Argv) {
   Pattern *RawPattern = nullptr;
   if (!parsePattern(Argv[1], PatternSource, Context, RawPattern))
     return 1;
-  Expected<PatternVariants> Lowered = PatternLowering(Context).lower(RawPattern);
+  Expected<PatternVariants> Lowered =
+      PatternLowering(Context).lower(RawPattern);
   if (!Lowered) {
-    logAllUnhandledErrors(Lowered.takeError(), errs(), "metaphir-match: ");
+    logAllUnhandledErrors(Lowered.takeError(), errs(),
+                          "metaphir-match: error: ");
     return 1;
   }
   PatternVariants Patterns = std::move(*Lowered);

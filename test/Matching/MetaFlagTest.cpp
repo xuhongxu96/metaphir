@@ -27,7 +27,6 @@ using namespace llvm::metaphir;
 
 namespace {
 
-using Instruction = llvm::metaphir::Instruction;
 using MIRInstruction = llvm::metaphir::Instruction;
 
 MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
@@ -39,8 +38,7 @@ MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
   return MetaFlag::getUserDefined(Context, Name, Arguments, Range);
 }
 
-static Pattern *makePatternWithOperandFlag(MIRContext &Context,
-                                           MetaFlag *Flag) {
+Pattern *makePatternWithOperandFlag(MIRContext &Context, MetaFlag *Flag) {
   auto *X = MetaVariable::get(Context, "x", MetaType::Value, {});
   MatcherOperand Operand;
   Operand.Val = X;
@@ -48,21 +46,23 @@ static Pattern *makePatternWithOperandFlag(MIRContext &Context,
   Operand.setMetaFlags(Context, Flags);
 
   SmallVector<MatcherOperand, 1> Operands = {Operand};
-  auto *Inst = Instruction::get(Context, Instruction::I_add, "", {}, {},
-                                Operands, nullptr, {}, nullptr);
+  auto *Inst = MIRInstruction::get(Context, MIRInstruction::I_add, "", {}, {},
+                                   Operands, nullptr, {}, nullptr);
   Pattern *P = Pattern::get(Context);
   P->addInstruction(Inst);
   return P;
 }
+
+} // namespace
 
 TEST(MetaFlagTest, InstructionHasMetaFlagSearchesByID) {
   MIRContext Context;
   SmallVector<MetaFlag *, 4> Flags = {
       makeFlag(Context, "c"),
       makeFlag(Context, "o", {{MetaFlag::Argument::Integer, 42}})};
-  Instruction *Inst =
-      Instruction::get(Context, Instruction::I_add, "", {}, Flags, {}, nullptr,
-                       SourceRange{}, nullptr);
+  MIRInstruction *Inst =
+      MIRInstruction::get(Context, MIRInstruction::I_add, "", {}, Flags, {},
+                          nullptr, SourceRange{}, nullptr);
   EXPECT_TRUE(Inst->hasMetaFlag(MetaFlag::MF_c));
   EXPECT_TRUE(Inst->hasMetaFlag(MetaFlag::MF_o));
   EXPECT_FALSE(Inst->hasMetaFlag(MetaFlag::MF_not));
@@ -73,8 +73,8 @@ TEST(MetaFlagTest, PreservesMatcherHandledFlagsDuringLowering) {
   MIRContext Context;
   SmallVector<MetaFlag *, 2> Flags = {makeFlag(Context, "c"),
                                       makeFlag(Context, "o")};
-  auto *Inst = Instruction::get(Context, Instruction::I_add, "", {}, Flags, {},
-                                nullptr, {}, nullptr);
+  auto *Inst = MIRInstruction::get(Context, MIRInstruction::I_add, "", {},
+                                   Flags, {}, nullptr, {}, nullptr);
   Pattern *P = Pattern::get(Context);
   P->addInstruction(Inst);
 
@@ -87,8 +87,10 @@ TEST(MetaFlagTest, PreservesMatcherHandledFlagsDuringLowering) {
 TEST(MetaFlagTest, ReportsMalformedMetaFlagDefinition) {
   MIRContext Context;
   StringRef Parameters[] = {"subject"};
+  MetaVariable *ParameterVars[] = {
+      MetaVariable::get(Context, "subject", MetaType::Unknown, {})};
   auto *Def = new (Context.pImpl->Alloc) MetaFlagDef(
-      "broken", MetaFlag::OperandPlacement, Parameters, {}, nullptr);
+      "broken", MetaFlag::OperandPlacement, Parameters, ParameterVars, nullptr);
   Context.registerMetaFlagDef(Def);
 
   Pattern *P = makePatternWithOperandFlag(Context, makeFlag(Context, "broken"));
@@ -197,7 +199,7 @@ TEST(MetaFlagTest,
   // Constraints should have been generated and added to Variant.
   ASSERT_EQ(Variant->getConstraints().size(), 2u);
 
-  // Check that the constraint for :s directly targets Instruction *I as its
+  // Check that the constraint for :s directly targets MIRInstruction *I as its
   // subject.
   bool FoundDirectInstSubject = false;
   for (const Constraint *C : Variant->getConstraints()) {
@@ -342,4 +344,20 @@ TEST(MetaFlagTest, DirectInstructionSubjectEndToEndMatching) {
   EXPECT_FALSE(ConstraintSatisfied);
 }
 
-} // namespace
+// Lowering builds new patterns and leaves its input untouched, so lowering the
+// same pattern twice gives the same result.
+TEST(MetaFlagTest, LoweringLeavesItsInputUnchanged) {
+  MIRContext Context;
+  SourceMgr SM;
+  Pattern *P = test::parsePattern("%r = add:s i32 ?x:su, ?y\n", SM, Context);
+  ASSERT_NE(P, nullptr);
+  ASSERT_TRUE(P->getConstraints().empty());
+  for (int Round = 0; Round != 2; ++Round) {
+    Expected<PatternVariants> Lowered = PatternLowering(Context).lower(P);
+    ASSERT_TRUE(static_cast<bool>(Lowered));
+    ASSERT_EQ(Lowered->size(), 1u);
+    EXPECT_NE((*Lowered)[0], P);
+    EXPECT_EQ((*Lowered)[0]->getConstraints().size(), 2u);
+  }
+  EXPECT_TRUE(P->getConstraints().empty());
+}

@@ -7,6 +7,8 @@ namespace metaphir {
 MIRContextImpl::~MIRContextImpl() {
   while (!OwnedPatterns.empty())
     delete *OwnedPatterns.begin();
+  for (Value *V : ValuesToDestroy)
+    V->~Value();
 }
 
 } // namespace metaphir

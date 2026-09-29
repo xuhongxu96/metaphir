@@ -7,8 +7,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(METAPHIR_WERROR "Treat compiler warnings as errors" ON)
+set(METAPHIR_USE_SANITIZER "" CACHE STRING
+    "Build MetaphIR with a sanitizer (e.g. 'address'); LLVM stays uninstrumented")
 
 add_compile_options(-fno-rtti)
+if(METAPHIR_USE_SANITIZER)
+  add_compile_options(-fsanitize=${METAPHIR_USE_SANITIZER} -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=${METAPHIR_USE_SANITIZER})
+  # LLVM's BumpPtrAllocator poisons slabs from inline code compiled into
+  # MetaphIR but writes into them from the uninstrumented LLVM libraries.
+  set(METAPHIR_TEST_ENVIRONMENT "ASAN_OPTIONS=allow_user_poisoning=0")
+endif()
 
 set(LLVM_DIR
     ${PROJECT_SOURCE_DIR}/llvm-project/build/install/lib/cmake/llvm
@@ -36,7 +45,8 @@ target_link_libraries(metaphir-gtest-main PUBLIC metaphir-gtest)
 function(add_metaphir_test test_name)
     add_executable(${test_name} ${ARGN})
     target_link_libraries(${test_name} PRIVATE metaphir-gtest-main)
-    gtest_discover_tests(${test_name})
+    gtest_discover_tests(${test_name}
+        PROPERTIES ENVIRONMENT "${METAPHIR_TEST_ENVIRONMENT}")
 endfunction()
 
 include_directories(${PROJECT_SOURCE_DIR})

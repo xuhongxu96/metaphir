@@ -35,7 +35,7 @@ public:
   struct Argument {
     enum Kind { Integer, Flag };
 
-    Kind K;
+    Kind K = Integer;
     int64_t IntegerValue = 0;
     MetaFlag *FlagValue = nullptr;
   };

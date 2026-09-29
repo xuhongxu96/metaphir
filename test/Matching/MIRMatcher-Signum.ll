@@ -15,7 +15,7 @@ entry:
 }
 ; CHECK: target 0: @signum_i32
 ; CHECK-NEXT:   match 0:
-; CHECK-NEXT:     {?anch = %r, ?bits = 32, ?shift = 31, ?x = %x}
+; CHECK-NEXT:     {?anch = %r, ?bits = 32, ?r$shift = 31, ?x = %x}
 
 define i32 @not_signum_wrong_shift(i32 %x) {
 entry:
@@ -27,4 +27,4 @@ entry:
 }
 ; CHECK-NEXT: target 1: @not_signum_wrong_shift
 ; CHECK-NEXT:   no match
-; CHECK-NEXT:   constraint not satisfied: (== ?shift (- ?bits 1))
+; CHECK-NEXT:   constraint not satisfied: (== ?r$shift (- ?bits 1))
