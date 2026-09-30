@@ -81,8 +81,10 @@ export const MATCH_BATCH = 100;
 /**
  * A query with more candidates than this pauses before reading their
  * features, until continued: reading and matching them all takes long.
+ * None of the examples (eval/patterns) has as many: the most, pr210499,
+ * has 148,678 of the published corpus.
  */
-export const CANDIDATE_PROMPT = 20_000;
+export const CANDIDATE_PROMPT = 200_000;
 
 /** "1 match", "2 matches". */
 export function count(n: number, noun: string, plural = `${noun}s`): string {
