@@ -25,17 +25,15 @@ export interface FetchStats {
 }
 
 /**
- * Ranges of a file closer than this are read in one request: the bytes
- * between them are kept too, and later queries often need them. The index
- * and the features are read in large blocks, so that after a few queries
- * they are all kept; packs, 6 GB in all, in smaller ones.
+ * Ranges of a file closer than this are read in one request. Reading them
+ * together costs the bytes between them; apart, one more request, which
+ * costs a browser about 30 to 45 ms of the Hub's CDN (it gets few done at
+ * once), as long as 500 KB to 1 MB take to read and keep at 100 to 150
+ * Mbps. Replaying the reads of the examples (eval/patterns), 512 KB came
+ * within 10% of the best gap from 30 Mbps to 150 Mbps; 10 MB took up to
+ * three times as long, reading about four times the bytes.
  */
-const MAX_GAP: Record<string, number> = {
-  "functions.idx": 10 * 1024 * 1024,
-  "features.bin": 10 * 1024 * 1024,
-  "packs.bin": 10 * 1024 * 1024,
-};
-const DEFAULT_MAX_GAP = 1024 * 1024;
+const MAX_GAP = 512 * 1024;
 /** No request reads more than this, unless one range is larger. */
 const MAX_REQUEST = 16 * 1024 * 1024;
 /** Requests in flight at once, over one HTTP/2 connection. */
@@ -71,7 +69,7 @@ export function planRequests(ranges: ByteRange[]): ByteRange[][] {
     const fits =
       last !== undefined &&
       last.file === range.file &&
-      range.offset <= end + (MAX_GAP[range.file] ?? DEFAULT_MAX_GAP) &&
+      range.offset <= end + MAX_GAP &&
       Math.max(end, range.offset + range.size) - start <= MAX_REQUEST;
     if (!fits) {
       if (current.length) requests.push(current);
