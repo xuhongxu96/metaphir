@@ -12,6 +12,8 @@ See the [Wiki](https://github.com/xuhongxu96/metaphir/wiki) for the language.
 ;; ugt(?n, 1) && isKnownNonZero(?x)
 ```
 
+![demo](metaphir.png)
+
 ## Building
 
 MetaphIR builds against a pinned, patched LLVM checkout in `llvm-project/`:
