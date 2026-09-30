@@ -10,8 +10,10 @@ matched highlighted, as the matcher reports them (`--print-instructions`);
 hovering a matched instruction in either editor highlights its counterpart
 in the other (the arrow keys move through the matches). A progress bar
 follows each stage's reads and then the matching; Share copies a link that
-carries the pattern (`#pattern=<encoded text>`); the theme follows the
-system unless chosen.
+carries the pattern compressed (`#patternz=`, as instcombine-instrumentor's
+links carry IR: its tokens as bytes, deflated, in base64url; see
+`src/share/`), or as text (`#pattern=`) where the browser cannot compress;
+links of either kind open. The theme follows the system unless chosen.
 
 ## Building
 

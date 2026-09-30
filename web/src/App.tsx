@@ -18,6 +18,7 @@ import { patternLink, type Link } from "./navigation.ts";
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
+import { patternHash, readPatternHash } from "./share/patternLink.ts";
 import { describe, type Status } from "./status.ts";
 import { StatusChip } from "./StatusChip.tsx";
 import { useFunctionIR } from "./useFunctionIR.ts";
@@ -36,24 +37,19 @@ const EXAMPLES: Record<string, string> = Object.fromEntries(
 );
 type Source = "published" | "local";
 
-function patternFromHash(): string | undefined {
-  const match = /^#pattern=(.*)$/s.exec(location.hash);
-  return match ? decodeURIComponent(match[1]) : undefined;
-}
-
-function linkTo(pattern: string): string {
-  return `${location.origin}${location.pathname}#pattern=${encodeURIComponent(pattern)}`;
-}
-
 export function App() {
   const { preference, setPreference, dark } = useColorScheme();
   const theme = themeName(dark);
   const [corpus, setCorpus] = useState<PublishedCorpus>();
   const [source, setSource] = useState<Source>("published");
-  // A link can carry a pattern, as "#pattern=<encoded text>".
-  const [pattern, setPattern] = useState(
-    () => patternFromHash() ?? Object.values(EXAMPLES)[0] ?? "",
-  );
+  const [pattern, setPattern] = useState("");
+  // A link can carry a pattern (see share/patternLink.ts); else the first
+  // example is shown.
+  useEffect(() => {
+    void readPatternHash(location.hash).then((shared) =>
+      setPattern(shared ?? Object.values(EXAMPLES)[0] ?? ""),
+    );
+  }, []);
   const [status, setStatus] = useState<Status>({ text: "Loading the corpus…", running: true });
   const [running, setRunning] = useState(false);
   // The published query running, to pause, continue or stop.
@@ -127,7 +123,7 @@ export function App() {
   const canRun = !running && pattern.trim() !== "" && (local || corpus !== undefined);
 
   const run = useCallback(async () => {
-    history.replaceState(null, "", `#pattern=${encodeURIComponent(pattern)}`);
+    void patternHash(pattern).then((hash) => history.replaceState(null, "", hash));
     setMatchedPattern(pattern);
     setRunning(true);
     setMatches([]);
@@ -188,7 +184,8 @@ export function App() {
 
   async function share() {
     try {
-      await navigator.clipboard.writeText(linkTo(pattern));
+      const hash = await patternHash(pattern);
+      await navigator.clipboard.writeText(`${location.origin}${location.pathname}${hash}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
