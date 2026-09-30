@@ -9,7 +9,12 @@ import {
   type Match,
   type Progress,
 } from "./engine.ts";
+import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
 import { monaco, themeName } from "./monaco.ts";
+import { QueryControl } from "./pipeline.ts";
+import { ProgressBar } from "./ProgressBar.tsx";
+import { describe, type Status } from "./status.ts";
+import { StatusChip } from "./StatusChip.tsx";
 
 // The patterns of the evaluation, as examples.
 const EXAMPLES: Record<string, string> = Object.fromEntries(
@@ -37,24 +42,6 @@ const EDITOR_OPTIONS = {
   wordWrap: "on" as const,
 };
 
-/** "1 match", "2 matches". */
-function count(n: number, noun: string, plural = `${noun}s`): string {
-  return `${n.toLocaleString()} ${n === 1 ? noun : plural}`;
-}
-
-function describe(progress: Progress, local: boolean): string {
-  const time = `${progress.seconds.toFixed(1)} s`;
-  const matches = count(progress.matches, "match", "matches");
-  if (local) return `${progress.stage} · ${matches} · ${time}`;
-  const parts = [progress.stage];
-  if (progress.matchable)
-    parts.push(
-      `${progress.matched.toLocaleString()} of ${count(progress.matchable, "function")} matched`,
-    );
-  parts.push(matches, `${(progress.bytes / 1e6).toFixed(1)} MB`, time);
-  return parts.join(" · ");
-}
-
 function patternFromHash(): string | undefined {
   const match = /^#pattern=(.*)$/s.exec(location.hash);
   return match ? decodeURIComponent(match[1]) : undefined;
@@ -62,14 +49,6 @@ function patternFromHash(): string | undefined {
 
 function linkTo(pattern: string): string {
   return `${location.origin}${location.pathname}#pattern=${encodeURIComponent(pattern)}`;
-}
-
-interface Status {
-  text: string;
-  error?: boolean;
-  /** How far a run is, from 0 to 1; undefined while not known. */
-  fraction?: number;
-  running?: boolean;
 }
 
 export function App() {
@@ -83,6 +62,8 @@ export function App() {
   );
   const [status, setStatus] = useState<Status>({ text: "Loading the corpus…", running: true });
   const [running, setRunning] = useState(false);
+  // The published query running, to pause, continue or stop.
+  const [control, setControl] = useState<QueryControl>();
   const [matches, setMatches] = useState<Match[]>([]);
   const [selected, setSelected] = useState<Match>();
   const [copied, setCopied] = useState(false);
@@ -127,7 +108,11 @@ export function App() {
       (opened) => {
         setCorpus(opened);
         setStatus({
-          text: `Ready: ${count(opened.functions, "function")} of ${count(opened.modules, "module")}.`,
+          text: "Ready",
+          details: [
+            ["functions", opened.functions.toLocaleString()],
+            ["modules", opened.modules.toLocaleString()],
+          ],
         });
       },
       (error: Error) => setStatus({ text: error.message, error: true }),
@@ -156,12 +141,7 @@ export function App() {
       pending.push(...found);
       frame ||= requestAnimationFrame(flush);
     };
-    const onProgress = (progress: Progress) =>
-      setStatus({
-        text: describe(progress, local),
-        fraction: progress.fraction,
-        running: progress.stage !== "done",
-      });
+    const onProgress = (progress: Progress) => setStatus(describe(progress, local));
     try {
       if (local)
         await matchLocal(
@@ -171,13 +151,18 @@ export function App() {
           onProgress,
           onMatches,
         );
-      else await corpus!.match(pattern, onProgress, onMatches);
+      else {
+        const control = new QueryControl();
+        setControl(control);
+        await corpus!.match(pattern, onProgress, onMatches, control);
+      }
     } catch (error) {
       setStatus({ text: (error as Error).message, error: true });
     } finally {
       if (frame) cancelAnimationFrame(frame);
       flush();
       setRunning(false);
+      setControl(undefined);
     }
   }, [pattern, local, corpus]);
 
@@ -245,14 +230,7 @@ export function App() {
         <button onClick={() => void share()} title="Copy a link to this pattern">
           {copied ? "link copied" : "Share"}
         </button>
-        <span
-          id="status"
-          role="status"
-          className={`status${status.error ? " error" : ""}`}
-          title={status.text}
-        >
-          {status.text}
-        </span>
+        <StatusChip status={status} control={control} />
         <label className="picker">
           theme
           <select
@@ -266,6 +244,9 @@ export function App() {
         </label>
         <ProgressBar status={status} />
       </header>
+      {control && status.pause?.kind === "candidates" && (
+        <LargeSearchDialog candidates={status.pause.candidates} control={control} />
+      )}
       <main className="panes">
         <Group
           orientation="horizontal"
@@ -332,22 +313,6 @@ export function App() {
           </Panel>
         </Group>
       </main>
-    </div>
-  );
-}
-
-function ProgressBar({ status }: { status: Status }) {
-  if (!status.running) return null;
-  const known = status.fraction !== undefined;
-  return (
-    <div
-      className={`progress${known ? "" : " indeterminate"}`}
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={known ? Math.round(status.fraction! * 100) : undefined}
-    >
-      <div style={known ? { width: `${status.fraction! * 100}%` } : undefined} />
     </div>
   );
 }

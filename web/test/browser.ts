@@ -31,6 +31,42 @@ try {
   const page = await browser.newPage();
   page.on("pageerror", (error) => console.error("page error:", error.message));
   const pattern = encodeURIComponent(readFileSync(patternFile, "utf8"));
+  // The status and its details, on one line.
+  const describe = async () => {
+    if (!(await page.$("#status-panel"))) await page.click("#status-chip");
+    return page.$eval("#status-panel", (panel) =>
+      [
+        document.getElementById("status")!.textContent,
+        ...[...panel.querySelectorAll(".status-details > div")].map(
+          (d) => `${d.children[0].textContent} ${d.children[1].textContent}`,
+        ),
+      ].join(" · "),
+    );
+  };
+  // Continues whenever the query pauses, until it is done.
+  const finish = async () => {
+    for (;;) {
+      await page.waitForFunction(
+        (status) => {
+          const s = eval(status)();
+          return (
+            /^(done|paused)/.test(s.textContent!) || s.className.includes("error")
+          );
+        },
+        `(${status})`,
+        { timeout: 600_000 },
+      );
+      const paused = (await page.textContent("#status"))!;
+      if (!paused.startsWith("paused")) return;
+      // A large search asks first, in a dialog.
+      await page.click((await page.$("#dialog-confirm")) ? "#dialog-confirm" : "#continue");
+      // The next pause can come before the page shows the query going on.
+      await page.waitForFunction(
+        ([status, paused]) => eval(status)().textContent !== paused,
+        [`(${status})`, paused],
+      );
+    }
+  };
   const run = async (reload: boolean) => {
     if (reload) await page.reload();
     else await page.goto(`${url}#pattern=${pattern}`);
@@ -42,15 +78,8 @@ try {
       `(${status})`,
     );
     await page.click("#run");
-    await page.waitForFunction(
-      (status) => {
-        const s = eval(status)();
-        return s.textContent!.startsWith("done") || s.className.includes("error");
-      },
-      `(${status})`,
-      { timeout: 600_000 },
-    );
-    return page.textContent("#status");
+    await finish();
+    return describe();
   };
   const first = await run(false);
   const rows = await page.$$eval("#matches tr", (rows) =>
@@ -70,11 +99,7 @@ try {
 
     // Matching again highlights the new matches' instructions as well.
     await page.click("#run");
-    await page.waitForFunction(
-      (status) => eval(status)().textContent!.startsWith("done"),
-      `(${status})`,
-      { timeout: 600_000 },
-    );
+    await finish();
     await page.waitForSelector(".ir-editor .view-lines");
     await page.waitForTimeout(1000);
     const again = await page.$$eval(".ir-editor .bound-line", (lines) => lines.length);

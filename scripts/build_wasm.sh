@@ -74,7 +74,7 @@ fi
 
 echo "[$(date)] Building LLVM for WebAssembly..."
 emcmake cmake -G Ninja -S "$BASE_DIR/llvm-project/llvm" -B "$BUILD_DIR/llvm" \
-    -DCMAKE_BUILD_TYPE=MinSizeRel \
+    -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_TARGETS_TO_BUILD="" \
     -DLLVM_DEFAULT_TARGET_TRIPLE=wasm32-unknown-emscripten \
     -DLLVM_ENABLE_PROJECTS="" \
@@ -103,7 +103,7 @@ cmake --build "$BUILD_DIR/llvm" -- -j"$JOBS" \
 
 echo "[$(date)] Building MetaphIR for WebAssembly..."
 emcmake cmake -G Ninja -S "$BASE_DIR/web/wasm" -B "$BUILD_DIR/metaphir" \
-    -DCMAKE_BUILD_TYPE=MinSizeRel \
+    -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_DIR="$BUILD_DIR/llvm/lib/cmake/llvm" \
     "${CCACHE_ARGS[@]}" >/dev/null
 cmake --build "$BUILD_DIR/metaphir" -- -j"$JOBS" metaphir metaphir-match

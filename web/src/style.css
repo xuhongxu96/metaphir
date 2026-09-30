@@ -65,17 +65,68 @@ body { background: var(--bg); color: var(--fg); }
   background: var(--bg);
 }
 .toolbar h1 { font-size: 1rem; margin: 0; font-weight: 600; }
-.toolbar .status {
-  margin-left: auto;
+/* The status, in the toolbar's free space; it opens a popover. */
+.status-chip-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; justify-content: flex-end; }
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.25rem 0.6rem;
+  border-color: transparent;
+  background: none;
   color: var(--muted);
   font-size: 0.85rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 0 1 auto;
 }
-.toolbar .status.error { color: var(--error); white-space: normal; }
+.status-chip:hover, .status-chip[aria-expanded="true"] { border-color: var(--border); background: var(--bg-alt); }
+.status-chip .status { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.status-chip .status-count { flex: none; color: var(--fg); font-variant-numeric: tabular-nums; }
+.status-chip .caret { flex: none; font-size: 0.7rem; }
+.status-chip.error { color: var(--error); }
+.status-chip.attention { border-color: var(--accent); color: var(--fg); }
+.status-panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 10;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  font-size: 0.85rem;
+}
+.status-text { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.status-text.error { color: var(--error); font-weight: normal; }
+.status-details { margin: 0.4rem 0 0; display: grid; gap: 0.15rem; }
+.status-details > div { display: flex; justify-content: space-between; gap: 1rem; }
+.status-details dt { color: var(--muted); }
+.status-details dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+.status-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.35);
+}
+.dialog {
+  width: min(28rem, 100%);
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+.dialog h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+.dialog-body { font-size: 0.9rem; line-height: 1.45; }
+.dialog-body p { margin: 0 0 0.6rem; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.75rem; }
 
 button {
   padding: 0.3rem 0.9rem;
@@ -85,6 +136,7 @@ button {
   border-radius: 4px;
   font: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 button:disabled { opacity: 0.55; cursor: default; }
@@ -126,6 +178,7 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
   width: 30%;
   animation: sweep 1.2s ease-in-out infinite;
 }
+.progress.paused > div { animation-play-state: paused; opacity: 0.5; }
 @keyframes sweep {
   from { transform: translateX(-100%); }
   to { transform: translateX(340%); }
@@ -133,7 +186,6 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
 
 @media (max-width: 1000px) {
   .toolbar { flex-wrap: wrap; }
-  .toolbar .status { margin-left: 0; width: 100%; order: 10; }
 }
 
 .panes { min-height: 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }

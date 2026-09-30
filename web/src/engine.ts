@@ -1,7 +1,8 @@
 // Opening the published corpus and running queries, apart from the page.
 
 import { RangeFetcher, type ByteRange } from "./fetcher.ts";
-import { runQuery } from "./pipeline.ts";
+import type { Matchable } from "./pipeline.ts";
+import { QueryControl, runQuery } from "./pipeline.ts";
 import { SessionPool } from "./pool.ts";
 
 export const wasmUrl = (name: string) => new URL(`wasm/${name}`, document.baseURI).href;
@@ -75,8 +76,30 @@ export function instructionLines(text: string): number[] {
   return lines;
 }
 
+/** A query pauses after each this many matches, until continued. */
+export const MATCH_BATCH = 100;
+/**
+ * A query with more candidates than this pauses before reading their
+ * features, until continued: reading and matching them all takes long.
+ */
+export const CANDIDATE_PROMPT = 20_000;
+
+/** "1 match", "2 matches". */
+export function count(n: number, noun: string, plural = `${noun}s`): string {
+  return `${n.toLocaleString()} ${n === 1 ? noun : plural}`;
+}
+
+/** Why a query is paused: it reached a number of matches, or it would
+ * check many candidates. */
+export type Pause =
+  | { kind: "matches"; matches: number }
+  | { kind: "candidates"; candidates: number };
+
 export interface Progress {
+  /** What the query does, or "done" or "stopped" once it ended. */
   stage: string;
+  /** Why the query is paused, while it is. */
+  paused?: Pause;
   /** How far the stage is, from 0 to 1, when that is known. */
   fraction?: number;
   matches: number;
@@ -94,7 +117,8 @@ export class PublishedCorpus {
   private readonly fetcher: RangeFetcher;
   private readonly pool: SessionPool;
 
-  private constructor(
+  /** A corpus read by fetcher, as open() opens the one configured. */
+  constructor(
     fetcher: RangeFetcher,
     pool: SessionPool,
     functions: number,
@@ -126,11 +150,17 @@ export class PublishedCorpus {
     return new PublishedCorpus(fetcher, pool, functions, modules);
   }
 
-  /** Matches pattern, reporting progress and each function's matches. */
+  /**
+   * Matches pattern, reporting progress and each function's matches. It
+   * pauses control after each MATCH_BATCH matches, and before reading the
+   * features of more than CANDIDATE_PROMPT candidates, unless it runs to
+   * the end.
+   */
   async match(
     pattern: string,
     onProgress: (progress: Progress) => void,
     onMatches: (matches: Match[]) => void,
+    control: QueryControl,
   ): Promise<void> {
     const { fetcher, pool } = this;
     const started = performance.now();
@@ -155,8 +185,18 @@ export class PublishedCorpus {
       progress.requests = fetcher.stats.requests - before.requests;
       progress.bytes = fetcher.stats.bytes - before.bytes;
       progress.seconds = (now - started) / 1000;
+      if (!control.paused) progress.paused = undefined;
       onProgress({ ...progress });
     };
+    // The report after continuing or stopping says the query goes on.
+    const pause = (why: Pause) => {
+      control.pause();
+      if (!control.paused) return;
+      progress.paused = why;
+      report();
+      void control.proceed().then(() => report());
+    };
+    let nextPause = MATCH_BATCH;
     const packs = new Map<number, ByteRange>();
     const irOf = (fn: number) => async () => {
       let frame: Uint8Array | undefined;
@@ -165,21 +205,27 @@ export class PublishedCorpus {
       if ("error" in printed) throw new Error(printed.error);
       return { text: printed.ir, lines: printed.lines };
     };
-    await runQuery(pattern, "pattern.mpir", pool.coordinator, pool.sessions, fetcher, {
-      onStage: (description) => {
+    const events = {
+      onStage: (description: string) => {
         progress.fraction = description === "matching" ? 0 : undefined;
         report(description);
       },
-      onFetch: (read, total) => {
-        progress.fraction = total ? read / total : 1;
+      onFetch: (read: number, total: number) => {
+        // Once all is read, the session works on it for as long as it
+        // takes, which is not known.
+        progress.fraction = read < total ? read / total : undefined;
         report(progress.stage, read === total);
       },
-      onCandidates: (candidates, matchable) => {
+      onListed: (candidates: number) => {
+        if (candidates > CANDIDATE_PROMPT)
+          pause({ kind: "candidates", candidates });
+      },
+      onCandidates: (candidates: number, matchable: Matchable[]) => {
         progress.candidates = candidates;
         progress.matchable = matchable.length;
         for (const m of matchable) packs.set(m.function, m);
       },
-      onMatched: (fn, lines) => {
+      onMatched: (fn: number, lines: string) => {
         progress.matched++;
         const found = lines
           .split("\n")
@@ -188,11 +234,25 @@ export class PublishedCorpus {
         progress.matches += found.length;
         progress.fraction = progress.matched / Math.max(progress.matchable, 1);
         if (found.length) onMatches(found);
-        report(progress.stage, found.length > 0);
+        if (progress.matches >= nextPause && !control.stopped) {
+          // Those being matched meanwhile come after: the count goes on.
+          const reached = nextPause;
+          while (nextPause <= progress.matches) nextPause += MATCH_BATCH;
+          pause({ kind: "matches", matches: reached });
+        } else report(progress.stage, found.length > 0);
       },
-    });
-    progress.fraction = 1;
-    report("done");
+    };
+    await runQuery(
+      pattern,
+      "pattern.mpir",
+      pool.coordinator,
+      pool.sessions,
+      fetcher,
+      events,
+      control,
+    );
+    if (!control.stopped) progress.fraction = 1;
+    report(control.stopped ? "stopped" : "done");
   }
 }
 

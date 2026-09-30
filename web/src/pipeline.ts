@@ -1,7 +1,8 @@
 // Runs a query against a published corpus: each stage of the WebAssembly
 // session says which bytes the next one reads, which the fetcher reads and
 // hands back. The functions that may match are then matched as their packs
-// arrive, by as many matchers as there are.
+// arrive, by as many matchers as there are. A QueryControl pauses or stops
+// the query between stages and between the functions it matches.
 
 import type { ByteRange, RangeFetcher } from "./fetcher.ts";
 
@@ -40,11 +41,57 @@ const STAGES: [StageName, string][] = [
   ["filterCandidates", "reading the candidates' features"],
 ];
 
+/**
+ * Pauses, resumes and stops a query from outside it: the query waits while
+ * paused, before each stage and each function it matches, and ends once
+ * stopped, when the functions being matched are. Once run to the end, it
+ * pauses no more.
+ */
+export class QueryControl {
+  private resumed?: Promise<void>;
+  private wake?: () => void;
+  private stop_ = false;
+  private toEnd = false;
+
+  get paused(): boolean {
+    return this.resumed !== undefined;
+  }
+  get stopped(): boolean {
+    return this.stop_;
+  }
+
+  pause(): void {
+    if (!this.stop_ && !this.toEnd) this.resumed ??= new Promise((resolve) => (this.wake = resolve));
+  }
+  resume(): void {
+    const wake = this.wake;
+    this.resumed = this.wake = undefined;
+    wake?.();
+  }
+  /** Resumes, and ignores pausing from now on. */
+  runToEnd(): void {
+    this.toEnd = true;
+    this.resume();
+  }
+  stop(): void {
+    this.stop_ = true;
+    this.resume();
+  }
+
+  /** Waits while paused; whether the query goes on. */
+  async proceed(): Promise<boolean> {
+    while (this.resumed) await this.resumed;
+    return !this.stop_;
+  }
+}
+
 export interface QueryEvents {
   /** A stage started. */
   onStage?(description: string): void;
   /** Bytes of the current stage read over the network, of those to read. */
   onFetch?(read: number, total: number): void;
+  /** The functions on the lists, before their features are read. */
+  onListed?(candidates: number): void;
   /** The functions on the lists, and those whose features may match. */
   onCandidates?(candidates: number, matchable: Matchable[]): void;
   /** Function was matched; lines are its matches, possibly none. */
@@ -59,8 +106,9 @@ export async function runQuery(
   name: string,
   coordinator: Coordinator,
   matchers: Matcher[],
-  fetcher: RangeFetcher,
+  fetcher: Pick<RangeFetcher, "fetchBlocks" | "fetchRanges">,
   events: QueryEvents = {},
+  control = new QueryControl(),
 ): Promise<void> {
   const check = (result: StageResult): ByteRange[] => {
     if ("error" in result) throw new Error(result.error);
@@ -87,10 +135,13 @@ export async function runQuery(
   let ranges = check(compiled[0]);
   for (const result of compiled.slice(1)) check(result);
   for (const [stage, description] of STAGES) {
+    if (!(await control.proceed())) return;
     events.onStage?.(description);
     await read(ranges);
     ranges = check(await coordinator.stage(stage));
+    if (stage === "findCandidates") events.onListed?.(await coordinator.numCandidates());
   }
+  if (!(await control.proceed())) return;
   const matchable = await coordinator.matchable();
   events.onCandidates?.(await coordinator.numCandidates(), matchable);
   events.onStage?.("matching");
@@ -107,7 +158,7 @@ export async function runQuery(
   let failure: Error | undefined;
   const work = async (matcher: Matcher) => {
     for (;;) {
-      if (failure) return;
+      if (failure || !(await control.proceed())) return;
       const next = queue.shift();
       if (!next) {
         if (!reading) return;
@@ -126,7 +177,11 @@ export async function runQuery(
   const workers = matchers.map(work);
   const byOffset = new Map(matchable.map((m) => [m.offset, m.function]));
   try {
-    for (let start = 0; start < matchable.length && !failure; start += PACK_BATCH)
+    for (
+      let start = 0;
+      start < matchable.length && !failure && (await control.proceed());
+      start += PACK_BATCH
+    )
       await fetcher.fetchRanges(
         matchable.slice(start, start + PACK_BATCH),
         (range, frame) => {

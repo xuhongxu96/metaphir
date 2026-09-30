@@ -31,9 +31,9 @@ export interface FetchStats {
  * they are all kept; packs, 6 GB in all, in smaller ones.
  */
 const MAX_GAP: Record<string, number> = {
-  "functions.idx": 1024 * 1024,
-  "features.bin": 1024 * 1024,
-  "packs.bin": 256 * 1024,
+  "functions.idx": 10 * 1024 * 1024,
+  "features.bin": 10 * 1024 * 1024,
+  "packs.bin": 10 * 1024 * 1024,
 };
 const DEFAULT_MAX_GAP = 1024 * 1024;
 /** No request reads more than this, unless one range is larger. */
