@@ -7,3 +7,7 @@ __pycache__/
 /Testing/
 /eval/corpus/
 /eval/corpus.mpidx
+/build-wasm/
+/web/public/wasm/
+/web/node_modules/
+/web/dist/

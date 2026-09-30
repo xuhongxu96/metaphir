@@ -2,7 +2,10 @@
 # Fetch, patch, build and install the pinned llvm-project checkout that
 # MetaphIR builds against.
 #
-# Usage: scripts/prepare_llvm.sh [debug|release] [--force]
+# Usage: scripts/prepare_llvm.sh [debug|release] [--force] [--source-only]
+#
+# --source-only stops once the source is patched, e.g. for
+# scripts/build_wasm.sh alone.
 #
 # Environment:
 #   LLVM_BUILD_TYPE  default build type when none is given (Release)
@@ -20,13 +23,15 @@ LLVM_DIR="$BASE_DIR/llvm-project"
 JOBS="${JOBS:-$(nproc)}"
 
 usage() {
-    echo "Usage: $0 [debug|release] [--force]"
+    echo "Usage: $0 [debug|release] [--force] [--source-only]"
 }
 
 BUILD_TYPE_ARG="${LLVM_BUILD_TYPE:-Release}"
 FORCE=0
+SOURCE_ONLY=0
 for arg in "$@"; do
     case "${arg,,}" in
+        --source-only) SOURCE_ONLY=1 ;;
         release|--release|debug|--debug) BUILD_TYPE_ARG="$arg" ;;
         -f|--force) FORCE=1 ;;
         -h|--help|help) usage; exit 0 ;;
@@ -95,6 +100,10 @@ git -C "$LLVM_DIR" reset --hard "$LLVM_COMMIT"
 git -C "$LLVM_DIR" clean -fd
 if [ "${#PATCHES[@]}" -gt 0 ]; then
     git -C "$LLVM_DIR" apply "${PATCHES[@]}"
+fi
+if [ "$SOURCE_ONLY" -eq 1 ]; then
+    echo "[$(date)] Done: $LLVM_DIR is at $LLVM_COMMIT with eval/patches."
+    exit 0
 fi
 
 # Configure LLVM

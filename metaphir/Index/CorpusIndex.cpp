@@ -1,5 +1,6 @@
 #include "metaphir/Index/CorpusIndex.h"
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/Index/FeatureCoding.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
@@ -18,6 +19,7 @@
 #include "llvm/Support/xxhash.h"
 #include <algorithm>
 #include <limits>
+#include <map>
 
 namespace llvm {
 namespace metaphir {
@@ -63,28 +65,6 @@ bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
   llvm::sort(DirectoryFiles);
   Files.append(DirectoryFiles);
   return true;
-}
-
-/// What the recorded features mean: the instruction matcher names in ID
-/// order, the fact and measure vocabulary, the type encoding, and the LLVM
-/// revision, whose value tracking the facts come from.
-static SmallVector<std::string, 96> getSchema() {
-  SmallVector<std::string, 96> Schema;
-#define MIR_INSTRUCTION_MATCHER_ID(Name)                                       \
-  Schema.push_back(Instruction::getOpcodeName(Instruction::I_##Name).str());
-#include "metaphir/IR/InstructionMatchers.def"
-  for (unsigned P = 0; P != Atom::NumPredicates; ++P)
-    Schema.push_back(("atom:" + Atom::getName(Atom::Predicate(P))).str());
-#define MIR_LLVM_VALUE_CLASS(Class) Schema.push_back("class:" #Class);
-#include "metaphir/Matching/LLVMValueClasses.def"
-  for (unsigned M = 0; M != unsigned(Measure::NumMeasures); ++M)
-    Schema.push_back(("measure:" + getMeasureName(Measure(M))).str());
-  Schema.push_back(
-      ("literals:" + Twine(Atom::MinLiteral) + ".." + Twine(Atom::MaxLiteral))
-          .str());
-  Schema.push_back("types:1");
-  Schema.push_back("llvm:" LLVM_REVISION);
-  return Schema;
 }
 
 /// Path made absolute and without dots.
@@ -168,66 +148,20 @@ Expected<IndexedModule> CorpusIndex::indexFile(StringRef Root, StringRef Path,
 // operand type codes); its fact and measure keys (like the edge keys); and
 // whether it has value facts (a byte).
 
-static void writeString(raw_ostream &OS, StringRef String) {
-  encodeULEB128(String.size(), OS);
-  OS << String;
-}
-
-template <typename T>
-static void writeSortedKeys(raw_ostream &OS, ArrayRef<T> Keys) {
-  encodeULEB128(Keys.size(), OS);
-  T Previous = 0;
-  for (T Key : Keys) {
-    encodeULEB128(Key - Previous, OS);
-    Previous = Key;
-  }
-}
-
-static void writeSignatures(raw_ostream &OS, ArrayRef<Signature> Signatures) {
-  encodeULEB128(Signatures.size(), OS);
-  unsigned PreviousID = 0;
-  for (const Signature &Sig : Signatures) {
-    encodeULEB128(Sig.ID - PreviousID, OS);
-    encodeULEB128(Sig.Flags, OS);
-    encodeULEB128(Sig.Result, OS);
-    for (TypeCode Operand : Sig.Operands)
-      encodeULEB128(Operand, OS);
-    PreviousID = Sig.ID;
-  }
-}
-
-static void writeCoarse(raw_ostream &OS, const FunctionFeatures &Features) {
-  encodeULEB128(Features.Instructions, OS);
-  writeSortedKeys<uint16_t>(OS, Features.Edges);
-  writeSortedKeys<uint16_t>(OS, Features.Siblings);
-}
-
-/// Writes the fine features behind their size, so readers can skip them.
-static void writeFine(raw_ostream &OS, const FunctionFeatures &Features) {
-  std::string Fine;
-  raw_string_ostream FineOS(Fine);
-  writeSignatures(FineOS, Features.Signatures);
-  writeSortedKeys<uint32_t>(FineOS, Features.Facts);
-  writeSortedKeys<uint32_t>(FineOS, Features.Measures);
-  FineOS << char(Features.HasValueFacts);
-  encodeULEB128(Fine.size(), OS);
-  OS << Fine;
-}
-
 static void writeSummary(raw_ostream &OS, const FunctionFeatures &Summary) {
-  writeCoarse(OS, Summary);
+  writeCoarseFeatures(OS, Summary);
   encodeULEB128(Summary.Globals.size(), OS);
   support::endian::Writer W(OS, llvm::endianness::little);
   for (uint64_t Global : Summary.Globals)
     W.write<uint64_t>(Global);
-  writeFine(OS, Summary);
+  writeFineFeatures(OS, Summary);
 }
 
 static void writeFunction(raw_ostream &OS, const IndexedFunction &Function,
                           ArrayRef<uint64_t> ModuleGlobals) {
   support::endian::Writer(OS, llvm::endianness::little)
       .write<uint64_t>(Function.NameHash);
-  writeCoarse(OS, Function.Features);
+  writeCoarseFeatures(OS, Function.Features);
   encodeULEB128(Function.Features.Globals.size(), OS);
   uint64_t Previous = 0;
   for (uint64_t Global : Function.Features.Globals) {
@@ -239,25 +173,7 @@ static void writeFunction(raw_ostream &OS, const IndexedFunction &Function,
     encodeULEB128(Position - Previous, OS);
     Previous = Position;
   }
-  writeFine(OS, Function.Features);
-}
-
-/// A posting key record: the key's kind (1 byte) and value (8), its list's
-/// length (4) and offset among the lists (8), little-endian, so that keys
-/// are looked up where they lie.
-static constexpr uint64_t PostingKeySize = 21;
-
-/// The coarse posting keys of a function's features.
-template <typename Callback>
-static void forEachPostingKey(const FunctionFeatures &Features, Callback Add) {
-  for (uint64_t IDs = Features.Instructions; IDs; IDs &= IDs - 1)
-    Add(PostingKey{PostingKey::Instruction, uint64_t(llvm::countr_zero(IDs))});
-  for (uint16_t Edge : Features.Edges)
-    Add(PostingKey{PostingKey::Edge, Edge});
-  for (uint16_t Sibling : Features.Siblings)
-    Add(PostingKey{PostingKey::Sibling, Sibling});
-  for (uint64_t Global : Features.Globals)
-    Add(PostingKey{PostingKey::Global, Global});
+  writeFineFeatures(OS, Function.Features);
 }
 
 /// Writes the posting keys and lists of the modules' functions, numbered in
@@ -281,18 +197,12 @@ static void writePostings(raw_ostream &OS, ArrayRef<IndexedModule> Modules) {
   std::string Lists;
   raw_string_ostream ListsOS(Lists);
   encodeULEB128(Keys.size(), OS);
-  support::endian::Writer W(OS, llvm::endianness::little);
   for (const auto &Key : Keys) {
     const std::vector<uint32_t> &Numbers = Postings[Key];
-    W.write<uint8_t>(Key.first);
-    W.write<uint64_t>(Key.second);
-    W.write<uint32_t>(Numbers.size());
-    W.write<uint64_t>(Lists.size());
-    uint32_t Previous = 0;
-    for (uint32_t N : Numbers) {
-      encodeULEB128(N - Previous, ListsOS);
-      Previous = N;
-    }
+    PostingRecord{PostingKey{PostingKey::KeyKind(Key.first), Key.second},
+                  uint32_t(Numbers.size()), Lists.size()}
+        .write(OS);
+    writePostingList(ListsOS, Numbers);
   }
   OS << Lists;
 }
@@ -320,7 +230,7 @@ Error CorpusIndex::write(StringRef File, StringRef Root,
     support::endian::Writer(OS, llvm::endianness::little)
         .write<uint32_t>(FormatVersion);
     writeString(OS, LLVM_VERSION_STRING);
-    SmallVector<std::string, 96> Schema = getSchema();
+    SmallVector<std::string, 96> Schema = getFeatureSchema();
     encodeULEB128(Schema.size(), OS);
     for (const std::string &Name : Schema)
       writeString(OS, Name);
@@ -335,79 +245,6 @@ Error CorpusIndex::write(StringRef File, StringRef Root,
     writePostings(OS, Modules);
     return Error::success();
   });
-}
-
-static StringRef readString(DataExtractor &Data, DataExtractor::Cursor &C) {
-  uint64_t Size = Data.getULEB128(C);
-  return Data.getBytes(C, Size);
-}
-
-/// Reads what writeSortedKeys wrote. Returns false if a key does not fit T.
-template <typename T>
-static bool readSortedKeys(DataExtractor &Data, DataExtractor::Cursor &C,
-                           SmallVectorImpl<T> &Keys) {
-  uint64_t NumKeys = Data.getULEB128(C);
-  uint64_t Key = 0;
-  for (uint64_t I = 0; I != NumKeys && C; ++I) {
-    Key += Data.getULEB128(C);
-    if (Key > std::numeric_limits<T>::max())
-      return false;
-    Keys.push_back(Key);
-  }
-  return true;
-}
-
-/// Reads what writeSignatures wrote. Returns false if a signature is not
-/// valid.
-static bool readSignatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                           SmallVectorImpl<Signature> &Signatures) {
-  uint64_t NumSignatures = Data.getULEB128(C);
-  uint64_t ID = 0;
-  for (uint64_t I = 0; I != NumSignatures && C; ++I) {
-    ID += Data.getULEB128(C);
-    if (ID >= Instruction::NumInstructionIDs)
-      return false;
-    Signature Sig;
-    Sig.ID = Instruction::InstructionID(ID);
-    uint64_t Flags = Data.getULEB128(C);
-    if (Flags > UINT32_MAX)
-      return false;
-    Sig.Flags = Flags;
-    Sig.Result = Data.getULEB128(C);
-    for (TypeCode &Operand : Sig.Operands)
-      Operand = Data.getULEB128(C);
-    Signatures.push_back(Sig);
-  }
-  return true;
-}
-
-/// Reads what writeCoarse wrote. Returns false if the keys are not valid.
-static bool readCoarse(DataExtractor &Data, DataExtractor::Cursor &C,
-                       FunctionFeatures &Features) {
-  Features.Instructions = Data.getULEB128(C);
-  return readSortedKeys(Data, C, Features.Edges) &&
-         readSortedKeys(Data, C, Features.Siblings);
-}
-
-/// Reads what writeFine wrote if NeedsFine, given the coarse features, asks
-/// for it; otherwise skips it. Returns false if the features are not valid.
-static bool readFine(DataExtractor &Data, DataExtractor::Cursor &C,
-                     FunctionFeatures &Features,
-                     function_ref<bool(const FunctionFeatures &)> NeedsFine) {
-  uint64_t Size = Data.getULEB128(C);
-  uint64_t End = C.tell() + Size;
-  Features.Fine = false;
-  if (NeedsFine && !NeedsFine(Features)) {
-    Data.skip(C, Size);
-    return true;
-  }
-  Features.Fine = true;
-  if (!readSignatures(Data, C, Features.Signatures) ||
-      !readSortedKeys(Data, C, Features.Facts) ||
-      !readSortedKeys(Data, C, Features.Measures))
-    return false;
-  Features.HasValueFacts = Data.getU8(C);
-  return !C || C.tell() == End;
 }
 
 static Error malformed(StringRef File, const Twine &Message) {
@@ -445,7 +282,7 @@ Expected<CorpusIndex> CorpusIndex::read(StringRef File) {
       C && Version != LLVM_VERSION_STRING)
     return malformed(File, "index built with LLVM " + Version +
                                ", expected " LLVM_VERSION_STRING);
-  SmallVector<std::string, 96> Schema = getSchema();
+  SmallVector<std::string, 96> Schema = getFeatureSchema();
   uint64_t NumNames = Data.getULEB128(C);
   bool SameSchema = C && NumNames == Schema.size();
   for (uint64_t I = 0; I != NumNames && C; ++I)
@@ -481,9 +318,9 @@ Expected<CorpusIndex> CorpusIndex::read(StringRef File) {
   Index.NumPostingKeys = Data.getULEB128(C);
   Index.PostingKeysStart = C.tell();
   if (C && Index.NumPostingKeys >
-               (Data.size() - Index.PostingKeysStart) / PostingKeySize)
+               (Data.size() - Index.PostingKeysStart) / PostingRecord::Size)
     return malformed(File, "posting keys past the end");
-  Data.skip(C, Index.NumPostingKeys * PostingKeySize);
+  Data.skip(C, Index.NumPostingKeys * PostingRecord::Size);
   Index.PostingListsStart = C.tell();
   if (!C)
     return malformed(File, toString(C.takeError()));
@@ -529,14 +366,6 @@ const IndexEntry *CorpusIndex::lookup(StringRef Path) const {
   return Find(canonicalPath(Path));
 }
 
-/// The key of the posting key record at Index.
-static PostingKey postingKeyAt(StringRef Buffer, uint64_t Start,
-                               uint64_t Index) {
-  const char *Record = Buffer.data() + Start + Index * PostingKeySize;
-  return PostingKey{PostingKey::KeyKind(uint8_t(Record[0])),
-                    support::endian::read64le(Record + 1)};
-}
-
 /// The record of Key, if the index has it.
 static std::optional<uint64_t> findPostingKey(StringRef Buffer, uint64_t Start,
                                               uint64_t NumKeys,
@@ -544,12 +373,15 @@ static std::optional<uint64_t> findPostingKey(StringRef Buffer, uint64_t Start,
   uint64_t Low = 0, High = NumKeys;
   while (Low < High) {
     uint64_t Middle = Low + (High - Low) / 2;
-    if (postingKeyAt(Buffer, Start, Middle) < Key)
+    if (PostingRecord::readKey(Buffer.data() + Start +
+                               Middle * PostingRecord::Size) < Key)
       Low = Middle + 1;
     else
       High = Middle;
   }
-  if (Low == NumKeys || !(postingKeyAt(Buffer, Start, Low) == Key))
+  if (Low == NumKeys ||
+      !(PostingRecord::readKey(Buffer.data() + Start +
+                               Low * PostingRecord::Size) == Key))
     return std::nullopt;
   return Low;
 }
@@ -560,7 +392,7 @@ uint64_t CorpusIndex::getPostingCount(const PostingKey &Key) const {
   if (!Record)
     return 0;
   return support::endian::read32le(Buffer->getBufferStart() + PostingKeysStart +
-                                   *Record * PostingKeySize + 9);
+                                   *Record * PostingRecord::Size + 9);
 }
 
 Expected<std::vector<uint32_t>>
@@ -569,24 +401,14 @@ CorpusIndex::readPostings(const PostingKey &Key) const {
       Buffer->getBuffer(), PostingKeysStart, NumPostingKeys, Key);
   if (!Record)
     return std::vector<uint32_t>();
-  const char *Fields =
-      Buffer->getBufferStart() + PostingKeysStart + *Record * PostingKeySize;
-  uint32_t Count = support::endian::read32le(Fields + 9);
-  uint64_t Offset = support::endian::read64le(Fields + 13);
-  DataExtractor Data(Buffer->getBuffer(), /*IsLittleEndian=*/true);
-  DataExtractor::Cursor C(PostingListsStart + Offset);
-  std::vector<uint32_t> Numbers;
-  Numbers.reserve(Count);
-  uint64_t Number = 0;
-  for (uint32_t I = 0; I != Count && C; ++I) {
-    Number += Data.getULEB128(C);
-    Numbers.push_back(Number);
-  }
-  if (!C)
-    return malformed(Buffer->getBufferIdentifier(), toString(C.takeError()));
-  if (!Numbers.empty() && Numbers.back() >= NumFunctions)
+  PostingRecord Found =
+      PostingRecord::read(Buffer->getBufferStart() + PostingKeysStart +
+                          *Record * PostingRecord::Size);
+  Expected<std::vector<uint32_t>> Numbers = readPostingList(
+      getPostingLists(), Found.Offset, Found.Count, NumFunctions);
+  if (!Numbers)
     return malformed(Buffer->getBufferIdentifier(),
-                     "posting past the last function");
+                     toString(Numbers.takeError()));
   return Numbers;
 }
 
@@ -598,49 +420,25 @@ FunctionLocation CorpusIndex::locate(uint32_t Number) const {
 
 Expected<std::optional<std::vector<FunctionLocation>>>
 CorpusIndex::findCandidates(const FeatureQuery &Query) const {
-  // The lists intersected per variant: the shortest few narrow the most.
-  constexpr size_t MaxIntersected = 3;
-  std::vector<uint32_t> Candidates;
-  for (unsigned Variant = 0; Variant != Query.size(); ++Variant) {
-    FunctionFeatures Required;
-    const FeatureRequirement &Requirement = Query.getRequirement(Variant);
-    Required.Instructions = Requirement.Instructions;
-    for (auto [User, Operand] : Requirement.Edges)
-      Required.Edges.push_back(FunctionFeatures::getEdgeKey(User, Operand));
-    Required.Siblings.assign(Requirement.Siblings.begin(),
-                             Requirement.Siblings.end());
-    Required.Globals.assign(Requirement.Globals.begin(),
-                            Requirement.Globals.end());
-    SmallVector<std::pair<uint64_t, PostingKey>, 8> Keys;
-    forEachPostingKey(Required, [&](const PostingKey &Key) {
-      Keys.push_back({getPostingCount(Key), Key});
-    });
-    if (Keys.empty())
-      return std::nullopt;
-    llvm::sort(Keys,
-               [](const auto &L, const auto &R) { return L.first < R.first; });
-    if (Keys.front().first == 0)
-      continue;
-
-    std::vector<uint32_t> Matching;
-    for (size_t I = 0; I != std::min(Keys.size(), MaxIntersected); ++I) {
-      Expected<std::vector<uint32_t>> Numbers = readPostings(Keys[I].second);
+  std::optional<std::vector<SmallVector<PostingKey, 3>>> Chosen =
+      choosePostingKeys(
+          Query, [&](const PostingKey &Key) { return getPostingCount(Key); });
+  if (!Chosen)
+    return std::nullopt;
+  std::map<PostingKey, std::vector<uint32_t>> Lists;
+  for (const SmallVector<PostingKey, 3> &Keys : *Chosen)
+    for (const PostingKey &Key : Keys) {
+      if (Lists.count(Key))
+        continue;
+      Expected<std::vector<uint32_t>> Numbers = readPostings(Key);
       if (!Numbers)
         return Numbers.takeError();
-      if (I == 0) {
-        Matching = std::move(*Numbers);
-        continue;
-      }
-      std::vector<uint32_t> Common;
-      std::set_intersection(Matching.begin(), Matching.end(), Numbers->begin(),
-                            Numbers->end(), std::back_inserter(Common));
-      Matching = std::move(Common);
+      Lists[Key] = std::move(*Numbers);
     }
-    std::vector<uint32_t> Union;
-    std::set_union(Candidates.begin(), Candidates.end(), Matching.begin(),
-                   Matching.end(), std::back_inserter(Union));
-    Candidates = std::move(Union);
-  }
+  std::vector<uint32_t> Candidates =
+      combinePostings(*Chosen, [&](const PostingKey &Key) {
+        return ArrayRef<uint32_t>(Lists[Key]);
+      });
 
   std::vector<FunctionLocation> Locations;
   Locations.reserve(Candidates.size());
@@ -656,11 +454,11 @@ Expected<FunctionFeatures> CorpusIndex::readSummary(
                      /*IsLittleEndian=*/true);
   DataExtractor::Cursor C(SummariesStart + Entry.SummaryOffset);
   FunctionFeatures Summary;
-  bool Valid = readCoarse(Data, C, Summary);
+  bool Valid = readCoarseFeatures(Data, C, Summary);
   uint64_t NumGlobals = Data.getULEB128(C);
   for (uint64_t I = 0; I != NumGlobals && C; ++I)
     Summary.Globals.push_back(Data.getU64(C));
-  Valid = Valid && readFine(Data, C, Summary, NeedsFine);
+  Valid = Valid && readFineFeatures(Data, C, Summary, NeedsFine);
   if (!C || !Valid)
     return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   return Summary;
@@ -679,7 +477,7 @@ Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
   bool Valid = true;
   for (IndexedFunction &Function : Functions) {
     Function.NameHash = Data.getU64(C);
-    Valid &= readCoarse(Data, C, Function.Features);
+    Valid &= readCoarseFeatures(Data, C, Function.Features);
     uint64_t NumGlobals = Data.getULEB128(C);
     uint64_t Position = 0;
     for (uint64_t I = 0; I != NumGlobals && C && Valid; ++I) {
@@ -688,7 +486,7 @@ Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
       if (Valid)
         Function.Features.Globals.push_back(Summary->Globals[Position]);
     }
-    Valid = Valid && readFine(Data, C, Function.Features, NeedsFine);
+    Valid = Valid && readFineFeatures(Data, C, Function.Features, NeedsFine);
     if (!C || !Valid)
       return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   }

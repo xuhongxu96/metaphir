@@ -1,6 +1,7 @@
 #ifndef METAPHIR_INDEX_CORPUSINDEX_H
 #define METAPHIR_INDEX_CORPUSINDEX_H
 
+#include "metaphir/Index/Postings.h"
 #include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/Features.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
@@ -73,20 +74,6 @@ struct IndexEntry {
   uint64_t FunctionsOffset = 0;
 };
 
-/// A coarse feature the index lists the functions of: an instruction kind, an
-/// edge or sibling key (see FunctionFeatures), or a global's hash.
-struct PostingKey {
-  enum KeyKind : uint8_t { Instruction, Edge, Sibling, Global };
-  KeyKind Kind;
-  uint64_t Value;
-
-  auto tie() const { return std::make_tuple(Kind, Value); }
-  bool operator<(const PostingKey &Other) const { return tie() < Other.tie(); }
-  bool operator==(const PostingKey &Other) const {
-    return tie() == Other.tie();
-  }
-};
-
 /// Where functions are: each by its entry's index and its ordinal there.
 struct FunctionLocation {
   size_t Entry;
@@ -123,6 +110,20 @@ public:
   std::optional<std::string> getRelativePath(StringRef Path) const;
   size_t getEntryIndex(const IndexEntry &Entry) const {
     return &Entry - Entries.data();
+  }
+
+  /// The number of functions indexed.
+  uint32_t getNumFunctions() const { return NumFunctions; }
+  /// The number of the first function of the entry at Index.
+  uint32_t getFirstFunction(size_t Index) const { return FirstFunction[Index]; }
+  /// The posting key records, sorted by key (see PostingRecord), and the
+  /// lists they point to.
+  StringRef getPostingRecords() const {
+    return Buffer->getBuffer().substr(PostingKeysStart,
+                                      NumPostingKeys * PostingRecord::Size);
+  }
+  StringRef getPostingLists() const {
+    return Buffer->getBuffer().substr(PostingListsStart);
   }
 
   /// The number of functions with Key.

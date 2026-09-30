@@ -20,10 +20,10 @@ ConcreteDomain::~ConcreteDomain() = default;
 
 void ConcreteDomain::resetAnalyses() { Analysis->reset(); }
 
-void ConcreteDomain::requireCompleteUses(const llvm::Value &V) {
-  // Only constants other than plain data are used across functions.
-  if (UseListCompleter && isa<llvm::Constant>(V) && !isa<ConstantData>(V))
-    UseListCompleter();
+std::optional<ModuleUses> ConcreteDomain::getModuleUses(const llvm::Value &V) {
+  if (!Uses || !isUsedAcrossFunctions(V))
+    return std::nullopt;
+  return Uses->getModuleUses(V);
 }
 
 /// Names Expression's variable in a diagnostic.

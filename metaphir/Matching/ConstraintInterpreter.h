@@ -3,7 +3,6 @@
 
 #include "metaphir/Matching/ConstraintValue.h"
 #include "llvm/Support/Error.h"
-#include <functional>
 #include <memory>
 
 namespace llvm {
@@ -11,6 +10,7 @@ class Value;
 namespace metaphir {
 
 class ConcreteDomain;
+class UseOracle;
 class Constraint;
 class Instantiation;
 class MIRContext;
@@ -31,10 +31,10 @@ public:
   /// the functions they were built for are freed.
   void resetAnalyses();
 
-  /// Sets what makes the use lists of constants complete, for a module whose
-  /// functions are not all materialized: uses of a global or constant
-  /// expression can be in any function.
-  void setUseListCompleter(std::function<void()> Completer);
+  /// Sets what tells how constants are used in their module, when the IR
+  /// matched has only part of it: uses of a global or constant expression
+  /// can be in any function. Oracle must outlive the matching.
+  void setUseOracle(UseOracle *Oracle);
 
 private:
   std::unique_ptr<ConcreteDomain> Domain;

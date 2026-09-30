@@ -3,6 +3,7 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/Matching/Instantiation.h"
+#include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Matching/ValueTrackContext.h"
 #include "test/TestUtils.h"
 #include "llvm/AsmParser/Parser.h"
@@ -246,6 +247,55 @@ TEST_F(ConstraintInterpreterTest, EvaluatesUsePredicates) {
 
   EXPECT_TRUE(evaluateBoolean(*call("hasOneUse", ExprB)));
   EXPECT_TRUE(evaluateBoolean(*call("hasOneUser", ExprB)));
+}
+
+/// Claims every value it is asked about has one use but two users.
+class OneUseOracle : public UseOracle {
+public:
+  std::optional<ModuleUses> getModuleUses(const llvm::Value &V) override {
+    Asked.push_back(&V);
+    return ModuleUses{/*OneUse=*/true, /*OneUser=*/false};
+  }
+  SmallVector<const llvm::Value *, 2> Asked;
+};
+
+TEST_F(ConstraintInterpreterTest, AsksUseOracleAboutConstants) {
+  LLVMContext LLVMContext;
+  SMDiagnostic Error;
+  std::unique_ptr<Module> M = parseAssemblyString(
+      R"(
+        @g = global i32 0
+        define i32 @f() {
+          %a = load i32, ptr @g
+          %b = load i32, ptr @g
+          %c = add i32 %a, %b
+          ret i32 %c
+        }
+      )",
+      Error, LLVMContext);
+  ASSERT_NE(M, nullptr);
+  const llvm::Instruction *A = &M->getFunction("f")->getEntryBlock().front();
+
+  MetaVariable *Global =
+      MetaVariable::create(Context, "g", MetaType::Value, Range);
+  MetaVariable *Load =
+      MetaVariable::create(Context, "a", MetaType::Value, Range);
+  VariableConstraint *GlobalExpr = VariableConstraint::create(
+      Context, Global, Constraint::ValueResult, Range);
+  VariableConstraint *LoadExpr =
+      VariableConstraint::create(Context, Load, Constraint::ValueResult, Range);
+  State.bind(*Global, M->getNamedGlobal("g"));
+  State.bind(*Load, A);
+
+  OneUseOracle Oracle;
+  Interpreter.setUseOracle(&Oracle);
+  // The function uses @g twice, but its module is what counts.
+  EXPECT_TRUE(evaluateBoolean(*call("hasOneUse", GlobalExpr)));
+  EXPECT_FALSE(evaluateBoolean(*call("hasOneUser", GlobalExpr)));
+  // Instructions are only used in their function.
+  EXPECT_TRUE(evaluateBoolean(*call("hasOneUse", LoadExpr)));
+  EXPECT_TRUE(evaluateBoolean(*call("hasOneUser", LoadExpr)));
+  EXPECT_EQ(Oracle.Asked.size(), 2u);
 }
 
 TEST_F(ConstraintInterpreterTest, EvaluatesOpcodePredicates) {

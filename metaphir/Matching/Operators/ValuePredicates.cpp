@@ -246,23 +246,20 @@ Expected<ConstraintValue> OpIsScalar::concrete(const ConcreteCall &Call) {
                                      Kind == ConstraintValue::Boolean);
 }
 
-/// Whether the uses of V may be in other functions, whose bodies a lazily
-/// loaded module may not have yet: the counts the index saw can differ from
-/// the matcher's, so the index records the fact regardless.
-static bool mayBeUsedElsewhere(const llvm::Value &V) {
-  return isa<llvm::Constant>(V) && !isa<ConstantData>(V);
-}
-
 bool OpHasOneUse::holds(const llvm::Value &V) { return V.hasOneUse(); }
 
 Expected<ConstraintValue> OpHasOneUse::concrete(const ConcreteCall &Call) {
   if (const llvm::Value *V = valueOperand(Call))
-    Call.RequireCompleteUses(*V);
+    if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*V))
+      return ConstraintValue::getBoolean(Uses->OneUse);
   return valuePredicate<OpHasOneUse>(Call);
 }
 
+// Uses in other functions may be missing from the IR at hand, so the counts
+// the index saw can differ from the matcher's: the index records the fact
+// regardless.
 void OpHasOneUse::record(const RecordCall &Call) {
-  if (mayBeUsedElsewhere(Call.Value) || holds(Call.Value))
+  if (isUsedAcrossFunctions(Call.Value) || holds(Call.Value))
     Call.Sink.add(Fact);
 }
 
@@ -270,12 +267,13 @@ bool OpHasOneUser::holds(const llvm::Value &V) { return V.hasOneUser(); }
 
 Expected<ConstraintValue> OpHasOneUser::concrete(const ConcreteCall &Call) {
   if (const llvm::Value *V = valueOperand(Call))
-    Call.RequireCompleteUses(*V);
+    if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*V))
+      return ConstraintValue::getBoolean(Uses->OneUser);
   return valuePredicate<OpHasOneUser>(Call);
 }
 
 void OpHasOneUser::record(const RecordCall &Call) {
-  if (mayBeUsedElsewhere(Call.Value) || holds(Call.Value))
+  if (isUsedAcrossFunctions(Call.Value) || holds(Call.Value))
     Call.Sink.add(Fact);
 }
 

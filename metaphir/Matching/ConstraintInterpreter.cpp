@@ -22,9 +22,8 @@ ConstraintInterpreter::evaluate(const Constraint &Expression,
 
 void ConstraintInterpreter::resetAnalyses() { Domain->resetAnalyses(); }
 
-void ConstraintInterpreter::setUseListCompleter(
-    std::function<void()> Completer) {
-  Domain->setUseListCompleter(std::move(Completer));
+void ConstraintInterpreter::setUseOracle(UseOracle *Oracle) {
+  Domain->setUseOracle(Oracle);
 }
 
 } // namespace metaphir

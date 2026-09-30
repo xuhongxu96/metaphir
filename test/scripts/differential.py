@@ -4,12 +4,14 @@
 Every pattern of every lit test under test/Matching is matched against the
 test's IR files in each mode of a group; within a group, the outputs must be
 identical. The indexed modes run on the files assembled to bitcode, which is
-loaded lazily.
+loaded lazily. Matching the bitcode published with metaphir-index publish
+(--packs) must find the same matches, but for how metadata is numbered.
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -36,6 +38,25 @@ BITCODE_GROUPS = [
         ["--matches-only", "--index", INDEX, "--trust-index", "-j", "4"],
     ],
 ]
+
+
+# Packs number metadata within their function.
+METADATA = re.compile(r"!\d+")
+# The published corpus refuses patterns that need no instruction.
+MATCHES_ANY = "could match any function"
+
+
+# The patterns --packs refuses, for the summary.
+SKIPPED: list[str] = []
+
+
+def normalize_packs(output: str, files: Path) -> str:
+    """The matches of a plain run, as --packs prints them."""
+    prefix = f"{files}/"
+    lines = [
+        line.removeprefix(prefix) for line in output.splitlines(keepends=True)
+    ]
+    return METADATA.sub("!N", "".join(lines))
 
 
 def run(command: list[str]) -> tuple[int, str, str]:
@@ -77,6 +98,12 @@ def check_test(test: Path, args: argparse.Namespace, work: Path) -> list[str]:
         check=True,
         capture_output=True,
     )
+    published = work / f"{test.stem}.published"
+    subprocess.run(
+        [args.index, "publish", str(index), "-o", str(published)],
+        check=True,
+        capture_output=True,
+    )
 
     failures = []
     for pattern in sorted(directory.rglob("*.mpir")):
@@ -94,6 +121,24 @@ def check_test(test: Path, args: argparse.Namespace, work: Path) -> list[str]:
                             f"{test.name}: {pattern.name}: {' '.join(shown)}"
                             f" differs from {' '.join(group[0]) or 'the default'}"
                         )
+        plain = run([args.match, "--matches-only", str(pattern), str(bitcode)])
+        packs = run(
+            [
+                args.match,
+                "--matches-only",
+                "--packs",
+                str(published),
+                str(pattern),
+            ]
+        )
+        if MATCHES_ANY in packs[2]:
+            SKIPPED.append(f"{test.name}: {pattern.name}")
+            continue
+        if METADATA.sub("!N", packs[1]) != normalize_packs(plain[1], bitcode):
+            failures.append(
+                f"{test.name}: {pattern.name}: --packs differs from"
+                " --matches-only"
+            )
     return failures
 
 
@@ -116,7 +161,10 @@ def main() -> int:
             failures += check_test(test, args, Path(work))
     for failure in failures:
         print(failure, file=sys.stderr)
-    print(f"{len(tests)} tests, {len(failures)} differences")
+    print(
+        f"{len(tests)} tests, {len(failures)} differences;"
+        f" --packs refused {len(SKIPPED)} patterns that need no instruction"
+    )
     return 1 if failures else 0
 
 

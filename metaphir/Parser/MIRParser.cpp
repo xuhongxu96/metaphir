@@ -183,7 +183,12 @@ bool parseMIRFile(StringRef Filename, SourceMgr &SM, MIRContext &Context,
                         "cannot read file: " + Buffer.getError().message());
     return true;
   }
-  unsigned BufferID = SM.AddNewSourceBuffer(std::move(*Buffer), SMLoc());
+  return parseMIRBuffer(std::move(*Buffer), SM, Context, Result, Diag);
+}
+
+bool parseMIRBuffer(std::unique_ptr<MemoryBuffer> Buffer, SourceMgr &SM,
+                    MIRContext &Context, Pattern *&Result, SMDiagnostic &Diag) {
+  unsigned BufferID = SM.AddNewSourceBuffer(std::move(Buffer), SMLoc());
   MIRParser Parser(SM.getMemoryBuffer(BufferID)->getBuffer(), SM, Diag,
                    Context);
   return Parser.parse(Result);

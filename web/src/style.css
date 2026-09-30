@@ -1,0 +1,219 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --border: #d0d7de;
+  --muted: #57606a;
+  --fg: #1f2328;
+  --bg: #ffffff;
+  --bg-alt: #f6f8fa;
+  --accent: #0969da;
+  --accent-bg: rgba(9, 105, 218, 0.12);
+  --on-accent: #ffffff;
+  --error: #cf222e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --border: #30363d;
+    --muted: #8b949e;
+    --fg: #e6edf3;
+    --bg: #0d1117;
+    --bg-alt: #161b22;
+    --accent: #58a6ff;
+    --accent-bg: rgba(88, 166, 255, 0.16);
+    --on-accent: #0d1117;
+    --error: #ff7b72;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --border: #30363d;
+  --muted: #8b949e;
+  --fg: #e6edf3;
+  --bg: #0d1117;
+  --bg-alt: #161b22;
+  --accent: #58a6ff;
+  --accent-bg: rgba(88, 166, 255, 0.16);
+  --on-accent: #0d1117;
+  --error: #ff7b72;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); }
+
+.app {
+  display: grid;
+  /* Wide content scrolls within its pane, never widening the page. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+}
+
+.toolbar {
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.toolbar h1 { font-size: 1rem; margin: 0; font-weight: 600; }
+.toolbar .status {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.toolbar .status.error { color: var(--error); white-space: normal; }
+
+button {
+  padding: 0.3rem 0.9rem;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: inherit;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+button:disabled { opacity: 0.55; cursor: default; }
+button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
+
+.picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.picker select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  border-radius: 4px;
+  font: inherit;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+/* The progress of a run, along the toolbar's bottom edge. */
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  overflow: hidden;
+  background: var(--accent-bg);
+}
+.progress > div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.15s ease-out;
+}
+.progress.indeterminate > div {
+  width: 30%;
+  animation: sweep 1.2s ease-in-out infinite;
+}
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(340%); }
+}
+
+@media (max-width: 1000px) {
+  .toolbar { flex-wrap: wrap; }
+  .toolbar .status { margin-left: 0; width: 100%; order: 10; }
+}
+
+.panes { min-height: 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
+.pane { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.pane-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+  min-height: 2.1rem;
+}
+.pane-header .title { color: var(--fg); font-weight: 600; white-space: nowrap; }
+.pane-header .hint { margin-left: auto; }
+.pane-header .title { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pane-header .spacer { flex: 1; }
+.binding-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  max-height: 6rem;
+  overflow: auto;
+}
+.binding {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-alt);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.binding .variable { color: var(--accent); }
+.pane-body { flex: 1; min-height: 0; position: relative; }
+.pane-body.results { overflow: auto; outline: none; }
+.empty { color: var(--muted); padding: 1rem; margin: 0; font-size: 0.9rem; }
+
+.separator { background: var(--border); }
+.separator.vertical { width: 4px; cursor: col-resize; }
+.separator.horizontal { height: 4px; cursor: row-resize; }
+.separator:hover, .separator[data-separator="active"] { background: var(--accent); }
+
+.local {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 12.5px; }
+col.module { width: 34%; }
+col.function { width: 26%; }
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--bg-alt); }
+tbody tr.selected { background: var(--accent-bg); }
+
+.bound-line { background: var(--accent-bg); }

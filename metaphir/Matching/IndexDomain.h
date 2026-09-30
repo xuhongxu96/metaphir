@@ -81,7 +81,9 @@ public:
     if (std::optional<SmallVector<ConstraintValue, 2>> Concrete =
             allConcrete(Operands)) {
       Expected<ConstraintValue> Result = Op::concrete(
-          ConcreteCall{*Concrete, Expression, [](const llvm::Value &) {}});
+          ConcreteCall{*Concrete, Expression, [](const llvm::Value &) {
+                         return std::optional<ModuleUses>();
+                       }});
       if (!Result)
         return Result.takeError();
       return AbstractValue::concrete(std::move(*Result));

@@ -31,10 +31,8 @@ public:
   explicit PatternMatcher(MIRContext *Context = nullptr)
       : Interpreter(Context) {}
 
-  /// See ConstraintInterpreter::setUseListCompleter.
-  void setUseListCompleter(std::function<void()> Completer) {
-    Interpreter.setUseListCompleter(std::move(Completer));
-  }
+  /// See ConstraintInterpreter::setUseOracle.
+  void setUseOracle(UseOracle *Oracle) { Interpreter.setUseOracle(Oracle); }
 
   /// The instantiations of Pattern's instructions in Program, before its
   /// constraints are checked.

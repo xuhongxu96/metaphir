@@ -6,6 +6,8 @@
 #include "metaphir/Parser/MIRLexer.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include <memory>
 
 namespace llvm {
 namespace metaphir {
@@ -15,6 +17,9 @@ namespace metaphir {
 /// diagnostic in Diag.
 bool parseMIRFile(StringRef Filename, SourceMgr &SM, MIRContext &Context,
                   Pattern *&Result, SMDiagnostic &Diag);
+/// Parses Buffer as parseMIRFile parses a file.
+bool parseMIRBuffer(std::unique_ptr<MemoryBuffer> Buffer, SourceMgr &SM,
+                    MIRContext &Context, Pattern *&Result, SMDiagnostic &Diag);
 
 class MIRParser {
 public:

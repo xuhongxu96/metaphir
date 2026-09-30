@@ -2,8 +2,10 @@
 #define METAPHIR_MATCHING_OPERATORS_OPERATORCALL_H
 
 #include "metaphir/Matching/ConstraintValue.h"
+#include "metaphir/Matching/UseOracle.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
+#include <optional>
 
 namespace llvm {
 struct SimplifyQuery;
@@ -24,8 +26,9 @@ struct ConcreteCall {
   ArrayRef<ConstraintValue> Operands;
   /// The operator, for diagnostics.
   const Constraint &Expression;
-  /// Makes the use list of a value complete before it is inspected.
-  function_ref<void(const llvm::Value &)> RequireCompleteUses;
+  /// How a value used across functions is used in its module, if its use
+  /// list is not complete.
+  function_ref<std::optional<ModuleUses>(const llvm::Value &)> GetModuleUses;
   /// The value-tracking query, for value-tracking operators only.
   const SimplifyQuery *Query = nullptr;
 };

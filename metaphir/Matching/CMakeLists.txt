@@ -34,6 +34,8 @@ add_library(
   Instantiation.h
   TypeMatcher.cpp
   TypeMatcher.h
+  UseOracle.cpp
+  UseOracle.h
   SubtreeMatcher.cpp
   SubtreeMatcher.h
   IndexDomain.cpp

@@ -5,6 +5,7 @@
 #include "metaphir/Index/CorpusIndex.h"
 #include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Parser/MIRParser.h"
+#include "metaphir/Web/WebPublisher.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
@@ -60,6 +61,24 @@ static cl::opt<std::string> StatsPattern(cl::Positional, cl::Required,
 static cl::opt<std::string> StatsIndex(cl::Positional, cl::Required,
                                        cl::desc("<index>"), cl::sub(Stats),
                                        cl::cat(Category));
+
+static cl::SubCommand
+    Publish("publish",
+            "Publish an indexed corpus for matching over HTTP, as the website "
+            "and metaphir-match --packs do");
+static cl::opt<std::string> PublishIndex(cl::Positional, cl::Required,
+                                         cl::desc("<index>"), cl::sub(Publish),
+                                         cl::cat(Category));
+static cl::opt<std::string>
+    PublishOutput("o", cl::Required,
+                  cl::desc("The directory to write the published files to"),
+                  cl::value_desc("directory"), cl::sub(Publish),
+                  cl::cat(Category));
+static cl::opt<unsigned>
+    PublishJobs("j",
+                cl::desc("Pack this many modules at once (0: one per "
+                         "hardware thread)"),
+                cl::init(0), cl::sub(Publish), cl::cat(Category));
 
 static int build(StringRef ToolName) {
   SmallVector<std::string, 16> Files;
@@ -233,6 +252,26 @@ static int stats(StringRef ToolName) {
   return 0;
 }
 
+static int publish(StringRef ToolName) {
+  Expected<CorpusIndex> Index = CorpusIndex::read(PublishIndex);
+  if (!Index) {
+    logAllUnhandledErrors(Index.takeError(), errs(),
+                          Twine(ToolName) + ": error: ");
+    return 1;
+  }
+  PublishOptions Options;
+  Options.Jobs = PublishJobs;
+  Options.Progress = &errs();
+  if (Error E = publishCorpus(*Index, PublishOutput, Options)) {
+    logAllUnhandledErrors(std::move(E), errs(), Twine(ToolName) + ": error: ");
+    return 1;
+  }
+  errs() << "published " << Index->size() << " files ("
+         << Index->getNumFunctions() << " functions) to " << PublishOutput
+         << '\n';
+  return 0;
+}
+
 int main(int Argc, char **Argv) {
   InitLLVM X(Argc, Argv);
   cl::HideUnrelatedOptions(Category);
@@ -249,7 +288,9 @@ int main(int Argc, char **Argv) {
     return dump(ToolName);
   if (Stats)
     return stats(ToolName);
+  if (Publish)
+    return publish(ToolName);
   errs() << ToolName
-         << ": error: expected a subcommand: build, dump or stats\n";
+         << ": error: expected a subcommand: build, dump, stats or publish\n";
   return 1;
 }

@@ -5,8 +5,12 @@
 #include "metaphir/Index/CorpusIndex.h"
 #include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/PatternMatcher.h"
+#include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Parser/MIRParser.h"
+#include "metaphir/Web/WebIndex.h"
+#include "metaphir/Web/WebQuery.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
@@ -38,7 +42,7 @@ static cl::opt<std::string> PatternFilename(cl::Positional, cl::Required,
                                             cl::desc("<pattern>"),
                                             cl::cat(Category));
 static cl::list<std::string>
-    InputPaths(cl::Positional, cl::OneOrMore,
+    InputPaths(cl::Positional, cl::ZeroOrMore,
                cl::desc("<llvm-ir file or directory>..."), cl::cat(Category));
 static cl::opt<bool> MatchesOnly(
     "matches-only",
@@ -60,6 +64,11 @@ static cl::opt<bool> TrustIndex(
     cl::desc("Match only the indexed files the index shows may match, without "
              "looking for other files or changes to those (needs --index)"),
     cl::cat(Category));
+static cl::opt<std::string> PacksDir(
+    "packs",
+    cl::desc("Match the corpus published in this directory (by "
+             "metaphir-index publish) instead of files; needs --matches-only"),
+    cl::value_desc("directory"), cl::cat(Category));
 static cl::opt<bool>
     PrintSummary("summary",
                  cl::desc("Print how many functions and files were matched "
@@ -348,16 +357,12 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
   // A matcher per module: its cached analyses belong to the module's
   // functions.
   PatternMatcher Matcher(&Pattern.Context);
-  bool Materialized = false;
-  if (*M && (*M)->getMaterializer())
-    // Uses of globals in functions not read yet count too.
-    Matcher.setUseListCompleter([&] {
-      if (Materialized)
-        return;
-      Materialized = true;
-      if (Error E = (**M).materializeAll())
-        report_fatal_error(Twine(File) + ": " + toString(std::move(E)));
-    });
+  // Uses of globals in functions not read yet count too.
+  std::optional<MaterializingUseOracle> Uses;
+  if (*M && (*M)->getMaterializer()) {
+    Uses.emplace(**M);
+    Matcher.setUseOracle(&*Uses);
+  }
   // Numbers the unnamed values of the function whose matches are printed; one
   // per module, as numbering the module's globals is costly.
   std::optional<ModuleSlotTracker> Slots;
@@ -489,6 +494,119 @@ static MatchStats matchInParallel(ArrayRef<std::string> Files,
   return Stats;
 }
 
+/// Maps the published file Name in PacksDir, reporting an error.
+static std::unique_ptr<MemoryBuffer> mapPublished(StringRef Name,
+                                                  StringRef ToolName) {
+  SmallString<256> Path(PacksDir);
+  sys::path::append(Path, Name);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer =
+      MemoryBuffer::getFile(Path, /*IsText=*/false,
+                            /*RequiresNullTerminator=*/false);
+  if (!Buffer) {
+    errs() << ToolName << ": error: " << Path << ": "
+           << Buffer.getError().message() << '\n';
+    return nullptr;
+  }
+  return std::move(*Buffer);
+}
+
+/// Matches the pattern against the corpus published in PacksDir, as the
+/// website does, with the files read whole.
+static int matchPacks(StringRef ToolName) {
+  auto Fail = [&](Error E) {
+    logAllUnhandledErrors(std::move(E), errs(), Twine(ToolName) + ": error: ");
+    return 1;
+  };
+  std::unique_ptr<MemoryBuffer> Header =
+      mapPublished(WebHeaderFileName, ToolName);
+  if (!Header)
+    return 1;
+  Expected<std::unique_ptr<WebIndex>> Index =
+      WebIndex::read(Header->getBuffer());
+  if (!Index)
+    return Fail(Index.takeError());
+  std::unique_ptr<MemoryBuffer> Files[NumWebFiles];
+  ByteCache Cache;
+  for (unsigned File = 0; File != NumWebFiles; ++File) {
+    Files[File] = mapPublished(getWebFileName(WebFile(File)), ToolName);
+    if (!Files[File])
+      return 1;
+    Cache.addBorrowed(WebFile(File), 0, Files[File]->getBuffer());
+  }
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Source =
+      MemoryBuffer::getFile(PatternFilename);
+  if (!Source)
+    return Fail(createFileError(PatternFilename, Source.getError()));
+  auto Compile = [&] {
+    return WebQuery::compile(**Index, (*Source)->getBuffer(), PatternFilename);
+  };
+  Expected<std::unique_ptr<WebQuery>> Query = Compile();
+  if (!Query)
+    return Fail(Query.takeError());
+  using Stage =
+      Expected<std::vector<ByteRange>> (WebQuery::*)(const ByteCache &);
+  for (Stage Next : {&WebQuery::findLists, &WebQuery::findCandidates,
+                     &WebQuery::findFeatures, &WebQuery::filterCandidates})
+    if (Expected<std::vector<ByteRange>> Needed = ((**Query).*Next)(Cache);
+        !Needed)
+      return Fail(Needed.takeError());
+
+  // The matches of each function, printed in order as they are done.
+  ArrayRef<uint32_t> Matchable = (*Query)->getMatchable();
+  struct Output {
+    std::string Out, Err;
+  };
+  std::vector<Output> Outputs(Matchable.size());
+  std::vector<bool> Done(Matchable.size());
+  std::mutex Mutex;
+  std::condition_variable FunctionDone;
+  std::atomic<size_t> Next{0};
+  std::atomic<bool> Failed{false};
+  auto Work = [&] {
+    // Each thread matches with its own pattern.
+    Expected<std::unique_ptr<WebQuery>> Own = Compile();
+    for (size_t I; (I = Next++) < Matchable.size();) {
+      Output Matched;
+      raw_string_ostream Out(Matched.Out);
+      Error E = Own ? (*Own)->match(
+                          Matchable[I],
+                          *Cache.get((*Query)->getPackRange(Matchable[I])), Out)
+                    : Own.takeError();
+      if (E) {
+        Failed = true;
+        raw_string_ostream(Matched.Err)
+            << ToolName << ": error: " << toString(std::move(E)) << '\n';
+      }
+      std::lock_guard<std::mutex> Lock(Mutex);
+      Outputs[I] = std::move(Matched);
+      Done[I] = true;
+      FunctionDone.notify_all();
+    }
+  };
+  unsigned Threads =
+      Jobs ? Jobs.getValue() : hardware_concurrency().compute_thread_count();
+  std::vector<std::thread> Workers;
+  for (unsigned I = 0; I != std::max(Threads, 1u); ++I)
+    Workers.emplace_back(Work);
+  for (size_t I = 0; I != Matchable.size(); ++I) {
+    Output Matched;
+    {
+      std::unique_lock<std::mutex> Lock(Mutex);
+      FunctionDone.wait(Lock, [&] { return bool(Done[I]); });
+      Matched = std::move(Outputs[I]);
+    }
+    outs() << Matched.Out;
+    errs() << Matched.Err;
+  }
+  for (std::thread &Worker : Workers)
+    Worker.join();
+  if (PrintSummary)
+    errs() << "matched " << Matchable.size() << " of "
+           << (*Index)->getNumFunctions() << " functions ("
+           << (*Query)->getCandidates().size() << " on the posting lists)\n";
+  return Failed ? 1 : 0;
+}
+
 int main(int Argc, char **Argv) {
   InitLLVM X(Argc, Argv);
   cl::HideUnrelatedOptions(Category);
@@ -509,6 +627,23 @@ int main(int Argc, char **Argv) {
   }
   if (TrustIndex && IndexFile.empty()) {
     errs() << ToolName << ": error: --trust-index needs --index\n";
+    return 1;
+  }
+  if (!PacksDir.empty()) {
+    if (!MatchesOnly || !IndexFile.empty() || !InputPaths.empty()) {
+      errs() << ToolName
+             << ": error: --packs needs --matches-only, and no --index or "
+                "input files\n";
+      return 1;
+    }
+    // Report the pattern's errors and warnings as for files.
+    if (!loadPattern(ToolName, errs()))
+      return 1;
+    return matchPacks(ToolName);
+  }
+  if (InputPaths.empty()) {
+    errs() << ToolName
+           << ": error: expected LLVM IR files or directories to match\n";
     return 1;
   }
 

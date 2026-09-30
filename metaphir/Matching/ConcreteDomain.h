@@ -5,9 +5,9 @@
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Instantiation.h"
 #include "metaphir/Matching/Operators/OperatorCall.h"
+#include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Matching/ValueTrackContext.h"
 #include "llvm/Support/Error.h"
-#include <functional>
 #include <memory>
 #include <optional>
 
@@ -45,12 +45,10 @@ public:
   /// Drops the analyses cached for value-tracking operators. Call it before
   /// the functions they were built for are freed.
   void resetAnalyses();
-  /// See ConstraintInterpreter::setUseListCompleter.
-  void setUseListCompleter(std::function<void()> Completer) {
-    UseListCompleter = std::move(Completer);
-  }
-  /// Makes V's use list complete before it is inspected.
-  void requireCompleteUses(const llvm::Value &V);
+  /// See ConstraintInterpreter::setUseOracle.
+  void setUseOracle(UseOracle *Oracle) { Uses = Oracle; }
+  /// How V is used in its module, if its use list is not complete.
+  std::optional<ModuleUses> getModuleUses(const llvm::Value &V);
 
   Value fromConcrete(ConstraintValue V) const { return V; }
   Expected<Value> variable(const VariableConstraint &Expression,
@@ -64,8 +62,9 @@ public:
   Expected<Value> apply(ArrayRef<Value> Operands,
                         const OperatorConstraint &Expression) {
     return Op::concrete(
-        ConcreteCall{Operands, Expression,
-                     [this](const llvm::Value &V) { requireCompleteUses(V); }});
+        ConcreteCall{Operands, Expression, [this](const llvm::Value &V) {
+                       return getModuleUses(V);
+                     }});
   }
 
   Expected<Context> explicitContext(Value Explicit,
@@ -78,7 +77,7 @@ public:
     SimplifyQuery Query = Analysis->getQuery(CtxI);
     return Op::concrete(ConcreteCall{
         Operands, Expression,
-        [this](const llvm::Value &V) { requireCompleteUses(V); }, &Query});
+        [this](const llvm::Value &V) { return getModuleUses(V); }, &Query});
   }
 
   Expected<std::optional<Value>> decides(Constraint::OperatorID ID,
@@ -94,7 +93,7 @@ public:
 private:
   // Lazily-constructed per-function analyses for value-tracking operators.
   std::unique_ptr<detail::ValueTrackContext> Analysis;
-  std::function<void()> UseListCompleter;
+  UseOracle *Uses = nullptr;
 };
 
 } // namespace metaphir
