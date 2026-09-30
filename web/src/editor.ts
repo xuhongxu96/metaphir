@@ -3,7 +3,9 @@
 
 import type { OnMount } from "@monaco-editor/react";
 import { useEffect, useMemo, useRef } from "react";
+import type { Definition } from "./irDefinition.ts";
 import { monaco } from "./monaco.ts";
+import type { NavLink } from "./navigation.ts";
 
 export type CodeEditor = Parameters<OnMount>[0];
 
@@ -50,6 +52,83 @@ export function useLineDecorations(
   useEffect(() => {
     if (editor && reveal && lines.length) editor.revealLineInCenterIfOutsideViewport(Math.min(...lines));
   }, [editor, lines, reveal]);
+}
+
+/** Whether event holds the key of links: Ctrl, or ⌘ on a Mac. */
+const linkKey = (event: { ctrlKey: boolean; metaKey: boolean }) =>
+  event.ctrlKey || event.metaKey;
+
+/**
+ * Makes links of editor, as resolve finds them where the mouse is: while
+ * Ctrl (⌘ on a Mac) is held, what a link goes from is underlined, and
+ * clicking it calls go with where it goes to.
+ */
+export function useModifierLinks(
+  editor: CodeEditor | undefined,
+  resolve: (line: number, column: number, text: string) => NavLink | undefined,
+  go: (to: Definition) => void,
+) {
+  const callbacks = useRef({ resolve, go });
+  callbacks.current = { resolve, go };
+  const collection = useMemo(() => editor?.createDecorationsCollection(), [editor]);
+  useEffect(() => {
+    if (!editor || !collection) return;
+    let mouse: { lineNumber: number; column: number } | undefined;
+    const linkAt = () => {
+      const model = editor.getModel();
+      if (!mouse || !model) return undefined;
+      const text = model.getLineContent(mouse.lineNumber);
+      const link = callbacks.current.resolve(mouse.lineNumber, mouse.column, text);
+      return link && { line: mouse.lineNumber, link };
+    };
+    const underline = (held: boolean) => {
+      const found = held ? linkAt() : undefined;
+      collection.set(
+        found
+          ? [
+              {
+                range: new monaco.Range(
+                  found.line,
+                  found.link.from.column,
+                  found.line,
+                  found.link.from.column + found.link.from.length,
+                ),
+                options: { inlineClassName: "modifier-link" },
+              },
+            ]
+          : [],
+      );
+    };
+    const moves = editor.onMouseMove((event) => {
+      mouse = event.target.position ?? undefined;
+      underline(linkKey(event.event));
+    });
+    const leaves = editor.onMouseLeave(() => {
+      mouse = undefined;
+      underline(false);
+    });
+    const downs = editor.onMouseDown((event) => {
+      if (!linkKey(event.event)) return;
+      mouse = event.target.position ?? undefined;
+      const found = linkAt();
+      if (found) callbacks.current.go(found.link.to);
+    });
+    // The key can be pressed or let go without the mouse moving.
+    const onKey = (event: KeyboardEvent) => underline(linkKey(event));
+    const onBlur = () => underline(false);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKey);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      moves.dispose();
+      leaves.dispose();
+      downs.dispose();
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKey);
+      window.removeEventListener("blur", onBlur);
+      collection.clear();
+    };
+  }, [editor, collection]);
 }
 
 /**

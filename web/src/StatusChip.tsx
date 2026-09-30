@@ -1,6 +1,7 @@
 // The status in the toolbar: a line of what the query does, which opens a
 // popover with its numbers and the buttons to go on or stop. The popover
-// opens by itself when the query pauses or fails.
+// is shown while a query runs, and when it pauses or fails; closed, it
+// stays so until the next.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { QueryControl } from "./pipeline.ts";
@@ -10,6 +11,9 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const paused = control !== undefined && status.pause?.kind === "matches";
+  useEffect(() => {
+    setOpen(!!status.running);
+  }, [status.running]);
   useEffect(() => {
     if (paused || status.error) setOpen(true);
   }, [paused, status.error]);

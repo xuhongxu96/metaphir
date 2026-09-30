@@ -288,4 +288,6 @@ tbody tr:hover { background: var(--bg-alt); }
 tbody tr.selected { background: var(--accent-bg); }
 
 .bound-line, .matched-line { background: var(--accent-bg); }
+/* What a Ctrl/⌘+click goes from, while the key is held. */
+.modifier-link { text-decoration: underline; cursor: pointer; }
 .hovered-line { background: var(--hover-bg) !important; outline: 1px solid var(--accent); }

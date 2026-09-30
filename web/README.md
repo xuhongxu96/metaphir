@@ -35,34 +35,38 @@ one, which holds the built site and `site/`'s workflow, deploying it to
 GitHub Pages as it is:
 
 ```sh
-web/scripts/deploy_site.sh ../metaphir-site --data <corpus URL> --commit
+web/scripts/deploy_site.sh ../metaphir-site --commit
 git -C ../metaphir-site push
 ```
 
 The script builds the site (after `scripts/build_wasm.sh`), replaces the
 site repository's contents with it (creating the repository if needed),
-points its `config.json` at the corpus, and commits.
+points its `config.json` at the corpus (`web/public/config.json`'s, or
+`--data <corpus URL>`), and commits.
 
 ## Publishing a corpus
 
 ```sh
 metaphir-index build -j 32 corpus -o corpus.mpidx
 metaphir-index publish -j 32 corpus.mpidx -o published
-web/scripts/publish.py published <owner>/<bucket>
+web/scripts/publish.py published
 ```
 
 `publish` writes, next to the posting keys and lists of the index, each
 function's features and a pack of the function alone (with stubs for the
 globals it uses and how the module uses its constants), compressed with zstd
 and trained dictionaries; see `metaphir/Web/WebIndex.h`. `publish.py`
-uploads them to `builds/<build>/` in the bucket, the manifest last, and
-prints the corpus URL for `deploy_site.sh --data` (or, with `--config`,
-writes it to `web/public/config.json`).
+uploads them to `builds/<build>/` in the site's bucket,
+`xuhongxu96/llvm-opt-benchmark-index` (or the `<owner>/<bucket>` given), the
+manifest last, and points `web/public/config.json` at the build, which the
+site then reads (unless `--no-config`). The bucket keeps the 3 builds last
+published (`--keep`): older ones are removed, so a deployed site reading one
+of them should be deployed again before three newer builds are published.
 
 The same files can be matched from the command line:
 
 ```sh
-hf buckets sync hf://buckets/<owner>/<bucket>/builds/<build> published
+hf buckets sync hf://buckets/xuhongxu96/llvm-opt-benchmark-index/builds/<build> published
 metaphir-match --matches-only --packs published pattern.mpir
 ```
 

@@ -1,29 +1,23 @@
 // The selected match's function: its bindings, and its IR with the
-// instructions the pattern matched highlighted. A binding takes to the
-// definition of its value.
+// instructions the pattern matched highlighted. A binding, or a value
+// Ctrl/⌘+clicked in the IR, takes to where the value is defined; the page
+// can take it elsewhere, with target.
 
 import Editor from "@monaco-editor/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BindingList } from "./BindingList.tsx";
 import { CopyButton } from "./CopyButton.tsx";
 import {
   EDITOR_OPTIONS,
   useHoveredLine,
   useLineDecorations,
+  useModifierLinks,
   type CodeEditor,
 } from "./editor.ts";
 import type { FunctionIR, Match } from "./engine.ts";
 import type { Definition } from "./irDefinition.ts";
 import { monaco } from "./monaco.ts";
-
-/** A pattern instruction and the IR instruction it matched, by line. */
-export interface Link {
-  name: string;
-  /** In the pattern, unless the instruction is from a library. */
-  patternLine?: number;
-  /** In the matched function's IR. */
-  irLine?: number;
-}
+import { irLink, type Link } from "./navigation.ts";
 
 export function IRPane(props: {
   match?: Match;
@@ -32,8 +26,10 @@ export function IRPane(props: {
   links: Link[];
   hovered: Link[];
   onHover: (line: number | undefined) => void;
+  /** Where to go in the IR, each time it is set anew. */
+  target?: Definition;
 }) {
-  const { match, ir, theme, links, hovered, onHover } = props;
+  const { match, ir, theme, links, hovered, onHover, target } = props;
   const [editor, setEditor] = useState<CodeEditor>();
   const irLines = useMemo(
     () => links.flatMap((link) => (link.irLine ? [link.irLine] : [])),
@@ -46,15 +42,23 @@ export function IRPane(props: {
   useLineDecorations(editor, ir ? irLines : [], hoveredLines, "bound-line", true);
   useHoveredLine(editor, onHover);
 
-  // The definition is selected, in view.
+  // What is gone to is selected, in view.
   const jump = ({ line, column, length }: Definition) => {
     if (!editor) return;
-    editor.setSelection(new monaco.Range(line, column, line, column + length));
-    editor.revealRangeInCenterIfOutsideViewport(
-      new monaco.Range(line, column, line, column + length),
-    );
+    const range = new monaco.Range(line, column, line, column + length);
+    editor.setSelection(range);
+    editor.revealRangeInCenterIfOutsideViewport(range);
     editor.focus();
   };
+  useEffect(() => {
+    if (target) jump(target);
+    // Only a new target is gone to, not the same once the editor changes.
+  }, [target]);
+  useModifierLinks(
+    editor,
+    (_, column, text) => (ir ? irLink({ column, text, ir: ir.text }) : undefined),
+    jump,
+  );
 
   return (
     <section className="pane">

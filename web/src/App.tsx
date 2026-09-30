@@ -6,12 +6,15 @@ import {
   EDITOR_OPTIONS,
   useHoveredLine,
   useLineDecorations,
+  useModifierLinks,
   type CodeEditor,
 } from "./editor.ts";
 import { matchLocal, PublishedCorpus, type Match, type Progress } from "./engine.ts";
-import { IRPane, type Link } from "./IRPane.tsx";
+import { IRPane } from "./IRPane.tsx";
+import type { Definition } from "./irDefinition.ts";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
 import { MatchesPane } from "./MatchesPane.tsx";
+import { patternLink, type Link } from "./navigation.ts";
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
@@ -90,6 +93,17 @@ export function App() {
   );
   const onIRHover = (line: number | undefined) =>
     setHovered(line ? links.filter((l) => l.irLine === line) : []);
+  // Ctrl/⌘+clicking the pattern goes to what it matched in the IR.
+  const [irTarget, setIRTarget] = useState<Definition>();
+  useModifierLinks(
+    patternEditor,
+    (line, column, text) =>
+      patternLinked && selected && ir
+        ? patternLink({ line, column, text, links, bindings: selected.bindings, ir: ir.text })
+        : undefined,
+    // A new object each time, gone to even if the same.
+    (to) => setIRTarget({ ...to }),
+  );
   const localFiles = useRef<HTMLInputElement>(null);
   const localIndex = useRef<HTMLInputElement>(null);
   const local = import.meta.env.DEV && source === "local";
@@ -254,7 +268,9 @@ export function App() {
                 <section className="pane">
                   <div className="pane-header">
                     <span>Pattern</span>
-                    <span className="hint">Ctrl/⌘+Enter to match</span>
+                    <span className="hint">
+                      Ctrl/⌘+Enter to match · Ctrl/⌘+click to find in the IR
+                    </span>
                   </div>
                   {local && (
                     <div className="local">
@@ -300,6 +316,7 @@ export function App() {
               links={links}
               hovered={hovered}
               onHover={onIRHover}
+              target={irTarget}
             />
           </Panel>
         </Group>

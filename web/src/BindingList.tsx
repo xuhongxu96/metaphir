@@ -2,18 +2,8 @@
 // value is defined in the function shown, as %x is, takes there once
 // clicked.
 
+import { splitBindings } from "./bindings.ts";
 import { findDefinition, type Definition } from "./irDefinition.ts";
-
-/** The bindings of "{?a = %x, ?b = 1}": "?a = %x" and "?b = 1". */
-export function splitBindings(bindings: string): string[] {
-  return (
-    bindings
-      .replace(/^\{|\}$/g, "")
-      // Values can have commas of their own, as vectors do.
-      .split(/, (?=\?[\w.]+ = )/)
-      .filter(Boolean)
-  );
-}
 
 export function BindingList(props: {
   bindings: string;
