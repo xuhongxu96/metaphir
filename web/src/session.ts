@@ -17,8 +17,14 @@ export interface Session {
   matchable(): Matchable[];
   match(fn: number, frame: Uint8Array): MatchResult;
   moduleOf(fn: number): string;
-  printFunction(frame: Uint8Array): { ir: string } | { error: string };
+  printFunction(frame: Uint8Array): PrintedFunction | { error: string };
   delete(): void;
+}
+
+/** A function's IR, and the line of each of its instructions (from 1). */
+export interface PrintedFunction {
+  ir: string;
+  lines: number[];
 }
 
 export interface MetaphIRModule {

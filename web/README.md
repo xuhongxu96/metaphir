@@ -5,8 +5,10 @@ the browser: MetaphIR runs as WebAssembly, and the corpus is read by byte
 ranges over HTTP, only where a query needs it. GitHub Pages serves the site;
 a public Hugging Face bucket serves the corpus. The page is React, in
 resizable panes: the pattern (in Monaco) above its matches, and beside them
-the IR of the selected match, its bindings listed and the instructions they
-bind highlighted (the arrow keys move through the matches). A progress bar
+the IR of the selected match, its bindings listed and the instructions it
+matched highlighted, as the matcher reports them (`--print-instructions`);
+hovering a matched instruction in either editor highlights its counterpart
+in the other (the arrow keys move through the matches). A progress bar
 follows each stage's reads and then the matching; Share copies a link that
 carries the pattern (`#pattern=<encoded text>`); the theme follows the
 system unless chosen.

@@ -6,20 +6,73 @@ import { SessionPool } from "./pool.ts";
 
 export const wasmUrl = (name: string) => new URL(`wasm/${name}`, document.baseURI).href;
 
-/** A match, as metaphir-match --matches-only prints it. */
+/** An instruction a match matched: the pattern's and the function's. */
+export interface MatchedInstruction {
+  /** The pattern instruction's result name, or its opcode. */
+  name: string;
+  /** Its line in the pattern (from 1), unless it is from a library. */
+  patternLine?: number;
+  /** The matched instruction's position among its function's. */
+  position: number;
+}
+
+/** A function's IR, and the line of each of its instructions (from 1). */
+export interface FunctionIR {
+  text: string;
+  lines: number[];
+}
+
+/**
+ * A match, as metaphir-match --matches-only --print-instructions prints it.
+ */
 export interface Match {
   /** Orders the matches as the corpus does. */
   key: number;
   module: string;
   fn: string;
   bindings: string;
+  instructions: MatchedInstruction[];
   /** The IR of the matched function, when it can be shown. */
-  ir?: () => Promise<string>;
+  ir?: () => Promise<FunctionIR>;
 }
 
 export function parseMatch(key: number, line: string): Match {
-  const [module, fn, bindings] = line.split("\t");
-  return { key, module, fn, bindings: bindings ?? "" };
+  const [module, fn, bindings, instructions] = line.split("\t");
+  return {
+    key,
+    module,
+    fn,
+    bindings: bindings ?? "",
+    instructions: [
+      ...(instructions ?? "").matchAll(/([^\s,{}@]+)(?:@(\d+))? = #(\d+)/g),
+    ].map((m) => ({
+      name: m[1],
+      patternLine: m[2] === undefined ? undefined : Number(m[2]),
+      position: Number(m[3]),
+    })),
+  };
+}
+
+/**
+ * The lines of a function's instructions in its textual IR: those of its
+ * body that are not labels, comments, debug records or the closing brace.
+ */
+export function instructionLines(text: string): number[] {
+  const lines: number[] = [];
+  text.split("\n").forEach((line, i) => {
+    const trimmed = line.trim();
+    if (
+      i === 0 ||
+      !trimmed ||
+      trimmed.startsWith(";") ||
+      trimmed.startsWith("#dbg_") ||
+      trimmed === "}" ||
+      /^[-\w.$"]+:/.test(trimmed)
+    )
+      return;
+    lines.push(i + 1);
+  });
+  return lines;
 }
 
 export interface Progress {
@@ -110,7 +163,7 @@ export class PublishedCorpus {
       await fetcher.fetchRanges([packs.get(fn)!], (_, bytes) => (frame = bytes));
       const printed = await pool.coordinator.printFunction(frame!);
       if ("error" in printed) throw new Error(printed.error);
-      return printed.ir;
+      return { text: printed.ir, lines: printed.lines };
     };
     await runQuery(pattern, "pattern.mpir", pool.coordinator, pool.sessions, fetcher, {
       onStage: (description) => {
@@ -187,8 +240,10 @@ export async function matchLocal(
       const match = parseMatch(i, line);
       const text = texts.get(match.module);
       if (text)
-        match.ir = async () =>
-          functionText(new TextDecoder().decode(text), match.fn) ?? "";
+        match.ir = async () => {
+          const body = functionText(new TextDecoder().decode(text), match.fn) ?? "";
+          return { text: body, lines: instructionLines(body) };
+        };
       return match;
     });
   onMatches(matches);

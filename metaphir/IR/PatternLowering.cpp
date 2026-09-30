@@ -608,6 +608,7 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
         Context, *BI, ResultName, Flags, MetaFlags, Subst.operands(*BI),
         Capture, BI->getSourceRange(), Use.getParentBlock(),
         BI->getSettings().inheritedFrom(Use.getSettings()));
+    New->setExpandedFrom(&Use);
 
     if (IsRoot) {
       // ':o(N)' lets the use match the root or, alternatively, its Nth

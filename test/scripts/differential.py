@@ -121,11 +121,22 @@ def check_test(test: Path, args: argparse.Namespace, work: Path) -> list[str]:
                             f"{test.name}: {pattern.name}: {' '.join(shown)}"
                             f" differs from {' '.join(group[0]) or 'the default'}"
                         )
-        plain = run([args.match, "--matches-only", str(pattern), str(bitcode)])
+        # Packed functions list the instructions matched at the same
+        # positions as their modules do.
+        plain = run(
+            [
+                args.match,
+                "--matches-only",
+                "--print-instructions",
+                str(pattern),
+                str(bitcode),
+            ]
+        )
         packs = run(
             [
                 args.match,
                 "--matches-only",
+                "--print-instructions",
                 "--packs",
                 str(published),
                 str(pattern),

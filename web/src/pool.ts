@@ -9,6 +9,7 @@ import type {
   StageName,
   StageResult,
 } from "./pipeline.ts";
+import type { PrintedFunction } from "./session.ts";
 
 class WorkerSession implements Coordinator, Matcher {
   private next = 0;
@@ -49,7 +50,7 @@ class WorkerSession implements Coordinator, Matcher {
     this.call<MatchResult>("match", fn, frame);
   moduleOf = (fn: number) => this.call<string>("moduleOf", fn);
   printFunction = (frame: Uint8Array) =>
-    this.call<{ ir: string } | { error: string }>("printFunction", frame);
+    this.call<PrintedFunction | { error: string }>("printFunction", frame);
 }
 
 export class SessionPool {

@@ -8,6 +8,7 @@
   --bg-alt: #f6f8fa;
   --accent: #0969da;
   --accent-bg: rgba(9, 105, 218, 0.12);
+  --hover-bg: rgba(9, 105, 218, 0.3);
   --on-accent: #ffffff;
   --error: #cf222e;
 }
@@ -22,6 +23,7 @@
     --bg-alt: #161b22;
     --accent: #58a6ff;
     --accent-bg: rgba(88, 166, 255, 0.16);
+    --hover-bg: rgba(88, 166, 255, 0.36);
     --on-accent: #0d1117;
     --error: #ff7b72;
   }
@@ -36,6 +38,7 @@
   --bg-alt: #161b22;
   --accent: #58a6ff;
   --accent-bg: rgba(88, 166, 255, 0.16);
+  --hover-bg: rgba(88, 166, 255, 0.36);
   --on-accent: #0d1117;
   --error: #ff7b72;
 }
@@ -216,4 +219,5 @@ tbody tr { cursor: pointer; }
 tbody tr:hover { background: var(--bg-alt); }
 tbody tr.selected { background: var(--accent-bg); }
 
-.bound-line { background: var(--accent-bg); }
+.bound-line, .matched-line { background: var(--accent-bg); }
+.hovered-line { background: var(--hover-bg) !important; outline: 1px solid var(--accent); }

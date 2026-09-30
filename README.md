@@ -52,7 +52,13 @@ ABI-breaking checks, which catch unchecked `llvm::Error`s.
 ### Matching a corpus
 
 `metaphir-match --matches-only` prints one tab-separated line per match (file,
-`@function`, bindings), and `-j N` then matches N files at once. Each
+`@function`, bindings), and `-j N` then matches N files at once.
+`--print-instructions` adds the instructions each match matched: every
+pattern instruction, by its result name (or opcode) and pattern line, with
+the position of the IR instruction it matched among its function's, as in
+`{%div@2 = #0, %sum@4 = #3}`. Instructions expanded from a composite matcher
+(such as `neg`, however deeply nested) have the line of the instruction
+using it in the pattern, and names that show the expansion (`%r$twice`). Each
 function is first summarized by its features: the signatures of its
 instructions (kind, flags and types), the operand edges between them, the
 values they share, the globals they use, and facts about the values at each

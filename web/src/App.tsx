@@ -5,6 +5,7 @@ import { useColorScheme, type SchemePreference } from "./colorScheme.ts";
 import {
   matchLocal,
   PublishedCorpus,
+  type FunctionIR,
   type Match,
   type Progress,
 } from "./engine.ts";
@@ -85,6 +86,38 @@ export function App() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [selected, setSelected] = useState<Match>();
   const [copied, setCopied] = useState(false);
+  // The pattern as last matched, whose lines the matches refer to.
+  const [matchedPattern, setMatchedPattern] = useState<string>();
+  const [patternEditor, setPatternEditor] = useState<CodeEditor>();
+  const [hovered, setHovered] = useState<Link[]>([]);
+  const ir = useFunctionIR(selected);
+  const links = useMemo<Link[]>(
+    () =>
+      (selected?.instructions ?? []).map((matched) => ({
+        name: matched.name,
+        patternLine: matched.patternLine,
+        irLine: ir?.lines[matched.position],
+      })),
+    [selected, ir],
+  );
+  // Pattern lines mean something only while the pattern is as matched.
+  const patternLinked = pattern === matchedPattern;
+  const patternLines = useMemo(
+    () =>
+      patternLinked ? links.flatMap((l) => (l.patternLine ? [l.patternLine] : [])) : [],
+    [links, patternLinked],
+  );
+  const hoveredPatternLines = useMemo(
+    () => hovered.flatMap((l) => (l.patternLine ? [l.patternLine] : [])),
+    [hovered],
+  );
+  useLineDecorations(patternEditor, patternLines, hoveredPatternLines, "matched-line", false);
+  // Hovering a linked line in either editor lights up both ends.
+  useHoveredLine(patternEditor, (line) =>
+    setHovered(patternLinked && line ? links.filter((l) => l.patternLine === line) : []),
+  );
+  const onIRHover = (line: number | undefined) =>
+    setHovered(line ? links.filter((l) => l.irLine === line) : []);
   const localFiles = useRef<HTMLInputElement>(null);
   const localIndex = useRef<HTMLInputElement>(null);
   const local = import.meta.env.DEV && source === "local";
@@ -105,6 +138,7 @@ export function App() {
 
   const run = useCallback(async () => {
     history.replaceState(null, "", `#pattern=${encodeURIComponent(pattern)}`);
+    setMatchedPattern(pattern);
     setRunning(true);
     setMatches([]);
     setSelected(undefined);
@@ -155,6 +189,7 @@ export function App() {
   const runRef = useRef(run);
   runRef.current = run;
   const onPatternMount: OnMount = (editor) => {
+    setPatternEditor(editor);
     // Ctrl/Cmd+Enter matches.
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       if (!document.getElementById("run")?.hasAttribute("disabled")) void runRef.current();
@@ -286,7 +321,14 @@ export function App() {
           </Panel>
           <Separator className="separator vertical" />
           <Panel id="ir-panel" defaultSize="55" minSize="20">
-            <IRView match={selected} theme={theme} />
+            <IRView
+              match={selected}
+              ir={ir}
+              theme={theme}
+              links={links}
+              hovered={hovered}
+              onHover={onIRHover}
+            />
           </Panel>
         </Group>
       </main>
@@ -404,54 +446,113 @@ function Bindings({ bindings }: { bindings: string }) {
   );
 }
 
-/** The local values a match binds, such as %x in "{?a = %x, ?b = 1}". */
-function boundLocals(bindings: string): string[] {
-  return [...bindings.matchAll(/= (%[-\w.$]+)/g)].map((m) => m[1]);
+type CodeEditor = Parameters<OnMount>[0];
+
+/** A pattern instruction and the IR instruction it matched, by line. */
+interface Link {
+  name: string;
+  /** In the pattern, unless the instruction is from a library. */
+  patternLine?: number;
+  /** In the matched function's IR. */
+  irLine?: number;
 }
 
-function IRView({ match, theme }: { match?: Match; theme: string }) {
-  const [ir, setIR] = useState<{ match: Match; text: string }>();
-  const editorRef = useRef<Parameters<OnMount>[0]>(undefined);
-  const decorations = useRef<string[]>([]);
+/**
+ * Keeps whole-line decorations on editor: className on lines, and
+ * hoverClassName on those of them hovered.
+ */
+function useLineDecorations(
+  editor: CodeEditor | undefined,
+  lines: number[],
+  hovered: number[],
+  className: string,
+  reveal: boolean,
+) {
+  // Each editor has its own collection: a new run can mount a new one.
+  const collection = useMemo(() => editor?.createDecorationsCollection(), [editor]);
+  useEffect(() => {
+    if (!collection) return;
+    const hover = new Set(hovered);
+    collection.set(
+      [...new Set(lines)].map((line) => ({
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: true,
+          className: hover.has(line) ? `${className} hovered-line` : className,
+          overviewRuler: {
+            color: "#2f81f7",
+            position: monaco.editor.OverviewRulerLane.Full,
+          },
+        },
+      })),
+    );
+  }, [collection, lines, hovered, className]);
+  // The first line is brought into view when the lines change.
+  useEffect(() => {
+    if (editor && reveal && lines.length) editor.revealLineInCenterIfOutsideViewport(Math.min(...lines));
+  }, [editor, lines, reveal]);
+}
 
+/**
+ * Reports the line under the mouse in editor, or undefined once it leaves.
+ */
+function useHoveredLine(
+  editor: CodeEditor | undefined,
+  onLine: (line: number | undefined) => void,
+) {
+  const callback = useRef(onLine);
+  callback.current = onLine;
+  useEffect(() => {
+    if (!editor) return;
+    const moves = editor.onMouseMove((event) =>
+      callback.current(event.target.position?.lineNumber),
+    );
+    const leaves = editor.onMouseLeave(() => callback.current(undefined));
+    return () => {
+      moves.dispose();
+      leaves.dispose();
+    };
+  }, [editor]);
+}
+
+/** The IR of the selected match's function, once loaded. */
+function useFunctionIR(match: Match | undefined) {
+  const [loaded, setLoaded] = useState<{ match: Match; ir: FunctionIR }>();
   useEffect(() => {
     let current = true;
     if (!match?.ir) return;
     match.ir().then(
-      (text) => current && setIR({ match, text }),
-      (error: Error) => current && setIR({ match, text: `; ${error.message}` }),
+      (ir) => current && setLoaded({ match, ir }),
+      (error: Error) =>
+        current && setLoaded({ match, ir: { text: `; ${error.message}`, lines: [] } }),
     );
     return () => {
       current = false;
     };
   }, [match]);
+  return loaded && loaded.match === match ? loaded.ir : undefined;
+}
 
-  const shown = ir && ir.match === match ? ir : undefined;
-  const bound = useMemo(() => (match ? boundLocals(match.bindings) : []), [match]);
-
-  // The instructions the match binds are highlighted.
-  const highlight = useCallback(() => {
-    const editor = editorRef.current;
-    const model = editor?.getModel();
-    if (!editor || !model) return;
-    const lines: number[] = [];
-    model.getLinesContent().forEach((line, i) => {
-      if (bound.some((name) => line.trimStart().startsWith(`${name} =`))) lines.push(i + 1);
-    });
-    decorations.current = editor.deltaDecorations(
-      decorations.current,
-      lines.map((line) => ({
-        range: new monaco.Range(line, 1, line, 1),
-        options: {
-          isWholeLine: true,
-          className: "bound-line",
-          overviewRuler: { color: "#2f81f7", position: monaco.editor.OverviewRulerLane.Full },
-        },
-      })),
-    );
-    if (lines.length) editor.revealLineInCenter(lines[0]);
-  }, [bound]);
-  useEffect(highlight, [shown, highlight]);
+function IRView(props: {
+  match?: Match;
+  ir?: FunctionIR;
+  theme: string;
+  links: Link[];
+  hovered: Link[];
+  onHover: (line: number | undefined) => void;
+}) {
+  const { match, ir, theme, links, hovered, onHover } = props;
+  const [editor, setEditor] = useState<CodeEditor>();
+  const irLines = useMemo(
+    () => links.flatMap((link) => (link.irLine ? [link.irLine] : [])),
+    [links],
+  );
+  const hoveredLines = useMemo(
+    () => hovered.flatMap((link) => (link.irLine ? [link.irLine] : [])),
+    [hovered],
+  );
+  useLineDecorations(editor, ir ? irLines : [], hoveredLines, "bound-line", true);
+  useHoveredLine(editor, onHover);
 
   return (
     <section className="pane">
@@ -462,7 +563,7 @@ function IRView({ match, theme }: { match?: Match; theme: string }) {
               {match.module} {match.fn}
             </span>
             <span className="spacer" />
-            {shown && <CopyButton text={shown.text} />}
+            {ir && <CopyButton text={ir.text} />}
           </>
         ) : (
           <span>Function IR</span>
@@ -478,11 +579,8 @@ function IRView({ match, theme }: { match?: Match; theme: string }) {
           <Editor
             language="llvm"
             theme={theme}
-            value={shown?.text ?? "; loading…"}
-            onMount={(editor) => {
-              editorRef.current = editor;
-              highlight();
-            }}
+            value={ir?.text ?? "; loading…"}
+            onMount={setEditor}
             options={{ ...EDITOR_OPTIONS, readOnly: true, wordWrap: "off" }}
           />
         )}

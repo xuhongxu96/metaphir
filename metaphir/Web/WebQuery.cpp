@@ -1,4 +1,5 @@
 #include "metaphir/Web/WebQuery.h"
+#include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/IR/PatternVariants.h"
@@ -9,10 +10,12 @@
 #include "metaphir/Matching/Target.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/AssemblyAnnotationWriter.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
@@ -193,8 +196,23 @@ ByteRange WebQuery::getPackRange(uint32_t Function) const {
   return Packs[It - Matchable.begin()];
 }
 
-Expected<std::string> WebQuery::printFunction(const WebIndex &Index,
-                                              StringRef Frame) {
+namespace {
+/// Records the line each instruction is printed on.
+class LineRecorder : public AssemblyAnnotationWriter {
+public:
+  explicit LineRecorder(std::vector<unsigned> &Lines) : Lines(Lines) {}
+  void emitInstructionAnnot(const llvm::Instruction *,
+                            formatted_raw_ostream &OS) override {
+    Lines.push_back(OS.getLine() + 1);
+  }
+
+private:
+  std::vector<unsigned> &Lines;
+};
+} // namespace
+
+Expected<PrintedFunction> WebQuery::printFunction(const WebIndex &Index,
+                                                  StringRef Frame) {
   Expected<std::string> Bytes = Index.getPackDictionary().decompress(Frame);
   if (!Bytes)
     return Bytes.takeError();
@@ -206,13 +224,15 @@ Expected<std::string> WebQuery::printFunction(const WebIndex &Index,
       UnpackedFunction::read(*Pack, Context);
   if (!Unpacked)
     return Unpacked.takeError();
-  std::string Printed;
-  raw_string_ostream OS(Printed);
-  (*Unpacked)->getFunction().print(OS);
+  PrintedFunction Printed;
+  raw_string_ostream OS(Printed.IR);
+  LineRecorder Recorder(Printed.Lines);
+  (*Unpacked)->getFunction().print(OS, &Recorder);
   return Printed;
 }
 
-Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out) {
+Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
+                      bool PrintInstructions) {
   const WebModule &Module = Index.getModuleOf(Function);
   auto Located = [&](Error E) {
     return createStringError(Module.Path + ": function " +
@@ -246,6 +266,12 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out) {
   for (const Instantiation &Match : Matches) {
     Out << Module.Path << "\t@" << F.getName() << '\t';
     Match.print(Out, &Slots);
+    if (PrintInstructions) {
+      Out << '\t';
+      Match.printInstructions(Out, [&](const metaphir::Instruction &I) {
+        return getMainFileLine(Pattern->Source, I.getSourceRange().Begin);
+      });
+    }
     Out << '\n';
   }
   return Error::success();

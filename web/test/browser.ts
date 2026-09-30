@@ -1,9 +1,10 @@
 // Matches a pattern in the production build of the site, in headless
 // Chromium, against a published directory, and prints the matches as
 // metaphir-match --matches-only --packs does, then the page's status and
-// the IR of the first match. The page is then reloaded and the query run
-// again, which must read nothing over the network, the blocks read the
-// first time being kept.
+// the IR of the first match. The query is then run again in the page, whose
+// matched instructions must be highlighted again; then the page is reloaded
+// and the query run again, which must read nothing over the network, the
+// blocks read the first time being kept.
 //
 //   npm run build
 //   node test/browser.ts <published directory> <pattern>
@@ -66,6 +67,22 @@ try {
     );
     const bound = await page.$$eval(".ir-editor .bound-line", (lines) => lines.length);
     console.error(`IR shown, ${bound} bound lines highlighted`);
+
+    // Matching again highlights the new matches' instructions as well.
+    await page.click("#run");
+    await page.waitForFunction(
+      (status) => eval(status)().textContent!.startsWith("done"),
+      `(${status})`,
+      { timeout: 600_000 },
+    );
+    await page.waitForSelector(".ir-editor .view-lines");
+    await page.waitForTimeout(1000);
+    const again = await page.$$eval(".ir-editor .bound-line", (lines) => lines.length);
+    console.error(`matched again, ${again} bound lines highlighted`);
+    if (bound > 0 && again === 0) {
+      console.error("error: matching again lost the highlighting");
+      process.exitCode = 1;
+    }
   }
   console.error(`after reloading: ${await run(true)}`);
 } finally {

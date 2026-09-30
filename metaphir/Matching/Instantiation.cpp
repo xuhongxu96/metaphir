@@ -1,12 +1,17 @@
 #include "metaphir/Matching/Instantiation.h"
+#include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Pattern.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <tuple>
 #include <type_traits>
 
 namespace llvm {
@@ -88,6 +93,61 @@ raw_ostream &operator<<(raw_ostream &OS,
                         const Instantiation::Binding &Binding) {
   printBinding(OS, Binding, nullptr);
   return OS;
+}
+
+void Instantiation::printInstructions(
+    raw_ostream &OS,
+    function_ref<std::optional<unsigned>(const metaphir::Instruction &)> LineOf)
+    const {
+  struct Matched {
+    std::optional<unsigned> Line;
+    std::string Name;
+    const llvm::Instruction *Target;
+  };
+  SmallVector<Matched, 8> All;
+  for (const auto &[Matcher, Binding] : Bindings) {
+    const auto *PatternInstruction = dyn_cast<metaphir::Instruction>(Matcher);
+    if (!PatternInstruction)
+      continue;
+    const auto *const *Value = std::get_if<const llvm::Value *>(&Binding.Data);
+    const auto *Target = Value ? dyn_cast<llvm::Instruction>(*Value) : nullptr;
+    if (!Target)
+      continue;
+    // An instruction expanded from a composite has the line of the
+    // instruction, written in the pattern, that used it.
+    const metaphir::Instruction *Written = PatternInstruction;
+    while (Written->getExpandedFrom())
+      Written = Written->getExpandedFrom();
+    std::optional<unsigned> Line = LineOf(*Written);
+    StringRef Result = PatternInstruction->getResultName();
+    All.push_back({Line,
+                   Result.empty() ? PatternInstruction->getOpcodeName().str()
+                                  : ("%" + Result).str(),
+                   Target});
+  }
+  if (All.empty()) {
+    OS << "{}";
+    return;
+  }
+  // Positions among the function's instructions, in order.
+  DenseMap<const llvm::Instruction *, unsigned> Positions;
+  for (const llvm::Instruction &I :
+       instructions(*All.front().Target->getFunction()))
+    Positions[&I] = Positions.size();
+  llvm::sort(All, [&](const Matched &L, const Matched &R) {
+    return std::make_tuple(L.Line.value_or(~0u), L.Name, Positions[L.Target]) <
+           std::make_tuple(R.Line.value_or(~0u), R.Name, Positions[R.Target]);
+  });
+  OS << '{';
+  for (auto [Index, Each] : enumerate(All)) {
+    if (Index)
+      OS << ", ";
+    OS << Each.Name;
+    if (Each.Line)
+      OS << '@' << *Each.Line;
+    OS << " = #" << Positions[Each.Target];
+  }
+  OS << '}';
 }
 
 void Instantiation::print(raw_ostream &OS, ModuleSlotTracker *Slots) const {

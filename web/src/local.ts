@@ -63,7 +63,7 @@ export async function matchLocalFiles(
   for (const file of files) write(`${root}/${file.path}`, file.bytes);
   FS.mkdirTree(root);
   write("/pattern.mpir", pattern);
-  const args = ["--matches-only"];
+  const args = ["--matches-only", "--print-instructions"];
   if (index) {
     write("/corpus.mpidx", index);
     args.push("--index", "/corpus.mpidx", "--trust-index");

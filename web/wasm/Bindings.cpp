@@ -93,11 +93,12 @@ public:
     return Array;
   }
 
-  /// The matches of Function, whose pack is Frame, one per line.
+  /// The matches of Function, whose pack is Frame, one per line, with the
+  /// instructions each matched.
   val match(uint32_t Function, const std::string &Frame) {
     std::string Lines;
     raw_string_ostream OS(Lines);
-    if (Error E = Query->match(Function, Frame, OS))
+    if (Error E = Query->match(Function, Frame, OS, /*PrintInstructions=*/true))
       return errorValue(std::move(E));
     val Result = val::object();
     Result.set("lines", Lines);
@@ -109,13 +110,18 @@ public:
     return Index->getModuleOf(Function).Path;
   }
 
-  /// The IR of the function whose pack is Frame.
+  /// The IR of the function whose pack is Frame, and the line of each of
+  /// its instructions.
   val printFunction(const std::string &Frame) const {
-    Expected<std::string> IR = WebQuery::printFunction(*Index, Frame);
-    if (!IR)
-      return errorValue(IR.takeError());
+    Expected<PrintedFunction> Printed = WebQuery::printFunction(*Index, Frame);
+    if (!Printed)
+      return errorValue(Printed.takeError());
+    val Lines = val::array();
+    for (unsigned Line : Printed->Lines)
+      Lines.call<void>("push", Line);
     val Result = val::object();
-    Result.set("ir", *IR);
+    Result.set("ir", Printed->IR);
+    Result.set("lines", Lines);
     return Result;
   }
 

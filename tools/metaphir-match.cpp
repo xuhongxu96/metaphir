@@ -49,6 +49,13 @@ static cl::opt<bool> MatchesOnly(
     cl::desc("Print only the matches, one per line: the file, @function "
              "and bindings, separated by tabs"),
     cl::cat(Category));
+static cl::opt<bool> PrintInstructions(
+    "print-instructions",
+    cl::desc("Add to each match the instructions it matched: each pattern "
+             "instruction (by its result or opcode, and its pattern line) and "
+             "the position of the IR instruction it matched in its "
+             "function; needs --matches-only"),
+    cl::cat(Category));
 static cl::opt<unsigned>
     Jobs("j",
          cl::desc("Match this many files at once (0: one per hardware "
@@ -388,6 +395,12 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
       for (const Instantiation &Match : Matches) {
         Out << File << "\t@" << F->getName() << '\t';
         PrintMatch(*F, Match);
+        if (PrintInstructions) {
+          Out << '\t';
+          Match.printInstructions(Out, [&](const metaphir::Instruction &I) {
+            return getMainFileLine(Pattern.Source, I.getSourceRange().Begin);
+          });
+        }
         Out << '\n';
       }
       continue;
@@ -568,10 +581,11 @@ static int matchPacks(StringRef ToolName) {
     for (size_t I; (I = Next++) < Matchable.size();) {
       Output Matched;
       raw_string_ostream Out(Matched.Out);
-      Error E = Own ? (*Own)->match(
-                          Matchable[I],
-                          *Cache.get((*Query)->getPackRange(Matchable[I])), Out)
-                    : Own.takeError();
+      Error E =
+          Own ? (*Own)->match(Matchable[I],
+                              *Cache.get((*Query)->getPackRange(Matchable[I])),
+                              Out, PrintInstructions)
+              : Own.takeError();
       if (E) {
         Failed = true;
         raw_string_ostream(Matched.Err)
@@ -619,6 +633,11 @@ int main(int Argc, char **Argv) {
 
   if (Jobs != 1 && !MatchesOnly) {
     errs() << ToolName << ": error: -j needs --matches-only\n";
+    return 1;
+  }
+  if (PrintInstructions && !MatchesOnly) {
+    errs() << ToolName
+           << ": error: --print-instructions needs --matches-only\n";
     return 1;
   }
   if (!IndexFile.empty() && !MatchesOnly) {

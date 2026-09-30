@@ -105,8 +105,9 @@ protected:
     std::string Matches;
   };
 
-  /// Matches Pattern, reading only the bytes each stage asks for.
-  Result query(StringRef Pattern) {
+  /// Matches Pattern, reading only the bytes each stage asks for; with
+  /// PrintInstructions, the matches list the instructions they matched.
+  Result query(StringRef Pattern, bool PrintInstructions = false) {
     Result R;
     Expected<std::unique_ptr<WebQuery>> Query =
         WebQuery::compile(*Web, Pattern, "pattern.mpir");
@@ -132,7 +133,7 @@ protected:
       EXPECT_TRUE(static_cast<bool>(Frame)) << toString(Frame.takeError());
       if (!Frame)
         return R;
-      Error E = (*Query)->match(Function, *Frame, OS);
+      Error E = (*Query)->match(Function, *Frame, OS, PrintInstructions);
       EXPECT_FALSE(static_cast<bool>(E)) << toString(std::move(E));
     }
     return R;
@@ -183,11 +184,24 @@ TEST_F(WebQueryTest, MatchesWhatTheCorpusHas) {
     return support::endian::read64le(Entries.data() +
                                      Function * WebIndexEntrySize + 8);
   };
-  Expected<std::string> IR =
+  Expected<PrintedFunction> Printed =
       WebQuery::printFunction(*Web, Packs.slice(Offset(42), Offset(43)));
-  ASSERT_TRUE(static_cast<bool>(IR)) << toString(IR.takeError());
-  EXPECT_NE(IR->find("define i32 @f42()"), std::string::npos);
-  EXPECT_NE(IR->find("load i32, ptr @g42"), std::string::npos);
+  ASSERT_TRUE(static_cast<bool>(Printed)) << toString(Printed.takeError());
+  EXPECT_NE(Printed->IR.find("define i32 @f42()"), std::string::npos);
+  // Each instruction's line, counted from 1.
+  SmallVector<StringRef, 8> Lines;
+  StringRef(Printed->IR).split(Lines, '\n');
+  ASSERT_EQ(Printed->Lines.size(), 3u);
+  EXPECT_TRUE(Lines[Printed->Lines[0] - 1].contains("load i32, ptr @g42"));
+  EXPECT_TRUE(Lines[Printed->Lines[1] - 1].contains("add i32 %v, 0"));
+  EXPECT_TRUE(Lines[Printed->Lines[2] - 1].contains("ret i32 %r"));
+
+  // Matches can list the instructions they matched, by position.
+  std::string Listed = query("%v = load i32, ptr ?g\n%r = add i32 %v, 1\n",
+                             /*PrintInstructions=*/true)
+                           .Matches;
+  EXPECT_EQ(StringRef(Listed).split('\n').first,
+            "many.ll\t@f1\t{?g = @g1}\t{%v@1 = #0, %r@2 = #1}");
 }
 
 TEST_F(WebQueryTest, CountsUsesInTheWholeModule) {

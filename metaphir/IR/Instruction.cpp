@@ -93,12 +93,15 @@ Instruction *Instruction::createLike(
     ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
     ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
     MetaVariable *ParentBlock, PatternSettings Settings) {
-  if (Proto.isComposite())
-    return createComposite(Context, ResultName, Proto.getCompositeMatcher(),
-                           Flags, MetaFlags, Operands, Capture, Range,
-                           ParentBlock, Settings);
-  return create(Context, Proto.getInstructionID(), ResultName, Flags, MetaFlags,
-                Operands, Capture, Range, ParentBlock, Settings);
+  Instruction *Like =
+      Proto.isComposite()
+          ? createComposite(Context, ResultName, Proto.getCompositeMatcher(),
+                            Flags, MetaFlags, Operands, Capture, Range,
+                            ParentBlock, Settings)
+          : create(Context, Proto.getInstructionID(), ResultName, Flags,
+                   MetaFlags, Operands, Capture, Range, ParentBlock, Settings);
+  Like->setExpandedFrom(Proto.getExpandedFrom());
+  return Like;
 }
 
 std::optional<unsigned> Instruction::getOrSelfOperandIndex() const {

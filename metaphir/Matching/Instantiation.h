@@ -3,9 +3,11 @@
 
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Intrinsics.h"
+#include <optional>
 #include <utility>
 #include <variant>
 
@@ -16,6 +18,7 @@ class Type;
 class Value;
 namespace metaphir {
 
+class Instruction;
 class Pattern;
 class Value;
 
@@ -87,6 +90,19 @@ public:
   /// given, numbers the unnamed values; it must have incorporated their
   /// function. Without it, each unnamed value numbers its whole function.
   void print(raw_ostream &OS, ModuleSlotTracker *Slots = nullptr) const;
+
+  /// Prints the IR instructions the pattern's instructions matched, as
+  /// "{%name@line = #position, ...}": each pattern instruction by its result
+  /// name (or opcode) and, where LineOf knows it, its line in the pattern --
+  /// for one expanded from a composite matcher, that of the instruction
+  /// using the composite as the pattern has it;
+  /// the IR instruction by its position among its function's instructions.
+  /// An or-self matcher stands for the instruction it matched in its place;
+  /// one that matched another kind of value is left out.
+  void printInstructions(
+      raw_ostream &OS,
+      function_ref<std::optional<unsigned>(const metaphir::Instruction &)>
+          LineOf) const;
 
   /// Whether both bind the same matchers to the same targets.
   bool operator==(const Instantiation &Other) const;

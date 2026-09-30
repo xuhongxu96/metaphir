@@ -155,6 +155,12 @@ public:
   std::optional<unsigned> getOrSelfOperandIndex() const;
   void setOrSelfValue(Value *V) { OrSelfValue = V; }
 
+  /// The instruction using a composite matcher that this one was expanded
+  /// from, if it was: its source range is in the composite's definition, the
+  /// use's (or its own origin's) in the pattern that used it.
+  const Instruction *getExpandedFrom() const { return ExpandedFrom; }
+  void setExpandedFrom(const Instruction *Use) { ExpandedFrom = Use; }
+
   static bool classof(const Value *V) {
     return V->getValueID() == InstructionVal;
   }
@@ -195,7 +201,8 @@ public:
                                       PatternSettings Settings = {});
 
   /// Creates an instruction of the same kind as Proto -- the same built-in
-  /// matcher, or the same composite -- with everything else given anew.
+  /// matcher, or the same composite -- expanded from where Proto was, with
+  /// everything else given anew.
   /// Operands holds keyed and unkeyed operands, as for create().
   static Instruction *
   createLike(MIRContext &Context, const Instruction &Proto,
@@ -230,6 +237,7 @@ private:
   MetaVariable *ParentBlock;
   PatternSettings Settings;
   CompositeMatcher *Composite = nullptr;
+  const Instruction *ExpandedFrom = nullptr;
 
   Instruction(InstructionID ID, StringRef ResultName,
               ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,

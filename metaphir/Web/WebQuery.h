@@ -18,6 +18,13 @@ namespace metaphir {
 
 class FeatureQuery;
 
+/// A function's IR as LLVM prints it, and the line of each of its
+/// instructions (counted from 1), in order.
+struct PrintedFunction {
+  std::string IR;
+  std::vector<unsigned> Lines;
+};
+
 /// A pattern matched against a published corpus, in stages that each tell
 /// which bytes the next one reads: the caller reads them into a ByteCache,
 /// from files or over HTTP, and goes on.
@@ -54,14 +61,16 @@ public:
   /// Where the pack of a matchable function is.
   ByteRange getPackRange(uint32_t Function) const;
 
-  /// The IR of the function whose pack is Frame, as LLVM prints it.
-  static Expected<std::string> printFunction(const WebIndex &Index,
-                                             StringRef Frame);
+  /// The function whose pack is Frame, printed.
+  static Expected<PrintedFunction> printFunction(const WebIndex &Index,
+                                                 StringRef Frame);
 
   /// Matches the function numbered Function, whose pack is Frame, and
   /// prints its matches to Out, one per line: the module, @function and
-  /// bindings, separated by tabs.
-  Error match(uint32_t Function, StringRef Frame, raw_ostream &Out);
+  /// bindings, and with PrintInstructions the instructions matched (see
+  /// Instantiation::printInstructions), separated by tabs.
+  Error match(uint32_t Function, StringRef Frame, raw_ostream &Out,
+              bool PrintInstructions = false);
 
 private:
   struct Compiled;

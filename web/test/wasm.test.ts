@@ -15,6 +15,7 @@ import { RangeFetcher } from "../src/fetcher.ts";
 import { runQuery, type Coordinator, type Matcher } from "../src/pipeline.ts";
 import { loadModule, runStage, type MetaphIRModule, type Session } from "../src/session.ts";
 import { matchLocalFiles } from "../src/local.ts";
+import { instructionLines } from "../src/engine.ts";
 
 const repo = resolve(import.meta.dirname, "../..");
 const build = process.env.METAPHIR_BUILD ?? join(repo, "build");
@@ -139,7 +140,7 @@ test("matches the published corpus as metaphir-match --packs does", async () => 
   for (const [i, source] of PATTERNS.entries()) {
     const pattern = join(work, `pattern${i}.mpir`);
     writeFileSync(pattern, source);
-    const expected = tool("metaphir-match", "--matches-only", "--packs", join(work, "published"), pattern);
+    const expected = tool("metaphir-match", "--matches-only", "--print-instructions", "--packs", join(work, "published"), pattern);
     const found = new Map<number, string>();
     await runQuery(source, `pattern${i}.mpir`, direct(coordinator), matchers.map(direct), fetcher, {
       onMatched: (fn, lines) => found.set(fn, lines),
@@ -155,6 +156,22 @@ test("matches the published corpus as metaphir-match --packs does", async () => 
   });
   assert.equal(requests - before, 0);
   assert.ok(found.size > 0);
+});
+
+test("finds each instruction's line in printed IR", async () => {
+  const fetcher = await RangeFetcher.open(base, "test");
+  const session = new module.Session(await fetcher.fetchFile("header.bin.zst"));
+  const index = readFileSync(join(work, "published", "functions.idx"));
+  const packs = readFileSync(join(work, "published", "packs.bin"));
+  const functions = index.length / 16 - 1;
+  for (let fn = 0; fn < functions; fn++) {
+    const start = Number(index.readBigUInt64LE(fn * 16 + 8));
+    const end = Number(index.readBigUInt64LE(fn * 16 + 24));
+    const printed = session.printFunction(packs.subarray(start, end));
+    assert.ok(!("error" in printed));
+    // As local files' IR is read, from the text alone.
+    assert.deepEqual(instructionLines(printed.ir), printed.lines);
+  }
 });
 
 test("reports pattern errors", async () => {
@@ -175,7 +192,7 @@ test("matches local files as metaphir-match does", async () => {
   for (const [i, source] of PATTERNS.entries()) {
     const pattern = join(work, `pattern${i}.mpir`);
     writeFileSync(pattern, source);
-    const expected = tool("metaphir-match", "--matches-only", pattern, join(work, "corpus"))
+    const expected = tool("metaphir-match", "--matches-only", "--print-instructions", pattern, join(work, "corpus"))
       .replaceAll(`${join(work, "corpus")}/`, "");
     for (const withIndex of [undefined, index]) {
       const result = await matchLocalFiles(join(wasm, "metaphir-match.js"), files, source, withIndex);
