@@ -227,6 +227,22 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
   white-space: nowrap;
 }
 .binding .variable { color: var(--accent); }
+button.binding { cursor: pointer; line-height: inherit; }
+button.binding:hover { border-color: var(--accent); background: var(--accent-bg); }
+.pane-header .count { white-space: nowrap; }
+.pane-header .search {
+  flex: 1;
+  min-width: 6rem;
+  max-width: 20rem;
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+}
+.pane-header .search + .hint { margin-left: 0; white-space: nowrap; }
 .pane-body { flex: 1; min-height: 0; position: relative; }
 .pane-body.results { overflow: auto; outline: none; }
 .empty { color: var(--muted); padding: 1rem; margin: 0; font-size: 0.9rem; }
