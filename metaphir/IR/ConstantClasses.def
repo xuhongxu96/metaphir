@@ -1,0 +1,53 @@
+// Constant classes: constraint operators (with metaflags in the stdlib), each
+// the PatternMatch.h matcher it is named after.
+//
+// MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest) is one the index
+// records; MIR_UNRECORDED_CONSTANT_CLASS, which defaults to it, is one too rare
+// to record. On an LLVM value the class is PatternMatch::Matcher(); on a plain
+// integer V (an APSInt) it is IntegerTest, or false for NoIntegerTest: those
+// classes depend on the bit width, which a plain integer has not.
+
+#ifndef MIR_CONSTANT_CLASS
+#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)
+#endif
+
+#ifndef MIR_UNRECORDED_CONSTANT_CLASS
+#define MIR_UNRECORDED_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)          \
+  MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)
+#endif
+
+MIR_CONSTANT_CLASS(IsZero, "isZero", m_Zero, V.isZero())
+MIR_CONSTANT_CLASS(IsAllOnes, "isAllOnes", m_AllOnes, V.isAllOnes())
+MIR_CONSTANT_CLASS(IsPower2, "isPower2", m_Power2, V.isPowerOf2())
+MIR_UNRECORDED_CONSTANT_CLASS(IsPower2OrZero, "isPower2OrZero", m_Power2OrZero,
+                              V.isZero() || V.isPowerOf2())
+MIR_CONSTANT_CLASS(IsNegatedPower2, "isNegatedPower2", m_NegatedPower2,
+                   NoIntegerTest)
+MIR_UNRECORDED_CONSTANT_CLASS(IsNegatedPower2OrZero, "isNegatedPower2OrZero",
+                              m_NegatedPower2OrZero, NoIntegerTest)
+// A low bit mask is a non-empty run of ones starting at bit 0.
+MIR_CONSTANT_CLASS(IsLowBitMask, "isLowBitMask", m_LowBitMask, V.isMask())
+MIR_UNRECORDED_CONSTANT_CLASS(IsLowBitMaskOrZero, "isLowBitMaskOrZero",
+                              m_LowBitMaskOrZero, V.isZero() || V.isMask())
+MIR_CONSTANT_CLASS(IsShiftedMask, "isShiftedMask", m_ShiftedMask,
+                   NoIntegerTest)
+MIR_CONSTANT_CLASS(IsSignMask, "isSignMask", m_SignMask, NoIntegerTest)
+MIR_CONSTANT_CLASS(IsMaxSignedValue, "isMaxSignedValue", m_MaxSignedValue,
+                   NoIntegerTest)
+// The sign classes read a plain integer by its signedness, as APSInt does.
+MIR_CONSTANT_CLASS(IsNegative, "isNegative", m_Negative, V.isNegative())
+MIR_CONSTANT_CLASS(IsNonNegative, "isNonNegative", m_NonNegative,
+                   V.isNonNegative())
+MIR_CONSTANT_CLASS(IsStrictlyPositive, "isStrictlyPositive", m_StrictlyPositive,
+                   V.isStrictlyPositive())
+MIR_UNRECORDED_CONSTANT_CLASS(IsNonPositive, "isNonPositive", m_NonPositive,
+                              !V.isStrictlyPositive())
+MIR_UNRECORDED_CONSTANT_CLASS(IsNonZeroInt, "isNonZeroInt", m_NonZeroInt,
+                              !V.isZero())
+MIR_CONSTANT_CLASS(IsAnyZeroFP, "isAnyZeroFP", m_AnyZeroFP, NoIntegerTest)
+MIR_CONSTANT_CLASS(IsPoison, "isPoison", m_Poison, NoIntegerTest)
+// m_Undef matches poison too.
+MIR_CONSTANT_CLASS(IsUndef, "isUndef", m_Undef, NoIntegerTest)
+
+#undef MIR_UNRECORDED_CONSTANT_CLASS
+#undef MIR_CONSTANT_CLASS

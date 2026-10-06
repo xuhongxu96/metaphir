@@ -201,17 +201,9 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_Intrinsic:
   case O_Predicate:
     return ValueResult;
-  case O_IsEquality:
-  case O_IsSigned:
-  case O_IsUnsigned:
-  case O_IsLT:
-  case O_IsGT:
-  case O_IsLE:
-  case O_IsGE:
-  case O_SwappedPredicate:
-  case O_InversePredicate:
-  case O_StrictPredicate:
-  case O_NonStrictPredicate:
+#define MIR_CMP_PREDICATE_TEST(ID, Name, Test) case O_##ID:
+#define MIR_CMP_PREDICATE_MAP(ID, Name, Map) case O_##ID:
+#include "metaphir/IR/CmpPredicateOperators.def"
   case O_FlippedSignednessPredicate:
     return StringResult;
   case O_KnownZeros:
@@ -241,32 +233,15 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   // else.
   case O_Equal:
   case O_NotEqual:
-  case O_IsPower2:
-  case O_IsZero:
-  case O_IsAllOnes:
-  case O_IsLowBitMask:
-  case O_IsAnyZeroFP:
   case O_IsAnyIntegralConstant:
-  case O_IsPoison:
   case O_IsForbidPoison:
   case O_IsConstantSplat:
   case O_IsScalar:
   case O_HasOneUse:
   case O_HasOneUser:
   case O_IsImmConstant:
-  case O_IsSignMask:
-  case O_IsMaxSignedValue:
-  case O_IsNegatedPower2:
-  case O_IsNegatedPower2OrZero:
-  case O_IsPower2OrZero:
-  case O_IsLowBitMaskOrZero:
-  case O_IsShiftedMask:
-  case O_IsNegative:
-  case O_IsNonNegative:
-  case O_IsStrictlyPositive:
-  case O_IsNonPositive:
-  case O_IsNonZeroInt:
-  case O_IsUndef:
+#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest) case O_##ID:
+#include "metaphir/IR/ConstantClasses.def"
   // bitWidth takes a value or a type.
   case O_BitWidth:
   case UnknownOperator:

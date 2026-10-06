@@ -1,0 +1,33 @@
+// Operators on comparison predicates, given as the strings '?pred' binds
+// ("slt", "oeq", ...) and named after CmpInst's.
+//
+// MIR_CMP_PREDICATE_TEST(ID, Name, Test): a boolean Test of the predicate P.
+// MIR_CMP_PREDICATE_MAP(ID, Name, Map): the predicate Map gives for P.
+
+#ifndef MIR_CMP_PREDICATE_TEST
+#define MIR_CMP_PREDICATE_TEST(ID, Name, Test)
+#endif
+
+#ifndef MIR_CMP_PREDICATE_MAP
+#define MIR_CMP_PREDICATE_MAP(ID, Name, Map)
+#endif
+
+MIR_CMP_PREDICATE_TEST(IsEquality, "isEquality", CmpInst::isEquality(P))
+MIR_CMP_PREDICATE_TEST(IsSigned, "isSigned", CmpInst::isSigned(P))
+MIR_CMP_PREDICATE_TEST(IsUnsigned, "isUnsigned", CmpInst::isUnsigned(P))
+// isLT and the like are ICmpInst's, so they are false for FP predicates.
+MIR_CMP_PREDICATE_TEST(IsLT, "isLT", ICmpInst::isLT(P))
+MIR_CMP_PREDICATE_TEST(IsGT, "isGT", ICmpInst::isGT(P))
+MIR_CMP_PREDICATE_TEST(IsLE, "isLE", ICmpInst::isLE(P))
+MIR_CMP_PREDICATE_TEST(IsGE, "isGE", ICmpInst::isGE(P))
+MIR_CMP_PREDICATE_MAP(SwappedPredicate, "swappedPredicate",
+                      CmpInst::getSwappedPredicate(P))
+MIR_CMP_PREDICATE_MAP(InversePredicate, "inversePredicate",
+                      CmpInst::getInversePredicate(P))
+MIR_CMP_PREDICATE_MAP(StrictPredicate, "strictPredicate",
+                      CmpInst::getStrictPredicate(P))
+MIR_CMP_PREDICATE_MAP(NonStrictPredicate, "nonStrictPredicate",
+                      CmpInst::getNonStrictPredicate(P))
+
+#undef MIR_CMP_PREDICATE_MAP
+#undef MIR_CMP_PREDICATE_TEST

@@ -7,9 +7,8 @@
 namespace llvm {
 namespace metaphir {
 
-// Operators on comparison predicates, given as the strings '?pred' binds
-// ("slt", "oeq", ...) and named after CmpInst's: pure functions of their
-// operand, the same on the IR and on the index.
+// Operators on comparison predicates (CmpPredicateOperators.def): pure
+// functions of their operand, the same on the IR and on the index.
 
 #define MIR_DECLARE_OPERATOR(ID)                                               \
   struct Op##ID {                                                              \
@@ -17,17 +16,9 @@ namespace metaphir {
     static Expected<ConstraintValue> concrete(const ConcreteCall &Call);       \
   };
 
-MIR_DECLARE_OPERATOR(IsEquality)
-MIR_DECLARE_OPERATOR(IsSigned)
-MIR_DECLARE_OPERATOR(IsUnsigned)
-MIR_DECLARE_OPERATOR(IsLT)
-MIR_DECLARE_OPERATOR(IsGT)
-MIR_DECLARE_OPERATOR(IsLE)
-MIR_DECLARE_OPERATOR(IsGE)
-MIR_DECLARE_OPERATOR(SwappedPredicate)
-MIR_DECLARE_OPERATOR(InversePredicate)
-MIR_DECLARE_OPERATOR(StrictPredicate)
-MIR_DECLARE_OPERATOR(NonStrictPredicate)
+#define MIR_CMP_PREDICATE_TEST(ID, Name, Test) MIR_DECLARE_OPERATOR(ID)
+#define MIR_CMP_PREDICATE_MAP(ID, Name, Map) MIR_DECLARE_OPERATOR(ID)
+#include "metaphir/IR/CmpPredicateOperators.def"
 MIR_DECLARE_OPERATOR(FlippedSignednessPredicate)
 
 #undef MIR_DECLARE_OPERATOR

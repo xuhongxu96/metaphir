@@ -80,20 +80,9 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(Opcode, "opcode", Call, StringResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, IntegerResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, IntegerResult,
                                     1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPower2, "isPower2", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsZero, "isZero", Call, BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAllOnes, "isAllOnes", Call, BooleanResult,
-                                    1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLowBitMask, "isLowBitMask", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyZeroFP, "isAnyZeroFP", Call,
-                                    BooleanResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyIntegralConstant,
                                     "isAnyIntegralConstant", Call,
                                     BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPoison, "isPoison", Call, BooleanResult,
-                                    1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsForbidPoison, "isForbidPoison", Call,
                                     BooleanResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsConstantSplat, "isConstantSplat", Call,
@@ -105,35 +94,12 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUse, "hasOneUse", Call, BooleanResult,
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUser, "hasOneUser", Call,
                                     BooleanResult, 1)
 
-// Constant classes, each the PatternMatch.h matcher it is named after.
+// Constant classes named after PatternMatch.h matchers.
+#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)                     \
+  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, BooleanResult, 1)
+#include "metaphir/IR/ConstantClasses.def"
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsImmConstant, "isImmConstant", Call,
                                     BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsSignMask, "isSignMask", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsMaxSignedValue, "isMaxSignedValue", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNegatedPower2, "isNegatedPower2", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNegatedPower2OrZero,
-                                    "isNegatedPower2OrZero", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPower2OrZero, "isPower2OrZero", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLowBitMaskOrZero, "isLowBitMaskOrZero",
-                                    Call, BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsShiftedMask, "isShiftedMask", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNegative, "isNegative", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNonNegative, "isNonNegative", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsStrictlyPositive, "isStrictlyPositive",
-                                    Call, BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNonPositive, "isNonPositive", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNonZeroInt, "isNonZeroInt", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsUndef, "isUndef", Call, BooleanResult, 1)
 
 // What a captured instruction is: the intrinsic a call calls and the
 // predicate of a compare, as strings like those '@llvm.?id' and '?pred' bind.
@@ -142,25 +108,12 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(Intrinsic, "intrinsic", Call, StringResult,
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Predicate, "predicate", Call, StringResult,
                                     1)
 
-// Comparison predicates, named after CmpInst's.
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsEquality, "isEquality", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsSigned, "isSigned", Call, BooleanResult,
-                                    1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsUnsigned, "isUnsigned", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLT, "isLT", Call, BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsGT, "isGT", Call, BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLE, "isLE", Call, BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsGE, "isGE", Call, BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(SwappedPredicate, "swappedPredicate", Call,
-                                    StringResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(InversePredicate, "inversePredicate", Call,
-                                    StringResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(StrictPredicate, "strictPredicate", Call,
-                                    StringResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(NonStrictPredicate, "nonStrictPredicate",
-                                    Call, StringResult, 1)
+// Comparison predicates named after CmpInst's.
+#define MIR_CMP_PREDICATE_TEST(ID, Name, Test)                                 \
+  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, BooleanResult, 1)
+#define MIR_CMP_PREDICATE_MAP(ID, Name, Map)                                   \
+  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, StringResult, 1)
+#include "metaphir/IR/CmpPredicateOperators.def"
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(FlippedSignednessPredicate,
                                     "flippedSignednessPredicate", Call,
                                     StringResult, 1)

@@ -1,6 +1,5 @@
 #include "metaphir/Matching/Operators/Facts.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include <iterator>
 
 namespace llvm {
 namespace metaphir {
@@ -11,43 +10,18 @@ static constexpr unsigned NumValueClasses = 0
     ;
 
 StringRef Atom::getName(Predicate P) {
-  static constexpr StringLiteral Names[] = {"isZero",
-                                            "isAllOnes",
-                                            "isPower2",
-                                            "isLowBitMask",
-                                            "isAnyZeroFP",
-                                            "isAnyIntegralConstant",
-                                            "isPoison",
-                                            "isForbidPoison",
-                                            "isConstantSplat",
-                                            "isImmConstant",
-                                            "isSignMask",
-                                            "isMaxSignedValue",
-                                            "isNegatedPower2",
-                                            "isShiftedMask",
-                                            "isNegative",
-                                            "isNonNegative",
-                                            "isStrictlyPositive",
-                                            "isUndef",
-                                            "hasOneUse",
-                                            "hasOneUser",
-                                            "isKnownNonZero",
-                                            "isKnownNegative",
-                                            "isKnownNonNegative",
-                                            "isKnownPositive",
-                                            "isKnownPowerOfTwo",
-                                            "isKnownPowerOfTwoOrZero",
-                                            "valueTrackingSkipped"};
-  static_assert(std::size(Names) == NumPredicates,
-                "every predicate needs a name");
+  static constexpr StringLiteral Names[] = {
+#define MIR_FACT(ID, Name) Name,
+#include "metaphir/Matching/Operators/Facts.def"
+  };
   return Names[P];
 }
 
 StringRef getMeasureName(Measure M) {
   static constexpr StringLiteral Names[] = {
-      "trailingZeros", "activeBits", "rangeSignedBits", "rangeUnsignedBits"};
-  static_assert(std::size(Names) == size_t(Measure::NumMeasures),
-                "every measure needs a name");
+#define MIR_MEASURE(ID, Name) Name,
+#include "metaphir/Matching/Operators/Facts.def"
+  };
   return Names[size_t(M)];
 }
 
