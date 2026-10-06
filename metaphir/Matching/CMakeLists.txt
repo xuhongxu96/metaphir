@@ -13,6 +13,8 @@ add_library(
   Operators/AbstractCall.cpp
   Operators/AbstractCall.h
   Operators/Arithmetic.h
+  Operators/CmpPredicates.cpp
+  Operators/CmpPredicates.h
   Operators/Facts.cpp
   Operators/Facts.h
   Operators/OperatorCall.h

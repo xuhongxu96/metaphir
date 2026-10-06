@@ -20,6 +20,15 @@ StringRef Atom::getName(Predicate P) {
                                             "isPoison",
                                             "isForbidPoison",
                                             "isConstantSplat",
+                                            "isImmConstant",
+                                            "isSignMask",
+                                            "isMaxSignedValue",
+                                            "isNegatedPower2",
+                                            "isShiftedMask",
+                                            "isNegative",
+                                            "isNonNegative",
+                                            "isStrictlyPositive",
+                                            "isUndef",
                                             "hasOneUse",
                                             "hasOneUser",
                                             "isKnownNonZero",
@@ -27,6 +36,7 @@ StringRef Atom::getName(Predicate P) {
                                             "isKnownNonNegative",
                                             "isKnownPositive",
                                             "isKnownPowerOfTwo",
+                                            "isKnownPowerOfTwoOrZero",
                                             "valueTrackingSkipped"};
   static_assert(std::size(Names) == NumPredicates,
                 "every predicate needs a name");
@@ -34,8 +44,8 @@ StringRef Atom::getName(Predicate P) {
 }
 
 StringRef getMeasureName(Measure M) {
-  static constexpr StringLiteral Names[] = {"trailingZeros", "activeBits",
-                                            "rangeSignedBits"};
+  static constexpr StringLiteral Names[] = {
+      "trailingZeros", "activeBits", "rangeSignedBits", "rangeUnsignedBits"};
   static_assert(std::size(Names) == size_t(Measure::NumMeasures),
                 "every measure needs a name");
   return Names[size_t(M)];

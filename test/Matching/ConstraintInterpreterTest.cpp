@@ -754,7 +754,9 @@ TEST_F(ConstraintInterpreterTest, ValueTrackContextBuildsLazily) {
 // builds with LLVM_ENABLE_ABI_BREAKING_CHECKS).
 TEST_F(ConstraintInterpreterTest, IntegerPredicatesRejectNonIntegers) {
   for (StringRef Name :
-       {"isPower2", "isZero", "isAllOnes", "isLowBitMask"}) {
+       {"isPower2", "isZero", "isAllOnes", "isLowBitMask", "isPower2OrZero",
+        "isLowBitMaskOrZero", "isNegative", "isNonNegative",
+        "isStrictlyPositive", "isNonPositive", "isNonZeroInt"}) {
     SCOPED_TRACE(Name);
     EXPECT_FALSE(evaluateBoolean(
         *call(Name, StringConstraint::create(Context, "x", Range))));

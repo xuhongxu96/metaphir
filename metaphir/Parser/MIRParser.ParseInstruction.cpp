@@ -123,8 +123,8 @@ bool MIRParser::parseSemanticFlags(
                                      OwnerName + "'");
     if (any_of(Result,
                [FlagID](const InstructionFlag &F) { return F.ID == FlagID; }))
-      return Lex.ParseError(Loc,
-                            "flag '" + FlagName + "' is written more than once");
+      return Lex.ParseError(Loc, "flag '" + FlagName +
+                                     "' is written more than once");
     next();
     MetaVariable *Capture = nullptr;
     if (Lex.getKind() == tok::MetaCaptureVar) {

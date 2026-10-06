@@ -2,7 +2,10 @@
 #include "metaphir/IR/Constraint.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <iterator>
@@ -277,6 +280,219 @@ void OpHasOneUser::record(const RecordCall &Call) {
     Call.Sink.add(Fact);
 }
 
+bool OpIsImmConstant::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_ImmConstant());
+}
+
+// A plain integer is an immediate, as it is an integral constant.
+Expected<ConstraintValue> OpIsImmConstant::concrete(const ConcreteCall &Call) {
+  if (valueOperand(Call))
+    return valuePredicate<OpIsImmConstant>(Call);
+  return ConstraintValue::getBoolean(Call.Operands[0].getKind() ==
+                                     ConstraintValue::Integer);
+}
+
+void OpIsImmConstant::record(const RecordCall &Call) {
+  recordIfHolds<OpIsImmConstant>(Call);
+}
+
+// The classes below that depend on the bit width (the sign bit, negated
+// powers of two, shifted masks) hold only for LLVM constants; a plain integer
+// has no width of its own.
+
+bool OpIsSignMask::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_SignMask());
+}
+
+Expected<ConstraintValue> OpIsSignMask::concrete(const ConcreteCall &Call) {
+  return valuePredicate<OpIsSignMask>(Call);
+}
+
+void OpIsSignMask::record(const RecordCall &Call) {
+  recordIfHolds<OpIsSignMask>(Call);
+}
+
+bool OpIsMaxSignedValue::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_MaxSignedValue());
+}
+
+Expected<ConstraintValue>
+OpIsMaxSignedValue::concrete(const ConcreteCall &Call) {
+  return valuePredicate<OpIsMaxSignedValue>(Call);
+}
+
+void OpIsMaxSignedValue::record(const RecordCall &Call) {
+  recordIfHolds<OpIsMaxSignedValue>(Call);
+}
+
+bool OpIsNegatedPower2::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_NegatedPower2());
+}
+
+Expected<ConstraintValue>
+OpIsNegatedPower2::concrete(const ConcreteCall &Call) {
+  return valuePredicate<OpIsNegatedPower2>(Call);
+}
+
+void OpIsNegatedPower2::record(const RecordCall &Call) {
+  recordIfHolds<OpIsNegatedPower2>(Call);
+}
+
+bool OpIsNegatedPower2OrZero::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_NegatedPower2OrZero());
+}
+
+Expected<ConstraintValue>
+OpIsNegatedPower2OrZero::concrete(const ConcreteCall &Call) {
+  return valuePredicate<OpIsNegatedPower2OrZero>(Call);
+}
+
+bool OpIsPower2OrZero::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_Power2OrZero());
+}
+
+Expected<ConstraintValue> OpIsPower2OrZero::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsPower2OrZero>(
+      Call, [](const APSInt &V) { return V.isZero() || V.isPowerOf2(); });
+}
+
+bool OpIsLowBitMaskOrZero::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_LowBitMaskOrZero());
+}
+
+Expected<ConstraintValue>
+OpIsLowBitMaskOrZero::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsLowBitMaskOrZero>(
+      Call, [](const APSInt &V) { return V.isZero() || V.isMask(); });
+}
+
+bool OpIsShiftedMask::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_ShiftedMask());
+}
+
+Expected<ConstraintValue> OpIsShiftedMask::concrete(const ConcreteCall &Call) {
+  return valuePredicate<OpIsShiftedMask>(Call);
+}
+
+void OpIsShiftedMask::record(const RecordCall &Call) {
+  recordIfHolds<OpIsShiftedMask>(Call);
+}
+
+// The sign classes read a plain integer by its signedness, as APSInt does.
+
+bool OpIsNegative::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_Negative());
+}
+
+Expected<ConstraintValue> OpIsNegative::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsNegative>(
+      Call, [](const APSInt &V) { return V.isNegative(); });
+}
+
+void OpIsNegative::record(const RecordCall &Call) {
+  recordIfHolds<OpIsNegative>(Call);
+}
+
+bool OpIsNonNegative::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_NonNegative());
+}
+
+Expected<ConstraintValue> OpIsNonNegative::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsNonNegative>(
+      Call, [](const APSInt &V) { return V.isNonNegative(); });
+}
+
+void OpIsNonNegative::record(const RecordCall &Call) {
+  recordIfHolds<OpIsNonNegative>(Call);
+}
+
+bool OpIsStrictlyPositive::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_StrictlyPositive());
+}
+
+Expected<ConstraintValue>
+OpIsStrictlyPositive::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsStrictlyPositive>(
+      Call, [](const APSInt &V) { return V.isStrictlyPositive(); });
+}
+
+void OpIsStrictlyPositive::record(const RecordCall &Call) {
+  recordIfHolds<OpIsStrictlyPositive>(Call);
+}
+
+bool OpIsNonPositive::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_NonPositive());
+}
+
+Expected<ConstraintValue> OpIsNonPositive::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsNonPositive>(
+      Call, [](const APSInt &V) { return !V.isStrictlyPositive(); });
+}
+
+bool OpIsNonZeroInt::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_NonZeroInt());
+}
+
+Expected<ConstraintValue> OpIsNonZeroInt::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsNonZeroInt>(
+      Call, [](const APSInt &V) { return !V.isZero(); });
+}
+
+bool OpIsUndef::holds(const llvm::Value &V) {
+  return PatternMatch::match(&V, PatternMatch::m_Undef());
+}
+
+Expected<ConstraintValue> OpIsUndef::concrete(const ConcreteCall &Call) {
+  return valuePredicate<OpIsUndef>(Call);
+}
+
+void OpIsUndef::record(const RecordCall &Call) {
+  recordIfHolds<OpIsUndef>(Call);
+}
+
+Expected<ConstraintValue> OpIntrinsic::concrete(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  if (const auto *CB = dyn_cast<CallBase>(*Value))
+    if (const Function *Callee = CB->getCalledFunction();
+        Callee && Callee->isIntrinsic())
+      return ConstraintValue::getString(
+          Intrinsic::getBaseName(Callee->getIntrinsicID()));
+  return make_error<ConstraintEvaluationError>(
+      Call.Expression, "expected a call to an intrinsic");
+}
+
+Expected<ConstraintValue> OpPredicate::concrete(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  if (const auto *Compare = dyn_cast<CmpInst>(*Value))
+    return ConstraintValue::getString(
+        CmpInst::getPredicateName(Compare->getPredicate()));
+  return make_error<ConstraintEvaluationError>(Call.Expression,
+                                               "expected a compare");
+}
+
+Expected<ConstraintValue> OpBitWidth::concrete(const ConcreteCall &Call) {
+  const ConstraintValue &Operand = Call.Operands[0];
+  const llvm::Type *Type = nullptr;
+  if (Operand.getKind() == ConstraintValue::Value)
+    Type = Operand.getValue()->getType();
+  else if (Operand.getKind() == ConstraintValue::Type)
+    Type = Operand.getType();
+  else
+    return make_error<ConstraintEvaluationError>(
+        Call.Expression, "expected a value or a type operand");
+  unsigned Width = Type->getScalarSizeInBits();
+  if (!Width)
+    return make_error<ConstraintEvaluationError>(
+        Call.Expression, "operand type has no bit width");
+  return integerResult(APInt(32, Width), /*IsUnsigned=*/true);
+}
+
 // A recorded predicate is false where the index lacks its fact.
 #define MIR_ABSTRACT_PREDICATE(ID)                                             \
   AbstractValue Op##ID::abstract(const AbstractCall &Call) {                   \
@@ -293,6 +509,15 @@ MIR_ABSTRACT_PREDICATE(IsForbidPoison)
 MIR_ABSTRACT_PREDICATE(IsConstantSplat)
 MIR_ABSTRACT_PREDICATE(HasOneUse)
 MIR_ABSTRACT_PREDICATE(HasOneUser)
+MIR_ABSTRACT_PREDICATE(IsImmConstant)
+MIR_ABSTRACT_PREDICATE(IsSignMask)
+MIR_ABSTRACT_PREDICATE(IsMaxSignedValue)
+MIR_ABSTRACT_PREDICATE(IsNegatedPower2)
+MIR_ABSTRACT_PREDICATE(IsShiftedMask)
+MIR_ABSTRACT_PREDICATE(IsNegative)
+MIR_ABSTRACT_PREDICATE(IsNonNegative)
+MIR_ABSTRACT_PREDICATE(IsStrictlyPositive)
+MIR_ABSTRACT_PREDICATE(IsUndef)
 #undef MIR_ABSTRACT_PREDICATE
 
 void recordValuePredicates(const RecordCall &Call) {
@@ -308,6 +533,15 @@ void recordValuePredicates(const RecordCall &Call) {
   OpIsConstantSplat::record(Call);
   OpHasOneUse::record(Call);
   OpHasOneUser::record(Call);
+  OpIsImmConstant::record(Call);
+  OpIsSignMask::record(Call);
+  OpIsMaxSignedValue::record(Call);
+  OpIsNegatedPower2::record(Call);
+  OpIsShiftedMask::record(Call);
+  OpIsNegative::record(Call);
+  OpIsNonNegative::record(Call);
+  OpIsStrictlyPositive::record(Call);
+  OpIsUndef::record(Call);
 }
 
 } // namespace metaphir

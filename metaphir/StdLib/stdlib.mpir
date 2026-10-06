@@ -97,6 +97,78 @@ metaflag :constantSplat(?v) {
 	isConstantSplat(?v)
 }
 
+; Constant classes, each the PatternMatch.h matcher it is named after.
+metaflag :immConstant(?v) {
+	isImmConstant(?v)
+}
+
+metaflag :signMask(?v) {
+	isSignMask(?v)
+}
+
+metaflag :maxSignedValue(?v) {
+	isMaxSignedValue(?v)
+}
+
+metaflag :negatedPower2(?v) {
+	isNegatedPower2(?v)
+}
+
+metaflag :negatedPower2OrZero(?v) {
+	isNegatedPower2OrZero(?v)
+}
+
+metaflag :power2OrZero(?v) {
+	isPower2OrZero(?v)
+}
+
+metaflag :lowBitMaskOrZero(?v) {
+	isLowBitMaskOrZero(?v)
+}
+
+metaflag :shiftedMask(?v) {
+	isShiftedMask(?v)
+}
+
+metaflag :negative(?v) {
+	isNegative(?v)
+}
+
+metaflag :nonNegative(?v) {
+	isNonNegative(?v)
+}
+
+metaflag :strictlyPositive(?v) {
+	isStrictlyPositive(?v)
+}
+
+metaflag :nonPositive(?v) {
+	isNonPositive(?v)
+}
+
+metaflag :nonZeroInt(?v) {
+	isNonZeroInt(?v)
+}
+
+metaflag :undef(?v) {
+	isUndef(?v)
+}
+
+; m_ZeroOrPoison and m_AllOnesOrPoison.
+constraint isZeroOrPoison(?v) {
+	isZero(?v) || isPoison(?v)
+}
+metaflag :zeroOrPoison(?v) {
+	isZeroOrPoison(?v)
+}
+
+constraint isAllOnesOrPoison(?v) {
+	isAllOnes(?v) || isPoison(?v)
+}
+metaflag :allOnesOrPoison(?v) {
+	isAllOnesOrPoison(?v)
+}
+
 ; m_Neg; 'neg nsw' is m_NSWNeg. The zero may be a splat with poison lanes.
 match neg [nsw] Unary (?ty ?x) {
 	%ret = sub nsw:?nsw ?ty ?_zero:zero, ?x
@@ -178,6 +250,42 @@ match fptoi [] Cast (?ty1 ?x to ?ty2) {
 	%ret = fptosi ?ty1 ?x to ?ty2
 }
 
+; m_MaxOrMin; 'intrinsic' on its capture tells which one matched.
+match:c maxOrMin [] Binary (?ty ?x, ?y) {
+	%ret = call ?ty @llvm.smax(?ty ?x, ?ty ?y)
+} or {
+	%ret = call ?ty @llvm.smin(?ty ?x, ?ty ?y)
+} or {
+	%ret = call ?ty @llvm.umax(?ty ?x, ?ty ?y)
+} or {
+	%ret = call ?ty @llvm.umin(?ty ?x, ?ty ?y)
+}
+
+; A compare that isSignBitCheck accepts: it tests ?x's sign bit, against an
+; m_APInt constant. 'trueIfSigned' on its capture is isSignBitCheck's
+; TrueIfSigned: whether the compare holds when the sign bit is set.
+match signBitCheck [] Unary (?ty ?x) {
+	%ret = icmp slt ?ty ?x, ?_c:zero:apInt
+} or {
+	%ret = icmp sle ?ty ?x, ?_c:allOnes:apInt
+} or {
+	%ret = icmp sgt ?ty ?x, ?_c:allOnes:apInt
+} or {
+	%ret = icmp sge ?ty ?x, ?_c:zero:apInt
+} or {
+	%ret = icmp ugt ?ty ?x, ?_c:maxSignedValue:apInt
+} or {
+	%ret = icmp uge ?ty ?x, ?_c:signMask:apInt
+} or {
+	%ret = icmp ult ?ty ?x, ?_c:signMask:apInt
+} or {
+	%ret = icmp ule ?ty ?x, ?_c:maxSignedValue:apInt
+}
+
+constraint trueIfSigned(?cmp) {
+	predicate(?cmp) == "slt" || predicate(?cmp) == "sle" || predicate(?cmp) == "ugt" || predicate(?cmp) == "uge"
+}
+
 ; m_PtrToIntOrAddr.
 match ptrToIntOrAddr [] Cast (?ty1 ?x to ?ty2) {
 	%ret = ptrtoint ?ty1 ?x to ?ty2
@@ -203,6 +311,18 @@ metaflag :notUndef(?v) {
 
 metaflag :knownPowerOfTwo(?v) {
 	isKnownPowerOfTwo(?v)
+}
+
+metaflag :knownPowerOfTwoOrZero(?v) {
+	isKnownPowerOfTwoOrZero(?v)
+}
+
+metaflag :notPoison(?v) {
+	isGuaranteedNotToBePoison(?v)
+}
+
+metaflag :notUndefOrPoison(?v) {
+	isGuaranteedNotToBeUndefOrPoison(?v)
 }
 
 constraint isOdd(?v) {
