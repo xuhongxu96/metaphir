@@ -154,6 +154,22 @@ metaflag :undef(?v) {
 	isUndef(?v)
 }
 
+metaflag :posZeroFP(?v) {
+	isPosZeroFP(?v)
+}
+
+metaflag :negZeroFP(?v) {
+	isNegZeroFP(?v)
+}
+
+metaflag :inf(?v) {
+	isInf(?v)
+}
+
+metaflag :nan(?v) {
+	isNaN(?v)
+}
+
 ; m_ZeroOrPoison and m_AllOnesOrPoison.
 constraint isZeroOrPoison(?v) {
 	isZero(?v) || isPoison(?v)
@@ -293,6 +309,15 @@ match signBitCheck [] Unary (?ty ?x) {
 
 constraint trueIfSigned(?cmp) {
 	predicate(?cmp) == "slt" || predicate(?cmp) == "sle" || predicate(?cmp) == "ugt" || predicate(?cmp) == "uge"
+}
+
+; m_FNeg: fneg, or fsub -0.0 or, with nsz, any zero, minus ?x.
+match fnegLike [] Unary (?ty ?x) {
+	%ret = fneg ?ty ?x
+} or {
+	%ret = fsub !nsz ?ty ?_zero:negZeroFP, ?x
+} or {
+	%ret = fsub nsz ?ty ?_zero:anyZeroFP, ?x
 }
 
 ; m_PtrToIntOrAddr.

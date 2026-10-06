@@ -225,6 +225,11 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_IsGuaranteedNotToBeUndefOrPoison:
   case O_NumSignBits:
   case O_MaxSignificantBits:
+  case O_IsKnownNeverNaN:
+  case O_IsKnownNeverInfinity:
+  case O_IsKnownNeverInfOrNaN:
+  case O_CannotBeNegativeZero:
+  case O_CannotBeOrderedLessThanZero:
     return ValueResult;
   case O_MaskedValueIsZero:
     return Index == 1 ? IntegerResult : ValueResult;

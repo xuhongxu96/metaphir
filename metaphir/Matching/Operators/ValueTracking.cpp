@@ -27,6 +27,19 @@ requireIntegerValue(const ConstraintValue &Value,
       Expression, "expected an integer-typed value operand");
 }
 
+/// Value with a floating-point (or vector-of-FP) type, as required by the
+/// floating-point value-tracking queries.
+static Expected<const llvm::Value *>
+requireFPValue(const ConstraintValue &Value, const Constraint &Expression) {
+  Expected<const llvm::Value *> Val = requireValue(Value, Expression);
+  if (!Val)
+    return Val.takeError();
+  if ((*Val)->getType()->isFPOrFPVectorTy())
+    return Val;
+  return make_error<ConstraintEvaluationError>(
+      Expression, "expected a floating-point value operand");
+}
+
 static unsigned integerElementWidth(const llvm::Value &Value) {
   return Value.getType()->getScalarSizeInBits();
 }
@@ -333,6 +346,52 @@ OpMaxSignificantBits::concrete(const ConcreteCall &Call) {
       APInt(32, ComputeMaxSignificantBits(*Value, Query.DL, Query.AC,
                                           Query.CxtI, Query.DT)),
       /*IsUnsigned=*/true);
+}
+
+/// A floating-point value-tracking query on the operand.
+template <typename FPQuery>
+static Expected<ConstraintValue> fpQuery(const ConcreteCall &Call,
+                                         FPQuery Query) {
+  Expected<const llvm::Value *> Value =
+      requireFPValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  return ConstraintValue::getBoolean(Query(*Value, query(Call)));
+}
+
+Expected<ConstraintValue>
+OpIsKnownNeverNaN::concrete(const ConcreteCall &Call) {
+  return fpQuery(Call, [](const llvm::Value *V, const SimplifyQuery &Q) {
+    return isKnownNeverNaN(V, Q);
+  });
+}
+
+Expected<ConstraintValue>
+OpIsKnownNeverInfinity::concrete(const ConcreteCall &Call) {
+  return fpQuery(Call, [](const llvm::Value *V, const SimplifyQuery &Q) {
+    return isKnownNeverInfinity(V, Q);
+  });
+}
+
+Expected<ConstraintValue>
+OpIsKnownNeverInfOrNaN::concrete(const ConcreteCall &Call) {
+  return fpQuery(Call, [](const llvm::Value *V, const SimplifyQuery &Q) {
+    return isKnownNeverInfOrNaN(V, Q);
+  });
+}
+
+Expected<ConstraintValue>
+OpCannotBeNegativeZero::concrete(const ConcreteCall &Call) {
+  return fpQuery(Call, [](const llvm::Value *V, const SimplifyQuery &Q) {
+    return cannotBeNegativeZero(V, Q);
+  });
+}
+
+Expected<ConstraintValue>
+OpCannotBeOrderedLessThanZero::concrete(const ConcreteCall &Call) {
+  return fpQuery(Call, [](const llvm::Value *V, const SimplifyQuery &Q) {
+    return cannotBeOrderedLessThanZero(V, Q);
+  });
 }
 
 void OpInSignedRange::record(const RecordCall &Call) {

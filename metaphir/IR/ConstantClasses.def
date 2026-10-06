@@ -45,6 +45,12 @@ MIR_UNRECORDED_CONSTANT_CLASS(IsNonPositive, "isNonPositive", m_NonPositive,
 MIR_UNRECORDED_CONSTANT_CLASS(IsNonZeroInt, "isNonZeroInt", m_NonZeroInt,
                               !V.isZero())
 MIR_CONSTANT_CLASS(IsAnyZeroFP, "isAnyZeroFP", m_AnyZeroFP, NoIntegerTest)
+MIR_UNRECORDED_CONSTANT_CLASS(IsPosZeroFP, "isPosZeroFP", m_PosZeroFP,
+                              NoIntegerTest)
+MIR_UNRECORDED_CONSTANT_CLASS(IsNegZeroFP, "isNegZeroFP", m_NegZeroFP,
+                              NoIntegerTest)
+MIR_UNRECORDED_CONSTANT_CLASS(IsInf, "isInf", m_Inf, NoIntegerTest)
+MIR_UNRECORDED_CONSTANT_CLASS(IsNaN, "isNaN", m_NaN, NoIntegerTest)
 MIR_CONSTANT_CLASS(IsPoison, "isPoison", m_Poison, NoIntegerTest)
 // m_Undef matches poison too.
 MIR_CONSTANT_CLASS(IsUndef, "isUndef", m_Undef, NoIntegerTest)
