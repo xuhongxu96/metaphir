@@ -25,14 +25,6 @@ match zextOrSext [] Cast (?ty1 ?x to ?ty2) {
 	%ret = sext ?ty1 ?x to ?ty2
 }
 
-match signum [] Unary (i?bits ?x) {
-	%neg = sub i?bits 0, ?x
-	%lhs = ashr i?bits ?x, ?shift
-	%rhs = lshr i?bits %neg, ?shift
-	%ret = or i?bits %lhs, %rhs
-	;; ?shift == ?bits - 1
-}
-
 constraint isConstantInt(?v) {
 	isa(?v, "ConstantInt")
 }
@@ -188,6 +180,17 @@ metaflag :allOnesOrPoison(?v) {
 ; m_Neg; 'neg nsw' is m_NSWNeg. The zero may be a splat with poison lanes.
 match neg [nsw] Unary (?ty ?x) {
 	%ret = sub nsw:?nsw ?ty ?_zero:zero, ?x
+}
+
+; m_Signum: (x >>s (BW-1)) | (-x >>u (BW-1)), for scalars and vectors alike.
+; Each shift amount is m_SpecificInt: a splat of BW-1 without poison lanes.
+match signum [] Unary (i?bits ?x) {
+	;; treatIntAsVec(true)
+	%neg = neg i?bits ?x
+	%lhs = ashr i?bits ?x, ?_ls:apInt
+	%rhs = lshr i?bits %neg, ?_rs:apInt
+	%ret = or:c i?bits %lhs, %rhs
+	;; ?_ls == ?bits - 1 && ?_rs == ?bits - 1
 }
 
 ; m_LogicalAnd / m_LogicalOr: the bitwise form, or the poison-blocking select
