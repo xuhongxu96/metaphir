@@ -254,7 +254,7 @@ class OneUseOracle : public UseOracle {
 public:
   std::optional<ModuleUses> getModuleUses(const llvm::Value &V) override {
     Asked.push_back(&V);
-    return ModuleUses{/*OneUse=*/true, /*OneUser=*/false};
+    return ModuleUses{/*NumUses=*/1, /*OneUser=*/false};
   }
   SmallVector<const llvm::Value *, 2> Asked;
 };
@@ -298,9 +298,8 @@ TEST_F(ConstraintInterpreterTest, AsksUseOracleAboutConstants) {
   EXPECT_EQ(Oracle.Asked.size(), 2u);
 }
 
-// Use counts other than hasOneUse's come from the IR, except for values used
-// across functions, whose module only the oracle knows: it tells one use from
-// more, as the bound value has at least one.
+// Use counts come from the IR, except for values used across functions,
+// whose module only the oracle knows.
 TEST_F(ConstraintInterpreterTest, CountsUsesWithTheUseOracle) {
   LLVMContext LLVMContext;
   SMDiagnostic Error;
@@ -342,13 +341,10 @@ TEST_F(ConstraintInterpreterTest, CountsUsesWithTheUseOracle) {
   Interpreter.setUseOracle(&Oracle);
   // The function uses @g twice, but its module is what counts.
   EXPECT_TRUE(evaluateBoolean(*Uses("hasNUses", GlobalExpr, 1)));
-  EXPECT_FALSE(evaluateBoolean(*Uses("hasNUsesOrMore", GlobalExpr, 2)));
+  EXPECT_FALSE(evaluateBoolean(*Uses("hasNUses", GlobalExpr, 2)));
+  EXPECT_FALSE(evaluateBoolean(*Uses("hasNUses", GlobalExpr, 3)));
   EXPECT_TRUE(evaluateBoolean(*Uses("hasNUsesOrMore", GlobalExpr, 1)));
-  // Other counts are unknown.
-  Expected<ConstraintValue> Three =
-      Interpreter.evaluate(*Uses("hasNUses", GlobalExpr, 3), State);
-  EXPECT_FALSE(static_cast<bool>(Three));
-  consumeError(Three.takeError());
+  EXPECT_FALSE(evaluateBoolean(*Uses("hasNUsesOrMore", GlobalExpr, 2)));
 }
 
 TEST_F(ConstraintInterpreterTest, EvaluatesOpcodePredicates) {

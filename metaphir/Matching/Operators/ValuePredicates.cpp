@@ -202,7 +202,7 @@ bool OpHasOneUse::holds(const llvm::Value &V) { return V.hasOneUse(); }
 Expected<ConstraintValue> OpHasOneUse::concrete(const ConcreteCall &Call) {
   if (const llvm::Value *V = valueOperand(Call))
     if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*V))
-      return ConstraintValue::getBoolean(Uses->OneUse);
+      return ConstraintValue::getBoolean(Uses->NumUses == 1);
   return valuePredicate<OpHasOneUse>(Call);
 }
 
@@ -244,28 +244,14 @@ useCountOperands(const ConcreteCall &Call) {
   return std::make_pair(*Value, *Count);
 }
 
-/// A use count the IR at hand cannot tell: the uses of a value used across
-/// functions are only known as one or more than one.
-static Error unknownUseCount(const ConcreteCall &Call) {
-  return make_error<ConstraintEvaluationError>(
-      Call.Expression, "the use count of a value used across functions is "
-                       "known only as one or more than one");
-}
-
-// A value used across functions is used by the instruction it was bound
-// from, so its module uses it at least once.
+// A value used across functions counts its uses in its whole module.
 Expected<ConstraintValue> OpHasNUses::concrete(const ConcreteCall &Call) {
   auto Operands = useCountOperands(Call);
   if (!Operands)
     return Operands.takeError();
   auto [Value, Count] = *Operands;
-  if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*Value)) {
-    if (Count.isZero())
-      return ConstraintValue::getBoolean(false);
-    if (Count.isOne())
-      return ConstraintValue::getBoolean(Uses->OneUse);
-    return unknownUseCount(Call);
-  }
+  if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*Value))
+    return ConstraintValue::getBoolean(Count == Uses->NumUses);
   return ConstraintValue::getBoolean(Value->hasNUses(Count.getZExtValue()));
 }
 
@@ -274,13 +260,8 @@ Expected<ConstraintValue> OpHasNUsesOrMore::concrete(const ConcreteCall &Call) {
   if (!Operands)
     return Operands.takeError();
   auto [Value, Count] = *Operands;
-  if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*Value)) {
-    if (Count.ule(1))
-      return ConstraintValue::getBoolean(true);
-    if (Count == 2)
-      return ConstraintValue::getBoolean(!Uses->OneUse);
-    return unknownUseCount(Call);
-  }
+  if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*Value))
+    return ConstraintValue::getBoolean(Count.ule(Uses->NumUses));
   return ConstraintValue::getBoolean(
       Value->hasNUsesOrMore(Count.getZExtValue()));
 }

@@ -10,24 +10,21 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MemoryBufferRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include <limits>
 
 namespace llvm {
 namespace metaphir {
 
-// A pack is the function's index (ULEB128), the number of uses (ULEB128),
-// two bits per use, four to a byte (OneUse, then OneUser, from the lowest
-// bit), and the bitcode.
+// A pack is the function's index (ULEB128), the number of constants
+// (ULEB128), how each is used (ULEB128: its number of uses, shifted left by
+// one, with OneUser in the lowest bit), and the bitcode.
 
 void FunctionPack::encode(std::string &Out) const {
   raw_string_ostream OS(Out);
   encodeULEB128(FunctionIndex, OS);
   encodeULEB128(Uses.size(), OS);
-  for (size_t I = 0; I < Uses.size(); I += 4) {
-    uint8_t Byte = 0;
-    for (size_t J = I; J != std::min(I + 4, Uses.size()); ++J)
-      Byte |= (Uses[J].OneUse | Uses[J].OneUser << 1) << 2 * (J - I);
-    OS << char(Byte);
-  }
+  for (const ModuleUses &U : Uses)
+    encodeULEB128(uint64_t(U.NumUses) << 1 | U.OneUser, OS);
   OS << Bitcode;
 }
 
@@ -36,17 +33,18 @@ Expected<FunctionPack> FunctionPack::decode(StringRef Data) {
   DataExtractor::Cursor C(0);
   FunctionPack Pack;
   Pack.FunctionIndex = Extractor.getULEB128(C);
-  uint64_t NumUses = Extractor.getULEB128(C);
-  if (C && NumUses > (Data.size() - C.tell()) * 4)
+  uint64_t NumConstants = Extractor.getULEB128(C);
+  if (C && NumConstants > Data.size() - C.tell())
     return createStringError("function pack: uses past the end");
-  StringRef Bits = Extractor.getBytes(C, (NumUses + 3) / 4);
+  Pack.Uses.reserve(NumConstants);
+  for (uint64_t I = 0; I != NumConstants && C; ++I) {
+    uint64_t Use = Extractor.getULEB128(C);
+    if (C && (Use >> 1) > std::numeric_limits<unsigned>::max())
+      return createStringError("function pack: too many uses");
+    Pack.Uses.push_back(ModuleUses{unsigned(Use >> 1), bool(Use & 1)});
+  }
   if (!C)
     return createStringError("function pack: " + toString(C.takeError()));
-  Pack.Uses.reserve(NumUses);
-  for (uint64_t I = 0; I != NumUses; ++I) {
-    uint8_t Pair = uint8_t(Bits[I / 4]) >> 2 * (I % 4);
-    Pack.Uses.push_back(ModuleUses{bool(Pair & 1), bool(Pair & 2)});
-  }
   Pack.Bitcode = Data.drop_front(C.tell()).str();
   return Pack;
 }

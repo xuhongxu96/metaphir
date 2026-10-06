@@ -145,19 +145,19 @@ TEST_F(FunctionPackTest, TellsHowConstantsAreUsedInTheModule) {
   std::optional<ModuleUses> Shared =
       F->getModuleUses(*Packed.getNamedGlobal("shared"));
   ASSERT_TRUE(Shared.has_value());
-  EXPECT_FALSE(Shared->OneUse);
+  EXPECT_EQ(Shared->NumUses, 2u);
   EXPECT_FALSE(Shared->OneUser);
   // Used by a store and by the getelementptr.
   std::optional<ModuleUses> Own =
       F->getModuleUses(*Packed.getNamedGlobal("own"));
   ASSERT_TRUE(Own.has_value());
-  EXPECT_FALSE(Own->OneUse);
+  EXPECT_EQ(Own->NumUses, 2u);
   auto *Store =
       cast<StoreInst>(std::next(F->getFunction().getEntryBlock().begin(), 2));
   std::optional<ModuleUses> Offset =
       F->getModuleUses(*Store->getPointerOperand());
   ASSERT_TRUE(Offset.has_value());
-  EXPECT_TRUE(Offset->OneUse);
+  EXPECT_EQ(Offset->NumUses, 1u);
   EXPECT_TRUE(Offset->OneUser);
 }
 

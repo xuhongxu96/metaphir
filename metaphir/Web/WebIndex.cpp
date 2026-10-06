@@ -12,7 +12,7 @@ namespace llvm {
 namespace metaphir {
 
 static constexpr StringLiteral Magic = "MPIRWEB";
-static constexpr uint32_t FormatVersion = 1;
+static constexpr uint32_t FormatVersion = 2;
 
 StringRef getWebFileName(WebFile File) {
   switch (File) {
