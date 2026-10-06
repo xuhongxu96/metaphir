@@ -68,8 +68,18 @@ metaflag :anyIntegralConstant(?v) {
 	isAnyIntegralConstant(?v)
 }
 
+; m_APIntAllowPoison: an integer constant, or a vector splat of one whose
+; other lanes may be poison.
+constraint isAPIntAllowPoison(?v) {
+	(isConstantInt(?v) || isConstantSplat(?v)) && isAnyIntegralConstant(?v)
+}
+metaflag :apIntAllowPoison(?v) {
+	isAPIntAllowPoison(?v)
+}
+
+; m_APInt: an integer constant, or a vector splat of one without poison lanes.
 constraint isAPInt(?v) {
-	isAnyIntegralConstant(?v)
+	isAPIntAllowPoison(?v) && isForbidPoison(?v)
 }
 metaflag :apInt(?v) {
 	isAPInt(?v)
@@ -87,8 +97,92 @@ metaflag :constantSplat(?v) {
 	isConstantSplat(?v)
 }
 
-match neg [] Unary (?ty ?x) {
-	%ret = sub ?ty 0, ?x
+; m_Neg; 'neg nsw' is m_NSWNeg. The zero may be a splat with poison lanes.
+match neg [nsw] Unary (?ty ?x) {
+	%ret = sub nsw:?nsw ?ty ?_zero:zero, ?x
+}
+
+; m_LogicalAnd / m_LogicalOr: the bitwise form, or the poison-blocking select
+; form. With ':c' they are m_c_LogicalAnd / m_c_LogicalOr.
+match:c logicalAnd [] Binary (?ty ?x, ?y) {
+	%ret = and ?ty ?x, ?y
+} or {
+	%ret = select ?ty ?x, ?ty ?y, ?ty ?_false:zero
+}
+
+match:c logicalOr [] Binary (?ty ?x, ?y) {
+	%ret = or ?ty ?x, ?y
+} or {
+	%ret = select ?ty ?x, ?ty ?_true:allOnes, ?ty ?y
+}
+
+; m_LogicalOp: logicalAnd or logicalOr.
+match:c logicalOp [] Binary (?ty ?x, ?y) {
+	%ret = and ?ty ?x, ?y
+} or {
+	%ret = select ?ty ?x, ?ty ?y, ?ty ?_false:zero
+} or {
+	%ret = or ?ty ?x, ?y
+} or {
+	%ret = select ?ty ?x, ?ty ?_true:allOnes, ?ty ?y
+}
+
+; m_Shift. shl has no 'exact', so 'shift exact' only matches lshr and ashr.
+match shift [exact] Binary (?ty ?x, ?y) {
+	%ret = lshr exact:?exact ?ty ?x, ?y
+} or {
+	%ret = ashr exact:?exact ?ty ?x, ?y
+} or [exact = false] {
+	%ret = shl ?ty ?x, ?y
+}
+
+; m_LogicalShift.
+match logicalShift [exact] Binary (?ty ?x, ?y) {
+	%ret = lshr exact:?exact ?ty ?x, ?y
+} or [exact = false] {
+	%ret = shl ?ty ?x, ?y
+}
+
+; m_IDiv.
+match idiv [exact] Binary (?ty ?x, ?y) {
+	%ret = udiv exact:?exact ?ty ?x, ?y
+} or {
+	%ret = sdiv exact:?exact ?ty ?x, ?y
+}
+
+; m_IRem.
+match irem [] Binary (?ty ?x, ?y) {
+	%ret = urem ?ty ?x, ?y
+} or {
+	%ret = srem ?ty ?x, ?y
+}
+
+; m_SExtLike: sext, or a zext of a value known non-negative.
+match sextLike [] Cast (?ty1 ?x to ?ty2) {
+	%ret = sext ?ty1 ?x to ?ty2
+} or {
+	%ret = zext nneg ?ty1 ?x to ?ty2
+}
+
+; m_IToFP.
+match itofp [] Cast (?ty1 ?x to ?ty2) {
+	%ret = uitofp ?ty1 ?x to ?ty2
+} or {
+	%ret = sitofp ?ty1 ?x to ?ty2
+}
+
+; m_FPToI.
+match fptoi [] Cast (?ty1 ?x to ?ty2) {
+	%ret = fptoui ?ty1 ?x to ?ty2
+} or {
+	%ret = fptosi ?ty1 ?x to ?ty2
+}
+
+; m_PtrToIntOrAddr.
+match ptrToIntOrAddr [] Cast (?ty1 ?x to ?ty2) {
+	%ret = ptrtoint ?ty1 ?x to ?ty2
+} or {
+	%ret = ptrtoaddr ?ty1 ?x to ?ty2
 }
 
 metaflag:i:o :s(?v) {
