@@ -27,9 +27,11 @@ define i32 @scalar() {
 ; APINT: target 0: @scalar
 ; APINT-NEXT:   match 0:
 ; APINT-NEXT:     {?anch = %r, ?c = 7, ?ty = i32}
+
 ; ALLOW: target 0: @scalar
 ; ALLOW-NEXT:   match 0:
 ; ALLOW-NEXT:     {?anch = %r, ?c = 7, ?ty = i32}
+
 ; ANY: target 0: @scalar
 ; ANY-NEXT:   match 0:
 ; ANY-NEXT:     {?anch = %r, ?c = 7, ?ty = i32}
@@ -41,9 +43,11 @@ define <2 x i32> @splat() {
 ; APINT-NEXT: target 1: @splat
 ; APINT-NEXT:   match 0:
 ; APINT-NEXT:     {?anch = %r, ?c = splat (i32 7), ?ty = <2 x i32>}
+
 ; ALLOW-NEXT: target 1: @splat
 ; ALLOW-NEXT:   match 0:
 ; ALLOW-NEXT:     {?anch = %r, ?c = splat (i32 7), ?ty = <2 x i32>}
+
 ; ANY-NEXT: target 1: @splat
 ; ANY-NEXT:   match 0:
 ; ANY-NEXT:     {?anch = %r, ?c = splat (i32 7), ?ty = <2 x i32>}
@@ -54,10 +58,12 @@ define <2 x i32> @splat_poison() {
 }
 ; APINT-NEXT: target 2: @splat_poison
 ; APINT-NEXT:   no match
-; APINT-NEXT:   constraint not satisfied: {{.*}}
+; APINT-NEXT:   constraint not satisfied: (isAPInt ?c)
+
 ; ALLOW-NEXT: target 2: @splat_poison
 ; ALLOW-NEXT:   match 0:
 ; ALLOW-NEXT:     {?anch = %r, ?c = <i32 7, i32 poison>, ?ty = <2 x i32>}
+
 ; ANY-NEXT: target 2: @splat_poison
 ; ANY-NEXT:   match 0:
 ; ANY-NEXT:     {?anch = %r, ?c = <i32 7, i32 poison>, ?ty = <2 x i32>}
@@ -68,10 +74,12 @@ define <2 x i32> @non_splat() {
 }
 ; APINT-NEXT: target 3: @non_splat
 ; APINT-NEXT:   no match
-; APINT-NEXT:   constraint not satisfied: {{.*}}
+; APINT-NEXT:   constraint not satisfied: (isAPInt ?c)
+
 ; ALLOW-NEXT: target 3: @non_splat
 ; ALLOW-NEXT:   no match
-; ALLOW-NEXT:   constraint not satisfied: {{.*}}
+; ALLOW-NEXT:   constraint not satisfied: (isAPIntAllowPoison ?c)
+
 ; ANY-NEXT: target 3: @non_splat
 ; ANY-NEXT:   match 0:
 ; ANY-NEXT:     {?anch = %r, ?c = <i32 1, i32 2>, ?ty = <2 x i32>}
@@ -82,10 +90,12 @@ define <2 x float> @float_splat() {
 }
 ; APINT-NEXT: target 4: @float_splat
 ; APINT-NEXT:   no match
-; APINT-NEXT:   constraint not satisfied: {{.*}}
+; APINT-NEXT:   constraint not satisfied: (isAPInt ?c)
+
 ; ALLOW-NEXT: target 4: @float_splat
 ; ALLOW-NEXT:   no match
-; ALLOW-NEXT:   constraint not satisfied: {{.*}}
+; ALLOW-NEXT:   constraint not satisfied: (isAPIntAllowPoison ?c)
+
 ; ANY-NEXT: target 4: @float_splat
 ; ANY-NEXT:   no match
-; ANY-NEXT:   constraint not satisfied: {{.*}}
+; ANY-NEXT:   constraint not satisfied: (isAnyIntegralConstant ?c)
