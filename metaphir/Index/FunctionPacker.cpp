@@ -294,7 +294,7 @@ Error packFunctions(Module &M,
       continue;
     std::vector<ModuleUses> &Uses = Functions.emplace_back(&F, 0).second;
     forEachReferencedConstant(F, [&](const Constant &C) {
-      Uses.push_back(ModuleUses{C.hasOneUse(), C.hasOneUser()});
+      Uses.push_back(ModuleUses{C.getNumUses(), C.hasOneUser()});
     });
   }
 

@@ -17,7 +17,7 @@ inline bool isUsedAcrossFunctions(const llvm::Value &V) {
 
 /// How a value is used in its whole module.
 struct ModuleUses {
-  bool OneUse;
+  unsigned NumUses;
   bool OneUser;
 };
 

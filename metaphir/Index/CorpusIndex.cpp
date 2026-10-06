@@ -25,7 +25,7 @@ namespace llvm {
 namespace metaphir {
 
 static constexpr StringLiteral Magic = "MPIRIDX";
-static constexpr uint32_t FormatVersion = 7;
+static constexpr uint32_t FormatVersion = 8;
 
 bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
                         raw_ostream &Err) {
