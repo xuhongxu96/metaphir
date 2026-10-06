@@ -11,10 +11,11 @@ match shr [exact] Binary (?ty ?x, ?y) {
 	%ret = ashr exact:?exact ?ty ?x, ?y
 }
 
-match:c bitwiseLogic [disjoint] Binary (?ty ?x, ?y) {
+; m_BitwiseLogic.
+match:c bitwiseLogic [] Binary (?ty ?x, ?y) {
 	%ret = and ?ty ?x, ?y
 } or {
-	%ret = or disjoint:?disjoint ?ty ?x, ?y
+	%ret = or ?ty ?x, ?y
 } or {
 	%ret = xor ?ty ?x, ?y
 }
