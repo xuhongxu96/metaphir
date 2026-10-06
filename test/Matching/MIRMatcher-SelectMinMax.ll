@@ -22,11 +22,12 @@ define i32 @smax(i32 %p, i32 %b) {
   ret i32 %s
 }
 ; MINMAX: target 0: @smax
-; MINMAX-NEXT: match 0:
-; MINMAX-NEXT: {?anch = %s, ?b = %b, ?p = %p}
+; MINMAX-NEXT:   match 0:
+; MINMAX-NEXT:     {?anch = %s, ?b = %b, ?p = %p}
+
 ; COMMUTED: target 0: @smax
-; COMMUTED-NEXT: match 0:
-; COMMUTED-NEXT: {?anch = %s, ?b = %b, ?p = %p}
+; COMMUTED-NEXT:   match 0:
+; COMMUTED-NEXT:     {?anch = %s, ?b = %b, ?p = %p}
 
 ; The compare's operands are swapped.
 define i32 @umin_swapped_cmp(i32 %p, i32 %b) {
@@ -36,11 +37,12 @@ define i32 @umin_swapped_cmp(i32 %p, i32 %b) {
   ret i32 %s
 }
 ; MINMAX-NEXT: target 1: @umin_swapped_cmp
-; MINMAX-NEXT: match 0:
-; MINMAX-NEXT: {?anch = %s, ?b = %b, ?p = %p}
+; MINMAX-NEXT:   match 0:
+; MINMAX-NEXT:     {?anch = %s, ?b = %b, ?p = %p}
+
 ; COMMUTED-NEXT: target 1: @umin_swapped_cmp
-; COMMUTED-NEXT: match 0:
-; COMMUTED-NEXT: {?anch = %s, ?b = %b, ?p = %p}
+; COMMUTED-NEXT:   match 0:
+; COMMUTED-NEXT:     {?anch = %s, ?b = %b, ?p = %p}
 
 ; The select's arms are swapped.
 define i32 @smin_swapped_arms(i32 %p, i32 %b) {
@@ -50,10 +52,11 @@ define i32 @smin_swapped_arms(i32 %p, i32 %b) {
   ret i32 %s
 }
 ; MINMAX-NEXT: target 2: @smin_swapped_arms
-; MINMAX-NEXT: no match
+; MINMAX-NEXT:   no match
+
 ; COMMUTED-NEXT: target 2: @smin_swapped_arms
-; COMMUTED-NEXT: match 0:
-; COMMUTED-NEXT: {?anch = %s, ?b = %b, ?p = %p}
+; COMMUTED-NEXT:   match 0:
+; COMMUTED-NEXT:     {?anch = %s, ?b = %b, ?p = %p}
 
 ; Not a min or max.
 define i32 @equality(i32 %p, i32 %b) {
@@ -63,11 +66,12 @@ define i32 @equality(i32 %p, i32 %b) {
   ret i32 %s
 }
 ; MINMAX-NEXT: target 3: @equality
-; MINMAX-NEXT: no match
-; MINMAX-NEXT: constraint not satisfied: (! (isEquality ?_s$_pred))
+; MINMAX-NEXT:   no match
+; MINMAX-NEXT:   constraint not satisfied: (! (isEquality ?_s$_pred))
+
 ; COMMUTED-NEXT: target 3: @equality
-; COMMUTED-NEXT: no match
-; COMMUTED-NEXT: constraint not satisfied: (! (isEquality ?_s$_pred))
+; COMMUTED-NEXT:   no match
+; COMMUTED-NEXT:   constraint not satisfied: (! (isEquality ?_s$_pred))
 
 define i32 @other_arm(i32 %p, i32 %b) {
   %a = add i32 %p, 1
@@ -76,6 +80,7 @@ define i32 @other_arm(i32 %p, i32 %b) {
   ret i32 %s
 }
 ; MINMAX-NEXT: target 4: @other_arm
-; MINMAX-NEXT: no match
+; MINMAX-NEXT:   no match
+
 ; COMMUTED-NEXT: target 4: @other_arm
-; COMMUTED-NEXT: no match
+; COMMUTED-NEXT:   no match

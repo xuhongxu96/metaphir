@@ -45,14 +45,18 @@ define i32 @plain(i32 %a, i32 %b) {
 ; OMITTED: target 0: @plain
 ; OMITTED-NEXT:   match 0:
 ; OMITTED-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+
 ; REQUIRED: target 0: @plain
 ; REQUIRED-NEXT:   no match
+
 ; NEGATED: target 0: @plain
 ; NEGATED-NEXT:   match 0:
 ; NEGATED-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+
 ; CAPTURED: target 0: @plain
 ; CAPTURED-NEXT:   match 0:
 ; CAPTURED-NEXT:     {?anch = %r, ?nsw = false, ?x = %a, ?y = %b}
+
 ; ADDLIKE: target 0: @plain
 ; ADDLIKE-NEXT:   match 0:
 ; ADDLIKE-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
@@ -67,14 +71,18 @@ define i32 @nsw_nuw(i32 %a, i32 %b) {
 ; OMITTED-NEXT: target 1: @nsw_nuw
 ; OMITTED-NEXT:   match 0:
 ; OMITTED-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+
 ; REQUIRED-NEXT: target 1: @nsw_nuw
 ; REQUIRED-NEXT:   match 0:
 ; REQUIRED-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+
 ; NEGATED-NEXT: target 1: @nsw_nuw
 ; NEGATED-NEXT:   no match
+
 ; CAPTURED-NEXT: target 1: @nsw_nuw
 ; CAPTURED-NEXT:   match 0:
 ; CAPTURED-NEXT:     {?anch = %r, ?nsw = true, ?x = %a, ?y = %b}
+
 ; ADDLIKE-NEXT: target 1: @nsw_nuw
 ; ADDLIKE-NEXT:   match 0:
 ; ADDLIKE-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
@@ -88,22 +96,46 @@ define i32 @nuw(i32 %a, i32 %b) {
 }
 ; OMITTED-NEXT: target 2: @nuw
 ; OMITTED-NEXT:   match 0:
+; OMITTED-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+
 ; REQUIRED-NEXT: target 2: @nuw
 ; REQUIRED-NEXT:   no match
+
 ; NEGATED-NEXT: target 2: @nuw
 ; NEGATED-NEXT:   match 0:
 ; NEGATED-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+
+; CAPTURED-NEXT: target 2: @nuw
+; CAPTURED-NEXT:   match 0:
+; CAPTURED-NEXT:     {?anch = %r, ?nsw = false, ?x = %a, ?y = %b}
+
+; ADDLIKE-NEXT: target 2: @nuw
+; ADDLIKE-NEXT:   match 0:
+; ADDLIKE-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
 ; ADDLIKE-NOT-NSW-NEXT: target 2: @nuw
 ; ADDLIKE-NOT-NSW-NEXT:   match 0:
+; ADDLIKE-NOT-NSW-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
 
 define i32 @disjoint(i32 %a, i32 %b) {
   %r = or disjoint i32 %a, %b
   ret i32 %r
 }
-; ADDLIKE: target 3: @disjoint
+; OMITTED-NEXT: target 3: @disjoint
+; OMITTED-NEXT:   no match
+
+; REQUIRED-NEXT: target 3: @disjoint
+; REQUIRED-NEXT:   no match
+
+; NEGATED-NEXT: target 3: @disjoint
+; NEGATED-NEXT:   no match
+
+; CAPTURED-NEXT: target 3: @disjoint
+; CAPTURED-NEXT:   no match
+
+; ADDLIKE-NEXT: target 3: @disjoint
 ; ADDLIKE-NEXT:   match 0:
 ; ADDLIKE-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
-; ADDLIKE-NOT-NSW: target 3: @disjoint
+; ADDLIKE-NOT-NSW-NEXT: target 3: @disjoint
 ; ADDLIKE-NOT-NSW-NEXT:   no match
 
 ;--- fp.ll
@@ -123,5 +155,7 @@ define float @nsz(float %a, float %b) {
 }
 ; FMF-NEXT: target 1: @nsz
 ; FMF-NEXT:   match 0:
+; FMF-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
 ; FMF-NOT-NNAN-NEXT: target 1: @nsz
 ; FMF-NOT-NNAN-NEXT:   match 0:
+; FMF-NOT-NNAN-NEXT:     {?anch = %r, ?x = %a, ?y = %b}

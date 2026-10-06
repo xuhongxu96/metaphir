@@ -22,11 +22,12 @@ define i32 @sext_i8(i8 %v, i32 %y) {
   ret i32 %r
 }
 ; SIGN: target 0: @sext_i8
-; SIGN-NEXT: match 0:
-; SIGN-NEXT: {?anch = %r, ?x = %x, ?y = %y}
+; SIGN-NEXT:   match 0:
+; SIGN-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
+
 ; SIGNIFICANT: target 0: @sext_i8
-; SIGNIFICANT-NEXT: match 0:
-; SIGNIFICANT-NEXT: {?anch = %r, ?x = %x, ?y = %y}
+; SIGNIFICANT-NEXT:   match 0:
+; SIGNIFICANT-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
 
 define i32 @sext_i16(i16 %v, i32 %y) {
   %x = sext i16 %v to i32
@@ -34,11 +35,12 @@ define i32 @sext_i16(i16 %v, i32 %y) {
   ret i32 %r
 }
 ; SIGN-NEXT: target 1: @sext_i16
-; SIGN-NEXT: no match
-; SIGN-NEXT: constraint not satisfied: (uge (numSignBits ?x) 25)
+; SIGN-NEXT:   no match
+; SIGN-NEXT:   constraint not satisfied: (uge (numSignBits ?x) 25)
+
 ; SIGNIFICANT-NEXT: target 1: @sext_i16
-; SIGNIFICANT-NEXT: no match
-; SIGNIFICANT-NEXT: constraint not satisfied: (ule (maxSignificantBits ?x) 8)
+; SIGNIFICANT-NEXT:   no match
+; SIGNIFICANT-NEXT:   constraint not satisfied: (ule (maxSignificantBits ?x) 8)
 
 define i32 @ashr(i32 %v, i32 %y) {
   %x = ashr i32 %v, 24
@@ -46,19 +48,21 @@ define i32 @ashr(i32 %v, i32 %y) {
   ret i32 %r
 }
 ; SIGN-NEXT: target 2: @ashr
-; SIGN-NEXT: match 0:
-; SIGN-NEXT: {?anch = %r, ?x = %x, ?y = %y}
+; SIGN-NEXT:   match 0:
+; SIGN-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
+
 ; SIGNIFICANT-NEXT: target 2: @ashr
-; SIGNIFICANT-NEXT: match 0:
-; SIGNIFICANT-NEXT: {?anch = %r, ?x = %x, ?y = %y}
+; SIGNIFICANT-NEXT:   match 0:
+; SIGNIFICANT-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
 
 define i32 @argument(i32 %x, i32 %y) {
   %r = add i32 %x, %y
   ret i32 %r
 }
 ; SIGN-NEXT: target 3: @argument
-; SIGN-NEXT: no match
-; SIGN-NEXT: constraint not satisfied: (uge (numSignBits ?x) 25)
+; SIGN-NEXT:   no match
+; SIGN-NEXT:   constraint not satisfied: (uge (numSignBits ?x) 25)
+
 ; SIGNIFICANT-NEXT: target 3: @argument
-; SIGNIFICANT-NEXT: no match
-; SIGNIFICANT-NEXT: constraint not satisfied: (ule (maxSignificantBits ?x) 8)
+; SIGNIFICANT-NEXT:   no match
+; SIGNIFICANT-NEXT:   constraint not satisfied: (ule (maxSignificantBits ?x) 8)

@@ -32,16 +32,19 @@ define i1 @in_order(i32 %p, i32 %y) {
   ret i1 %c
 }
 ; LITERAL: target 0: @in_order
-; LITERAL-NEXT: match 0:
-; LITERAL-NEXT: {?anch = %c, ?p = %p, ?y = %y}
+; LITERAL-NEXT:   match 0:
+; LITERAL-NEXT:     {?anch = %c, ?p = %p, ?y = %y}
+
 ; PRED: target 0: @in_order
-; PRED-NEXT: match 0:
-; PRED-NEXT: {?anch = %c, ?p = %p, ?pred = slt, ?y = %y}
+; PRED-NEXT:   match 0:
+; PRED-NEXT:     {?anch = %c, ?p = %p, ?pred = slt, ?y = %y}
+
 ; PLAIN: target 0: @in_order
-; PLAIN-NEXT: match 0:
-; PLAIN-NEXT: {?anch = %c, ?p = %p, ?y = %y}
+; PLAIN-NEXT:   match 0:
+; PLAIN-NEXT:     {?anch = %c, ?p = %p, ?y = %y}
+
 ; FCMP: target 0: @in_order
-; FCMP-NEXT: no match
+; FCMP-NEXT:   no match
 
 ; y s> a is a s< y.
 define i1 @swapped(i32 %p, i32 %y) {
@@ -50,15 +53,18 @@ define i1 @swapped(i32 %p, i32 %y) {
   ret i1 %c
 }
 ; LITERAL-NEXT: target 1: @swapped
-; LITERAL-NEXT: match 0:
-; LITERAL-NEXT: {?anch = %c, ?p = %p, ?y = %y}
+; LITERAL-NEXT:   match 0:
+; LITERAL-NEXT:     {?anch = %c, ?p = %p, ?y = %y}
+
 ; PRED-NEXT: target 1: @swapped
-; PRED-NEXT: match 0:
-; PRED-NEXT: {?anch = %c, ?p = %p, ?pred = slt, ?y = %y}
+; PRED-NEXT:   match 0:
+; PRED-NEXT:     {?anch = %c, ?p = %p, ?pred = slt, ?y = %y}
+
 ; PLAIN-NEXT: target 1: @swapped
-; PLAIN-NEXT: no match
+; PLAIN-NEXT:   no match
+
 ; FCMP-NEXT: target 1: @swapped
-; FCMP-NEXT: no match
+; FCMP-NEXT:   no match
 
 ; y s< a is a s> y: '?pred' binds sgt.
 define i1 @swapped_other(i32 %p, i32 %y) {
@@ -67,14 +73,17 @@ define i1 @swapped_other(i32 %p, i32 %y) {
   ret i1 %c
 }
 ; LITERAL-NEXT: target 2: @swapped_other
-; LITERAL-NEXT: no match
+; LITERAL-NEXT:   no match
+
 ; PRED-NEXT: target 2: @swapped_other
-; PRED-NEXT: match 0:
-; PRED-NEXT: {?anch = %c, ?p = %p, ?pred = sgt, ?y = %y}
+; PRED-NEXT:   match 0:
+; PRED-NEXT:     {?anch = %c, ?p = %p, ?pred = sgt, ?y = %y}
+
 ; PLAIN-NEXT: target 2: @swapped_other
-; PLAIN-NEXT: no match
+; PLAIN-NEXT:   no match
+
 ; FCMP-NEXT: target 2: @swapped_other
-; FCMP-NEXT: no match
+; FCMP-NEXT:   no match
 
 define i1 @equality(i32 %p, i32 %y) {
   %a = add i32 %p, 1
@@ -82,14 +91,17 @@ define i1 @equality(i32 %p, i32 %y) {
   ret i1 %c
 }
 ; LITERAL-NEXT: target 3: @equality
-; LITERAL-NEXT: no match
+; LITERAL-NEXT:   no match
+
 ; PRED-NEXT: target 3: @equality
-; PRED-NEXT: match 0:
-; PRED-NEXT: {?anch = %c, ?p = %p, ?pred = eq, ?y = %y}
+; PRED-NEXT:   match 0:
+; PRED-NEXT:     {?anch = %c, ?p = %p, ?pred = eq, ?y = %y}
+
 ; PLAIN-NEXT: target 3: @equality
-; PLAIN-NEXT: no match
+; PLAIN-NEXT:   no match
+
 ; FCMP-NEXT: target 3: @equality
-; FCMP-NEXT: no match
+; FCMP-NEXT:   no match
 
 define i1 @fcmp_in_order(float %p, float %y) {
   %a = fadd float %p, 1.0
@@ -97,14 +109,17 @@ define i1 @fcmp_in_order(float %p, float %y) {
   ret i1 %c
 }
 ; LITERAL-NEXT: target 4: @fcmp_in_order
-; LITERAL-NEXT: no match
+; LITERAL-NEXT:   no match
+
 ; PRED-NEXT: target 4: @fcmp_in_order
-; PRED-NEXT: no match
+; PRED-NEXT:   no match
+
 ; PLAIN-NEXT: target 4: @fcmp_in_order
-; PLAIN-NEXT: no match
+; PLAIN-NEXT:   no match
+
 ; FCMP-NEXT: target 4: @fcmp_in_order
-; FCMP-NEXT: match 0:
-; FCMP-NEXT: {?anch = %c, ?p = %p, ?y = %y}
+; FCMP-NEXT:   match 0:
+; FCMP-NEXT:     {?anch = %c, ?p = %p, ?y = %y}
 
 define i1 @fcmp_swapped(float %p, float %y) {
   %a = fadd float %p, 1.0
@@ -112,11 +127,14 @@ define i1 @fcmp_swapped(float %p, float %y) {
   ret i1 %c
 }
 ; LITERAL-NEXT: target 5: @fcmp_swapped
-; LITERAL-NEXT: no match
+; LITERAL-NEXT:   no match
+
 ; PRED-NEXT: target 5: @fcmp_swapped
-; PRED-NEXT: no match
+; PRED-NEXT:   no match
+
 ; PLAIN-NEXT: target 5: @fcmp_swapped
-; PLAIN-NEXT: no match
+; PLAIN-NEXT:   no match
+
 ; FCMP-NEXT: target 5: @fcmp_swapped
-; FCMP-NEXT: match 0:
-; FCMP-NEXT: {?anch = %c, ?p = %p, ?y = %y}
+; FCMP-NEXT:   match 0:
+; FCMP-NEXT:     {?anch = %c, ?p = %p, ?y = %y}
