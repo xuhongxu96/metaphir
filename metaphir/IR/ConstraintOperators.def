@@ -173,6 +173,21 @@ MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(NumSignBits, "numSignBits", Call,
                                     IntegerResult, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaxSignificantBits, "maxSignificantBits",
                                     Call, IntegerResult, 1)
+// Floating-point value tracking.
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNeverNaN, "isKnownNeverNaN", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNeverInfinity,
+                                    "isKnownNeverInfinity", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNeverInfOrNaN,
+                                    "isKnownNeverInfOrNaN", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(CannotBeNegativeZero,
+                                    "cannotBeNegativeZero", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(CannotBeOrderedLessThanZero,
+                                    "cannotBeOrderedLessThanZero", Call,
+                                    BooleanResult, 1)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownZeros, "knownZeros", Call,
                                     IntegerResult, 1)
