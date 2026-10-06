@@ -50,9 +50,10 @@ struct MatcherOperand {
   void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
 };
 
-/// A semantic flag written on an instruction matcher ('nsw'). Without a
-/// Capture the flag must be present; with one it is optional and Capture is
-/// bound to whether it is.
+/// A semantic flag written on an instruction matcher. 'nsw' requires the flag,
+/// '!nsw' (Negated) requires its absence, and 'nsw:?v' (Capture) accepts either
+/// and binds ?v to whether it is present. A flag that is not written matches
+/// either way.
 struct InstructionFlag {
   enum FlagID {
 #define MIR_FLAG_TOKEN_KIND(Name) F_##Name,
@@ -62,6 +63,7 @@ struct InstructionFlag {
 
   FlagID ID = NumFlagIDs;
   MetaVariable *Capture = nullptr;
+  bool Negated = false;
 
   static StringRef getName(FlagID ID);
 };

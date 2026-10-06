@@ -88,7 +88,7 @@ metaflag :constantSplat(?v) {
 }
 
 match neg [] Unary (?ty ?x) {
-	%ret = sub nsw:?_ nuw:?_ ?ty 0, ?x
+	%ret = sub ?ty 0, ?x
 }
 
 metaflag:i:o :s(?v) {

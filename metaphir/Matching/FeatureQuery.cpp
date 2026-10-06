@@ -125,15 +125,13 @@ static unsigned fixedWidth(const Type *Ty) {
 static ShapeRequirement shapeOf(const Instruction &Node) {
   Instruction::InstructionID ID = Node.getInstructionID();
   ShapeRequirement Shape{ID};
-  // The matcher requires the named flags and, of the other supported flags,
-  // the absence of those not captured.
-  uint32_t Named = 0;
+  // The matcher requires the flags it writes and the absence of those it
+  // negates; it accepts either for the rest.
   for (const InstructionFlag &Flag : Node.getFlags()) {
-    Named |= flagBit(Flag.ID);
-    if (!Flag.Capture)
-      Shape.Present |= flagBit(Flag.ID);
+    if (Flag.Capture)
+      continue;
+    (Flag.Negated ? Shape.Absent : Shape.Present) |= flagBit(Flag.ID);
   }
-  Shape.Absent = Instruction::getSupportedFlags(ID) & ~Named;
 
   // A type-only operand is matched against the result type, except for
   // alloca's and getelementptr's; a binary operator's operands have the type

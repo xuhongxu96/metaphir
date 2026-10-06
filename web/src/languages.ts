@@ -28,6 +28,8 @@ const metaphir: Monaco.languages.IMonarchLanguage = {
       // Constraints and settings follow ';;'; other ';' lines are comments.
       [/;;/, { token: "keyword.constraint", next: "@constraint" }],
       [/;.*$/, "comment"],
+      // A negated flag, as in 'add !nsw'.
+      [/!(?=[A-Za-z])/, "operator"],
       { include: "@common" },
     ],
     constraint: [

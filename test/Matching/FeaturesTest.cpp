@@ -327,9 +327,8 @@ TEST_F(FeaturesTest, RequiresNamedFlags) {
   EXPECT_FALSE(passes("inexact"));
 }
 
-// A supported flag the pattern does not name must be absent, unless it is
-// captured.
-TEST_F(FeaturesTest, OmittedFlagsMustBeAbsent) {
+// A supported flag the pattern does not name may be present or absent.
+TEST_F(FeaturesTest, OmittedFlagsMayBeEither) {
   parse(R"(
     %r = add i32 ?x, ?y
   )",
@@ -344,8 +343,32 @@ TEST_F(FeaturesTest, OmittedFlagsMustBeAbsent) {
     }
   )");
   EXPECT_TRUE(passes("plain"));
+  EXPECT_TRUE(matches(*M->getFunction("nsw")));
+  EXPECT_TRUE(passes("nsw"));
+}
+
+TEST_F(FeaturesTest, NegatedFlagsMustBeAbsent) {
+  parse(R"(
+    %r = add !nsw i32 ?x, ?y
+  )",
+        R"(
+    define i32 @plain(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @nsw(i32 %x, i32 %y) {
+      %r = add nsw i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @nuw(i32 %x, i32 %y) {
+      %r = add nuw i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("plain"));
   EXPECT_FALSE(matches(*M->getFunction("nsw")));
   EXPECT_FALSE(passes("nsw"));
+  EXPECT_TRUE(passes("nuw"));
 }
 
 TEST_F(FeaturesTest, CapturedFlagsMayBeEither) {
@@ -368,7 +391,7 @@ TEST_F(FeaturesTest, CapturedFlagsMayBeEither) {
   )");
   EXPECT_TRUE(passes("plain"));
   EXPECT_TRUE(passes("nsw"));
-  EXPECT_FALSE(passes("nuw"));
+  EXPECT_TRUE(passes("nuw"));
 }
 
 TEST_F(FeaturesTest, RequiresCastResultWidths) {

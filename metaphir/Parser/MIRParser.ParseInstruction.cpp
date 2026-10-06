@@ -106,29 +106,42 @@ bool MIRParser::parseInstructionMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
 bool MIRParser::parseSemanticFlags(
     function_ref<bool(InstructionFlag::FlagID)> IsSupported,
     StringRef OwnerName, SmallVectorImpl<InstructionFlag> &Result) {
-  while (std::optional<InstructionFlag::FlagID> Flag =
-             getSemanticFlag(Lex.getKind())) {
+  while (true) {
     LocTy Loc = Lex.getLoc();
+    bool Negated = consume(tok::exclaim);
+    std::optional<InstructionFlag::FlagID> Flag =
+        getSemanticFlag(Lex.getKind());
+    if (!Flag) {
+      if (Negated)
+        return error("expected a flag after '!'");
+      return false;
+    }
     InstructionFlag::FlagID FlagID = *Flag;
+    StringRef FlagName = InstructionFlag::getName(FlagID);
     if (!IsSupported(FlagID))
-      return Lex.ParseError(Loc, "flag '" + InstructionFlag::getName(FlagID) +
-                                     "' is not valid for '" + OwnerName + "'");
+      return Lex.ParseError(Loc, "flag '" + FlagName + "' is not valid for '" +
+                                     OwnerName + "'");
+    if (any_of(Result,
+               [FlagID](const InstructionFlag &F) { return F.ID == FlagID; }))
+      return Lex.ParseError(Loc,
+                            "flag '" + FlagName + "' is written more than once");
     next();
     MetaVariable *Capture = nullptr;
     if (Lex.getKind() == tok::MetaCaptureVar) {
+      if (Negated)
+        return error("a negated flag cannot be captured");
       StringRef CaptureName = Lex.getStrVal();
-      if (CaptureName == "_") {
-        CaptureName = Context.saveString(
-            (Twine("_flag$") + Twine(WildcardCaptureCounter++)).str());
-      }
+      if (CaptureName == "_")
+        return error("flag '" + FlagName +
+                     "' cannot be captured by '?_'; omit the flag, which "
+                     "matches whether or not it is present");
       Capture = getMeta(CaptureName, MetaType::Bool, Lex.getLoc());
       if (!Capture)
         return true;
       next();
     }
-    Result.push_back({FlagID, Capture});
+    Result.push_back({FlagID, Capture, Negated});
   }
-  return false;
 }
 
 /// Parses one metaflag and reports through Allowed where it may be written.

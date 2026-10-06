@@ -1,5 +1,5 @@
 ;; treatIntAsVec(true)
 %rem = and:c:s i?bits ?x, 1
 %div = lshr:s i?bits ?x, 1
-%add = add:?anch nuw:?_ nsw:?_ i?bits %rem, %div
+%add = add:?anch i?bits %rem, %div
 ;; isGuaranteedNotToBeUndef(?x)

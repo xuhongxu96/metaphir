@@ -173,6 +173,8 @@ const Instruction::Info &Instruction::getInfo(InstructionID ID) {
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F) {
+  if (F.Negated)
+    OS << '!';
   OS << InstructionFlag::getName(F.ID);
   if (F.Capture)
     OS << ":" << *F.Capture;

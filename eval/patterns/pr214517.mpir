@@ -1,3 +1,3 @@
 ;; treatIntAsVec(true)
 %cttz = call:s i?bits @llvm.cttz(i?bits ?x, i1 ?isz)
-%shl = shl:?anch nuw:?_ nsw:?_ i?bits 1, %cttz
+%shl = shl:?anch i?bits 1, %cttz

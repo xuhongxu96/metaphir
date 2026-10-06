@@ -1,6 +1,6 @@
 ;; treatIntAsVec(true)
 %sat = call:s i?bits @llvm.uadd.sat(i?bits ?x, i?bits ?c:or(:constantInt, :constantSplat))
-%res = add:?anch:c nsw:?_ nuw:?_ i?bits %sat, ?negc:or(:constantInt, :constantSplat)
+%res = add:?anch:c i?bits %sat, ?negc:or(:constantInt, :constantSplat)
 ;; add(?c, ?negc, ?bits) == 0
 
 

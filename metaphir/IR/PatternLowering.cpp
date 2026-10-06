@@ -12,9 +12,10 @@
 namespace llvm {
 namespace metaphir {
 
+/// The fresh variable a use that omits a flag passes for it to the matcher's
+/// root (see inlineBranch); a use nested in that body then also omits it.
 static bool isWildcardCapture(const MetaVariable *Capture) {
-  return Capture && (Capture->getName() == "_" ||
-                     Capture->getName().starts_with("_flag$"));
+  return Capture && Capture->getName().starts_with("_flag$");
 }
 
 static bool isMetaType(const Type *T) {
@@ -491,15 +492,16 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
                               : Use.getResultName().str();
 
   // Bind the matcher's supported flags. For each one, the use either omits
-  // it (the flag must be absent), requires it, or captures it; a branch may
-  // also fix its value. FlagValue is what the root's capture of the flag
-  // stands for: a boolean constant or a meta variable.
+  // it (either value), requires it, negates it (it must be absent), or
+  // captures it; a branch may also fix its value. FlagValue is what the root's
+  // capture of the flag stands for: a boolean constant or a meta variable.
   SmallVector<std::pair<const MetaVariable *, bool>, 4> FixedFlags;
   DenseMap<unsigned, Value *> FlagValues;
   for (InstructionFlag::FlagID FlagID : CM.getSupportedFlags()) {
     auto HasID = [FlagID](const InstructionFlag &F) { return F.ID == FlagID; };
     const InstructionFlag *UseFlag = find_if(Use.getFlags(), HasID);
-    if (UseFlag == Use.getFlags().end())
+    // A flag forwarded from an enclosing use that omitted it is omitted too.
+    if (UseFlag == Use.getFlags().end() || isWildcardCapture(UseFlag->Capture))
       UseFlag = nullptr;
     const auto *Fixed = find_if(Branch.FixedFlags, [FlagID](const auto &F) {
       return F.first == FlagID;
@@ -508,35 +510,25 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
       Fixed = nullptr;
 
     Value *FlagValue = nullptr;
-    if (Fixed) {
-      bool Val = Fixed->second;
-      if (!UseFlag) {
-        if (Val)
-          return nullptr;
-        FlagValue = boolean(false, Use.getSourceRange());
-      } else if (!UseFlag->Capture) {
-        if (!Val)
-          return nullptr;
-        FlagValue = boolean(true, Use.getSourceRange());
-      } else if (isWildcardCapture(UseFlag->Capture)) {
-        FlagValue = boolean(Val, Use.getSourceRange());
-      } else {
-        FixedFlags.push_back({UseFlag->Capture, Val});
-        FlagValue = UseFlag->Capture;
-      }
-    } else if (!UseFlag) {
-      FlagValue = boolean(false, Use.getSourceRange());
-    } else if (!UseFlag->Capture) {
-      FlagValue = boolean(true, Use.getSourceRange());
-    } else if (isWildcardCapture(UseFlag->Capture)) {
+    if (UseFlag && !UseFlag->Capture) {
+      bool Required = !UseFlag->Negated;
+      if (Fixed && Fixed->second != Required)
+        return nullptr;
+      FlagValue = boolean(Required, Use.getSourceRange());
+    } else if (Fixed) {
+      if (UseFlag)
+        FixedFlags.push_back({UseFlag->Capture, Fixed->second});
+      FlagValue = UseFlag ? static_cast<Value *>(UseFlag->Capture)
+                          : boolean(Fixed->second, Use.getSourceRange());
+    } else if (UseFlag) {
+      FlagValue = UseFlag->Capture;
+    } else {
       FlagValue = MetaVariable::create(
           Context,
           Context.pImpl->Saver.save(
               ("_flag$" + UsePrefix + "$" + InstructionFlag::getName(FlagID))
                   .str()),
           MetaType::Bool, Use.getSourceRange());
-    } else {
-      FlagValue = UseFlag->Capture;
     }
     FlagValues[FlagID] = FlagValue;
     for (const InstructionFlag &F : Root.getFlags())
@@ -582,16 +574,17 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
     SmallVector<InstructionFlag, 4> Flags;
     for (const InstructionFlag &F : BI->getFlags()) {
       if (!IsRoot || !CM.hasSupportedFlag(F.ID)) {
-        Flags.push_back({F.ID, Subst.variable(F.Capture)});
+        Flags.push_back({F.ID, Subst.variable(F.Capture), F.Negated});
         continue;
       }
       // A supported flag on the root takes the use's flag: absent (false),
-      // required (true), or captured.
+      // required (true), or a variable.
       Value *FlagValue = FlagValues.lookup(F.ID);
       if (auto *Var = dyn_cast<MetaVariable>(FlagValue))
         Flags.push_back({F.ID, Var});
-      else if (!cast<IntegerConstant>(FlagValue)->getValue().isZero())
-        Flags.push_back({F.ID, nullptr});
+      else
+        Flags.push_back({F.ID, nullptr,
+                         cast<IntegerConstant>(FlagValue)->getValue().isZero()});
     }
     if (IsRoot) {
       if (Use.getCapture())

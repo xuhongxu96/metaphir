@@ -107,31 +107,13 @@ bool InstructionMatcher::matchKeyedOperands() {
 }
 
 bool InstructionMatcher::matchSemanticFlags() {
-  Instruction::FlagMask Supported =
-      Instruction::getSupportedFlags(Matcher.getInstructionID());
-  for (unsigned ID = 0; ID != InstructionFlag::NumFlagIDs; ++ID) {
-    auto FlagID = static_cast<InstructionFlag::FlagID>(ID);
-    if (!(Supported & Instruction::mask(FlagID)))
-      continue;
-
-    const InstructionFlag *Flag = nullptr;
-    for (const InstructionFlag &Candidate : Matcher.getFlags()) {
-      if (Candidate.ID == FlagID) {
-        Flag = &Candidate;
-        break;
-      }
-    }
-
-    bool Present = hasSemanticFlag(FlagID, *TargetInstruction);
-    if (!Flag) {
-      // An omitted supported flag is an assertion that the target does not
-      // have it. Captures remain the way to explicitly accept either value.
-      if (Present)
+  // A flag the matcher does not write matches either way.
+  for (const InstructionFlag &Flag : Matcher.getFlags()) {
+    bool Present = hasSemanticFlag(Flag.ID, *TargetInstruction);
+    if (Flag.Capture) {
+      if (!State.unify(*Flag.Capture, Present))
         return false;
-    } else if (Flag->Capture) {
-      if (!State.unify(*Flag->Capture, Present))
-        return false;
-    } else if (!Present) {
+    } else if (Present == Flag.Negated) {
       return false;
     }
   }

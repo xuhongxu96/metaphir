@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
-%trunc = trunc nsw nuw:?_ i?big ?x to i?small
-%logic = bitwiseLogic:c:s disjoint:?_ i?small %trunc, ?y
+%trunc = trunc nsw i?big ?x to i?small
+%logic = bitwiseLogic:c:s i?small %trunc, ?y
 %sext = sext:?anch i?small %logic to i?big
