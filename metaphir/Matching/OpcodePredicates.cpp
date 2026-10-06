@@ -131,6 +131,15 @@ void collectMatcherOperands(const llvm::Instruction &Target,
       Operands.push_back(Argument.get());
     return;
   }
+  case llvm::Instruction::ShuffleVector: {
+    // The mask is not an operand; it is matched as the constant vector of
+    // i32 the IR prints (poison for an undefined element).
+    const auto &Shuffle = cast<ShuffleVectorInst>(Target);
+    Operands.push_back(Shuffle.getOperand(0));
+    Operands.push_back(Shuffle.getOperand(1));
+    Operands.push_back(Shuffle.getShuffleMaskForBitcode());
+    return;
+  }
   case llvm::Instruction::PHI: {
     const auto &Phi = cast<PHINode>(Target);
     for (unsigned Index = 0; Index != Phi.getNumIncomingValues(); ++Index) {
