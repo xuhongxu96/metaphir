@@ -68,7 +68,7 @@ bool InstructionMatcher::matchIntegerKeyedOperand(const MatcherOperand &Matcher,
   return APSInt::isSameValue(Constant->getValue(), Target);
 }
 
-bool InstructionMatcher::matchPredicate() {
+bool InstructionMatcher::matchPredicate(Instantiation &S, bool Swapped) {
   const MatcherOperand *Predicate =
       Matcher.getKeyedOperand(MatcherOperand::Predicate);
   if (!Predicate)
@@ -78,21 +78,21 @@ bool InstructionMatcher::matchPredicate() {
          "predicate used with an incompatible instruction matcher");
   assert(Predicate->Val && "predicate operand has no value");
 
+  // The predicate of the target's operands in the order they are matched.
   const auto &Compare = cast<CmpInst>(Target);
+  CmpInst::Predicate TargetPredicate =
+      Swapped ? Compare.getSwappedPredicate() : Compare.getPredicate();
   if (const auto *Variable = dyn_cast<MetaVariable>(Predicate->Val))
-    return State.unify(*Variable, Compare.getPredicate());
+    return S.unify(*Variable, TargetPredicate);
 
   const auto *Keyword = dyn_cast<KeywordConstant>(Predicate->Val);
   assert(Keyword && "predicate is neither a variable nor a keyword");
 
   return KeywordConstant::getKeywordName(Keyword->getKeywordID()) ==
-         CmpInst::getPredicateName(Compare.getPredicate());
+         CmpInst::getPredicateName(TargetPredicate);
 }
 
 bool InstructionMatcher::matchKeyedOperands() {
-  if (!matchPredicate())
-    return false;
-
   for (unsigned Kind = MatcherOperand::Alignment;
        Kind != MatcherOperand::NumKeyedOperandKinds; ++Kind) {
     const auto Key = static_cast<MatcherOperand::KeyedOperandKind>(Kind);
@@ -288,11 +288,16 @@ MatchResults InstructionMatcher::match() {
 
   bool HasCommutativeFlag = Matcher.hasMetaFlag(MetaFlag::MF_c);
 
-  MatchResults Natural =
-      HasCommutativeFlag ? matchOperandOrder(NaturalOrder, State)
-                         : matchOperandOrder(NaturalOrder, std::move(State));
-  Results.append(std::make_move_iterator(Natural.begin()),
-                 std::make_move_iterator(Natural.end()));
+  // A compare's predicate is matched per operand order: swapped operands
+  // match the swapped predicate.
+  Instantiation NaturalState =
+      HasCommutativeFlag ? Instantiation(State) : std::move(State);
+  if (matchPredicate(NaturalState, /*Swapped=*/false)) {
+    MatchResults Natural =
+        matchOperandOrder(NaturalOrder, std::move(NaturalState));
+    Results.append(std::make_move_iterator(Natural.begin()),
+                   std::make_move_iterator(Natural.end()));
+  }
 
   if (HasCommutativeFlag) {
     // The parser admits ':c' only where there are two operands to swap: a
@@ -306,6 +311,8 @@ MatchResults InstructionMatcher::match() {
     else
       return Results;
 
+    if (!matchPredicate(State, /*Swapped=*/true))
+      return Results;
     // Equal operands match both ways; report each match once.
     appendUnique(Results, matchOperandOrder(SwappedIndices, std::move(State)));
   }

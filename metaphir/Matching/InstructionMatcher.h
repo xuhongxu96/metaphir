@@ -32,7 +32,9 @@ private:
   bool matchTypeOnlyOperands();
   bool matchSemanticFlags();
   bool matchKeyedOperands();
-  bool matchPredicate();
+  /// Matches the predicate of the target, whose operands are matched in
+  /// swapped order if Swapped, binding it in S.
+  bool matchPredicate(Instantiation &S, bool Swapped);
 
   std::optional<APSInt>
   getKeyedIntegerTarget(MatcherOperand::KeyedOperandKind Kind);

@@ -141,10 +141,11 @@ MIR_INSTRUCTION_MATCHER(bitcast, matchOpcode<llvm::Instruction::BitCast>,
 MIR_INSTRUCTION_MATCHER(ret, matchOpcode<llvm::Instruction::Ret>, NoFlags,
                         false, Custom, 0)
 MIR_INSTRUCTION_MATCHER(br, matchBranch, NoFlags, false, Custom, 0)
+// A commuted compare also swaps its predicate.
 MIR_INSTRUCTION_MATCHER(icmp, matchOpcode<llvm::Instruction::ICmp>,
-                        SameSignFlag, false, Custom, 0)
+                        SameSignFlag, true, Custom, 0)
 MIR_INSTRUCTION_MATCHER(fcmp, matchOpcode<llvm::Instruction::FCmp>,
-                        FastMathFlags, false, Custom, 0)
+                        FastMathFlags, true, Custom, 0)
 MIR_INSTRUCTION_MATCHER(phi, matchOpcode<llvm::Instruction::PHI>, FastMathFlags,
                         false, Custom, 0)
 MIR_INSTRUCTION_MATCHER(select, matchOpcode<llvm::Instruction::Select>,
