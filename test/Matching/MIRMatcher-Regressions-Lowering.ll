@@ -133,7 +133,7 @@ define i32 @signum_i32(i32 %x) {
 }
 ; CONCRETE-WIDTH: target 0: @signum_i32
 ; CONCRETE-WIDTH-NEXT:   match 0:
-; CONCRETE-WIDTH-NEXT:     {?anch = %r, ?r$shift = 31, ?x = %x}
+; CONCRETE-WIDTH-NEXT:     {?anch = %r, ?x = %x}
 
 ; A use cannot pass a meta type where the matcher fixes a concrete one.
 ;--- meta-for-fixed.mpir
