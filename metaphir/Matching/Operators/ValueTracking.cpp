@@ -311,6 +311,30 @@ OpInUnsignedRange::concrete(const ConcreteCall &Call) {
       Q->Range.getUnsignedMax().zext(Q->Width).sle(Q->Upper));
 }
 
+Expected<ConstraintValue> OpNumSignBits::concrete(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireIntegerValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  const SimplifyQuery &Query = query(Call);
+  return integerResult(APInt(32, ComputeNumSignBits(*Value, Query.DL, Query.AC,
+                                                    Query.CxtI, Query.DT)),
+                       /*IsUnsigned=*/true);
+}
+
+Expected<ConstraintValue>
+OpMaxSignificantBits::concrete(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireIntegerValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  const SimplifyQuery &Query = query(Call);
+  return integerResult(
+      APInt(32, ComputeMaxSignificantBits(*Value, Query.DL, Query.AC,
+                                          Query.CxtI, Query.DT)),
+      /*IsUnsigned=*/true);
+}
+
 void OpInSignedRange::record(const RecordCall &Call) {
   // Every value in [Min, Max] fits in as many signed bits as the wider bound,
   // so a range within the bounds does too.

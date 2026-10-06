@@ -298,6 +298,59 @@ TEST_F(ConstraintInterpreterTest, AsksUseOracleAboutConstants) {
   EXPECT_EQ(Oracle.Asked.size(), 2u);
 }
 
+// Use counts other than hasOneUse's come from the IR, except for values used
+// across functions, whose module only the oracle knows: it tells one use from
+// more, as the bound value has at least one.
+TEST_F(ConstraintInterpreterTest, CountsUsesWithTheUseOracle) {
+  LLVMContext LLVMContext;
+  SMDiagnostic Error;
+  std::unique_ptr<Module> M = parseAssemblyString(
+      R"(
+        @g = global i32 0
+        define i32 @f() {
+          %a = load i32, ptr @g
+          %b = load i32, ptr @g
+          %c = add i32 %a, %a
+          ret i32 %c
+        }
+      )",
+      Error, LLVMContext);
+  ASSERT_NE(M, nullptr);
+  const llvm::Instruction *A = &M->getFunction("f")->getEntryBlock().front();
+
+  MetaVariable *Global =
+      MetaVariable::create(Context, "g", MetaType::Value, Range);
+  MetaVariable *Load =
+      MetaVariable::create(Context, "a", MetaType::Value, Range);
+  VariableConstraint *GlobalExpr = VariableConstraint::create(
+      Context, Global, Constraint::ValueResult, Range);
+  VariableConstraint *LoadExpr =
+      VariableConstraint::create(Context, Load, Constraint::ValueResult, Range);
+  State.bind(*Global, M->getNamedGlobal("g"));
+  State.bind(*Load, A);
+  auto Uses = [&](StringRef Name, Constraint *Value, int64_t N) {
+    return operation(Constraint::Call, Name, {Value, integer(N)});
+  };
+
+  // %a has two uses, by one user.
+  EXPECT_TRUE(evaluateBoolean(*Uses("hasNUses", LoadExpr, 2)));
+  EXPECT_FALSE(evaluateBoolean(*Uses("hasNUses", LoadExpr, 1)));
+  EXPECT_TRUE(evaluateBoolean(*Uses("hasNUsesOrMore", LoadExpr, 2)));
+  EXPECT_FALSE(evaluateBoolean(*Uses("hasNUsesOrMore", LoadExpr, 3)));
+
+  OneUseOracle Oracle;
+  Interpreter.setUseOracle(&Oracle);
+  // The function uses @g twice, but its module is what counts.
+  EXPECT_TRUE(evaluateBoolean(*Uses("hasNUses", GlobalExpr, 1)));
+  EXPECT_FALSE(evaluateBoolean(*Uses("hasNUsesOrMore", GlobalExpr, 2)));
+  EXPECT_TRUE(evaluateBoolean(*Uses("hasNUsesOrMore", GlobalExpr, 1)));
+  // Other counts are unknown.
+  Expected<ConstraintValue> Three =
+      Interpreter.evaluate(*Uses("hasNUses", GlobalExpr, 3), State);
+  EXPECT_FALSE(static_cast<bool>(Three));
+  consumeError(Three.takeError());
+}
+
 TEST_F(ConstraintInterpreterTest, EvaluatesOpcodePredicates) {
   LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);

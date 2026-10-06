@@ -93,6 +93,10 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUse, "hasOneUse", Call, BooleanResult,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUser, "hasOneUser", Call,
                                     BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasNUses, "hasNUses", Call, BooleanResult,
+                                    2)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasNUsesOrMore, "hasNUsesOrMore", Call,
+                                    BooleanResult, 2)
 
 // Constant classes named after PatternMatch.h matchers.
 #define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)                     \
@@ -165,6 +169,10 @@ MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(InSignedRange, "inSignedRange", Call,
                                     BooleanResult, 3)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(InUnsignedRange, "inUnsignedRange", Call,
                                     BooleanResult, 3)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(NumSignBits, "numSignBits", Call,
+                                    IntegerResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaxSignificantBits, "maxSignificantBits",
+                                    Call, IntegerResult, 1)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownZeros, "knownZeros", Call,
                                     IntegerResult, 1)

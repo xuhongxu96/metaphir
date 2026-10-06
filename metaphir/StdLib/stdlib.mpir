@@ -261,6 +261,15 @@ match:c maxOrMin [] Binary (?ty ?x, ?y) {
 	%ret = call ?ty @llvm.umin(?ty ?x, ?ty ?y)
 }
 
+; An integer min or max as matchSelectPattern finds it: a select of a
+; relational compare's operands. icmp:c finds the compare either way round,
+; and ':c' at the use finds the select's arms either way round.
+match:c selectMinMax [] Binary (?ty ?x, ?y) {
+	%_cmp = icmp:c ?_pred ?ty ?x, ?y
+	%ret = select ?_cty %_cmp, ?ty ?x, ?ty ?y
+	;; !isEquality(?_pred)
+}
+
 ; A compare that isSignBitCheck accepts: it tests ?x's sign bit, against an
 ; m_APInt constant. 'trueIfSigned' on its capture is isSignBitCheck's
 ; TrueIfSigned: whether the compare holds when the sign bit is set.
