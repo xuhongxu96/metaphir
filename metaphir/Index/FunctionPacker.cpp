@@ -12,6 +12,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include <tuple>
 
 namespace llvm {
 namespace metaphir {
@@ -242,12 +243,16 @@ private:
     };
     auto Sorted = [&](auto &&List) {
       using T = std::remove_pointer_t<std::decay_t<decltype(&*List.begin())>>;
-      SmallVector<T *, 16> Values;
+      // Each value's position, then its index in List to keep ties stable
+      // (without std::stable_sort's temporary buffer, deprecated in newer
+      // libstdc++).
+      SmallVector<std::tuple<unsigned, unsigned, T *>, 16> Keyed;
       for (auto &V : List)
-        Values.push_back(&V);
-      llvm::stable_sort(Values, [&](const T *L, const T *R) {
-        return Position(*L) < Position(*R);
-      });
+        Keyed.emplace_back(Position(V), Keyed.size(), &V);
+      llvm::sort(Keyed);
+      SmallVector<T *, 16> Values;
+      for (const auto &Entry : Keyed)
+        Values.push_back(std::get<2>(Entry));
       return Values;
     };
     for (GlobalVariable *GV : Sorted(Packed->globals())) {

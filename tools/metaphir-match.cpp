@@ -455,8 +455,11 @@ static MatchStats matchInParallel(ArrayRef<std::string> Files,
       LookUps.emplace_back(LookUp);
     for (std::thread &LookUpThread : LookUps)
       LookUpThread.join();
-    llvm::stable_sort(Order,
-                      [&](size_t L, size_t R) { return Sizes[L] > Sizes[R]; });
+    // Order starts as the files' indices, so they break ties stably (without
+    // std::stable_sort's temporary buffer, deprecated in newer libstdc++).
+    llvm::sort(Order, [&](size_t L, size_t R) {
+      return Sizes[L] != Sizes[R] ? Sizes[L] > Sizes[R] : L < R;
+    });
   }
 
   auto Work = [&] {
