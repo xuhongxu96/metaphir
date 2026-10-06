@@ -25,38 +25,17 @@ constexpr unsigned ResultSlot = NumOperandSlots;
 class Atom {
 public:
   enum Predicate : uint8_t {
-    IsZero,
-    IsAllOnes,
-    IsPower2,
-    IsLowBitMask,
-    IsAnyZeroFP,
-    IsAnyIntegralConstant,
-    IsPoison,
-    IsForbidPoison,
-    IsConstantSplat,
-    IsImmConstant,
-    IsSignMask,
-    IsMaxSignedValue,
-    IsNegatedPower2,
-    IsShiftedMask,
-    IsNegative,
-    IsNonNegative,
-    IsStrictlyPositive,
-    IsUndef,
-    HasOneUse,
-    HasOneUser,
-    // Value tracking, anchored at the site's instruction.
-    IsKnownNonZero,
-    IsKnownNegative,
-    IsKnownNonNegative,
-    IsKnownPositive,
-    IsKnownPowerOfTwo,
-    IsKnownPowerOfTwoOrZero,
-    /// Value tracking was skipped for a value at the site; its facts there
-    /// are unknown.
-    ValueTrackingSkipped,
+#define MIR_FACT(ID, Name) ID,
+#include "metaphir/Matching/Operators/Facts.def"
     NumPredicates
   };
+
+  /// The predicates before the value-tracking ones.
+  static constexpr unsigned NumPlainPredicates = 0
+#define MIR_FACT(ID, Name) +1
+#define MIR_VALUE_TRACKING_FACT(ID, Name)
+#include "metaphir/Matching/Operators/Facts.def"
+      ;
 
   /// Integer constants are recorded when their value, read signed or
   /// unsigned, is in [MinLiteral, MaxLiteral].
@@ -74,7 +53,7 @@ public:
 
   /// Whether the atom is recorded from value tracking.
   bool isValueTracking() const {
-    return Code >= PredicateBase + IsKnownNonZero &&
+    return Code >= PredicateBase + NumPlainPredicates &&
            Code < PredicateBase + NumPredicates;
   }
 
@@ -99,14 +78,8 @@ private:
 
 /// Numbers recorded for a site: the most, or the least, of the values there.
 enum class Measure : uint8_t {
-  /// The most known trailing zero bits.
-  TrailingZeros,
-  /// The fewest bits that are not known leading zeros.
-  ActiveBits,
-  /// The fewest bits holding the signed range computeConstantRange finds.
-  RangeSignedBits,
-  /// The fewest bits holding the unsigned range computeConstantRange finds.
-  RangeUnsignedBits,
+#define MIR_MEASURE(ID, Name) ID,
+#include "metaphir/Matching/Operators/Facts.def"
   NumMeasures
 };
 

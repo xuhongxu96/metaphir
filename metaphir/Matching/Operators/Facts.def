@@ -1,0 +1,53 @@
+// What a corpus index records about the values at a site.
+//
+// MIR_FACT(ID, Name): a predicate that holds for a value at the site.
+// MIR_VALUE_TRACKING_FACT(ID, Name), which defaults to MIR_FACT: one from value
+// tracking, anchored at the site's instruction. These come last.
+// MIR_MEASURE(ID, Name): a number recorded for the site.
+
+#ifndef MIR_FACT
+#define MIR_FACT(ID, Name)
+#endif
+
+#ifndef MIR_VALUE_TRACKING_FACT
+#define MIR_VALUE_TRACKING_FACT(ID, Name) MIR_FACT(ID, Name)
+#endif
+
+#ifndef MIR_MEASURE
+#define MIR_MEASURE(ID, Name)
+#endif
+
+// The recorded constant classes.
+#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest) MIR_FACT(ID, Name)
+#define MIR_UNRECORDED_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)
+#include "metaphir/IR/ConstantClasses.def"
+MIR_FACT(IsAnyIntegralConstant, "isAnyIntegralConstant")
+MIR_FACT(IsImmConstant, "isImmConstant")
+MIR_FACT(IsForbidPoison, "isForbidPoison")
+MIR_FACT(IsConstantSplat, "isConstantSplat")
+MIR_FACT(HasOneUse, "hasOneUse")
+MIR_FACT(HasOneUser, "hasOneUser")
+
+MIR_VALUE_TRACKING_FACT(IsKnownNonZero, "isKnownNonZero")
+MIR_VALUE_TRACKING_FACT(IsKnownNegative, "isKnownNegative")
+MIR_VALUE_TRACKING_FACT(IsKnownNonNegative, "isKnownNonNegative")
+MIR_VALUE_TRACKING_FACT(IsKnownPositive, "isKnownPositive")
+MIR_VALUE_TRACKING_FACT(IsKnownPowerOfTwo, "isKnownPowerOfTwo")
+MIR_VALUE_TRACKING_FACT(IsKnownPowerOfTwoOrZero, "isKnownPowerOfTwoOrZero")
+// Value tracking was skipped for a value at the site; its facts there are
+// unknown.
+MIR_VALUE_TRACKING_FACT(ValueTrackingSkipped, "valueTrackingSkipped")
+
+// Measures are the most, or the least, of the site's values (see isMaximum).
+// The most known trailing zero bits.
+MIR_MEASURE(TrailingZeros, "trailingZeros")
+// The fewest bits that are not known leading zeros.
+MIR_MEASURE(ActiveBits, "activeBits")
+// The fewest bits holding the signed range computeConstantRange finds.
+MIR_MEASURE(RangeSignedBits, "rangeSignedBits")
+// The fewest bits holding the unsigned range computeConstantRange finds.
+MIR_MEASURE(RangeUnsignedBits, "rangeUnsignedBits")
+
+#undef MIR_MEASURE
+#undef MIR_VALUE_TRACKING_FACT
+#undef MIR_FACT

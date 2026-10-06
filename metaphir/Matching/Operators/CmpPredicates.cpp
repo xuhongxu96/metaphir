@@ -50,70 +50,15 @@ static Expected<ConstraintValue> mapPredicate(const ConcreteCall &Call,
   return ConstraintValue::getString(CmpInst::getPredicateName(Map(*P)));
 }
 
-Expected<ConstraintValue> OpIsEquality::concrete(const ConcreteCall &Call) {
-  return testPredicate(
-      Call, [](CmpInst::Predicate P) { return CmpInst::isEquality(P); });
-}
-
-Expected<ConstraintValue> OpIsSigned::concrete(const ConcreteCall &Call) {
-  return testPredicate(
-      Call, [](CmpInst::Predicate P) { return CmpInst::isSigned(P); });
-}
-
-Expected<ConstraintValue> OpIsUnsigned::concrete(const ConcreteCall &Call) {
-  return testPredicate(
-      Call, [](CmpInst::Predicate P) { return CmpInst::isUnsigned(P); });
-}
-
-// isLT and the like are ICmpInst's, so they are false for FP predicates.
-
-Expected<ConstraintValue> OpIsLT::concrete(const ConcreteCall &Call) {
-  return testPredicate(Call,
-                       [](CmpInst::Predicate P) { return ICmpInst::isLT(P); });
-}
-
-Expected<ConstraintValue> OpIsGT::concrete(const ConcreteCall &Call) {
-  return testPredicate(Call,
-                       [](CmpInst::Predicate P) { return ICmpInst::isGT(P); });
-}
-
-Expected<ConstraintValue> OpIsLE::concrete(const ConcreteCall &Call) {
-  return testPredicate(Call,
-                       [](CmpInst::Predicate P) { return ICmpInst::isLE(P); });
-}
-
-Expected<ConstraintValue> OpIsGE::concrete(const ConcreteCall &Call) {
-  return testPredicate(Call,
-                       [](CmpInst::Predicate P) { return ICmpInst::isGE(P); });
-}
-
-Expected<ConstraintValue>
-OpSwappedPredicate::concrete(const ConcreteCall &Call) {
-  return mapPredicate(Call, [](CmpInst::Predicate P) {
-    return CmpInst::getSwappedPredicate(P);
-  });
-}
-
-Expected<ConstraintValue>
-OpInversePredicate::concrete(const ConcreteCall &Call) {
-  return mapPredicate(Call, [](CmpInst::Predicate P) {
-    return CmpInst::getInversePredicate(P);
-  });
-}
-
-Expected<ConstraintValue>
-OpStrictPredicate::concrete(const ConcreteCall &Call) {
-  return mapPredicate(Call, [](CmpInst::Predicate P) {
-    return CmpInst::getStrictPredicate(P);
-  });
-}
-
-Expected<ConstraintValue>
-OpNonStrictPredicate::concrete(const ConcreteCall &Call) {
-  return mapPredicate(Call, [](CmpInst::Predicate P) {
-    return CmpInst::getNonStrictPredicate(P);
-  });
-}
+#define MIR_CMP_PREDICATE_TEST(ID, Name, Test)                                 \
+  Expected<ConstraintValue> Op##ID::concrete(const ConcreteCall &Call) {       \
+    return testPredicate(Call, [](CmpInst::Predicate P) { return Test; });     \
+  }
+#define MIR_CMP_PREDICATE_MAP(ID, Name, Map)                                   \
+  Expected<ConstraintValue> Op##ID::concrete(const ConcreteCall &Call) {       \
+    return mapPredicate(Call, [](CmpInst::Predicate P) { return Map; });       \
+  }
+#include "metaphir/IR/CmpPredicateOperators.def"
 
 // ICmpInst::getFlippedSignednessPredicate takes an integer relational
 // predicate; an equality has no signedness, so it is its own flip.
