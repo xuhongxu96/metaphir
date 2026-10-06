@@ -100,10 +100,10 @@ entry:
 ; L2O-NEXT:   no match
 ; L2O-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
 
-; 'isPowerOfTwo' checks whether a constant is a power of two.
+; 'isPower2' checks whether a constant is a power of two.
 ;--- ispowertwo.mpir
 %udiv = udiv:?anch i?bits ?x, ?d:constantInt
-;; isPowerOfTwo(?d)
+;; isPower2(?d)
 
 ;--- ispowertwo.ll
 define i32 @d8(i32 %x) {
@@ -122,7 +122,7 @@ entry:
 }
 ; POW-NEXT: target 1: @d6
 ; POW-NEXT:   no match
-; POW-NEXT:   constraint not satisfied: (isPowerOfTwo ?d)
+; POW-NEXT:   constraint not satisfied: (isPower2 ?d)
 
 define i32 @d1(i32 %x) {
 entry:
@@ -140,4 +140,4 @@ entry:
 }
 ; POW-NEXT: target 3: @d0
 ; POW-NEXT:   no match
-; POW-NEXT:   constraint not satisfied: (isPowerOfTwo ?d)
+; POW-NEXT:   constraint not satisfied: (isPower2 ?d)

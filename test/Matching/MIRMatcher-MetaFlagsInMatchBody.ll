@@ -95,7 +95,7 @@ match addzero [] Binary (?ty ?x, ?y) {
 match twobranch [] Binary (?ty ?x, ?y) {
 	%ret = add ?ty ?x, ?y:zero
 } or {
-	%ret = mul ?ty ?x, ?y:powerOfTwo
+	%ret = mul ?ty ?x, ?y:power2
 }
 
 %r = twobranch:?anch i32 ?a, ?b
@@ -181,4 +181,4 @@ define i32 @mul_three(i32 %x) {
 }
 ; TWO-NEXT: target 2: @mul_three
 ; TWO-NEXT:   no match
-; TWO-NEXT:   constraint not satisfied: (isPowerOfTwo ?b)
+; TWO-NEXT:   constraint not satisfied: (isPower2 ?b)

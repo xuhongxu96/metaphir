@@ -80,16 +80,16 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(Opcode, "opcode", Call, StringResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, IntegerResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, IntegerResult,
                                     1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPowerOfTwo, "isPowerOfTwo", Call,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPower2, "isPower2", Call,
                                     BooleanResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsZero, "isZero", Call, BooleanResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAllOnes, "isAllOnes", Call, BooleanResult,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLowBitMask, "isLowBitMask", Call,
                                     BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsZeroFP, "isZeroFP", Call, BooleanResult,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyZeroFP, "isAnyZeroFP", Call, BooleanResult,
                                     1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsIntegralConstant, "isIntegralConstant",
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyIntegralConstant, "isAnyIntegralConstant",
                                     Call, BooleanResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPoison, "isPoison", Call, BooleanResult,
                                     1)

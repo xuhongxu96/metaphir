@@ -2,13 +2,13 @@
 ; RUN: %metaphir-match %t/pow2.mpir %t/input.ll | FileCheck %s --check-prefix=P2
 ; RUN: %metaphir-match %t/pow2-or-const.mpir %t/input.ll | FileCheck %s --check-prefix=ORC
 
-; ':powerOfTwo' matches an integer (or vector) constant that is a power of two.
+; ':power2' matches an integer (or vector) constant that is a power of two.
 ;--- pow2.mpir
-%udiv = udiv:?anch i?bits ?x, ?d:powerOfTwo
+%udiv = udiv:?anch i?bits ?x, ?d:power2
 
 ; It can be combined with other flags via ':or' (power of two, or 0).
 ;--- pow2-or-const.mpir
-%udiv = udiv:?anch i?bits ?x, ?d:or(:powerOfTwo, :constantInt)
+%udiv = udiv:?anch i?bits ?x, ?d:or(:power2, :constantInt)
 
 ;--- input.ll
 define i32 @pow2_8(i32 %x) {
@@ -44,7 +44,7 @@ entry:
 }
 ; P2-NEXT: target 2: @not_pow2_6
 ; P2-NEXT:   no match
-; P2-NEXT:   constraint not satisfied: (isPowerOfTwo ?d)
+; P2-NEXT:   constraint not satisfied: (isPower2 ?d)
 
 ; ORC-NEXT: target 2: @not_pow2_6
 ; ORC-NEXT:   match 0:
@@ -57,8 +57,8 @@ entry:
 }
 ; P2-NEXT: target 3: @dynamic
 ; P2-NEXT:   no match
-; P2-NEXT:   constraint not satisfied: (isPowerOfTwo ?d)
+; P2-NEXT:   constraint not satisfied: (isPower2 ?d)
 
 ; ORC-NEXT: target 3: @dynamic
 ; ORC-NEXT:   no match
-; ORC-NEXT:   constraint not satisfied: (|| (isPowerOfTwo ?d) (isConstantInt ?d))
+; ORC-NEXT:   constraint not satisfied: (|| (isPower2 ?d) (isConstantInt ?d))
