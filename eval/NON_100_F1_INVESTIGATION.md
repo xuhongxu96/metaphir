@@ -22,7 +22,7 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
 1. **Ground truth runs `instcombine<no-verify-fixpoint>`.** With fixpoint verification on (the `opt` default), InstCombine aborts on some modules with `LLVM ERROR: Instruction Combining on <fn> did not reach a fixpoint` (e.g. `velox__DecimalFunctions.bc`, `abc__giaSimBase.bc`, `harfbuzz__harfbuzz.bc`, `node__sqlite3.bc`), and every later function in the module loses its anchors. `run_llvm_anchors` (`eval/scripts/run_eval.py`) disables the check and `gt` lists any module where `opt` still exits non-zero; the current run has none.
 2. **Each upstream test file is in the corpus once.** `add-mask-neg.ll` exercises both pr216436 and pr215122; it is included once (as `pr216436__add-mask-neg.ll`) and counted for both PRs.
 3. **Accepted discrepancies.** These are kept as is and have no proposed fix:
-   - **`optnone` functions**: the pass manager skips InstCombine on them, so no anchor can fire, but `metaphir-match` still matches them (all 16 FPs of pr204089).
+   - **`optnone` functions**: the pass manager skips InstCombine on them, so no anchor can fire, but `metaphir-match` still matches them (all 21 FPs of pr204089).
    - **Anchors fired from simplify queries on operand combinations that are not in the IR**: `foldOpIntoPhi`/`FoldOpIntoSelect` translating a cast through a phi/select (pr204089 FNs), and `simplifyOrInst`'s internal reassociation/distribution attempts (pr213313 FNs).
 
 ---
@@ -50,7 +50,7 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
 | **pr214381** | 17 | 16 | 14 | 2 | 3 | 82.35% | 87.50% | **84.85%** | **83.87%** | Pow2 divisor; `uge`/`ule` canonicalization; `mul(udiv)` |
 | **pr213313** | 15 | 10 | 10 | 0 | 5 | 66.67% | 100.0% | **80.00%** | **86.96%** | Speculative `simplifyOrInst` queries (accepted) |
 | **pr215130** | 5 | 3 | 3 | 0 | 2 | 60.00% | 100.0% | **75.00%** | **75.00%** | `sub` input rewritten to `add` by Negator |
-| **pr204089** | 4021 | 19 | 3 | 16 | 4018 | 0.07% | 15.79% | **0.15%** | **0.48%** | FN: via `foldOpIntoPhi`/`FoldOpIntoSelect` (ignored); FP: `optnone` (accepted) |
+| **pr204089** | 4021 | 24 | 3 | 21 | 4018 | 0.07% | 12.50% | **0.15%** | **0.48%** | FN: via `foldOpIntoPhi`/`FoldOpIntoSelect` (ignored); FP: `optnone` (accepted) |
 
 ---
 
@@ -616,7 +616,7 @@ Both FPs are in `pr214541__div.ll` and come from earlier transforms in `visitUDi
   }
   ```
 
-- **Metrics**: |G|=4021, |P|=19, TP=3, FP=16, FN=4018 (Anchor F1: **0.15%**, Function F1: **0.48%**; functions |G|=1249, |P|=5, TP=3)
+- **Metrics**: |G|=4021, |P|=24, TP=3, FP=21, FN=4018 (Anchor F1: **0.15%**, Function F1: **0.48%**; functions |G|=1249, |P|=10, TP=3)
 
 The fold lives in `simplifyCastInst`, which InstCombine calls both on real cast instructions and on *hypothetical* casts whose operand has been substituted: an incoming value of a phi (`foldOpIntoPhi`) or an arm of a select (`FoldOpIntoSelect`). The anchor reports the `trunc` operand, so a firing on a hypothetical `ext(trunc)` is attributed to a real `trunc` even though no `ext` uses it directly. The 3 TPs are all in the unit-test file `pr204089__cast.ll` (`sext_of_trunc_nsw`, `zext_of_trunc_nuw`, `zext_of_trunc_nuw_vec`). In the real-world corpus the direct `ext(trunc)` shape essentially never appears; every corpus firing goes through an operand substitution.
 
@@ -627,7 +627,7 @@ The fold lives in `simplifyCastInst`, which InstCombine calls both on real cast 
 | FN: `ext(phi)` pushed through the phi by `foldOpIntoPhi`, with the anchored trunc feeding the phi directly | 3843 | static check of all 4018 FNs |
 | FN: same as above, but the trunc reaches the `ext` through a chain of phis (trunc → phi → phi → … → ext) | 142 | static check; 12/12 sampled gdb backtraces are `foldOpIntoPhi` |
 | FN: `ext(select)` pushed into the select arms by `FoldOpIntoSelect` | 33 | static check; 1 sampled gdb backtrace |
-| FP: function is `optnone`, so InstCombine skips it | 16 | `-debug-pass-manager`: "Skipping pass InstCombinePass … due to optnone attribute" |
+| FP: function is `optnone`, so InstCombine skips it | 21 | `-debug-pass-manager`: "Skipping pass InstCombinePass … due to optnone attribute" |
 
 How the counts were obtained:
 - **Static check (all 4018 FNs):** each FN was classified by how its anchored trunc reaches a flag-compatible `zext`/`sext` in the input IR: through one phi (3843) or through one select (33). None had a direct `ext` user. The remaining 142 had no one-level route.
@@ -670,8 +670,8 @@ So roughly **99.2% of FNs (3985) are `foldOpIntoPhi` and 0.8% (33) are `FoldOpIn
   2. `visitSExt(%74)` → `commonCastTransforms` → `FoldOpIntoSelect` (`InstCombineCasts.cpp:261`) → `simplifyOperationIntoSelectOperand` (`InstructionCombining.cpp:1749`) simplifies the hypothetical `sext i32 %72 to i64` to `%..i` and fires the anchor on `%72`.
   3. As in Example 1, no `ext(trunc)` exists in the input IR.
 
-#### False Positive Example — `optnone` functions (all 16 FPs)
-- **Target File & Function**: `hdf5__H5FDonion_history.bc` @ `@H5FD__onion_history_decode` (5 FPs) and `hdf5__H5FDonion_index.bc` @ `@H5FD__onion_revision_record_decode` (11 FPs)
+#### False Positive Example — `optnone` functions (all 21 FPs)
+- **Target File & Function**: `hdf5__H5FDonion_history.bc` @ `@H5FD__onion_history_decode` (5 FPs) and `hdf5__H5FDonion_index.bc` @ `@H5FD__onion_revision_record_decode` (11 FPs); also 5 FPs in `optnone` functions of `php__minilua.bc` (`@GCTM`, `@luaC_barrierf`, `@luaC_linkupval`, `@marktmu`, `@sweeplist`), whose `zext` carries `nneg`. The pattern's `zextOrSext` matched them once omitted flags stopped excluding `nneg`; the fold ignores `nneg` too.
 - **Target LLVM IR**:
   ```llvm
   store i8 1, ptr %12, align 1
@@ -686,4 +686,4 @@ So roughly **99.2% of FNs (3985) are `foldOpIntoPhi` and 0.8% (33) are `FoldOpIn
   3. The pass manager skips InstCombine on `optnone` functions (`-debug-pass-manager`: "Skipping pass InstCombinePass on H5FD__onion_history_decode due to optnone attribute"), so the fold never runs and no anchor is reported. The IR is unchanged after `opt`.
 - **Resolution**:
   - **FNs (4018):** ignored, and the instrumentation stays as is. Every FN examined is a genuine fold firing on a hypothetical cast created by operand substitution, either through `foldOpIntoPhi` (≈3985) or `FoldOpIntoSelect` (33). Matching these would require phi/select translation in the pattern matcher, which is out of scope.
-  - **FPs (16):** accepted. They all come from InstCombine skipping `optnone` functions.
+  - **FPs (21):** accepted. They all come from InstCombine skipping `optnone` functions.
