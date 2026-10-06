@@ -223,8 +223,13 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_IsKnownPowerOfTwoOrZero:
   case O_IsGuaranteedNotToBePoison:
   case O_IsGuaranteedNotToBeUndefOrPoison:
+  case O_NumSignBits:
+  case O_MaxSignificantBits:
     return ValueResult;
   case O_MaskedValueIsZero:
+    return Index == 1 ? IntegerResult : ValueResult;
+  case O_HasNUses:
+  case O_HasNUsesOrMore:
     return Index == 1 ? IntegerResult : ValueResult;
   case O_InSignedRange:
   case O_InUnsignedRange:

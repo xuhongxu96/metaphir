@@ -71,6 +71,9 @@ struct OpIsScalar {
 };
 MIR_DECLARE_RECORDED_PREDICATE(HasOneUse)
 MIR_DECLARE_RECORDED_PREDICATE(HasOneUser)
+/// Value::hasNUses and hasNUsesOrMore.
+MIR_DECLARE_OPERATOR(HasNUses)
+MIR_DECLARE_OPERATOR(HasNUsesOrMore)
 
 /// The intrinsic a call calls, and the predicate of a compare.
 MIR_DECLARE_OPERATOR(Intrinsic)

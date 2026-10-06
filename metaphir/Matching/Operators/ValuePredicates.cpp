@@ -228,6 +228,63 @@ void OpHasOneUser::record(const RecordCall &Call) {
     Call.Sink.add(Fact);
 }
 
+/// The value and the count of a use-count operator.
+static Expected<std::pair<const llvm::Value *, APSInt>>
+useCountOperands(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  Expected<APSInt> Count = requireInteger(Call.Operands[1], Call.Expression);
+  if (!Count)
+    return Count.takeError();
+  if (Count->isNegative() || !Count->isIntN(32))
+    return make_error<ConstraintEvaluationError>(
+        Call.Expression, "expected a use count between 0 and 2^32 - 1");
+  return std::make_pair(*Value, *Count);
+}
+
+/// A use count the IR at hand cannot tell: the uses of a value used across
+/// functions are only known as one or more than one.
+static Error unknownUseCount(const ConcreteCall &Call) {
+  return make_error<ConstraintEvaluationError>(
+      Call.Expression, "the use count of a value used across functions is "
+                       "known only as one or more than one");
+}
+
+// A value used across functions is used by the instruction it was bound
+// from, so its module uses it at least once.
+Expected<ConstraintValue> OpHasNUses::concrete(const ConcreteCall &Call) {
+  auto Operands = useCountOperands(Call);
+  if (!Operands)
+    return Operands.takeError();
+  auto [Value, Count] = *Operands;
+  if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*Value)) {
+    if (Count.isZero())
+      return ConstraintValue::getBoolean(false);
+    if (Count.isOne())
+      return ConstraintValue::getBoolean(Uses->OneUse);
+    return unknownUseCount(Call);
+  }
+  return ConstraintValue::getBoolean(Value->hasNUses(Count.getZExtValue()));
+}
+
+Expected<ConstraintValue> OpHasNUsesOrMore::concrete(const ConcreteCall &Call) {
+  auto Operands = useCountOperands(Call);
+  if (!Operands)
+    return Operands.takeError();
+  auto [Value, Count] = *Operands;
+  if (std::optional<ModuleUses> Uses = Call.GetModuleUses(*Value)) {
+    if (Count.ule(1))
+      return ConstraintValue::getBoolean(true);
+    if (Count == 2)
+      return ConstraintValue::getBoolean(!Uses->OneUse);
+    return unknownUseCount(Call);
+  }
+  return ConstraintValue::getBoolean(
+      Value->hasNUsesOrMore(Count.getZExtValue()));
+}
+
 bool OpIsImmConstant::holds(const llvm::Value &V) {
   return PatternMatch::match(&V, PatternMatch::m_ImmConstant());
 }
