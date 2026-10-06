@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
-%udiv1 = udiv:s exact:?_ i?bits ?x, ?y
-%udiv2 = udiv:?anch exact:?_ i?bits %udiv1, ?z
+%udiv1 = udiv:s i?bits ?x, ?y
+%udiv2 = udiv:?anch i?bits %udiv1, ?z
 ;; noOverflow("umul", ?y, ?z)

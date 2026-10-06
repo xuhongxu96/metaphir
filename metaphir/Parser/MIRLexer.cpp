@@ -242,7 +242,7 @@ tok::Kind MIRLexer::LexToken() {
       SkipLineComment();
       continue;
     case '!':
-      return LexUnexpected(CurChar);
+      return tok::exclaim;
     case ':':
       return LexColon();
     case '0':

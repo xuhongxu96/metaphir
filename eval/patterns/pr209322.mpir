@@ -1,2 +1,2 @@
 ;; treatIntAsVec(true)
-%udiv = udiv:?anch exact:?_ i?bits ?x, ?y:knownNegative
+%udiv = udiv:?anch i?bits ?x, ?y:knownNegative

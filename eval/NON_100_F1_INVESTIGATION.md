@@ -65,7 +65,7 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
   ;; treatIntAsVec(true)
   %neg = neg i?bits ?a
   %and = and:c:s i?bits %neg, ?cm:lowBitMask:or(:scalar, :constantSplat)
-  %add = add:?anch:c nsw:?_ nuw:?_ i?bits ?a, %and
+  %add = add:?anch:c i?bits ?a, %and
   ```
 
 - **LLVM Implementation (`InstCombineAddSub.cpp:1834-1842`)**:
@@ -121,7 +121,7 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
   ```mpir
   ;; treatIntAsVec(true)
   %sat = call:s i?bits @llvm.uadd.sat(i?bits ?x, i?bits ?c:or(:constantInt, :constantSplat))
-  %res = add:?anch:c nsw:?_ nuw:?_ i?bits %sat, ?negc:or(:constantInt, :constantSplat)
+  %res = add:?anch:c i?bits %sat, ?negc:or(:constantInt, :constantSplat)
   ;; add(?c, ?negc, ?bits) == 0
   ```
 
@@ -166,8 +166,8 @@ All divergences have one cause: **the input is `sub X, C`, which InstCombine rew
   ```mpir
   ;; treatIntAsVec(true)
   %rem = urem i?bits ?x, ?d:constantInt
-  %aligned = sub nuw:?_ nsw:?_ i?bits ?x, %rem
-  %cmp = icmp:?anch samesign:?_ ?pred i?bits %aligned, ?c:constantInt
+  %aligned = sub i?bits ?x, %rem
+  %cmp = icmp:?anch ?pred i?bits %aligned, ?c:constantInt
   ;; (?d != 0)
   ;; ((?pred == "ugt" && ult(?c, ?d)) || (?pred == "ult" && ?c != 0 && ule(?c, ?d)))
   ```
@@ -249,8 +249,8 @@ All 5 divergences are in `pr214381__icmp-floor-align.ll`. They have three causes
 - **Pattern File (`eval/patterns/pr204928.mpir`)**:
   ```mpir
   ;; treatIntAsVec(true)
-  %trunc = trunc nsw nuw:?_ i?big ?x to i?small
-  %logic = bitwiseLogic:c:s disjoint:?_ i?small %trunc, ?y
+  %trunc = trunc nsw i?big ?x to i?small
+  %logic = bitwiseLogic:c:s i?small %trunc, ?y
   %sext = sext:?anch i?small %logic to i?big
   ```
 
@@ -295,9 +295,9 @@ All 5 divergences are in `pr214381__icmp-floor-align.ll`. They have three causes
 - **Pattern File (`eval/patterns/pr204927.mpir`)**:
   ```mpir
   ;; treatIntAsVec(true)
-  %trunc = trunc nuw nsw:?_ i?big ?x to i?small
-  %logic = bitwiseLogic:c:s disjoint:?_ i?small %trunc, ?y
-  %zext = zext:?anch nneg:?_ i?small %logic to i?big
+  %trunc = trunc nuw i?big ?x to i?small
+  %logic = bitwiseLogic:c:s i?small %trunc, ?y
+  %zext = zext:?anch i?small %logic to i?big
   ```
 
 - **LLVM Implementation (`InstCombineCasts.cpp:1718-1727`)**:
@@ -350,9 +350,9 @@ All 5 divergences are in `pr214381__icmp-floor-align.ll`. They have three causes
 - **Pattern File (`eval/patterns/pr207564.mpir`)**:
   ```mpir
   ;; treatIntAsVec(true)
-  %trunc = trunc nuw:?_ nsw:?_ i?big ?x to i?small
+  %trunc = trunc i?big ?x to i?small
   %sub = neg i?small %trunc
-  %zext = zext:?anch nneg:?_ i?small %sub to i?big
+  %zext = zext:?anch i?small %sub to i?big
   ```
 
 - **LLVM Implementation (`InstCombineCasts.cpp:1697-1705`)**:
@@ -406,7 +406,7 @@ All 5 divergences are in `pr214381__icmp-floor-align.ll`. They have three causes
     %neg = neg i?bits ?x
     %and = and:c i?bits %neg, ?x
     %ctlz = call i?bits @llvm.ctlz(i?bits %and, i1 ?_)
-    %sub = sub nuw:?_ nsw:?_ i?bits ?bm1:constantInt, %ctlz
+    %sub = sub i?bits ?bm1:constantInt, %ctlz
     %sel = selectEqZero:?anch i?bits ?x, i?bits ?bits, i?bits %sub
     ;; ?bm1 == ?bits - 1
     ```
@@ -488,7 +488,7 @@ All 5 divergences are in `pr214381__icmp-floor-align.ll`. They have three causes
   match:c andOr [] Binary (?ty ?x, ?y) {
       %ret = and ?ty ?x, ?y
   } or {
-      %ret = or disjoint:?_ ?ty ?x, ?y
+      %ret = or ?ty ?x, ?y
   }
 
   %zext = zext i?small ?x to i?big
@@ -541,7 +541,7 @@ All 5 FNs have one cause: **the anchor fires inside a recursive InstSimplify que
 - **Pattern File (`eval/patterns/pr209322.mpir`)**:
   ```mpir
   ;; treatIntAsVec(true)
-  %udiv = udiv:?anch exact:?_ i?bits ?x, ?y:knownNegative
+  %udiv = udiv:?anch i?bits ?x, ?y:knownNegative
   ```
 
 - **LLVM Implementation (`InstCombineMulDivRem.cpp:1853-1859`)**:

@@ -49,7 +49,6 @@ private:
   MIRLexer Lex;
   MIRContext &Context;
   StringMap<MetaVariable *> MetaVariables;
-  unsigned WildcardCaptureCounter = 0;
   StringMap<Instruction *> Instructions;
   Pattern *CurrentPattern = nullptr;
   MetaVariable *CurrentBlock = nullptr;
