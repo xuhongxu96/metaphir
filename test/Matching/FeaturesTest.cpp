@@ -764,6 +764,49 @@ TEST_F(FeaturesTest, RequiresSignedRanges) {
   EXPECT_FALSE(passesWithValueFacts("byte"));
 }
 
+TEST_F(FeaturesTest, RequiresUnsignedRanges) {
+  parse(R"(
+    %r = add i32 ?x, ?y
+    ;; inUnsignedRange(?x, 0, 255)
+  )",
+        R"(
+    define i32 @byte(i32 %v, i32 %y) {
+      %x = lshr i32 %v, 24
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+    define i32 @half(i32 %v, i32 %y) {
+      %x = lshr i32 %v, 16
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("byte")));
+  EXPECT_TRUE(passesWithValueFacts("byte"));
+  EXPECT_FALSE(passesWithValueFacts("half"));
+}
+
+// The constant classes added after PatternMatch.h's matchers are recorded
+// too.
+TEST_F(FeaturesTest, RequiresSignMasks) {
+  parse(R"(
+    %r = and i32 ?x, ?c:signMask
+  )",
+        R"(
+    define i32 @sign_mask(i32 %x) {
+      %r = and i32 %x, -2147483648
+      ret i32 %r
+    }
+    define i32 @other(i32 %x) {
+      %r = and i32 %x, -2
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(passes("sign_mask"));
+  EXPECT_FALSE(matches(*M->getFunction("other")));
+  EXPECT_FALSE(passes("other"));
+}
+
 // Type variables are bound from the signatures of the instructions.
 TEST_F(FeaturesTest, BindsTypeVariables) {
   parse(R"(

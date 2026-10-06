@@ -62,6 +62,36 @@ struct OpIsScalar {
 MIR_DECLARE_RECORDED_PREDICATE(HasOneUse)
 MIR_DECLARE_RECORDED_PREDICATE(HasOneUser)
 
+// Constant classes, each the PatternMatch.h matcher it is named after. The
+// rarer ones are not recorded.
+#define MIR_DECLARE_PREDICATE(ID)                                              \
+  struct Op##ID {                                                              \
+    static constexpr bool ShortCircuits = false;                               \
+    static bool holds(const llvm::Value &V);                                   \
+    static Expected<ConstraintValue> concrete(const ConcreteCall &Call);       \
+  };
+MIR_DECLARE_RECORDED_PREDICATE(IsImmConstant)
+MIR_DECLARE_RECORDED_PREDICATE(IsSignMask)
+MIR_DECLARE_RECORDED_PREDICATE(IsMaxSignedValue)
+MIR_DECLARE_RECORDED_PREDICATE(IsNegatedPower2)
+MIR_DECLARE_PREDICATE(IsNegatedPower2OrZero)
+MIR_DECLARE_PREDICATE(IsPower2OrZero)
+MIR_DECLARE_PREDICATE(IsLowBitMaskOrZero)
+MIR_DECLARE_RECORDED_PREDICATE(IsShiftedMask)
+MIR_DECLARE_RECORDED_PREDICATE(IsNegative)
+MIR_DECLARE_RECORDED_PREDICATE(IsNonNegative)
+MIR_DECLARE_RECORDED_PREDICATE(IsStrictlyPositive)
+MIR_DECLARE_PREDICATE(IsNonPositive)
+MIR_DECLARE_PREDICATE(IsNonZeroInt)
+MIR_DECLARE_RECORDED_PREDICATE(IsUndef)
+#undef MIR_DECLARE_PREDICATE
+
+/// The intrinsic a call calls, and the predicate of a compare.
+MIR_DECLARE_OPERATOR(Intrinsic)
+MIR_DECLARE_OPERATOR(Predicate)
+/// The width of a value's, or a type's, scalar type.
+MIR_DECLARE_OPERATOR(BitWidth)
+
 /// Records the facts of the predicates above for a value at a site.
 void recordValuePredicates(const RecordCall &Call);
 

@@ -583,8 +583,9 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
       if (auto *Var = dyn_cast<MetaVariable>(FlagValue))
         Flags.push_back({F.ID, Var});
       else
-        Flags.push_back({F.ID, nullptr,
-                         cast<IntegerConstant>(FlagValue)->getValue().isZero()});
+        Flags.push_back(
+            {F.ID, nullptr,
+             cast<IntegerConstant>(FlagValue)->getValue().isZero()});
     }
     if (IsRoot) {
       if (Use.getCapture())

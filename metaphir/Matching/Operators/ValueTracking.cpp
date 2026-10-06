@@ -145,6 +145,28 @@ OpIsGuaranteedNotToBeUndef::concrete(const ConcreteCall &Call) {
 }
 
 Expected<ConstraintValue>
+OpIsGuaranteedNotToBePoison::concrete(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  const SimplifyQuery &Query = query(Call);
+  return ConstraintValue::getBoolean(
+      isGuaranteedNotToBePoison(*Value, Query.AC, Query.CxtI, Query.DT));
+}
+
+Expected<ConstraintValue>
+OpIsGuaranteedNotToBeUndefOrPoison::concrete(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  const SimplifyQuery &Query = query(Call);
+  return ConstraintValue::getBoolean(
+      isGuaranteedNotToBeUndefOrPoison(*Value, Query.AC, Query.CxtI, Query.DT));
+}
+
+Expected<ConstraintValue>
 OpIsKnownNonNegative::concrete(const ConcreteCall &Call) {
   Expected<const llvm::Value *> Value =
       requireIntegerValue(Call.Operands[0], Call.Expression);
@@ -192,6 +214,22 @@ void OpIsKnownPowerOfTwo::record(const RecordCall &Call) {
 }
 
 Expected<ConstraintValue>
+OpIsKnownPowerOfTwoOrZero::concrete(const ConcreteCall &Call) {
+  Expected<const llvm::Value *> Value =
+      requireIntegerValue(Call.Operands[0], Call.Expression);
+  if (!Value)
+    return Value.takeError();
+  return ConstraintValue::getBoolean(
+      isKnownToBeAPowerOfTwo(*Value, /*OrZero=*/true, query(Call)));
+}
+
+void OpIsKnownPowerOfTwoOrZero::record(const RecordCall &Call) {
+  if (Call.Value.getType()->isIntOrIntVectorTy() &&
+      isKnownToBeAPowerOfTwo(&Call.Value, /*OrZero=*/true, query(Call)))
+    Call.Sink.add(Fact);
+}
+
+Expected<ConstraintValue>
 OpMaskedValueIsZero::concrete(const ConcreteCall &Call) {
   Expected<const llvm::Value *> Value =
       requireIntegerValue(Call.Operands[0], Call.Expression);
@@ -221,7 +259,17 @@ void OpMaskedValueIsZero::record(const RecordCall &Call) {
   Call.Sink.measure(Measure::ActiveBits, Known.countMaxActiveBits());
 }
 
-Expected<ConstraintValue> OpInSignedRange::concrete(const ConcreteCall &Call) {
+/// The range computeConstantRange finds for the operand, and the bounds it
+/// must lie within, extended to a width that holds them all exactly: bounds
+/// outside the value's range must not wrap into it.
+struct RangeQuery {
+  ConstantRange Range;
+  APInt Lower, Upper;
+  unsigned Width;
+};
+
+static Expected<RangeQuery> rangeQuery(const ConcreteCall &Call,
+                                       bool ForSigned) {
   Expected<const llvm::Value *> Value =
       requireIntegerValue(Call.Operands[0], Call.Expression);
   if (!Value)
@@ -234,18 +282,33 @@ Expected<ConstraintValue> OpInSignedRange::concrete(const ConcreteCall &Call) {
     return Max.takeError();
 
   ConstantRange Range = computeConstantRange(const_cast<llvm::Value *>(*Value),
-                                             /*ForSigned=*/true, query(Call));
-  // Compare at a width that holds the value and both bounds exactly; bounds
-  // outside the value's range must not wrap into it.
+                                             ForSigned, query(Call));
   auto Needed = [](const APSInt &V) {
     return V.getBitWidth() + (V.isUnsigned() ? 1 : 0);
   };
-  unsigned Width = std::max({Range.getBitWidth(), Needed(*Min), Needed(*Max)});
-  APInt Lower = Min->extend(Width);
-  APInt Upper = Max->extend(Width);
+  // One more bit than the value's, so its unsigned values read as signed.
+  unsigned Width =
+      std::max({Range.getBitWidth() + 1, Needed(*Min), Needed(*Max)});
+  return RangeQuery{Range, Min->extend(Width), Max->extend(Width), Width};
+}
+
+Expected<ConstraintValue> OpInSignedRange::concrete(const ConcreteCall &Call) {
+  Expected<RangeQuery> Q = rangeQuery(Call, /*ForSigned=*/true);
+  if (!Q)
+    return Q.takeError();
   return ConstraintValue::getBoolean(
-      Range.getSignedMin().sext(Width).sge(Lower) &&
-      Range.getSignedMax().sext(Width).sle(Upper));
+      Q->Range.getSignedMin().sext(Q->Width).sge(Q->Lower) &&
+      Q->Range.getSignedMax().sext(Q->Width).sle(Q->Upper));
+}
+
+Expected<ConstraintValue>
+OpInUnsignedRange::concrete(const ConcreteCall &Call) {
+  Expected<RangeQuery> Q = rangeQuery(Call, /*ForSigned=*/false);
+  if (!Q)
+    return Q.takeError();
+  return ConstraintValue::getBoolean(
+      Q->Range.getUnsignedMin().zext(Q->Width).sge(Q->Lower) &&
+      Q->Range.getUnsignedMax().zext(Q->Width).sle(Q->Upper));
 }
 
 void OpInSignedRange::record(const RecordCall &Call) {
@@ -259,6 +322,17 @@ void OpInSignedRange::record(const RecordCall &Call) {
   Call.Sink.measure(Measure::RangeSignedBits, Range.getMinSignedBits());
 }
 
+void OpInUnsignedRange::record(const RecordCall &Call) {
+  // Every value up to Max fits in as many bits as Max, so a range within the
+  // bounds does too.
+  if (!Call.Value.getType()->isIntOrIntVectorTy())
+    return;
+  ConstantRange Range =
+      computeConstantRange(const_cast<llvm::Value *>(&Call.Value),
+                           /*ForSigned=*/false, query(Call));
+  Call.Sink.measure(Measure::RangeUnsignedBits, Range.getActiveBits());
+}
+
 // A recorded predicate is false where the index lacks its fact.
 #define MIR_ABSTRACT_PREDICATE(ID)                                             \
   AbstractValue Op##ID::abstract(const AbstractCall &Call) {                   \
@@ -269,6 +343,7 @@ MIR_ABSTRACT_PREDICATE(IsKnownNegative)
 MIR_ABSTRACT_PREDICATE(IsKnownNonNegative)
 MIR_ABSTRACT_PREDICATE(IsKnownPositive)
 MIR_ABSTRACT_PREDICATE(IsKnownPowerOfTwo)
+MIR_ABSTRACT_PREDICATE(IsKnownPowerOfTwoOrZero)
 #undef MIR_ABSTRACT_PREDICATE
 
 /// The integer Operands[Index] certainly is, if it is concrete and one.
@@ -319,6 +394,18 @@ AbstractValue OpInSignedRange::abstract(const AbstractCall &Call) {
                         std::max(signedBits(*Min), signedBits(*Max)));
 }
 
+AbstractValue OpInUnsignedRange::abstract(const AbstractCall &Call) {
+  std::optional<APSInt> Max = concreteInteger(Call, 2);
+  if (!Max)
+    return AbstractValue::unknown();
+  // A negative Max is left to the matcher.
+  if (Max->isSigned() && Max->isNegative())
+    return AbstractValue::unknown();
+  // Values up to Max fit in as many bits as it.
+  return exceedsMeasure(Call, 0, Measure::RangeUnsignedBits,
+                        Max->getActiveBits());
+}
+
 void recordValueTracking(const RecordCall &Call) {
   // Value tracking is asked about integers and pointers only; other values'
   // facts are unknown.
@@ -332,8 +419,10 @@ void recordValueTracking(const RecordCall &Call) {
   OpIsKnownNonNegative::record(Call);
   OpIsKnownPositive::record(Call);
   OpIsKnownPowerOfTwo::record(Call);
+  OpIsKnownPowerOfTwoOrZero::record(Call);
   OpMaskedValueIsZero::record(Call);
   OpInSignedRange::record(Call);
+  OpInUnsignedRange::record(Call);
 }
 
 } // namespace metaphir

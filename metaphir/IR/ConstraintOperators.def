@@ -87,10 +87,11 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAllOnes, "isAllOnes", Call, BooleanResult,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLowBitMask, "isLowBitMask", Call,
                                     BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyZeroFP, "isAnyZeroFP", Call, BooleanResult,
-                                    1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyIntegralConstant, "isAnyIntegralConstant",
-                                    Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyZeroFP, "isAnyZeroFP", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyIntegralConstant,
+                                    "isAnyIntegralConstant", Call,
+                                    BooleanResult, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPoison, "isPoison", Call, BooleanResult,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsForbidPoison, "isForbidPoison", Call,
@@ -103,6 +104,79 @@ MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUse, "hasOneUse", Call, BooleanResult,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUser, "hasOneUser", Call,
                                     BooleanResult, 1)
+
+// Constant classes, each the PatternMatch.h matcher it is named after.
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsImmConstant, "isImmConstant", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsSignMask, "isSignMask", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsMaxSignedValue, "isMaxSignedValue", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNegatedPower2, "isNegatedPower2", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNegatedPower2OrZero,
+                                    "isNegatedPower2OrZero", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsPower2OrZero, "isPower2OrZero", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLowBitMaskOrZero, "isLowBitMaskOrZero",
+                                    Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsShiftedMask, "isShiftedMask", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNegative, "isNegative", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNonNegative, "isNonNegative", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsStrictlyPositive, "isStrictlyPositive",
+                                    Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNonPositive, "isNonPositive", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsNonZeroInt, "isNonZeroInt", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsUndef, "isUndef", Call, BooleanResult, 1)
+
+// What a captured instruction is: the intrinsic a call calls and the
+// predicate of a compare, as strings like those '@llvm.?id' and '?pred' bind.
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Intrinsic, "intrinsic", Call, StringResult,
+                                    1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Predicate, "predicate", Call, StringResult,
+                                    1)
+
+// Comparison predicates, named after CmpInst's.
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsEquality, "isEquality", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsSigned, "isSigned", Call, BooleanResult,
+                                    1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsUnsigned, "isUnsigned", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLT, "isLT", Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsGT, "isGT", Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsLE, "isLE", Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsGE, "isGE", Call, BooleanResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(SwappedPredicate, "swappedPredicate", Call,
+                                    StringResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(InversePredicate, "inversePredicate", Call,
+                                    StringResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(StrictPredicate, "strictPredicate", Call,
+                                    StringResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(NonStrictPredicate, "nonStrictPredicate",
+                                    Call, StringResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(FlippedSignednessPredicate,
+                                    "flippedSignednessPredicate", Call,
+                                    StringResult, 1)
+
+// Bit counts, as APInt's, at the operand's own width or an explicit one; and
+// the bit width of a value's (or a type's) scalar type.
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountlZero, "countl_zero", Call,
+                                     IntegerResult, 1)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountrZero, "countr_zero", Call,
+                                     IntegerResult, 1)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountlOne, "countl_one", Call,
+                                     IntegerResult, 1)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountrOne, "countr_one", Call,
+                                     IntegerResult, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(BitWidth, "bitWidth", Call, IntegerResult,
+                                    1)
 
 // Value-tracking backed operators. The trailing ?ctx is optional and defaults
 // to the pattern instruction preceding the constraint.
@@ -123,9 +197,20 @@ MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPositive, "isKnownPositive", Call,
                                     BooleanResult, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPowerOfTwo, "isKnownPowerOfTwo",
                                     Call, BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPowerOfTwoOrZero,
+                                    "isKnownPowerOfTwoOrZero", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsGuaranteedNotToBePoison,
+                                    "isGuaranteedNotToBePoison", Call,
+                                    BooleanResult, 1)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsGuaranteedNotToBeUndefOrPoison,
+                                    "isGuaranteedNotToBeUndefOrPoison", Call,
+                                    BooleanResult, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaskedValueIsZero, "maskedValueIsZero",
                                     Call, BooleanResult, 2)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(InSignedRange, "inSignedRange", Call,
+                                    BooleanResult, 3)
+MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(InUnsignedRange, "inUnsignedRange", Call,
                                     BooleanResult, 3)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownZeros, "knownZeros", Call,

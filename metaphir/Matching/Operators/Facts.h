@@ -34,6 +34,15 @@ public:
     IsPoison,
     IsForbidPoison,
     IsConstantSplat,
+    IsImmConstant,
+    IsSignMask,
+    IsMaxSignedValue,
+    IsNegatedPower2,
+    IsShiftedMask,
+    IsNegative,
+    IsNonNegative,
+    IsStrictlyPositive,
+    IsUndef,
     HasOneUse,
     HasOneUser,
     // Value tracking, anchored at the site's instruction.
@@ -42,6 +51,7 @@ public:
     IsKnownNonNegative,
     IsKnownPositive,
     IsKnownPowerOfTwo,
+    IsKnownPowerOfTwoOrZero,
     /// Value tracking was skipped for a value at the site; its facts there
     /// are unknown.
     ValueTrackingSkipped,
@@ -95,6 +105,8 @@ enum class Measure : uint8_t {
   ActiveBits,
   /// The fewest bits holding the signed range computeConstantRange finds.
   RangeSignedBits,
+  /// The fewest bits holding the unsigned range computeConstantRange finds.
+  RangeUnsignedBits,
   NumMeasures
 };
 

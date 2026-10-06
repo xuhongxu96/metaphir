@@ -190,11 +190,30 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_Xor:
   case O_Log2:
   case O_Popcount:
+  case O_CountlZero:
+  case O_CountrZero:
+  case O_CountlOne:
+  case O_CountrOne:
     return IntegerResult;
   case O_Isa:
     return Index == 0 ? ValueResult : StringResult;
   case O_Opcode:
+  case O_Intrinsic:
+  case O_Predicate:
     return ValueResult;
+  case O_IsEquality:
+  case O_IsSigned:
+  case O_IsUnsigned:
+  case O_IsLT:
+  case O_IsGT:
+  case O_IsLE:
+  case O_IsGE:
+  case O_SwappedPredicate:
+  case O_InversePredicate:
+  case O_StrictPredicate:
+  case O_NonStrictPredicate:
+  case O_FlippedSignednessPredicate:
+    return StringResult;
   case O_KnownZeros:
   case O_KnownOnes:
     return BitVectorResult;
@@ -209,10 +228,14 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_IsKnownNonNegative:
   case O_IsKnownPositive:
   case O_IsKnownPowerOfTwo:
+  case O_IsKnownPowerOfTwoOrZero:
+  case O_IsGuaranteedNotToBePoison:
+  case O_IsGuaranteedNotToBeUndefOrPoison:
     return ValueResult;
   case O_MaskedValueIsZero:
     return Index == 1 ? IntegerResult : ValueResult;
   case O_InSignedRange:
+  case O_InUnsignedRange:
     return Index == 1 || Index == 2 ? IntegerResult : ValueResult;
   // These accept a value or a plain integer, or answer false for anything
   // else.
@@ -230,6 +253,22 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_IsScalar:
   case O_HasOneUse:
   case O_HasOneUser:
+  case O_IsImmConstant:
+  case O_IsSignMask:
+  case O_IsMaxSignedValue:
+  case O_IsNegatedPower2:
+  case O_IsNegatedPower2OrZero:
+  case O_IsPower2OrZero:
+  case O_IsLowBitMaskOrZero:
+  case O_IsShiftedMask:
+  case O_IsNegative:
+  case O_IsNonNegative:
+  case O_IsStrictlyPositive:
+  case O_IsNonPositive:
+  case O_IsNonZeroInt:
+  case O_IsUndef:
+  // bitWidth takes a value or a type.
+  case O_BitWidth:
   case UnknownOperator:
     return Unknown;
   }

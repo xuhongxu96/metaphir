@@ -7,6 +7,7 @@
 #include "metaphir/Matching/ConstraintError.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Operators/Arithmetic.h"
+#include "metaphir/Matching/Operators/CmpPredicates.h"
 #include "metaphir/Matching/Operators/ValuePredicates.h"
 #include "metaphir/Matching/Operators/ValueTracking.h"
 #include "llvm/ADT/SmallVector.h"

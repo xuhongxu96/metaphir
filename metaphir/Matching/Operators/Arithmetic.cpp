@@ -290,5 +290,38 @@ Expected<ConstraintValue> OpPopcount::concrete(const ConcreteCall &Call) {
                        true);
 }
 
+/// A count of the operand's bits by Count, at the operand's own width or the
+/// optional one: a constant's is its type's, and knownZeros' and knownOnes'
+/// are the value's.
+template <typename BitCount>
+static Expected<ConstraintValue> evaluateCount(const ConcreteCall &Call,
+                                               BitCount Count) {
+  Expected<std::optional<unsigned>> BitWidth = optionalBitWidth(Call, 1);
+  if (!BitWidth)
+    return BitWidth.takeError();
+  Expected<APSInt> Operand = requireInteger(Call.Operands[0], Call.Expression);
+  if (!Operand)
+    return Operand.takeError();
+  if (*BitWidth)
+    *Operand = castToBitWidth(*Operand, **BitWidth);
+  return integerResult(APInt(32, Count(*Operand)), /*IsUnsigned=*/true);
+}
+
+Expected<ConstraintValue> OpCountlZero::concrete(const ConcreteCall &Call) {
+  return evaluateCount(Call, [](const APInt &V) { return V.countl_zero(); });
+}
+
+Expected<ConstraintValue> OpCountrZero::concrete(const ConcreteCall &Call) {
+  return evaluateCount(Call, [](const APInt &V) { return V.countr_zero(); });
+}
+
+Expected<ConstraintValue> OpCountlOne::concrete(const ConcreteCall &Call) {
+  return evaluateCount(Call, [](const APInt &V) { return V.countl_one(); });
+}
+
+Expected<ConstraintValue> OpCountrOne::concrete(const ConcreteCall &Call) {
+  return evaluateCount(Call, [](const APInt &V) { return V.countr_one(); });
+}
+
 } // namespace metaphir
 } // namespace llvm
