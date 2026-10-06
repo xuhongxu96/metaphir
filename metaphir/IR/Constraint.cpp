@@ -218,12 +218,12 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   // else.
   case O_Equal:
   case O_NotEqual:
-  case O_IsPowerOfTwo:
+  case O_IsPower2:
   case O_IsZero:
   case O_IsAllOnes:
   case O_IsLowBitMask:
-  case O_IsZeroFP:
-  case O_IsIntegralConstant:
+  case O_IsAnyZeroFP:
+  case O_IsAnyIntegralConstant:
   case O_IsPoison:
   case O_IsForbidPoison:
   case O_IsConstantSplat:

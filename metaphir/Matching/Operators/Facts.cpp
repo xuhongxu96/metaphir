@@ -13,10 +13,10 @@ static constexpr unsigned NumValueClasses = 0
 StringRef Atom::getName(Predicate P) {
   static constexpr StringLiteral Names[] = {"isZero",
                                             "isAllOnes",
-                                            "isPowerOfTwo",
+                                            "isPower2",
                                             "isLowBitMask",
-                                            "isZeroFP",
-                                            "isIntegralConstant",
+                                            "isAnyZeroFP",
+                                            "isAnyIntegralConstant",
                                             "isPoison",
                                             "isForbidPoison",
                                             "isConstantSplat",

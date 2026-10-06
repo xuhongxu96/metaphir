@@ -40,8 +40,8 @@ metaflag :constantInt(?v) {
 	isConstantInt(?v)
 }
 
-metaflag :powerOfTwo(?v) {
-	isPowerOfTwo(?v)
+metaflag :power2(?v) {
+	isPower2(?v)
 }
 
 metaflag :zero(?v) {
@@ -64,19 +64,19 @@ metaflag :forbidPoison(?v) {
 	isForbidPoison(?v)
 }
 
-metaflag :integralConstant(?v) {
-	isIntegralConstant(?v)
+metaflag :anyIntegralConstant(?v) {
+	isAnyIntegralConstant(?v)
 }
 
 constraint isAPInt(?v) {
-	isIntegralConstant(?v)
+	isAnyIntegralConstant(?v)
 }
 metaflag :apInt(?v) {
 	isAPInt(?v)
 }
 
-metaflag :zeroFP(?v) {
-	isZeroFP(?v)
+metaflag :anyZeroFP(?v) {
+	isAnyZeroFP(?v)
 }
 
 metaflag :scalar(?v) {

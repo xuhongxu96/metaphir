@@ -114,17 +114,17 @@ template <class Op> static void recordIfHolds(const RecordCall &Call) {
     Call.Sink.add(Op::Fact);
 }
 
-bool OpIsPowerOfTwo::holds(const llvm::Value &V) {
+bool OpIsPower2::holds(const llvm::Value &V) {
   return PatternMatch::match(&V, PatternMatch::m_Power2());
 }
 
-Expected<ConstraintValue> OpIsPowerOfTwo::concrete(const ConcreteCall &Call) {
-  return integerPredicate<OpIsPowerOfTwo>(
+Expected<ConstraintValue> OpIsPower2::concrete(const ConcreteCall &Call) {
+  return integerPredicate<OpIsPower2>(
       Call, [](const APSInt &V) { return V.isPowerOf2(); });
 }
 
-void OpIsPowerOfTwo::record(const RecordCall &Call) {
-  recordIfHolds<OpIsPowerOfTwo>(Call);
+void OpIsPower2::record(const RecordCall &Call) {
+  recordIfHolds<OpIsPower2>(Call);
 }
 
 bool OpIsZero::holds(const llvm::Value &V) {
@@ -165,32 +165,32 @@ void OpIsLowBitMask::record(const RecordCall &Call) {
   recordIfHolds<OpIsLowBitMask>(Call);
 }
 
-bool OpIsZeroFP::holds(const llvm::Value &V) {
+bool OpIsAnyZeroFP::holds(const llvm::Value &V) {
   return PatternMatch::match(&V, PatternMatch::m_AnyZeroFP());
 }
 
-Expected<ConstraintValue> OpIsZeroFP::concrete(const ConcreteCall &Call) {
-  return valuePredicate<OpIsZeroFP>(Call);
+Expected<ConstraintValue> OpIsAnyZeroFP::concrete(const ConcreteCall &Call) {
+  return valuePredicate<OpIsAnyZeroFP>(Call);
 }
 
-void OpIsZeroFP::record(const RecordCall &Call) {
-  recordIfHolds<OpIsZeroFP>(Call);
+void OpIsAnyZeroFP::record(const RecordCall &Call) {
+  recordIfHolds<OpIsAnyZeroFP>(Call);
 }
 
-bool OpIsIntegralConstant::holds(const llvm::Value &V) {
+bool OpIsAnyIntegralConstant::holds(const llvm::Value &V) {
   return PatternMatch::match(&V, PatternMatch::m_AnyIntegralConstant());
 }
 
 Expected<ConstraintValue>
-OpIsIntegralConstant::concrete(const ConcreteCall &Call) {
+OpIsAnyIntegralConstant::concrete(const ConcreteCall &Call) {
   if (valueOperand(Call))
-    return valuePredicate<OpIsIntegralConstant>(Call);
+    return valuePredicate<OpIsAnyIntegralConstant>(Call);
   return ConstraintValue::getBoolean(Call.Operands[0].getKind() ==
                                      ConstraintValue::Integer);
 }
 
-void OpIsIntegralConstant::record(const RecordCall &Call) {
-  recordIfHolds<OpIsIntegralConstant>(Call);
+void OpIsAnyIntegralConstant::record(const RecordCall &Call) {
+  recordIfHolds<OpIsAnyIntegralConstant>(Call);
 }
 
 bool OpIsPoison::holds(const llvm::Value &V) {
@@ -282,12 +282,12 @@ void OpHasOneUser::record(const RecordCall &Call) {
   AbstractValue Op##ID::abstract(const AbstractCall &Call) {                   \
     return lacksFact(Call, 0, Fact);                                           \
   }
-MIR_ABSTRACT_PREDICATE(IsPowerOfTwo)
+MIR_ABSTRACT_PREDICATE(IsPower2)
 MIR_ABSTRACT_PREDICATE(IsZero)
 MIR_ABSTRACT_PREDICATE(IsAllOnes)
 MIR_ABSTRACT_PREDICATE(IsLowBitMask)
-MIR_ABSTRACT_PREDICATE(IsZeroFP)
-MIR_ABSTRACT_PREDICATE(IsIntegralConstant)
+MIR_ABSTRACT_PREDICATE(IsAnyZeroFP)
+MIR_ABSTRACT_PREDICATE(IsAnyIntegralConstant)
 MIR_ABSTRACT_PREDICATE(IsPoison)
 MIR_ABSTRACT_PREDICATE(IsForbidPoison)
 MIR_ABSTRACT_PREDICATE(IsConstantSplat)
@@ -297,12 +297,12 @@ MIR_ABSTRACT_PREDICATE(HasOneUser)
 
 void recordValuePredicates(const RecordCall &Call) {
   OpIsa::record(Call);
-  OpIsPowerOfTwo::record(Call);
+  OpIsPower2::record(Call);
   OpIsZero::record(Call);
   OpIsAllOnes::record(Call);
   OpIsLowBitMask::record(Call);
-  OpIsZeroFP::record(Call);
-  OpIsIntegralConstant::record(Call);
+  OpIsAnyZeroFP::record(Call);
+  OpIsAnyIntegralConstant::record(Call);
   OpIsPoison::record(Call);
   OpIsForbidPoison::record(Call);
   OpIsConstantSplat::record(Call);

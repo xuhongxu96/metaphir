@@ -27,10 +27,10 @@ public:
   enum Predicate : uint8_t {
     IsZero,
     IsAllOnes,
-    IsPowerOfTwo,
+    IsPower2,
     IsLowBitMask,
-    IsZeroFP,
-    IsIntegralConstant,
+    IsAnyZeroFP,
+    IsAnyIntegralConstant,
     IsPoison,
     IsForbidPoison,
     IsConstantSplat,

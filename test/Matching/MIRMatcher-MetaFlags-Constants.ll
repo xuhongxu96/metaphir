@@ -2,7 +2,7 @@
 ; RUN: %metaphir-match %t/pattern.mpir %t/match.ll %t/no-match.ll | FileCheck %s
 
 ;--- pattern.mpir
-call void @sink(i32 ?allones:allOnes, i32 ?safe:forbidPoison, i32 ?integral:integralConstant, float ?zero:zeroFP, i32 ?poison:poison, i32 ?apint:apInt, i32 ?either:or(:allOnes, :poison), i32 ?not_poison:not(:poison), i32 ?low:lowBitMask)
+call void @sink(i32 ?allones:allOnes, i32 ?safe:forbidPoison, i32 ?integral:anyIntegralConstant, float ?zero:anyZeroFP, i32 ?poison:poison, i32 ?apint:apInt, i32 ?either:or(:allOnes, :poison), i32 ?not_poison:not(:poison), i32 ?low:lowBitMask)
 
 ;--- match.ll
 declare void @sink(i32, i32, i32, float, i32, i32, i32, i32, i32)
@@ -48,7 +48,7 @@ define void @bad_integralconstant(i32 %integral) {
 }
 ; CHECK-NEXT: target 4: @bad_integralconstant
 ; CHECK-NEXT:   no match
-; CHECK-NEXT:   constraint not satisfied: (isIntegralConstant ?integral)
+; CHECK-NEXT:   constraint not satisfied: (isAnyIntegralConstant ?integral)
 
 define void @bad_zerofp() {
   call void @sink(i32 -1, i32 7, i32 17, float 1.0, i32 poison, i32 42, i32 -1, i32 0, i32 255)
@@ -56,7 +56,7 @@ define void @bad_zerofp() {
 }
 ; CHECK-NEXT: target 5: @bad_zerofp
 ; CHECK-NEXT:   no match
-; CHECK-NEXT:   constraint not satisfied: (isZeroFP ?zero)
+; CHECK-NEXT:   constraint not satisfied: (isAnyZeroFP ?zero)
 
 define void @bad_poison() {
   call void @sink(i32 -1, i32 7, i32 17, float 0.0, i32 0, i32 42, i32 -1, i32 0, i32 255)

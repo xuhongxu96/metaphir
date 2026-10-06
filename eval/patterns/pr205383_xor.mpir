@@ -4,4 +4,4 @@
 %xor = xor:c i?bits %ctlz, ?bm1:constantInt
 %sel = selectEqZero:?anch i?bits ?x, i?bits ?bits, i?bits %xor
 ;; ?bm1 == ?bits - 1
-;; isPowerOfTwo(?bits)
+;; isPower2(?bits)
