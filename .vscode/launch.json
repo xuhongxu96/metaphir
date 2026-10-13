@@ -1,0 +1,99 @@
+{
+    // Debug configurations for CodeLLDB (vadimcn.vscode-lldb). Each builds
+    // build/ first (the "build" task in tasks.json) and asks for its inputs.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "match",
+            "program": "${workspaceFolder}/build/tools/metaphir-match",
+            "args": "${input:matchArgs}",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "match: current pattern",
+            "program": "${workspaceFolder}/build/tools/metaphir-match",
+            "args": "'${file}' ${input:irFiles}",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "parse: current pattern",
+            "program": "${workspaceFolder}/build/tools/metaphir-parse",
+            "args": ["${file}"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "lex: current file",
+            "program": "${workspaceFolder}/build/tools/metaphir-lex",
+            "args": ["${file}"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "index",
+            "program": "${workspaceFolder}/build/tools/metaphir-index",
+            "args": "${input:indexArgs}",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "unit test",
+            "program": "${workspaceFolder}/build/test/${input:unitTest}",
+            "args": ["--gtest_filter=${input:gtestFilter}"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "matchArgs",
+            "type": "promptString",
+            "description": "metaphir-match arguments: <pattern> <llvm-ir file or directory>... [options]",
+            "default": "test.mpir test.ll"
+        },
+        {
+            "id": "irFiles",
+            "type": "promptString",
+            "description": "LLVM IR files or directories (and options) to match the current pattern against",
+            "default": "test.ll"
+        },
+        {
+            "id": "indexArgs",
+            "type": "promptString",
+            "description": "metaphir-index arguments: build, dump, stats or publish, then its options",
+            "default": "stats test.mpir eval/corpus.mpidx"
+        },
+        {
+            "id": "unitTest",
+            "type": "pickString",
+            "description": "Unit test binary",
+            "options": [
+                "Matching/metaphir-matching-test",
+                "Parser/metaphir-parser-test",
+                "IR/metaphir-ir-test",
+                "Index/metaphir-index-test",
+                "Web/metaphir-web-test"
+            ]
+        },
+        {
+            "id": "gtestFilter",
+            "type": "promptString",
+            "description": "--gtest_filter (e.g. FeaturesTest.*)",
+            "default": "*"
+        }
+    ]
+}

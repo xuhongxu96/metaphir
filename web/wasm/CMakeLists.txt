@@ -16,7 +16,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(LLVM REQUIRED CONFIG)
 
 set(METAPHIR_ROOT ${PROJECT_SOURCE_DIR}/../..)
-set(METAPHIR_WERROR OFF)
 
 add_compile_options(-fno-rtti
                     "SHELL:-include ${PROJECT_SOURCE_DIR}/NoAllocaMacro.h")

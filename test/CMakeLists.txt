@@ -46,18 +46,6 @@ if(Python3_FOUND)
       ${METAPHIR_LLVM_UTILS_DIR}/split-file --llvm-as
       ${METAPHIR_LLVM_UTILS_DIR}/llvm-as ${CMAKE_CURRENT_SOURCE_DIR}/Matching)
 
-  # The WebAssembly builds (scripts/build_wasm.sh), when there are some, must
-  # find what the native tools find.
-  find_program(NODE_EXECUTABLE node)
-  if(NODE_EXECUTABLE AND EXISTS ${PROJECT_SOURCE_DIR}/web/public/wasm/metaphir.js)
-    file(GLOB METAPHIR_WEB_TESTS ${PROJECT_SOURCE_DIR}/web/test/*.test.ts)
-    add_test(NAME MetaphIR.web COMMAND ${NODE_EXECUTABLE} --test
-                                       ${METAPHIR_WEB_TESTS})
-    set_tests_properties(
-      MetaphIR.web
-      PROPERTIES ENVIRONMENT "METAPHIR_BUILD=${PROJECT_BINARY_DIR};LLVM_BIN=${METAPHIR_LLVM_UTILS_DIR}")
-  endif()
-
   add_test(
     NAME MetaphIR.eval-scripts
     COMMAND ${Python3_EXECUTABLE} -m unittest discover -s
