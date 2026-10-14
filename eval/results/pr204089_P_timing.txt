@@ -1,5 +1,5 @@
 modules=50838
 pattern_mode=indexed
-pattern_seconds=0.698
+pattern_seconds=1.850
 patterns=1
 P_anchors=24
