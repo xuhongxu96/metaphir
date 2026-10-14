@@ -37,12 +37,12 @@ TEST(InstructionMatcherTest, RecursivelyMatchesAndBindsOperandTypes) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MetaVariable *Element =
-      MetaVariable::create(Context, "element", MetaType::Type, Range);
+      MetaVariable::create(Context, "element", Sort::Type, Range);
   MetaVariable *Count =
-      MetaVariable::create(Context, "count", MetaType::Nat, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "count", Sort::Nat, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   llvm::metaphir::Type *Array = llvm::metaphir::ArrayType::get(
       Context, MetaIRType::get(Context, Element), 0, Count);
   MatcherOperand Operands[] = {{Array, X}};
@@ -76,10 +76,10 @@ TEST(InstructionMatcherTest, BindsStandaloneResultTypes) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MetaVariable *ResultType =
-      MetaVariable::create(Context, "result_type", MetaType::Type, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "result_type", Sort::Type, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   MatcherOperand Operands[] = {
       {llvm::metaphir::IntegerType::get(Context, 8), X},
       {MetaIRType::get(Context, ResultType), nullptr, false, false},
@@ -114,8 +114,8 @@ TEST(InstructionMatcherTest, CommutativeFlagWithoutOperandPairMatchesOnce) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   MetaFlag *Commutative =
       MetaFlag::createBuiltin(Context, MetaFlag::MF_c, {}, Range);
   MetaFlag *Flags[] = {Commutative};
@@ -145,13 +145,13 @@ TEST(InstructionMatcherTest, BindsPredicatesAndCapturedSemanticFlags) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", Sort::Value, Range);
   MetaVariable *Predicate =
-      MetaVariable::create(Context, "predicate", MetaType::CmpPredicate, Range);
+      MetaVariable::create(Context, "predicate", Sort::CmpPredicate, Range);
   MetaVariable *HasNSW =
-      MetaVariable::create(Context, "has_nsw", MetaType::Bool, Range);
+      MetaVariable::create(Context, "has_nsw", Sort::Boolean, Range);
 
   MatcherOperand CompareOperands[] = {
       {nullptr, Predicate, false, false, nullptr, nullptr,
@@ -203,11 +203,11 @@ TEST(InstructionMatcherTest, MatchesAndBindsKeyedIntegerOperands) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MetaVariable *Pointer =
-      MetaVariable::create(Context, "pointer", MetaType::Value, Range);
+      MetaVariable::create(Context, "pointer", Sort::Value, Range);
   MetaVariable *Alignment =
-      MetaVariable::create(Context, "alignment", MetaType::Nat, Range);
+      MetaVariable::create(Context, "alignment", Sort::Nat, Range);
 
   MatcherOperand TypeOnly;
   TypeOnly.Ty = llvm::metaphir::IntegerType::get(Context, 32);
@@ -246,13 +246,13 @@ TEST(InstructionMatcherTest, MatchesFastMathFlagsThroughInstructionInterface) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MetaVariable *Condition =
-      MetaVariable::create(Context, "condition", MetaType::Bool, Range);
+      MetaVariable::create(Context, "condition", Sort::Boolean, Range);
   MetaVariable *TrueValue =
-      MetaVariable::create(Context, "true_value", MetaType::Value, Range);
+      MetaVariable::create(Context, "true_value", Sort::Value, Range);
   MetaVariable *FalseValue =
-      MetaVariable::create(Context, "false_value", MetaType::Value, Range);
+      MetaVariable::create(Context, "false_value", Sort::Value, Range);
   InstructionFlag Flags[] = {{InstructionFlag::F_nnan, nullptr}};
   MatcherOperand Operands[] = {
       {nullptr, Condition},
@@ -293,13 +293,13 @@ TEST(InstructionMatcherTest, CapturesTrailingCallArgumentTypesAndValues) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MetaVariable *Prefix =
-      MetaVariable::create(Context, "prefix", MetaType::Value, Range);
+      MetaVariable::create(Context, "prefix", Sort::Value, Range);
   MetaVariable *Types =
-      MetaVariable::create(Context, "types", MetaType::TypeArray, Range);
+      MetaVariable::create(Context, "types", Sort::TypeArray, Range);
   MetaVariable *Values =
-      MetaVariable::create(Context, "values", MetaType::ValueArray, Range);
+      MetaVariable::create(Context, "values", Sort::ValueArray, Range);
   llvm::metaphir::Type *I32 = llvm::metaphir::IntegerType::get(Context, 32);
   MatcherOperand Operands[] = {
       {I32, nullptr, false, false},
@@ -343,11 +343,11 @@ TEST(InstructionMatcherTest, CapturesAggregateIndicesAsValueArray) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MetaVariable *Aggregate =
-      MetaVariable::create(Context, "aggregate", MetaType::Value, Range);
+      MetaVariable::create(Context, "aggregate", Sort::Value, Range);
   MetaVariable *Indices =
-      MetaVariable::create(Context, "indices", MetaType::ValueArray, Range);
+      MetaVariable::create(Context, "indices", Sort::ValueArray, Range);
   llvm::metaphir::Type *I8 = llvm::metaphir::IntegerType::get(Context, 8);
   llvm::metaphir::Type *I16 = llvm::metaphir::IntegerType::get(Context, 16);
   llvm::metaphir::Type *I32 = llvm::metaphir::IntegerType::get(Context, 32);

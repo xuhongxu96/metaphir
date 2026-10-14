@@ -24,8 +24,8 @@ TEST(PatternMatcherTest, EnforcesRepeatedBindings) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   MatcherOperand PatternOperands[] = {{nullptr, X}, {nullptr, X}};
   Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add, "",
                                              {}, {}, PatternOperands, nullptr,
@@ -59,9 +59,9 @@ TEST(PatternMatcherTest, RequiresEveryRootAndFiltersPrograms) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", Sort::Value, Range);
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, X}};
   MatcherOperand SubOperands[] = {{nullptr, Y}, {nullptr, Y}};
   Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add, "",
@@ -100,9 +100,9 @@ TEST(PatternMatcherTest, MetaVariablesMatchTypeCompatibleInstructions) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MetaVariable *I =
-      MetaVariable::create(Context, "i", MetaType::Instruction, Range);
+      MetaVariable::create(Context, "i", Sort::Instruction, Range);
   Pat->addMetaVariable(Block);
   Pat->addMetaVariable(I);
   MatcherOperand PatternOperands[] = {{nullptr, I}};
@@ -132,10 +132,10 @@ TEST(PatternMatcherTest, ReportsIncompleteSuccessfulInstantiationAsUnexpected) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   MetaVariable *Unbound =
-      MetaVariable::create(Context, "unbound", MetaType::Value, Range);
+      MetaVariable::create(Context, "unbound", Sort::Value, Range);
   Pat->addMetaVariable(Block);
   Pat->addMetaVariable(X);
   Pat->addMetaVariable(Unbound);
@@ -167,8 +167,8 @@ TEST(PatternMatcherTest, EnforcesInstructionBlockMembership) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   MatcherOperand Operands[] = {{nullptr, X}, {nullptr, X}};
   Pat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add, "",
                                              {}, {}, Operands, nullptr, Range,
@@ -211,10 +211,10 @@ TEST(PatternMatcherTest, AllowsInstructionOperandsFromOtherBlocks) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Entry =
-      MetaVariable::create(Context, "entry", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "entry", Sort::BasicBlock, Range);
   MetaVariable *Next =
-      MetaVariable::create(Context, "next", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "next", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, X}};
   MIRInstruction *Add =
       MIRInstruction::create(Context, MIRInstruction::I_add, "add", {}, {},
@@ -251,8 +251,8 @@ TEST(PatternMatcherTest, InstructionMatcherControlsCommutativeOperands) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
   IntegerConstant *One =
       IntegerConstant::create(Context, APSInt(APInt(32, 1), false), Range);
   MatcherOperand Operands[] = {{nullptr, One}, {nullptr, X}};
@@ -284,9 +284,9 @@ TEST(PatternMatcherTest, OrSelfAdmitsSelectedOperandAsRoot) {
   SourceRange Range;
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", Sort::Value, Range);
 
   MatcherOperand SubOperands[] = {{nullptr, X}, {nullptr, Y}};
   MIRInstruction *Sub =
@@ -327,9 +327,9 @@ TEST(PatternMatcherTest, MatchesPatternVariants) {
 
   Pattern *AddPat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", Sort::Value, Range);
   MatcherOperand Operands[] = {{nullptr, X}, {nullptr, Y}};
   AddPat->addInstruction(MIRInstruction::create(Context, MIRInstruction::I_add,
                                                 "", {}, {}, Operands, nullptr,
@@ -368,9 +368,9 @@ TEST(PatternMatcherTest, InstructionAndMetaVariableCanShareName) {
 
   Pattern *Pat = Pattern::create(Context);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
-  MetaVariable *X = MetaVariable::create(Context, "x", MetaType::Value, Range);
-  MetaVariable *Y = MetaVariable::create(Context, "y", MetaType::Value, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
+  MetaVariable *X = MetaVariable::create(Context, "x", Sort::Value, Range);
+  MetaVariable *Y = MetaVariable::create(Context, "y", Sort::Value, Range);
 
   // %x = add i32 ?x, ?y
   MatcherOperand AddOperands[] = {{nullptr, X}, {nullptr, Y}};

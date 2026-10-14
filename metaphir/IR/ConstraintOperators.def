@@ -46,152 +46,152 @@
 #define MIR_CONSTRAINT_OPERATOR_ALIAS(ID, Name, Kind)
 #endif
 
-MIR_CONSTRAINT_OPERATOR(LogicalOr, "||", Binary, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(LogicalAnd, "&&", Binary, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(Equal, "==", Binary, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(NotEqual, "!=", Binary, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Add, "+", Binary, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Subtract, "-", Binary, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Multiply, "*", Binary, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR(Not, "!", Unary, BooleanResult, 1)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Negate, "-", Unary, IntegerResult, 1)
+MIR_CONSTRAINT_OPERATOR(LogicalOr, "||", Binary, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(LogicalAnd, "&&", Binary, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(Equal, "==", Binary, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(NotEqual, "!=", Binary, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Add, "+", Binary, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Subtract, "-", Binary, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Multiply, "*", Binary, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR(Not, "!", Unary, Sort::Boolean, 1)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Negate, "-", Unary, Sort::Integer, 1)
 
-MIR_CONSTRAINT_OPERATOR(SLT, "slt", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(ULT, "ult", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(SLE, "sle", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(ULE, "ule", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(SGT, "sgt", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(UGT, "ugt", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(SGE, "sge", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR(UGE, "uge", Call, BooleanResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(SDiv, "sdiv", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(UDiv, "udiv", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(SRem, "srem", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(URem, "urem", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Lshr, "lshr", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Ashr, "ashr", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Shl, "shl", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(And, "and", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Or, "or", Call, IntegerResult, 2)
-MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Xor, "xor", Call, IntegerResult, 2)
+MIR_CONSTRAINT_OPERATOR(SLT, "slt", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(ULT, "ult", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(SLE, "sle", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(ULE, "ule", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(SGT, "sgt", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(UGT, "ugt", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(SGE, "sge", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR(UGE, "uge", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(SDiv, "sdiv", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(UDiv, "udiv", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(SRem, "srem", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(URem, "urem", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Lshr, "lshr", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Ashr, "ashr", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Shl, "shl", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(And, "and", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Or, "or", Call, Sort::Integer, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Xor, "xor", Call, Sort::Integer, 2)
 
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Isa, "isa", Call, BooleanResult, 2)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Opcode, "opcode", Call, StringResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, IntegerResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, IntegerResult,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Isa, "isa", Call, Sort::Boolean, 2)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Opcode, "opcode", Call, Sort::String, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Log2, "log2", Call, Sort::Integer, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Popcount, "popcount", Call, Sort::Integer,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsAnyIntegralConstant,
                                     "isAnyIntegralConstant", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsForbidPoison, "isForbidPoison", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsConstantSplat, "isConstantSplat", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsScalar, "isScalar", Call, BooleanResult,
+                                    Sort::Boolean, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsScalar, "isScalar", Call, Sort::Boolean,
                                     1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUse, "hasOneUse", Call, BooleanResult,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUse, "hasOneUse", Call, Sort::Boolean,
                                     1)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasOneUser, "hasOneUser", Call,
-                                    BooleanResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasNUses, "hasNUses", Call, BooleanResult,
+                                    Sort::Boolean, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasNUses, "hasNUses", Call, Sort::Boolean,
                                     2)
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(HasNUsesOrMore, "hasNUsesOrMore", Call,
-                                    BooleanResult, 2)
+                                    Sort::Boolean, 2)
 
 // Constant classes named after PatternMatch.h matchers.
 #define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)                     \
-  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, BooleanResult, 1)
+  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, Sort::Boolean, 1)
 #include "metaphir/IR/ConstantClasses.def"
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(IsImmConstant, "isImmConstant", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 
 // What a captured instruction is: the intrinsic a call calls and the
 // predicate of a compare, as strings like those '@llvm.?id' and '?pred' bind.
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Intrinsic, "intrinsic", Call, StringResult,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Intrinsic, "intrinsic", Call, Sort::String,
                                     1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(Predicate, "predicate", Call, StringResult,
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(Predicate, "predicate", Call, Sort::String,
                                     1)
 
 // Comparison predicates named after CmpInst's.
 #define MIR_CMP_PREDICATE_TEST(ID, Name, Test)                                 \
-  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, BooleanResult, 1)
+  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, Sort::Boolean, 1)
 #define MIR_CMP_PREDICATE_MAP(ID, Name, Map)                                   \
-  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, StringResult, 1)
+  MIR_CONSTRAINT_INTERPRETED_OPERATOR(ID, Name, Call, Sort::String, 1)
 #include "metaphir/IR/CmpPredicateOperators.def"
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(FlippedSignednessPredicate,
                                     "flippedSignednessPredicate", Call,
-                                    StringResult, 1)
+                                    Sort::String, 1)
 
 // Bit counts, as APInt's, at the operand's own width or an explicit one; and
 // the bit width of a value's (or a type's) scalar type.
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountlZero, "countl_zero", Call,
-                                     IntegerResult, 1)
+                                     Sort::Integer, 1)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountrZero, "countr_zero", Call,
-                                     IntegerResult, 1)
+                                     Sort::Integer, 1)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountlOne, "countl_one", Call,
-                                     IntegerResult, 1)
+                                     Sort::Integer, 1)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(CountrOne, "countr_one", Call,
-                                     IntegerResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(BitWidth, "bitWidth", Call, IntegerResult,
+                                     Sort::Integer, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(BitWidth, "bitWidth", Call, Sort::Integer,
                                     1)
 
 // Value-tracking backed operators. The trailing ?ctx is optional and defaults
 // to the pattern instruction preceding the constraint.
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(NoOverflow, "noOverflow", Call,
-                                    BooleanResult, 3)
+                                    Sort::Boolean, 3)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(KnownBits, "knownBits", Call,
-                                    BitVectorResult, 1)
+                                    Sort::BitVector, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonZero, "isKnownNonZero", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNegative, "isKnownNegative", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsGuaranteedNotToBeUndef,
                                     "isGuaranteedNotToBeUndef", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNonNegative, "isKnownNonNegative",
-                                    Call, BooleanResult, 1)
+                                    Call, Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPositive, "isKnownPositive", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPowerOfTwo, "isKnownPowerOfTwo",
-                                    Call, BooleanResult, 1)
+                                    Call, Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownPowerOfTwoOrZero,
                                     "isKnownPowerOfTwoOrZero", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsGuaranteedNotToBePoison,
                                     "isGuaranteedNotToBePoison", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsGuaranteedNotToBeUndefOrPoison,
                                     "isGuaranteedNotToBeUndefOrPoison", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaskedValueIsZero, "maskedValueIsZero",
-                                    Call, BooleanResult, 2)
+                                    Call, Sort::Boolean, 2)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(InSignedRange, "inSignedRange", Call,
-                                    BooleanResult, 3)
+                                    Sort::Boolean, 3)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(InUnsignedRange, "inUnsignedRange", Call,
-                                    BooleanResult, 3)
+                                    Sort::Boolean, 3)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(NumSignBits, "numSignBits", Call,
-                                    IntegerResult, 1)
+                                    Sort::Integer, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(MaxSignificantBits, "maxSignificantBits",
-                                    Call, IntegerResult, 1)
+                                    Call, Sort::Integer, 1)
 // Floating-point value tracking.
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNeverNaN, "isKnownNeverNaN", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNeverInfinity,
                                     "isKnownNeverInfinity", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(IsKnownNeverInfOrNaN,
                                     "isKnownNeverInfOrNaN", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(CannotBeNegativeZero,
                                     "cannotBeNegativeZero", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(CannotBeOrderedLessThanZero,
                                     "cannotBeOrderedLessThanZero", Call,
-                                    BooleanResult, 1)
+                                    Sort::Boolean, 1)
 
 MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownZeros, "knownZeros", Call,
-                                    IntegerResult, 1)
-MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownOnes, "knownOnes", Call, IntegerResult,
+                                    Sort::Integer, 1)
+MIR_CONSTRAINT_INTERPRETED_OPERATOR(KnownOnes, "knownOnes", Call, Sort::Integer,
                                     1)
 
 MIR_CONSTRAINT_OPERATOR_ALIAS(Add, "add", Call)

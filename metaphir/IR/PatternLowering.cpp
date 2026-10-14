@@ -203,7 +203,7 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
         return New.takeError();
       Elements.push_back(*New);
     }
-    Result = ArrayConstraint::create(Context, AC->getResultType(), Elements,
+    Result = ArrayConstraint::create(Context, AC->getSort(), Elements,
                                      AC->getSourceRange());
     break;
   }
@@ -215,9 +215,8 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
     Expected<Constraint *> Index = constraint(Access->getIndex());
     if (!Index)
       return Index.takeError();
-    Result =
-        ArrayAccessConstraint::create(Context, Access->getResultType(), *Array,
-                                      *Index, Access->getSourceRange());
+    Result = ArrayAccessConstraint::create(Context, Access->getSort(), *Array,
+                                           *Index, Access->getSourceRange());
     break;
   }
   case Constraint::Variable: {
@@ -225,22 +224,19 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
     Value *Original = VC->getVariable();
     Value *Target = value(Original);
     if (auto *Var = dyn_cast<MetaVariable>(Target)) {
-      Constraint::ResultType Type =
-          Var != Original && Var->getType() != MetaType::Unknown
-              ? Constraint::getResultType(Var->getType())
-              : VC->getResultType();
+      Sort Type = Var != Original && Var->getSort() != Sort::Unknown
+                      ? getRepresentation(Var->getSort())
+                      : VC->getSort();
       Result =
           VariableConstraint::create(Context, Var, Type, VC->getSourceRange());
     } else if (isa<Instruction>(Target)) {
-      Result = VariableConstraint::create(Context, Target,
-                                          isa<Instruction>(Original)
-                                              ? VC->getResultType()
-                                              : Constraint::ValueResult,
-                                          VC->getSourceRange());
+      Result = VariableConstraint::create(
+          Context, Target,
+          isa<Instruction>(Original) ? VC->getSort() : Sort::Value,
+          VC->getSourceRange());
     } else if (auto *IC = dyn_cast<IntegerConstant>(Target)) {
       const APSInt &Number = IC->getValue();
-      if (VC->getResultType() == Constraint::BooleanResult &&
-          Number.getBitWidth() == 1)
+      if (VC->getSort() == Sort::Boolean && Number.getBitWidth() == 1)
         return BooleanConstraint::create(Context, !Number.isZero(),
                                          VC->getSourceRange());
       if (!Number.isRepresentableByInt64())
@@ -268,10 +264,10 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
     }
     Result = OC->isUserDefined()
                  ? OperatorConstraint::createUserDefined(
-                       Context, OC->getConstraintID(), OC->getResultType(),
+                       Context, OC->getConstraintID(), OC->getSort(),
                        OC->getOperator(), Arguments, OC->getSourceRange())
                  : OperatorConstraint::createBuiltin(
-                       Context, OC->getConstraintID(), OC->getResultType(),
+                       Context, OC->getConstraintID(), OC->getSort(),
                        OC->getOperatorID(), Arguments, OC->getSourceRange());
     break;
   }
@@ -469,7 +465,8 @@ MetaVariable *Expander::copyVariable(const MetaVariable &Original,
   std::string CopyName =
       ((Name.starts_with("_") ? "_" : "") + UsePrefix + "$" + Name).str();
   return MetaVariable::create(Context, Context.pImpl->Saver.save(CopyName),
-                              Original.getType(), Original.getSourceRange());
+                              Original.getInferredSort(),
+                              Original.getSourceRange());
 }
 
 Expected<Pattern *>
@@ -528,7 +525,7 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
           Context.pImpl->Saver.save(
               ("_flag$" + UsePrefix + "$" + InstructionFlag::getName(FlagID))
                   .str()),
-          MetaType::Bool, Use.getSourceRange());
+          Sort::Boolean, Use.getSourceRange());
     }
     FlagValues[FlagID] = FlagValue;
     for (const InstructionFlag &F : Root.getFlags())
@@ -553,7 +550,7 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
     Subst.Values[Local] = Copy;
     // Block labels in a body are dropped (the body is placed in the use's
     // block), so their variables are never bound.
-    if (Local->getType() != MetaType::BasicBlock)
+    if (Local->getSort() != Sort::BasicBlock)
       LocalCopies.push_back(Copy);
   }
 
@@ -762,9 +759,9 @@ Expected<Constraint *> Desugarer::lowerNot(const MetaFlag &MF, Value *Subject) {
     return Inner.takeError();
   if (!*Inner)
     return makeError("metaflag ':not' contains a flag that cannot be lowered");
-  return OperatorConstraint::createBuiltin(
-      Context, Constraint::Unary, Constraint::BooleanResult, Constraint::O_Not,
-      {*Inner}, MF.getSourceRange());
+  return OperatorConstraint::createBuiltin(Context, Constraint::Unary,
+                                           Sort::Boolean, Constraint::O_Not,
+                                           {*Inner}, MF.getSourceRange());
 }
 
 Expected<Constraint *> Desugarer::lowerOr(const MetaFlag &MF, Value *Subject) {
@@ -778,9 +775,9 @@ Expected<Constraint *> Desugarer::lowerOr(const MetaFlag &MF, Value *Subject) {
     if (!*Inner)
       return makeError("metaflag ':or' contains a flag that cannot be lowered");
     Result = Result ? OperatorConstraint::createBuiltin(
-                          Context, Constraint::Binary,
-                          Constraint::BooleanResult, Constraint::O_LogicalOr,
-                          {Result, *Inner}, MF.getSourceRange())
+                          Context, Constraint::Binary, Sort::Boolean,
+                          Constraint::O_LogicalOr, {Result, *Inner},
+                          MF.getSourceRange())
                     : *Inner;
   }
   if (!Result)

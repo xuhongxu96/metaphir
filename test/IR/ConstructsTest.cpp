@@ -21,8 +21,7 @@ static_assert(!std::is_copy_constructible_v<Pattern>,
 TEST(MetaphIRConstructs, UsesOneTypeHierarchy) {
   MIRContext Context;
   SourceRange Range;
-  MetaVariable *Bits =
-      MetaVariable::create(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Bits = MetaVariable::create(Context, "bits", Sort::Nat, Range);
   Value *BitsValue = Bits;
   EXPECT_EQ(BitsValue->getValueID(), Value::MetaVariableVal);
   EXPECT_EQ(cast<MetaVariable>(BitsValue), Bits);
@@ -39,11 +38,10 @@ TEST(MetaphIRConstructs, UsesOneTypeHierarchy) {
 TEST(MetaphIRConstructs, UniquesTypesByStructure) {
   MIRContext Context;
   SourceRange Range;
-  MetaVariable *Ty = MetaVariable::create(Context, "ty", MetaType::Type, Range);
-  MetaVariable *Bits =
-      MetaVariable::create(Context, "bits", MetaType::Nat, Range);
+  MetaVariable *Ty = MetaVariable::create(Context, "ty", Sort::Type, Range);
+  MetaVariable *Bits = MetaVariable::create(Context, "bits", Sort::Nat, Range);
   MetaVariable *Count =
-      MetaVariable::create(Context, "count", MetaType::Nat, Range);
+      MetaVariable::create(Context, "count", Sort::Nat, Range);
 
   Type *I8 = IntegerType::get(Context, 8);
   Type *I32 = IntegerType::get(Context, 32);
@@ -100,7 +98,7 @@ TEST(MetaphIRConstructs, SeparatesKeyedOperands) {
   Value *Predicate =
       KeywordConstant::create(Context, KeywordConstant::K_EQ, Range);
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
   MatcherOperand Operands[] = {
       {I32, LHS, false, true, nullptr, nullptr, MatcherOperand::NotKeyed, {}},
       {I32, RHS, false, true, nullptr, nullptr, MatcherOperand::NotKeyed, {}},
@@ -140,7 +138,7 @@ TEST(MetaphIRConstructs, GeneratedExtensibilitySchemas) {
 
   auto ULT = Constraint::getOperatorSchema(Constraint::O_ULT);
   ASSERT_TRUE(ULT);
-  EXPECT_EQ(ULT->Result, Constraint::BooleanResult);
+  EXPECT_EQ(ULT->Result, Sort::Boolean);
   EXPECT_EQ(ULT->MinArity, 2u);
   EXPECT_EQ(ULT->MaxArity, 2u);
   EXPECT_FALSE(Constraint::getOperatorSchema(Constraint::UnknownOperator));
@@ -158,11 +156,11 @@ TEST(MetaphIRConstructs, OperatorConstraintUniquesUserOperatorNames) {
   MIRContext Context;
   SourceRange Range;
   OperatorConstraint *Op1 = OperatorConstraint::createUserDefined(
-      Context, Constraint::Call, Constraint::BooleanResult,
-      "myCustomConstraint", {}, Range);
+      Context, Constraint::Call, Sort::Boolean, "myCustomConstraint", {},
+      Range);
   OperatorConstraint *Op2 = OperatorConstraint::createUserDefined(
-      Context, Constraint::Call, Constraint::BooleanResult,
-      "myCustomConstraint", {}, Range);
+      Context, Constraint::Call, Sort::Boolean, "myCustomConstraint", {},
+      Range);
 
   EXPECT_TRUE(Op1->isUserDefined());
   EXPECT_TRUE(Op2->isUserDefined());
@@ -174,8 +172,8 @@ TEST(MetaphIRConstructs, OperatorConstraintUniquesUserOperatorNames) {
 
   // Built-in operator overload:
   OperatorConstraint *Builtin = OperatorConstraint::createBuiltin(
-      Context, Constraint::Binary, Constraint::BooleanResult,
-      Constraint::O_Equal, {}, Range);
+      Context, Constraint::Binary, Sort::Boolean, Constraint::O_Equal, {},
+      Range);
   EXPECT_FALSE(Builtin->isUserDefined());
   EXPECT_EQ(Builtin->getOperatorID(), Constraint::O_Equal);
   EXPECT_EQ(Builtin->getOperator(), "==");
@@ -211,7 +209,7 @@ TEST(MetaphIRConstructs, InstructionCustomOpcodeAndKeyedOperands) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Block =
-      MetaVariable::create(Context, "block", MetaType::BasicBlock, Range);
+      MetaVariable::create(Context, "block", Sort::BasicBlock, Range);
 
   // Instruction without keyed operands has 0 keyed operand allocations:
   Instruction *Inst = Instruction::create(Context, Instruction::I_add, "res",

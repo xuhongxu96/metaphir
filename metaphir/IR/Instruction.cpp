@@ -47,9 +47,9 @@ Instruction *Instruction::create(
     ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
     ArrayRef<MatcherOperand> Operands, MetaVariable *Capture, SourceRange Range,
     MetaVariable *ParentBlock, PatternSettings Settings) {
-  assert((ParentBlock == nullptr ||
-          ParentBlock->getType() == MetaType::BasicBlock) &&
-         "instruction must have a basic block");
+  assert(
+      (ParentBlock == nullptr || ParentBlock->getSort() == Sort::BasicBlock) &&
+      "instruction must have a basic block");
   SmallVector<MatcherOperand, 8> UnkeyedOperands;
   MatcherOperand KeyedOperands[MatcherOperand::NumKeyedOperandKinds];
   uint64_t KeyedOperandMask = 0;

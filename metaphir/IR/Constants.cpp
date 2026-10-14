@@ -61,7 +61,7 @@ raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
   switch (V.getValueID()) {
   case Value::MetaVariableVal: {
     const auto &Variable = cast<MetaVariable>(V);
-    if (Variable.getType() == MetaType::IntrinsicID)
+    if (Variable.getSort() == Sort::IntrinsicID)
       OS << "@llvm.";
     OS << Variable;
     break;

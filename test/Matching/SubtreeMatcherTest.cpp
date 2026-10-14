@@ -19,15 +19,15 @@ using namespace llvm::metaphir;
 
 namespace {
 
-TEST(SubtreeMatcherTest, NonValueMetaTypesFailToMatchLLVMValues) {
+TEST(SubtreeMatcherTest, NonValueSortsFailToMatchLLVMValues) {
   MIRContext Context;
   SourceRange Range;
   LLVMContext LLVMContext;
   ConstantInt *Target =
       ConstantInt::get(llvm::Type::getInt32Ty(LLVMContext), 0);
 
-  for (MetaType Type : {MetaType::Type, MetaType::CmpPredicate,
-                        MetaType::TypeArray, MetaType::ValueArray}) {
+  for (Sort Type :
+       {Sort::Type, Sort::CmpPredicate, Sort::TypeArray, Sort::ValueArray}) {
     MetaVariable *Variable =
         MetaVariable::create(Context, "variable", Type, Range);
     Instantiation State;
@@ -36,12 +36,12 @@ TEST(SubtreeMatcherTest, NonValueMetaTypesFailToMatchLLVMValues) {
   }
 }
 
-TEST(SubtreeMatcherTest, RejectsUnknownMetaTypeAsUnexpected) {
+TEST(SubtreeMatcherTest, RejectsUnknownSortAsUnexpected) {
   MIRContext Context;
   SourceRange Range;
   LLVMContext LLVMContext;
   MetaVariable *Variable =
-      MetaVariable::create(Context, "unknown", MetaType::Unknown, Range);
+      MetaVariable::create(Context, "unknown", Sort::Unknown, Range);
   ConstantInt *Target =
       ConstantInt::get(llvm::Type::getInt32Ty(LLVMContext), 0);
 
@@ -50,14 +50,14 @@ TEST(SubtreeMatcherTest, RejectsUnknownMetaTypeAsUnexpected) {
         Instantiation State;
         (void)SubtreeMatcher(*Variable, *Target, std::move(State)).match();
       },
-      "unexpected meta type 'Unknown'");
+      "unexpected sort 'Unknown'");
 }
 
 TEST(SubtreeMatcherTest, InstantiationsRepresentNonValueBindings) {
   MIRContext Context;
   SourceRange Range;
   MetaVariable *Pred =
-      MetaVariable::create(Context, "pred", MetaType::CmpPredicate, Range);
+      MetaVariable::create(Context, "pred", Sort::CmpPredicate, Range);
   Instantiation::Binding Predicate(CmpInst::ICMP_EQ);
   Instantiation::Binding OtherPredicate(CmpInst::ICMP_NE);
   Instantiation::Binding Integer(APInt(32, 17));

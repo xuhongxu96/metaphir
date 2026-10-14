@@ -55,8 +55,8 @@ detail::bindingValue(const VariableConstraint &Expression,
   auto FormatMsg = [&](StringRef Msg) {
     return describeVariable(Expression, Msg);
   };
-  switch (Expression.getResultType()) {
-  case Constraint::IntegerResult:
+  switch (Expression.getSort()) {
+  case Sort::Integer:
     if (const auto *Integer = std::get_if<APSInt>(&Binding.Data))
       return ConstraintValue::getInteger(*Integer);
     // An IR constant is read as a signed number, as in coerceValueToInteger.
@@ -65,38 +65,38 @@ detail::bindingValue(const VariableConstraint &Expression,
         return ConstraintValue::getInteger(
             APSInt(CI->getValue(), /*isUnsigned=*/false));
     break;
-  case Constraint::BooleanResult:
+  case Sort::Boolean:
     if (const auto *Boolean = std::get_if<bool>(&Binding.Data))
       return ConstraintValue::getBoolean(*Boolean);
     if (const auto *Value = std::get_if<const llvm::Value *>(&Binding.Data))
       if (const auto *CI = dyn_cast<ConstantInt>(*Value))
         return ConstraintValue::getBoolean(CI->isOne());
     break;
-  case Constraint::StringResult:
+  case Sort::String:
     if (const auto *Predicate = std::get_if<CmpInst::Predicate>(&Binding.Data))
       return ConstraintValue::getString(CmpInst::getPredicateName(*Predicate));
     if (const auto *ID = std::get_if<Intrinsic::ID>(&Binding.Data))
       return ConstraintValue::getString(Intrinsic::getBaseName(*ID));
     break;
-  case Constraint::TypeResult:
+  case Sort::Type:
     if (const auto *Type = std::get_if<const llvm::Type *>(&Binding.Data))
       return ConstraintValue::getType(*Type);
     break;
-  case Constraint::ValueResult:
+  case Sort::Value:
     if (const auto *Value = std::get_if<const llvm::Value *>(&Binding.Data))
       return ConstraintValue::getValue(*Value);
     break;
-  case Constraint::TypeArrayResult:
+  case Sort::TypeArray:
     if (const auto *Types =
             std::get_if<Instantiation::TypeArray>(&Binding.Data))
       return ConstraintValue::getTypeArray(*Types);
     break;
-  case Constraint::ValueArrayResult:
+  case Sort::ValueArray:
     if (const auto *Values =
             std::get_if<Instantiation::ValueArray>(&Binding.Data))
       return ConstraintValue::getValueArray(*Values);
     break;
-  case Constraint::Unknown:
+  case Sort::Unknown:
     return std::visit(
         [&](const auto &Val) -> Expected<ConstraintValue> {
           using T = std::decay_t<decltype(Val)>;
@@ -122,7 +122,7 @@ detail::bindingValue(const VariableConstraint &Expression,
         },
         Binding.Data);
   default:
-    llvm_unreachable("variable constraint has no result type");
+    llvm_unreachable("variable constraint has no runtime sort");
   }
 
   return make_error<ConstraintEvaluationError>(
@@ -138,8 +138,8 @@ ConcreteDomain::array(const ArrayConstraint &Expression,
 Expected<ConstraintValue>
 detail::arrayValue(const ArrayConstraint &Expression,
                    SmallVector<ConstraintValue, 2> Elements) {
-  switch (Expression.getResultType()) {
-  case Constraint::TypeArrayResult: {
+  switch (Expression.getSort()) {
+  case Sort::TypeArray: {
     Instantiation::TypeArray Types;
     for (const ConstraintValue &Element : Elements) {
       if (Element.getKind() != ConstraintValue::Type)
@@ -148,7 +148,7 @@ detail::arrayValue(const ArrayConstraint &Expression,
     }
     return ConstraintValue::getTypeArray(std::move(Types));
   }
-  case Constraint::ValueArrayResult: {
+  case Sort::ValueArray: {
     Instantiation::ValueArray Values;
     for (const ConstraintValue &Element : Elements) {
       if (Element.getKind() != ConstraintValue::Value)
@@ -157,7 +157,7 @@ detail::arrayValue(const ArrayConstraint &Expression,
     }
     return ConstraintValue::getValueArray(std::move(Values));
   }
-  case Constraint::StringArrayResult: {
+  case Sort::StringArray: {
     ConstraintValue::StringArrayStorage Strings;
     for (const ConstraintValue &Element : Elements) {
       Expected<std::string> String = requireString(Element, Expression);
@@ -168,7 +168,7 @@ detail::arrayValue(const ArrayConstraint &Expression,
     return ConstraintValue::getStringArray(std::move(Strings));
   }
   default:
-    llvm_unreachable("array constraint has a non-array result type");
+    llvm_unreachable("array constraint has a non-array sort");
   }
 }
 

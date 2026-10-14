@@ -23,7 +23,7 @@ StringConstraint *StringConstraint::create(MIRContext &Context, StringRef Value,
       StringConstraint(Context.pImpl->Saver.save(Value), Range);
 }
 
-ArrayConstraint *ArrayConstraint::create(MIRContext &Context, ResultType Type,
+ArrayConstraint *ArrayConstraint::create(MIRContext &Context, Sort Type,
                                          ArrayRef<Constraint *> Elements,
                                          SourceRange Range) {
   return new (Context.pImpl->Alloc)
@@ -31,22 +31,20 @@ ArrayConstraint *ArrayConstraint::create(MIRContext &Context, ResultType Type,
 }
 
 VariableConstraint *VariableConstraint::create(MIRContext &Context,
-                                               Value *Variable, ResultType Type,
+                                               Value *Variable, Sort Type,
                                                SourceRange Range) {
   return new (Context.pImpl->Alloc) VariableConstraint(Variable, Type, Range);
 }
 
-ArrayAccessConstraint *ArrayAccessConstraint::create(MIRContext &Context,
-                                                     ResultType Type,
-                                                     Constraint *Array,
-                                                     Constraint *Index,
-                                                     SourceRange Range) {
+ArrayAccessConstraint *
+ArrayAccessConstraint::create(MIRContext &Context, Sort Type, Constraint *Array,
+                              Constraint *Index, SourceRange Range) {
   return new (Context.pImpl->Alloc)
       ArrayAccessConstraint(Type, Array, Index, Range);
 }
 
 OperatorConstraint *OperatorConstraint::createBuiltin(
-    MIRContext &Context, ConstraintID ID, ResultType Type, OperatorID OpID,
+    MIRContext &Context, ConstraintID ID, Sort Type, OperatorID OpID,
     ArrayRef<Constraint *> Arguments, SourceRange Range) {
   assert(OpID != UnknownOperator &&
          "built-in OperatorConstraint::getBuiltin requires a known OperatorID");
@@ -55,7 +53,7 @@ OperatorConstraint *OperatorConstraint::createBuiltin(
 }
 
 OperatorConstraint *OperatorConstraint::createUserDefined(
-    MIRContext &Context, ConstraintID ID, ResultType Type, StringRef Operator,
+    MIRContext &Context, ConstraintID ID, Sort Type, StringRef Operator,
     ArrayRef<Constraint *> Arguments, SourceRange Range) {
   assert(Constraint::getOperatorID(Operator, ID) == UnknownOperator &&
          "custom OperatorConstraint::getUserDefined cannot be called with a "
@@ -149,23 +147,25 @@ StringRef Constraint::getOperatorName(OperatorID ID) {
   llvm_unreachable("invalid constraint function ID");
 }
 
-bool Constraint::canCoerce(ResultType From, ResultType To) {
-  if (From == To || From == Unknown || To == Unknown)
+bool Constraint::canCoerce(Sort From, Sort To) {
+  if (From == Sort::Unknown || To == Sort::Unknown || isSubsort(From, To))
+    return true;
+  Sort Represented = getRepresentation(From);
+  if (Represented == To)
     return true;
 #define MIR_COERCION(Src, Dst, Op)                                             \
-  if (From == Src##Result && To == Dst##Result)                                \
+  if (Represented == Sort::Src && To == Sort::Dst)                             \
     return true;
 #include "metaphir/IR/ConstraintCoercions.def"
   return false;
 }
 
-Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
-                                                   unsigned Index) {
+Sort Constraint::getArgumentType(OperatorID ID, unsigned Index) {
   switch (ID) {
   case O_LogicalOr:
   case O_LogicalAnd:
   case O_Not:
-    return BooleanResult;
+    return Sort::Boolean;
   case O_Add:
   case O_Subtract:
   case O_Multiply:
@@ -194,25 +194,25 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_CountrZero:
   case O_CountlOne:
   case O_CountrOne:
-    return IntegerResult;
+    return Sort::Integer;
   case O_Isa:
-    return Index == 0 ? ValueResult : StringResult;
+    return Index == 0 ? Sort::Value : Sort::String;
   case O_Opcode:
   case O_Intrinsic:
   case O_Predicate:
-    return ValueResult;
+    return Sort::Value;
 #define MIR_CMP_PREDICATE_TEST(ID, Name, Test) case O_##ID:
 #define MIR_CMP_PREDICATE_MAP(ID, Name, Map) case O_##ID:
 #include "metaphir/IR/CmpPredicateOperators.def"
   case O_FlippedSignednessPredicate:
-    return StringResult;
+    return Sort::String;
   case O_KnownZeros:
   case O_KnownOnes:
-    return BitVectorResult;
+    return Sort::BitVector;
   // Value-tracking operators take values, then an optional context
   // instruction.
   case O_NoOverflow:
-    return Index == 0 ? StringResult : ValueResult;
+    return Index == 0 ? Sort::String : Sort::Value;
   case O_KnownBits:
   case O_IsKnownNonZero:
   case O_IsKnownNegative:
@@ -230,15 +230,15 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   case O_IsKnownNeverInfOrNaN:
   case O_CannotBeNegativeZero:
   case O_CannotBeOrderedLessThanZero:
-    return ValueResult;
+    return Sort::Value;
   case O_MaskedValueIsZero:
-    return Index == 1 ? IntegerResult : ValueResult;
+    return Index == 1 ? Sort::Integer : Sort::Value;
   case O_HasNUses:
   case O_HasNUsesOrMore:
-    return Index == 1 ? IntegerResult : ValueResult;
+    return Index == 1 ? Sort::Integer : Sort::Value;
   case O_InSignedRange:
   case O_InUnsignedRange:
-    return Index == 1 || Index == 2 ? IntegerResult : ValueResult;
+    return Index == 1 || Index == 2 ? Sort::Integer : Sort::Value;
   // These accept a value or a plain integer, or answer false for anything
   // else.
   case O_Equal:
@@ -255,45 +255,37 @@ Constraint::ResultType Constraint::getArgumentType(OperatorID ID,
   // bitWidth takes a value or a type.
   case O_BitWidth:
   case UnknownOperator:
-    return Unknown;
+    return Sort::Unknown;
   }
   llvm_unreachable("invalid constraint operator");
 }
 
-StringRef Constraint::describe(ResultType Type) {
-  switch (Type) {
-  case Unknown:
+StringRef Constraint::describe(Sort Type) {
+  switch (getRepresentation(Type)) {
+  case Sort::Unknown:
     return "any value";
-  case IntegerResult:
+  case Sort::Integer:
     return "an integer";
-  case BooleanResult:
+  case Sort::Boolean:
     return "a boolean";
-  case StringResult:
+  case Sort::String:
     return "a string";
-  case TypeResult:
+  case Sort::Type:
     return "a type";
-  case ValueResult:
+  case Sort::Value:
     return "a value";
-  case TypeArrayResult:
+  case Sort::TypeArray:
     return "a type array";
-  case ValueArrayResult:
+  case Sort::ValueArray:
     return "a value array";
-  case StringArrayResult:
+  case Sort::StringArray:
     return "a string array";
-  case BitVectorResult:
+  case Sort::BitVector:
     return "a bit vector";
+  default:
+    break;
   }
-  llvm_unreachable("invalid constraint result type");
-}
-
-Constraint::ResultType Constraint::getResultType(MetaType Type) {
-  switch (Type) {
-#define MIR_META_TYPE_CONSTRAINT_RESULT(ID, Result)                            \
-  case MetaType::ID:                                                           \
-    return Result;
-#include "metaphir/IR/MetaTypes.def"
-  }
-  llvm_unreachable("invalid meta type");
+  llvm_unreachable("a representation sort has no description");
 }
 
 void Constraint::setDefaultContextInstruction(const Instruction *CxtI) {

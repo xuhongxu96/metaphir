@@ -72,8 +72,8 @@ private:
   std::string describeToken() const;
   void skipNewlines();
 
-  MetaVariable *getMeta(StringRef Name, MetaType Expected, LocTy Loc);
-  bool infer(MetaVariable *M, MetaType Expected, LocTy Loc);
+  MetaVariable *getMeta(StringRef Name, Sort Expected, LocTy Loc);
+  bool infer(MetaVariable *M, Sort Expected, LocTy Loc);
   bool parseBlockLabel();
   bool parsePatternSetting(PatternSettings::Setting Setting);
 
@@ -91,13 +91,12 @@ private:
                            SmallVectorImpl<MatcherOperand> &Ops);
   /// A typed operand, 'i32 ?x'.
   bool parseOperand(SmallVectorImpl<MatcherOperand> &Ops,
-                    MetaType Expected = MetaType::Value);
+                    Sort Expected = Sort::Operand);
   /// A bare type that is not an operand, e.g. a load's result type.
   bool parseTypeOperand(SmallVectorImpl<MatcherOperand> &Ops);
   /// A value stored under Key, e.g. an alignment.
   bool parseKeyedOperand(SmallVectorImpl<MatcherOperand> &Ops,
-                         MatcherOperand::KeyedOperandKind Key,
-                         MetaType Expected);
+                         MatcherOperand::KeyedOperandKind Key, Sort Expected);
   bool parseOperandComma();
   /// An optional ', align N'.
   bool parseAlign(SmallVectorImpl<MatcherOperand> &Ops);
@@ -124,9 +123,8 @@ private:
   /// Pointer ('*') and function ('(T, ...)') type suffixes.
   bool parseTypeSuffixes(Type *&Result);
   bool parseAggregateConstant(Value *&Result);
-  bool parseValue(Value *&Result, MetaType Expected = MetaType::Value);
-  bool parseTypedOperand(MatcherOperand &Result,
-                         MetaType Expected = MetaType::Value);
+  bool parseValue(Value *&Result, Sort Expected = Sort::Operand);
+  bool parseTypedOperand(MatcherOperand &Result, Sort Expected = Sort::Operand);
   bool parseOperandMetaFlags(MatcherOperand &Result);
   bool parseArrayCapture(MatcherOperand &Result, bool WithTypes);
   bool parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed);

@@ -76,7 +76,7 @@ bool MIRParser::parseDefinitionBody(StringRef Kind, ArrayRef<StringRef> Names,
   ClosedScope Scope(*this);
   for (unsigned I = 0; I != Names.size(); ++I) {
     MetaVariable *M =
-        MetaVariable::create(Context, Names[I], MetaType::Unknown, Ranges[I]);
+        MetaVariable::create(Context, Names[I], Sort::Unknown, Ranges[I]);
     MetaVariables[Names[I]] = M;
     Vars.push_back(M);
   }
@@ -372,7 +372,7 @@ bool MIRParser::parseMatchBranch(const MatchHeader &Header,
     // A type parameter may be repeated to give operands the same type.
     MetaVariable *&M = MetaVariables[P.Name];
     if (!M)
-      M = MetaVariable::create(Context, P.Name, MetaType::Unknown, P.Range);
+      M = MetaVariable::create(Context, P.Name, Sort::Unknown, P.Range);
     Storage.ParameterVars.push_back(M);
   }
 

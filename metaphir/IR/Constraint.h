@@ -2,6 +2,7 @@
 #define METAPHIR_IR_CONSTRAINT_H
 
 #include "metaphir/IR/MetaVariable.h"
+#include "metaphir/IR/Sort.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <optional>
 #include <variant>
@@ -32,21 +33,9 @@ public:
 #define MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind) O_##ID,
 #include "metaphir/IR/ConstraintOperators.def"
   };
-  enum ResultType {
-    Unknown,
-    IntegerResult,
-    BooleanResult,
-    StringResult,
-    TypeResult,
-    ValueResult,
-    TypeArrayResult,
-    ValueArrayResult,
-    StringArrayResult,
-    BitVectorResult
-  };
 
   struct OperatorSchema {
-    ResultType Result;
+    Sort Result;
     unsigned MinArity;
     unsigned MaxArity;
   };
@@ -54,7 +43,7 @@ public:
   virtual ~Constraint() = default;
 
   ConstraintID getConstraintID() const { return ID; }
-  ResultType getResultType() const { return Ty; }
+  Sort getSort() const { return Ty; }
   SourceRange getSourceRange() const { return Range; }
 
   // The pattern instruction that lexically precedes this constraint, used as
@@ -72,25 +61,24 @@ public:
   static std::optional<OperatorSchema> getOperatorSchema(OperatorID ID);
   static StringRef getOperatorName(OperatorID ID);
   static OperatorID getOperatorID(StringRef Name, ConstraintID Kind);
-  static ResultType getResultType(MetaType Type);
 
-  /// Whether a value of type From may be used where To is expected: the
-  /// types agree, one of them is unknown until evaluation, or From converts
-  /// to To (see ConstraintCoercions.def).
-  static bool canCoerce(ResultType From, ResultType To);
-  /// The type argument Index of a built-in operator must coerce to; Unknown
+  /// Whether a value of sort From may be used where To is expected: From is
+  /// a subsort of To, one of them is unknown until evaluation, or From's
+  /// representation converts to To (see ConstraintCoercions.def).
+  static bool canCoerce(Sort From, Sort To);
+  /// The sort argument Index of a built-in operator must coerce to; Unknown
   /// when any value is accepted.
-  static ResultType getArgumentType(OperatorID ID, unsigned Index);
-  /// A phrase naming a type for diagnostics, e.g. "an integer".
-  static StringRef describe(ResultType Type);
+  static Sort getArgumentType(OperatorID ID, unsigned Index);
+  /// A phrase naming a sort for diagnostics, e.g. "an integer".
+  static StringRef describe(Sort Type);
 
 protected:
-  Constraint(ConstraintID ID, ResultType Ty, SourceRange R)
+  Constraint(ConstraintID ID, Sort Ty, SourceRange R)
       : ID(ID), Ty(Ty), Range(R) {}
 
 private:
   ConstraintID ID;
-  ResultType Ty;
+  Sort Ty;
   SourceRange Range;
   const Instruction *Context = nullptr;
 };
@@ -113,7 +101,7 @@ private:
   int64_t Number;
 
   IntegerConstraint(int64_t N, SourceRange R)
-      : Constraint(Integer, IntegerResult, R), Number(N) {}
+      : Constraint(Integer, Sort::Integer, R), Number(N) {}
 };
 
 /// 'true' or 'false'.
@@ -130,7 +118,7 @@ private:
   bool State;
 
   BooleanConstraint(bool S, SourceRange R)
-      : Constraint(Boolean, BooleanResult, R), State(S) {}
+      : Constraint(Boolean, Sort::Boolean, R), State(S) {}
 };
 
 /// A string literal.
@@ -147,7 +135,7 @@ private:
   StringRef Value;
 
   StringConstraint(StringRef Value, SourceRange Range)
-      : Constraint(String, StringResult, Range), Value(Value) {}
+      : Constraint(String, Sort::String, Range), Value(Value) {}
 };
 
 /// An array literal of types, values or strings, '[a, b]'.
@@ -157,15 +145,14 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Array;
   }
-  static ArrayConstraint *create(MIRContext &Context, ResultType Type,
+  static ArrayConstraint *create(MIRContext &Context, Sort Type,
                                  ArrayRef<Constraint *> Elements,
                                  SourceRange Range);
 
 private:
   ArrayRef<Constraint *> Elements;
 
-  ArrayConstraint(ResultType Type, ArrayRef<Constraint *> Elements,
-                  SourceRange Range)
+  ArrayConstraint(Sort Type, ArrayRef<Constraint *> Elements, SourceRange Range)
       : Constraint(Array, Type, Range), Elements(Elements) {}
 };
 
@@ -177,12 +164,12 @@ public:
     return C->getConstraintID() == Variable;
   }
   static VariableConstraint *create(MIRContext &Context, Value *Variable,
-                                    ResultType Type, SourceRange Range);
+                                    Sort Type, SourceRange Range);
 
 private:
   Value *VariableValue;
 
-  VariableConstraint(Value *V, ResultType T, SourceRange R)
+  VariableConstraint(Value *V, Sort T, SourceRange R)
       : Constraint(Variable, T, R), VariableValue(V) {}
 };
 
@@ -194,7 +181,7 @@ public:
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == ArrayAccess;
   }
-  static ArrayAccessConstraint *create(MIRContext &Context, ResultType Type,
+  static ArrayAccessConstraint *create(MIRContext &Context, Sort Type,
                                        Constraint *Array, Constraint *Index,
                                        SourceRange Range);
 
@@ -202,7 +189,7 @@ private:
   Constraint *Array;
   Constraint *Index;
 
-  ArrayAccessConstraint(ResultType Type, Constraint *Array, Constraint *Index,
+  ArrayAccessConstraint(Sort Type, Constraint *Array, Constraint *Index,
                         SourceRange Range)
       : Constraint(ArrayAccess, Type, Range), Array(Array), Index(Index) {}
 };
@@ -220,11 +207,11 @@ public:
            C->getConstraintID() == Call;
   }
   static OperatorConstraint *createBuiltin(MIRContext &Context, ConstraintID ID,
-                                           ResultType Type, OperatorID OpID,
+                                           Sort Type, OperatorID OpID,
                                            ArrayRef<Constraint *> Arguments,
                                            SourceRange Range);
   static OperatorConstraint *createUserDefined(MIRContext &Context,
-                                               ConstraintID ID, ResultType Type,
+                                               ConstraintID ID, Sort Type,
                                                StringRef Operator,
                                                ArrayRef<Constraint *> Arguments,
                                                SourceRange Range);
@@ -233,7 +220,7 @@ private:
   std::variant<OperatorID, StringRef> Op;
   ArrayRef<Constraint *> Arguments;
 
-  OperatorConstraint(ConstraintID ID, ResultType T,
+  OperatorConstraint(ConstraintID ID, Sort T,
                      std::variant<OperatorID, StringRef> Op,
                      ArrayRef<Constraint *> A, SourceRange R)
       : Constraint(ID, T, R), Op(Op), Arguments(A) {}

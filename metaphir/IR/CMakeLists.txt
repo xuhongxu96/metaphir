@@ -46,6 +46,10 @@ add_library(metaphir-ir
 
   MetaVariable.h
   MetaVariable.cpp
+
+  Sort.cpp
+  Sort.h
+  Sorts.def
 )
 
 target_link_libraries(metaphir-ir

@@ -97,8 +97,7 @@ protected:
     Constraint::OperatorID ID = Constraint::getOperatorID(Name, Kind);
     std::optional<Constraint::OperatorSchema> Schema =
         Constraint::getOperatorSchema(ID);
-    Constraint::ResultType Result =
-        Schema ? Schema->Result : Constraint::BooleanResult;
+    Sort Result = Schema ? Schema->Result : Sort::Boolean;
     if (ID != Constraint::UnknownOperator)
       return OperatorConstraint::createBuiltin(Context, Kind, Result, ID,
                                                Arguments, Range);
@@ -124,13 +123,13 @@ protected:
     return operation(Constraint::Call, Name, {Left, Right});
   }
 
-  ArrayConstraint *array(Constraint::ResultType Type,
+  ArrayConstraint *array(Sort Type,
                          std::initializer_list<Constraint *> Elements) {
     return ArrayConstraint::create(Context, Type, Elements, Range);
   }
 
   ArrayAccessConstraint *access(Constraint *Array, Constraint *Index,
-                                Constraint::ResultType Type) {
+                                Sort Type) {
     return ArrayAccessConstraint::create(Context, Type, Array, Index, Range);
   }
 };

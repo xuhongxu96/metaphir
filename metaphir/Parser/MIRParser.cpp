@@ -13,20 +13,6 @@
 namespace llvm {
 namespace metaphir {
 
-static bool compatibleMeta(MetaType A, MetaType B) {
-  if (A == B || A == MetaType::Unknown || B == MetaType::Unknown)
-    return true;
-  auto IsValue = [](MetaType T) {
-    return T == MetaType::Value || T == MetaType::Instruction ||
-           T == MetaType::Function || T == MetaType::Nat || T == MetaType::Bool;
-  };
-  if ((A == MetaType::Value && IsValue(B)) ||
-      (B == MetaType::Value && IsValue(A)))
-    return true;
-  return (A == MetaType::Nat && B == MetaType::Bool) ||
-         (A == MetaType::Bool && B == MetaType::Nat);
-}
-
 static std::optional<PatternSettings::Setting>
 settingFromKeyword(tok::Kind Kind) {
   switch (Kind) {
@@ -78,18 +64,17 @@ void MIRParser::skipNewlines() {
   }
 }
 
-bool MIRParser::infer(MetaVariable *M, MetaType Expected, LocTy Loc) {
-  if (!compatibleMeta(M->getType(), Expected))
+bool MIRParser::infer(MetaVariable *M, Sort Expected, LocTy Loc) {
+  // The variable's sort is the meet of the sorts its occurrences require.
+  std::optional<Sort> Meet = meetSorts(M->getInferredSort(), Expected);
+  if (!Meet)
     return Lex.ParseError(Loc, "meta variable '?" + M->getName() +
                                    "' is used with an incompatible type");
-  if (M->getType() == MetaType::Unknown ||
-      (M->getType() == MetaType::Value && Expected != MetaType::Value) ||
-      (M->getType() == MetaType::Nat && Expected == MetaType::Bool))
-    M->setType(Expected);
+  M->setSort(*Meet);
   return false;
 }
 
-MetaVariable *MIRParser::getMeta(StringRef Name, MetaType Expected, LocTy Loc) {
+MetaVariable *MIRParser::getMeta(StringRef Name, Sort Expected, LocTy Loc) {
   auto It = MetaVariables.find(Name);
   if (It != MetaVariables.end()) {
     if (infer(It->second, Expected, Loc))
@@ -127,7 +112,7 @@ bool MIRParser::parseBlockLabel() {
       return true;
   }
 
-  CurrentBlock = getMeta(Name, MetaType::BasicBlock, Loc);
+  CurrentBlock = getMeta(Name, Sort::BasicBlock, Loc);
   return CurrentBlock == nullptr;
 }
 
@@ -251,8 +236,8 @@ bool MIRParser::parseModule(Pattern *&Result) {
 }
 
 bool MIRParser::requireBooleanConstraint(const Constraint &C) {
-  Constraint::ResultType Type = C.getResultType();
-  if (Type == Constraint::BooleanResult || Type == Constraint::Unknown)
+  Sort Type = C.getSort();
+  if (Type == Sort::Boolean || Type == Sort::Unknown)
     return false;
   return Lex.ParseError(C.getSourceRange().Begin,
                         "constraint must have a boolean result");

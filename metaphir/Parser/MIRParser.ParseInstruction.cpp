@@ -83,7 +83,7 @@ bool MIRParser::parseInstructionCapture(MetaVariable *&Capture) {
   Capture = nullptr;
   if (Lex.getKind() != tok::MetaCaptureVar)
     return false;
-  Capture = getMeta(Lex.getStrVal(), MetaType::Instruction, Lex.getLoc());
+  Capture = getMeta(Lex.getStrVal(), Sort::Instruction, Lex.getLoc());
   if (!Capture)
     return true;
   next();
@@ -135,7 +135,7 @@ bool MIRParser::parseSemanticFlags(
         return error("flag '" + FlagName +
                      "' cannot be captured by '?_'; omit the flag, which "
                      "matches whether or not it is present");
-      Capture = getMeta(CaptureName, MetaType::Bool, Lex.getLoc());
+      Capture = getMeta(CaptureName, Sort::Boolean, Lex.getLoc());
       if (!Capture)
         return true;
       next();
@@ -256,7 +256,7 @@ bool MIRParser::parseBaseType(Type *&Result, bool AllowVoid) {
     next();
     return false;
   case tok::MetaIntVar: {
-    MetaVariable *Width = getMeta(Lex.getStrVal(), MetaType::Nat, Loc);
+    MetaVariable *Width = getMeta(Lex.getStrVal(), Sort::Nat, Loc);
     if (!Width)
       return true;
     Result =
@@ -265,7 +265,7 @@ bool MIRParser::parseBaseType(Type *&Result, bool AllowVoid) {
     return false;
   }
   case tok::MetaVar: {
-    MetaVariable *M = getMeta(Lex.getStrVal(), MetaType::Type, Loc);
+    MetaVariable *M = getMeta(Lex.getStrVal(), Sort::Type, Loc);
     if (!M)
       return true;
     Result = MetaIRType::get(Context, M);
@@ -332,7 +332,7 @@ bool MIRParser::parseSequenceType(Type *&Result, bool IsVector) {
       return error("invalid " + What + " size");
     Count = Lex.getAPSIntVal().getZExtValue();
   } else if (Lex.getKind() == tok::MetaVar) {
-    CountVar = getMeta(Lex.getStrVal(), MetaType::Nat, Lex.getLoc());
+    CountVar = getMeta(Lex.getStrVal(), Sort::Nat, Lex.getLoc());
     if (!CountVar)
       return true;
   } else {
@@ -394,7 +394,7 @@ bool MIRParser::parseTypeSuffixes(Type *&Result) {
   }
 }
 
-bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
+bool MIRParser::parseValue(Value *&Result, Sort Expected) {
   LocTy Loc = Lex.getLoc();
   SourceRange Range{Loc, Loc};
   switch (Lex.getKind()) {
@@ -413,8 +413,8 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
                          ? StringRef(Lex.getStrVal())
                          : Twine(Lex.getUIntVal()).toStringRef(NameStorage);
     // A block written as a local ('label %bb') is a block meta variable.
-    if (Expected == MetaType::BasicBlock) {
-      Result = getMeta(Name, MetaType::BasicBlock, Loc);
+    if (Expected == Sort::BasicBlock) {
+      Result = getMeta(Name, Sort::BasicBlock, Loc);
       if (!Result)
         return true;
     } else {
@@ -431,7 +431,7 @@ bool MIRParser::parseValue(Value *&Result, MetaType Expected) {
     next();
     if (Lex.getKind() != tok::MetaVar)
       return error("expected intrinsic ID meta variable");
-    Result = getMeta(Lex.getStrVal(), MetaType::IntrinsicID, Lex.getLoc());
+    Result = getMeta(Lex.getStrVal(), Sort::IntrinsicID, Lex.getLoc());
     if (!Result)
       return true;
     next();
@@ -505,15 +505,15 @@ bool MIRParser::parseAggregateConstant(Value *&Result) {
   return false;
 }
 
-bool MIRParser::parseTypedOperand(MatcherOperand &Result, MetaType Expected) {
+bool MIRParser::parseTypedOperand(MatcherOperand &Result, Sort Expected) {
   if (parseType(Result.Ty))
     return true;
-  if (Expected == MetaType::Value) {
+  if (Expected == Sort::Operand) {
     if (auto *Integer = dyn_cast<IntegerType>(Result.Ty)) {
       if (Integer->getNumBits() == 1)
-        Expected = MetaType::Bool;
+        Expected = Sort::Boolean;
     } else if (Result.Ty->getTypeID() == Type::LabelTyID) {
-      Expected = MetaType::BasicBlock;
+      Expected = Sort::BasicBlock;
     }
   }
   if (parseValue(Result.Val, Expected))
@@ -543,16 +543,14 @@ bool MIRParser::parseArrayCapture(MatcherOperand &Result, bool WithTypes) {
   if (WithTypes) {
     if (Lex.getKind() != tok::MetaVar)
       return error("expected type-array meta variable");
-    Result.TypeArray =
-        getMeta(Lex.getStrVal(), MetaType::TypeArray, Lex.getLoc());
+    Result.TypeArray = getMeta(Lex.getStrVal(), Sort::TypeArray, Lex.getLoc());
     if (!Result.TypeArray)
       return true;
     next();
   }
   if (Lex.getKind() != tok::MetaVar)
     return error("expected value-array meta variable");
-  Result.ValueArray =
-      getMeta(Lex.getStrVal(), MetaType::ValueArray, Lex.getLoc());
+  Result.ValueArray = getMeta(Lex.getStrVal(), Sort::ValueArray, Lex.getLoc());
   if (!Result.ValueArray)
     return true;
   next();
@@ -564,7 +562,7 @@ bool MIRParser::parseArrayCapture(MatcherOperand &Result, bool WithTypes) {
 bool MIRParser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
                                        unsigned Arity, StringRef OpName,
                                        SmallVectorImpl<MatcherOperand> &Ops) {
-  auto Typed = [&](MetaType E = MetaType::Value) -> bool {
+  auto Typed = [&](Sort E = Sort::Operand) -> bool {
     MatcherOperand O;
     if (parseTypedOperand(O, E))
       return true;
@@ -699,7 +697,7 @@ bool MIRParser::parseInstruction(Instruction *&Result) {
 }
 
 bool MIRParser::parseOperand(SmallVectorImpl<MatcherOperand> &Ops,
-                             MetaType Expected) {
+                             Sort Expected) {
   MatcherOperand O;
   if (parseTypedOperand(O, Expected))
     return true;
@@ -718,7 +716,7 @@ bool MIRParser::parseTypeOperand(SmallVectorImpl<MatcherOperand> &Ops) {
 
 bool MIRParser::parseKeyedOperand(SmallVectorImpl<MatcherOperand> &Ops,
                                   MatcherOperand::KeyedOperandKind Key,
-                                  MetaType Expected) {
+                                  Sort Expected) {
   MatcherOperand O;
   O.IsInstructionOperand = false;
   O.Key = Key;
@@ -737,7 +735,7 @@ bool MIRParser::parseAlign(SmallVectorImpl<MatcherOperand> &Ops) {
     return false;
   if (!consume(tok::kw_align))
     return error("expected 'align'");
-  return parseKeyedOperand(Ops, MatcherOperand::Alignment, MetaType::Nat);
+  return parseKeyedOperand(Ops, MatcherOperand::Alignment, Sort::Nat);
 }
 
 bool MIRParser::parseTrailingOperands(SmallVectorImpl<MatcherOperand> &Ops,
@@ -751,7 +749,7 @@ bool MIRParser::parseTrailingOperands(SmallVectorImpl<MatcherOperand> &Ops,
       Ops.push_back(O);
       return false;
     }
-    if (Kind == NatIndices ? parseValue(O.Val, MetaType::Nat)
+    if (Kind == NatIndices ? parseValue(O.Val, Sort::Nat)
                            : parseTypedOperand(O))
       return true;
     Ops.push_back(O);
@@ -764,7 +762,7 @@ bool MIRParser::parseCustomOperands(Instruction::InstructionID ID,
   switch (ID) {
   case Instruction::I_extractelement:
     return parseOperand(Ops) || parseOperandComma() ||
-           parseOperand(Ops, MetaType::Nat);
+           parseOperand(Ops, Sort::Nat);
   case Instruction::I_extractvalue:
     return parseOperand(Ops) || parseTrailingOperands(Ops, NatIndices);
   case Instruction::I_insertvalue:
@@ -811,14 +809,14 @@ bool MIRParser::parseAllocaOperands(SmallVectorImpl<MatcherOperand> &Ops) {
     return true;
   while (consume(tok::comma)) {
     if (consume(tok::kw_align)) {
-      if (parseKeyedOperand(Ops, MatcherOperand::Alignment, MetaType::Nat))
+      if (parseKeyedOperand(Ops, MatcherOperand::Alignment, Sort::Nat))
         return true;
     } else if (consume(tok::kw_addrspace)) {
       if (expect(tok::lparen, "expected '(' after 'addrspace'") ||
-          parseKeyedOperand(Ops, MatcherOperand::AddressSpace, MetaType::Nat) ||
+          parseKeyedOperand(Ops, MatcherOperand::AddressSpace, Sort::Nat) ||
           expect(tok::rparen, "expected ')' after 'addrspace'"))
         return true;
-    } else if (parseOperand(Ops, MetaType::Nat)) {
+    } else if (parseOperand(Ops, Sort::Nat)) {
       return true;
     }
   }
@@ -828,9 +826,9 @@ bool MIRParser::parseAllocaOperands(SmallVectorImpl<MatcherOperand> &Ops) {
 bool MIRParser::parseGEPOperands(SmallVectorImpl<MatcherOperand> &Ops) {
   if (consume(tok::kw_inrange)) {
     if (expect(tok::lparen, "expected '(' after 'inrange'") ||
-        parseKeyedOperand(Ops, MatcherOperand::InRangeLower, MetaType::Nat) ||
+        parseKeyedOperand(Ops, MatcherOperand::InRangeLower, Sort::Nat) ||
         parseOperandComma() ||
-        parseKeyedOperand(Ops, MatcherOperand::InRangeUpper, MetaType::Nat) ||
+        parseKeyedOperand(Ops, MatcherOperand::InRangeUpper, Sort::Nat) ||
         expect(tok::rparen, "expected ')' after 'inrange'"))
       return true;
   }
@@ -845,16 +843,16 @@ bool MIRParser::parseBranchOperands(SmallVectorImpl<MatcherOperand> &Ops) {
   bool IsLabel = First.Ty->getTypeID() == Type::LabelTyID;
   auto *Integer = dyn_cast<IntegerType>(First.Ty);
   bool IsBool = Integer && Integer->getNumBits() == 1;
-  if (parseValue(First.Val, IsLabel  ? MetaType::BasicBlock
-                            : IsBool ? MetaType::Bool
-                                     : MetaType::Value))
+  if (parseValue(First.Val, IsLabel  ? Sort::BasicBlock
+                            : IsBool ? Sort::Boolean
+                                     : Sort::Operand))
     return true;
   Ops.push_back(First);
   // 'br label %dest', or 'br i1 %cond, label %true, label %false'.
   if (IsLabel)
     return false;
-  return parseOperandComma() || parseOperand(Ops, MetaType::BasicBlock) ||
-         parseOperandComma() || parseOperand(Ops, MetaType::BasicBlock);
+  return parseOperandComma() || parseOperand(Ops, Sort::BasicBlock) ||
+         parseOperandComma() || parseOperand(Ops, Sort::BasicBlock);
 }
 
 bool MIRParser::parseCompareOperands(SmallVectorImpl<MatcherOperand> &Ops) {
@@ -862,7 +860,7 @@ bool MIRParser::parseCompareOperands(SmallVectorImpl<MatcherOperand> &Ops) {
   Pred.IsInstructionOperand = false;
   Pred.Key = MatcherOperand::Predicate;
   if (Lex.getKind() == tok::MetaVar) {
-    Pred.Val = getMeta(Lex.getStrVal(), MetaType::CmpPredicate, Lex.getLoc());
+    Pred.Val = getMeta(Lex.getStrVal(), Sort::CmpPredicate, Lex.getLoc());
     if (!Pred.Val)
       return true;
   } else if (std::optional<KeywordConstant::KeywordID> Predicate =
@@ -887,7 +885,7 @@ bool MIRParser::parsePhiOperands(SmallVectorImpl<MatcherOperand> &Ops) {
     Incoming.Ty = Ty;
     if (expect(tok::lsquare, "expected '[' in phi") ||
         parseValue(Incoming.Val) || parseOperandComma() ||
-        parseValue(Block.Val, MetaType::BasicBlock) ||
+        parseValue(Block.Val, Sort::BasicBlock) ||
         expect(tok::rsquare, "expected ']' in phi"))
       return true;
     Ops.push_back(Incoming);
@@ -898,7 +896,7 @@ bool MIRParser::parsePhiOperands(SmallVectorImpl<MatcherOperand> &Ops) {
 
 bool MIRParser::parseCallOperands(SmallVectorImpl<MatcherOperand> &Ops) {
   MatcherOperand Callee;
-  if (parseTypeOperand(Ops) || parseValue(Callee.Val, MetaType::Function))
+  if (parseTypeOperand(Ops) || parseValue(Callee.Val, Sort::Function))
     return true;
   Ops.push_back(Callee);
   if (expect(tok::lparen, "expected '(' in call"))

@@ -1,0 +1,57 @@
+//===- Sorts.def - Sorts of meta variables and constraints ---------------===//
+//
+// One sort system classifies both meta variables and constraint expressions.
+// A meta variable's sort is the meet of the sorts its occurrences require;
+// a constraint expression's sort is checked against operator signatures.
+//
+// MIR_SORT(ID, Name, Representation) declares a sort, the name printed for
+// it, and the sort of the runtime value that represents it in constraints.
+// MIR_SUBSORT(Sub, Super) declares a direct subsort edge; the order is its
+// reflexive-transitive closure.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef MIR_SORT
+#define MIR_SORT(ID, Name, Representation)
+#endif
+
+#ifndef MIR_SUBSORT
+#define MIR_SUBSORT(Sub, Super)
+#endif
+
+// Not yet inferred; a top element below which every sort lies.
+MIR_SORT(Unknown, "Unknown", Unknown)
+// What an operand position accepts. A meta variable that occurs only as an
+// operand denotes a value (see resolveSort).
+MIR_SORT(Operand, "Operand", Value)
+MIR_SORT(Value, "Value", Value)
+MIR_SORT(Instruction, "Instruction", Value)
+MIR_SORT(Function, "Function", Value)
+// A block is not an operand of a first-class type, so it lies outside
+// Operand; constraints still read it as a value.
+MIR_SORT(BasicBlock, "BasicBlock", Value)
+// A bit width, count, or index; an operand of this sort matches a constant.
+MIR_SORT(Nat, "Nat", Integer)
+// Whether a flag is present, or an i1 operand.
+MIR_SORT(Boolean, "i1", Boolean)
+MIR_SORT(Integer, "Integer", Integer)
+MIR_SORT(String, "String", String)
+MIR_SORT(CmpPredicate, "CmpPredicate", String)
+MIR_SORT(IntrinsicID, "Intrinsic::ID", String)
+MIR_SORT(Type, "Type", Type)
+MIR_SORT(BitVector, "BitVector", BitVector)
+MIR_SORT(TypeArray, "Type[]", TypeArray)
+MIR_SORT(ValueArray, "Value[]", ValueArray)
+MIR_SORT(StringArray, "String[]", StringArray)
+
+MIR_SUBSORT(Instruction, Value)
+MIR_SUBSORT(Function, Value)
+MIR_SUBSORT(Value, Operand)
+MIR_SUBSORT(Boolean, Nat)
+MIR_SUBSORT(Nat, Operand)
+MIR_SUBSORT(Nat, Integer)
+MIR_SUBSORT(CmpPredicate, String)
+MIR_SUBSORT(IntrinsicID, String)
+
+#undef MIR_SORT
+#undef MIR_SUBSORT

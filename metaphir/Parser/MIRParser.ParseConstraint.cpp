@@ -66,9 +66,9 @@ bool MIRParser::checkOperands(const OperatorConstraint &Operator,
     return false;
   ArrayRef<Constraint *> Arguments = Operator.getArguments();
   for (unsigned Index = 0; Index != Arguments.size(); ++Index) {
-    Constraint::ResultType Expected =
+    Sort Expected =
         Constraint::getArgumentType(Operator.getOperatorID(), Index);
-    if (Constraint::canCoerce(Arguments[Index]->getResultType(), Expected))
+    if (Constraint::canCoerce(Arguments[Index]->getSort(), Expected))
       continue;
     std::string What =
         Operator.getConstraintID() == Constraint::Call
@@ -150,22 +150,22 @@ bool MIRParser::parseConstraintPostfix(Constraint *&Result) {
     if (parseConstraint(Index) ||
         expect(tok::rsquare, "expected ']' after array index"))
       return true;
-    Constraint::ResultType ElementType;
-    switch (Result->getResultType()) {
-    case Constraint::TypeArrayResult:
-      ElementType = Constraint::TypeResult;
+    Sort ElementType;
+    switch (Result->getSort()) {
+    case Sort::TypeArray:
+      ElementType = Sort::Type;
       break;
-    case Constraint::ValueArrayResult:
-      ElementType = Constraint::ValueResult;
+    case Sort::ValueArray:
+      ElementType = Sort::Value;
       break;
-    case Constraint::StringArrayResult:
-      ElementType = Constraint::StringResult;
+    case Sort::StringArray:
+      ElementType = Sort::String;
       break;
     default:
       return Lex.ParseError(Loc,
                             "constraint subscript requires an array operand");
     }
-    if (Index->getResultType() != Constraint::IntegerResult)
+    if (Index->getSort() != Sort::Integer)
       return Lex.ParseError(Index->getSourceRange().Begin,
                             "constraint array index must be an integer");
     Result = ArrayAccessConstraint::create(Context, ElementType, Result, Index,
@@ -228,8 +228,7 @@ bool MIRParser::parseConstraintCall(Constraint *&Result) {
     return ArityError(Arity, Arity);
   // The call has the type of the definition's body.
   Result = OperatorConstraint::createUserDefined(
-      Context, Constraint::Call, Def->getBody()->getResultType(), Name, Args,
-      Range);
+      Context, Constraint::Call, Def->getBody()->getSort(), Name, Args, Range);
   return false;
 }
 
@@ -264,8 +263,8 @@ bool MIRParser::parseConstraintPrimary(Constraint *&Result) {
                    Lex.getStrVal() + "'");
     MetaVariable *M = It->second;
     next();
-    Result = VariableConstraint::create(
-        Context, M, Constraint::getResultType(M->getType()), Range);
+    Result = VariableConstraint::create(Context, M,
+                                        getRepresentation(M->getSort()), Range);
     return false;
   }
   case tok::lparen:
@@ -294,17 +293,17 @@ bool MIRParser::parseConstraintArray(Constraint *&Result) {
   if (expect(tok::rsquare, "expected ']' after array literal"))
     return true;
 
-  Constraint::ResultType ElementType = Elements.front()->getResultType();
-  Constraint::ResultType ArrayType;
+  Sort ElementType = Elements.front()->getSort();
+  Sort ArrayType;
   switch (ElementType) {
-  case Constraint::TypeResult:
-    ArrayType = Constraint::TypeArrayResult;
+  case Sort::Type:
+    ArrayType = Sort::TypeArray;
     break;
-  case Constraint::ValueResult:
-    ArrayType = Constraint::ValueArrayResult;
+  case Sort::Value:
+    ArrayType = Sort::ValueArray;
     break;
-  case Constraint::StringResult:
-    ArrayType = Constraint::StringArrayResult;
+  case Sort::String:
+    ArrayType = Sort::StringArray;
     break;
   default:
     return Lex.ParseError(
@@ -312,7 +311,7 @@ bool MIRParser::parseConstraintArray(Constraint *&Result) {
         "constraint array literal requires type, value, or string elements");
   }
   if (!all_of(Elements, [ElementType](const Constraint *Element) {
-        return Element->getResultType() == ElementType;
+        return Element->getSort() == ElementType;
       }))
     return Lex.ParseError(
         Loc, "constraint array literal elements must have the same type");

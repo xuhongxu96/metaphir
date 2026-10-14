@@ -40,7 +40,7 @@ MetaFlag *makeFlag(MIRContext &Context, StringRef Name,
 }
 
 Pattern *makePatternWithOperandFlag(MIRContext &Context, MetaFlag *Flag) {
-  auto *X = MetaVariable::create(Context, "x", MetaType::Value, {});
+  auto *X = MetaVariable::create(Context, "x", Sort::Value, {});
   MatcherOperand Operand;
   Operand.Val = X;
   SmallVector<MetaFlag *, 1> Flags = {Flag};
@@ -87,7 +87,7 @@ TEST(MetaFlagTest, ReportsMalformedMetaFlagDefinition) {
   MIRContext Context;
   StringRef Parameters[] = {"subject"};
   MetaVariable *ParameterVars[] = {
-      MetaVariable::create(Context, "subject", MetaType::Unknown, {})};
+      MetaVariable::create(Context, "subject", Sort::Unknown, {})};
   auto *Def = MetaFlagDef::create(Context, "broken", MetaFlag::OperandPlacement,
                                   Parameters, ParameterVars, nullptr);
   Context.registerMetaFlagDef(Def);

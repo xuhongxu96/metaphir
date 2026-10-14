@@ -6,24 +6,10 @@
 namespace llvm {
 namespace metaphir {
 
-MetaVariable *MetaVariable::create(MIRContext &Context, StringRef Name,
-                                   MetaType Ty, SourceRange Range) {
+MetaVariable *MetaVariable::create(MIRContext &Context, StringRef Name, Sort Ty,
+                                   SourceRange Range) {
   return new (Context.pImpl->Alloc)
       MetaVariable(Context.pImpl->Saver.save(Name), Ty, Range);
-}
-
-StringRef getMetaTypeName(MetaType Type) {
-  switch (Type) {
-#define MIR_META_TYPE_NAME(ID, Name)                                           \
-  case MetaType::ID:                                                           \
-    return Name;
-#include "metaphir/IR/MetaTypes.def"
-  }
-  llvm_unreachable("invalid meta type");
-}
-
-raw_ostream &operator<<(raw_ostream &OS, MetaType Type) {
-  return OS << getMetaTypeName(Type);
 }
 
 raw_ostream &operator<<(raw_ostream &OS, const MetaVariable &M) {

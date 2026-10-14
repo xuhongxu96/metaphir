@@ -64,46 +64,53 @@ static bool matches(const KeywordConstant &Matcher, const llvm::Value &Target) {
 
 std::optional<Instantiation::Binding>
 SubtreeMatcher::getMetaVariableBinding(const MetaVariable &Matcher) {
-  switch (Matcher.getType()) {
-  case MetaType::Value:
+  switch (Matcher.getSort()) {
+  case Sort::Value:
     return &Target;
-  case MetaType::Nat:
+  case Sort::Nat:
     // A vector splat constant binds its scalar element value.
     if (std::optional<APInt> Integer = getConstantInteger(Target))
       return Instantiation::Binding(*Integer);
     return std::nullopt;
-  case MetaType::Bool:
+  case Sort::Boolean:
     if (!Target.getType()->isIntegerTy(1))
       return std::nullopt;
     return &Target;
-  case MetaType::Instruction:
+  case Sort::Instruction:
     if (!isa<llvm::Instruction>(Target))
       return std::nullopt;
     return &Target;
-  case MetaType::Function:
+  case Sort::Function:
     if (!isa<llvm::Function>(Target))
       return std::nullopt;
     return &Target;
-  case MetaType::IntrinsicID: {
+  case Sort::IntrinsicID: {
     const auto *Function = dyn_cast<llvm::Function>(&Target);
     if (!Function || !Function->isIntrinsic())
       return std::nullopt;
     return Function->getIntrinsicID();
   }
-  case MetaType::BasicBlock:
+  case Sort::BasicBlock:
     if (!isa<llvm::BasicBlock>(Target))
       return std::nullopt;
     return &Target;
-  case MetaType::Type:
-  case MetaType::CmpPredicate:
-  case MetaType::TypeArray:
-  case MetaType::ValueArray:
+  case Sort::Type:
+  case Sort::CmpPredicate:
+  case Sort::TypeArray:
+  case Sort::ValueArray:
     return std::nullopt;
-  case MetaType::Unknown:
-    report_fatal_error(Twine("unexpected meta type '") +
-                       getMetaTypeName(Matcher.getType()) + "'");
+  // Inference resolves Operand, and the remaining sorts occur only in
+  // constraints.
+  case Sort::Operand:
+  case Sort::Integer:
+  case Sort::String:
+  case Sort::BitVector:
+  case Sort::StringArray:
+  case Sort::Unknown:
+    report_fatal_error(Twine("unexpected sort '") +
+                       getSortName(Matcher.getSort()) + "'");
   }
-  llvm_unreachable("invalid meta type");
+  llvm_unreachable("invalid sort");
 }
 
 std::optional<Instantiation::Binding> SubtreeMatcher::getTargetBinding() {

@@ -55,7 +55,7 @@ raw_ostream &operator<<(raw_ostream &OS, const Pattern &P) {
     OS << "constraint " << *C << '\n';
   }
   for (const MetaVariable *M : P.getMetaVariables())
-    OS << "meta " << *M << " type=" << M->getType() << '\n';
+    OS << "meta " << *M << " type=" << M->getSort() << '\n';
   return OS;
 }
 
