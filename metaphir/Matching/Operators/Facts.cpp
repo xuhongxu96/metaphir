@@ -19,7 +19,7 @@ StringRef Atom::getName(Predicate P) {
 
 StringRef getMeasureName(Measure M) {
   static constexpr StringLiteral Names[] = {
-#define MIR_MEASURE(ID, Name) Name,
+#define MIR_MEASURE(ID, Name, Order) Name,
 #include "metaphir/Matching/Operators/Facts.def"
   };
   return Names[size_t(M)];

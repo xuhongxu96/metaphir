@@ -70,8 +70,13 @@ AbstractValue exceedsMeasure(const AbstractCall &Call, unsigned OperandIndex,
   // Recorded measures are capped at MaxMeasure, so a most measure at the cap
   // may reach any bound, and a least one never falls below its value.
   auto Within = [&](unsigned Recorded) {
-    return isMaximum(M) ? Recorded >= std::min(Bound, MaxMeasure)
-                        : Recorded <= Bound;
+    switch (getMeasureOrder(M)) {
+    case MeasureOrder::Most:
+      return Recorded >= std::min(Bound, MaxMeasure);
+    case MeasureOrder::Least:
+      return Recorded <= Bound;
+    }
+    llvm_unreachable("invalid measure order");
   };
   for (const Site &S : *Anchored)
     if (!anySlot(S, [&](Instruction::InstructionID ID, unsigned Slot) {

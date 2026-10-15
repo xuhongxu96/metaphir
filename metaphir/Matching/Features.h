@@ -75,11 +75,19 @@ public:
                              Atom A) {
     return uint32_t(ID) << 14 | Slot << 12 | A.getCode();
   }
-  /// The key of measure M at a site, with its value.
+  /// The key of measure M at a site, with its value. The measure takes four
+  /// bits and the value eight.
   static uint32_t getMeasureKey(Instruction::InstructionID ID, unsigned Slot,
                                 Measure M, unsigned Value) {
+    static_assert(unsigned(Measure::NumMeasures) <= 16,
+                  "a measure key has four bits for the measure");
+    static_assert(MaxMeasure <= 0xff, "a measure key has eight value bits");
     return uint32_t(ID) << 14 | Slot << 12 | uint32_t(M) << 8 |
            std::min(Value, MaxMeasure);
+  }
+  /// The measure of a key from getMeasureKey.
+  static Measure getMeasureOfKey(uint32_t Key) {
+    return Measure(Key >> 8 & 0xf);
   }
 
   /// The key of an edge from an instruction matched by User to its operand

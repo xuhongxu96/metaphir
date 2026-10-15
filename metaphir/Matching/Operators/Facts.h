@@ -2,7 +2,9 @@
 #define METAPHIR_MATCHING_OPERATORS_FACTS_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 
@@ -78,16 +80,39 @@ private:
 
 /// Numbers recorded for a site: the most, or the least, of the values there.
 enum class Measure : uint8_t {
-#define MIR_MEASURE(ID, Name) ID,
+#define MIR_MEASURE(ID, Name, Order) ID,
 #include "metaphir/Matching/Operators/Facts.def"
   NumMeasures
 };
 
 StringRef getMeasureName(Measure M);
 
-/// Whether the recorded number for M is the most of the site's values;
-/// otherwise it is the least.
-inline bool isMaximum(Measure M) { return M == Measure::TrailingZeros; }
+/// Which of its values' numbers a site keeps for a measure (see Facts.def).
+enum class MeasureOrder : uint8_t {
+  /// The most: a larger number satisfies more queries.
+  Most,
+  /// The least: a smaller number satisfies more queries.
+  Least
+};
+
+/// The order of M, as Facts.def declares it for every measure.
+inline MeasureOrder getMeasureOrder(Measure M) {
+  switch (M) {
+#define MIR_MEASURE(ID, Name, Order)                                           \
+  case Measure::ID:                                                            \
+    return MeasureOrder::Order;
+#include "metaphir/Matching/Operators/Facts.def"
+  case Measure::NumMeasures:
+    break;
+  }
+  llvm_unreachable("invalid measure");
+}
+
+/// The number a site keeps for M from two of its values' numbers.
+inline unsigned mergeMeasure(Measure M, unsigned A, unsigned B) {
+  return getMeasureOrder(M) == MeasureOrder::Most ? std::max(A, B)
+                                                  : std::min(A, B);
+}
 
 /// Measures are recorded up to this; larger ones are recorded as it.
 constexpr unsigned MaxMeasure = 255;

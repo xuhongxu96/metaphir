@@ -115,9 +115,10 @@ static void mergeMeasures(SmallVectorImpl<uint32_t> &Measures,
   Measures.clear();
   for (uint32_t Key : Merged) {
     if (!Measures.empty() && (Measures.back() & ~0xffu) == (Key & ~0xffu)) {
-      // Sorted, so Key's value is at least the kept one.
-      if (isMaximum(Measure(Key >> 8 & 0xf)))
-        Measures.back() = Key;
+      uint32_t Site = Key & ~0xffu;
+      unsigned Value = mergeMeasure(FunctionFeatures::getMeasureOfKey(Key),
+                                    Measures.back() & 0xffu, Key & 0xffu);
+      Measures.back() = Site | Value;
       continue;
     }
     Measures.push_back(Key);
@@ -163,8 +164,7 @@ public:
           Instruction::InstructionID(llvm::countr_zero(Each)), Slot, M, 0);
       auto [It, Inserted] = MeasureValues.try_emplace(Key, Value);
       if (!Inserted)
-        It->second = isMaximum(M) ? std::max(It->second, Value)
-                                  : std::min(It->second, Value);
+        It->second = mergeMeasure(M, It->second, Value);
     }
   }
 

@@ -3,7 +3,9 @@
 // MIR_FACT(ID, Name): a predicate that holds for a value at the site.
 // MIR_VALUE_TRACKING_FACT(ID, Name), which defaults to MIR_FACT: one from value
 // tracking, anchored at the site's instruction. These come last.
-// MIR_MEASURE(ID, Name): a number recorded for the site.
+// MIR_MEASURE(ID, Name, Order): a number recorded for the site. Order says
+// which of its values' numbers the site keeps: Most, when a larger number
+// satisfies more queries, or Least, when a smaller one does.
 
 #ifndef MIR_FACT
 #define MIR_FACT(ID, Name)
@@ -14,7 +16,7 @@
 #endif
 
 #ifndef MIR_MEASURE
-#define MIR_MEASURE(ID, Name)
+#define MIR_MEASURE(ID, Name, Order)
 #endif
 
 // The recorded constant classes.
@@ -38,15 +40,14 @@ MIR_VALUE_TRACKING_FACT(IsKnownPowerOfTwoOrZero, "isKnownPowerOfTwoOrZero")
 // unknown.
 MIR_VALUE_TRACKING_FACT(ValueTrackingSkipped, "valueTrackingSkipped")
 
-// Measures are the most, or the least, of the site's values (see isMaximum).
 // The most known trailing zero bits.
-MIR_MEASURE(TrailingZeros, "trailingZeros")
+MIR_MEASURE(TrailingZeros, "trailingZeros", Most)
 // The fewest bits that are not known leading zeros.
-MIR_MEASURE(ActiveBits, "activeBits")
+MIR_MEASURE(ActiveBits, "activeBits", Least)
 // The fewest bits holding the signed range computeConstantRange finds.
-MIR_MEASURE(RangeSignedBits, "rangeSignedBits")
+MIR_MEASURE(RangeSignedBits, "rangeSignedBits", Least)
 // The fewest bits holding the unsigned range computeConstantRange finds.
-MIR_MEASURE(RangeUnsignedBits, "rangeUnsignedBits")
+MIR_MEASURE(RangeUnsignedBits, "rangeUnsignedBits", Least)
 
 #undef MIR_MEASURE
 #undef MIR_VALUE_TRACKING_FACT
