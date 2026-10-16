@@ -376,9 +376,14 @@ Error packFunctions(Module &M,
                                  Problems);
       Pack.FunctionIndex =
           std::distance(Packed.begin(), Builder.getFunction().getIterator());
-      raw_string_ostream OS(Pack.Bitcode);
-      // With the use lists' order (see copyUseListOrder).
-      WriteBitcodeToFile(Packed, OS, /*ShouldPreserveUseListOrder=*/true);
+      // With the use lists' order (see copyUseListOrder), and without the
+      // symbol table WriteBitcodeToFile adds for LTO: no reader of a pack
+      // needs it, and it is about a sixth of its bitcode.
+      SmallVector<char, 0> Buffer;
+      BitcodeWriter Writer(Buffer);
+      Writer.writeModule(Packed, /*ShouldPreserveUseListOrder=*/true);
+      Writer.writeStrtab();
+      Pack.Bitcode.assign(Buffer.begin(), Buffer.end());
     }
     if (Error E = Add(*F, std::move(Pack)))
       return E;
