@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { Diagnostic } from "./diagnostics.ts";
 import type { Definition } from "./irDefinition.ts";
 import { monaco } from "./monaco.ts";
-import type { NavLink } from "./navigation.ts";
+import { irLink, linkLines, type Link, type NavLink } from "./navigation.ts";
 
 export type CodeEditor = Parameters<OnMount>[0];
 
@@ -66,10 +66,10 @@ const linkKey = (event: { ctrlKey: boolean; metaKey: boolean }) =>
  * Ctrl (⌘ on a Mac) is held, what a link goes from is underlined, and
  * clicking it calls go with where it goes to.
  */
-export function useModifierLinks(
+export function useModifierLinks<L extends NavLink>(
   editor: CodeEditor | undefined,
-  resolve: (line: number, column: number, text: string) => NavLink | undefined,
-  go: (to: Definition) => void,
+  resolve: (line: number, column: number, text: string) => L | undefined,
+  go: (to: Definition, link: L) => void,
 ) {
   const callbacks = useRef({ resolve, go });
   callbacks.current = { resolve, go };
@@ -114,7 +114,7 @@ export function useModifierLinks(
       if (!linkKey(event.event)) return;
       mouse = event.target.position ?? undefined;
       const found = linkAt();
-      if (found) callbacks.current.go(found.link.to);
+      if (found) callbacks.current.go(found.link.to, found.link);
     });
     // The key can be pressed or let go without the mouse moving.
     const onKey = (event: KeyboardEvent) => underline(linkKey(event));
@@ -191,4 +191,49 @@ function tokenEnd(model: monaco.editor.ITextModel, line: number, column: number)
   const text = model.getLineContent(line);
   const token = /^[\w?%@.$:-]+/.exec(text.slice(column - 1));
   return column + (token ? token[0].length : 1);
+}
+
+/** Selects to in editor, in view, and focuses it. */
+export function selectRange(editor: CodeEditor, to: Definition) {
+  const range = new monaco.Range(to.line, to.column, to.line, to.column + to.length);
+  editor.setSelection(range);
+  editor.revealRangeInCenterIfOutsideViewport(range);
+  editor.focus();
+}
+
+/** Selects target in editor each time it is set anew (a new object). */
+export function useJumpTarget(editor: CodeEditor | undefined, target: Definition | undefined) {
+  useEffect(() => {
+    if (editor && target) selectRange(editor, target);
+    // Only a new target is gone to, not the same once the editor changes.
+  }, [target]);
+}
+
+/**
+ * What an editor showing IR does with a match's links, while they hold
+ * (linked): highlights the instructions they matched, and those hovered;
+ * reports the line hovered; and goes from a value Ctrl/⌘+clicked to its
+ * definition in text. Returns the lines highlighted.
+ */
+export function useIRLinks(
+  editor: CodeEditor | undefined,
+  text: string | undefined,
+  links: Link[],
+  hovered: Link[],
+  linked: boolean,
+  onHover: (line: number | undefined) => void,
+): number[] {
+  const lines = useMemo(() => (linked ? linkLines(links, "irLine") : []), [links, linked]);
+  const hoveredLines = useMemo(
+    () => (linked ? linkLines(hovered, "irLine") : []),
+    [hovered, linked],
+  );
+  useLineDecorations(editor, lines, hoveredLines, "bound-line", true);
+  useHoveredLine(editor, onHover);
+  useModifierLinks(
+    editor,
+    (_, column, line) => (text !== undefined ? irLink({ column, text: line, ir: text }) : undefined),
+    (to) => editor && selectRange(editor, to),
+  );
+  return lines;
 }

@@ -16,6 +16,11 @@ export interface Link {
   irLine?: number;
 }
 
+/** The lines links have in the pattern or in the IR. */
+export function linkLines(links: Link[], side: "patternLine" | "irLine"): number[] {
+  return links.flatMap((link) => (link[side] ? [link[side]] : []));
+}
+
 /** Text of a line, from column (from 1). */
 export interface Span {
   column: number;

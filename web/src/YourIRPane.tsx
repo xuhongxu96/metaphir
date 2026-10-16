@@ -1,21 +1,23 @@
 // The IR the pattern is matched in, written in the page: an editor with the
 // selected match's bindings above it, and while the IR is as matched, the
 // instructions the match matched highlighted and the IR's errors marked.
+// It shares IRPane's links into the IR (see useIRLinks).
 
 import Editor from "@monaco-editor/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { BindingList } from "./BindingList.tsx";
+import { CopyButton } from "./CopyButton.tsx";
 import type { Diagnostic } from "./diagnostics.ts";
 import {
   EDITOR_OPTIONS,
-  useHoveredLine,
-  useLineDecorations,
+  selectRange,
+  useIRLinks,
+  useJumpTarget,
   useMarkers,
   type CodeEditor,
 } from "./editor.ts";
 import type { Match } from "./engine.ts";
 import type { Definition } from "./irDefinition.ts";
-import { monaco } from "./monaco.ts";
 import type { Link } from "./navigation.ts";
 import { definitionLine } from "./yourIR.ts";
 
@@ -36,16 +38,13 @@ export function YourIRPane(props: {
   const { value, onChange, match, linked, links, hovered, onHover, diagnostics, theme, target } =
     props;
   const [editor, setEditor] = useState<CodeEditor>();
-  const lines = (of: Link[]) => (linked ? of.flatMap((l) => (l.irLine ? [l.irLine] : [])) : []);
-  const irLines = useMemo(() => lines(links), [links, linked]);
-  const hoveredLines = useMemo(() => lines(hovered), [hovered, linked]);
-  useLineDecorations(editor, irLines, hoveredLines, "bound-line", true);
-  useHoveredLine(editor, onHover);
+  const lines = useIRLinks(editor, linked ? value : undefined, links, hovered, linked, onHover);
+  useJumpTarget(editor, target);
   useMarkers(editor, diagnostics);
   // A function opened with nothing matched, such as one without a match, is
   // shown from its definition.
   useEffect(() => {
-    if (!editor || !match || !linked || irLines.length) return;
+    if (!editor || !match || !linked || lines.length) return;
     const line = definitionLine(value, match.fn);
     if (line) {
       editor.revealLineNearTop(line);
@@ -54,26 +53,22 @@ export function YourIRPane(props: {
     // Only when another function is opened, not as the IR is edited.
   }, [editor, match, linked]);
 
-  const jump = ({ line, column, length }: Definition) => {
-    if (!editor) return;
-    const range = new monaco.Range(line, column, line, column + length);
-    editor.setSelection(range);
-    editor.revealRangeInCenterIfOutsideViewport(range);
-    editor.focus();
-  };
-  useEffect(() => {
-    if (target) jump(target);
-    // Only a new target is gone to, not the same once the editor changes.
-  }, [target]);
-
   return (
     <section className="pane">
       <div className="pane-header">
         <span className="title">Your IR</span>
         {match && linked && <span>{match.fn}</span>}
+        <span className="spacer" />
         <span className="hint">LLVM IR, matched in the page</span>
+        <CopyButton text={value} />
       </div>
-      {match && linked && <BindingList bindings={match.bindings} ir={value} onJump={jump} />}
+      {match && linked && (
+        <BindingList
+          bindings={match.bindings}
+          ir={value}
+          onJump={(to) => editor && selectRange(editor, to)}
+        />
+      )}
       <div className="pane-body ir-editor">
         <Editor
           language="llvm"

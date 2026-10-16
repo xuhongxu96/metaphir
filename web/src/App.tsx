@@ -4,6 +4,7 @@ import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panel
 import { useColorScheme, type SchemePreference } from "./colorScheme.ts";
 import {
   EDITOR_OPTIONS,
+  selectRange,
   useHoveredLine,
   useLineDecorations,
   useMarkers,
@@ -17,7 +18,7 @@ import { definitionLink, definitionsIn, type DefinitionFile } from "./mpirDefini
 import type { Definition } from "./irDefinition.ts";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
 import { MatchesPane } from "./MatchesPane.tsx";
-import { patternLink, type Link } from "./navigation.ts";
+import { linkLines, patternLink, type Link, type NavLink } from "./navigation.ts";
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
@@ -63,13 +64,6 @@ function savedIR(): string {
 type PatternTab = "pattern" | "stdlib";
 const STDLIB_DEFINITIONS = definitionsIn(STDLIB);
 
-/** Selects to in editor, in view, and focuses it. */
-function select(editor: CodeEditor, to: Definition) {
-  const range = new monaco.Range(to.line, to.column, to.line, to.column + to.length);
-  editor.setSelection(range);
-  editor.revealRangeInCenterIfOutsideViewport(range);
-  editor.focus();
-}
 
 export function App() {
   const { preference, setPreference, dark } = useColorScheme();
@@ -144,11 +138,11 @@ export function App() {
   );
   const patternLines = useMemo(
     () =>
-      patternLinked ? links.flatMap((l) => (l.patternLine ? [l.patternLine] : [])) : [],
+      patternLinked ? linkLines(links, "patternLine") : [],
     [links, patternLinked],
   );
   const hoveredPatternLines = useMemo(
-    () => hovered.flatMap((l) => (l.patternLine ? [l.patternLine] : [])),
+    () => linkLines(hovered, "patternLine"),
     [hovered],
   );
   useLineDecorations(patternEditor, patternLines, hoveredPatternLines, "matched-line", false);
@@ -170,21 +164,25 @@ export function App() {
     ]);
   const [stdlibEditor, setStdlibEditor] = useState<CodeEditor>();
   const [stdlibTarget, setStdlibTarget] = useState<Definition>();
-  const definitionFile = useRef<DefinitionFile>("pattern");
-  useModifierLinks(
+  // In the pattern, a name with a definition goes there; else what the
+  // match bound it to goes to the IR.
+  useModifierLinks<NavLink & { file: DefinitionFile | "ir" }>(
     patternEditor,
-    (_, column, text) => {
-      const link = definitionAt(text, column);
-      if (link) definitionFile.current = link.file;
-      return link;
+    (line, column, text) => {
+      const definition = definitionAt(text, column);
+      if (definition) return definition;
+      if (!patternLinked || !irCurrent || !selected || !ir) return undefined;
+      const toIR = patternLink({ line, column, text, links, bindings: selected.bindings, ir: ir.text });
+      return toIR && { ...toIR, file: "ir" };
     },
-    (to) => {
-      if (definitionFile.current === "pattern") {
-        if (patternEditor) select(patternEditor, to);
-        return;
+    // A new object each time, gone to even if the same.
+    (to, { file }) => {
+      if (file === "ir") setIRTarget({ ...to });
+      else if (file === "pattern") patternEditor && selectRange(patternEditor, to);
+      else {
+        setPatternTab("stdlib");
+        setStdlibTarget({ ...to });
       }
-      setPatternTab("stdlib");
-      setStdlibTarget({ ...to });
     },
   );
   useModifierLinks(
@@ -197,20 +195,10 @@ export function App() {
     if (patternTab !== "stdlib" || !stdlibEditor || !stdlibTarget) return;
     const frame = requestAnimationFrame(() => {
       stdlibEditor.layout();
-      select(stdlibEditor, stdlibTarget);
+      selectRange(stdlibEditor, stdlibTarget);
     });
     return () => cancelAnimationFrame(frame);
   }, [patternTab, stdlibEditor, stdlibTarget]);
-  useModifierLinks(
-    patternEditor,
-    (line, column, text) =>
-      // A name with a definition goes there instead.
-      patternLinked && irCurrent && selected && ir && !definitionAt(text, column)
-        ? patternLink({ line, column, text, links, bindings: selected.bindings, ir: ir.text })
-        : undefined,
-    // A new object each time, gone to even if the same.
-    (to) => setIRTarget({ ...to }),
-  );
 
   useEffect(() => {
     PublishedCorpus.open().then(
