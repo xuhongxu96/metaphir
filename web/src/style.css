@@ -323,6 +323,8 @@ col.function { width: 26%; }
 thead th {
   position: sticky;
   top: 0;
+  /* Above the rows, whose cells are positioned for their copy buttons. */
+  z-index: 2;
   background: var(--bg);
   text-align: left;
   font-weight: 600;
