@@ -658,6 +658,14 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
   }
   Subst.Instructions[&Use] = Subst.Instructions.lookup(&Root);
 
+  // The metaflags on the use's operands apply to the values it passes, as
+  // they would on a primitive instruction's; the use is gone, so they are
+  // kept for desugaring, at the instruction it became.
+  const Instruction *UseRoot = Subst.Instructions.lookup(&Root);
+  for (const MatcherOperand &Op : CallerOps)
+    if (!Op.MetaFlags.empty() && Op.Val)
+      Variant->addOperandFlags({Op.Val, Op.MetaFlags, UseRoot});
+
   // Instructions after the use are copied when they refer to it.
   for (Instruction *I : Cur.getInstructions().drop_front(UseIndex + 1)) {
     SmallVector<MatcherOperand, 8> Operands = Subst.operands(*I);
@@ -705,6 +713,10 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
     Variant->addMetaVariable(M);
   for (const auto &[Var, Val] : Cur.getFixedFlags())
     Variant->addFixedFlag(Var, Val);
+  // Those of uses inlined before, about values this one may have replaced.
+  for (const Pattern::OperandFlags &F : Cur.getOperandFlags())
+    Variant->addOperandFlags({Subst.value(F.Subject), F.Flags,
+                              Subst.contextInstruction(F.ContextInstruction)});
   return Variant;
 }
 
@@ -757,6 +769,9 @@ Error Desugarer::desugar(Pattern &P) {
       if (Error E = LowerAll(Op.MetaFlags, Op.Val, I))
         return E;
   }
+  for (const Pattern::OperandFlags &F : P.getOperandFlags())
+    if (Error E = LowerAll(F.Flags, F.Subject, F.ContextInstruction))
+      return E;
   for (Constraint *C : Lowered)
     P.addConstraint(C);
   return Error::success();

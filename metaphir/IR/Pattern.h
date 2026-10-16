@@ -14,6 +14,15 @@ namespace metaphir {
 /// fixed by lowering. Created by create()/copy() and owned by the context.
 class Pattern {
 public:
+  /// Metaflags written on an operand of a composite matcher's use, which
+  /// lowering inlines away: they apply to the value the use passes there,
+  /// with the instruction the use became as their context.
+  struct OperandFlags {
+    Value *Subject;
+    ArrayRef<MetaFlag *> Flags;
+    const Instruction *ContextInstruction;
+  };
+
   ~Pattern();
 
   ArrayRef<Instruction *> getInstructions() const { return Instructions; }
@@ -23,6 +32,8 @@ public:
   ArrayRef<std::pair<const MetaVariable *, bool>> getFixedFlags() const {
     return FixedFlags;
   }
+
+  ArrayRef<OperandFlags> getOperandFlags() const { return OperandFlagList; }
 
   SmallVector<Instruction *, 4> getRoots() const;
 
@@ -34,6 +45,9 @@ public:
   }
   void addFixedFlag(const MetaVariable *Var, bool Value) {
     FixedFlags.push_back({Var, Value});
+  }
+  void addOperandFlags(const OperandFlags &Flags) {
+    OperandFlagList.push_back(Flags);
   }
   void addMetaVariable(MetaVariable *MetaVariable) {
     assert(llvm::none_of(MetaVariables,
@@ -61,6 +75,7 @@ private:
   SmallVector<Constraint *, 8> Constraints;
   SmallVector<MetaVariable *, 16> MetaVariables;
   SmallVector<std::pair<const MetaVariable *, bool>, 4> FixedFlags;
+  SmallVector<OperandFlags, 2> OperandFlagList;
 
   explicit Pattern(MIRContext &Context) : Context(Context) {}
 };

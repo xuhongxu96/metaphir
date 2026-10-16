@@ -12,6 +12,8 @@
 ; RUN: not %metaphir-match %t/meta-for-fixed.mpir %t/add.ll 2>&1 | FileCheck %s --check-prefix=META-FOR-FIXED
 ; RUN: not %metaphir-match %t/or-self-unbound.mpir %t/zext.ll 2>&1 | FileCheck %s --check-prefix=OR-SELF-UNBOUND
 ; RUN: %metaphir-match --matches-only %t/or-self-unnamed.mpir %t/zext.ll | FileCheck %s --check-prefix=OR-SELF-UNNAMED
+; RUN: %metaphir-match --matches-only %t/use-operand-flag.mpir %t/consts.ll | FileCheck %s --check-prefix=USE-OPERAND-FLAG
+; RUN: %metaphir-match --matches-only %t/nested-operand-flag.mpir %t/consts.ll | FileCheck %s --check-prefix=USE-OPERAND-FLAG
 
 ; A value-tracking operator nested inside a metaflag body is evaluated at the
 ; instruction the flag is written on, like a top-level one.
@@ -199,5 +201,29 @@ define i32 @add(i32 %a, i32 %b) {
 define i32 @g(i8 %x) {
   %z = zext i8 %x to i32
   %r = add i32 %z, 1
+  ret i32 %r
+}
+
+; A metaflag on an operand of a composite matcher's use constrains the value
+; passed there, as on a primitive instruction, also when the use is in
+; another matcher's body.
+;--- use-operand-flag.mpir
+%r = addLike i32 ?x, ?c:allOnes
+; USE-OPERAND-FLAG: consts.ll	@add_m1	{?c = -1, ?x = %x}
+; USE-OPERAND-FLAG-NOT: @add_5
+
+;--- nested-operand-flag.mpir
+match outer [] Binary (?ty ?p, ?q) {
+  %ret = addLike ?ty ?p, ?q:allOnes
+}
+%r = outer i32 ?x, ?c
+
+;--- consts.ll
+define i32 @add_m1(i32 %x) {
+  %r = add i32 %x, -1
+  ret i32 %r
+}
+define i32 @add_5(i32 %x) {
+  %r = add i32 %x, 5
   ret i32 %r
 }

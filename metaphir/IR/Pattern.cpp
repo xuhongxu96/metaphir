@@ -21,6 +21,7 @@ Pattern *Pattern::copy() const {
   Result->Constraints = Constraints;
   Result->MetaVariables = MetaVariables;
   Result->FixedFlags = FixedFlags;
+  Result->OperandFlagList = OperandFlagList;
   return Result;
 }
 
