@@ -784,7 +784,8 @@ Error Desugarer::desugar(Pattern &P) {
 Expected<Constraint *> Desugarer::lower(const MetaFlag &MF, Value *Subject) {
   const MetaFlagDef *Def = Context.getMetaFlagDef(MF.getName());
   if (!Subject) {
-    if (!Def)
+    if (MF.getMetaFlagID() == MetaFlag::MF_c ||
+        MF.getMetaFlagID() == MetaFlag::MF_o)
       return nullptr;
     return makeError(MF.getSourceRange(),
                      "metaflag ':" + MF.getName() +
