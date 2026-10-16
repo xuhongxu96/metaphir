@@ -528,11 +528,14 @@ bool MIRParser::parseOperandMetaFlags(MatcherOperand &Result) {
   if (Flags.empty())
     return false;
   Result.setMetaFlags(Context, Flags);
-  if (!isa_and_nonnull<MetaVariable>(Result.Val))
+  // A defined metaflag constrains the operand's value: a meta variable's, or
+  // a local's ('%a:s' is about the instruction %a). A constant's is known.
+  if (!isa_and_nonnull<MetaVariable, Instruction>(Result.Val))
     for (const MetaFlag *Flag : Flags)
       if (Context.getMetaFlagDef(Flag->getName()))
         return error("metaflag ':" + Flag->getName() +
-                     "' can only be applied to a meta variable operand");
+                     "' can only be applied to a meta variable or a local "
+                     "value");
   return false;
 }
 

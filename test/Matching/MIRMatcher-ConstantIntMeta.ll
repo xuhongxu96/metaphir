@@ -3,6 +3,7 @@
 ; RUN: %metaphir-match %t/nat-unsigned.mpir %t/nat.ll | FileCheck %s --check-prefix=U
 ; RUN: %metaphir-match %t/icmp-rhs.mpir %t/icmp-rhs.ll | FileCheck %s --check-prefix=ICMP
 ; RUN: not %metaphir-parse %t/notvar.mpir 2>&1 | FileCheck %s --check-prefix=ERR
+; RUN: %metaphir-match --matches-only %t/local.mpir %t/local.ll | FileCheck %s --check-prefix=LOCAL
 
 ; The ':constantInt' meta flag lowers to an 'isConstantInt' constraint, so the
 ; operand keeps its value binding and constraint arithmetic reaches the integer
@@ -90,8 +91,28 @@ entry:
 ; ICMP-NEXT:   no match
 ; ICMP-NEXT:   constraint not satisfied: (|| (== ?c 0) (== ?c 1))
 
-; ':constantInt' requires a meta variable operand.
+; ':constantInt' requires a meta variable or a local value, not a constant.
 ;--- notvar.mpir
-%neg = sub i?bits 0, ?x
-%add = add i?bits %neg, %neg:constantInt
-; ERR: metaflag ':constantInt' can only be applied to a meta variable operand
+%add = add ptr ?x, @g:constantInt
+; ERR: metaflag ':constantInt' can only be applied to a meta variable or a local value
+
+; A metaflag on a local operand constrains the instruction it names: only the
+; add whose result has one use matches.
+;--- local.mpir
+%a = add i64 ?x, ?y
+%b = add:?anch i64 %a:s, 1
+; LOCAL:     local.ll	@one	{?anch = %b, ?x = %p, ?y = %q}
+; LOCAL-NOT: @two
+
+;--- local.ll
+define i64 @one(i64 %p, i64 %q) {
+  %a = add i64 %p, %q
+  %b = add i64 %a, 1
+  ret i64 %b
+}
+define i64 @two(i64 %p, i64 %q) {
+  %a = add i64 %p, %q
+  %b = add i64 %a, 1
+  %c = mul i64 %a, %b
+  ret i64 %c
+}
