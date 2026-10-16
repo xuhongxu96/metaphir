@@ -3,6 +3,7 @@
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MIRContextImpl.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -75,9 +76,16 @@ raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
   case Value::IntegerConstantVal:
     OS << cast<IntegerConstant>(V).getValue();
     break;
-  case Value::FloatingConstantVal:
-    cast<FloatingConstant>(V).getValue().print(OS);
+  case Value::FloatingConstantVal: {
+    // As written in a pattern: APFloat::print adds a newline, and an
+    // integral value needs its '.0' to stay a float, -0.0 its sign.
+    SmallString<16> Text;
+    cast<FloatingConstant>(V).getValue().toString(Text);
+    if (StringRef(Text).find_first_of(".eEnN") == StringRef::npos)
+      Text += ".0";
+    OS << Text;
     break;
+  }
   case Value::KeywordConstantVal:
     OS << KeywordConstant::getKeywordName(
         cast<KeywordConstant>(V).getKeywordID());
