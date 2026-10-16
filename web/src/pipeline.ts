@@ -28,9 +28,16 @@ export interface Rejected extends Note {
 /** What a stage reads next; compiling also gives the pattern's warnings. */
 export type StageResult = { ranges: ByteRange[]; warnings?: Note[] } | { error: string };
 /** A function's matches; and if it has none, the constraints that rejected
- * its structural matches, with the module and name of the function. */
+ * its structural matches, with the module and name of the function; and
+ * whether it has any structural match. */
 export type MatchResult =
-  | { lines: string; rejected?: Rejected[]; module?: string; function?: string }
+  | {
+      lines: string;
+      rejected?: Rejected[];
+      structural?: boolean;
+      module?: string;
+      function?: string;
+    }
   | { error: string };
 
 export interface Matchable extends ByteRange {
@@ -122,11 +129,12 @@ export interface QueryEvents {
   onCompiled?(warnings: Note[]): void;
   /** Function was matched; lines are its matches, possibly none, and
    * rejected the constraints that rejected its structural matches, in the
-   * function named where. */
+   * function named where; structural tells whether it has any. */
   onMatched?(
     fn: number,
     lines: string,
     rejected: Rejected[],
+    structural: boolean,
     where?: { module: string; name: string },
   ): void;
 }
@@ -210,7 +218,13 @@ export async function runQuery(
         result.module !== undefined && result.function !== undefined
           ? { module: result.module, name: result.function }
           : undefined;
-      events.onMatched?.(next.fn, result.lines, result.rejected ?? [], where);
+      events.onMatched?.(
+        next.fn,
+        result.lines,
+        result.rejected ?? [],
+        result.structural ?? false,
+        where,
+      );
     }
   };
   const workers = matchers.map(work);

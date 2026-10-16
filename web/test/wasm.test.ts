@@ -143,7 +143,11 @@ test("matches the published corpus as metaphir-match --packs does", async () => 
     const expected = tool("metaphir-match", "--matches-only", "--print-instructions", "--packs", join(work, "published"), pattern);
     const found = new Map<number, string>();
     await runQuery(source, `pattern${i}.mpir`, direct(coordinator), matchers.map(direct), fetcher, {
-      onMatched: (fn, lines) => found.set(fn, lines),
+      onMatched: (fn, lines, _, structural) => {
+        found.set(fn, lines);
+        // A match is a structural match too.
+        if (lines) assert.ok(structural, `${source}: function ${fn}`);
+      },
     });
     const lines = [...found.entries()].sort(([a], [b]) => a - b).map(([, l]) => l).join("");
     assert.equal(lines, expected, source);

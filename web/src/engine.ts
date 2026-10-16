@@ -135,10 +135,22 @@ export interface Progress {
   paused?: Pause;
   /** How far the stage is, from 0 to 1, when that is known. */
   fraction?: number;
+  /** The corpus: its modules and functions. */
+  modules: number;
+  functions: number;
+  /** The functions on the posting lists the index chose, once read. */
+  candidates?: number;
+  /** Those of them whose features may match, once read: those checked. */
+  matchable?: number;
+  /** The functions checked so far. */
+  checked: number;
+  /** The functions checked with a structural match, satisfying the
+   * constraints or not. */
+  structural: number;
+  /** The matches, which satisfy the constraints, and the functions they
+   * are in. */
   matches: number;
   matched: number;
-  matchable: number;
-  candidates: number;
   requests: number;
   bytes: number;
   seconds: number;
@@ -203,10 +215,12 @@ export class PublishedCorpus {
       stage: "starting",
       warnings: [],
       rejections: [],
+      modules: this.modules,
+      functions: this.functions,
+      checked: 0,
+      structural: 0,
       matches: 0,
       matched: 0,
-      matchable: 0,
-      candidates: 0,
       requests: 0,
       bytes: 0,
       seconds: 0,
@@ -253,6 +267,7 @@ export class PublishedCorpus {
         report(progress.stage, read === total);
       },
       onListed: (candidates: number) => {
+        progress.candidates = candidates;
         if (candidates > CANDIDATE_PROMPT)
           pause({ kind: "candidates", candidates });
       },
@@ -268,9 +283,11 @@ export class PublishedCorpus {
         fn: number,
         lines: string,
         rejected: Rejected[],
+        structural: boolean,
         where?: { module: string; name: string },
       ) => {
-        progress.matched++;
+        progress.checked++;
+        if (structural) progress.structural++;
         // A constraint of several variants counts once per function.
         const counted = new Set<string>();
         for (const r of rejected) {
@@ -302,7 +319,8 @@ export class PublishedCorpus {
           .filter(Boolean)
           .map((line, i) => ({ ...parseMatch(fn + i / 1e6, line), ir: irOf(fn) }));
         progress.matches += found.length;
-        progress.fraction = progress.matched / Math.max(progress.matchable, 1);
+        if (found.length) progress.matched++;
+        progress.fraction = progress.checked / Math.max(progress.matchable ?? 0, 1);
         if (found.length) onMatches(found);
         if (progress.matches >= nextPause && !control.stopped) {
           // Those being matched meanwhile come after: the count goes on.

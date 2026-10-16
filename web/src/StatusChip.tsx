@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { count, type Rejection } from "./engine.ts";
 import type { QueryControl } from "./pipeline.ts";
-import { describeRejection, INDEX_HINT, type Status } from "./status.ts";
+import { describeRejection, INDEX_HINT, type Detail, type Status } from "./status.ts";
 
 export function StatusChip({
   status,
@@ -117,11 +117,11 @@ function Notes({ title, items, hint }: { title: string; items: ReactNode[]; hint
   );
 }
 
-function Details({ details }: { details: [string, string][] }) {
+function Details({ details }: { details: Detail[] }) {
   return (
     <dl className="status-details">
-      {details.map(([label, value]) => (
-        <div key={label}>
+      {details.map(({ label, value, hint, level = 0 }) => (
+        <div key={label} title={hint} style={{ paddingLeft: `${level * 0.6}rem` }}>
           <dt>{label}</dt>
           <dd>{value}</dd>
         </div>

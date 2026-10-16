@@ -4,11 +4,20 @@ import { count, rejectionKey, type Pause, type Progress, type Rejection } from "
 import { PAGE_SCHEME, type Diagnostic } from "./diagnostics.ts";
 import type { Note } from "./pipeline.ts";
 
+/** A labelled value, and what it means, said on hover; one of the values
+ * above it at a lower level, which it is counted of, is shown indented. */
+export interface Detail {
+  label: string;
+  value: string;
+  hint?: string;
+  level?: number;
+}
+
 export interface Status {
   /** What is going on, or what went wrong. */
   text: string;
   /** Labelled values, such as how many matches there are. */
-  details?: [string, string][];
+  details?: Detail[];
   /** How many matches there are so far. */
   matches?: number;
   /** The pattern's warnings. */
@@ -33,17 +42,75 @@ function headline(progress: Progress): string {
     : `paused: ${count(pause.candidates, "candidate function")}`;
 }
 
-/** The status of a query of the published corpus. */
+/** The corpus's size, before a query narrows it. */
+export const corpusDetails = (functions: number, modules: number): Detail[] => [
+  { label: "modules in the corpus", value: modules.toLocaleString() },
+  { label: "functions in the corpus", value: functions.toLocaleString() },
+];
+
+/** What matching found in the functions it checked, at level: how many
+ * have a structural match, how many a match, and how many matches. */
+export function matchDetails(
+  level: number,
+  structural: number,
+  matched: number,
+  matches: number,
+): Detail[] {
+  return [
+    {
+      label: "with a structural match",
+      value: structural.toLocaleString(),
+      hint: "Functions with an instance of the pattern's instructions, whether or not it satisfies the constraints.",
+      level,
+    },
+    {
+      label: "with a match",
+      value: matched.toLocaleString(),
+      hint: "Functions with an instance that satisfies the constraints too.",
+      level: level + 1,
+    },
+    { label: "matches", value: matches.toLocaleString(), hint: "The instances in them." },
+  ];
+}
+
+/** The status of a query of the published corpus: from the corpus to the
+ * matches, each function counted of those above it. */
 export function describe(progress: Progress): Status {
-  const details: [string, string][] = [];
-  if (progress.matchable)
-    details.push([
-      "functions",
-      `${progress.matched.toLocaleString()} of ${progress.matchable.toLocaleString()} matched`,
-    ]);
-  details.push(["matches", progress.matches.toLocaleString()]);
-  details.push(["read", `${(progress.bytes / 1e6).toFixed(1)} MB`]);
-  details.push(["time", `${progress.seconds.toFixed(1)} s`]);
+  const details = corpusDetails(progress.functions, progress.modules);
+  if (progress.candidates !== undefined)
+    details.push({
+      label: "on the index's lists",
+      value: progress.candidates.toLocaleString(),
+      hint: "Functions with every instruction and operand of the pattern that the index lists.",
+      level: 1,
+    });
+  if (progress.matchable !== undefined) {
+    const checking = progress.checked < progress.matchable;
+    details.push(
+      {
+        label: "whose features may match",
+        value: progress.matchable.toLocaleString(),
+        hint: "The functions whose features the pattern may match: those checked against it.",
+        level: 2,
+      },
+      // While checking, what was found is of those checked so far.
+      ...(checking
+        ? [
+            {
+              label: "checked so far",
+              value: progress.checked.toLocaleString(),
+              hint: "The functions checked against the pattern so far.",
+              level: 3,
+            },
+          ]
+        : []),
+      ...matchDetails(checking ? 4 : 3, progress.structural, progress.matched, progress.matches),
+    );
+  }
+  details.push(
+    { label: "read", value: `${(progress.bytes / 1e6).toFixed(1)} MB` },
+    { label: "time", value: `${progress.seconds.toFixed(1)} s` },
+  );
   return {
     text: headline(progress),
     details,
@@ -57,7 +124,7 @@ export function describe(progress: Progress): Status {
 }
 
 /** Where rejecting constraints are counted, said beside them. */
-export const INDEX_HINT = "Counted in the functions matched: those the index rules out are not.";
+export const INDEX_HINT = "Counted in the functions checked: those the index rules out are not.";
 
 /** What a constraint that rejected structural matches did, in words. */
 export function describeRejection(r: Rejection): string {

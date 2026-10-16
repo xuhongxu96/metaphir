@@ -8,10 +8,14 @@ const progress = (matches: number): Progress => ({
   warnings: [],
   rejections: [],
   paused: { kind: "matches", matches: 1000 },
-  matches,
-  matched: 10,
+  modules: 2,
+  functions: 100,
+  candidates: 30,
   matchable: 20,
-  candidates: 20,
+  checked: 10,
+  structural: 5,
+  matches,
+  matched: 3,
   requests: 1,
   bytes: 0,
   seconds: 1,
@@ -21,6 +25,36 @@ test("a pause says as many matches as the counter", () => {
   const status = describe(progress(1003));
   assert.equal(status.text, "paused at 1,003 matches");
   assert.equal(status.matches, 1003);
+});
+
+test("each count says what it counts", () => {
+  const shown = (progress: Progress) =>
+    describe(progress).details!.map((d) => `${"  ".repeat(d.level ?? 0)}${d.label}: ${d.value}`);
+  assert.deepEqual(shown({ ...progress(4), checked: 20, stage: "done", paused: undefined }), [
+    "modules in the corpus: 2",
+    "functions in the corpus: 100",
+    "  on the index's lists: 30",
+    "    whose features may match: 20",
+    "      with a structural match: 5",
+    "        with a match: 3",
+    "matches: 4",
+    "read: 0.0 MB",
+    "time: 1.0 s",
+  ]);
+  // While checking, what was found is of those checked so far.
+  assert.deepEqual(shown(progress(4)).slice(3, 7), [
+    "    whose features may match: 20",
+    "      checked so far: 10",
+    "        with a structural match: 5",
+    "          with a match: 3",
+  ]);
+  // What the index has not read yet is not counted.
+  assert.deepEqual(shown({ ...progress(0), candidates: undefined, matchable: undefined }), [
+    "modules in the corpus: 2",
+    "functions in the corpus: 100",
+    "read: 0.0 MB",
+    "time: 1.0 s",
+  ]);
 });
 
 test("rejecting constraints and warnings are marked on the pattern", () => {

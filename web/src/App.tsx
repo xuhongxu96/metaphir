@@ -30,7 +30,13 @@ import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
 import { patternHash, readPatternHash } from "./share/patternLink.ts";
-import { describe, linkedRejection, statusDiagnostics } from "./status.ts";
+import {
+  corpusDetails,
+  describe,
+  linkedRejection,
+  matchDetails,
+  statusDiagnostics,
+} from "./status.ts";
 import { StatusChip } from "./StatusChip.tsx";
 import { CopyButton } from "./CopyButton.tsx";
 import { useResults } from "./results.ts";
@@ -223,10 +229,7 @@ export function App() {
         setCorpus(opened);
         results.published.setStatus({
           text: "Ready",
-          details: [
-            ["functions", opened.functions.toLocaleString()],
-            ["modules", opened.modules.toLocaleString()],
-          ],
+          details: corpusDetails(opened.functions, opened.modules),
         });
       },
       (error: Error) => results.published.setStatus({ text: error.message, error: true }),
@@ -281,12 +284,19 @@ export function App() {
         setStatus({ text: "matching your IR", running: true });
         const result = await matchYourIR(userIR, pattern);
         onMatches(result.matches);
-        const matched = result.functions.filter((f) => f.matches > 0).length;
-        setMisses(result.functions.filter((f) => f.matches === 0));
+        const { functions } = result;
+        setMisses(functions.filter((f) => f.matches === 0));
         setStatus({
           text: "done",
           details: [
-            ["functions", `${matched.toLocaleString()} of ${result.functions.length.toLocaleString()} matched`],
+            { label: "functions in your IR", value: functions.length.toLocaleString() },
+            // Constraints are reported only of functions with a structural match.
+            ...matchDetails(
+              1,
+              functions.filter((f) => f.matches > 0 || f.rejected.length > 0).length,
+              functions.filter((f) => f.matches > 0).length,
+              result.matches.length,
+            ),
           ],
           matches: result.matches.length,
           warnings: parseDiagnostics(result.messages)

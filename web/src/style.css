@@ -94,7 +94,7 @@ body { background: var(--bg); color: var(--fg); }
   top: calc(100% + 0.4rem);
   right: 0;
   z-index: 10;
-  width: min(20rem, calc(100vw - 2rem));
+  width: min(22rem, calc(100vw - 2rem));
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 8px;
