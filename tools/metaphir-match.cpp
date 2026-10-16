@@ -607,14 +607,26 @@ static int matchPacks(StringRef ToolName) {
   auto Work = [&] {
     // Each thread matches with its own pattern.
     Expected<std::unique_ptr<WebQuery>> Own = Compile();
+    // A pattern that does not compile is reported once, with the first
+    // function this thread takes; the functions it takes are still done.
+    std::optional<std::string> CompileError;
+    if (!Own)
+      CompileError = toString(Own.takeError());
     for (size_t I; (I = Next++) < Matchable.size();) {
       Output Matched;
       raw_string_ostream Out(Matched.Out);
-      Error E =
-          Own ? (*Own)->match(Matchable[I],
-                              *Cache.get((*Query)->getPackRange(Matchable[I])),
-                              Out, PrintInstructions)
-              : Own.takeError();
+      Error E = [&]() -> Error {
+        if (Own)
+          return (*Own)->match(Matchable[I],
+                               *Cache.get((*Query)->getPackRange(Matchable[I])),
+                               Out, PrintInstructions);
+        Failed = true;
+        if (!CompileError)
+          return Error::success();
+        Error First = createStringError(*CompileError);
+        CompileError.reset();
+        return First;
+      }();
       if (E) {
         Failed = true;
         raw_string_ostream(Matched.Err)
