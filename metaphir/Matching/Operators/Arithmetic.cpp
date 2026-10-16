@@ -340,16 +340,15 @@ Expected<ConstraintValue> OpLog2::concrete(const ConcreteCall &Call) {
   if (Operand->isNegative() || Operand->isZero())
     return make_error<ConstraintEvaluationError>(
         Call.Expression, "log2 requires a positive operand");
-  return integerResult(APInt(Operand->getBitWidth(), Operand->logBase2(), true),
-                       true);
+  // A count of bits, unsigned, as evaluateCount's.
+  return integerResult(APInt(32, Operand->logBase2()), /*IsUnsigned=*/true);
 }
 
 Expected<ConstraintValue> OpPopcount::concrete(const ConcreteCall &Call) {
   Expected<APSInt> Operand = requireInteger(Call.Operands[0], Call.Expression);
   if (!Operand)
     return Operand.takeError();
-  return integerResult(APInt(Operand->getBitWidth(), Operand->popcount(), true),
-                       true);
+  return integerResult(APInt(32, Operand->popcount()), /*IsUnsigned=*/true);
 }
 
 /// A count of the operand's bits by Count, at the operand's own width or the

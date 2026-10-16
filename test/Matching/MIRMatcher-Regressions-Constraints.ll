@@ -15,6 +15,7 @@
 ; RUN: %metaphir-match %t/user-arg-sign.mpir %t/add.ll | FileCheck %s --check-prefix=MATCH
 ; RUN: %metaphir-match %t/splat-poison.mpir %t/splat.ll | FileCheck %s --check-prefix=SPLAT
 ; RUN: %metaphir-match %t/commutative-once.mpir %t/same.ll | FileCheck %s --check-prefix=COMMUTATIVE
+; RUN: %metaphir-match --matches-only %t/narrow-popcount.mpir %t/narrow.ll | FileCheck %s --check-prefix=NARROW
 
 ; MATCH: target 0: @f
 ; MATCH-NEXT:   match 0:
@@ -157,3 +158,21 @@ define i8 @f(i8 %x, i8 %y) {
 ; MATCH8: target 0: @f
 ; MATCH8-NEXT:   match 0:
 ; MATCH8-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
+
+; Bit counts of a narrow constant are counts, not values of its type: an i1
+; or i2 count does not overflow.
+;--- narrow-popcount.mpir
+%r = xor i?n ?x, ?k
+;; popcount(?k) == ?n
+; NARROW: narrow.ll	@one	{?k = true, ?n = 1, ?x = %x}
+; NARROW: narrow.ll	@two	{?k = -1, ?n = 2, ?x = %x}
+
+;--- narrow.ll
+define i1 @one(i1 %x) {
+  %r = xor i1 %x, true
+  ret i1 %r
+}
+define i2 @two(i2 %x) {
+  %r = xor i2 %x, -1
+  ret i2 %r
+}
