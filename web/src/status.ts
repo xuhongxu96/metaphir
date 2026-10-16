@@ -7,6 +7,8 @@ export interface Status {
   text: string;
   /** Labelled values, such as how many matches there are. */
   details?: [string, string][];
+  /** How many matches there are so far. */
+  matches?: number;
   error?: boolean;
   /** How far a run is, from 0 to 1; undefined while not known. */
   fraction?: number;
@@ -37,6 +39,7 @@ export function describe(progress: Progress, local: boolean): Status {
   return {
     text: headline(progress),
     details,
+    matches: progress.matches,
     fraction: progress.fraction,
     running: progress.stage !== "done" && progress.stage !== "stopped",
     pause: progress.paused,

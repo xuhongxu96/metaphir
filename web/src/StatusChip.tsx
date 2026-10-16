@@ -4,6 +4,7 @@
 // stays so until the next.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { count } from "./engine.ts";
 import type { QueryControl } from "./pipeline.ts";
 import type { Status } from "./status.ts";
 
@@ -18,7 +19,6 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
     if (paused || status.error) setOpen(true);
   }, [paused, status.error]);
   useDismiss(root, open, () => setOpen(false));
-  const matches = status.details?.find(([label]) => label === "matches")?.[1];
 
   return (
     <div ref={root} className="status-chip-wrap">
@@ -33,7 +33,9 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
         <span id="status" role="status" className="status">
           {status.text}
         </span>
-        {matches !== undefined && <span className="status-count">{matches} matches</span>}
+        {status.matches !== undefined && (
+          <span className="status-count">{count(status.matches, "match", "matches")}</span>
+        )}
         <span className="caret" aria-hidden="true">
           {open ? "▴" : "▾"}
         </span>
