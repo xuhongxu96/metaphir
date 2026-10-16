@@ -10,8 +10,8 @@ import {
   useModifierLinks,
   type CodeEditor,
 } from "./editor.ts";
-import { parseDiagnostics, type Diagnostic } from "./diagnostics.ts";
-import { matchLocal, PublishedCorpus, type Match, type Progress } from "./engine.ts";
+import { inFile, parseDiagnostics, type Diagnostic } from "./diagnostics.ts";
+import { count, matchLocal, PublishedCorpus, type Match, type Progress } from "./engine.ts";
 import { IRPane } from "./IRPane.tsx";
 import type { Definition } from "./irDefinition.ts";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
@@ -24,6 +24,8 @@ import { patternHash, readPatternHash } from "./share/patternLink.ts";
 import { describe, statusDiagnostics, type Status } from "./status.ts";
 import { StatusChip } from "./StatusChip.tsx";
 import { useFunctionIR } from "./useFunctionIR.ts";
+import { YourIRPane } from "./YourIRPane.tsx";
+import { IR_FILE, matchYourIR, SAMPLE_IR, type FunctionResult } from "./yourIR.ts";
 
 // The patterns of the evaluation, as examples.
 const EXAMPLES: Record<string, string> = Object.fromEntries(
@@ -45,7 +47,18 @@ const STDLIB = Object.values(
     eager: true,
   }) as Record<string, string>,
 )[0];
-type Source = "published" | "local";
+// What Match searches: the published corpus, the IR written in the page,
+// or (in the development server) local files.
+type Source = "published" | "ir" | "local";
+
+const IR_KEY = "metaphir-your-ir";
+function savedIR(): string {
+  try {
+    return localStorage.getItem(IR_KEY) ?? SAMPLE_IR;
+  } catch {
+    return SAMPLE_IR;
+  }
+}
 type PatternTab = "pattern" | "stdlib";
 
 export function App() {
@@ -53,6 +66,18 @@ export function App() {
   const theme = themeName(dark);
   const [corpus, setCorpus] = useState<PublishedCorpus>();
   const [source, setSource] = useState<Source>("published");
+  // The IR written in the page, kept in this browser, and as last matched.
+  const [userIR, setUserIR] = useState(savedIR);
+  const [matchedIR, setMatchedIR] = useState<string>();
+  useEffect(() => {
+    try {
+      localStorage.setItem(IR_KEY, userIR);
+    } catch {
+      // Storage may be unavailable; the IR is then not kept.
+    }
+  }, [userIR]);
+  // The functions of the IR without a match, and why.
+  const [misses, setMisses] = useState<FunctionResult[]>([]);
   const [pattern, setPattern] = useState("");
   // A link can carry a pattern (see share/patternLink.ts); else the first
   // example is shown.
@@ -93,7 +118,10 @@ export function App() {
   useMarkers(
     patternEditor,
     useMemo(
-      () => (patternLinked ? [...diagnostics, ...notes] : diagnostics),
+      () => {
+        const own = diagnostics.filter((d) => inFile(d, "pattern.mpir"));
+        return patternLinked ? [...own, ...notes] : own;
+      },
       [patternLinked, diagnostics, notes],
     ),
   );
@@ -144,7 +172,14 @@ export function App() {
     );
   }, []);
 
-  const canRun = !running && pattern.trim() !== "" && (local || corpus !== undefined);
+  const yourIR = source === "ir";
+  const irLinked = yourIR && userIR === matchedIR;
+  const irDiagnostics = useMemo(
+    () => (irLinked ? diagnostics.filter((d) => d.file && inFile(d, IR_FILE)) : []),
+    [irLinked, diagnostics],
+  );
+  const canRun =
+    !running && pattern.trim() !== "" && (local || yourIR || corpus !== undefined);
 
   const run = useCallback(async () => {
     void patternHash(pattern).then((hash) => history.replaceState(null, "", hash));
@@ -153,6 +188,8 @@ export function App() {
     setMatches([]);
     setSelected(undefined);
     setDiagnostics([]);
+    setMisses([]);
+    if (yourIR) setMatchedIR(userIR);
     // Matches arrive by function; the table updates once a frame.
     let pending: Match[] = [];
     let frame = 0;
@@ -169,7 +206,23 @@ export function App() {
     };
     const onProgress = (progress: Progress) => setStatus(describe(progress, local));
     try {
-      if (local)
+      if (yourIR) {
+        setStatus({ text: "matching your IR", running: true });
+        const result = await matchYourIR(userIR, pattern);
+        onMatches(result.matches);
+        const matched = result.functions.filter((f) => f.matches > 0).length;
+        setMisses(result.functions.filter((f) => f.matches === 0));
+        setStatus({
+          text: "done",
+          details: [
+            ["functions", `${matched.toLocaleString()} of ${result.functions.length.toLocaleString()} matched`],
+          ],
+          matches: result.matches.length,
+          warnings: parseDiagnostics(result.messages)
+            .filter((d) => d.severity === "warning")
+            .map(({ message, line, column }) => ({ message, line, column })),
+        });
+      } else if (local)
         await matchLocal(
           Array.from(localFiles.current?.files ?? []),
           localIndex.current?.files?.[0],
@@ -192,7 +245,7 @@ export function App() {
       setRunning(false);
       setControl(undefined);
     }
-  }, [pattern, local, corpus]);
+  }, [pattern, local, yourIR, userIR, corpus]);
 
   const runRef = useRef(run);
   runRef.current = run;
@@ -239,15 +292,29 @@ export function App() {
             ))}
           </select>
         </label>
-        {import.meta.env.DEV && (
-          <label className="picker">
-            corpus
-            <select value={source} onChange={(e) => setSource(e.target.value as Source)}>
-              <option value="published">published</option>
-              <option value="local">local files</option>
-            </select>
-          </label>
-        )}
+        <div className="segmented" role="group" aria-label="What to match">
+          <button
+            id="source-corpus"
+            aria-pressed={source === "published"}
+            onClick={() => setSource("published")}
+            title="Match the published corpus"
+          >
+            Corpus
+          </button>
+          <button
+            id="source-ir"
+            aria-pressed={source === "ir"}
+            onClick={() => setSource("ir")}
+            title="Match IR you write, in the page"
+          >
+            Your IR
+          </button>
+          {import.meta.env.DEV && (
+            <button aria-pressed={source === "local"} onClick={() => setSource("local")}>
+              Local files
+            </button>
+          )}
+        </div>
         <button id="run" className="primary" disabled={!canRun} onClick={() => void run()}>
           Match
         </button>
@@ -353,21 +420,37 @@ export function App() {
                   selected={selected}
                   onSelect={setSelected}
                   running={running}
+                  misses={yourIR ? misses : undefined}
                 />
               </Panel>
             </Group>
           </Panel>
           <Separator className="separator vertical" />
           <Panel id="ir-panel" defaultSize="55" minSize="20">
-            <IRPane
-              match={selected}
-              ir={ir}
-              theme={theme}
-              links={links}
-              hovered={hovered}
-              onHover={onIRHover}
-              target={irTarget}
-            />
+            {yourIR ? (
+              <YourIRPane
+                value={userIR}
+                onChange={setUserIR}
+                match={selected}
+                linked={irLinked}
+                links={links}
+                hovered={hovered}
+                onHover={onIRHover}
+                diagnostics={irDiagnostics}
+                theme={theme}
+                target={irTarget}
+              />
+            ) : (
+              <IRPane
+                match={selected}
+                ir={ir}
+                theme={theme}
+                links={links}
+                hovered={hovered}
+                onHover={onIRHover}
+                target={irTarget}
+              />
+            )}
           </Panel>
         </Group>
       </main>

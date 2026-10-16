@@ -108,6 +108,16 @@ body { background: var(--bg); color: var(--fg); }
 .status-notes h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; }
 .status-notes ul { margin: 0; padding-left: 16px; font-size: 12px; overflow-wrap: anywhere; }
 .status-notes .hint { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
+.misses { padding: 0.5rem 0.75rem; font-size: 0.8rem; border-top: 1px solid var(--border); }
+.misses h3 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 600; }
+.misses ul { margin: 0; padding-left: 1rem; }
+.misses .fn { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.misses .why, .misses li li { color: var(--muted); overflow-wrap: anywhere; }
+.misses code { font-size: 0.75rem; color: var(--fg); }
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.segmented button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--bg); color: var(--muted); font: inherit; cursor: pointer; }
+.segmented button + button { border-left: 1px solid var(--border); }
+.segmented button[aria-pressed="true"] { background: var(--accent-bg); color: var(--fg); font-weight: 600; }
 .status-source { margin: 6px 0 0; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; overflow-x: auto; }
 .status-details { margin: 0.4rem 0 0; display: grid; gap: 0.15rem; }
 .status-details > div { display: flex; justify-content: space-between; gap: 1rem; }

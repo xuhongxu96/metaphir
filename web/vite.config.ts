@@ -1,4 +1,4 @@
-import { createReadStream, rmSync, statSync } from "node:fs";
+import { createReadStream, statSync } from "node:fs";
 import { join, normalize, resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Connect, type Plugin } from "vite";
@@ -52,26 +52,10 @@ function localData(): Plugin {
   };
 }
 
-/** Local files are matched in the development server only. */
-function withoutLocalMatcher(): Plugin {
-  let outDir = "dist";
-  return {
-    name: "metaphir-without-local-matcher",
-    apply: "build",
-    configResolved(config) {
-      outDir = resolve(config.root, config.build.outDir);
-    },
-    closeBundle() {
-      for (const ext of ["js", "wasm"])
-        rmSync(join(outDir, "wasm", `metaphir-match.${ext}`), { force: true });
-    },
-  };
-}
-
 export default defineConfig({
   // Served from a subpath of GitHub Pages.
   base: "./",
-  plugins: [react(), localData(), withoutLocalMatcher()],
+  plugins: [react(), localData()],
   resolve: {
     alias: {
       // Monaco's package exports only its scripts; its icon font's style is

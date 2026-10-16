@@ -1,6 +1,7 @@
-// Matching local files, in the development server only: metaphir-match,
-// built for WebAssembly, runs on the files placed in its in-memory file
-// system, with their index when one is given, as it would on a machine.
+// metaphir-match, built for WebAssembly, run on files placed in its
+// in-memory file system, with their index when one is given, as it would on
+// a machine: for local files (in the development server) and for the IR
+// written in the page.
 
 export interface LocalFile {
   /** The path relative to the corpus directory. */
@@ -9,7 +10,8 @@ export interface LocalFile {
 }
 
 export interface LocalResult {
-  /** Matches as metaphir-match --matches-only prints them, paths relative. */
+  /** Matches as metaphir-match --matches-only prints them, paths relative;
+   * or with full, its report of each function. */
   out: string;
   err: string;
   status: number;
@@ -44,6 +46,7 @@ export async function matchLocalFiles(
   files: LocalFile[],
   pattern: string,
   index?: Uint8Array,
+  full = false,
 ): Promise<LocalResult> {
   let out = "";
   let err = "";
@@ -63,7 +66,7 @@ export async function matchLocalFiles(
   for (const file of files) write(`${root}/${file.path}`, file.bytes);
   FS.mkdirTree(root);
   write("/pattern.mpir", pattern);
-  const args = ["--matches-only", "--print-instructions"];
+  const args = full ? [] : ["--matches-only", "--print-instructions"];
   if (index) {
     write("/corpus.mpidx", index);
     args.push("--index", "/corpus.mpidx", "--trust-index");

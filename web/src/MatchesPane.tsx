@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { Match } from "./engine.ts";
 import { filterMatches } from "./matchSearch.ts";
+import type { FunctionResult } from "./yourIR.ts";
 
 /** Rows shown at most; the count shows how many more there are. */
 const MAX_ROWS = 5000;
@@ -14,8 +15,10 @@ export function MatchesPane(props: {
   selected?: Match;
   onSelect: (match: Match) => void;
   running: boolean;
+  /** The functions without a match, when it is known why (your IR). */
+  misses?: FunctionResult[];
 }) {
-  const { matches, selected, onSelect, running } = props;
+  const { matches, selected, onSelect, running, misses = [] } = props;
   const [query, setQuery] = useState("");
   const body = useRef<HTMLTableSectionElement>(null);
   const found = useMemo(() => filterMatches(matches, query), [matches, query]);
@@ -96,7 +99,7 @@ export function MatchesPane(props: {
               ))}
             </tbody>
           </table>
-        ) : (
+        ) : misses.length ? null : (
           <p className="empty">
             {matches.length
               ? "No match has every binding and word of the search."
@@ -105,7 +108,36 @@ export function MatchesPane(props: {
                 : "No matches yet: write a pattern and press Match."}
           </p>
         )}
+        {misses.length > 0 && <Misses misses={misses} />}
       </div>
     </section>
+  );
+}
+
+/** Why each function without a match has none. */
+function Misses({ misses }: { misses: FunctionResult[] }) {
+  return (
+    <div id="misses" className="misses">
+      <h3>No match</h3>
+      <ul>
+        {misses.map((miss) => (
+          <li key={miss.fn}>
+            <span className="fn">{miss.fn}</span>
+            {miss.rejected.length === 0 ? (
+              <span className="why"> has none of the pattern's instructions</span>
+            ) : (
+              <ul>
+                {miss.rejected.map((r, i) => (
+                  <li key={i}>
+                    <code>{r.constraint}</code>{" "}
+                    {r.reason ? `could not be evaluated: ${r.reason}` : "is false"}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

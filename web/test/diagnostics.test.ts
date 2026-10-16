@@ -9,8 +9,14 @@ test("reads located diagnostics", () => {
     "               ^\n" +
     "metaphir-match: pattern.mpir:2:1: warning: unused ?y\n";
   assert.deepEqual(parseDiagnostics(text), [
-    { line: 4, column: 16, severity: "error", message: "matcher 'addi8' requires type 'i8'" },
-    { line: 2, column: 1, severity: "warning", message: "unused ?y" },
+    {
+      file: "pattern.mpir",
+      line: 4,
+      column: 16,
+      severity: "error",
+      message: "matcher 'addi8' requires type 'i8'",
+    },
+    { file: "pattern.mpir", line: 2, column: 1, severity: "warning", message: "unused ?y" },
   ]);
 });
 
