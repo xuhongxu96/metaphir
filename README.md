@@ -756,7 +756,6 @@ cd web && METAPHIR_DATA=/path/to/published npm run dev
 | | |
 |---|---|
 | `METAPHIR_DATA` | a directory from `metaphir-index publish`; the development server serves it at `/data` and points the site at it |
-| local files | the development server can also match local `.ll`/`.bc` files, with their index if given, using `metaphir-match` built for WebAssembly; the deployed site cannot |
 
 ## Layout
 

@@ -1,6 +1,5 @@
 // Opening the published corpus and running queries, apart from the page.
 
-import { parseDiagnostics } from "./diagnostics.ts";
 import { RangeFetcher, type ByteRange } from "./fetcher.ts";
 import type { Matchable, Note, Rejected } from "./pipeline.ts";
 import { QueryControl, runQuery } from "./pipeline.ts";
@@ -282,75 +281,4 @@ export class PublishedCorpus {
     if (!control.stopped) progress.fraction = 1;
     report(control.stopped ? "stopped" : "done");
   }
-}
-
-/** Matches local files with metaphir-match (the development server only). */
-export async function matchLocal(
-  picked: File[],
-  indexFile: File | undefined,
-  pattern: string,
-  onProgress: (progress: Progress) => void,
-  onMatches: (matches: Match[]) => void,
-): Promise<void> {
-  const { matchLocalFiles } = await import("./local.ts");
-  const files = [];
-  for (const file of picked) {
-    if (!/\.(ll|bc)$/.test(file.name)) continue;
-    // Paths relative to the picked directory.
-    const path = file.webkitRelativePath.split("/").slice(1).join("/") || file.name;
-    files.push({ path, bytes: new Uint8Array(await file.arrayBuffer()) });
-  }
-  if (!files.length) throw new Error("Pick a directory with .ll or .bc files.");
-  const index = indexFile ? new Uint8Array(await indexFile.arrayBuffer()) : undefined;
-  const started = performance.now();
-  const progress = (stage: string, matches = 0, warnings: Note[] = []): Progress => ({
-    stage,
-    warnings,
-    rejections: [],
-    matches,
-    matched: 0,
-    matchable: files.length,
-    candidates: 0,
-    requests: 0,
-    bytes: 0,
-    seconds: (performance.now() - started) / 1000,
-  });
-  onProgress(progress(`matching ${files.length} files`));
-  const result = await matchLocalFiles(wasmUrl("metaphir-match.js"), files, pattern, index);
-  if (result.status !== 0) throw new Error(result.err || `failed (${result.status})`);
-  // Textual IR shows the function as it is written; bitcode cannot be
-  // shown without a disassembler.
-  const texts = new Map(
-    files.filter((f) => f.path.endsWith(".ll")).map((f) => [f.path, f.bytes]),
-  );
-  const matches = result.out
-    .split("\n")
-    .filter(Boolean)
-    .map((line, i) => {
-      const match = parseMatch(i, line);
-      const text = texts.get(match.module);
-      if (text)
-        match.ir = async () => {
-          const body = functionText(new TextDecoder().decode(text), match.fn) ?? "";
-          return { text: body, lines: instructionLines(body) };
-        };
-      return match;
-    });
-  onMatches(matches);
-  // metaphir-match prints the pattern's warnings as it does its errors.
-  const warnings = parseDiagnostics(result.err)
-    .filter((d) => d.severity === "warning")
-    .map(({ message, line, column }) => ({ message, line, column }));
-  onProgress(progress("done", matches.length, warnings));
-}
-
-/** The definition of fn (as "@name") in the textual IR of a module. */
-export function functionText(module: string, fn: string): string | undefined {
-  const lines = module.split("\n");
-  const start = lines.findIndex(
-    (line) => line.startsWith("define ") && line.includes(`${fn}(`),
-  );
-  if (start < 0) return undefined;
-  const end = lines.findIndex((line, i) => i > start && line.startsWith("}"));
-  return lines.slice(start, end < 0 ? undefined : end + 1).join("\n");
 }

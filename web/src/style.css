@@ -283,16 +283,6 @@ button.binding:hover { border-color: var(--accent); background: var(--accent-bg)
 .separator.horizontal { height: 4px; cursor: row-resize; }
 .separator:hover, .separator[data-separator="active"] { background: var(--accent); }
 
-.local {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.8rem;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
-}
-
 table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 12.5px; }
 col.module { width: 34%; }
 col.function { width: 26%; }

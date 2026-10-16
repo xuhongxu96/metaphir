@@ -4,7 +4,7 @@
 // one has no match.
 
 import { instructionLines, parseMatch, wasmUrl, type Match } from "./engine.ts";
-import { matchLocalFiles } from "./local.ts";
+import { runMatcher } from "./wasmMatcher.ts";
 
 /** The name of the IR in diagnostics. */
 export const IR_FILE = "your.ll";
@@ -88,9 +88,9 @@ const named = (text: string) =>
 export async function matchYourIR(ir: string, pattern: string): Promise<IRResult> {
   const files = [{ path: IR_FILE, bytes: new TextEncoder().encode(ir) }];
   const url = wasmUrl("metaphir-match.js");
-  const found = await matchLocalFiles(url, files, pattern);
+  const found = await runMatcher(url, files, pattern);
   if (found.status !== 0) throw new Error(named(found.err) || `failed (${found.status})`);
-  const report = await matchLocalFiles(url, files, pattern, undefined, /*full=*/ true);
+  const report = await runMatcher(url, files, pattern, /*full=*/ true);
   if (report.status !== 0) throw new Error(named(report.err) || `failed (${report.status})`);
   const matches = found.out
     .split("\n")

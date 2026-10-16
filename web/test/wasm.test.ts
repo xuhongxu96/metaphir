@@ -14,7 +14,7 @@ import { join, resolve } from "node:path";
 import { RangeFetcher } from "../src/fetcher.ts";
 import { runQuery, type Coordinator, type Matcher } from "../src/pipeline.ts";
 import { loadModule, runStage, type MetaphIRModule, type Session } from "../src/session.ts";
-import { matchLocalFiles } from "../src/local.ts";
+import { runMatcher } from "../src/wasmMatcher.ts";
 import { instructionLines } from "../src/engine.ts";
 
 const repo = resolve(import.meta.dirname, "../..");
@@ -169,7 +169,7 @@ test("finds each instruction's line in printed IR", async () => {
     const end = Number(index.readBigUInt64LE(fn * 16 + 24));
     const printed = session.printFunction(packs.subarray(start, end));
     assert.ok(!("error" in printed));
-    // As local files' IR is read, from the text alone.
+    // As your IR's instructions are found, from the text alone.
     assert.deepEqual(instructionLines(printed.ir), printed.lines);
   }
 });
@@ -183,21 +183,18 @@ test("reports pattern errors", async () => {
   );
 });
 
-test("matches local files as metaphir-match does", async () => {
+test("matches files in the page as metaphir-match does", async () => {
   const files = Object.keys(SOURCES).map((path) => {
     const bc = path.replace(/\.ll$/, ".bc");
     return { path: bc, bytes: readFileSync(join(work, "corpus", bc)) };
   });
-  const index = readFileSync(join(work, "corpus.mpidx"));
   for (const [i, source] of PATTERNS.entries()) {
     const pattern = join(work, `pattern${i}.mpir`);
     writeFileSync(pattern, source);
     const expected = tool("metaphir-match", "--matches-only", "--print-instructions", pattern, join(work, "corpus"))
       .replaceAll(`${join(work, "corpus")}/`, "");
-    for (const withIndex of [undefined, index]) {
-      const result = await matchLocalFiles(join(wasm, "metaphir-match.js"), files, source, withIndex);
-      assert.equal(result.status, 0, result.err);
-      assert.equal(result.out.trimEnd(), expected.trimEnd(), source);
-    }
+    const result = await runMatcher(join(wasm, "metaphir-match.js"), files, source);
+    assert.equal(result.status, 0, result.err);
+    assert.equal(result.out.trimEnd(), expected.trimEnd(), source);
   }
 });

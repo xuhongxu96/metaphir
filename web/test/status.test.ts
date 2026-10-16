@@ -18,14 +18,13 @@ const progress = (matches: number): Progress => ({
 });
 
 test("a pause says as many matches as the counter", () => {
-  const status = describe(progress(1003), false);
+  const status = describe(progress(1003));
   assert.equal(status.text, "paused at 1,003 matches");
   assert.equal(status.matches, 1003);
 });
 
 test("rejecting constraints and warnings are marked on the pattern", () => {
-  const status = describe(
-    {
+  const status = describe({
       ...progress(0),
       warnings: [{ message: "shadowed", line: 1, column: 1 }],
       rejections: [
@@ -33,9 +32,7 @@ test("rejecting constraints and warnings are marked on the pattern", () => {
         { message: "(== (+ ?x 1) 2)", line: 3, column: 4, reason: "not a constant", functions: 1 },
         { message: "(isa ?x)", line: 0, column: 0, reason: "", functions: 1 },
       ],
-    },
-    false,
-  );
+  });
   assert.deepEqual(statusDiagnostics(status), [
     { line: 1, column: 1, severity: "warning", message: "shadowed" },
     {

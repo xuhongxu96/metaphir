@@ -10,8 +10,8 @@ import {
   useModifierLinks,
   type CodeEditor,
 } from "./editor.ts";
-import { inFile, parseDiagnostics, type Diagnostic } from "./diagnostics.ts";
-import { count, matchLocal, PublishedCorpus, type Match, type Progress } from "./engine.ts";
+import { inFile, parseDiagnostics } from "./diagnostics.ts";
+import { PublishedCorpus, type Match, type Progress } from "./engine.ts";
 import { IRPane } from "./IRPane.tsx";
 import type { Definition } from "./irDefinition.ts";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
@@ -21,11 +21,12 @@ import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
 import { patternHash, readPatternHash } from "./share/patternLink.ts";
-import { describe, statusDiagnostics, type Status } from "./status.ts";
+import { describe, statusDiagnostics } from "./status.ts";
 import { StatusChip } from "./StatusChip.tsx";
+import { useResults } from "./results.ts";
 import { useFunctionIR } from "./useFunctionIR.ts";
 import { YourIRPane } from "./YourIRPane.tsx";
-import { IR_FILE, matchYourIR, SAMPLE_IR, type FunctionResult } from "./yourIR.ts";
+import { IR_FILE, matchYourIR, SAMPLE_IR } from "./yourIR.ts";
 
 // The patterns of the evaluation, as examples.
 const EXAMPLES: Record<string, string> = Object.fromEntries(
@@ -47,9 +48,8 @@ const STDLIB = Object.values(
     eager: true,
   }) as Record<string, string>,
 )[0];
-// What Match searches: the published corpus, the IR written in the page,
-// or (in the development server) local files.
-type Source = "published" | "ir" | "local";
+// What Match searches: the published corpus or the IR written in the page.
+type Source = "published" | "ir";
 
 const IR_KEY = "metaphir-your-ir";
 function savedIR(): string {
@@ -76,8 +76,6 @@ export function App() {
       // Storage may be unavailable; the IR is then not kept.
     }
   }, [userIR]);
-  // The functions of the IR without a match, and why.
-  const [misses, setMisses] = useState<FunctionResult[]>([]);
   const [pattern, setPattern] = useState("");
   // A link can carry a pattern (see share/patternLink.ts); else the first
   // example is shown.
@@ -86,20 +84,23 @@ export function App() {
       setPattern(shared ?? Object.values(EXAMPLES)[0] ?? ""),
     );
   }, []);
-  const [status, setStatus] = useState<Status>({ text: "Loading the corpus…", running: true });
-  const [running, setRunning] = useState(false);
+  // Each source keeps its own results.
+  const results = {
+    published: useResults({ text: "Loading the corpus…", running: true }),
+    ir: useResults({ text: "Ready" }),
+  };
+  const shown = results[source];
+  const { matches, selected, setSelected, misses, status, matchedPattern, diagnostics, running } =
+    shown;
   // The published query running, to pause, continue or stop.
   const [control, setControl] = useState<QueryControl>();
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [selected, setSelected] = useState<Match>();
   const [copied, setCopied] = useState(false);
-  // The pattern as last matched, whose lines the matches refer to.
-  const [matchedPattern, setMatchedPattern] = useState<string>();
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
   const [patternTab, setPatternTab] = useState<PatternTab>("pattern");
-  // What the last run found wrong in the pattern, until it is edited.
-  const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
-  useEffect(() => setDiagnostics([]), [pattern]);
+  // What a run found wrong in the pattern is gone once it is edited.
+  useEffect(() => {
+    for (const r of Object.values(results)) r.setDiagnostics([]);
+  }, [pattern]);
   const [hovered, setHovered] = useState<Link[]>([]);
   const ir = useFunctionIR(selected);
   const links = useMemo<Link[]>(
@@ -152,15 +153,12 @@ export function App() {
     // A new object each time, gone to even if the same.
     (to) => setIRTarget({ ...to }),
   );
-  const localFiles = useRef<HTMLInputElement>(null);
-  const localIndex = useRef<HTMLInputElement>(null);
-  const local = import.meta.env.DEV && source === "local";
 
   useEffect(() => {
     PublishedCorpus.open().then(
       (opened) => {
         setCorpus(opened);
-        setStatus({
+        results.published.setStatus({
           text: "Ready",
           details: [
             ["functions", opened.functions.toLocaleString()],
@@ -168,7 +166,7 @@ export function App() {
           ],
         });
       },
-      (error: Error) => setStatus({ text: error.message, error: true }),
+      (error: Error) => results.published.setStatus({ text: error.message, error: true }),
     );
   }, []);
 
@@ -179,9 +177,21 @@ export function App() {
     [irLinked, diagnostics],
   );
   const canRun =
-    !running && pattern.trim() !== "" && (local || yourIR || corpus !== undefined);
+    !running && pattern.trim() !== "" && (yourIR || corpus !== undefined);
 
   const run = useCallback(async () => {
+    // A run's results go to the source it started in, even if another is
+    // shown meanwhile.
+    const into = results[source];
+    const {
+      setMatches,
+      setSelected,
+      setMisses,
+      setStatus,
+      setMatchedPattern,
+      setDiagnostics,
+      setRunning,
+    } = into;
     void patternHash(pattern).then((hash) => history.replaceState(null, "", hash));
     setMatchedPattern(pattern);
     setRunning(true);
@@ -204,7 +214,7 @@ export function App() {
       pending.push(...found);
       frame ||= requestAnimationFrame(flush);
     };
-    const onProgress = (progress: Progress) => setStatus(describe(progress, local));
+    const onProgress = (progress: Progress) => setStatus(describe(progress));
     try {
       if (yourIR) {
         setStatus({ text: "matching your IR", running: true });
@@ -222,15 +232,7 @@ export function App() {
             .filter((d) => d.severity === "warning")
             .map(({ message, line, column }) => ({ message, line, column })),
         });
-      } else if (local)
-        await matchLocal(
-          Array.from(localFiles.current?.files ?? []),
-          localIndex.current?.files?.[0],
-          pattern,
-          onProgress,
-          onMatches,
-        );
-      else {
+      } else {
         const control = new QueryControl();
         setControl(control);
         await corpus!.match(pattern, onProgress, onMatches, control);
@@ -243,9 +245,9 @@ export function App() {
       if (frame) cancelAnimationFrame(frame);
       flush();
       setRunning(false);
-      setControl(undefined);
+      if (!yourIR) setControl(undefined);
     }
-  }, [pattern, local, yourIR, userIR, corpus]);
+  }, [pattern, source, yourIR, userIR, corpus]);
 
   const runRef = useRef(run);
   runRef.current = run;
@@ -309,11 +311,6 @@ export function App() {
           >
             Your IR
           </button>
-          {import.meta.env.DEV && (
-            <button aria-pressed={source === "local"} onClick={() => setSource("local")}>
-              Local files
-            </button>
-          )}
         </div>
         <button id="run" className="primary" disabled={!canRun} onClick={() => void run()}>
           Match
@@ -321,7 +318,7 @@ export function App() {
         <button onClick={() => void share()} title="Copy a link to this pattern">
           {copied ? "link copied" : "Share"}
         </button>
-        <StatusChip status={status} control={control} />
+        <StatusChip status={status} control={yourIR ? undefined : control} />
         <label className="picker">
           theme
           <select
@@ -335,7 +332,7 @@ export function App() {
         </label>
         <ProgressBar status={status} />
       </header>
-      {control && status.pause?.kind === "candidates" && (
+      {!yourIR && control && status.pause?.kind === "candidates" && (
         <LargeSearchDialog candidates={status.pause.candidates} control={control} />
       )}
       <main className="panes">
@@ -377,18 +374,6 @@ export function App() {
                         : "read-only"}
                     </span>
                   </div>
-                  {local && (
-                    <div className="local">
-                      <label>
-                        .ll/.bc directory{" "}
-                        <input ref={localFiles} type="file" multiple {...{ webkitdirectory: "" }} />
-                      </label>
-                      <label>
-                        index (optional){" "}
-                        <input ref={localIndex} type="file" accept=".mpidx" />
-                      </label>
-                    </div>
-                  )}
                   {/* Both stay mounted, so the pattern keeps its undo history
                       and markers while the library is shown. */}
                   <div className="pane-body" hidden={patternTab !== "pattern"}>

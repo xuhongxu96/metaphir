@@ -33,16 +33,16 @@ function headline(progress: Progress): string {
     : `paused: ${count(pause.candidates, "candidate function")}`;
 }
 
-/** The status of a query, of local files or of the published corpus. */
-export function describe(progress: Progress, local: boolean): Status {
+/** The status of a query of the published corpus. */
+export function describe(progress: Progress): Status {
   const details: [string, string][] = [];
-  if (!local && progress.matchable)
+  if (progress.matchable)
     details.push([
       "functions",
       `${progress.matched.toLocaleString()} of ${progress.matchable.toLocaleString()} matched`,
     ]);
   details.push(["matches", progress.matches.toLocaleString()]);
-  if (!local) details.push(["read", `${(progress.bytes / 1e6).toFixed(1)} MB`]);
+  details.push(["read", `${(progress.bytes / 1e6).toFixed(1)} MB`]);
   details.push(["time", `${progress.seconds.toFixed(1)} s`]);
   return {
     text: headline(progress),
