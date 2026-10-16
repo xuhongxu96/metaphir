@@ -147,7 +147,8 @@ button.link:hover, button.link.selected { text-decoration: underline; }
 .card table.samples col.constraint { width: 55%; }
 .card table.samples td .warn { color: var(--warning); font-family: inherit; }
 .card-list { margin: 0; padding: 0.35rem 0.6rem 0.35rem 1.6rem; overflow-wrap: anywhere; }
-.card table.samples th { position: static; padding: 0.25rem 0.6rem; border-top: 1px solid var(--border); }
+/* Not sticky in a card, but still the place of its resize handle. */
+.card table.samples th { position: relative; padding: 0.25rem 0.6rem; border-top: 1px solid var(--border); }
 .card table.samples td { padding: 0.2rem 0.6rem; }
 .card-foot { margin: 0; padding: 0.3rem 0.6rem; color: var(--muted); border-top: 1px solid var(--border); font-size: 0.75rem; }
 .cards-hint { margin: 0; color: var(--muted); font-size: 0.75rem; }

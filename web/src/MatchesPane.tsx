@@ -158,7 +158,12 @@ export function MatchesPane(props: {
             className="count"
             title="What the constraints rejected"
           >
-            Rejected{rejected ? ` (${rejected.toLocaleString()})` : ""}
+            Rejected
+            {misses.length
+              ? ` (${count(misses.length, "function")})`
+              : rejections.length
+                ? ` (by ${count(rejections.length, "constraint")})`
+                : ""}
           </button>
         </div>
         {tab === "matches" && (
