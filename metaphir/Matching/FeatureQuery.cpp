@@ -86,6 +86,107 @@ bool FeatureRequirement::isSatisfiedBy(const FunctionFeatures &Features) const {
   return true;
 }
 
+/// An instruction matcher, as the pattern names it.
+static std::string opcode(Instruction::InstructionID ID) {
+  return ("`" + Instruction::getOpcodeName(ID) + "`").str();
+}
+
+/// "a" or "an", as an instruction matcher's name begins.
+static std::string article(Instruction::InstructionID ID) {
+  return StringRef("aeiou").contains(Instruction::getOpcodeName(ID).front())
+             ? "an"
+             : "a";
+}
+
+/// The first feature of R that Features lacks, in words, if any. The globals
+/// R names are hashes, named by Lowered's.
+static std::optional<std::string> firstLack(const FeatureRequirement &R,
+                                            const FunctionFeatures &Features,
+                                            const Pattern &Lowered) {
+  if (uint64_t Missing = R.Instructions & ~Features.Instructions) {
+    SmallVector<std::string, 4> Names;
+    for (; Missing; Missing &= Missing - 1)
+      Names.push_back(
+          opcode(Instruction::InstructionID(llvm::countr_zero(Missing))));
+    std::string Text = "it has no ";
+    for (auto [Index, Name] : enumerate(Names))
+      Text += (Index == 0                  ? ""
+               : Index + 1 == Names.size() ? " or "
+                                           : ", ") +
+              Name;
+    return Text;
+  }
+  for (auto [User, Operand] : R.Edges)
+    if (!Features.mayHaveEdge(User, Operand))
+      return ("no " + opcode(User) + " in it has " + article(Operand) + " " +
+              opcode(Operand) + " operand");
+  for (uint16_t Sibling : R.Siblings)
+    if (!std::binary_search(Features.Siblings.begin(), Features.Siblings.end(),
+                            Sibling)) {
+      auto A = Instruction::InstructionID(Sibling / 64);
+      auto B = Instruction::InstructionID(Sibling % 64);
+      return ("no value in it is used by both " + article(A) + " " + opcode(A) +
+              " and " + article(B) + " " + opcode(B));
+    }
+  for (uint64_t Hash : R.Globals) {
+    if (Features.hasGlobal(Hash))
+      continue;
+    for (const Instruction *I : Lowered.getInstructions())
+      for (const MatcherOperand &Op : I->getUnkeyedOperands())
+        if (const auto *Global = dyn_cast_or_null<GlobalValue>(Op.Val))
+          if (hashGlobalName(Global->getName()) == Hash)
+            return ("it uses no `@" + Global->getName() + "`").str();
+    return std::string("it uses none of the globals the pattern names");
+  }
+  if (!Features.Fine)
+    return std::nullopt;
+  for (const ShapeRequirement &Shape : R.Shapes) {
+    if (Shape.isSatisfiedBy(Features))
+      continue;
+    std::string Text = "no " + opcode(Shape.ID) + " in it";
+    SmallVector<std::string, 4> Parts;
+    for (unsigned Flag = 0; Flag != 32; ++Flag) {
+      if (Shape.Present & flagBit(Flag))
+        Parts.push_back(
+            ("has " + InstructionFlag::getName(InstructionFlag::FlagID(Flag)))
+                .str());
+      if (Shape.Absent & flagBit(Flag))
+        Parts.push_back(
+            ("lacks " + InstructionFlag::getName(InstructionFlag::FlagID(Flag)))
+                .str());
+    }
+    if (Shape.Width)
+      Parts.push_back("has an i" + std::to_string(Shape.Width) + " result");
+    for (auto [Index, Part] : enumerate(Parts))
+      Text += (Index == 0                  ? " "
+               : Index + 1 == Parts.size() ? " and "
+                                           : ", ") +
+              Part;
+    return Text;
+  }
+  for (const auto &[S, A] : R.SiteFacts)
+    if (!hasSiteFact(Features, S, A))
+      return "no " + opcode(S.Parent->getInstructionID()) +
+             " in it has the constant operand the pattern gives it";
+  return std::nullopt;
+}
+
+SmallVector<std::string, 2>
+FeatureQuery::explainNoStructure(const FunctionFeatures &Features) const {
+  SmallVector<std::string, 2> Reasons;
+  for (const Variant &V : Variants) {
+    std::optional<std::string> Lack =
+        firstLack(V.Requirement, Features, *V.Lowered);
+    std::string Reason =
+        Lack ? std::move(*Lack)
+             : "it has the instructions the pattern needs, but not as the "
+               "pattern connects them";
+    if (!is_contained(Reasons, Reason))
+      Reasons.push_back(std::move(Reason));
+  }
+  return Reasons;
+}
+
 void FeatureRequirement::unite(const FeatureRequirement &Other) {
   Instructions |= Other.Instructions;
   appendUnique<ShapeRequirement>(Shapes, Other.Shapes);

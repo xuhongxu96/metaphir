@@ -76,6 +76,13 @@ static cl::opt<std::string> PacksDir(
     cl::desc("Match the corpus published in this directory (by "
              "metaphir-index publish) instead of files; needs --matches-only"),
     cl::value_desc("directory"), cl::cat(Category));
+static cl::opt<bool> Explain(
+    "explain",
+    cl::desc("With each function without a match, print why: the structural "
+             "match each rejecting constraint rejected, with the instructions "
+             "it matched (as --print-instructions prints them), or what the "
+             "function lacks for a structural match; not with --matches-only"),
+    cl::cat(Category));
 static cl::opt<bool>
     PrintSummary("summary",
                  cl::desc("Print how many functions and files were matched "
@@ -408,13 +415,32 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
     Out << "target " << TargetIndex++ << ": @" << F->getName() << '\n';
     if (Matches.empty()) {
       Out << "  no match\n";
-      if (HadStructuralMatch)
+      if (HadStructuralMatch) {
         for (const UnsatisfiedConstraint &U : Unsatisfied) {
           Out << "  constraint not satisfied: " << *U.Expression;
           if (!U.Reason.empty())
             Out << " (cannot evaluate: " << U.Reason << ")";
           Out << '\n';
+          if (Explain) {
+            Out << "    rejected: ";
+            PrintMatch(*F, U.Rejected);
+            Out << '\t';
+            U.Rejected.printInstructions(
+                Out, [&](const metaphir::Instruction &I) {
+                  return getMainFileLine(Pattern.Source,
+                                         I.getSourceRange().Begin);
+                });
+            Out << '\n';
+          }
         }
+      } else if (Explain) {
+        FunctionFeatures Features = Function.Features && Function.Features->Fine
+                                        ? *Function.Features
+                                        : FunctionFeatures::compute(*F);
+        for (const std::string &Reason :
+             Pattern.Query.explainNoStructure(Features))
+          Out << "  no structural match: " << Reason << '\n';
+      }
       continue;
     }
     for (auto [Index, Match] : enumerate(Matches)) {
@@ -636,6 +662,10 @@ int main(int Argc, char **Argv) {
 
   if (Jobs != 1 && !MatchesOnly) {
     errs() << ToolName << ": error: -j needs --matches-only\n";
+    return 1;
+  }
+  if (Explain && MatchesOnly) {
+    errs() << ToolName << ": error: --explain is not for --matches-only\n";
     return 1;
   }
   if (PrintInstructions && !MatchesOnly) {

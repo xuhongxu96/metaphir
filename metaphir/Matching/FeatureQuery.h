@@ -109,6 +109,13 @@ public:
     return Variants[Index].Requirement.isSatisfiedBy(Features);
   }
 
+  /// Why a function with Features has no structural match, in words: for
+  /// each variant whose features it lacks, the first of them; or, if it has
+  /// a variant's features, that its instructions are not as the variant
+  /// connects them. Without duplicates.
+  SmallVector<std::string, 2>
+  explainNoStructure(const FunctionFeatures &Features) const;
+
 private:
   struct Variant {
     FeatureRequirement Requirement;
