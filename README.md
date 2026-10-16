@@ -582,6 +582,15 @@ The page is React, in resizable panes:
 
 - Hovering a matched instruction in either editor highlights its counterpart
   in the other.
+- The search above the matches keeps those with every word of it in their
+  module, function or bindings. A binding in it, `?a = %x` or `?a=%x`, must be
+  one of the match's, the variable bound to that value; quote a value with
+  spaces: `?v = "<2 x i32> <i32 1, i32 2>"`.
+- A pattern's errors are marked in the editor, and listed in the status
+  panel with their source line and caret. The panel also lists the pattern's
+  warnings, and the constraints that rejected the structural matches of the
+  functions matched, with how many functions each rejected; those that could
+  not be evaluated are marked in the editor as warnings.
 - A progress bar follows each stage's reads, then the matching.
 - The theme follows the system unless one is chosen.
 
