@@ -108,14 +108,36 @@ body { background: var(--bg); color: var(--fg); }
 .status-notes h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; }
 .status-notes ul { margin: 0; padding-left: 16px; font-size: 12px; overflow-wrap: anywhere; }
 .status-notes .hint { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
-.rejections { padding: 0.25rem 0 0.5rem; font-size: 0.8rem; }
-.rejection { border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
-.rejection p { margin: 0.4rem 0.75rem; overflow-wrap: anywhere; }
-.rejection .where, .rejections .hint { color: var(--muted); }
-.rejections > .hint { margin: 0.5rem 0.75rem 0; font-size: 0.75rem; }
-.rejection tr { cursor: pointer; }
-.rejection.focused { animation: flash 1.5s ease-out; }
-@keyframes flash { from { background: var(--accent-bg); } to { background: transparent; } }
+.cards { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.75rem; font-size: 0.8rem; }
+.card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg); }
+.card.focused { box-shadow: 0 0 0 2px var(--accent); }
+.card-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}
+.card-header code { font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
+.card-header .where { color: var(--muted); }
+.card-header .badge {
+  margin-left: auto;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.card-note { margin: 0; padding: 0.35rem 0.6rem; color: var(--muted); overflow-wrap: anywhere; }
+.card-note.warn, .card-list li.warn { color: var(--warning); }
+.card-list { margin: 0; padding: 0.35rem 0.6rem 0.35rem 1.6rem; overflow-wrap: anywhere; }
+.card table.samples th { position: static; padding: 0.25rem 0.6rem; border-top: 1px solid var(--border); }
+.card table.samples td { padding: 0.2rem 0.6rem; }
+.card-foot { margin: 0; padding: 0.3rem 0.6rem; color: var(--muted); border-top: 1px solid var(--border); font-size: 0.75rem; }
+.cards-hint { margin: 0; color: var(--muted); font-size: 0.75rem; }
 .status-notes button.link {
   vertical-align: top;
   white-space: normal;
@@ -129,12 +151,6 @@ body { background: var(--bg); color: var(--fg); }
   cursor: pointer;
 }
 .status-notes button.link:hover { text-decoration: underline; }
-.misses { padding: 0.5rem 0.75rem; font-size: 0.8rem; border-top: 1px solid var(--border); }
-.misses h3 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 600; }
-.misses ul { margin: 0; padding-left: 1rem; }
-.misses .fn { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.misses .why, .misses li li { color: var(--muted); overflow-wrap: anywhere; }
-.misses code { font-size: 0.75rem; color: var(--fg); }
 .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .segmented button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--bg); color: var(--muted); font: inherit; cursor: pointer; }
 .segmented button + button { border-left: 1px solid var(--border); }

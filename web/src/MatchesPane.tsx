@@ -175,27 +175,27 @@ export function MatchesPane(props: {
 /** Why each function without a match has none. */
 function Misses({ misses }: { misses: FunctionResult[] }) {
   return (
-    <div id="misses" className="misses">
-      <h3>No match</h3>
-      <ul>
-        {misses.map((miss) => (
-          <li key={miss.fn}>
-            <span className="fn">{miss.fn}</span>
-            {miss.rejected.length === 0 ? (
-              <span className="why"> has none of the pattern's instructions</span>
-            ) : (
-              <ul>
-                {miss.rejected.map((r, i) => (
-                  <li key={i}>
-                    <code>{r.constraint}</code>{" "}
-                    {r.reason ? `could not be evaluated: ${r.reason}` : "is false"}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
+    <div id="misses" className="cards">
+      {misses.map((miss) => (
+        <section key={miss.fn} className="card">
+          <header className="card-header">
+            <code>{miss.fn}</code>
+            <span className="badge">no match</span>
+          </header>
+          {miss.rejected.length === 0 ? (
+            <p className="card-note">It has none of the pattern's instructions.</p>
+          ) : (
+            <ul className="card-list">
+              {miss.rejected.map((r, i) => (
+                <li key={i} className={r.reason ? "warn" : undefined}>
+                  <code>{r.constraint}</code>{" "}
+                  {r.reason ? `could not be evaluated: ${r.reason}` : "was false"}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ))}
     </div>
   );
 }
@@ -221,30 +221,33 @@ function Rejections(props: {
     // Only a new focus is brought into view, not the same as more arrive.
   }, [focus]);
   return (
-    <div id="rejections" className="rejections" ref={root}>
+    <div id="rejections" className="cards" ref={root}>
       {rejections.map((r) => (
-        <div
+        <section
           key={rejectionKey(r)}
-          className={`rejection${focused === rejectionKey(r) ? " focused" : ""}`}
+          className={`card rejection${focused === rejectionKey(r) ? " focused" : ""}`}
         >
-          <p>
+          <header className="card-header">
             <code>{r.message}</code>
-            {r.line > 0 && <span className="where"> line {r.line}</span>}{" "}
+            {r.line > 0 && <span className="where">line {r.line}</span>}
+            <span className="badge">{count(r.functions, "function")}</span>
+          </header>
+          <p className={`card-note${r.reason ? " warn" : ""}`}>
             {r.reason
-              ? `could not be evaluated in ${count(r.functions, "function")}: ${r.reason}`
-              : `rejected the structural matches of ${count(r.functions, "function")}`}
-            {r.functions > r.samples.length && (
-              <span className="hint">
-                {" "}
-                (first {Math.min(REJECTION_SAMPLES, r.samples.length)} listed)
-              </span>
-            )}
+              ? `Could not be evaluated: ${r.reason}`
+              : "False for every structural match of these functions."}
           </p>
-          <table>
+          <table className="samples">
             <colgroup>
               <col className="module" />
               <col />
             </colgroup>
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Function</th>
+              </tr>
+            </thead>
             <tbody>
               {r.samples.map((sample) => (
                 <tr
@@ -258,9 +261,17 @@ function Rejections(props: {
               ))}
             </tbody>
           </table>
-        </div>
+          {r.functions > r.samples.length && (
+            <p className="card-foot">
+              First {Math.min(REJECTION_SAMPLES, r.samples.length)} of{" "}
+              {r.functions.toLocaleString()} listed
+            </p>
+          )}
+        </section>
       ))}
-      <p className="hint">Counted in the functions matched: those the index rules out are not.</p>
+      <p className="cards-hint">
+        Counted in the functions matched: those the index rules out are not.
+      </p>
     </div>
   );
 }
