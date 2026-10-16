@@ -93,6 +93,15 @@ PatternMatcher::match(const Pattern &Pattern, const Target &Program,
   return Matches;
 }
 
+/// Whether A and B are copies of one constraint of the pattern, as lowering
+/// makes for its variants: they come from the same source text.
+static bool isSameConstraint(const Constraint &A, const Constraint &B) {
+  SourceRange RA = A.getSourceRange(), RB = B.getSourceRange();
+  if (&A == &B)
+    return true;
+  return RA.Begin.isValid() && RA.Begin == RB.Begin && RA.End == RB.End;
+}
+
 MatchResults
 PatternMatcher::match(const PatternVariants &Variants, const Target &Program,
                       SmallVectorImpl<UnsatisfiedConstraint> *Unsatisfied,
@@ -119,8 +128,14 @@ PatternMatcher::match(const PatternVariants &Variants, const Target &Program,
         applyConstraints(*Variant, std::move(Structural), Failed);
     // Variants for the operand orders of a ':c' use can find the same match.
     appendUnique(Combined, std::move(Matches));
+    // A constraint is copied into each variant (each ':c' order, each
+    // branch of a composite matcher), and reported once.
     if (Combined.empty() && Unsatisfied)
-      Unsatisfied->append(Failed.begin(), Failed.end());
+      for (UnsatisfiedConstraint &U : Failed)
+        if (none_of(*Unsatisfied, [&](const UnsatisfiedConstraint &Known) {
+              return isSameConstraint(*Known.Expression, *U.Expression);
+            }))
+          Unsatisfied->push_back(std::move(U));
   }
   return Combined;
 }

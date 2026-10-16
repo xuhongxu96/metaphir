@@ -62,7 +62,6 @@ define i32 @umax(i32 %a, i32 %b) {
 ; SIGNED-NEXT: target 2: @umax
 ; SIGNED-NEXT:   no match
 ; SIGNED-NEXT:   constraint not satisfied: (|| (== (intrinsic ?mm) "llvm.smax") (== (intrinsic ?mm) "llvm.smin"))
-; SIGNED-NEXT:   constraint not satisfied: (|| (== (intrinsic ?mm) "llvm.smax") (== (intrinsic ?mm) "llvm.smin"))
 
 ; ANY-NEXT: target 2: @umax
 ; ANY-NEXT:   match 0:
@@ -78,7 +77,6 @@ define i32 @umin(i32 %a, i32 %b) {
 }
 ; SIGNED-NEXT: target 3: @umin
 ; SIGNED-NEXT:   no match
-; SIGNED-NEXT:   constraint not satisfied: (|| (== (intrinsic ?mm) "llvm.smax") (== (intrinsic ?mm) "llvm.smin"))
 ; SIGNED-NEXT:   constraint not satisfied: (|| (== (intrinsic ?mm) "llvm.smax") (== (intrinsic ?mm) "llvm.smin"))
 
 ; ANY-NEXT: target 3: @umin
