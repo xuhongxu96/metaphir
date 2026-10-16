@@ -208,6 +208,7 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
   color: var(--muted);
 }
 .picker select {
+  max-width: 24rem;
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--border);
   background: var(--bg-alt);
@@ -216,6 +217,7 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
   color: var(--fg);
   cursor: pointer;
 }
+.pr-link { font-size: 0.85rem; white-space: nowrap; }
 
 /* The progress of a run, along the toolbar's bottom edge. */
 .progress {

@@ -29,6 +29,7 @@ import { linkLines, patternLink, type Link, type NavLink } from "./navigation.ts
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
+import { exampleLabel, pullRequest, pullRequestUrl } from "./examples.ts";
 import { patternHash, readPatternHash } from "./share/patternLink.ts";
 import {
   corpusDetails,
@@ -104,6 +105,7 @@ export function App() {
   }, []);
   // The example the pattern is, until it is edited.
   const example = Object.keys(EXAMPLES).find((name) => EXAMPLES[name] === pattern);
+  const pr = example === undefined ? undefined : pullRequest(example);
   // Each source keeps its own results.
   const results = {
     published: useResults({ text: "Loading the corpus…", running: true }),
@@ -349,6 +351,7 @@ export function App() {
           <select
             id="example"
             value={example ?? ""}
+            title={example && exampleLabel(example)}
             onChange={(event) => {
               const text = EXAMPLES[event.target.value];
               if (text !== undefined) setPattern(text);
@@ -357,11 +360,22 @@ export function App() {
             <option value="">choose…</option>
             {Object.keys(EXAMPLES).map((name) => (
               <option key={name} value={name}>
-                {name}
+                {exampleLabel(name)}
               </option>
             ))}
           </select>
         </label>
+        {pr !== undefined && (
+          <a
+            className="pr-link"
+            href={pullRequestUrl(pr)}
+            target="_blank"
+            rel="noreferrer"
+            title="The LLVM pull request that added the fold"
+          >
+            #{pr}
+          </a>
+        )}
         <div className="segmented" role="group" aria-label="What to match">
           <button
             id="source-corpus"
