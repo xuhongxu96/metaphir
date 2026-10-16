@@ -102,6 +102,8 @@ export function App() {
       setPattern(shared ?? Object.values(EXAMPLES)[0] ?? ""),
     );
   }, []);
+  // The example the pattern is, until it is edited.
+  const example = Object.keys(EXAMPLES).find((name) => EXAMPLES[name] === pattern);
   // Each source keeps its own results.
   const results = {
     published: useResults({ text: "Loading the corpus…", running: true }),
@@ -345,7 +347,8 @@ export function App() {
         <label className="picker">
           example
           <select
-            value=""
+            id="example"
+            value={example ?? ""}
             onChange={(event) => {
               const text = EXAMPLES[event.target.value];
               if (text !== undefined) setPattern(text);
