@@ -73,6 +73,27 @@ TEST_F(ConstraintInterpreterTest, EvaluatesArithmeticOperators) {
   EXPECT_EQ(evaluateInteger(*call("ashr", integer(-16), integer(2))), -4);
 }
 
+TEST_F(ConstraintInterpreterTest, EvaluatesWideIntegersExactly) {
+  APSInt Max64(APInt::getMaxValue(64), /*isUnsigned=*/true);
+  IntegerConstraint *Wide = IntegerConstraint::create(Context, Max64, Range);
+  EXPECT_EQ(evaluate(*Wide).getInteger(), Max64);
+  EXPECT_TRUE(evaluateBoolean(*call("ugt", Wide, integer(0))));
+
+  // Without a bit width, results grow instead of wrapping.
+  APSInt Sum = evaluate(*binary("+", Wide, integer(1))).getInteger();
+  EXPECT_EQ(Sum.getActiveBits(), 65u);
+  APSInt Shifted = evaluate(*call("shl", integer(1), integer(70))).getInteger();
+  EXPECT_EQ(Shifted.countr_zero(), 70u);
+  EXPECT_EQ(Shifted.popcount(), 1u);
+  EXPECT_EQ(evaluateInteger(*call("lshr", integer(1), integer(64))), 0);
+  EXPECT_EQ(evaluateInteger(*call("ashr", integer(-8), integer(100))), -1);
+
+  // With a bit width, operators behave like the LLVM instructions.
+  EXPECT_EQ(evaluateInteger(*operation(Constraint::Call, "shl",
+                                       {integer(1), integer(7), integer(8)})),
+            -128);
+}
+
 TEST_F(ConstraintInterpreterTest, EvaluatesBooleanAndEqualityOperators) {
   EXPECT_TRUE(evaluateBoolean(*binary("||", boolean(false), boolean(true))));
   EXPECT_FALSE(evaluateBoolean(*binary("&&", boolean(true), boolean(false))));
@@ -479,12 +500,12 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "cannot evaluate constraint '?values[0]': array index is out of "
             "bounds");
 
-  OperatorConstraint *InvalidShift = call("lshr", integer(1), integer(64));
+  OperatorConstraint *InvalidShift = operation(Constraint::Call, "lshr", {integer(1), integer(64), integer(64)});
   Expected<ConstraintValue> ShiftResult =
       Interpreter.evaluate(*InvalidShift, State);
   ASSERT_FALSE(ShiftResult);
   EXPECT_EQ(toString(ShiftResult.takeError()),
-            "cannot evaluate constraint '(lshr 1 64)': shift amount is out of "
+            "cannot evaluate constraint '(lshr 1 64 64)': shift amount is out of "
             "range");
 
   OperatorConstraint *NegativeShift = call("ashr", integer(1), integer(-1));

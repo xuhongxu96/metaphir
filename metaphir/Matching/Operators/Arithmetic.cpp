@@ -231,26 +231,35 @@ static Expected<ConstraintValue> evaluateShift(Constraint::OperatorID ID,
   Expected<APSInt> Amount = requireInteger(Call.Operands[1], Call.Expression);
   if (!Amount)
     return Amount.takeError();
-  if ((Amount->isSigned() && Amount->isNegative()) ||
-      Amount->uge(Value->getBitWidth()))
+  if (Amount->isSigned() && Amount->isNegative())
     return make_error<ConstraintEvaluationError>(
         Call.Expression, "shift amount is out of range");
-  // Without an explicit width, shl keeps the bits shifted out of the
-  // operand's width, like the other arithmetic operators.
-  if (!*BitWidth && ID == Constraint::O_Shl)
-    *Value = extend(*Value, Value->getBitWidth() + Amount->getZExtValue(),
+  // With a bit width, a shift by the width or more is poison in LLVM.
+  if (*BitWidth && Amount->uge(**BitWidth))
+    return make_error<ConstraintEvaluationError>(
+        Call.Expression, "shift amount is out of range");
+  // Without one, integers are mathematical: shl keeps every bit, and a right
+  // shift past the operand's bits leaves only its sign.
+  uint64_t Shift = Amount->getLimitedValue();
+  if (!*BitWidth && ID == Constraint::O_Shl) {
+    if (Shift > llvm::IntegerType::MAX_INT_BITS)
+      return make_error<ConstraintEvaluationError>(
+          Call.Expression, "shift amount is out of range");
+    *Value = extend(*Value, Value->getBitWidth() + unsigned(Shift),
                     Value->isUnsigned());
+  }
   const APInt &Integer = *Value;
+  unsigned Width = Integer.getBitWidth();
   APInt Result;
   switch (ID) {
   case Constraint::O_Lshr:
-    Result = Integer.lshr(Amount->getLimitedValue());
+    Result = Shift >= Width ? APInt::getZero(Width) : Integer.lshr(Shift);
     break;
   case Constraint::O_Ashr:
-    Result = Integer.ashr(Amount->getLimitedValue());
+    Result = Integer.ashr(std::min<uint64_t>(Shift, Width - 1));
     break;
   case Constraint::O_Shl:
-    Result = Integer.shl(Amount->getLimitedValue());
+    Result = Integer.shl(Shift);
     break;
   default:
     llvm_unreachable("invalid shift operator");

@@ -53,9 +53,8 @@ public:
   Expected<Value> evaluate(const Constraint &Expression, const State &S) {
     switch (Expression.getConstraintID()) {
     case Constraint::Integer: {
-      int64_t Integer = cast<IntegerConstraint>(Expression).getValue();
-      return D.fromConcrete(ConstraintValue::getInteger(APSInt(
-          APInt(64, static_cast<uint64_t>(Integer), true), Integer >= 0)));
+      return D.fromConcrete(ConstraintValue::getInteger(
+          cast<IntegerConstraint>(Expression).getValue()));
     }
     case Constraint::Boolean:
       return D.fromConcrete(ConstraintValue::getBoolean(

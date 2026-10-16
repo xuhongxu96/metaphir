@@ -237,10 +237,7 @@ bool MIRParser::parseConstraintPrimary(Constraint *&Result) {
   SourceRange Range{Loc, Loc};
   switch (Lex.getKind()) {
   case tok::APSInt: {
-    if (!Lex.getAPSIntVal().isRepresentableByInt64())
-      return error("constraint integer is too large");
-    Result = IntegerConstraint::create(Context,
-                                       Lex.getAPSIntVal().getExtValue(), Range);
+    Result = IntegerConstraint::create(Context, Lex.getAPSIntVal(), Range);
     next();
     return false;
   }

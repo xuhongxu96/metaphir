@@ -9,8 +9,8 @@
 ; RUN: not %metaphir-parse %t/width-wraps.ll 2>&1 | FileCheck %s --check-prefix=WIDTH
 ; RUN: not %metaphir-parse %t/width-zero-after-wrap.ll 2>&1 | FileCheck %s --check-prefix=WIDTH
 ; RUN: not %metaphir-parse %t/width-too-large.ll 2>&1 | FileCheck %s --check-prefix=WIDTH
-; RUN: not %metaphir-parse %t/constraint-int.ll 2>&1 | FileCheck %s --check-prefix=CONSTRAINT-INT
-; RUN: not %metaphir-parse %t/constraint-uint.ll 2>&1 | FileCheck %s --check-prefix=CONSTRAINT-INT
+; RUN: %metaphir-parse %t/constraint-int.ll 2>&1 | FileCheck %s --check-prefix=CONSTRAINT-INT
+; RUN: %metaphir-parse %t/constraint-uint.ll 2>&1 | FileCheck %s --check-prefix=CONSTRAINT-UINT
 ; RUN: not %metaphir-parse %t/metaflag-int.ll 2>&1 | FileCheck %s --check-prefix=METAFLAG-INT
 ; RUN: not %metaphir-parse %t/hex-float-literal.ll 2>&1 | FileCheck %s --check-prefix=HEX-FLOAT-LITERAL
 ; RUN: not %metaphir-parse %t/ampersand.ll 2>&1 | FileCheck %s --check-prefix=AMPERSAND
@@ -48,11 +48,13 @@ add i9000000 ?x, ?y
 ;--- constraint-int.ll
 add i32 ?x, ?y
 ;; ?x == 9223372036854775808
-; CONSTRAINT-INT: error: constraint integer is too large
+; Constraint integers are arbitrary precision.
+; CONSTRAINT-INT: constraint (== ?x 9223372036854775808)
 
 ;--- constraint-uint.ll
 add i32 ?x, ?y
-;; ?x == 18446744073709551615
+;; ?x == 340282366920938463463374607431768211456
+; CONSTRAINT-UINT: constraint (== ?x 340282366920938463463374607431768211456)
 
 ;--- metaflag-int.ll
 add:o(9223372036854775808) i32 ?x, ?y

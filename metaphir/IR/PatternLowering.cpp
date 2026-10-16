@@ -239,11 +239,7 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
       if (VC->getSort() == Sort::Boolean && Number.getBitWidth() == 1)
         return BooleanConstraint::create(Context, !Number.isZero(),
                                          VC->getSourceRange());
-      if (!Number.isRepresentableByInt64())
-        return makeError("constant " + toString(Number) + " bound to '" +
-                         toString(*C) + "' is too large for a constraint");
-      return IntegerConstraint::create(Context, Number.getExtValue(),
-                                       VC->getSourceRange());
+      return IntegerConstraint::create(Context, Number, VC->getSourceRange());
     } else {
       return makeError("'" + toString(*C) + "' is bound to '" +
                        toString(*Target) +

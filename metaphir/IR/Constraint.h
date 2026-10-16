@@ -3,6 +3,7 @@
 
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Sort.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <optional>
 #include <variant>
@@ -87,21 +88,25 @@ raw_ostream &operator<<(raw_ostream &OS, const Constraint &C);
 
 // Kinds of constraint expression nodes.
 
-/// An integer literal.
+/// An integer literal, of any size. A non-negative literal is unsigned and a
+/// negative one signed, each at least 64 bits wide.
 class IntegerConstraint : public Constraint {
 public:
-  int64_t getValue() const { return Number; }
+  const APSInt &getValue() const { return Number; }
   static bool classof(const Constraint *C) {
     return C->getConstraintID() == Integer;
   }
+  /// The literal with Number's value, read as its signedness says.
+  static IntegerConstraint *create(MIRContext &Context, const APSInt &Number,
+                                   SourceRange Range);
   static IntegerConstraint *create(MIRContext &Context, int64_t Number,
                                    SourceRange Range);
 
 private:
-  int64_t Number;
+  APSInt Number;
 
-  IntegerConstraint(int64_t N, SourceRange R)
-      : Constraint(Integer, Sort::Integer, R), Number(N) {}
+  IntegerConstraint(APSInt N, SourceRange R)
+      : Constraint(Integer, Sort::Integer, R), Number(std::move(N)) {}
 };
 
 /// 'true' or 'false'.

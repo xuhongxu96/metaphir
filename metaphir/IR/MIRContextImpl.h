@@ -20,6 +20,8 @@
 namespace llvm {
 namespace metaphir {
 
+class Constraint;
+
 class Pattern;
 
 class MIRContextImpl {
@@ -49,6 +51,9 @@ public:
   /// storage). The arena releases memory without running destructors, so
   /// these are destroyed explicitly with the context.
   SmallVector<Value *, 0> ValuesToDestroy;
+  /// Constraints owning heap memory, such as integer literals wider than 64
+  /// bits, destroyed with the context.
+  SmallVector<Constraint *, 0> ConstraintsToDestroy;
 
   StringMap<CompositeMatcher *> CompositeMatchers;
   StringMap<ConstraintDef *> ConstraintDefs;

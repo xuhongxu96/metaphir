@@ -7,9 +7,28 @@ namespace llvm {
 namespace metaphir {
 
 IntegerConstraint *IntegerConstraint::create(MIRContext &Context,
+                                             const APSInt &Number,
+                                             SourceRange Range) {
+  bool Negative = Number.isSigned() && Number.isNegative();
+  APSInt Literal =
+      Negative
+          ? APSInt(
+                Number.sextOrTrunc(std::max(64u, Number.getSignificantBits())),
+                /*isUnsigned=*/false)
+          : APSInt(Number.zextOrTrunc(std::max(64u, Number.getActiveBits())),
+                   /*isUnsigned=*/true);
+  auto *Result =
+      new (Context.pImpl->Alloc) IntegerConstraint(std::move(Literal), Range);
+  if (Result->Number.needsCleanup())
+    Context.pImpl->ConstraintsToDestroy.push_back(Result);
+  return Result;
+}
+
+IntegerConstraint *IntegerConstraint::create(MIRContext &Context,
                                              int64_t Number,
                                              SourceRange Range) {
-  return new (Context.pImpl->Alloc) IntegerConstraint(Number, Range);
+  return create(Context, APSInt(APInt(64, uint64_t(Number), true), false),
+                Range);
 }
 
 BooleanConstraint *BooleanConstraint::create(MIRContext &Context, bool State,
