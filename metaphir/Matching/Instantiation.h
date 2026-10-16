@@ -113,18 +113,12 @@ public:
 
   /// Prints the IR instructions the pattern's instructions matched, as
   /// "{%name@line = #position, ...}": each pattern instruction by its result
-  /// name (or opcode) and, where LineOf knows it, its line in the pattern --
-  /// for one expanded from a composite matcher, that of the instruction
-  /// using the composite as the pattern has it;
-  /// the IR instruction by its position among its function's instructions.
-  /// An or-self matcher stands for the instruction it matched in its place;
-  /// one that matched another kind of value is left out.
-  void printInstructions(
-      raw_ostream &OS,
-      function_ref<std::optional<unsigned>(const metaphir::Instruction &)>
-          LineOf) const;
-  /// The same, with each pattern instruction's line in the main file of
-  /// Source, the pattern's.
+  /// name (or opcode) and, if it is in the main file of Source (the
+  /// pattern's), its line there -- for one expanded from a composite
+  /// matcher, that of the instruction using the composite as the pattern
+  /// has it; the IR instruction by its position among its function's
+  /// instructions. An or-self matcher stands for the instruction it matched
+  /// in its place; one that matched another kind of value is left out.
   void printInstructions(raw_ostream &OS, const SourceMgr &Source) const;
 
   /// Prints the match as metaphir-match --matches-only does: Module,

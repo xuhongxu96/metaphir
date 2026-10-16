@@ -96,10 +96,8 @@ raw_ostream &operator<<(raw_ostream &OS,
   return OS;
 }
 
-void Instantiation::printInstructions(
-    raw_ostream &OS,
-    function_ref<std::optional<unsigned>(const metaphir::Instruction &)> LineOf)
-    const {
+void Instantiation::printInstructions(raw_ostream &OS,
+                                      const SourceMgr &Source) const {
   struct Matched {
     std::optional<unsigned> Line;
     std::string Name;
@@ -119,7 +117,8 @@ void Instantiation::printInstructions(
     const metaphir::Instruction *Written = PatternInstruction;
     while (Written->getExpandedFrom())
       Written = Written->getExpandedFrom();
-    std::optional<unsigned> Line = LineOf(*Written);
+    std::optional<unsigned> Line =
+        getMainFileLine(Source, Written->getSourceRange().Begin);
     StringRef Result = PatternInstruction->getResultName();
     All.push_back({Line,
                    Result.empty() ? PatternInstruction->getOpcodeName().str()
@@ -171,13 +170,6 @@ void Instantiation::printConflict(raw_ostream &OS, const Conflict &C,
   printBinding(OS, C.First, Slots);
   OS << " and ";
   printBinding(OS, C.Second, Slots);
-}
-
-void Instantiation::printInstructions(raw_ostream &OS,
-                                      const SourceMgr &Source) const {
-  printInstructions(OS, [&](const metaphir::Instruction &I) {
-    return getMainFileLine(Source, I.getSourceRange().Begin);
-  });
 }
 
 void Instantiation::printLine(raw_ostream &OS, StringRef Module,
