@@ -1,6 +1,8 @@
 // What the page shows of a query: a line, its numbers and how far it is.
 
-import { count, type Pause, type Progress } from "./engine.ts";
+import { count, type Pause, type Progress, type Rejection } from "./engine.ts";
+import type { Diagnostic } from "./diagnostics.ts";
+import type { Note } from "./pipeline.ts";
 
 export interface Status {
   /** What is going on, or what went wrong. */
@@ -9,6 +11,10 @@ export interface Status {
   details?: [string, string][];
   /** How many matches there are so far. */
   matches?: number;
+  /** The pattern's warnings. */
+  warnings?: Note[];
+  /** The constraints that rejected structural matches. */
+  rejections?: Rejection[];
   error?: boolean;
   /** How far a run is, from 0 to 1; undefined while not known. */
   fraction?: number;
@@ -42,8 +48,38 @@ export function describe(progress: Progress, local: boolean): Status {
     text: headline(progress),
     details,
     matches: progress.matches,
+    warnings: progress.warnings,
+    rejections: progress.rejections,
     fraction: progress.fraction,
     running: progress.stage !== "done" && progress.stage !== "stopped",
     pause: progress.paused,
   };
+}
+
+/** What a constraint that rejected structural matches did, in words. */
+export function describeRejection(r: Rejection): string {
+  const where = `in ${count(r.functions, "function")}`;
+  return r.reason
+    ? `${r.message} could not be evaluated ${where}: ${r.reason}`
+    : `${r.message} rejected the structural matches ${where}`;
+}
+
+/** The warnings and rejecting constraints of status, as diagnostics on the
+ * pattern: a constraint that could not be evaluated is a warning. */
+export function statusDiagnostics(status: Status): Diagnostic[] {
+  const located = (note: Note) => note.line > 0;
+  return [
+    ...(status.warnings ?? []).filter(located).map((w) => ({
+      line: w.line,
+      column: w.column,
+      severity: "warning" as const,
+      message: w.message,
+    })),
+    ...(status.rejections ?? []).filter(located).map((r) => ({
+      line: r.line,
+      column: r.column,
+      severity: r.reason ? ("warning" as const) : ("info" as const),
+      message: describeRejection(r),
+    })),
+  ];
 }

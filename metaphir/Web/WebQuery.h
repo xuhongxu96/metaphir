@@ -25,6 +25,23 @@ struct PrintedFunction {
   std::vector<unsigned> Lines;
 };
 
+/// Something said about a pattern: the message, and where in the pattern's
+/// source it is about (line and column from 1), or 0 and 0 when it is not in
+/// the pattern's source.
+struct PatternNote {
+  std::string Message;
+  unsigned Line = 0;
+  unsigned Column = 0;
+};
+
+/// A constraint that rejected all the structural matches of a function.
+struct RejectingConstraint {
+  /// The constraint, printed, and where it is.
+  PatternNote Constraint;
+  /// Why it could not be evaluated; empty if it was false.
+  std::string Reason;
+};
+
 /// A pattern matched against a published corpus, in stages that each tell
 /// which bytes the next one reads: the caller reads them into a ByteCache,
 /// from files or over HTTP, and goes on.
@@ -54,6 +71,9 @@ public:
   Expected<std::vector<ByteRange>> findFeatures(const ByteCache &Cache);
   Expected<std::vector<ByteRange>> filterCandidates(const ByteCache &Cache);
 
+  /// The warnings the pattern was compiled with.
+  ArrayRef<PatternNote> getWarnings() const;
+
   /// The functions on the lists, once found.
   ArrayRef<uint32_t> getCandidates() const { return Candidates; }
   /// The candidates whose features may match, once filtered.
@@ -68,9 +88,12 @@ public:
   /// Matches the function numbered Function, whose pack is Frame, and
   /// prints its matches to Out, one per line: the module, @function and
   /// bindings, and with PrintInstructions the instructions matched (see
-  /// Instantiation::printInstructions), separated by tabs.
+  /// Instantiation::printInstructions), separated by tabs. With Rejecting,
+  /// a function with structural matches but none satisfying the constraints
+  /// adds the constraints that rejected them, as metaphir-match prints.
   Error match(uint32_t Function, StringRef Frame, raw_ostream &Out,
-              bool PrintInstructions = false);
+              bool PrintInstructions = false,
+              std::vector<RejectingConstraint> *Rejecting = nullptr);
 
 private:
   struct Compiled;

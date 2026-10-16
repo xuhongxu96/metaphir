@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { count } from "./engine.ts";
 import type { QueryControl } from "./pipeline.ts";
-import type { Status } from "./status.ts";
+import { describeRejection, type Status } from "./status.ts";
 
 export function StatusChip({ status, control }: { status: Status; control?: QueryControl }) {
   const [open, setOpen] = useState(false);
@@ -23,6 +23,10 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
   // shown apart, in a fixed-width font, so that the caret lines up.
   const [headline, ...rest] = status.text.trimEnd().split("\n");
   const more = rest.join("\n");
+  const warnings = status.warnings ?? [];
+  const rejections = status.rejections ?? [];
+  const failures = rejections.filter((r) => r.reason).length;
+  const alerts = warnings.length + failures;
 
   return (
     <div ref={root} className="status-chip-wrap">
@@ -37,6 +41,11 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
         <span id="status" role="status" className="status">
           {headline}
         </span>
+        {alerts > 0 && (
+          <span className="status-alerts" title={count(alerts, "warning")}>
+            ⚠ {alerts.toLocaleString()}
+          </span>
+        )}
         {status.matches !== undefined && (
           <span className="status-count">{count(status.matches, "match", "matches")}</span>
         )}
@@ -49,9 +58,36 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
           <p className={`status-text${status.error ? " error" : ""}`}>{headline}</p>
           {more && <pre className="status-source">{more}</pre>}
           {status.details && <Details details={status.details} />}
+          {warnings.length > 0 && (
+            <Notes title="Warnings" items={warnings.map((w) => located(w.line, w.message))} />
+          )}
+          {rejections.length > 0 && (
+            <Notes
+              title="Constraints that rejected structural matches"
+              items={rejections.map((r) => located(r.line, describeRejection(r)))}
+              hint="Counted in the functions matched: those the index rules out are not."
+            />
+          )}
           {control && <Actions control={control} paused={paused} />}
         </div>
       )}
+    </div>
+  );
+}
+
+const located = (line: number, message: string) =>
+  line > 0 ? `line ${line}: ${message}` : message;
+
+function Notes({ title, items, hint }: { title: string; items: string[]; hint?: string }) {
+  return (
+    <div className="status-notes">
+      <h3>{title}</h3>
+      <ul>
+        {items.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+      {hint && <p className="hint">{hint}</p>}
     </div>
   );
 }

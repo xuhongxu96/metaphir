@@ -6,8 +6,24 @@
 
 import type { ByteRange, RangeFetcher } from "./fetcher.ts";
 
-export type StageResult = { ranges: ByteRange[] } | { error: string };
-export type MatchResult = { lines: string } | { error: string };
+/** Something said about the pattern, at its line and column (from 1), or
+ * at 0 and 0 when not in the pattern. */
+export interface Note {
+  message: string;
+  line: number;
+  column: number;
+}
+
+/** A constraint, printed, that rejected all the structural matches of a
+ * function; reason says why it could not be evaluated, or is empty if it
+ * was false. */
+export interface Rejected extends Note {
+  reason: string;
+}
+
+/** What a stage reads next; compiling also gives the pattern's warnings. */
+export type StageResult = { ranges: ByteRange[]; warnings?: Note[] } | { error: string };
+export type MatchResult = { lines: string; rejected?: Rejected[] } | { error: string };
 
 export interface Matchable extends ByteRange {
   function: number;
@@ -94,8 +110,11 @@ export interface QueryEvents {
   onListed?(candidates: number): void;
   /** The functions on the lists, and those whose features may match. */
   onCandidates?(candidates: number, matchable: Matchable[]): void;
-  /** Function was matched; lines are its matches, possibly none. */
-  onMatched?(fn: number, lines: string): void;
+  /** The pattern compiled, with these warnings. */
+  onCompiled?(warnings: Note[]): void;
+  /** Function was matched; lines are its matches, possibly none, and
+   * rejected the constraints that rejected its structural matches. */
+  onMatched?(fn: number, lines: string, rejected: Rejected[]): void;
 }
 
 /** Packs read per batch, so matching starts before all have arrived. */
@@ -134,6 +153,8 @@ export async function runQuery(
   ]);
   let ranges = check(compiled[0]);
   for (const result of compiled.slice(1)) check(result);
+  // Every session compiled the same pattern, with the same warnings.
+  events.onCompiled?.(("warnings" in compiled[0] && compiled[0].warnings) || []);
   for (const [stage, description] of STAGES) {
     if (!(await control.proceed())) return;
     events.onStage?.(description);
@@ -171,7 +192,7 @@ export async function runQuery(
         wakeAll();
         return;
       }
-      events.onMatched?.(next.fn, result.lines);
+      events.onMatched?.(next.fn, result.lines, result.rejected ?? []);
     }
   };
   const workers = matchers.map(work);

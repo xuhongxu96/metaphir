@@ -37,6 +37,14 @@ val rangesValue(const std::vector<ByteRange> &Ranges) {
   return Result;
 }
 
+val noteValue(const PatternNote &Note) {
+  val Result = val::object();
+  Result.set("message", Note.Message);
+  Result.set("line", Note.Line);
+  Result.set("column", Note.Column);
+  return Result;
+}
+
 class Session {
 public:
   explicit Session(const std::string &Header) {
@@ -72,7 +80,12 @@ public:
     if (!Compiled)
       return errorValue(Compiled.takeError());
     Query = std::move(*Compiled);
-    return rangesValue(Query->getKeyRanges());
+    val Result = rangesValue(Query->getKeyRanges());
+    val Warnings = val::array();
+    for (const PatternNote &Warning : Query->getWarnings())
+      Warnings.call<void>("push", noteValue(Warning));
+    Result.set("warnings", Warnings);
+    return Result;
   }
 
   val findLists() { return stage(&WebQuery::findLists); }
@@ -94,14 +107,24 @@ public:
   }
 
   /// The matches of Function, whose pack is Frame, one per line, with the
-  /// instructions each matched.
+  /// instructions each matched; and if it has none, the constraints that
+  /// rejected its structural matches.
   val match(uint32_t Function, const std::string &Frame) {
     std::string Lines;
     raw_string_ostream OS(Lines);
-    if (Error E = Query->match(Function, Frame, OS, /*PrintInstructions=*/true))
+    std::vector<RejectingConstraint> Rejecting;
+    if (Error E = Query->match(Function, Frame, OS, /*PrintInstructions=*/true,
+                               &Rejecting))
       return errorValue(std::move(E));
     val Result = val::object();
     Result.set("lines", Lines);
+    val Rejected = val::array();
+    for (const RejectingConstraint &R : Rejecting) {
+      val Entry = noteValue(R.Constraint);
+      Entry.set("reason", R.Reason);
+      Rejected.call<void>("push", Entry);
+    }
+    Result.set("rejected", Rejected);
     return Result;
   }
 

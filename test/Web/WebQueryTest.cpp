@@ -103,11 +103,14 @@ protected:
   struct Result {
     std::vector<uint32_t> Candidates;
     std::string Matches;
+    std::vector<PatternNote> Warnings;
+    std::vector<RejectingConstraint> Rejecting;
   };
 
   /// Matches Pattern, reading only the bytes each stage asks for; with
   /// PrintInstructions, the matches list the instructions they matched.
-  Result query(StringRef Pattern, bool PrintInstructions = false) {
+  Result query(StringRef Pattern, bool PrintInstructions = false,
+               bool ReportRejecting = false) {
     Result R;
     Expected<std::unique_ptr<WebQuery>> Query =
         WebQuery::compile(*Web, Pattern, "pattern.mpir");
@@ -127,13 +130,15 @@ protected:
       fetch(*Ranges, Cache);
     }
     R.Candidates = (*Query)->getCandidates().vec();
+    R.Warnings = (*Query)->getWarnings().vec();
     raw_string_ostream OS(R.Matches);
     for (uint32_t Function : (*Query)->getMatchable()) {
       Expected<StringRef> Frame = Cache.read((*Query)->getPackRange(Function));
       EXPECT_TRUE(static_cast<bool>(Frame)) << toString(Frame.takeError());
       if (!Frame)
         return R;
-      Error E = (*Query)->match(Function, *Frame, OS, PrintInstructions);
+      Error E = (*Query)->match(Function, *Frame, OS, PrintInstructions,
+                                ReportRejecting ? &R.Rejecting : nullptr);
       EXPECT_FALSE(static_cast<bool>(E)) << toString(std::move(E));
     }
     return R;
@@ -224,6 +229,41 @@ TEST_F(WebQueryTest, CountsUsesInTheWholeModule) {
   publish();
   EXPECT_EQ(query("%v = load i32, ptr ?p\n;; hasOneUse(?p)\n").Matches,
             "uses.ll\t@load_single\t{?p = @single}\n");
+}
+
+TEST_F(WebQueryTest, ReportsWarningsAndRejectingConstraints) {
+  writeFile("adds.ll", R"(
+    define i32 @f(i32 %x) {
+      %r = add i32 %x, 1
+      ret i32 %r
+    }
+  )");
+  publish();
+  Result Shadowed = query("%x = add i32 ?x, 1\n");
+  ASSERT_EQ(Shadowed.Warnings.size(), 1u);
+  EXPECT_EQ(Shadowed.Warnings[0].Message,
+            "local variable '%x' shares a name with meta variable '?x'");
+  EXPECT_EQ(Shadowed.Warnings[0].Line, 1u);
+
+  // The index cannot tell how often ?x is used, so the function is matched.
+  Result False = query("%r = add i32 ?x, ?c\n;; hasNUses(?x, 2)\n",
+                       /*PrintInstructions=*/false, /*ReportRejecting=*/true);
+  EXPECT_EQ(False.Matches, "");
+  ASSERT_EQ(False.Rejecting.size(), 1u);
+  EXPECT_EQ(False.Rejecting[0].Constraint.Message, "(hasNUses ?x 2)");
+  EXPECT_EQ(False.Rejecting[0].Constraint.Line, 2u);
+  EXPECT_EQ(False.Rejecting[0].Constraint.Column, 4u);
+  EXPECT_EQ(False.Rejecting[0].Reason, "");
+
+  // Arithmetic on an argument cannot be evaluated.
+  Result Failed = query("%r = add i32 ?x, ?c\n;; ?x + 1 == 2\n",
+                        /*PrintInstructions=*/false, /*ReportRejecting=*/true);
+  ASSERT_EQ(Failed.Rejecting.size(), 1u);
+  EXPECT_NE(Failed.Rejecting[0].Reason, "");
+
+  // A match is not rejected.
+  EXPECT_TRUE(query("%r = add i32 ?x, ?c\n;; hasNUses(?x, 1)\n", false, true)
+                  .Rejecting.empty());
 }
 
 TEST_F(WebQueryTest, ReportsPatternErrors) {

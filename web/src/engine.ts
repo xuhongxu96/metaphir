@@ -1,7 +1,8 @@
 // Opening the published corpus and running queries, apart from the page.
 
+import { parseDiagnostics } from "./diagnostics.ts";
 import { RangeFetcher, type ByteRange } from "./fetcher.ts";
-import type { Matchable } from "./pipeline.ts";
+import type { Matchable, Note, Rejected } from "./pipeline.ts";
 import { QueryControl, runQuery } from "./pipeline.ts";
 import { SessionPool } from "./pool.ts";
 
@@ -97,9 +98,19 @@ export type Pause =
   | { kind: "matches"; matches: number }
   | { kind: "candidates"; candidates: number };
 
+/** A constraint that rejected the structural matches of functions. */
+export interface Rejection extends Rejected {
+  /** How many functions it rejected. */
+  functions: number;
+}
+
 export interface Progress {
   /** What the query does, or "done" or "stopped" once it ended. */
   stage: string;
+  /** The warnings the pattern was compiled with. */
+  warnings: Note[];
+  /** The constraints that rejected structural matches, in order found. */
+  rejections: Rejection[];
   /** Why the query is paused, while it is. */
   paused?: Pause;
   /** How far the stage is, from 0 to 1, when that is known. */
@@ -167,8 +178,11 @@ export class PublishedCorpus {
     const { fetcher, pool } = this;
     const started = performance.now();
     const before = { ...fetcher.stats };
+    const rejections = new Map<string, Rejection>();
     const progress: Progress = {
       stage: "starting",
+      warnings: [],
+      rejections: [],
       matches: 0,
       matched: 0,
       matchable: 0,
@@ -227,8 +241,20 @@ export class PublishedCorpus {
         progress.matchable = matchable.length;
         for (const m of matchable) packs.set(m.function, m);
       },
-      onMatched: (fn: number, lines: string) => {
+      onCompiled: (warnings: Note[]) => {
+        progress.warnings = warnings;
+      },
+      onMatched: (fn: number, lines: string, rejected: Rejected[]) => {
         progress.matched++;
+        for (const r of rejected) {
+          const key = `${r.line}:${r.column}:${r.message}`;
+          const known = rejections.get(key);
+          if (known) {
+            known.functions++;
+            known.reason ||= r.reason;
+          } else rejections.set(key, { ...r, functions: 1 });
+        }
+        if (rejected.length) progress.rejections = [...rejections.values()].map((r) => ({ ...r }));
         const found = lines
           .split("\n")
           .filter(Boolean)
@@ -277,8 +303,10 @@ export async function matchLocal(
   if (!files.length) throw new Error("Pick a directory with .ll or .bc files.");
   const index = indexFile ? new Uint8Array(await indexFile.arrayBuffer()) : undefined;
   const started = performance.now();
-  const progress = (stage: string, matches = 0): Progress => ({
+  const progress = (stage: string, matches = 0, warnings: Note[] = []): Progress => ({
     stage,
+    warnings,
+    rejections: [],
     matches,
     matched: 0,
     matchable: files.length,
@@ -309,7 +337,11 @@ export async function matchLocal(
       return match;
     });
   onMatches(matches);
-  onProgress(progress("done", matches.length));
+  // metaphir-match prints the pattern's warnings as it does its errors.
+  const warnings = parseDiagnostics(result.err)
+    .filter((d) => d.severity === "warning")
+    .map(({ message, line, column }) => ({ message, line, column }));
+  onProgress(progress("done", matches.length, warnings));
 }
 
 /** The definition of fn (as "@name") in the textual IR of a module. */

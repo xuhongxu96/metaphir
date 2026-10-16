@@ -21,7 +21,7 @@ import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
 import { patternHash, readPatternHash } from "./share/patternLink.ts";
-import { describe, type Status } from "./status.ts";
+import { describe, statusDiagnostics, type Status } from "./status.ts";
 import { StatusChip } from "./StatusChip.tsx";
 import { useFunctionIR } from "./useFunctionIR.ts";
 
@@ -64,7 +64,6 @@ export function App() {
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
   // What the last run found wrong in the pattern, until it is edited.
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
-  useMarkers(patternEditor, diagnostics);
   useEffect(() => setDiagnostics([]), [pattern]);
   const [hovered, setHovered] = useState<Link[]>([]);
   const ir = useFunctionIR(selected);
@@ -79,6 +78,15 @@ export function App() {
   );
   // Pattern lines mean something only while the pattern is as matched.
   const patternLinked = pattern === matchedPattern;
+  // The pattern's errors, and the warnings of the run, while it is as run.
+  const notes = useMemo(() => statusDiagnostics(status), [status]);
+  useMarkers(
+    patternEditor,
+    useMemo(
+      () => (patternLinked ? [...diagnostics, ...notes] : diagnostics),
+      [patternLinked, diagnostics, notes],
+    ),
+  );
   const patternLines = useMemo(
     () =>
       patternLinked ? links.flatMap((l) => (l.patternLine ? [l.patternLine] : [])) : [],

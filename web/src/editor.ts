@@ -154,6 +154,12 @@ export function useHoveredLine(
   }, [editor]);
 }
 
+const SEVERITIES = {
+  error: monaco.MarkerSeverity.Error,
+  warning: monaco.MarkerSeverity.Warning,
+  info: monaco.MarkerSeverity.Info,
+};
+
 /** Shows diagnostics as markers on editor: a squiggle under the word each
  * points at, with its message on hover. */
 export function useMarkers(editor: CodeEditor | undefined, diagnostics: Diagnostic[]) {
@@ -164,8 +170,7 @@ export function useMarkers(editor: CodeEditor | undefined, diagnostics: Diagnost
       model,
       "metaphir",
       diagnostics.map((d) => ({
-        severity:
-          d.severity === "error" ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
+        severity: SEVERITIES[d.severity],
         message: d.message,
         startLineNumber: d.line,
         startColumn: d.column,

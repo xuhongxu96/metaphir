@@ -1,8 +1,10 @@
 #include "metaphir/Web/WebQuery.h"
+#include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/PatternLowering.h"
 #include "metaphir/IR/PatternVariants.h"
+#include "metaphir/IR/SourceRange.h"
 #include "metaphir/Index/FeatureCoding.h"
 #include "metaphir/Index/FunctionPack.h"
 #include "metaphir/Matching/FeatureQuery.h"
@@ -28,6 +30,7 @@ namespace metaphir {
 struct WebQuery::Compiled {
   SourceMgr Source;
   MIRContext Context;
+  std::vector<PatternNote> Warnings;
   std::optional<PatternVariants> Variants;
   FeatureQuery Query;
 };
@@ -40,8 +43,15 @@ WebQuery::compile(const WebIndex &Index, StringRef Source, StringRef Name) {
   std::unique_ptr<WebQuery> Query(new WebQuery(Index));
   Query->Pattern = std::make_unique<Compiled>();
   Compiled &Pattern = *Query->Pattern;
-  // Warnings are not errors.
-  Pattern.Source.setDiagHandler([](const SMDiagnostic &, void *) {});
+  // Warnings are not errors: they are kept for the page.
+  Pattern.Source.setDiagHandler(
+      [](const SMDiagnostic &Diag, void *Warnings) {
+        bool Located = Diag.getLineNo() > 0;
+        static_cast<std::vector<PatternNote> *>(Warnings)->push_back(
+            {Diag.getMessage().str(), Located ? unsigned(Diag.getLineNo()) : 0,
+             Located ? unsigned(Diag.getColumnNo() + 1) : 0});
+      },
+      &Pattern.Warnings);
   metaphir::Pattern *RawPattern = nullptr;
   SMDiagnostic Diag;
   if (parseMIRBuffer(MemoryBuffer::getMemBufferCopy(Source, Name),
@@ -236,8 +246,13 @@ Expected<PrintedFunction> WebQuery::printFunction(const WebIndex &Index,
   return Printed;
 }
 
+ArrayRef<PatternNote> WebQuery::getWarnings() const {
+  return Pattern->Warnings;
+}
+
 Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
-                      bool PrintInstructions) {
+                      bool PrintInstructions,
+                      std::vector<RejectingConstraint> *Rejecting) {
   const WebModule &Module = Index.getModuleOf(Function);
   auto Located = [&](Error E) {
     return createStringError(Module.Path + ": function " +
@@ -260,12 +275,25 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
   PatternMatcher Matcher(&Pattern->Context);
   Matcher.setUseOracle(Unpacked->get());
   Target Program(F);
-  MatchResults Matches =
-      Matcher.match(*Pattern->Variants, Program,
-                    /*Unsatisfied=*/nullptr,
-                    /*HadStructuralMatch=*/nullptr, &Pattern->Query);
-  if (Matches.empty())
+  bool HadStructuralMatch = false;
+  SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
+  MatchResults Matches = Matcher.match(
+      *Pattern->Variants, Program, Rejecting ? &Unsatisfied : nullptr,
+      Rejecting ? &HadStructuralMatch : nullptr, &Pattern->Query);
+  if (Matches.empty()) {
+    if (HadStructuralMatch)
+      for (const UnsatisfiedConstraint &U : Unsatisfied) {
+        RejectingConstraint &R = Rejecting->emplace_back();
+        raw_string_ostream(R.Constraint.Message) << *U.Expression;
+        SMLoc Loc = U.Expression->getSourceRange().Begin;
+        const SourceMgr &SM = Pattern->Source;
+        if (getMainFileLine(SM, Loc))
+          std::tie(R.Constraint.Line, R.Constraint.Column) =
+              SM.getLineAndColumn(Loc, SM.getMainFileID());
+        R.Reason = U.Reason;
+      }
     return Error::success();
+  }
   ModuleSlotTracker Slots(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
   Slots.incorporateFunction(F);
   for (const Instantiation &Match : Matches) {

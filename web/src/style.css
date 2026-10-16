@@ -11,6 +11,7 @@
   --hover-bg: rgba(9, 105, 218, 0.3);
   --on-accent: #ffffff;
   --error: #cf222e;
+  --warning: #9a6700;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,6 +27,7 @@
     --hover-bg: rgba(88, 166, 255, 0.36);
     --on-accent: #0d1117;
     --error: #ff7b72;
+    --warning: #d29922;
   }
 }
 
@@ -41,6 +43,7 @@
   --hover-bg: rgba(88, 166, 255, 0.36);
   --on-accent: #0d1117;
   --error: #ff7b72;
+  --warning: #d29922;
 }
 
 * { box-sizing: border-box; }
@@ -100,6 +103,11 @@ body { background: var(--bg); color: var(--fg); }
 }
 .status-text { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .status-text.error { color: var(--error); font-weight: normal; }
+.status-chip .status-alerts { flex: none; color: var(--warning); font-variant-numeric: tabular-nums; }
+.status-notes { margin-top: 8px; }
+.status-notes h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; }
+.status-notes ul { margin: 0; padding-left: 16px; font-size: 12px; overflow-wrap: anywhere; }
+.status-notes .hint { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
 .status-source { margin: 6px 0 0; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; overflow-x: auto; }
 .status-details { margin: 0.4rem 0 0; display: grid; gap: 0.15rem; }
 .status-details > div { display: flex; justify-content: space-between; gap: 1rem; }

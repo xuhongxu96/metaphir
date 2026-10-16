@@ -4,7 +4,7 @@
 export interface Diagnostic {
   line: number;
   column: number;
-  severity: "error" | "warning";
+  severity: "error" | "warning" | "info";
   message: string;
 }
 
