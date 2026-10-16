@@ -1,6 +1,6 @@
-// The matches, as a table, with a search: only the matches with every word
-// of it are listed. Arrow keys move the selection, in the table or the
-// search; Escape clears the search.
+// The matches, as a table, with a search: only the matches with every
+// binding and word of it are listed (see matchSearch.ts). Arrow keys move
+// the selection, in the table or the search; Escape clears the search.
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { Match } from "./engine.ts";
@@ -49,7 +49,7 @@ export function MatchesPane(props: {
           id="match-search"
           className="search"
           type="search"
-          placeholder="Search module, function, bindings"
+          placeholder="Search module, function, ?a = %x"
           aria-label="Search the matches"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -94,7 +94,7 @@ export function MatchesPane(props: {
         ) : (
           <p className="empty">
             {matches.length
-              ? "No match has every word of the search."
+              ? "No match has every binding and word of the search."
               : running
                 ? "Searching…"
                 : "No matches yet: write a pattern and press Match."}
