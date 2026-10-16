@@ -235,6 +235,25 @@ bool MIRParser::parseModule(Pattern *&Result) {
     }
     return error("expected at least one instruction matcher");
   }
+  // A block needs an instruction in it, or one referring to it: else no
+  // match binds its label.
+  auto IsUsed = [&](const MetaVariable *Block) {
+    for (const Instruction *I : CurrentPattern->getInstructions()) {
+      if (I->getParentBlock() == Block)
+        return true;
+      for (const MatcherOperand &Op : I->getUnkeyedOperands())
+        if (Op.Val == Block)
+          return true;
+    }
+    return false;
+  };
+  for (const MetaVariable *M : CurrentPattern->getMetaVariables())
+    if (M->getSort() == Sort::BasicBlock && !M->getName().starts_with("_") &&
+        !IsUsed(M))
+      return Lex.ParseError(M->getSourceRange().Begin,
+                            "block '?" + M->getName() +
+                                "' has no instruction, and no instruction "
+                                "refers to it");
   Result = CurrentPattern;
   return false;
 }

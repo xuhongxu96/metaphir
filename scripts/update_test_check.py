@@ -37,6 +37,7 @@ WARNING_RE = re.compile(r":(?P<line>[0-9]+):[0-9]+: warning: (?P<message>.*)$")
 TOOL_ERROR_HEAD_RE = re.compile(
     r"^\s*(?:\S*/)?(?:metaphir-[a-z0-9]+|opt):\s*\S+:\d+:\d+:\s*(?:error:)"
 )
+LABEL_RE = re.compile(r"^\s*\?[^\s:]+:\s*$")
 MATCH_TARGET_RE = re.compile(r"^target [0-9]+: @(?P<name>[-a-zA-Z$._0-9]+)$")
 LLVM_FUNCTION_RE = re.compile(r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\(")
 
@@ -606,6 +607,15 @@ def gen_parser_checks(
                 ln
                 for ln in run.output
                 if not ln.startswith(("pattern ", "constraint ", "meta "))
+            ]
+            # A block label is printed before its block's first instruction;
+            # one with none, which a branch refers to, is not printed.
+            printed = set(instruction_output)
+            instruction_lines = [
+                i
+                for i in instruction_lines
+                if not LABEL_RE.match(clean_lines[i])
+                or clean_lines[i].strip() in printed
             ]
             if len(instruction_output) != len(instruction_lines):
                 raise ValueError(f"{path}: cannot map parser instructions to input")
