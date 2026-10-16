@@ -4,6 +4,7 @@
 ; RUN: %metaphir-match --explain %t/constraint.mpir %t/funcs.ll | FileCheck %s --check-prefix=CONSTRAINT
 ; RUN: %metaphir-match --explain %t/structure.mpir %t/funcs.ll | FileCheck %s --check-prefix=STRUCTURE
 ; RUN: %metaphir-match --explain %t/global.mpir %t/funcs.ll | FileCheck %s --check-prefix=GLOBAL
+; RUN: %metaphir-match --explain %t/types.mpir %t/types.ll | FileCheck %s --check-prefix=TYPES
 ; RUN: not %metaphir-match --explain --matches-only %t/constraint.mpir %t/funcs.ll 2>&1 | FileCheck %s --check-prefix=MATCHES-ONLY
 
 ;--- funcs.ll
@@ -105,6 +106,21 @@ declare i32 @llvm.ctpop.i32(i32)
 
 ;--- global.mpir
 %r = call i32 @llvm.cttz.i32(i32 ?x, i1 ?b)
+; The instructions are there, but no one type fits both as ?ty.
+;--- types.mpir
+%a = add ?ty ?x, ?y
+%b = mul ?ty ?z, ?w
+
+;--- types.ll
+define i64 @mixed(i32 %a, i64 %b) {
+  %x = add i32 %a, 1
+  %y = mul i64 %b, 2
+  ret i64 %y
+}
+; TYPES: target 0: @mixed
+; TYPES-NEXT:   no match
+; TYPES-NEXT:   no structural match: it has the instructions the pattern needs, but not of the types the pattern gives them together
+; TYPES-NOT: {{.}}
 
 ; MATCHES-ONLY: metaphir-match: error: --explain is not for --matches-only
 ; MATCHES-ONLY-NOT: {{.}}

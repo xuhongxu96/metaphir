@@ -177,9 +177,14 @@ FeatureQuery::explainNoStructure(const FunctionFeatures &Features) const {
   for (const Variant &V : Variants) {
     std::optional<std::string> Lack =
         firstLack(V.Requirement, Features, *V.Lowered);
-    std::string Reason =
-        Lack ? std::move(*Lack)
-             : "it has the instructions the pattern needs, but not as the "
+    std::string Reason;
+    if (Lack)
+      Reason = std::move(*Lack);
+    else if (Features.Fine && joinSignatures(V, Features).empty())
+      Reason = "it has the instructions the pattern needs, but not of the "
+               "types the pattern gives them together";
+    else
+      Reason = "it has the instructions the pattern needs, but not as the "
                "pattern connects them";
     if (!is_contained(Reasons, Reason))
       Reasons.push_back(std::move(Reason));
