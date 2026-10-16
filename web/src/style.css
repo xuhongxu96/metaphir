@@ -108,6 +108,12 @@ body { background: var(--bg); color: var(--fg); }
 .status-notes h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; }
 .status-notes ul { margin: 0; padding-left: 16px; font-size: 12px; overflow-wrap: anywhere; }
 .status-notes .hint { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
+.rejections { padding: 0.25rem 0 0.5rem; font-size: 0.8rem; }
+.rejection { border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
+.rejection p { margin: 0.4rem 0.75rem; overflow-wrap: anywhere; }
+.rejection .where, .rejections .hint { color: var(--muted); }
+.rejections > .hint { margin: 0.5rem 0.75rem 0; font-size: 0.75rem; }
+.rejection tr { cursor: pointer; }
 .misses { padding: 0.5rem 0.75rem; font-size: 0.8rem; border-top: 1px solid var(--border); }
 .misses h3 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 600; }
 .misses ul { margin: 0; padding-left: 1rem; }

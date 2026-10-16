@@ -23,7 +23,11 @@ export interface Rejected extends Note {
 
 /** What a stage reads next; compiling also gives the pattern's warnings. */
 export type StageResult = { ranges: ByteRange[]; warnings?: Note[] } | { error: string };
-export type MatchResult = { lines: string; rejected?: Rejected[] } | { error: string };
+/** A function's matches; and if it has none, the constraints that rejected
+ * its structural matches, with the module and name of the function. */
+export type MatchResult =
+  | { lines: string; rejected?: Rejected[]; module?: string; function?: string }
+  | { error: string };
 
 export interface Matchable extends ByteRange {
   function: number;
@@ -113,8 +117,14 @@ export interface QueryEvents {
   /** The pattern compiled, with these warnings. */
   onCompiled?(warnings: Note[]): void;
   /** Function was matched; lines are its matches, possibly none, and
-   * rejected the constraints that rejected its structural matches. */
-  onMatched?(fn: number, lines: string, rejected: Rejected[]): void;
+   * rejected the constraints that rejected its structural matches, in the
+   * function named where. */
+  onMatched?(
+    fn: number,
+    lines: string,
+    rejected: Rejected[],
+    where?: { module: string; name: string },
+  ): void;
 }
 
 /** Packs read per batch, so matching starts before all have arrived. */
@@ -192,7 +202,11 @@ export async function runQuery(
         wakeAll();
         return;
       }
-      events.onMatched?.(next.fn, result.lines, result.rejected ?? []);
+      const where =
+        result.module !== undefined && result.function !== undefined
+          ? { module: result.module, name: result.function }
+          : undefined;
+      events.onMatched?.(next.fn, result.lines, result.rejected ?? [], where);
     }
   };
   const workers = matchers.map(work);

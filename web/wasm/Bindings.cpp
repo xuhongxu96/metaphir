@@ -125,6 +125,10 @@ public:
       Rejected.call<void>("push", Entry);
     }
     Result.set("rejected", Rejected);
+    if (!Rejecting.empty()) {
+      Result.set("module", Index->getModuleOf(Function).Path);
+      Result.set("function", Rejecting.front().Function);
+    }
     return Result;
   }
 

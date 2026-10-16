@@ -40,6 +40,11 @@ export function IRPane(props: {
     [hovered],
   );
   useLineDecorations(editor, ir ? irLines : [], hoveredLines, "bound-line", true);
+  // A function with nothing highlighted, such as a rejected one, is shown
+  // from its start.
+  useEffect(() => {
+    if (editor && ir && !irLines.length) editor.setScrollTop(0);
+  }, [editor, ir, irLines]);
   useHoveredLine(editor, onHover);
 
   // What is gone to is selected, in view.

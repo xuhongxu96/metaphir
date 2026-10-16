@@ -284,6 +284,7 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
     if (HadStructuralMatch)
       for (const UnsatisfiedConstraint &U : Unsatisfied) {
         RejectingConstraint &R = Rejecting->emplace_back();
+        R.Function = ("@" + F.getName()).str();
         raw_string_ostream(R.Constraint.Message) << *U.Expression;
         SMLoc Loc = U.Expression->getSourceRange().Begin;
         const SourceMgr &SM = Pattern->Source;

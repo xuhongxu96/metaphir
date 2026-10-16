@@ -36,6 +36,8 @@ struct PatternNote {
 
 /// A constraint that rejected all the structural matches of a function.
 struct RejectingConstraint {
+  /// The function, as "@name".
+  std::string Function;
   /// The constraint, printed, and where it is.
   PatternNote Constraint;
   /// Why it could not be evaluated; empty if it was false.

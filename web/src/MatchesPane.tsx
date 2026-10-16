@@ -1,9 +1,12 @@
 // The matches, as a table, with a search: only the matches with every
 // binding and word of it are listed (see matchSearch.ts). Arrow keys move
-// the selection, in the table or the search; Escape clears the search.
+// the selection, in the table or the search; Escape clears the search. A
+// second tab lists what was rejected: the constraints that rejected
+// functions' structural matches, with some of those functions to open, or
+// for your IR each function without a match and why.
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { Match } from "./engine.ts";
+import { count, REJECTION_SAMPLES, type Match, type Rejection } from "./engine.ts";
 import { filterMatches } from "./matchSearch.ts";
 import type { FunctionResult } from "./yourIR.ts";
 
@@ -17,8 +20,12 @@ export function MatchesPane(props: {
   running: boolean;
   /** The functions without a match, when it is known why (your IR). */
   misses?: FunctionResult[];
+  /** The constraints that rejected structural matches (the corpus). */
+  rejections?: Rejection[];
 }) {
-  const { matches, selected, onSelect, running, misses = [] } = props;
+  const { matches, selected, onSelect, running, misses = [], rejections = [] } = props;
+  const [tab, setTab] = useState<"matches" | "rejected">("matches");
+  const rejected = misses.length + rejections.length;
   const [query, setQuery] = useState("");
   const body = useRef<HTMLTableSectionElement>(null);
   const found = useMemo(() => filterMatches(matches, query), [matches, query]);
@@ -45,31 +52,63 @@ export function MatchesPane(props: {
   return (
     <section className="pane">
       <div className="pane-header">
-        <span className="count">
-          Matches
-          {matches.length
-            ? searching
-              ? ` (${found.length.toLocaleString()} of ${total})`
-              : ` (${total})`
-            : ""}
-        </span>
-        <input
-          id="match-search"
-          className="search"
-          type="search"
-          placeholder="Search module, function, ?a = %x"
-          aria-label="Search the matches"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") setQuery("");
-            else onKeyDown(event);
-          }}
-        />
-        {found.length > MAX_ROWS && (
+        <div className="tabs" role="tablist">
+          <button
+            role="tab"
+            aria-selected={tab === "matches"}
+            onClick={() => setTab("matches")}
+            className="count"
+          >
+            Matches
+            {matches.length
+              ? searching
+                ? ` (${found.length.toLocaleString()} of ${total})`
+                : ` (${total})`
+              : ""}
+          </button>
+          <button
+            id="rejected-tab"
+            role="tab"
+            aria-selected={tab === "rejected"}
+            onClick={() => setTab("rejected")}
+            className="count"
+            title="What the constraints rejected"
+          >
+            Rejected{rejected ? ` (${rejected.toLocaleString()})` : ""}
+          </button>
+        </div>
+        {tab === "matches" && (
+          <input
+            id="match-search"
+            className="search"
+            type="search"
+            placeholder="Search module, function, ?a = %x"
+            aria-label="Search the matches"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setQuery("");
+              else onKeyDown(event);
+            }}
+          />
+        )}
+        {tab === "matches" && found.length > MAX_ROWS && (
           <span className="hint">first {MAX_ROWS.toLocaleString()} shown</span>
         )}
       </div>
+      {tab === "rejected" ? (
+        <div className="pane-body results" tabIndex={0}>
+          {rejections.length > 0 && (
+            <Rejections rejections={rejections} selected={selected} onSelect={onSelect} />
+          )}
+          {misses.length > 0 && <Misses misses={misses} />}
+          {!rejected && (
+            <p className="empty">
+              {running ? "Searching…" : "No constraint rejected a structural match."}
+            </p>
+          )}
+        </div>
+      ) : (
       <div className="pane-body results" tabIndex={0} onKeyDown={onKeyDown}>
         {shown.length ? (
           <table>
@@ -99,17 +138,19 @@ export function MatchesPane(props: {
               ))}
             </tbody>
           </table>
-        ) : misses.length ? null : (
+        ) : (
           <p className="empty">
             {matches.length
               ? "No match has every binding and word of the search."
               : running
                 ? "Searching…"
-                : "No matches yet: write a pattern and press Match."}
+                : rejected
+                  ? "No matches: the Rejected tab says why."
+                  : "No matches yet: write a pattern and press Match."}
           </p>
         )}
-        {misses.length > 0 && <Misses misses={misses} />}
       </div>
+      )}
     </section>
   );
 }
@@ -138,6 +179,56 @@ function Misses({ misses }: { misses: FunctionResult[] }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** Each constraint that rejected structural matches, with the first of the
+ * functions it rejected, to open. */
+function Rejections(props: {
+  rejections: Rejection[];
+  selected?: Match;
+  onSelect: (match: Match) => void;
+}) {
+  const { rejections, selected, onSelect } = props;
+  return (
+    <div id="rejections" className="rejections">
+      {rejections.map((r) => (
+        <div key={`${r.line}:${r.column}:${r.message}`} className="rejection">
+          <p>
+            <code>{r.message}</code>
+            {r.line > 0 && <span className="where"> line {r.line}</span>}{" "}
+            {r.reason
+              ? `could not be evaluated in ${count(r.functions, "function")}: ${r.reason}`
+              : `rejected the structural matches of ${count(r.functions, "function")}`}
+            {r.functions > r.samples.length && (
+              <span className="hint">
+                {" "}
+                (first {Math.min(REJECTION_SAMPLES, r.samples.length)} listed)
+              </span>
+            )}
+          </p>
+          <table>
+            <colgroup>
+              <col className="module" />
+              <col />
+            </colgroup>
+            <tbody>
+              {r.samples.map((sample) => (
+                <tr
+                  key={sample.key}
+                  className={sample === selected ? "selected" : undefined}
+                  onClick={() => onSelect(sample)}
+                >
+                  <td title={sample.module}>{sample.module}</td>
+                  <td title={sample.fn}>{sample.fn}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+      <p className="hint">Counted in the functions matched: those the index rules out are not.</p>
     </div>
   );
 }

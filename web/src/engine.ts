@@ -97,10 +97,15 @@ export type Pause =
   | { kind: "matches"; matches: number }
   | { kind: "candidates"; candidates: number };
 
+/** Rejected functions kept per constraint, to be looked at. */
+export const REJECTION_SAMPLES = 10;
+
 /** A constraint that rejected the structural matches of functions. */
 export interface Rejection extends Rejected {
   /** How many functions it rejected. */
   functions: number;
+  /** The first REJECTION_SAMPLES of them, as matches without bindings. */
+  samples: Match[];
 }
 
 export interface Progress {
@@ -243,17 +248,39 @@ export class PublishedCorpus {
       onCompiled: (warnings: Note[]) => {
         progress.warnings = warnings;
       },
-      onMatched: (fn: number, lines: string, rejected: Rejected[]) => {
+      onMatched: (
+        fn: number,
+        lines: string,
+        rejected: Rejected[],
+        where?: { module: string; name: string },
+      ) => {
         progress.matched++;
+        // The function, to be opened as a match without bindings.
+        const sample: Match | undefined = where && {
+          key: fn,
+          module: where.module,
+          fn: where.name,
+          bindings: "",
+          instructions: [],
+          ir: irOf(fn),
+        };
         for (const r of rejected) {
           const key = `${r.line}:${r.column}:${r.message}`;
-          const known = rejections.get(key);
+          let known = rejections.get(key);
           if (known) {
             known.functions++;
             known.reason ||= r.reason;
-          } else rejections.set(key, { ...r, functions: 1 });
+          } else {
+            known = { ...r, functions: 1, samples: [] };
+            rejections.set(key, known);
+          }
+          if (sample && known.samples.length < REJECTION_SAMPLES) known.samples.push(sample);
         }
-        if (rejected.length) progress.rejections = [...rejections.values()].map((r) => ({ ...r }));
+        if (rejected.length)
+          progress.rejections = [...rejections.values()].map((r) => ({
+            ...r,
+            samples: [...r.samples],
+          }));
         const found = lines
           .split("\n")
           .filter(Boolean)

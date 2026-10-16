@@ -406,6 +406,7 @@ export function App() {
                   onSelect={setSelected}
                   running={running}
                   misses={yourIR ? misses : undefined}
+                  rejections={yourIR ? undefined : status.rejections}
                 />
               </Panel>
             </Group>

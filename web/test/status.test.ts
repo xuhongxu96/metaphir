@@ -28,9 +28,16 @@ test("rejecting constraints and warnings are marked on the pattern", () => {
       ...progress(0),
       warnings: [{ message: "shadowed", line: 1, column: 1 }],
       rejections: [
-        { message: "(hasNUses ?x 2)", line: 2, column: 4, reason: "", functions: 3 },
-        { message: "(== (+ ?x 1) 2)", line: 3, column: 4, reason: "not a constant", functions: 1 },
-        { message: "(isa ?x)", line: 0, column: 0, reason: "", functions: 1 },
+        { message: "(hasNUses ?x 2)", line: 2, column: 4, reason: "", functions: 3, samples: [] },
+        {
+          message: "(== (+ ?x 1) 2)",
+          line: 3,
+          column: 4,
+          reason: "not a constant",
+          functions: 1,
+          samples: [],
+        },
+        { message: "(isa ?x)", line: 0, column: 0, reason: "", functions: 1, samples: [] },
       ],
   });
   assert.deepEqual(statusDiagnostics(status), [
