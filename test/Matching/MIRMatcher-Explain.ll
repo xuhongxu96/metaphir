@@ -5,6 +5,7 @@
 ; RUN: %metaphir-match --explain %t/structure.mpir %t/funcs.ll | FileCheck %s --check-prefix=STRUCTURE
 ; RUN: %metaphir-match --explain %t/global.mpir %t/funcs.ll | FileCheck %s --check-prefix=GLOBAL
 ; RUN: %metaphir-match --explain %t/types.mpir %t/types.ll | FileCheck %s --check-prefix=TYPES
+; RUN: %metaphir-match --explain %t/twice.mpir %t/twice.ll | FileCheck %s --check-prefix=TWICE
 ; RUN: not %metaphir-match --explain --matches-only %t/constraint.mpir %t/funcs.ll 2>&1 | FileCheck %s --check-prefix=MATCHES-ONLY
 
 ;--- funcs.ll
@@ -119,8 +120,22 @@ define i64 @mixed(i32 %a, i64 %b) {
 }
 ; TYPES: target 0: @mixed
 ; TYPES-NEXT:   no match
-; TYPES-NEXT:   no structural match: it has the instructions the pattern needs, but not of the types the pattern gives them together
+; TYPES-NEXT:   no structural match: ?ty would be both i32 and i64
 ; TYPES-NOT: {{.}}
+
+; ?x is used twice, but the add has two different operands.
+;--- twice.mpir
+%r = add i32 ?x, ?x
+
+;--- twice.ll
+define i32 @sum(i32 %a, i32 %b) {
+  %r = add i32 %a, %b
+  ret i32 %r
+}
+; TWICE: target 0: @sum
+; TWICE-NEXT:   no match
+; TWICE-NEXT:   no structural match: ?x would be both %a and %b
+; TWICE-NOT: {{.}}
 
 ; MATCHES-ONLY: metaphir-match: error: --explain is not for --matches-only
 ; MATCHES-ONLY-NOT: {{.}}

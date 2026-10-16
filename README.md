@@ -261,7 +261,7 @@ metaphir-match [options] <pattern> <.ll/.bc file or directory>...
 | `--index=<file>` | skip the files and functions the index shows cannot match (see [Indexing a corpus](#indexing-a-corpus)); needs `--matches-only` |
 | `--trust-index` | match only the indexed candidates; needs `--index` |
 | `--packs=<directory>` | match a published corpus instead of files (see [Website](#website)); needs `--matches-only` |
-| `--explain` | with each function without a match, print why: the structural match each rejecting constraint rejected (`rejected:`, its bindings and instructions), or what the function lacks for a structural match (`no structural match:`); not with `--matches-only` |
+| `--explain` | with each function without a match, print why: the structural match each rejecting constraint rejected (`rejected:`, its bindings and instructions), or why it has no structural match (`no structural match:`): a meta variable it would bind to two values (`?x would be both %a and %b`), or what it lacks; not with `--matches-only` |
 | `--summary` | print to stderr how many functions and files were checked |
 
 The examples below use this pattern, `pattern.mpir`:

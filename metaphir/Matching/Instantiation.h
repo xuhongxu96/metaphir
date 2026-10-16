@@ -19,6 +19,7 @@ class Value;
 namespace metaphir {
 
 class Instruction;
+class MetaVariable;
 class Pattern;
 class Value;
 
@@ -70,11 +71,28 @@ public:
   }
 
   /// Binds Matcher to Target if it is unbound; otherwise returns whether its
-  /// binding equals Target.
+  /// binding equals Target, or, once relaxed, records a meta variable bound
+  /// to another target as a conflict and goes on.
   bool unify(const metaphir::Value &Matcher, Binding Target) {
     auto [It, Inserted] = Bindings.try_emplace(&Matcher, std::move(Target));
-    return Inserted || It->second == Target;
+    return Inserted || It->second == Target ||
+           (Relaxed && recordConflict(Matcher, It->second, Target));
   }
+
+  /// A meta variable a relaxed instantiation found bound to two targets:
+  /// a match would need it to be both.
+  struct Conflict {
+    const MetaVariable *Variable;
+    Binding First;
+    Binding Second;
+  };
+  /// Makes unify record conflicts rather than fail on them (see
+  /// PatternMatcher::findConflicts).
+  void relax() { Relaxed = true; }
+  ArrayRef<Conflict> getConflicts() const { return Conflicts; }
+  /// Prints a conflict as "?x is both %a and %b"; Slots as for print.
+  static void printConflict(raw_ostream &OS, const Conflict &C,
+                            ModuleSlotTracker *Slots = nullptr);
 
   /// Unifies every binding of Other; returns whether all agree.
   bool unifyAll(const Instantiation &Other) {
@@ -112,6 +130,12 @@ public:
 
 private:
   DenseMap<const metaphir::Value *, Binding> Bindings;
+  bool Relaxed = false;
+  SmallVector<Conflict, 1> Conflicts;
+
+  /// Records Matcher's second target if it is a meta variable.
+  bool recordConflict(const metaphir::Value &Matcher, const Binding &First,
+                      const Binding &Second);
 };
 
 using MatchResults = SmallVector<Instantiation, 4>;

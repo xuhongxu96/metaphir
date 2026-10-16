@@ -40,6 +40,12 @@ public:
   /// constraints are checked.
   MatchResults matchStructure(const Pattern &Pattern, const Target &Program);
 
+  /// For a function without a structural match of Variants: the meta
+  /// variables a structural match would bind to two different targets each,
+  /// as one found by letting them; none if even that finds none.
+  SmallVector<Instantiation::Conflict, 1>
+  findConflicts(const PatternVariants &Variants, const Target &Program);
+
   /// The instantiations of Pattern that satisfy its constraints. Constraints
   /// that rejected a structural match are added to Unsatisfied.
   MatchResults

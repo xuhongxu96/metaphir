@@ -380,12 +380,15 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
   // Numbers the unnamed values of the function whose matches are printed; one
   // per module, as numbering the module's globals is costly.
   std::optional<ModuleSlotTracker> Slots;
-  auto PrintMatch = [&](const Function &F, const Instantiation &Match) {
+  auto SlotsFor = [&](const Function &F) {
     if (!Slots)
       Slots.emplace(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
     if (Slots->getCurrentFunction() != &F)
       Slots->incorporateFunction(F);
-    Match.print(Out, &*Slots);
+    return &*Slots;
+  };
+  auto PrintMatch = [&](const Function &F, const Instantiation &Match) {
+    Match.print(Out, SlotsFor(F));
   };
   for (const Candidate &Function : Functions) {
     const llvm::Function *F = Function.F;
@@ -434,6 +437,16 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
           }
         }
       } else if (Explain) {
+        // A variable that would be bound to two values says the most.
+        SmallVector<Instantiation::Conflict, 1> Conflicts =
+            Matcher.findConflicts(*Pattern.Variants, Program);
+        for (const Instantiation::Conflict &C : Conflicts) {
+          Out << "  no structural match: ";
+          Instantiation::printConflict(Out, C, SlotsFor(*F));
+          Out << '\n';
+        }
+        if (!Conflicts.empty())
+          continue;
         FunctionFeatures Features = Function.Features && Function.Features->Fine
                                         ? *Function.Features
                                         : FunctionFeatures::compute(*F);

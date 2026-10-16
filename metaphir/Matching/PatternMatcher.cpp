@@ -10,9 +10,10 @@
 namespace llvm {
 namespace metaphir {
 
-MatchResults PatternMatcher::matchStructure(const Pattern &Pattern,
-                                            const Target &Program) {
-  MatchResults Instantiations(1);
+/// The instantiations of Pattern's instructions, starting from Initial.
+static MatchResults matchRoots(const Pattern &Pattern, const Target &Program,
+                               const Instantiation &Initial) {
+  MatchResults Instantiations = singleResult(Initial);
   for (const Instruction *Root : Pattern.getRoots()) {
     MatchResults NewInstantiations;
     for (const Instantiation &Candidate : Instantiations)
@@ -24,6 +25,33 @@ MatchResults PatternMatcher::matchStructure(const Pattern &Pattern,
     if (Instantiations.empty())
       return {};
   }
+  return Instantiations;
+}
+
+SmallVector<Instantiation::Conflict, 1>
+PatternMatcher::findConflicts(const PatternVariants &Variants,
+                              const Target &Program) {
+  Interpreter.resetAnalyses();
+  Instantiation Relaxed;
+  Relaxed.relax();
+  // The closest miss: the relaxed match with the fewest conflicts.
+  std::optional<Instantiation> Closest;
+  for (const Pattern *Variant : Variants)
+    for (Instantiation &Match : matchRoots(*Variant, Program, Relaxed))
+      if (!Match.getConflicts().empty() &&
+          (!Closest ||
+           Match.getConflicts().size() < Closest->getConflicts().size()))
+        Closest = std::move(Match);
+  if (!Closest)
+    return {};
+  return SmallVector<Instantiation::Conflict, 1>(Closest->getConflicts());
+}
+
+MatchResults PatternMatcher::matchStructure(const Pattern &Pattern,
+                                            const Target &Program) {
+  MatchResults Instantiations = matchRoots(Pattern, Program, Instantiation());
+  if (Instantiations.empty())
+    return {};
   for (Instantiation &Candidate : Instantiations) {
     for (const auto &[Var, Val] : Pattern.getFixedFlags())
       Candidate.bind(*Var, Val);

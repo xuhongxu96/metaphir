@@ -150,6 +150,28 @@ void Instantiation::printInstructions(
   OS << '}';
 }
 
+bool Instantiation::recordConflict(const metaphir::Value &Matcher,
+                                   const Binding &First,
+                                   const Binding &Second) {
+  // Only meta variables: an instruction matched twice is no conflict.
+  const auto *Variable = dyn_cast<MetaVariable>(&Matcher);
+  if (!Variable)
+    return false;
+  if (none_of(Conflicts, [&](const Conflict &C) {
+        return C.Variable == Variable && C.First == First && C.Second == Second;
+      }))
+    Conflicts.push_back({Variable, First, Second});
+  return true;
+}
+
+void Instantiation::printConflict(raw_ostream &OS, const Conflict &C,
+                                  ModuleSlotTracker *Slots) {
+  OS << '?' << C.Variable->getName() << " would be both ";
+  printBinding(OS, C.First, Slots);
+  OS << " and ";
+  printBinding(OS, C.Second, Slots);
+}
+
 void Instantiation::print(raw_ostream &OS, ModuleSlotTracker *Slots) const {
   SmallVector<std::pair<StringRef, const Binding *>, 8> Named;
   StringSet<> SeenNames;

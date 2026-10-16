@@ -172,9 +172,10 @@ MatchResults SubtreeMatcher::match() {
   std::optional<Instantiation::Binding> TargetBinding = getTargetBinding();
   if (!TargetBinding)
     return {};
-  if (const Instantiation::Binding *Existing = State.lookup(Matcher))
-    return *Existing == *TargetBinding ? singleResult(std::move(State))
-                                       : MatchResults();
+  // A matcher bound already matches only its binding (see unify).
+  if (State.lookup(Matcher))
+    return State.unify(Matcher, *TargetBinding) ? singleResult(std::move(State))
+                                                : MatchResults();
 
   switch (Matcher.getValueID()) {
   case Value::InstructionVal:
