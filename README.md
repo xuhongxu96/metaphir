@@ -232,6 +232,12 @@ $ metaphir-match --matches-only --packs published pattern.mpir
 a.ll	@odd	{?c = 1, ?x = %x}
 ```
 
+Each function is packed with the order of its use lists as the module has
+it, so value-tracking constraints, which look at a bounded number of a
+value's uses, answer on the website as `metaphir-match` does on the module.
+A corpus published by an earlier version (format 2) is refused: publish it
+again.
+
 Next: the [Wiki](https://github.com/xuhongxu96/metaphir/wiki) for the
 language, and [Tools](#tools) for every option.
 
