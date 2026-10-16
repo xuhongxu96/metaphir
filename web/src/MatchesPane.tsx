@@ -5,7 +5,14 @@
 // functions' structural matches, with some of those functions to open, or
 // for your IR each function without a match and why.
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type RefObject,
+} from "react";
 import {
   count,
   REJECTION_SAMPLES,
@@ -37,6 +44,19 @@ export function MatchesPane(props: {
 }) {
   const { matches, selected, onSelect, running, misses = [], rejections = [] } = props;
   const { tab, onTab: setTab, focus } = props;
+  // A new focus brings its card into view and outlines it for a moment;
+  // the card is not brought again when the tab is shown again.
+  const rejectionsRoot = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState<string>();
+  useEffect(() => {
+    if (!focus) return;
+    const index = rejections.findIndex((r) => rejectionKey(r) === focus.key);
+    rejectionsRoot.current?.children[index]?.scrollIntoView({ block: "start" });
+    setFocused(focus.key);
+    const done = setTimeout(() => setFocused(undefined), 1500);
+    return () => clearTimeout(done);
+    // Only a new focus is brought into view, not the same as more arrive.
+  }, [focus]);
   const rejected = misses.length + rejections.length;
   const [query, setQuery] = useState("");
   const body = useRef<HTMLTableSectionElement>(null);
@@ -116,7 +136,8 @@ export function MatchesPane(props: {
               rejections={rejections}
               selected={selected}
               onSelect={onSelect}
-              focus={focus}
+              focused={focused}
+              root={rejectionsRoot}
             />
           )}
           {misses.length > 0 && (
@@ -259,20 +280,11 @@ function Rejections(props: {
   rejections: Rejection[];
   selected?: Match;
   onSelect: (match: Match) => void;
-  focus?: { key: string };
+  /** The card to outline. */
+  focused?: string;
+  root: RefObject<HTMLDivElement | null>;
 }) {
-  const { rejections, selected, onSelect, focus } = props;
-  const root = useRef<HTMLDivElement>(null);
-  const [focused, setFocused] = useState<string>();
-  useEffect(() => {
-    if (!focus) return;
-    const index = rejections.findIndex((r) => rejectionKey(r) === focus.key);
-    root.current?.children[index]?.scrollIntoView({ block: "start" });
-    setFocused(focus.key);
-    const done = setTimeout(() => setFocused(undefined), 1500);
-    return () => clearTimeout(done);
-    // Only a new focus is brought into view, not the same as more arrive.
-  }, [focus]);
+  const { rejections, selected, onSelect, focused, root } = props;
   return (
     <div id="rejections" className="cards" ref={root}>
       {rejections.map((r) => (
