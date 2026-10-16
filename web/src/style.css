@@ -351,7 +351,17 @@ td {
   touch-action: none;
   z-index: 1;
 }
-.data-table th .column-resize:hover { background: var(--accent); opacity: 0.4; }
+/* A thin divider marks where to drag; the handle around it is wider. */
+.data-table th .column-resize::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  right: 2px;
+  width: 1px;
+  background: var(--border);
+}
+.data-table th .column-resize:hover::after { top: 0; bottom: 0; width: 2px; background: var(--accent); }
 .data-table td { position: relative; }
 .data-table .cell-copy {
   display: none;
