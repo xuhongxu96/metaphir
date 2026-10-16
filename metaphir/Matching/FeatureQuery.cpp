@@ -91,6 +91,17 @@ static std::string opcode(Instruction::InstructionID ID) {
   return ("`" + Instruction::getOpcodeName(ID) + "`").str();
 }
 
+/// Words as a list: "a", "a and b", "a, b and c", with Last for "and".
+static std::string joinWords(ArrayRef<std::string> Words, StringRef Last) {
+  std::string Text;
+  for (auto [Index, Word] : enumerate(Words))
+    Text += (Index == 0                  ? std::string()
+             : Index + 1 == Words.size() ? (" " + Last + " ").str()
+                                         : std::string(", ")) +
+            Word;
+  return Text;
+}
+
 /// "a" or "an", as an instruction matcher's name begins.
 static std::string article(Instruction::InstructionID ID) {
   return StringRef("aeiou").contains(Instruction::getOpcodeName(ID).front())
@@ -108,13 +119,7 @@ static std::optional<std::string> firstLack(const FeatureRequirement &R,
     for (; Missing; Missing &= Missing - 1)
       Names.push_back(
           opcode(Instruction::InstructionID(llvm::countr_zero(Missing))));
-    std::string Text = "it has no ";
-    for (auto [Index, Name] : enumerate(Names))
-      Text += (Index == 0                  ? ""
-               : Index + 1 == Names.size() ? " or "
-                                           : ", ") +
-              Name;
-    return Text;
+    return "it has no " + joinWords(Names, "or");
   }
   for (auto [User, Operand] : R.Edges)
     if (!Features.mayHaveEdge(User, Operand))
@@ -157,11 +162,8 @@ static std::optional<std::string> firstLack(const FeatureRequirement &R,
     }
     if (Shape.Width)
       Parts.push_back("has an i" + std::to_string(Shape.Width) + " result");
-    for (auto [Index, Part] : enumerate(Parts))
-      Text += (Index == 0                  ? " "
-               : Index + 1 == Parts.size() ? " and "
-                                           : ", ") +
-              Part;
+    if (!Parts.empty())
+      Text += " " + joinWords(Parts, "and");
     return Text;
   }
   for (const auto &[S, A] : R.SiteFacts)
