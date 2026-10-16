@@ -20,6 +20,8 @@ struct UnsatisfiedConstraint {
   const Constraint *Expression;
   /// Why the constraint could not be evaluated; empty if it was false.
   std::string Reason;
+  /// The first structural match it rejected.
+  Instantiation Rejected;
 };
 
 /// Searches a function for the instantiations of a lowered pattern: matches

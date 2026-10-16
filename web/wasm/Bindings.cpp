@@ -122,6 +122,8 @@ public:
     for (const RejectingConstraint &R : Rejecting) {
       val Entry = noteValue(R.Constraint);
       Entry.set("reason", R.Reason);
+      Entry.set("bindings", R.Bindings);
+      Entry.set("instructions", R.Instructions);
       Rejected.call<void>("push", Entry);
     }
     Result.set("rejected", Rejected);

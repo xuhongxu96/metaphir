@@ -35,11 +35,12 @@ MatchResults PatternMatcher::matchStructure(const Pattern &Pattern,
 MatchResults PatternMatcher::applyConstraints(
     const Pattern &Pattern, MatchResults Matches,
     SmallVectorImpl<UnsatisfiedConstraint> &Failed) {
-  auto Record = [&Failed](const Constraint *Expression, std::string Reason) {
+  auto Record = [&Failed](const Constraint *Expression, std::string Reason,
+                          const Instantiation &Rejected) {
     if (none_of(Failed, [&](const UnsatisfiedConstraint &U) {
           return U.Expression == Expression;
         }))
-      Failed.push_back({Expression, std::move(Reason)});
+      Failed.push_back({Expression, std::move(Reason), Rejected});
   };
 
   MatchResults Filtered;
@@ -62,12 +63,12 @@ MatchResults PatternMatcher::applyConstraints(
               Reason = E.Message;
             },
             [&](const ErrorInfoBase &E) { Reason = E.message(); });
-        Record(Expression, std::move(Reason));
+        Record(Expression, std::move(Reason), Match);
         Satisfies = false;
         break;
       }
       if (!*Holds) {
-        Record(Expression, "");
+        Record(Expression, "", Match);
         Satisfies = false;
       }
     }

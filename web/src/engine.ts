@@ -107,7 +107,8 @@ export const rejectionKey = (r: Rejected) => `${r.line}:${r.column}:${r.message}
 export interface Rejection extends Rejected {
   /** How many functions it rejected. */
   functions: number;
-  /** The first REJECTION_SAMPLES of them, as matches without bindings. */
+  /** The first REJECTION_SAMPLES of them, each as the structural match
+   * the constraint rejected. */
   samples: Match[];
 }
 
@@ -258,17 +259,12 @@ export class PublishedCorpus {
         where?: { module: string; name: string },
       ) => {
         progress.matched++;
-        // The function, to be opened as a match without bindings.
-        const sample: Match | undefined = where && {
-          key: fn,
-          module: where.module,
-          fn: where.name,
-          bindings: "",
-          instructions: [],
-          ir: irOf(fn),
-        };
+        // A constraint of several variants counts once per function.
+        const counted = new Set<string>();
         for (const r of rejected) {
           const key = rejectionKey(r);
+          if (counted.has(key)) continue;
+          counted.add(key);
           let known = rejections.get(key);
           if (known) {
             known.functions++;
@@ -277,7 +273,15 @@ export class PublishedCorpus {
             known = { ...r, functions: 1, samples: [] };
             rejections.set(key, known);
           }
-          if (sample && known.samples.length < REJECTION_SAMPLES) known.samples.push(sample);
+          // The function, opened with the structural match rejected.
+          if (where && known.samples.length < REJECTION_SAMPLES)
+            known.samples.push({
+              ...parseMatch(
+                fn,
+                [where.module, where.name, r.bindings ?? "", r.instructions ?? ""].join("\t"),
+              ),
+              ir: irOf(fn),
+            });
         }
         if (rejected.length)
           progress.rejections = [...rejections.values()].map((r) => ({

@@ -255,6 +255,10 @@ TEST_F(WebQueryTest, ReportsWarningsAndRejectingConstraints) {
   EXPECT_EQ(False.Rejecting[0].Constraint.Column, 4u);
   EXPECT_EQ(False.Rejecting[0].Reason, "");
   EXPECT_EQ(False.Rejecting[0].Function, "@f");
+  // With the structural match it rejected.
+  EXPECT_EQ(False.Rejecting[0].Bindings, "{?c = 1, ?x = %x}");
+  EXPECT_NE(False.Rejecting[0].Instructions.find("= #0"), std::string::npos)
+      << False.Rejecting[0].Instructions;
 
   // Arithmetic on an argument cannot be evaluated.
   Result Failed = query("%r = add i32 ?x, ?c\n;; ?x + 1 == 2\n",

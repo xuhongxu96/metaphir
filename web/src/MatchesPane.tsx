@@ -240,12 +240,14 @@ function Rejections(props: {
           <table className="samples">
             <colgroup>
               <col className="module" />
+              <col className="function" />
               <col />
             </colgroup>
             <thead>
               <tr>
                 <th>Module</th>
                 <th>Function</th>
+                <th title="The structural match the constraint rejected">Rejected bindings</th>
               </tr>
             </thead>
             <tbody>
@@ -257,6 +259,7 @@ function Rejections(props: {
                 >
                   <td title={sample.module}>{sample.module}</td>
                   <td title={sample.fn}>{sample.fn}</td>
+                  <td title={sample.bindings}>{sample.bindings}</td>
                 </tr>
               ))}
             </tbody>

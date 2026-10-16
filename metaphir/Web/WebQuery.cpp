@@ -280,6 +280,11 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
   MatchResults Matches = Matcher.match(
       *Pattern->Variants, Program, Rejecting ? &Unsatisfied : nullptr,
       Rejecting ? &HadStructuralMatch : nullptr, &Pattern->Query);
+  ModuleSlotTracker Slots(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
+  Slots.incorporateFunction(F);
+  auto PatternLine = [&](const metaphir::Instruction &I) {
+    return getMainFileLine(Pattern->Source, I.getSourceRange().Begin);
+  };
   if (Matches.empty()) {
     if (HadStructuralMatch)
       for (const UnsatisfiedConstraint &U : Unsatisfied) {
@@ -292,19 +297,19 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
           std::tie(R.Constraint.Line, R.Constraint.Column) =
               SM.getLineAndColumn(Loc, SM.getMainFileID());
         R.Reason = U.Reason;
+        raw_string_ostream Bindings(R.Bindings);
+        U.Rejected.print(Bindings, &Slots);
+        raw_string_ostream Instructions(R.Instructions);
+        U.Rejected.printInstructions(Instructions, PatternLine);
       }
     return Error::success();
   }
-  ModuleSlotTracker Slots(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
-  Slots.incorporateFunction(F);
   for (const Instantiation &Match : Matches) {
     Out << Module.Path << "\t@" << F.getName() << '\t';
     Match.print(Out, &Slots);
     if (PrintInstructions) {
       Out << '\t';
-      Match.printInstructions(Out, [&](const metaphir::Instruction &I) {
-        return getMainFileLine(Pattern->Source, I.getSourceRange().Begin);
-      });
+      Match.printInstructions(Out, PatternLine);
     }
     Out << '\n';
   }

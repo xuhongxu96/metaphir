@@ -19,6 +19,10 @@ export interface Note {
  * was false. */
 export interface Rejected extends Note {
   reason: string;
+  /** The first structural match it rejected, printed as a match is (see
+   * parseMatch): its bindings and the instructions it matched. */
+  bindings?: string;
+  instructions?: string;
 }
 
 /** What a stage reads next; compiling also gives the pattern's warnings. */

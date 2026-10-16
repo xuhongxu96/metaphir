@@ -42,6 +42,10 @@ struct RejectingConstraint {
   PatternNote Constraint;
   /// Why it could not be evaluated; empty if it was false.
   std::string Reason;
+  /// The first structural match it rejected, printed as a match is: its
+  /// bindings, and the instructions it matched.
+  std::string Bindings;
+  std::string Instructions;
 };
 
 /// A pattern matched against a published corpus, in stages that each tell

@@ -577,7 +577,7 @@ The page is React, in resizable panes:
 | Pane | Shows |
 |---|---|
 | pattern | the pattern, in Monaco; a second tab shows `stdlib.mpir`, read-only |
-| matches | the matches, below the pattern; the arrow keys move through them. A **Rejected** tab lists each constraint that rejected functions' structural matches, with how many it rejected and the first 10 of them to open; for your IR, each function without a match and why |
+| matches | the matches, below the pattern; the arrow keys move through them. A **Rejected** tab lists each constraint that rejected functions' structural matches, with how many it rejected and the first 10 of them to open, each with the structural match it rejected highlighted as a match is; for your IR, each function without a match and why |
 | IR | the selected match's function, with its bindings listed and the instructions it matched highlighted (as `metaphir-match --print-instructions` reports them) |
 
 - **Corpus** or **Your IR** picks what Match searches. With Your IR, the IR
