@@ -56,6 +56,9 @@ choosePostingKeys(const FeatureQuery &Query,
   constexpr size_t MaxIntersected = 3;
   std::vector<SmallVector<PostingKey, 3>> Chosen(Query.size());
   for (unsigned Variant = 0; Variant != Query.size(); ++Variant) {
+    // A variant that matches nothing needs no list.
+    if (Query.isImpossible(Variant))
+      continue;
     SmallVector<std::pair<uint64_t, PostingKey>, 8> Keys;
     for (const PostingKey &Key : getPostingKeys(Query.getRequirement(Variant)))
       Keys.push_back({Count(Key), Key});

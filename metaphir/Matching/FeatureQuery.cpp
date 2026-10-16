@@ -6,6 +6,8 @@
 #include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/ConstraintEvaluator.h"
+#include "metaphir/Matching/ConstraintInterpreter.h"
+#include "metaphir/Matching/Instantiation.h"
 #include "metaphir/Matching/TypeMatcher.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -255,6 +257,45 @@ FeatureQuery::FeatureQuery(FeatureQuery &&) = default;
 FeatureQuery &FeatureQuery::operator=(FeatureQuery &&) = default;
 FeatureQuery::~FeatureQuery() = default;
 
+/// Whether C refers to nothing a match binds, nor to definitions, so that it
+/// evaluates the same in every match.
+static bool isClosed(const Constraint &C) {
+  if (isa<VariableConstraint>(C))
+    return false;
+  if (const auto *Array = dyn_cast<ArrayConstraint>(&C))
+    return all_of(Array->getElements(),
+                  [](const Constraint *E) { return isClosed(*E); });
+  if (const auto *Access = dyn_cast<ArrayAccessConstraint>(&C))
+    return isClosed(*Access->getArray()) && isClosed(*Access->getIndex());
+  if (const auto *Operator = dyn_cast<OperatorConstraint>(&C))
+    return !Operator->isUserDefined() &&
+           all_of(Operator->getArguments(),
+                  [](const Constraint *A) { return isClosed(*A); });
+  return true;
+}
+
+/// Whether some constraint of Lowered rejects every match: a closed
+/// constraint evaluates alike in every match, and rejects it when it is false
+/// or fails to evaluate (such as 'udiv(1, 0) == 0').
+static bool hasFalseConstraint(const Pattern &Lowered) {
+  ConstraintInterpreter Interpreter;
+  Instantiation Empty;
+  for (const Constraint *C : Lowered.getConstraints()) {
+    if (!isClosed(*C))
+      continue;
+    Expected<ConstraintValue> Result = Interpreter.evaluate(*C, Empty);
+    Expected<bool> Holds = Result ? detail::requireBoolean(*Result, *C)
+                                  : Expected<bool>(Result.takeError());
+    if (!Holds) {
+      consumeError(Holds.takeError());
+      return true;
+    }
+    if (!*Holds)
+      return true;
+  }
+  return false;
+}
+
 FeatureQuery FeatureQuery::compute(const PatternVariants &Variants,
                                    const MIRContext *Definitions) {
   FeatureQuery Query;
@@ -262,6 +303,7 @@ FeatureQuery FeatureQuery::compute(const PatternVariants &Variants,
   for (const Pattern *Lowered : Variants) {
     Variant V;
     V.Lowered = Lowered;
+    V.Impossible = hasFalseConstraint(*Lowered);
     FeatureRequirement &Requirement = V.Requirement;
     SmallPtrSet<const Instruction *, 8> OnStack;
     for (const Instruction *Root : Lowered->getRoots())
@@ -455,7 +497,7 @@ bool FeatureQuery::constraintsMayHold(const Variant &V,
 bool FeatureQuery::mayMatchVariant(unsigned Index,
                                    const FunctionFeatures &Features) const {
   const Variant &V = Variants[Index];
-  if (!V.Requirement.isSatisfiedBy(Features))
+  if (V.Impossible || !V.Requirement.isSatisfiedBy(Features))
     return false;
   if (!Features.Fine)
     return true;

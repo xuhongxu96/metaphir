@@ -101,6 +101,53 @@ TEST_F(FeaturesTest, RequiresTheInstructions) {
   EXPECT_FALSE(passes("add"));
 }
 
+TEST_F(FeaturesTest, AFalseConstraintPrunesEveryFunction) {
+  parse(R"(
+    %r = add i32 ?x, ?y
+    ;; 1 == 2 || false
+  )",
+        R"(
+    define i32 @add(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  ASSERT_EQ(Query.size(), 1u);
+  EXPECT_TRUE(Query.isImpossible(0));
+  EXPECT_FALSE(passes("add"));
+}
+
+TEST_F(FeaturesTest, AClosedConstraintThatFailsPrunesEveryFunction) {
+  // Division by zero fails in every match, which rejects it.
+  parse(R"(
+    %r = add i32 ?x, ?y
+    ;; udiv(1, 0) == 0
+  )",
+        R"(
+    define i32 @add(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_TRUE(Query.isImpossible(0));
+  EXPECT_FALSE(passes("add"));
+}
+
+TEST_F(FeaturesTest, AConstraintOnBindingsIsNotDecidedEarly) {
+  parse(R"(
+    %r = add i32 ?x, ?c
+    ;; ?c == 1
+  )",
+        R"(
+    define i32 @add(i32 %x) {
+      %r = add i32 %x, 1
+      ret i32 %r
+    }
+  )");
+  EXPECT_FALSE(Query.isImpossible(0));
+  EXPECT_TRUE(passes("add"));
+}
+
 TEST_F(FeaturesTest, RequiresOperandEdges) {
   parse(R"(
     %a = add i32 ?x, ?y

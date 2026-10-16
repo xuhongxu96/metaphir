@@ -97,6 +97,10 @@ public:
     return Variants[Index].Requirement;
   }
 
+  /// Whether a constraint of the variant is false whatever it binds, such as
+  /// ';; false', so the variant matches no function.
+  bool isImpossible(unsigned Index) const { return Variants[Index].Impossible; }
+
   bool mayMatch(const FunctionFeatures &Features) const;
   bool mayMatchVariant(unsigned Index, const FunctionFeatures &Features) const;
   /// Whether a variant's instructions can match, whatever its constraints.
@@ -114,6 +118,7 @@ private:
     /// The instructions matched as themselves, and in pattern order.
     SmallPtrSet<const Instruction *, 8> Certain;
     SmallVector<const Instruction *, 4> CertainInOrder;
+    bool Impossible = false;
   };
 
   /// The ways the certain instructions of V can be typed by the signatures
