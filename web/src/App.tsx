@@ -37,7 +37,16 @@ const EXAMPLES: Record<string, string> = Object.fromEntries(
     .map(([path, text]) => [path.slice(path.lastIndexOf("/") + 1, -".mpir".length), text])
     .sort(([a], [b]) => (a < b ? -1 : 1)),
 );
+// The standard library the patterns use, shown beside the pattern.
+const STDLIB = Object.values(
+  import.meta.glob("../../metaphir/StdLib/stdlib.mpir", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }) as Record<string, string>,
+)[0];
 type Source = "published" | "local";
+type PatternTab = "pattern" | "stdlib";
 
 export function App() {
   const { preference, setPreference, dark } = useColorScheme();
@@ -62,6 +71,7 @@ export function App() {
   // The pattern as last matched, whose lines the matches refer to.
   const [matchedPattern, setMatchedPattern] = useState<string>();
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
+  const [patternTab, setPatternTab] = useState<PatternTab>("pattern");
   // What the last run found wrong in the pattern, until it is edited.
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   useEffect(() => setDiagnostics([]), [pattern]);
@@ -276,9 +286,28 @@ export function App() {
               <Panel id="pattern-panel" defaultSize="35" minSize="15">
                 <section className="pane">
                   <div className="pane-header">
-                    <span>Pattern</span>
+                    <div className="tabs" role="tablist">
+                      <button
+                        role="tab"
+                        aria-selected={patternTab === "pattern"}
+                        onClick={() => setPatternTab("pattern")}
+                      >
+                        Pattern
+                      </button>
+                      <button
+                        id="stdlib-tab"
+                        role="tab"
+                        aria-selected={patternTab === "stdlib"}
+                        onClick={() => setPatternTab("stdlib")}
+                        title="The standard library's matchers, metaflags and constraints"
+                      >
+                        stdlib.mpir
+                      </button>
+                    </div>
                     <span className="hint">
-                      Ctrl/⌘+Enter to match · Ctrl/⌘+click to find in the IR
+                      {patternTab === "pattern"
+                        ? "Ctrl/⌘+Enter to match · Ctrl/⌘+click to find in the IR"
+                        : "read-only"}
                     </span>
                   </div>
                   {local && (
@@ -293,14 +322,26 @@ export function App() {
                       </label>
                     </div>
                   )}
-                  <div className="pane-body">
+                  {/* Both stay mounted, so the pattern keeps its undo history
+                      and markers while the library is shown. */}
+                  <div className="pane-body" hidden={patternTab !== "pattern"}>
                     <Editor
                       language="metaphir"
                       theme={theme}
+                      path="pattern.mpir"
                       value={pattern}
                       onChange={(value) => setPattern(value ?? "")}
                       onMount={onPatternMount}
                       options={EDITOR_OPTIONS}
+                    />
+                  </div>
+                  <div className="pane-body" hidden={patternTab !== "stdlib"}>
+                    <Editor
+                      language="metaphir"
+                      theme={theme}
+                      path="stdlib.mpir"
+                      value={STDLIB}
+                      options={{ ...EDITOR_OPTIONS, readOnly: true }}
                     />
                   </div>
                 </section>
