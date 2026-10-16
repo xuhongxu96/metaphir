@@ -12,6 +12,7 @@
 ; RUN: not %metaphir-match %t/meta-for-fixed.mpir %t/add.ll 2>&1 | FileCheck %s --check-prefix=META-FOR-FIXED
 ; RUN: not %metaphir-match %t/or-self-unbound.mpir %t/zext.ll 2>&1 | FileCheck %s --check-prefix=OR-SELF-UNBOUND
 ; RUN: %metaphir-match --matches-only %t/or-self-unnamed.mpir %t/zext.ll | FileCheck %s --check-prefix=OR-SELF-UNNAMED
+; RUN: not %metaphir-match %t/or-self-nested.mpir %t/zext.ll 2>&1 | FileCheck %s --check-prefix=OR-SELF-NESTED
 ; RUN: %metaphir-match --matches-only %t/use-operand-flag.mpir %t/consts.ll | FileCheck %s --check-prefix=USE-OPERAND-FLAG
 ; RUN: %metaphir-match --matches-only %t/nested-operand-flag.mpir %t/consts.ll | FileCheck %s --check-prefix=USE-OPERAND-FLAG
 
@@ -190,6 +191,13 @@ define i32 @add(i32 %a, i32 %b) {
 %z = zext:o i?n ?x to i32
 %r = add i32 %z, 1
 ; OR-SELF-UNBOUND: or-self-unbound.mpir:1:13: error: meta variable '?n' is not bound when ':o' lets 'zext' match its operand; name it '?_n' if it need not be bound
+
+;--- or-self-nested.mpir
+%y = mul i32 ?c, ?d
+%x = add:o(1) i32 %y, ?b
+%r = sub i32 %x, 1
+; Also those of an operand instruction it would match.
+; OR-SELF-NESTED: error: meta variable '?{{[cd]}}' is not bound when ':o' lets 'add' match its operand
 
 ;--- or-self-unnamed.mpir
 %z = zext:o i?_n ?x to i32

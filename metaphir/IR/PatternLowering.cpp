@@ -973,8 +973,15 @@ static Error checkOrSelfBindings(const Pattern &P) {
       continue;
     bool OrSelf = I->getOrSelfOperandIndex().has_value();
     if (OrSelf) {
+      // Matching itself binds its parts and its operand instructions'.
       Bindings Itself;
-      Itself.addInstruction(*I, /*OnlySelf=*/false);
+      SmallPtrSet<const Instruction *, 8> Seen;
+      Itself.Instructions.push_back(I);
+      while (!Itself.Instructions.empty()) {
+        const Instruction *J = Itself.Instructions.pop_back_val();
+        if (Seen.insert(J).second)
+          Itself.addInstruction(*J, /*OnlySelf=*/false);
+      }
       for (const MetaVariable *V : Itself.Variables)
         BoundBy.try_emplace(V, I);
     }
