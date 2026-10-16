@@ -3,10 +3,10 @@
 // is shown while a query runs, and when it pauses or fails; closed, it
 // stays so until the next.
 
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { count, rejectionKey, type Rejection } from "./engine.ts";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { count, type Rejection } from "./engine.ts";
 import type { QueryControl } from "./pipeline.ts";
-import { describeRejection, type Status } from "./status.ts";
+import { describeRejection, INDEX_HINT, type Status } from "./status.ts";
 
 export function StatusChip({
   status,
@@ -71,32 +71,27 @@ export function StatusChip({
             <Notes title="Warnings" items={warnings.map((w) => located(w.line, w.message))} />
           )}
           {rejections.length > 0 && (
-            <div className="status-notes">
-              <h3>Constraints that rejected structural matches</h3>
-              <ul>
-                {rejections.map((r) => (
-                  <li key={rejectionKey(r)}>
-                    {onRejection ? (
-                      <button
-                        className="link"
-                        onClick={() => {
-                          onRejection(r);
-                          setOpen(false);
-                        }}
-                        title="List the functions it rejected"
-                      >
-                        {located(r.line, describeRejection(r))}
-                      </button>
-                    ) : (
-                      located(r.line, describeRejection(r))
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <p className="hint">
-                Counted in the functions matched: those the index rules out are not.
-              </p>
-            </div>
+            <Notes
+              title="Constraints that rejected structural matches"
+              items={rejections.map((r) => {
+                const text = located(r.line, describeRejection(r));
+                return onRejection ? (
+                  <button
+                    className="link"
+                    onClick={() => {
+                      onRejection(r);
+                      setOpen(false);
+                    }}
+                    title="List the functions it rejected"
+                  >
+                    {text}
+                  </button>
+                ) : (
+                  text
+                );
+              })}
+              hint={INDEX_HINT}
+            />
           )}
           {control && <Actions control={control} paused={paused} />}
         </div>
@@ -108,7 +103,7 @@ export function StatusChip({
 const located = (line: number, message: string) =>
   line > 0 ? `line ${line}: ${message}` : message;
 
-function Notes({ title, items, hint }: { title: string; items: string[]; hint?: string }) {
+function Notes({ title, items, hint }: { title: string; items: ReactNode[]; hint?: string }) {
   return (
     <div className="status-notes">
       <h3>{title}</h3>

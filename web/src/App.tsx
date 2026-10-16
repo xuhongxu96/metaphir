@@ -25,6 +25,7 @@ import { ProgressBar } from "./ProgressBar.tsx";
 import { patternHash, readPatternHash } from "./share/patternLink.ts";
 import { describe, statusDiagnostics } from "./status.ts";
 import { StatusChip } from "./StatusChip.tsx";
+import { CopyButton } from "./CopyButton.tsx";
 import { useResults } from "./results.ts";
 import { useFunctionIR } from "./useFunctionIR.ts";
 import { YourIRPane } from "./YourIRPane.tsx";
@@ -98,7 +99,6 @@ export function App() {
     shown;
   // The published query running, to pause, continue or stop.
   const [control, setControl] = useState<QueryControl>();
-  const [copied, setCopied] = useState(false);
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
   const [patternTab, setPatternTab] = useState<PatternTab>("pattern");
   const [rejectionFocus, setRejectionFocus] = useState<{ key: string }>();
@@ -304,16 +304,9 @@ export function App() {
     });
   };
 
-  async function share() {
-    try {
-      const hash = await patternHash(pattern);
-      await navigator.clipboard.writeText(`${location.origin}${location.pathname}${hash}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // The clipboard may be unavailable; the address bar has the link too.
-    }
-  }
+  // The link Share copies; the address bar has it too.
+  const shareLink = async () =>
+    `${location.origin}${location.pathname}${await patternHash(pattern)}`;
 
   const horizontal = useDefaultLayout({ id: "metaphir-horizontal" });
   const vertical = useDefaultLayout({ id: "metaphir-vertical" });
@@ -360,9 +353,13 @@ export function App() {
         <button id="run" className="primary" disabled={!canRun} onClick={() => void run()}>
           Match
         </button>
-        <button onClick={() => void share()} title="Copy a link to this pattern">
-          {copied ? "link copied" : "Share"}
-        </button>
+        <CopyButton
+          text={shareLink}
+          label="Share"
+          copiedLabel="link copied"
+          title="Copy a link to this pattern"
+          className=""
+        />
         <StatusChip
           status={status}
           control={yourIR ? undefined : control}

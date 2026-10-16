@@ -21,6 +21,7 @@ import {
   type Rejection,
 } from "./engine.ts";
 import { DataTable, type Column } from "./DataTable.tsx";
+import { INDEX_HINT } from "./status.ts";
 import { filterMatches, lookalikes, type Lookalike } from "./matchSearch.ts";
 import type { FunctionResult, RejectedBy } from "./yourIR.ts";
 
@@ -324,9 +325,7 @@ function Rejections(props: {
           )}
         </section>
       ))}
-      <p className="cards-hint">
-        Counted in the functions matched: those the index rules out are not.
-      </p>
+      <p className="cards-hint">{INDEX_HINT}</p>
     </div>
   );
 }

@@ -56,6 +56,9 @@ export function describe(progress: Progress): Status {
   };
 }
 
+/** Where rejecting constraints are counted, said beside them. */
+export const INDEX_HINT = "Counted in the functions matched: those the index rules out are not.";
+
 /** What a constraint that rejected structural matches did, in words. */
 export function describeRejection(r: Rejection): string {
   const where = `in ${count(r.functions, "function")}`;

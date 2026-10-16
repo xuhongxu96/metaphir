@@ -41,14 +41,24 @@ export interface Match {
 
 export function parseMatch(key: number, line: string): Match {
   const [module, fn, bindings, instructions] = line.split("\t");
+  return makeMatch(key, module, fn, bindings ?? "", instructions ?? "");
+}
+
+/** A match of its parts as metaphir-match prints them: bindings like
+ * "{?x = %a}", instructions like "{%r@1 = #0}". */
+export function makeMatch(
+  key: number,
+  module: string,
+  fn: string,
+  bindings: string,
+  instructions: string,
+): Match {
   return {
     key,
     module,
     fn,
-    bindings: bindings ?? "",
-    instructions: [
-      ...(instructions ?? "").matchAll(/([^\s,{}@]+)(?:@(\d+))? = #(\d+)/g),
-    ].map((m) => ({
+    bindings,
+    instructions: [...instructions.matchAll(/([^\s,{}@]+)(?:@(\d+))? = #(\d+)/g)].map((m) => ({
       name: m[1],
       patternLine: m[2] === undefined ? undefined : Number(m[2]),
       position: Number(m[3]),
@@ -278,10 +288,7 @@ export class PublishedCorpus {
           // The function, opened with the structural match rejected.
           if (where && known.samples.length < REJECTION_SAMPLES)
             known.samples.push({
-              ...parseMatch(
-                fn,
-                [where.module, where.name, r.bindings ?? "", r.instructions ?? ""].join("\t"),
-              ),
+              ...makeMatch(fn, where.module, where.name, r.bindings ?? "", r.instructions ?? ""),
               ir: irOf(fn),
             });
         }

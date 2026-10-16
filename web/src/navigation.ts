@@ -46,6 +46,11 @@ export function tokenAt(text: string, column: number): (Span & { text: string })
   return matchAt(NAME, text, column);
 }
 
+/** The word (an opcode or a name like addLike) at column of text. */
+export function wordAt(text: string, column: number): (Span & { text: string }) | undefined {
+  return matchAt(WORD, text, column);
+}
+
 /** What of pattern is at column of text, or just before it. */
 function matchAt(pattern: RegExp, text: string, column: number) {
   const at = column - 1;
@@ -83,7 +88,7 @@ export function patternLink(click: {
     return link && { from: span(token), to: instructionAt(ir, link.irLine!) };
   }
   // An instruction without a result is named by its opcode, on its line.
-  const word = token ? undefined : matchAt(WORD, text, column);
+  const word = token ? undefined : wordAt(text, column);
   const link =
     word && links.find((l) => l.name === word.text && l.patternLine === line && l.irLine);
   return link && { from: span(word!), to: instructionAt(ir, link.irLine!) };

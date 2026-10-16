@@ -3,7 +3,7 @@
 // instructions they matched, and once for its report of each function: why
 // one has no match (--explain).
 
-import { instructionLines, parseMatch, wasmUrl, type Match } from "./engine.ts";
+import { instructionLines, makeMatch, parseMatch, wasmUrl, type Match } from "./engine.ts";
 import { runMatcher } from "./wasmMatcher.ts";
 
 /** The name of the IR in diagnostics. */
@@ -118,32 +118,29 @@ const named = (text: string) =>
 export async function matchYourIR(ir: string, pattern: string): Promise<IRResult> {
   const files = [{ path: IR_FILE, bytes: new TextEncoder().encode(ir) }];
   const url = wasmUrl("metaphir-match.js");
-  const found = await runMatcher(url, files, pattern);
-  if (found.status !== 0) throw new Error(named(found.err) || `failed (${found.status})`);
-  const report = await runMatcher(url, files, pattern, /*explain=*/ true);
-  if (report.status !== 0) throw new Error(named(report.err) || `failed (${report.status})`);
+  // The two runs are independent, each in a module instance of its own.
+  const [found, report] = await Promise.all([
+    runMatcher(url, files, pattern),
+    runMatcher(url, files, pattern, /*explain=*/ true),
+  ]);
+  for (const run of [found, report])
+    if (run.status !== 0) throw new Error(named(run.err) || `failed (${run.status})`);
   const matches = found.out
     .split("\n")
     .filter(Boolean)
-    .map((line, i) => {
-      const match = parseMatch(i, line);
-      const lines = moduleInstructionLines(ir, match.fn);
-      match.ir = async () => ({ text: ir, lines });
-      return match;
-    });
+    .map((line, i) => withIR(parseMatch(i, line), ir));
   const functions = parseReport(report.out);
   let key = 0;
   for (const f of functions) {
-    f.open = rejectedMatch(ir, f.fn, { constraint: "", reason: "", bindings: "", instructions: "" }, key++);
-    for (const by of f.rejected) by.match = rejectedMatch(ir, f.fn, by, key++);
+    f.open = withIR(makeMatch(key++, IR_FILE, f.fn, "", ""), ir);
+    for (const by of f.rejected)
+      by.match = withIR(makeMatch(key++, IR_FILE, f.fn, by.bindings, by.instructions), ir);
   }
   return { matches, functions, messages: named(found.err) };
 }
 
-/** A rejected structural match of fn in ir, to open as a match is. */
-export function rejectedMatch(ir: string, fn: string, by: RejectedBy, key: number): Match {
-  const match = parseMatch(key, [IR_FILE, fn, by.bindings, by.instructions].join("\t"));
-  const lines = moduleInstructionLines(ir, fn);
-  match.ir = async () => ({ text: ir, lines });
-  return match;
+/** Match, opened in ir, the module it is in. */
+function withIR(match: Match, ir: string): Match {
+  const lines = moduleInstructionLines(ir, match.fn);
+  return { ...match, ir: async () => ({ text: ir, lines }) };
 }

@@ -3,6 +3,7 @@
 // cell hovered shows a button that copies its full text.
 
 import { useRef, useState, type PointerEvent, type ReactNode, type RefObject } from "react";
+import { CopyButton } from "./CopyButton.tsx";
 
 export interface Column<Row> {
   title: string;
@@ -123,32 +124,12 @@ export function DataTable<Row>(props: {
             {columns.map((column) => (
               <td key={column.title} title={column.text(row)}>
                 {column.render ? column.render(row) : column.text(row)}
-                <CellCopy text={column.text(row)} />
+                <CopyButton text={column.text(row)} className="cell-copy" title="Copy the cell" />
               </td>
             ))}
           </tr>
         ))}
       </tbody>
     </table>
-  );
-}
-
-/** Copies a cell's text, without selecting its row. */
-function CellCopy({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      className="cell-copy"
-      title="Copy the cell"
-      onClick={(event) => {
-        event.stopPropagation();
-        void navigator.clipboard.writeText(text).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1200);
-        });
-      }}
-    >
-      {copied ? "copied" : "copy"}
-    </button>
   );
 }

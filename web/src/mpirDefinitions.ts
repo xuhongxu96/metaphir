@@ -3,7 +3,7 @@
 // constraint ('constraint name'), in the pattern itself or in stdlib.mpir.
 
 import type { Definition } from "./irDefinition.ts";
-import type { NavLink } from "./navigation.ts";
+import { wordAt, type NavLink } from "./navigation.ts";
 
 export type DefinitionKind = "matcher" | "metaflag" | "constraint";
 
@@ -20,7 +20,6 @@ const KINDS: Record<string, DefinitionKind> = {
 };
 // 'match:c name', 'metaflag:i:o :name(...)', 'constraint name(...)'.
 const DEFINITION = /^(\s*(match|metaflag|constraint)(?::\w+)*\s+:?)([A-Za-z_][\w.]*)/;
-const WORD = /[A-Za-z_][\w.]*/g;
 
 /** The definitions in the text of a pattern or library, in order. */
 export function definitionsIn(text: string): NamedDefinition[] {
@@ -46,22 +45,18 @@ export function referenceAt(
   text: string,
   column: number,
 ): { kind: DefinitionKind; name: string; column: number; length: number } | undefined {
-  const at = column - 1;
-  for (const found of text.matchAll(WORD)) {
-    const start = found.index;
-    const end = start + found[0].length;
-    if (start > at || at > end) continue;
-    // Part of a meta variable or value, such as ?x or %a: not a name.
-    if (/[?%@$\w]/.test(text[start - 1] ?? "")) return undefined;
-    const kind: DefinitionKind =
-      text[start - 1] === ":"
-        ? "metaflag"
-        : /^\s*\(/.test(text.slice(end))
-          ? "constraint"
-          : "matcher";
-    return { kind, name: found[0], column: start + 1, length: found[0].length };
-  }
-  return undefined;
+  const word = wordAt(text, column);
+  if (!word) return undefined;
+  const before = text[word.column - 2] ?? "";
+  // Part of a meta variable or value, such as ?x or %a: not a name.
+  if (/[?%@$\w]/.test(before)) return undefined;
+  const kind: DefinitionKind =
+    before === ":"
+      ? "metaflag"
+      : /^\s*\(/.test(text.slice(word.column - 1 + word.length))
+        ? "constraint"
+        : "matcher";
+  return { kind, name: word.text, column: word.column, length: word.length };
 }
 
 /** Where a definition is: in the pattern, or in the library. */
