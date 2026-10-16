@@ -918,9 +918,8 @@ bool MIRParser::parseCallOperands(SmallVectorImpl<MatcherOperand> &Ops) {
   return expect(tok::rparen, "expected ')' after call arguments");
 }
 
-bool MIRParser::validateInstruction(Instruction::InstructionID ID,
-                                    ArrayRef<MetaFlag *> MFlags,
-                                    ArrayRef<MatcherOperand> Ops) {
+bool MIRParser::validateOrSelf(ArrayRef<MetaFlag *> MFlags,
+                               ArrayRef<MatcherOperand> Ops) {
   for (const MetaFlag *F : MFlags) {
     LocTy FlagLoc = F->getSourceRange().Begin;
     if (F->getMetaFlagID() == MetaFlag::MF_o) {
@@ -942,6 +941,17 @@ bool MIRParser::validateInstruction(Instruction::InstructionID ID,
         return Lex.ParseError(FlagLoc,
                               "metaflag ':o' operand index is out of range");
     }
+  }
+  return false;
+}
+
+bool MIRParser::validateInstruction(Instruction::InstructionID ID,
+                                    ArrayRef<MetaFlag *> MFlags,
+                                    ArrayRef<MatcherOperand> Ops) {
+  if (validateOrSelf(MFlags, Ops))
+    return true;
+  for (const MetaFlag *F : MFlags) {
+    LocTy FlagLoc = F->getSourceRange().Begin;
     if (F->getMetaFlagID() == MetaFlag::MF_c && ID == Instruction::I_call) {
       // Operands are the return type, the callee and the arguments.
       unsigned ArgumentCount = Ops.size() >= 2 ? Ops.size() - 2 : 0;
@@ -987,7 +997,8 @@ bool MIRParser::parseCompositeInstruction(Instruction *&Result,
   SmallVector<MatcherOperand, 8> Ops;
   if (CM->getSyntax() == Instruction::OperandSyntax::Custom)
     return error("custom syntax not supported for composite matchers");
-  if (parseArchetypeOperands(CM->getSyntax(), CM->getArity(), OpName, Ops))
+  if (parseArchetypeOperands(CM->getSyntax(), CM->getArity(), OpName, Ops) ||
+      validateOrSelf(MFlags, Ops))
     return true;
 
   SourceRange Range{Loc, Lex.getPrevTokEnd()};

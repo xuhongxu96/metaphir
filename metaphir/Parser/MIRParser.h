@@ -84,6 +84,9 @@ private:
   bool parseInstructionResult(SmallVectorImpl<char> &Name);
   /// Checks what the operand grammar cannot: ':o' and ':c' against the
   /// operands, and that no keyed operand is given twice.
+  /// Checks the ':o' operand indices of MFlags against Ops.
+  bool validateOrSelf(ArrayRef<MetaFlag *> MFlags,
+                      ArrayRef<MatcherOperand> Ops);
   bool validateInstruction(Instruction::InstructionID ID,
                            ArrayRef<MetaFlag *> MFlags,
                            ArrayRef<MatcherOperand> Ops);
