@@ -383,3 +383,7 @@ tbody tr.selected { background: var(--accent-bg); }
 /* What a Ctrl/⌘+click goes from, while the key is held. */
 .modifier-link { text-decoration: underline; cursor: pointer; }
 .hovered-line { background: var(--hover-bg) !important; outline: 1px solid var(--accent); }
+
+/* Monaco underlines the text of a diagnostic's link, not the link itself:
+ * the browser's underline would be a second one, under the parentheses too. */
+.monaco-hover .hover-contents a.code-link { text-decoration: none; }
