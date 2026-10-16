@@ -219,11 +219,12 @@ export const TRY: { title: string; pattern: string; matches: string }[] = [
     matches: "%m = and i32 %a, 8\n%t = icmp ne i32 %m, 0\n%z = zext i1 %t to i32\n%u = add i32 %z, 1",
   },
   {
-    title: "Signed Max of a Widened Value",
+    title: "Signed Min or Max of a Widened Value",
     pattern: [
       "%e = sextLike i?s ?x to i?d",
       "%m = maxOrMin:?mm i?d %e, ?c:apInt",
-      ';; intrinsic(?mm) == "llvm.smax" && ugt(?d, ?s)',
+      ';; intrinsic(?mm) == "llvm.smax" || intrinsic(?mm) == "llvm.smin"',
+      ";; sge(?c, -shl(1, ?s - 1)) && slt(?c, shl(1, ?s - 1))",
     ].join("\n"),
     matches: "%e = sext i8 %c to i32\n%m = call i32 @llvm.smax.i32(i32 %e, i32 7)",
   },
