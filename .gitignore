@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 /build/
 /build-release/
+/build-asan/
 .cache/
 /Testing/
 /eval/corpus/
