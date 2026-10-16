@@ -114,6 +114,11 @@ export function App() {
     for (const r of Object.values(results)) r.setDiagnostics([]);
   }, [pattern]);
   const [hovered, setHovered] = useState<Link[]>([]);
+  const yourIR = source === "ir";
+  const irLinked = yourIR && userIR === matchedIR;
+  // Links into the IR hold while it is the IR they were found in: the
+  // corpus's always, yours until it is edited.
+  const irCurrent = !yourIR || irLinked;
   const ir = useFunctionIR(selected);
   const links = useMemo<Link[]>(
     () =>
@@ -153,7 +158,7 @@ export function App() {
     setHovered(patternLinked && line ? links.filter((l) => l.patternLine === line) : []),
   );
   const onIRHover = (line: number | undefined) =>
-    setHovered(line ? links.filter((l) => l.irLine === line) : []);
+    setHovered(irCurrent && line ? links.filter((l) => l.irLine === line) : []);
   // Ctrl/⌘+clicking the pattern goes to what it matched in the IR.
   const [irTarget, setIRTarget] = useState<Definition>();
   // Ctrl/⌘+clicking a matcher, metaflag or constraint goes to its
@@ -201,7 +206,7 @@ export function App() {
     patternEditor,
     (line, column, text) =>
       // A name with a definition goes there instead.
-      patternLinked && selected && ir && !definitionAt(text, column)
+      patternLinked && irCurrent && selected && ir && !definitionAt(text, column)
         ? patternLink({ line, column, text, links, bindings: selected.bindings, ir: ir.text })
         : undefined,
     // A new object each time, gone to even if the same.
@@ -224,8 +229,6 @@ export function App() {
     );
   }, []);
 
-  const yourIR = source === "ir";
-  const irLinked = yourIR && userIR === matchedIR;
   const irDiagnostics = useMemo(
     () => (irLinked ? diagnostics.filter((d) => d.file && inFile(d, IR_FILE)) : []),
     [irLinked, diagnostics],
