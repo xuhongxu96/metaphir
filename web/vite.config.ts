@@ -1,4 +1,5 @@
-import { createReadStream, statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { createReadStream, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, normalize, resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Connect, type Plugin } from "vite";
@@ -52,7 +53,23 @@ function localData(): Plugin {
   };
 }
 
+/**
+ * A hash of the WebAssembly modules, which the page adds to their URLs:
+ * modules from an earlier build are then never taken from a cache.
+ */
+function wasmVersion(): string {
+  const dir = resolve(import.meta.dirname, "public/wasm");
+  const hash = createHash("sha256");
+  try {
+    for (const name of readdirSync(dir).sort()) hash.update(name).update(readFileSync(join(dir, name)));
+  } catch {
+    // No modules built yet.
+  }
+  return hash.digest("hex").slice(0, 12);
+}
+
 export default defineConfig({
+  define: { __WASM_VERSION__: JSON.stringify(wasmVersion()) },
   // Served from a subpath of GitHub Pages.
   base: "./",
   plugins: [react(), localData()],

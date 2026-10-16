@@ -5,7 +5,9 @@ import type { Matchable, Note, Rejected } from "./pipeline.ts";
 import { QueryControl, runQuery } from "./pipeline.ts";
 import { SessionPool } from "./pool.ts";
 
-export const wasmUrl = (name: string) => new URL(`wasm/${name}`, document.baseURI).href;
+/** A WebAssembly module's script, versioned so that no cache keeps an old one. */
+export const wasmUrl = (name: string) =>
+  new URL(`wasm/${name}?v=${__WASM_VERSION__}`, document.baseURI).href;
 
 /** An instruction a match matched: the pattern's and the function's. */
 export interface MatchedInstruction {

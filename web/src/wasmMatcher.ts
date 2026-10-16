@@ -2,6 +2,8 @@
 // in-memory file system as it would on a machine: how the page matches the
 // IR written in it.
 
+import { locateBeside } from "./session.ts";
+
 export interface MatcherFile {
   /** The path relative to the corpus directory. */
   path: string;
@@ -28,6 +30,7 @@ export async function runMatcher(
   const { default: create } = await import(/* @vite-ignore */ moduleUrl);
   // A fresh instance per run: the tool's options are parsed once.
   const tool = await create({
+    locateFile: locateBeside(moduleUrl),
     print: (line: string) => (out += line + "\n"),
     printErr: (line: string) => (err += line + "\n"),
   });
