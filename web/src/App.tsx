@@ -305,13 +305,14 @@ export function App() {
     }
   }, [pattern, source, yourIR, userIR, corpus]);
 
-  const runRef = useRef(run);
-  runRef.current = run;
+  // The editor's command is added once: it calls the run of the moment.
+  const runRef = useRef<typeof run | undefined>(run);
+  runRef.current = canRun ? run : undefined;
   const onPatternMount: OnMount = (editor) => {
     setPatternEditor(editor);
-    // Ctrl/Cmd+Enter matches.
+    // Ctrl/Cmd+Enter matches, as the Match button would.
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      if (!document.getElementById("run")?.hasAttribute("disabled")) void runRef.current();
+      void runRef.current?.();
     });
   };
 
