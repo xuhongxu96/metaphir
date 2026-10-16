@@ -11,6 +11,8 @@ import "monaco-editor/editor/contrib/contextmenu/browser/contextmenu";
 import "monaco-editor/editor/contrib/cursorUndo/browser/cursorUndo";
 import "monaco-editor/editor/contrib/find/browser/findController";
 import "monaco-editor/editor/contrib/folding/browser/folding";
+import "monaco-editor/editor/contrib/gotoError/browser/gotoError";
+import "monaco-editor/editor/contrib/hover/browser/hoverContribution";
 import "monaco-editor/editor/contrib/linesOperations/browser/linesOperations";
 import "monaco-editor/editor/contrib/multicursor/browser/multicursor";
 import "monaco-editor/editor/contrib/wordHighlighter/browser/wordHighlighter";

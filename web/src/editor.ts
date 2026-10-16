@@ -3,6 +3,7 @@
 
 import type { OnMount } from "@monaco-editor/react";
 import { useEffect, useMemo, useRef } from "react";
+import type { Diagnostic } from "./diagnostics.ts";
 import type { Definition } from "./irDefinition.ts";
 import { monaco } from "./monaco.ts";
 import type { NavLink } from "./navigation.ts";
@@ -151,4 +152,36 @@ export function useHoveredLine(
       leaves.dispose();
     };
   }, [editor]);
+}
+
+/** Shows diagnostics as markers on editor: a squiggle under the word each
+ * points at, with its message on hover. */
+export function useMarkers(editor: CodeEditor | undefined, diagnostics: Diagnostic[]) {
+  useEffect(() => {
+    const model = editor?.getModel();
+    if (!model) return;
+    monaco.editor.setModelMarkers(
+      model,
+      "metaphir",
+      diagnostics.map((d) => ({
+        severity:
+          d.severity === "error" ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
+        message: d.message,
+        startLineNumber: d.line,
+        startColumn: d.column,
+        endLineNumber: d.line,
+        endColumn: tokenEnd(model, d.line, d.column),
+      })),
+    );
+    return () => monaco.editor.setModelMarkers(model, "metaphir", []);
+  }, [editor, diagnostics]);
+}
+
+/** The column after the token at line and column of model, such as a meta
+ * variable '?a' or a value '%r'; Monaco's words leave out their sigils. */
+function tokenEnd(model: monaco.editor.ITextModel, line: number, column: number): number {
+  if (line < 1 || line > model.getLineCount()) return column;
+  const text = model.getLineContent(line);
+  const token = /^[\w?%@.$:-]+/.exec(text.slice(column - 1));
+  return column + (token ? token[0].length : 1);
 }

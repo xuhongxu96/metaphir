@@ -6,9 +6,11 @@ import {
   EDITOR_OPTIONS,
   useHoveredLine,
   useLineDecorations,
+  useMarkers,
   useModifierLinks,
   type CodeEditor,
 } from "./editor.ts";
+import { parseDiagnostics, type Diagnostic } from "./diagnostics.ts";
 import { matchLocal, PublishedCorpus, type Match, type Progress } from "./engine.ts";
 import { IRPane } from "./IRPane.tsx";
 import type { Definition } from "./irDefinition.ts";
@@ -60,6 +62,10 @@ export function App() {
   // The pattern as last matched, whose lines the matches refer to.
   const [matchedPattern, setMatchedPattern] = useState<string>();
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
+  // What the last run found wrong in the pattern, until it is edited.
+  const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
+  useMarkers(patternEditor, diagnostics);
+  useEffect(() => setDiagnostics([]), [pattern]);
   const [hovered, setHovered] = useState<Link[]>([]);
   const ir = useFunctionIR(selected);
   const links = useMemo<Link[]>(
@@ -128,6 +134,7 @@ export function App() {
     setRunning(true);
     setMatches([]);
     setSelected(undefined);
+    setDiagnostics([]);
     // Matches arrive by function; the table updates once a frame.
     let pending: Match[] = [];
     let frame = 0;
@@ -158,7 +165,9 @@ export function App() {
         await corpus!.match(pattern, onProgress, onMatches, control);
       }
     } catch (error) {
-      setStatus({ text: (error as Error).message, error: true });
+      const message = (error as Error).message;
+      setStatus({ text: message, error: true });
+      setDiagnostics(parseDiagnostics(message));
     } finally {
       if (frame) cancelAnimationFrame(frame);
       flush();

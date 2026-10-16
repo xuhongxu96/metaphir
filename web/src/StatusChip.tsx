@@ -19,6 +19,10 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
     if (paused || status.error) setOpen(true);
   }, [paused, status.error]);
   useDismiss(root, open, () => setOpen(false));
+  // A diagnostic's source line and caret follow its first line; they are
+  // shown apart, in a fixed-width font, so that the caret lines up.
+  const [headline, ...rest] = status.text.trimEnd().split("\n");
+  const more = rest.join("\n");
 
   return (
     <div ref={root} className="status-chip-wrap">
@@ -28,10 +32,10 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-controls="status-panel"
-        title={status.text}
+        title={headline}
       >
         <span id="status" role="status" className="status">
-          {status.text}
+          {headline}
         </span>
         {status.matches !== undefined && (
           <span className="status-count">{count(status.matches, "match", "matches")}</span>
@@ -42,7 +46,8 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
       </button>
       {open && (
         <div id="status-panel" className="status-panel" role="dialog" aria-label="Status">
-          <p className={`status-text${status.error ? " error" : ""}`}>{status.text}</p>
+          <p className={`status-text${status.error ? " error" : ""}`}>{headline}</p>
+          {more && <pre className="status-source">{more}</pre>}
           {status.details && <Details details={status.details} />}
           {control && <Actions control={control} paused={paused} />}
         </div>
