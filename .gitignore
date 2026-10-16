@@ -2,13 +2,11 @@
 __pycache__/
 .venv/
 /build/
-/build-release/
-/build-asan/
+/build-*/
 .cache/
 /Testing/
 /eval/corpus/
 /eval/corpus.mpidx
-/build-wasm/
 /web/public/wasm/
 /web/node_modules/
 /web/dist/
