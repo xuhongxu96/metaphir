@@ -577,16 +577,17 @@ The page is React, in resizable panes:
 | Pane | Shows |
 |---|---|
 | pattern | the pattern, in Monaco; a second tab shows `stdlib.mpir`, read-only |
-| matches | the matches, below the pattern; the arrow keys move through them |
+| matches | the matches, below the pattern; the arrow keys move through them. A **Rejected** tab lists each constraint that rejected functions' structural matches, with how many it rejected and the first 10 of them to open; for your IR, each function without a match and why |
 | IR | the selected match's function, with its bindings listed and the instructions it matched highlighted (as `metaphir-match --print-instructions` reports them) |
 
 - **Corpus** or **Your IR** picks what Match searches. With Your IR, the IR
   pane is an editor for LLVM IR of your own, kept in the browser, which
   `metaphir-match` (built for WebAssembly, loaded when first used) matches in
-  the page. The matches list the bindings as for the corpus, and each
-  function without a match is listed with why: the constraints that were
-  false or could not be evaluated, or that it has none of the pattern's
-  instructions. Errors in the IR are marked in its editor.
+  the page. The matches list the bindings as for the corpus, and the
+  Rejected tab lists each function without a match with why: the
+  constraints that were false or could not be evaluated, or that it has
+  none of the pattern's instructions. Errors in the IR are marked in its
+  editor. Corpus and Your IR each keep their own results.
 - Hovering a matched instruction in either editor highlights its counterpart
   in the other.
 - The search above the matches keeps those with every word of it in their
