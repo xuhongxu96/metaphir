@@ -117,6 +117,9 @@ body { background: var(--bg); color: var(--fg); }
 .rejection.focused { animation: flash 1.5s ease-out; }
 @keyframes flash { from { background: var(--accent-bg); } to { background: transparent; } }
 .status-notes button.link {
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
   padding: 0;
   border: 0;
   background: none;
