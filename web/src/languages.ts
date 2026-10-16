@@ -91,6 +91,24 @@ const llvm: Monaco.languages.IMonarchLanguage = {
   },
 };
 
+// InstCombine's C++, as the pattern guide shows it: PatternMatch.h's matchers
+// colored as the instructions they match, and what they bind as meta
+// variables.
+const cpp: Monaco.languages.IMonarchLanguage = {
+  tokenizer: {
+    root: [
+      [/\/\/.*$/, "comment"],
+      [/"([^"\\]|\\.)*"/, "string"],
+      [/\bm_\w+/, "keyword.instruction"],
+      [/\b(if|return|auto|const|true|false)\b/, "keyword"],
+      [/\b[A-Z]\w*(?=::)/, "type"],
+      [/\b(X|Y|Z|A|B|C|T|F|Pred|Op\d|I)\b/, "variable.meta"],
+      [/-?\d+/, "number"],
+      [/(&&|\|\||==|!=|->|[-+*!<>])/, "operator"],
+    ],
+  },
+};
+
 const rules = (dark: boolean): Monaco.editor.ITokenThemeRule[] => [
   { token: "keyword.instruction", foreground: dark ? "7ea6f0" : "2f5fb3", fontStyle: "bold" },
   { token: "keyword.constraint", foreground: dark ? "d7a35f" : "9a5b00" },
@@ -102,7 +120,7 @@ const rules = (dark: boolean): Monaco.editor.ITokenThemeRule[] => [
 ];
 
 export function registerLanguages(monaco: typeof Monaco): void {
-  for (const [id, language] of [["metaphir", metaphir], ["llvm", llvm]] as const) {
+  for (const [id, language] of [["metaphir", metaphir], ["llvm", llvm], ["cpp", cpp]] as const) {
     monaco.languages.register({ id });
     monaco.languages.setMonarchTokensProvider(id, language);
   }

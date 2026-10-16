@@ -23,6 +23,7 @@ import {
 import { IRPane } from "./IRPane.tsx";
 import { definitionLink, definitionsIn, type DefinitionFile } from "./mpirDefinitions.ts";
 import type { Definition } from "./irDefinition.ts";
+import { GuideDialog } from "./GuideDialog.tsx";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
 import { MatchesPane } from "./MatchesPane.tsx";
 import { linkLines, patternLink, type Link, type NavLink } from "./navigation.ts";
@@ -85,6 +86,7 @@ export function App() {
   const theme = themeName(dark);
   const [corpus, setCorpus] = useState<PublishedCorpus>();
   const [source, setSource] = useState<Source>("published");
+  const [helpOpen, setHelpOpen] = useState(false);
   // The IR written in the page, kept in this browser, and as last matched.
   const [userIR, setUserIR] = useState(savedIR);
   const [matchedIR, setMatchedIR] = useState<string>();
@@ -420,8 +422,21 @@ export function App() {
             <option value="dark">dark</option>
           </select>
         </label>
+        <button id="help-button" onClick={() => setHelpOpen(true)} title="The syntax, by example">
+          Help
+        </button>
         <ProgressBar status={status} />
       </header>
+      {helpOpen && (
+        <GuideDialog
+          onTry={(text) => {
+            setPattern(text);
+            setPatternTab("pattern");
+            setHelpOpen(false);
+          }}
+          onClose={() => setHelpOpen(false)}
+        />
+      )}
       {!yourIR && control && status.pause?.kind === "candidates" && (
         <LargeSearchDialog candidates={status.pause.candidates} control={control} />
       )}

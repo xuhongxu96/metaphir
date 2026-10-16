@@ -13,6 +13,16 @@
   --on-accent: #ffffff;
   --error: #cf222e;
   --warning: #9a6700;
+  --mk-value: #0b62c4;
+  --mk-nat: #b35400;
+  --mk-type: #7c3aad;
+  --mk-bool: #b0186e;
+  --mk-inst: #1f7a35;
+  --mk-pred: #c02a20;
+  --mk-intrinsic: #00808a;
+  --mk-fn: #7a5230;
+  --mk-block: #4a57a0;
+  --mk-array: #7d6400;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -29,6 +39,16 @@
     --on-accent: #0d1117;
     --error: #ff7b72;
     --warning: #d29922;
+    --mk-value: #6cb6ff;
+    --mk-nat: #f0a35e;
+    --mk-type: #c79bf2;
+    --mk-bool: #f47fc3;
+    --mk-inst: #7ee08f;
+    --mk-pred: #ff8f86;
+    --mk-intrinsic: #56d4dd;
+    --mk-fn: #d9b48a;
+    --mk-block: #a5b4fc;
+    --mk-array: #e3c75b;
   }
 }
 
@@ -45,6 +65,16 @@
   --on-accent: #0d1117;
   --error: #ff7b72;
   --warning: #d29922;
+  --mk-value: #6cb6ff;
+  --mk-nat: #f0a35e;
+  --mk-type: #c79bf2;
+  --mk-bool: #f47fc3;
+  --mk-inst: #7ee08f;
+  --mk-pred: #ff8f86;
+  --mk-intrinsic: #56d4dd;
+  --mk-fn: #d9b48a;
+  --mk-block: #a5b4fc;
+  --mk-array: #e3c75b;
 }
 
 * { box-sizing: border-box; }
@@ -185,6 +215,179 @@ button.link:hover, button.link.selected { text-decoration: underline; }
 .dialog-body { font-size: 0.9rem; line-height: 1.45; }
 .dialog-body p { margin: 0 0 0.6rem; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.75rem; }
+
+.help-dialog {
+  width: min(60rem, 100%);
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+}
+.help-header h2 { margin: 0; }
+.help-nav {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0 1.25rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+.help-nav div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.8rem; }
+.help-nav span { width: 4.5rem; color: var(--muted); font-weight: 600; }
+.help-nav button.link { padding: 0.05rem 0.35rem; margin: 0 -0.35rem; border-radius: 4px; }
+.help-nav button.link.current { background: var(--accent-bg); text-decoration: none; }
+.help-body { overflow-y: auto; padding: 0 1.5rem 1.5rem; font-size: 0.875rem; line-height: 1.55; }
+.help-body p { margin: 0 0 0.75rem; }
+.help-body code { font-family: var(--mono); font-size: 0.95em; }
+.help-section { padding-top: 1.75rem; }
+.help-section h3 { margin: 0 0 0.4rem; font-size: 1rem; }
+.help-part {
+  margin: 1.5rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 1rem;
+}
+.help-label { margin-bottom: 0.3rem; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.help-code {
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  background: var(--bg-alt);
+  font: 12px/1.6 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.help-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.help-pair > div { min-width: 0; }
+@media (max-width: 40rem) { .help-pair { grid-template-columns: 1fr; } }
+.help-aside { margin-top: 1rem; }
+.help-notes { margin: 0.9rem 0 0; padding-left: 1.1rem; }
+.help-notes li { margin: 0.3rem 0; }
+.help-see { margin: 0.75rem 0 0 !important; font-size: 0.8rem; color: var(--muted); }
+.help-see button.link { font-size: inherit; }
+.help-idiom-note { margin: 0.25rem 0 0 !important; font-size: 0.78rem; color: var(--muted); }
+
+/* A part of a demonstration, and the IR it binds: underlined in the color
+ * of its kind, with its name under it the first time, and what it is on
+ * hover. */
+.mark {
+  --k: var(--fg);
+  position: relative;
+  color: var(--k);
+  text-decoration: underline dotted var(--k) 1.5px;
+  text-underline-offset: 3px;
+  border-radius: 3px;
+  outline: none;
+  transition: background 0.12s;
+}
+.mark[data-says] { cursor: default; }
+.mark.lit, .mark[data-says]:hover, .mark[data-says]:focus-visible {
+  background: color-mix(in srgb, var(--k) 18%, transparent);
+}
+/* Lines of a demonstration are tall enough for the names under its parts,
+ * which are placed, not laid out: nothing moves as they show or light. */
+.help-code.annotated { padding: 0.5rem 0.8rem 1rem; line-height: 3; }
+.mark-name {
+  position: absolute;
+  top: calc(50% + 11px);
+  left: 0;
+  font: 600 10px/1 system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--k);
+  pointer-events: none;
+}
+.mark-tip {
+  display: none;
+  position: absolute;
+  bottom: calc(50% + 12px);
+  left: -0.4rem;
+  z-index: 5;
+  width: max-content;
+  max-width: 19rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: var(--fg);
+  color: var(--bg);
+  font: 12px/1.45 system-ui, sans-serif;
+  white-space: normal;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+/* The part as written on the first line, then its name and what it is. */
+.mark-tip > * { display: block; }
+.mark-tip code { margin-bottom: 0.2rem; font: 600 13px/1.4 var(--mono); color: inherit; }
+.mark-tip b { font-weight: 600; opacity: 0.75; }
+.mark:hover > .mark-tip, .mark:focus-visible > .mark-tip { display: block; }
+.mark-var, .mark-value { --k: var(--mk-value); }
+.mark-local, .mark-inst { --k: var(--mk-inst); }
+.mark-flag, .mark-nat { --k: var(--mk-nat); }
+.mark-constraint, .mark-type { --k: var(--mk-type); }
+.mark-bool { --k: var(--mk-bool); }
+.mark-pred { --k: var(--mk-pred); }
+.mark-intrinsic { --k: var(--mk-intrinsic); }
+.mark-fn { --k: var(--mk-fn); }
+.mark-block { --k: var(--mk-block); }
+.mark-array { --k: var(--mk-array); }
+
+/* Cases matched each on their own, and the instructions they light. */
+/* Each row is tall enough to hold the names under its parts, and as tall
+ * in the IR, so that the rows line up and a lit row holds all it shows. */
+.help-cases .case, .help-cases .case-line {
+  margin: 0 -0.4rem 2px;
+  padding: 0 0.4rem 10px;
+  border-radius: 4px;
+  transition: background 0.12s, opacity 0.12s;
+}
+.help-cases .case { cursor: default; outline: none; }
+.help-cases .case.on { background: var(--accent-bg); }
+.help-cases .case-line.on { background: color-mix(in srgb, var(--mk-inst) 14%, transparent); }
+.help-cases .case-line.dim { opacity: 0.35; }
+.case-note { margin-left: 1rem; font: 600 11px system-ui, sans-serif; color: var(--mk-inst); }
+
+.help-tries { display: grid; grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr)); gap: 0.75rem; }
+@media (max-width: 40rem) { .help-tries { grid-template-columns: 1fr; } }
+.help-try-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.help-group { margin-top: 1rem; }
+.help-about { margin: -0.2rem 0 0.4rem !important; font-size: 0.8rem; color: var(--muted); }
+.help-group h4 { margin: 0 0 0.4rem; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+/* Entries as written beside what they mean, in as many columns as fit. */
+.help-entries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 0.35rem 2rem;
+  margin: 0;
+}
+.help-entries > div { display: flex; align-items: baseline; gap: 0.75rem; min-width: 0; }
+.help-entries dt { flex: none; }
+.help-entries dt code { color: var(--accent); white-space: nowrap; }
+.help-entries dd { margin: 0; color: var(--muted); }
+.help-example { display: block; margin-top: 0.5rem; color: var(--muted); font-size: 0.8rem; }
+.help-table { width: 100%; border-collapse: collapse; table-layout: auto; }
+.help-table th, .help-table td {
+  padding: 0.45rem 0.5rem 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  text-align: left;
+}
+.help-table th { width: 11rem; font-weight: 400; color: var(--muted); position: static; background: none; }
+/* Unlike the page's other tables, cells wrap, in the text's font. */
+.help-table td { font-family: inherit; white-space: normal; overflow: visible; }
+.help-idioms thead th { position: static; padding: 0 0 0.3rem; font-weight: 600; }
+.help-idioms pre { margin: 0; font: 12px/1.5 var(--mono); white-space: pre-wrap; }
+.help-table td + td { padding-left: 0.5rem; }
 
 button {
   padding: 0.3rem 0.9rem;
