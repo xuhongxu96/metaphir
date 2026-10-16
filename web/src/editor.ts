@@ -17,6 +17,8 @@ export const EDITOR_OPTIONS = {
   automaticLayout: true,
   renderLineHighlight: "none" as const,
   wordWrap: "on" as const,
+  // Hovers are fixed in the page, so that a pane does not clip them.
+  fixedOverflowWidgets: true,
 };
 
 /**
