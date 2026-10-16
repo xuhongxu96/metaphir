@@ -1,12 +1,6 @@
 // What the page shows of a query: a line, its numbers and how far it is.
 
-import {
-  count,
-  rejectionKey,
-  type Pause,
-  type Progress,
-  type Rejection,
-} from "./engine.ts";
+import { count, rejectionKey, type Pause, type Progress, type Rejection } from "./engine.ts";
 import { PAGE_SCHEME, type Diagnostic } from "./diagnostics.ts";
 import type { Note } from "./pipeline.ts";
 
@@ -63,8 +57,7 @@ export function describe(progress: Progress): Status {
 }
 
 /** Where rejecting constraints are counted, said beside them. */
-export const INDEX_HINT =
-  "Counted in the functions matched: those the index rules out are not.";
+export const INDEX_HINT = "Counted in the functions matched: those the index rules out are not.";
 
 /** What a constraint that rejected structural matches did, in words. */
 export function describeRejection(r: Rejection): string {
@@ -79,14 +72,9 @@ export const rejectionLink = (r: Rejection) =>
   `${PAGE_SCHEME}:rejection/${encodeURIComponent(rejectionKey(r))}`;
 
 /** The rejection rejectionLink linked to, given the link's path. */
-export function linkedRejection(
-  rejections: Rejection[],
-  path: string,
-): Rejection | undefined {
+export function linkedRejection(rejections: Rejection[], path: string): Rejection | undefined {
   const key = /^rejection\/(.*)$/.exec(path)?.[1];
-  return key === undefined
-    ? undefined
-    : rejections.find((r) => rejectionKey(r) === key);
+  return key === undefined ? undefined : rejections.find((r) => rejectionKey(r) === key);
 }
 
 /** The warnings and rejecting constraints of status, as diagnostics on the
