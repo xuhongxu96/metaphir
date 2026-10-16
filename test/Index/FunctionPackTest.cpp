@@ -122,6 +122,61 @@ TEST_F(FunctionPackTest, RoundTripsTheFunction) {
   EXPECT_TRUE(Ext->doesNotThrow());
 }
 
+TEST_F(FunctionPackTest, KeepsTheOrderOfUseLists) {
+  pack(R"(
+    @g = global i32 0
+    define i32 @f(i32 %x, i1 %c) {
+    entry:
+      %a = add i32 %x, 1
+      %b = mul i32 %x, %a
+      %d = sdiv i32 %b, %x
+      store i32 %x, ptr @g
+      %l = load i32, ptr @g
+      br i1 %c, label %next, label %next
+    next:
+      %s = add i32 %a, %d
+      %t = add i32 %a, %l
+      ret i32 %t
+    }
+  )");
+  // Analyses that walk only some of a value's uses depend on their order,
+  // which parsing does not decide: one other than its order is kept.
+  Function &Original = *M->getFunction("f");
+  BasicBlock &Next = *std::next(Original.begin());
+  Value &A = *Original.getEntryBlock().begin();
+  for (Value *V : {static_cast<Value *>(Original.getArg(0)), &A,
+                   static_cast<Value *>(&Next),
+                   static_cast<Value *>(M->getNamedGlobal("g"))})
+    V->reverseUseList();
+  Packs.clear();
+  ASSERT_FALSE(
+      errorToBool(packFunctions(*M, [&](const Function &F, FunctionPack Pack) {
+        Packs[F.getName()] = std::move(Pack);
+        return Error::success();
+      })));
+
+  // A use, by the text of its user and the operand it is.
+  auto Uses = [](const Value &V) {
+    std::vector<std::string> Result;
+    for (const Use &U : V.uses()) {
+      std::string Text;
+      raw_string_ostream OS(Text);
+      U.getUser()->print(OS);
+      Result.push_back(Text + " #" + std::to_string(U.getOperandNo()));
+    }
+    return Result;
+  };
+  LLVMContext Into;
+  std::unique_ptr<UnpackedFunction> Unpacked = unpack("f", Into);
+  ASSERT_NE(Unpacked, nullptr);
+  const Function &F = Unpacked->getFunction();
+  EXPECT_EQ(Uses(*F.getArg(0)), Uses(*Original.getArg(0)));
+  EXPECT_EQ(Uses(*F.getEntryBlock().begin()), Uses(A));
+  EXPECT_EQ(Uses(*std::next(F.begin())), Uses(Next));
+  EXPECT_EQ(Uses(*F.getParent()->getNamedGlobal("g")),
+            Uses(*M->getNamedGlobal("g")));
+}
+
 TEST_F(FunctionPackTest, TellsHowConstantsAreUsedInTheModule) {
   pack(R"(
     @shared = global i32 0

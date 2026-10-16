@@ -12,7 +12,8 @@ namespace llvm {
 namespace metaphir {
 
 static constexpr StringLiteral Magic = "MPIRWEB";
-static constexpr uint32_t FormatVersion = 2;
+// 3: packs keep the order of their functions' use lists.
+static constexpr uint32_t FormatVersion = 3;
 
 StringRef getWebFileName(WebFile File) {
   switch (File) {

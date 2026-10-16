@@ -48,6 +48,16 @@ public:
   /// The unnamed global values, by number.
   ArrayRef<const GlobalValue *> getUnnamed() const { return Unnamed; }
 
+  /// The position of each use of GV in its use list, which spans the
+  /// module's functions: ranked once, for all of their packs.
+  const DenseMap<const Use *, unsigned> &getUseRanks(const GlobalValue &GV) {
+    auto [It, Inserted] = UseRanks.try_emplace(&GV);
+    if (Inserted)
+      for (const Use &U : GV.uses())
+        It->second.try_emplace(&U, It->second.size());
+    return It->second;
+  }
+
 private:
   void add(const GlobalValue &GV) {
     Positions[&GV] = Positions.size();
@@ -60,13 +70,14 @@ private:
   DenseMap<const GlobalValue *, unsigned> Positions;
   DenseMap<const GlobalValue *, unsigned> Slots;
   SmallVector<const GlobalValue *, 0> Unnamed;
+  DenseMap<const GlobalValue *, DenseMap<const Use *, unsigned>> UseRanks;
 };
 
 /// Builds the module of one function, with stubs for the global values it
 /// refers to, created as the function is cloned.
 class PackBuilder : public ValueMaterializer {
 public:
-  PackBuilder(const Function &F, const GlobalOrder &Order)
+  PackBuilder(const Function &F, GlobalOrder &Order)
       : Source(*F.getParent()), Order(Order),
         Packed(std::make_unique<Module>(Source.getModuleIdentifier(),
                                         Source.getContext())) {
@@ -101,7 +112,57 @@ public:
     completeIndirections();
     addPlaceholders();
     sortGlobals();
+    copyUseListOrder(F, *Clone);
     Target = Clone;
+  }
+
+  /// Orders the use lists of Clone's arguments, blocks and instructions, and
+  /// of the stubs of the globals it uses, as the originals' are: analyses
+  /// that walk a bounded number of uses, as value tracking does, then see
+  /// the uses InstCombine sees in the module. Of a global's uses, those in
+  /// other functions are not in the pack.
+  void copyUseListOrder(const Function &F, Function &Clone) {
+    // The original of each user in the clone.
+    DenseMap<const llvm::User *, const llvm::User *> OriginalUser;
+    for (const BasicBlock &BB : F)
+      for (const llvm::Instruction &I : BB)
+        if (auto *Cloned = dyn_cast_or_null<llvm::Instruction>(VMap.lookup(&I)))
+          OriginalUser[Cloned] = &I;
+    // Sorts Copy's uses as their originals rank in Rank.
+    auto SortAs = [&](llvm::Value &Copy,
+                      const DenseMap<const Use *, unsigned> &Rank) {
+      if (Copy.hasOneUse() || Copy.use_empty())
+        return;
+      auto RankOf = [&](const Use &U) {
+        const llvm::User *User = OriginalUser.lookup(U.getUser());
+        if (!User)
+          return ~0u;
+        auto Of = Rank.find(&User->getOperandUse(U.getOperandNo()));
+        return Of == Rank.end() ? ~0u : Of->second;
+      };
+      Copy.sortUseList(
+          [&](const Use &L, const Use &R) { return RankOf(L) < RankOf(R); });
+    };
+    // A value of the function is used only in it: its uses are ranked here.
+    auto Reorder = [&](const llvm::Value &Original, llvm::Value &Copy) {
+      if (Copy.hasOneUse() || Copy.use_empty())
+        return;
+      DenseMap<const Use *, unsigned> Rank;
+      for (const Use &U : Original.uses())
+        Rank.try_emplace(&U, Rank.size());
+      SortAs(Copy, Rank);
+    };
+    for (auto [Argument, Cloned] : zip(F.args(), Clone.args()))
+      Reorder(Argument, Cloned);
+    for (const BasicBlock &BB : F) {
+      if (auto *Cloned = dyn_cast_or_null<BasicBlock>(VMap.lookup(&BB)))
+        Reorder(BB, *Cloned);
+      for (const llvm::Instruction &I : BB)
+        if (llvm::Value *Cloned = VMap.lookup(&I))
+          Reorder(I, *Cloned);
+    }
+    for (const auto &[Stub, Original] : Originals)
+      SortAs(*const_cast<GlobalValue *>(Stub), Order.getUseRanks(*Original));
   }
 
   llvm::Value *materialize(llvm::Value *V) override {
@@ -274,7 +335,7 @@ private:
   }
 
   const Module &Source;
-  const GlobalOrder &Order;
+  GlobalOrder &Order;
   std::unique_ptr<Module> Packed;
   ValueToValueMapTy VMap;
   /// What each global value of the packed module stands for.
@@ -316,7 +377,8 @@ Error packFunctions(Module &M,
       Pack.FunctionIndex =
           std::distance(Packed.begin(), Builder.getFunction().getIterator());
       raw_string_ostream OS(Pack.Bitcode);
-      WriteBitcodeToFile(Packed, OS);
+      // With the use lists' order (see copyUseListOrder).
+      WriteBitcodeToFile(Packed, OS, /*ShouldPreserveUseListOrder=*/true);
     }
     if (Error E = Add(*F, std::move(Pack)))
       return E;
