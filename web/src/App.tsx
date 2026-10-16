@@ -176,11 +176,6 @@ export function App() {
     }
   }, [pattern, local, corpus]);
 
-  // The first match is shown once it arrives.
-  useEffect(() => {
-    if (!selected && matches.length) setSelected(matches[0]);
-  }, [matches, selected]);
-
   const runRef = useRef(run);
   runRef.current = run;
   const onPatternMount: OnMount = (editor) => {

@@ -31,6 +31,11 @@ export function MatchesPane(props: {
   useEffect(() => {
     body.current?.children[index]?.scrollIntoView({ block: "nearest" });
   }, [index]);
+  // The first match the search lists is shown once it arrives.
+  const first = shown[0];
+  useEffect(() => {
+    if (!selected && first) onSelect(first);
+  }, [selected, first, onSelect]);
 
   const searching = query.trim() !== "";
   const total = matches.length.toLocaleString();
