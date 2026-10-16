@@ -432,8 +432,11 @@ FeatureQuery FeatureQuery::compute(const PatternVariants &Variants,
         V.CertainInOrder.push_back(I);
     for (const Instruction *I : Lowered->getInstructions())
       if (MetaVariable *Capture = I->getCapture())
-        if (auto It = SitesOf.find(I); It != SitesOf.end())
-          SitesOf[Capture] = It->second;
+        if (auto It = SitesOf.find(I); It != SitesOf.end()) {
+          // Copied first: inserting the capture may move the map's entries.
+          Sites Of = It->second;
+          SitesOf[Capture] = std::move(Of);
+        }
     for (auto &[Value, S] : SitesOf)
       V.Bindings.bind(*Value, AbstractValue::sites(std::move(S)));
 
