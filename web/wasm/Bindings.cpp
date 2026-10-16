@@ -113,18 +113,20 @@ public:
 
   /// The matches of Function, whose pack is Frame, one per line, with the
   /// instructions each matched; and if it has none, the constraints that
-  /// rejected its structural matches.
+  /// rejected its structural matches; and whether it has any.
   val match(uint32_t Function, const std::string &Frame) {
     if (!Query)
       return noQuery();
     std::string Lines;
     raw_string_ostream OS(Lines);
     std::vector<RejectingConstraint> Rejecting;
+    bool Structural = false;
     if (Error E = Query->match(Function, Frame, OS, /*PrintInstructions=*/true,
-                               &Rejecting))
+                               &Rejecting, &Structural))
       return errorValue(std::move(E));
     val Result = val::object();
     Result.set("lines", Lines);
+    Result.set("structural", Structural);
     val Rejected = val::array();
     for (const RejectingConstraint &R : Rejecting) {
       val Entry = noteValue(R.Constraint);

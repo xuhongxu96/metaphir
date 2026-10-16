@@ -105,6 +105,8 @@ protected:
     std::string Matches;
     std::vector<PatternNote> Warnings;
     std::vector<RejectingConstraint> Rejecting;
+    /// How many functions had a structural match.
+    unsigned Structural = 0;
   };
 
   /// Matches Pattern, reading only the bytes each stage asks for; with
@@ -137,8 +139,11 @@ protected:
       EXPECT_TRUE(static_cast<bool>(Frame)) << toString(Frame.takeError());
       if (!Frame)
         return R;
+      bool Structural = false;
       Error E = (*Query)->match(Function, *Frame, OS, PrintInstructions,
-                                ReportRejecting ? &R.Rejecting : nullptr);
+                                ReportRejecting ? &R.Rejecting : nullptr,
+                                &Structural);
+      R.Structural += Structural;
       EXPECT_FALSE(static_cast<bool>(E)) << toString(std::move(E));
     }
     return R;
@@ -249,6 +254,7 @@ TEST_F(WebQueryTest, ReportsWarningsAndRejectingConstraints) {
   Result False = query("%r = add i32 ?x, ?c\n;; hasNUses(?x, 2)\n",
                        /*PrintInstructions=*/false, /*ReportRejecting=*/true);
   EXPECT_EQ(False.Matches, "");
+  EXPECT_EQ(False.Structural, 1u);
   ASSERT_EQ(False.Rejecting.size(), 1u);
   EXPECT_EQ(False.Rejecting[0].Constraint.Message, "(hasNUses ?x 2)");
   EXPECT_EQ(False.Rejecting[0].Constraint.Line, 2u);
@@ -266,9 +272,12 @@ TEST_F(WebQueryTest, ReportsWarningsAndRejectingConstraints) {
   ASSERT_EQ(Failed.Rejecting.size(), 1u);
   EXPECT_NE(Failed.Rejecting[0].Reason, "");
 
-  // A match is not rejected.
-  EXPECT_TRUE(query("%r = add i32 ?x, ?c\n;; hasNUses(?x, 1)\n", false, true)
-                  .Rejecting.empty());
+  // A match is not rejected, and is a structural match too.
+  Result Matched =
+      query("%r = add i32 ?x, ?c\n;; hasNUses(?x, 1)\n", false, true);
+  EXPECT_TRUE(Matched.Rejecting.empty());
+  EXPECT_EQ(Matched.Structural, 1u);
+  EXPECT_EQ(query("%r = sub i32 ?x, ?c\n").Structural, 0u);
 }
 
 TEST_F(WebQueryTest, ReportsPatternErrors) {

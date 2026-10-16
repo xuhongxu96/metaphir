@@ -97,9 +97,12 @@ public:
   /// Instantiation::printInstructions), separated by tabs. With Rejecting,
   /// a function with structural matches but none satisfying the constraints
   /// adds the constraints that rejected them, as metaphir-match prints.
+  /// HadStructuralMatch tells whether the function had any structural
+  /// match, whether or not one satisfied the constraints.
   Error match(uint32_t Function, StringRef Frame, raw_ostream &Out,
               bool PrintInstructions = false,
-              std::vector<RejectingConstraint> *Rejecting = nullptr);
+              std::vector<RejectingConstraint> *Rejecting = nullptr,
+              bool *HadStructuralMatch = nullptr);
 
 private:
   struct Compiled;

@@ -258,7 +258,8 @@ ArrayRef<PatternNote> WebQuery::getWarnings() const {
 
 Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
                       bool PrintInstructions,
-                      std::vector<RejectingConstraint> *Rejecting) {
+                      std::vector<RejectingConstraint> *Rejecting,
+                      bool *HadStructuralMatch) {
   const WebModule &Module = Index.getModuleOf(Function);
   auto Located = [&](Error E) {
     return createStringError(Module.Path + ": function " +
@@ -275,15 +276,17 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
   PatternMatcher Matcher(&Pattern->Context);
   Matcher.setUseOracle(Unpacked->get());
   Target Program(F);
-  bool HadStructuralMatch = false;
+  bool Structural = false;
   SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
   MatchResults Matches = Matcher.match(
       *Pattern->Variants, Program, Rejecting ? &Unsatisfied : nullptr,
-      Rejecting ? &HadStructuralMatch : nullptr, &Pattern->Query);
+      Rejecting || HadStructuralMatch ? &Structural : nullptr, &Pattern->Query);
+  if (HadStructuralMatch)
+    *HadStructuralMatch = Structural;
   ModuleSlotTracker Slots(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
   Slots.incorporateFunction(F);
   if (Matches.empty()) {
-    if (HadStructuralMatch)
+    if (Structural && Rejecting)
       for (const UnsatisfiedConstraint &U : Unsatisfied) {
         RejectingConstraint &R = Rejecting->emplace_back();
         R.Function = ("@" + F.getName()).str();
