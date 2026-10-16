@@ -4,11 +4,20 @@
 // stays so until the next.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { count } from "./engine.ts";
+import { count, rejectionKey, type Rejection } from "./engine.ts";
 import type { QueryControl } from "./pipeline.ts";
 import { describeRejection, type Status } from "./status.ts";
 
-export function StatusChip({ status, control }: { status: Status; control?: QueryControl }) {
+export function StatusChip({
+  status,
+  control,
+  onRejection,
+}: {
+  status: Status;
+  control?: QueryControl;
+  /** Shows the functions a rejecting constraint rejected. */
+  onRejection?: (r: Rejection) => void;
+}) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const paused = control !== undefined && status.pause?.kind === "matches";
@@ -62,11 +71,32 @@ export function StatusChip({ status, control }: { status: Status; control?: Quer
             <Notes title="Warnings" items={warnings.map((w) => located(w.line, w.message))} />
           )}
           {rejections.length > 0 && (
-            <Notes
-              title="Constraints that rejected structural matches"
-              items={rejections.map((r) => located(r.line, describeRejection(r)))}
-              hint="Counted in the functions matched: those the index rules out are not."
-            />
+            <div className="status-notes">
+              <h3>Constraints that rejected structural matches</h3>
+              <ul>
+                {rejections.map((r) => (
+                  <li key={rejectionKey(r)}>
+                    {onRejection ? (
+                      <button
+                        className="link"
+                        onClick={() => {
+                          onRejection(r);
+                          setOpen(false);
+                        }}
+                        title="List the functions it rejected"
+                      >
+                        {located(r.line, describeRejection(r))}
+                      </button>
+                    ) : (
+                      located(r.line, describeRejection(r))
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="hint">
+                Counted in the functions matched: those the index rules out are not.
+              </p>
+            </div>
           )}
           {control && <Actions control={control} paused={paused} />}
         </div>

@@ -11,11 +11,12 @@ import {
   type CodeEditor,
 } from "./editor.ts";
 import { inFile, parseDiagnostics } from "./diagnostics.ts";
-import { PublishedCorpus, type Match, type Progress } from "./engine.ts";
+import { PublishedCorpus, rejectionKey, type Match, type Progress } from "./engine.ts";
 import { IRPane } from "./IRPane.tsx";
+import { definitionLink, definitionsIn, type DefinitionFile } from "./mpirDefinitions.ts";
 import type { Definition } from "./irDefinition.ts";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
-import { MatchesPane } from "./MatchesPane.tsx";
+import { MatchesPane, type MatchesTab } from "./MatchesPane.tsx";
 import { patternLink, type Link } from "./navigation.ts";
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
@@ -60,6 +61,15 @@ function savedIR(): string {
   }
 }
 type PatternTab = "pattern" | "stdlib";
+const STDLIB_DEFINITIONS = definitionsIn(STDLIB);
+
+/** Selects to in editor, in view, and focuses it. */
+function select(editor: CodeEditor, to: Definition) {
+  const range = new monaco.Range(to.line, to.column, to.line, to.column + to.length);
+  editor.setSelection(range);
+  editor.revealRangeInCenterIfOutsideViewport(range);
+  editor.focus();
+}
 
 export function App() {
   const { preference, setPreference, dark } = useColorScheme();
@@ -97,6 +107,8 @@ export function App() {
   const [copied, setCopied] = useState(false);
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
   const [patternTab, setPatternTab] = useState<PatternTab>("pattern");
+  const [matchesTab, setMatchesTab] = useState<MatchesTab>("matches");
+  const [rejectionFocus, setRejectionFocus] = useState<{ key: string }>();
   // What a run found wrong in the pattern is gone once it is edited.
   useEffect(() => {
     for (const r of Object.values(results)) r.setDiagnostics([]);
@@ -144,10 +156,52 @@ export function App() {
     setHovered(line ? links.filter((l) => l.irLine === line) : []);
   // Ctrl/⌘+clicking the pattern goes to what it matched in the IR.
   const [irTarget, setIRTarget] = useState<Definition>();
+  // Ctrl/⌘+clicking a matcher, metaflag or constraint goes to its
+  // definition, in the pattern or in stdlib.mpir (in its tab).
+  const patternDefinitions = useMemo(() => definitionsIn(pattern), [pattern]);
+  const definitionAt = (text: string, column: number) =>
+    definitionLink(text, column, [
+      ["pattern", patternDefinitions],
+      ["stdlib", STDLIB_DEFINITIONS],
+    ]);
+  const [stdlibEditor, setStdlibEditor] = useState<CodeEditor>();
+  const [stdlibTarget, setStdlibTarget] = useState<Definition>();
+  const definitionFile = useRef<DefinitionFile>("pattern");
+  useModifierLinks(
+    patternEditor,
+    (_, column, text) => {
+      const link = definitionAt(text, column);
+      if (link) definitionFile.current = link.file;
+      return link;
+    },
+    (to) => {
+      if (definitionFile.current === "pattern") {
+        if (patternEditor) select(patternEditor, to);
+        return;
+      }
+      setPatternTab("stdlib");
+      setStdlibTarget({ ...to });
+    },
+  );
+  useModifierLinks(
+    stdlibEditor,
+    (_, column, text) => definitionLink(text, column, [["stdlib", STDLIB_DEFINITIONS]]),
+    (to) => setStdlibTarget({ ...to }),
+  );
+  // The library's editor is laid out once its tab is shown.
+  useEffect(() => {
+    if (patternTab !== "stdlib" || !stdlibEditor || !stdlibTarget) return;
+    const frame = requestAnimationFrame(() => {
+      stdlibEditor.layout();
+      select(stdlibEditor, stdlibTarget);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [patternTab, stdlibEditor, stdlibTarget]);
   useModifierLinks(
     patternEditor,
     (line, column, text) =>
-      patternLinked && selected && ir
+      // A name with a definition goes there instead.
+      patternLinked && selected && ir && !definitionAt(text, column)
         ? patternLink({ line, column, text, links, bindings: selected.bindings, ir: ir.text })
         : undefined,
     // A new object each time, gone to even if the same.
@@ -318,7 +372,15 @@ export function App() {
         <button onClick={() => void share()} title="Copy a link to this pattern">
           {copied ? "link copied" : "Share"}
         </button>
-        <StatusChip status={status} control={yourIR ? undefined : control} />
+        <StatusChip
+          status={status}
+          control={yourIR ? undefined : control}
+          onRejection={(r) => {
+            setMatchesTab("rejected");
+            // A new object each time, brought into view even if the same.
+            setRejectionFocus({ key: rejectionKey(r) });
+          }}
+        />
         <label className="picker">
           theme
           <select
@@ -370,8 +432,8 @@ export function App() {
                     </div>
                     <span className="hint">
                       {patternTab === "pattern"
-                        ? "Ctrl/⌘+Enter to match · Ctrl/⌘+click to find in the IR"
-                        : "read-only"}
+                        ? "Ctrl/⌘+Enter to match · Ctrl/⌘+click to follow a name"
+                        : "read-only · Ctrl/⌘+click to follow a name"}
                     </span>
                   </div>
                   {/* Both stay mounted, so the pattern keeps its undo history
@@ -393,6 +455,7 @@ export function App() {
                       theme={theme}
                       path="stdlib.mpir"
                       value={STDLIB}
+                      onMount={setStdlibEditor}
                       options={{ ...EDITOR_OPTIONS, readOnly: true }}
                     />
                   </div>
@@ -407,6 +470,9 @@ export function App() {
                   running={running}
                   misses={yourIR ? misses : undefined}
                   rejections={yourIR ? undefined : status.rejections}
+                  tab={matchesTab}
+                  onTab={setMatchesTab}
+                  focus={rejectionFocus}
                 />
               </Panel>
             </Group>

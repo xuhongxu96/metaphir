@@ -114,6 +114,18 @@ body { background: var(--bg); color: var(--fg); }
 .rejection .where, .rejections .hint { color: var(--muted); }
 .rejections > .hint { margin: 0.5rem 0.75rem 0; font-size: 0.75rem; }
 .rejection tr { cursor: pointer; }
+.rejection.focused { animation: flash 1.5s ease-out; }
+@keyframes flash { from { background: var(--accent-bg); } to { background: transparent; } }
+.status-notes button.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.status-notes button.link:hover { text-decoration: underline; }
 .misses { padding: 0.5rem 0.75rem; font-size: 0.8rem; border-top: 1px solid var(--border); }
 .misses h3 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 600; }
 .misses ul { margin: 0; padding-left: 1rem; }

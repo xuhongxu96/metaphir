@@ -6,9 +6,17 @@
 // for your IR each function without a match and why.
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { count, REJECTION_SAMPLES, type Match, type Rejection } from "./engine.ts";
+import {
+  count,
+  REJECTION_SAMPLES,
+  rejectionKey,
+  type Match,
+  type Rejection,
+} from "./engine.ts";
 import { filterMatches } from "./matchSearch.ts";
 import type { FunctionResult } from "./yourIR.ts";
+
+export type MatchesTab = "matches" | "rejected";
 
 /** Rows shown at most; the count shows how many more there are. */
 const MAX_ROWS = 5000;
@@ -22,9 +30,13 @@ export function MatchesPane(props: {
   misses?: FunctionResult[];
   /** The constraints that rejected structural matches (the corpus). */
   rejections?: Rejection[];
+  tab: MatchesTab;
+  onTab: (tab: MatchesTab) => void;
+  /** A rejecting constraint to bring into view, each time it is set anew. */
+  focus?: { key: string };
 }) {
   const { matches, selected, onSelect, running, misses = [], rejections = [] } = props;
-  const [tab, setTab] = useState<"matches" | "rejected">("matches");
+  const { tab, onTab: setTab, focus } = props;
   const rejected = misses.length + rejections.length;
   const [query, setQuery] = useState("");
   const body = useRef<HTMLTableSectionElement>(null);
@@ -99,7 +111,12 @@ export function MatchesPane(props: {
       {tab === "rejected" ? (
         <div className="pane-body results" tabIndex={0}>
           {rejections.length > 0 && (
-            <Rejections rejections={rejections} selected={selected} onSelect={onSelect} />
+            <Rejections
+              rejections={rejections}
+              selected={selected}
+              onSelect={onSelect}
+              focus={focus}
+            />
           )}
           {misses.length > 0 && <Misses misses={misses} />}
           {!rejected && (
@@ -189,12 +206,27 @@ function Rejections(props: {
   rejections: Rejection[];
   selected?: Match;
   onSelect: (match: Match) => void;
+  focus?: { key: string };
 }) {
-  const { rejections, selected, onSelect } = props;
+  const { rejections, selected, onSelect, focus } = props;
+  const root = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState<string>();
+  useEffect(() => {
+    if (!focus) return;
+    const index = rejections.findIndex((r) => rejectionKey(r) === focus.key);
+    root.current?.children[index]?.scrollIntoView({ block: "start" });
+    setFocused(focus.key);
+    const done = setTimeout(() => setFocused(undefined), 1500);
+    return () => clearTimeout(done);
+    // Only a new focus is brought into view, not the same as more arrive.
+  }, [focus]);
   return (
-    <div id="rejections" className="rejections">
+    <div id="rejections" className="rejections" ref={root}>
       {rejections.map((r) => (
-        <div key={`${r.line}:${r.column}:${r.message}`} className="rejection">
+        <div
+          key={rejectionKey(r)}
+          className={`rejection${focused === rejectionKey(r) ? " focused" : ""}`}
+        >
           <p>
             <code>{r.message}</code>
             {r.line > 0 && <span className="where"> line {r.line}</span>}{" "}

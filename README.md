@@ -588,6 +588,11 @@ The page is React, in resizable panes:
   constraints that were false or could not be evaluated, or that it has
   none of the pattern's instructions. Errors in the IR are marked in its
   editor. Corpus and Your IR each keep their own results.
+- Ctrl/⌘+clicking the name of a composite matcher, metaflag or constraint,
+  in the pattern or in `stdlib.mpir`, goes to its definition: in the pattern
+  if it defines one, or else in the `stdlib.mpir` tab.
+- Each constraint the status panel lists as rejecting structural matches
+  links to the Rejected tab, at the functions it rejected.
 - Hovering a matched instruction in either editor highlights its counterpart
   in the other.
 - The search above the matches keeps those with every word of it in their

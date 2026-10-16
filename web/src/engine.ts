@@ -100,6 +100,9 @@ export type Pause =
 /** Rejected functions kept per constraint, to be looked at. */
 export const REJECTION_SAMPLES = 10;
 
+/** What tells rejecting constraints apart: the same one, at the same place. */
+export const rejectionKey = (r: Rejected) => `${r.line}:${r.column}:${r.message}`;
+
 /** A constraint that rejected the structural matches of functions. */
 export interface Rejection extends Rejected {
   /** How many functions it rejected. */
@@ -265,7 +268,7 @@ export class PublishedCorpus {
           ir: irOf(fn),
         };
         for (const r of rejected) {
-          const key = `${r.line}:${r.column}:${r.message}`;
+          const key = rejectionKey(r);
           let known = rejections.get(key);
           if (known) {
             known.functions++;
