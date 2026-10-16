@@ -106,13 +106,19 @@ export function registerLanguages(monaco: typeof Monaco): void {
     monaco.languages.register({ id });
     monaco.languages.setMonarchTokensProvider(id, language);
   }
+  // A name is one word with its sigil, so that the editors highlight its
+  // occurrences, and change them all (Ctrl/⌘+F2), as a whole: ?x, %x, @x,
+  // %"a b". A pattern's names never contain '-' (?bits-1 is a subtraction);
+  // LLVM's may, and it has metadata (!x) and attribute groups (#0) too.
   monaco.languages.setLanguageConfiguration("metaphir", {
     comments: { lineComment: ";" },
     brackets: [["{", "}"], ["(", ")"], ["[", "]"], ["<", ">"]],
+    wordPattern: /[?%@](?:"[^"]*"|[\w.$]+)|[\w.$]+/g,
   });
   monaco.languages.setLanguageConfiguration("llvm", {
     comments: { lineComment: ";" },
     brackets: [["{", "}"], ["(", ")"], ["[", "]"], ["<", ">"]],
+    wordPattern: /[%@!](?:"[^"]*"|[-\w.$]+)|#\d+|[\w.$]+/g,
   });
   monaco.editor.defineTheme("metaphir-light", {
     base: "vs",

@@ -19,6 +19,10 @@ export const EDITOR_OPTIONS = {
   wordWrap: "on" as const,
   // Hovers are fixed in the page, so that a pane does not clip them.
   fixedOverflowWidgets: true,
+  // Monaco's default but for the sigils and '.' that names have (?x, %a.b,
+  // @llvm.abs), so that double-clicking, Ctrl/⌘+arrows and changing all
+  // occurrences (Ctrl/⌘+F2) take a whole name; see also languages.ts.
+  wordSeparators: "`~!#^&*()-=+[{]}\\|;:'\",<>/",
 };
 
 /**

@@ -599,6 +599,9 @@ The page is React, in resizable panes:
 - In the tables, dragging the right edge of a column's header resizes the
   column (double-click to reset; the widths are kept in the browser), and a
   hovered cell shows a button that copies its full text.
+- In the editors a name is one word with its sigil (`?x`, `%.x`,
+  `@llvm.ctpop.i32`): the cursor in it highlights its occurrences,
+  double-clicking selects it, and Ctrl/⌘+F2 changes them all.
 - Hovering a matched instruction in either editor highlights its counterpart
   in the other.
 - The search above the matches keeps those with every word of it in their
