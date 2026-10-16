@@ -278,9 +278,13 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
   Target Program(F);
   bool Structural = false;
   SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
+  // No filter: the candidate's features were checked against the pattern
+  // when it was found, and finding them again in its IR would take most of
+  // the time matching it does.
   MatchResults Matches = Matcher.match(
       *Pattern->Variants, Program, Rejecting ? &Unsatisfied : nullptr,
-      Rejecting || HadStructuralMatch ? &Structural : nullptr, &Pattern->Query);
+      Rejecting || HadStructuralMatch ? &Structural : nullptr,
+      /*Filter=*/nullptr);
   if (HadStructuralMatch)
     *HadStructuralMatch = Structural;
   ModuleSlotTracker Slots(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
