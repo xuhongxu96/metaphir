@@ -96,6 +96,12 @@ public:
                              Instruction::InstructionID Operand) {
     return uint16_t(User) * 64 + Operand;
   }
+  /// The instruction matchers of an edge or sibling key.
+  static std::pair<Instruction::InstructionID, Instruction::InstructionID>
+  splitEdgeKey(uint16_t Key) {
+    return {Instruction::InstructionID(Key / 64),
+            Instruction::InstructionID(Key % 64)};
+  }
 
   static FunctionFeatures compute(const Function &F,
                                   const FeatureOptions &Options = {});

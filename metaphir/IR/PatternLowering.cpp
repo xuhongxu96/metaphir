@@ -15,8 +15,9 @@ namespace metaphir {
 
 /// The fresh variable a use that omits a flag passes for it to the matcher's
 /// root (see inlineBranch); a use nested in that body then also omits it.
+static constexpr StringLiteral OmittedFlagPrefix = "_flag$";
 static bool isWildcardCapture(const MetaVariable *Capture) {
-  return Capture && Capture->getName().starts_with("_flag$");
+  return Capture && Capture->getName().starts_with(OmittedFlagPrefix);
 }
 
 static bool isMetaType(const Type *T) {
@@ -560,9 +561,9 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
     } else {
       FlagValue = MetaVariable::create(
           Context,
-          Context.pImpl->Saver.save(
-              ("_flag$" + UsePrefix + "$" + InstructionFlag::getName(FlagID))
-                  .str()),
+          Context.pImpl->Saver.save((OmittedFlagPrefix + UsePrefix + "$" +
+                                     InstructionFlag::getName(FlagID))
+                                        .str()),
           Sort::Boolean, Use.getSourceRange());
     }
     FlagValues[FlagID] = FlagValue;
@@ -656,12 +657,12 @@ Expander::inlineBranch(const Pattern &Cur, size_t UseIndex,
     Variant->addInstruction(New);
     Subst.Instructions[BI] = New;
   }
-  Subst.Instructions[&Use] = Subst.Instructions.lookup(&Root);
+  Instruction *UseRoot = Subst.Instructions.lookup(&Root);
+  Subst.Instructions[&Use] = UseRoot;
 
   // The metaflags on the use's operands apply to the values it passes, as
   // they would on a primitive instruction's; the use is gone, so they are
   // kept for desugaring, at the instruction it became.
-  const Instruction *UseRoot = Subst.Instructions.lookup(&Root);
   for (const MatcherOperand &Op : CallerOps)
     if (!Op.MetaFlags.empty() && Op.Val)
       Variant->addOperandFlags({Op.Val, Op.MetaFlags, UseRoot});

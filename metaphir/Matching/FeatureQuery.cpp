@@ -128,8 +128,7 @@ static std::optional<std::string> firstLack(const FeatureRequirement &R,
   for (uint16_t Sibling : R.Siblings)
     if (!std::binary_search(Features.Siblings.begin(), Features.Siblings.end(),
                             Sibling)) {
-      auto A = Instruction::InstructionID(Sibling / 64);
-      auto B = Instruction::InstructionID(Sibling % 64);
+      auto [A, B] = FunctionFeatures::splitEdgeKey(Sibling);
       return ("no value in it is used by both " + article(A) + " " + opcode(A) +
               " and " + article(B) + " " + opcode(B));
     }
