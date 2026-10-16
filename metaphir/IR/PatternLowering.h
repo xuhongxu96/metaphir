@@ -2,6 +2,7 @@
 #define METAPHIR_IR_PATTERN_LOWERING_H
 
 #include "metaphir/IR/PatternVariants.h"
+#include "metaphir/IR/SourceRange.h"
 #include "llvm/Support/Error.h"
 
 namespace llvm {
@@ -9,6 +10,29 @@ namespace metaphir {
 
 class MIRContext;
 class Pattern;
+
+/// An error in lowering a pattern, at the source text it is about.
+class LoweringError : public ErrorInfo<LoweringError> {
+public:
+  static char ID;
+  SourceRange Range;
+  std::string Message;
+
+  LoweringError(SourceRange Range, const Twine &Message)
+      : Range(Range), Message(Message.str()) {}
+
+  void log(raw_ostream &OS) const override { OS << Message; }
+  std::error_code convertToErrorCode() const override {
+    return inconvertibleErrorCode();
+  }
+};
+
+/// Prints the errors of lowering a pattern parsed with SM, each with its
+/// source line when SM or Context's libraries hold it.
+void printLoweringErrors(Error E, const SourceMgr &SM,
+                         const MIRContext &Context, raw_ostream &OS,
+                         const char *ProgName = nullptr,
+                         bool ShowColors = false);
 
 /// Lowers a parsed pattern into the patterns the matcher runs:
 ///

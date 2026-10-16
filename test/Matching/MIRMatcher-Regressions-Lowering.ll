@@ -176,4 +176,6 @@ define i32 @add(i32 %a, i32 %b) {
 ; FLAG-RENAMED-NEXT:   match 0:
 ; FLAG-RENAMED-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?c = true}
 
-; META-FOR-FIXED: metaphir-match: error: matcher 'addi8' requires type 'i8' for a parameter, but this use passes 'i?n'
+; META-FOR-FIXED: meta-for-fixed.mpir:4:16: error: matcher 'addi8' requires type 'i8' for a parameter, but this use passes 'i?n'
+; META-FOR-FIXED-NEXT: %r = addi8 i?n ?a, ?b
+; META-FOR-FIXED-NEXT: {{^}}               ^

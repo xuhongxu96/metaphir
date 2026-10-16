@@ -28,8 +28,45 @@ template <typename T> static std::string toString(const T &Object) {
   return Result;
 }
 
-static Error makeError(const Twine &Message) {
-  return createStringError(inconvertibleErrorCode(), Message);
+static Error makeError(SourceRange Range, const Twine &Message) {
+  return make_error<LoweringError>(Range, Message);
+}
+
+char LoweringError::ID = 0;
+
+void printLoweringErrors(Error E, const SourceMgr &SM,
+                         const MIRContext &Context, raw_ostream &OS,
+                         const char *ProgName, bool ShowColors) {
+  auto Print = [&](const SourceMgr *Holder, SMLoc Loc, ArrayRef<SMRange> Ranges,
+                   const Twine &Message) {
+    if (Holder) {
+      Holder->GetMessage(Loc, SourceMgr::DK_Error, Message, Ranges)
+          .print(ProgName, OS, ShowColors);
+      return;
+    }
+    if (ProgName)
+      OS << ProgName << ": ";
+    OS << "error: " << Message << "\n";
+  };
+  handleAllErrors(
+      std::move(E),
+      [&](const LoweringError &L) {
+        const SourceMgr *Holder = nullptr;
+        if (L.Range.Begin.isValid()) {
+          if (SM.FindBufferContainingLoc(L.Range.Begin))
+            Holder = &SM;
+          else if (Context.getLibrarySourceMgr().FindBufferContainingLoc(
+                       L.Range.Begin))
+            Holder = &Context.getLibrarySourceMgr();
+        }
+        SmallVector<SMRange, 1> Ranges;
+        if (L.Range.End.isValid())
+          Ranges.push_back(SMRange(L.Range.Begin, L.Range.End));
+        Print(Holder, L.Range.Begin, Ranges, L.Message);
+      },
+      [&](const ErrorInfoBase &Other) {
+        Print(nullptr, SMLoc(), {}, Other.message());
+      });
 }
 
 namespace {
@@ -241,9 +278,10 @@ Expected<Constraint *> Substitution::constraint(Constraint *C) const {
                                          VC->getSourceRange());
       return IntegerConstraint::create(Context, Number, VC->getSourceRange());
     } else {
-      return makeError("'" + toString(*C) + "' is bound to '" +
-                       toString(*Target) +
-                       "', which a constraint cannot refer to");
+      return makeError(C->getSourceRange(),
+                       "'" + toString(*C) + "' is bound to '" +
+                           toString(*Target) +
+                           "', which a constraint cannot refer to");
     }
     break;
   }
@@ -378,11 +416,14 @@ Expected<bool> Expander::bindParameters(const Instruction &Use,
       // The declaration fixes this type. A use's meta type could only be
       // compared once matched, so the use must spell the type as well.
       if (isMetaType(CallerTy))
-        return makeError("matcher '" + CM.getName() + "' requires type '" +
-                         toString(*P.Ty) +
-                         "' for a parameter, but this use "
-                         "passes '" +
-                         toString(*CallerTy) + "'");
+        return makeError(Op.Val && Op.Val->getSourceRange().Begin.isValid()
+                             ? Op.Val->getSourceRange()
+                             : Use.getSourceRange(),
+                         "matcher '" + CM.getName() + "' requires type '" +
+                             toString(*P.Ty) +
+                             "' for a parameter, but this use "
+                             "passes '" +
+                             toString(*CallerTy) + "'");
       return P.Ty == CallerTy;
     }
     // A type parameter repeated for several operands must get one type.
@@ -727,8 +768,9 @@ Expected<Constraint *> Desugarer::lower(const MetaFlag &MF, Value *Subject) {
   if (!Subject) {
     if (!Def)
       return nullptr;
-    return makeError("metaflag ':" + MF.getName() +
-                     "' has no value to use as its subject");
+    return makeError(MF.getSourceRange(),
+                     "metaflag ':" + MF.getName() +
+                         "' has no value to use as its subject");
   }
   switch (MF.getMetaFlagID()) {
   case MetaFlag::MF_not:
@@ -742,19 +784,22 @@ Expected<Constraint *> Desugarer::lower(const MetaFlag &MF, Value *Subject) {
     break;
   }
   if (!Def)
-    return makeError("unknown metaflag ':" + MF.getName() + "'");
+    return makeError(MF.getSourceRange(),
+                     "unknown metaflag ':" + MF.getName() + "'");
   return lowerUserDefined(MF, *Def, Subject);
 }
 
 Expected<Constraint *> Desugarer::lowerNot(const MetaFlag &MF, Value *Subject) {
   if (MF.getArguments().size() != 1 || !MF.getArguments()[0].FlagValue)
-    return makeError("metaflag ':not' requires one nested flag");
+    return makeError(MF.getSourceRange(),
+                     "metaflag ':not' requires one nested flag");
   Expected<Constraint *> Inner =
       lower(*MF.getArguments()[0].FlagValue, Subject);
   if (!Inner)
     return Inner.takeError();
   if (!*Inner)
-    return makeError("metaflag ':not' contains a flag that cannot be lowered");
+    return makeError(MF.getSourceRange(),
+                     "metaflag ':not' contains a flag that cannot be lowered");
   return OperatorConstraint::createBuiltin(Context, Constraint::Unary,
                                            Sort::Boolean, Constraint::O_Not,
                                            {*Inner}, MF.getSourceRange());
@@ -764,12 +809,14 @@ Expected<Constraint *> Desugarer::lowerOr(const MetaFlag &MF, Value *Subject) {
   Constraint *Result = nullptr;
   for (const MetaFlag::Argument &Arg : MF.getArguments()) {
     if (!Arg.FlagValue)
-      return makeError("metaflag ':or' requires nested flags");
+      return makeError(MF.getSourceRange(),
+                       "metaflag ':or' requires nested flags");
     Expected<Constraint *> Inner = lower(*Arg.FlagValue, Subject);
     if (!Inner)
       return Inner.takeError();
     if (!*Inner)
-      return makeError("metaflag ':or' contains a flag that cannot be lowered");
+      return makeError(MF.getSourceRange(),
+                       "metaflag ':or' contains a flag that cannot be lowered");
     Result = Result ? OperatorConstraint::createBuiltin(
                           Context, Constraint::Binary, Sort::Boolean,
                           Constraint::O_LogicalOr, {Result, *Inner},
@@ -777,7 +824,8 @@ Expected<Constraint *> Desugarer::lowerOr(const MetaFlag &MF, Value *Subject) {
                     : *Inner;
   }
   if (!Result)
-    return makeError("metaflag ':or' requires at least one flag");
+    return makeError(MF.getSourceRange(),
+                     "metaflag ':or' requires at least one flag");
   return Result;
 }
 
@@ -787,19 +835,21 @@ Expected<Constraint *> Desugarer::lowerUserDefined(const MetaFlag &MF,
   ArrayRef<MetaFlag::Argument> Args = MF.getArguments();
   ArrayRef<MetaVariable *> Params = Def.getParameterVars();
   if (Args.size() != Def.getNumArguments())
-    return makeError("metaflag ':" + MF.getName() + "' expects " +
-                     Twine(Def.getNumArguments()) + " arguments, got " +
-                     Twine(Args.size()));
+    return makeError(MF.getSourceRange(),
+                     "metaflag ':" + MF.getName() + "' expects " +
+                         Twine(Def.getNumArguments()) + " arguments, got " +
+                         Twine(Args.size()));
   if (!Def.getBody())
-    return makeError("metaflag ':" + MF.getName() + "' has an empty body");
+    return makeError(MF.getSourceRange(),
+                     "metaflag ':" + MF.getName() + "' has an empty body");
 
   // The first parameter is the subject; the rest are the flag's arguments.
   Substitution Subst(Context);
   Subst.Values[Params.front()] = Subject;
   for (unsigned I = 0; I != Args.size(); ++I) {
     if (Args[I].K != MetaFlag::Argument::Integer)
-      return makeError("metaflag ':" + MF.getName() +
-                       "' expects integer arguments");
+      return makeError(MF.getSourceRange(), "metaflag ':" + MF.getName() +
+                                                "' expects integer arguments");
     Subst.Values[Params[I + 1]] = IntegerConstant::create(
         Context,
         APSInt(APInt(64, Args[I].IntegerValue, /*isSigned=*/true),

@@ -204,8 +204,8 @@ static int stats(StringRef ToolName) {
   Expected<PatternVariants> Lowered =
       PatternLowering(Context).lower(RawPattern);
   if (!Lowered) {
-    logAllUnhandledErrors(Lowered.takeError(), errs(),
-                          Twine(ToolName) + ": error: ");
+    printLoweringErrors(Lowered.takeError(), Source, Context, errs(),
+                        ToolName.data());
     return 1;
   }
   FeatureQuery Query = FeatureQuery::compute(*Lowered, &Context);

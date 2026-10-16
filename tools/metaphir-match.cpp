@@ -171,8 +171,8 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
   Expected<PatternVariants> Lowered =
       PatternLowering(Loaded->Context).lower(RawPattern);
   if (!Lowered) {
-    logAllUnhandledErrors(Lowered.takeError(), Err,
-                          Twine(ToolName) + ": error: ");
+    printLoweringErrors(Lowered.takeError(), Loaded->Source, Loaded->Context,
+                        Err, ToolName.data());
     return nullptr;
   }
   Loaded->Variants = std::move(*Lowered);

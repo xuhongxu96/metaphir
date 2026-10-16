@@ -53,8 +53,13 @@ WebQuery::compile(const WebIndex &Index, StringRef Source, StringRef Name) {
   }
   Expected<PatternVariants> Lowered =
       PatternLowering(Pattern.Context).lower(RawPattern);
-  if (!Lowered)
-    return Lowered.takeError();
+  if (!Lowered) {
+    std::string Message;
+    raw_string_ostream OS(Message);
+    printLoweringErrors(Lowered.takeError(), Pattern.Source, Pattern.Context,
+                        OS);
+    return createStringError(Message);
+  }
   Pattern.Variants = std::move(*Lowered);
   Pattern.Query = FeatureQuery::compute(*Pattern.Variants, &Pattern.Context);
   return Query;
