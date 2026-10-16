@@ -226,17 +226,23 @@ private:
 };
 } // namespace
 
-Expected<PrintedFunction> WebQuery::printFunction(const WebIndex &Index,
-                                                  StringRef Frame) {
+/// The function whose pack is Frame, read into Context.
+static Expected<std::unique_ptr<UnpackedFunction>>
+unpack(const WebIndex &Index, StringRef Frame, LLVMContext &Context) {
   Expected<std::string> Bytes = Index.getPackDictionary().decompress(Frame);
   if (!Bytes)
     return Bytes.takeError();
   Expected<FunctionPack> Pack = FunctionPack::decode(*Bytes);
   if (!Pack)
     return Pack.takeError();
+  return UnpackedFunction::read(*Pack, Context);
+}
+
+Expected<PrintedFunction> WebQuery::printFunction(const WebIndex &Index,
+                                                  StringRef Frame) {
   LLVMContext Context;
   Expected<std::unique_ptr<UnpackedFunction>> Unpacked =
-      UnpackedFunction::read(*Pack, Context);
+      unpack(Index, Frame, Context);
   if (!Unpacked)
     return Unpacked.takeError();
   PrintedFunction Printed;
@@ -259,15 +265,9 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
                              Twine(Function - Module.FirstFunction) + ": " +
                              toString(std::move(E)));
   };
-  Expected<std::string> Bytes = Index.getPackDictionary().decompress(Frame);
-  if (!Bytes)
-    return Located(Bytes.takeError());
-  Expected<FunctionPack> Pack = FunctionPack::decode(*Bytes);
-  if (!Pack)
-    return Located(Pack.takeError());
   LLVMContext Context;
   Expected<std::unique_ptr<UnpackedFunction>> Unpacked =
-      UnpackedFunction::read(*Pack, Context);
+      unpack(Index, Frame, Context);
   if (!Unpacked)
     return Located(Unpacked.takeError());
   const llvm::Function &F = (*Unpacked)->getFunction();
