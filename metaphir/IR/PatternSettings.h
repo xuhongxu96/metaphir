@@ -33,10 +33,6 @@ public:
     Specified |= uint64_t(Flag);
   }
 
-  /// Whether this setting was written here, as opposed to being left at its
-  /// default or taken from an enclosing position.
-  bool isSpecified(Setting Flag) const { return Specified & uint64_t(Flag); }
-
   /// Settings for an instruction placed at Outer's position: Outer's values
   /// apply, except for settings written here, which take precedence. Used when
   /// a 'match' body is inlined into a use site.

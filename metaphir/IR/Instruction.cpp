@@ -35,13 +35,6 @@ void Instruction::setMetaFlags(MIRContext &Context,
   MetaFlags = Context.pImpl->copyArray<MetaFlag *>(Flags);
 }
 
-void Instruction::setOperandMetaFlags(unsigned OpIdx, MIRContext &Context,
-                                      ArrayRef<MetaFlag *> Flags) {
-  assert(OpIdx < UnkeyedOperands.size() && "operand index out of range");
-  const_cast<MatcherOperand &>(UnkeyedOperands[OpIdx])
-      .setMetaFlags(Context, Flags);
-}
-
 Instruction *Instruction::create(
     MIRContext &Context, InstructionID ID, StringRef ResultName,
     ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,

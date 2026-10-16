@@ -53,12 +53,6 @@ public:
   /// A value of the ClassIndex-th class of LLVMValueClasses.def.
   static Atom valueClass(unsigned ClassIndex);
 
-  /// Whether the atom is recorded from value tracking.
-  bool isValueTracking() const {
-    return Code >= PredicateBase + NumPlainPredicates &&
-           Code < PredicateBase + NumPredicates;
-  }
-
   /// An encoding of the atom that fits in 12 bits.
   uint16_t getCode() const { return Code; }
 

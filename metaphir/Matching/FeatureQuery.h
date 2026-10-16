@@ -66,10 +66,6 @@ struct FeatureRequirement {
   /// The instructions matched as themselves (not as an or-self operand).
   SmallVector<const Instruction *, 4> Selves;
 
-  bool isTrivial() const {
-    return Instructions == 0 && Shapes.empty() && Edges.empty() &&
-           Siblings.empty() && Globals.empty() && SiteFacts.empty();
-  }
   bool isSatisfiedBy(const FunctionFeatures &Features) const;
 
   /// Requires Other's features too.

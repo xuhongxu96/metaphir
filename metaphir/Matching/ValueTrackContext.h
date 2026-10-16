@@ -32,7 +32,6 @@ public:
   bool hasMaterializedDominatorTree() const { return DT.has_value(); }
   bool hasMaterializedAssumptionCache() const { return AC.has_value(); }
   bool hasMaterializedTargetLibraryInfo() const { return TLI.has_value(); }
-  bool hasMaterializedDomConditionCache() const { return DC.has_value(); }
 
 private:
   // Resets per-function components when the context instruction's function

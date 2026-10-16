@@ -130,8 +130,6 @@ public:
 
   ArrayRef<MetaFlag *> getMetaFlags() const { return MetaFlags; }
   void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
-  void setOperandMetaFlags(unsigned OpIdx, MIRContext &Context,
-                           ArrayRef<MetaFlag *> Flags);
   bool hasMetaFlag(MetaFlag::MetaFlagID FlagID) const {
     return llvm::any_of(MetaFlags, [FlagID](const MetaFlag *Flag) {
       return Flag->getMetaFlagID() == FlagID;
@@ -148,7 +146,6 @@ public:
   getKeyedOperand(MatcherOperand::KeyedOperandKind Kind) const;
 
   MetaVariable *getCapture() const { return Capture; }
-  void setCapture(MetaVariable *V) { Capture = V; }
 
   Value *getOrSelfValue() const { return OrSelfValue; }
 

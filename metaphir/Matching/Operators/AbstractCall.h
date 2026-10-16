@@ -44,9 +44,6 @@ public:
   }
   static AbstractValue sites(Sites S) { return AbstractValue(std::move(S)); }
 
-  bool isUnknown() const {
-    return std::holds_alternative<std::monostate>(Data);
-  }
   bool isConcrete() const {
     return std::holds_alternative<ConstraintValue>(Data);
   }

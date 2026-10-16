@@ -79,8 +79,6 @@ public:
   /// subject.
   unsigned getNumArguments() const { return Parameters.size() - 1; }
 
-  StringRef getSubjectParameter() const { return Parameters.front(); }
-
   Constraint *getBody() const { return Body; }
 
 private:
