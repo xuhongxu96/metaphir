@@ -28,10 +28,30 @@ optionalBitWidth(const ConcreteCall &Call, unsigned Index) {
   return static_cast<unsigned>(Width->getZExtValue());
 }
 
+/// Whether Left and Right have the same low BitWidth bits: 'icmp eq' on
+/// iBitWidth, both operands cast to that width.
+static Expected<bool> evaluateBitEquality(const ConcreteCall &Call,
+                                          unsigned BitWidth) {
+  Expected<APSInt> Left = requireInteger(Call.Operands[0], Call.Expression);
+  if (!Left)
+    return Left.takeError();
+  Expected<APSInt> Right = requireInteger(Call.Operands[1], Call.Expression);
+  if (!Right)
+    return Right.takeError();
+  return static_cast<const APInt &>(castToBitWidth(*Left, BitWidth)) ==
+         static_cast<const APInt &>(castToBitWidth(*Right, BitWidth));
+}
+
+/// '==' or '!=': by value, or with a bit width by bit pattern.
 static Expected<ConstraintValue> evaluateEqual(const ConcreteCall &Call,
                                                bool Negated) {
+  Expected<std::optional<unsigned>> BitWidth = optionalBitWidth(Call, 2);
+  if (!BitWidth)
+    return BitWidth.takeError();
   Expected<bool> Equal =
-      evaluateEquality(Call.Operands[0], Call.Operands[1], Call.Expression);
+      *BitWidth ? evaluateBitEquality(Call, **BitWidth)
+                : evaluateEquality(Call.Operands[0], Call.Operands[1],
+                                   Call.Expression);
   if (!Equal)
     return Equal.takeError();
   return ConstraintValue::getBoolean(Negated ? !*Equal : *Equal);
@@ -60,7 +80,10 @@ void OpEqual::record(const RecordCall &Call) {
 
 AbstractValue OpEqual::abstract(const AbstractCall &Call) {
   // A value compared with a literal the index records must have it at each
-  // of its sites; anything else is unknown.
+  // of its sites; anything else is unknown, as is a comparison of bit
+  // patterns.
+  if (Call.Operands.size() > 2)
+    return AbstractValue::unknown();
   for (unsigned SitesIndex : {0u, 1u}) {
     const AbstractValue &Other = Call.Operands[1 - SitesIndex];
     if (!Call.Operands[SitesIndex].isSites() || !Other.isConcrete())
@@ -78,22 +101,6 @@ AbstractValue OpEqual::abstract(const AbstractCall &Call) {
         return lacksFact(Call, SitesIndex, *A);
   }
   return AbstractValue::unknown();
-}
-
-Expected<ConstraintValue> OpBitEqual::concrete(const ConcreteCall &Call) {
-  // 'icmp eq' on iW: both operands cast to W bits, then compared.
-  Expected<std::optional<unsigned>> BitWidth = optionalBitWidth(Call, 2);
-  if (!BitWidth)
-    return BitWidth.takeError();
-  Expected<APSInt> Left = requireInteger(Call.Operands[0], Call.Expression);
-  if (!Left)
-    return Left.takeError();
-  Expected<APSInt> Right = requireInteger(Call.Operands[1], Call.Expression);
-  if (!Right)
-    return Right.takeError();
-  return ConstraintValue::getBoolean(
-      static_cast<const APInt &>(castToBitWidth(*Left, **BitWidth)) ==
-      static_cast<const APInt &>(castToBitWidth(*Right, **BitWidth)));
 }
 
 Expected<ConstraintValue> OpNotEqual::concrete(const ConcreteCall &Call) {

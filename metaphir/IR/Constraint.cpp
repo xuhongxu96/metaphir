@@ -189,7 +189,6 @@ Sort Constraint::getArgumentType(OperatorID ID, unsigned Index) {
   case O_Subtract:
   case O_Multiply:
   case O_Negate:
-  case O_BitEqual:
   case O_SLT:
   case O_ULT:
   case O_SLE:
@@ -261,8 +260,10 @@ Sort Constraint::getArgumentType(OperatorID ID, unsigned Index) {
     return Index == 1 || Index == 2 ? Sort::Integer : Sort::Value;
   // These accept a value or a plain integer, or answer false for anything
   // else.
+  // With a bit width, the operands of equality are integers.
   case O_Equal:
   case O_NotEqual:
+    return Index == 2 ? Sort::Integer : Sort::Unknown;
   case O_IsAnyIntegralConstant:
   case O_IsForbidPoison:
   case O_IsConstantSplat:

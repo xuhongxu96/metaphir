@@ -110,7 +110,7 @@ define i8 @e(<256 x i8> %v) {
 ; result is signed, but read unsigned by an unsigned comparison.
 ;--- user-arg-sign.mpir
 constraint isFF(?v) {
-  ?v == -1 && ugt(?v, 254) && eq(?v, 255, 8)
+  ?v == -1 && ugt(?v, 254) && eq(?v, 255, 8) && eq(?v, -1)
 }
 %r = add:?anch i32 ?x, ?y
 ;; isFF(and(255, 255, 8))

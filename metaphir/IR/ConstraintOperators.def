@@ -48,15 +48,14 @@
 
 MIR_CONSTRAINT_OPERATOR(LogicalOr, "||", Binary, Sort::Boolean, 2)
 MIR_CONSTRAINT_OPERATOR(LogicalAnd, "&&", Binary, Sort::Boolean, 2)
-MIR_CONSTRAINT_OPERATOR(Equal, "==", Binary, Sort::Boolean, 2)
-MIR_CONSTRAINT_OPERATOR(NotEqual, "!=", Binary, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Equal, "==", Binary, Sort::Boolean, 2)
+MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(NotEqual, "!=", Binary, Sort::Boolean, 2)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Add, "+", Binary, Sort::Integer, 2)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Subtract, "-", Binary, Sort::Integer, 2)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Multiply, "*", Binary, Sort::Integer, 2)
 MIR_CONSTRAINT_OPERATOR(Not, "!", Unary, Sort::Boolean, 1)
 MIR_CONSTRAINT_OPERATOR_OPT_BITWIDTH(Negate, "-", Unary, Sort::Integer, 1)
 
-MIR_CONSTRAINT_OPERATOR(BitEqual, "eq", Call, Sort::Boolean, 3)
 MIR_CONSTRAINT_OPERATOR(SLT, "slt", Call, Sort::Boolean, 2)
 MIR_CONSTRAINT_OPERATOR(ULT, "ult", Call, Sort::Boolean, 2)
 MIR_CONSTRAINT_OPERATOR(SLE, "sle", Call, Sort::Boolean, 2)
@@ -199,6 +198,8 @@ MIR_CONSTRAINT_OPERATOR_ALIAS(Add, "add", Call)
 MIR_CONSTRAINT_OPERATOR_ALIAS(Subtract, "sub", Call)
 MIR_CONSTRAINT_OPERATOR_ALIAS(Multiply, "mul", Call)
 MIR_CONSTRAINT_OPERATOR_ALIAS(Negate, "neg", Call)
+MIR_CONSTRAINT_OPERATOR_ALIAS(Equal, "eq", Call)
+MIR_CONSTRAINT_OPERATOR_ALIAS(NotEqual, "ne", Call)
 
 #undef MIR_CONSTRAINT_OPERATOR_ALIAS
 #undef MIR_CONSTRAINT_INTERPRETED_OPERATOR
