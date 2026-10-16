@@ -155,6 +155,18 @@ public:
   /// The index, among the value operands, of the operand that ':o' lets match
   /// in place of this instruction; none without ':o'.
   std::optional<unsigned> getOrSelfOperandIndex() const;
+  /// The two positions, among NumOperands matcher operands, that ':c' swaps:
+  /// a two-argument call's arguments (after the callee), or the two operands
+  /// of anything else; none if there are not two to swap. The parser admits
+  /// ':c' only where there are.
+  std::optional<std::pair<unsigned, unsigned>>
+  getCommutedOperands(unsigned NumOperands) const {
+    if (getInstructionID() == I_call && NumOperands == 3)
+      return std::make_pair(1u, 2u);
+    if (NumOperands == 2)
+      return std::make_pair(0u, 1u);
+    return std::nullopt;
+  }
   void setOrSelfValue(Value *V) { OrSelfValue = V; }
 
   /// The instruction using a composite matcher that this one was expanded

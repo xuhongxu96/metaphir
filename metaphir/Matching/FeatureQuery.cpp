@@ -259,8 +259,7 @@ static ShapeRequirement shapeOf(const Instruction &Node) {
 }
 
 /// The slots the Position-th of NumOperands matcher operands of Node can be
-/// in: its own, or with ':c' the one it swaps with (as InstructionMatcher
-/// does: the first two operands, or a two-argument call's arguments).
+/// in: its own, or with ':c' the one it swaps with.
 static uint8_t operandSlots(const Instruction &Node, unsigned Position,
                             unsigned NumOperands) {
   auto SlotBit = [](unsigned P) {
@@ -269,12 +268,12 @@ static uint8_t operandSlots(const Instruction &Node, unsigned Position,
   uint8_t Slots = SlotBit(Position);
   if (!Node.hasMetaFlag(MetaFlag::MF_c))
     return Slots;
-  unsigned First =
-      Node.getInstructionID() == Instruction::I_call && NumOperands == 3 ? 1
-                                                                         : 0;
-  if ((NumOperands == 2 || First == 1) &&
-      (Position == First || Position == First + 1))
-    Slots |= SlotBit(Position == First ? First + 1 : First);
+  if (auto Commuted = Node.getCommutedOperands(NumOperands)) {
+    if (Position == Commuted->first)
+      Slots |= SlotBit(Commuted->second);
+    else if (Position == Commuted->second)
+      Slots |= SlotBit(Commuted->first);
+  }
   return Slots;
 }
 
@@ -463,12 +462,9 @@ operandPositions(const Instruction &Node, unsigned NumOperands, bool Swapped) {
   SmallVector<unsigned, 4> Positions;
   for (unsigned P = 0; P != NumOperands; ++P)
     Positions.push_back(P);
-  if (!Swapped)
-    return Positions;
-  if (Node.getInstructionID() == Instruction::I_call && NumOperands == 3)
-    std::swap(Positions[1], Positions[2]);
-  else if (NumOperands == 2)
-    std::swap(Positions[0], Positions[1]);
+  if (Swapped)
+    if (auto Commuted = Node.getCommutedOperands(NumOperands))
+      std::swap(Positions[Commuted->first], Positions[Commuted->second]);
   return Positions;
 }
 

@@ -300,16 +300,12 @@ MatchResults InstructionMatcher::match() {
   }
 
   if (HasCommutativeFlag) {
-    // The parser admits ':c' only where there are two operands to swap: a
-    // binary operator's, or a two-argument call's (after the callee).
     SmallVector<unsigned, 4> SwappedIndices = NaturalOrder;
-    if (Matcher.getInstructionID() == Instruction::I_call &&
-        SwappedIndices.size() == 3)
-      std::swap(SwappedIndices[1], SwappedIndices[2]);
-    else if (SwappedIndices.size() == 2)
-      std::swap(SwappedIndices[0], SwappedIndices[1]);
-    else
+    auto Commuted = Matcher.getCommutedOperands(SwappedIndices.size());
+    if (!Commuted)
       return Results;
+    std::swap(SwappedIndices[Commuted->first],
+              SwappedIndices[Commuted->second]);
 
     if (!matchPredicate(State, /*Swapped=*/true))
       return Results;
