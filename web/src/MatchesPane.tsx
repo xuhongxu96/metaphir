@@ -118,7 +118,9 @@ export function MatchesPane(props: {
               focus={focus}
             />
           )}
-          {misses.length > 0 && <Misses misses={misses} />}
+          {misses.length > 0 && (
+            <Misses misses={misses} selected={selected} onSelect={onSelect} />
+          )}
           {!rejected && (
             <p className="empty">
               {running ? "Searching…" : "No constraint rejected a structural match."}
@@ -172,24 +174,64 @@ export function MatchesPane(props: {
   );
 }
 
-/** Why each function without a match has none. */
-function Misses({ misses }: { misses: FunctionResult[] }) {
+/** Why each function without a match has none: the constraints that
+ * rejected its structural matches, each opening the match it rejected, or
+ * what it lacks for one. Its name opens it. */
+function Misses(props: {
+  misses: FunctionResult[];
+  selected?: Match;
+  onSelect: (match: Match) => void;
+}) {
+  const { misses, selected, onSelect } = props;
   return (
     <div id="misses" className="cards">
       {misses.map((miss) => (
         <section key={miss.fn} className="card">
           <header className="card-header">
-            <code>{miss.fn}</code>
-            <span className="badge">no match</span>
+            <button
+              className={`link fn${miss.open && miss.open === selected ? " selected" : ""}`}
+              onClick={() => miss.open && onSelect(miss.open)}
+              title="Show the function"
+            >
+              {miss.fn}
+            </button>
+            <span className="badge">
+              {miss.rejected.length ? "rejected by constraints" : "no structural match"}
+            </span>
           </header>
-          {miss.rejected.length === 0 ? (
-            <p className="card-note">It has none of the pattern's instructions.</p>
+          {miss.rejected.length > 0 ? (
+            <table className="samples">
+              <colgroup>
+                <col className="constraint" />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Constraint</th>
+                  <th title="The structural match the constraint rejected">Rejected bindings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {miss.rejected.map((by, i) => (
+                  <tr
+                    key={i}
+                    className={by.match && by.match === selected ? "selected" : undefined}
+                    onClick={() => by.match && onSelect(by.match)}
+                  >
+                    <td title={by.reason ? `could not be evaluated: ${by.reason}` : "was false"}>
+                      {by.constraint}
+                      {by.reason && <span className="warn"> cannot evaluate: {by.reason}</span>}
+                    </td>
+                    <td title={by.bindings}>{by.bindings}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <ul className="card-list">
-              {miss.rejected.map((r, i) => (
-                <li key={i} className={r.reason ? "warn" : undefined}>
-                  <code>{r.constraint}</code>{" "}
-                  {r.reason ? `could not be evaluated: ${r.reason}` : "was false"}
+              {miss.structure.map((reason, i) => (
+                <li key={i}>
+                  <Prose text={`${reason.charAt(0).toUpperCase()}${reason.slice(1)}.`} />
                 </li>
               ))}
             </ul>
@@ -276,5 +318,14 @@ function Rejections(props: {
         Counted in the functions matched: those the index rules out are not.
       </p>
     </div>
+  );
+}
+
+/** Text whose `quoted` parts are code. */
+function Prose({ text }: { text: string }) {
+  return (
+    <>
+      {text.split("`").map((part, i) => (i % 2 ? <code key={i}>{part}</code> : part))}
+    </>
   );
 }

@@ -10,7 +10,8 @@ export interface MatcherFile {
 
 export interface MatcherResult {
   /** Matches as metaphir-match --matches-only prints them, paths relative;
-   * or with full, its report of each function. */
+   * or with explain, its report of each function, with why each without a
+   * match has none (--explain). */
   out: string;
   err: string;
   status: number;
@@ -20,7 +21,7 @@ export async function runMatcher(
   moduleUrl: string,
   files: MatcherFile[],
   pattern: string,
-  full = false,
+  explain = false,
 ): Promise<MatcherResult> {
   let out = "";
   let err = "";
@@ -39,7 +40,7 @@ export async function runMatcher(
   for (const file of files) write(`${root}/${file.path}`, file.bytes);
   FS.mkdirTree(root);
   write("/pattern.mpir", pattern);
-  const args = full ? [] : ["--matches-only", "--print-instructions"];
+  const args = explain ? ["--explain"] : ["--matches-only", "--print-instructions"];
   args.push("/pattern.mpir", root);
   const status = tool.callMain(args);
   const prefix = `${root}/`;

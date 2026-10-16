@@ -584,10 +584,12 @@ The page is React, in resizable panes:
 - **Corpus** or **Your IR** picks what Match searches. With Your IR, the IR
   pane is an editor for LLVM IR of your own, kept in the browser, which
   `metaphir-match` (built for WebAssembly, loaded when first used) matches in
-  the page. The matches list the bindings as for the corpus, and the
-  Rejected tab lists each function without a match with why: the
-  constraints that were false or could not be evaluated, or that it has
-  none of the pattern's instructions. Errors in the IR are marked in its
+  the page. The matches list the bindings as for the corpus. As every
+  function is matched, the Rejected tab lists each one without a match,
+  with why (`metaphir-match --explain`): each constraint that was false or
+  could not be evaluated, opening the structural match it rejected with its
+  instructions highlighted, or what the function lacks for a structural
+  match. Errors in the IR are marked in its
   editor. Corpus and Your IR each keep their own results.
 - Ctrl/⌘+clicking the name of a composite matcher, metaflag or constraint,
   in the pattern or in `stdlib.mpir`, goes to its definition: in the pattern

@@ -17,6 +17,7 @@ import type { Match } from "./engine.ts";
 import type { Definition } from "./irDefinition.ts";
 import { monaco } from "./monaco.ts";
 import type { Link } from "./navigation.ts";
+import { definitionLine } from "./yourIR.ts";
 
 export function YourIRPane(props: {
   value: string;
@@ -41,6 +42,17 @@ export function YourIRPane(props: {
   useLineDecorations(editor, irLines, hoveredLines, "bound-line", true);
   useHoveredLine(editor, onHover);
   useMarkers(editor, diagnostics);
+  // A function opened with nothing matched, such as one without a match, is
+  // shown from its definition.
+  useEffect(() => {
+    if (!editor || !match || !linked || irLines.length) return;
+    const line = definitionLine(value, match.fn);
+    if (line) {
+      editor.revealLineNearTop(line);
+      editor.setPosition({ lineNumber: line, column: 1 });
+    }
+    // Only when another function is opened, not as the IR is edited.
+  }, [editor, match, linked]);
 
   const jump = ({ line, column, length }: Definition) => {
     if (!editor) return;

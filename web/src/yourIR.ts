@@ -1,7 +1,7 @@
 // Matching IR written in the page: metaphir-match, built for WebAssembly,
 // runs on it as a module of its own, once for the matches and the
 // instructions they matched, and once for its report of each function: why
-// one has no match.
+// one has no match (--explain).
 
 import { instructionLines, parseMatch, wasmUrl, type Match } from "./engine.ts";
 import { runMatcher } from "./wasmMatcher.ts";
@@ -21,24 +21,40 @@ define i32 @add2(i32 %a) {
 }
 `;
 
+/** A constraint that rejected a function's structural matches. */
+export interface RejectedBy {
+  constraint: string;
+  /** Why it could not be evaluated; empty if it was false. */
+  reason: string;
+  /** The first structural match it rejected, as metaphir-match prints a
+   * match: its bindings, and the instructions it matched. */
+  bindings: string;
+  instructions: string;
+  /** That match, to open (see rejectedMatch). */
+  match?: Match;
+}
+
 /** What matching did in a function of the IR. */
 export interface FunctionResult {
   /** The function, as "@name". */
   fn: string;
   matches: number;
   /** For a function without a match: the constraints that rejected its
-   * structural matches, each with why it could not be evaluated, if it
-   * could not. None means the pattern's instructions are not there. */
-  rejected: { constraint: string; reason: string }[];
+   * structural matches, if it has any. */
+  rejected: RejectedBy[];
+  /** Else, why it has no structural match. */
+  structure: string[];
+  /** The function, to open without anything matched. */
+  open?: Match;
 }
 
-/** The functions of metaphir-match's full report, in order. */
+/** The functions of metaphir-match --explain's report, in order. */
 export function parseReport(report: string): FunctionResult[] {
   const functions: FunctionResult[] = [];
   for (const line of report.split("\n")) {
     const target = /^target \d+: (@\S+)$/.exec(line);
     if (target) {
-      functions.push({ fn: target[1], matches: 0, rejected: [] });
+      functions.push({ fn: target[1], matches: 0, rejected: [], structure: [] });
       continue;
     }
     const current = functions.at(-1);
@@ -47,7 +63,21 @@ export function parseReport(report: string): FunctionResult[] {
     const rejected = /^ {2}constraint not satisfied: (.*?)(?: \(cannot evaluate: (.*)\))?$/.exec(
       line,
     );
-    if (rejected) current.rejected.push({ constraint: rejected[1], reason: rejected[2] ?? "" });
+    if (rejected)
+      current.rejected.push({
+        constraint: rejected[1],
+        reason: rejected[2] ?? "",
+        bindings: "",
+        instructions: "",
+      });
+    const match = /^ {4}rejected: ([^\t]*)\t?(.*)$/.exec(line);
+    const last = current.rejected.at(-1);
+    if (match && last) {
+      last.bindings = match[1];
+      last.instructions = match[2];
+    }
+    const structure = /^ {2}no structural match: (.*)$/.exec(line);
+    if (structure) current.structure.push(structure[1]);
   }
   return functions;
 }
@@ -90,7 +120,7 @@ export async function matchYourIR(ir: string, pattern: string): Promise<IRResult
   const url = wasmUrl("metaphir-match.js");
   const found = await runMatcher(url, files, pattern);
   if (found.status !== 0) throw new Error(named(found.err) || `failed (${found.status})`);
-  const report = await runMatcher(url, files, pattern, /*full=*/ true);
+  const report = await runMatcher(url, files, pattern, /*explain=*/ true);
   if (report.status !== 0) throw new Error(named(report.err) || `failed (${report.status})`);
   const matches = found.out
     .split("\n")
@@ -101,5 +131,19 @@ export async function matchYourIR(ir: string, pattern: string): Promise<IRResult
       match.ir = async () => ({ text: ir, lines });
       return match;
     });
-  return { matches, functions: parseReport(report.out), messages: named(found.err) };
+  const functions = parseReport(report.out);
+  let key = 0;
+  for (const f of functions) {
+    f.open = rejectedMatch(ir, f.fn, { constraint: "", reason: "", bindings: "", instructions: "" }, key++);
+    for (const by of f.rejected) by.match = rejectedMatch(ir, f.fn, by, key++);
+  }
+  return { matches, functions, messages: named(found.err) };
+}
+
+/** A rejected structural match of fn in ir, to open as a match is. */
+export function rejectedMatch(ir: string, fn: string, by: RejectedBy, key: number): Match {
+  const match = parseMatch(key, [IR_FILE, fn, by.bindings, by.instructions].join("\t"));
+  const lines = moduleInstructionLines(ir, fn);
+  match.ir = async () => ({ text: ir, lines });
+  return match;
 }
