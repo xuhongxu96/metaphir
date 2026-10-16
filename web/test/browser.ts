@@ -29,6 +29,8 @@ const browser = await chromium.launch();
 const status = () => document.getElementById("status")!;
 try {
   const page = await browser.newPage();
+  // The guide that opens with the page would cover it.
+  await page.addInitScript(() => localStorage.setItem("metaphir-guide-dismissed", "1"));
   page.on("pageerror", (error) => console.error("page error:", error.message));
   const pattern = encodeURIComponent(readFileSync(patternFile, "utf8"));
   // The status and its details, on one line.

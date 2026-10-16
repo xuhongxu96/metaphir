@@ -1,4 +1,5 @@
-// The pattern guide, over the page: first demonstrations, each a pattern beside
+// The pattern guide, over the page, which opens with the page until asked
+// not to: first demonstrations, each a pattern beside
 // IR it matches, their parts named and explained where they are; then
 // patterns that put them together, to try; then the reference, of every
 // meta flag, constraint operator and matcher there is. Trying a pattern puts
@@ -288,8 +289,29 @@ function Reference({ id, title, children }: { id: string; title: string; childre
   );
 }
 
+const DISMISSED_KEY = "metaphir-guide-dismissed";
+
+/** Whether the guide is not to open when the page does, as asked. */
+export function guideDismissed(): boolean {
+  try {
+    return localStorage.getItem(DISMISSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setGuideDismissed(dismissed: boolean) {
+  try {
+    if (dismissed) localStorage.setItem(DISMISSED_KEY, "1");
+    else localStorage.removeItem(DISMISSED_KEY);
+  } catch {
+    // Storage may be unavailable; the guide then opens each time.
+  }
+}
+
 export function GuideDialog(props: { onTry: (pattern: string) => void; onClose: () => void }) {
   const { onTry, onClose } = props;
+  const [dismissed, setDismissed] = useState(guideDismissed);
   const close = useRef<HTMLButtonElement>(null);
   const body = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -343,6 +365,19 @@ export function GuideDialog(props: { onTry: (pattern: string) => void; onClose: 
       >
         <div className="help-header">
           <h2 id="help-title">Pattern Guide</h2>
+          <span className="spacer" />
+          <label className="help-dismiss">
+            <input
+              id="help-dismiss"
+              type="checkbox"
+              checked={dismissed}
+              onChange={(e) => {
+                setDismissed(e.target.checked);
+                setGuideDismissed(e.target.checked);
+              }}
+            />
+            Don't show again
+          </label>
           <button id="help-close" ref={close} onClick={onClose}>
             Close
           </button>

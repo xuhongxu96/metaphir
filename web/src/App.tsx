@@ -23,7 +23,7 @@ import {
 import { IRPane } from "./IRPane.tsx";
 import { definitionLink, definitionsIn, type DefinitionFile } from "./mpirDefinitions.ts";
 import type { Definition } from "./irDefinition.ts";
-import { GuideDialog } from "./GuideDialog.tsx";
+import { GuideDialog, guideDismissed } from "./GuideDialog.tsx";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
 import { MatchesPane } from "./MatchesPane.tsx";
 import { linkLines, patternLink, type Link, type NavLink } from "./navigation.ts";
@@ -86,7 +86,8 @@ export function App() {
   const theme = themeName(dark);
   const [corpus, setCorpus] = useState<PublishedCorpus>();
   const [source, setSource] = useState<Source>("published");
-  const [helpOpen, setHelpOpen] = useState(false);
+  // The guide opens with the page, until asked not to.
+  const [helpOpen, setHelpOpen] = useState(() => !guideDismissed());
   // The IR written in the page, kept in this browser, and as last matched.
   const [userIR, setUserIR] = useState(savedIR);
   const [matchedIR, setMatchedIR] = useState<string>();
