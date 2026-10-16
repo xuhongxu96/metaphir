@@ -12,6 +12,8 @@
 #include <variant>
 
 namespace llvm {
+class Function;
+class SourceMgr;
 class ModuleSlotTracker;
 class raw_ostream;
 class Type;
@@ -121,6 +123,16 @@ public:
       raw_ostream &OS,
       function_ref<std::optional<unsigned>(const metaphir::Instruction &)>
           LineOf) const;
+  /// The same, with each pattern instruction's line in the main file of
+  /// Source, the pattern's.
+  void printInstructions(raw_ostream &OS, const SourceMgr &Source) const;
+
+  /// Prints the match as metaphir-match --matches-only does: Module,
+  /// @function and bindings, and with Source the instructions it matched,
+  /// separated by tabs, on a line.
+  void printLine(raw_ostream &OS, StringRef Module, const llvm::Function &F,
+                 ModuleSlotTracker *Slots,
+                 const SourceMgr *Source = nullptr) const;
 
   /// Whether both bind the same matchers to the same targets.
   bool operator==(const Instantiation &Other) const;

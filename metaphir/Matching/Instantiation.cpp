@@ -2,6 +2,7 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MetaVariable.h"
 #include "metaphir/IR/Pattern.h"
+#include "metaphir/IR/SourceRange.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/IR/Function.h"
@@ -170,6 +171,25 @@ void Instantiation::printConflict(raw_ostream &OS, const Conflict &C,
   printBinding(OS, C.First, Slots);
   OS << " and ";
   printBinding(OS, C.Second, Slots);
+}
+
+void Instantiation::printInstructions(raw_ostream &OS,
+                                      const SourceMgr &Source) const {
+  printInstructions(OS, [&](const metaphir::Instruction &I) {
+    return getMainFileLine(Source, I.getSourceRange().Begin);
+  });
+}
+
+void Instantiation::printLine(raw_ostream &OS, StringRef Module,
+                              const llvm::Function &F, ModuleSlotTracker *Slots,
+                              const SourceMgr *Source) const {
+  OS << Module << "\t@" << F.getName() << '\t';
+  print(OS, Slots);
+  if (Source) {
+    OS << '\t';
+    printInstructions(OS, *Source);
+  }
+  OS << '\n';
 }
 
 void Instantiation::print(raw_ostream &OS, ModuleSlotTracker *Slots) const {

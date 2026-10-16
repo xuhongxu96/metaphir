@@ -282,9 +282,6 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
       Rejecting ? &HadStructuralMatch : nullptr, &Pattern->Query);
   ModuleSlotTracker Slots(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
   Slots.incorporateFunction(F);
-  auto PatternLine = [&](const metaphir::Instruction &I) {
-    return getMainFileLine(Pattern->Source, I.getSourceRange().Begin);
-  };
   if (Matches.empty()) {
     if (HadStructuralMatch)
       for (const UnsatisfiedConstraint &U : Unsatisfied) {
@@ -300,19 +297,13 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
         raw_string_ostream Bindings(R.Bindings);
         U.Rejected.print(Bindings, &Slots);
         raw_string_ostream Instructions(R.Instructions);
-        U.Rejected.printInstructions(Instructions, PatternLine);
+        U.Rejected.printInstructions(Instructions, Pattern->Source);
       }
     return Error::success();
   }
-  for (const Instantiation &Match : Matches) {
-    Out << Module.Path << "\t@" << F.getName() << '\t';
-    Match.print(Out, &Slots);
-    if (PrintInstructions) {
-      Out << '\t';
-      Match.printInstructions(Out, PatternLine);
-    }
-    Out << '\n';
-  }
+  for (const Instantiation &Match : Matches)
+    Match.printLine(Out, Module.Path, F, &Slots,
+                    PrintInstructions ? &Pattern->Source : nullptr);
   return Error::success();
 }
 

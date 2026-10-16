@@ -402,17 +402,9 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
         *Pattern.Variants, Program, MatchesOnly ? nullptr : &Unsatisfied,
         MatchesOnly ? nullptr : &HadStructuralMatch, Pattern.getFilter());
     if (MatchesOnly) {
-      for (const Instantiation &Match : Matches) {
-        Out << File << "\t@" << F->getName() << '\t';
-        PrintMatch(*F, Match);
-        if (PrintInstructions) {
-          Out << '\t';
-          Match.printInstructions(Out, [&](const metaphir::Instruction &I) {
-            return getMainFileLine(Pattern.Source, I.getSourceRange().Begin);
-          });
-        }
-        Out << '\n';
-      }
+      for (const Instantiation &Match : Matches)
+        Match.printLine(Out, File, *F, SlotsFor(*F),
+                        PrintInstructions ? &Pattern.Source : nullptr);
       continue;
     }
     Out << "target " << TargetIndex++ << ": @" << F->getName() << '\n';
@@ -428,11 +420,7 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
             Out << "    rejected: ";
             PrintMatch(*F, U.Rejected);
             Out << '\t';
-            U.Rejected.printInstructions(
-                Out, [&](const metaphir::Instruction &I) {
-                  return getMainFileLine(Pattern.Source,
-                                         I.getSourceRange().Begin);
-                });
+            U.Rejected.printInstructions(Out, Pattern.Source);
             Out << '\n';
           }
         }
