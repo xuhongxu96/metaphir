@@ -109,6 +109,16 @@ body { background: var(--bg); color: var(--fg); }
 .status-notes ul { margin: 0; padding-left: 16px; font-size: 12px; overflow-wrap: anywhere; }
 .status-notes .hint { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
 .cards { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.75rem; font-size: 0.8rem; }
+.lookalike {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--fg);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
 .card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg); }
 .card.focused { box-shadow: 0 0 0 2px var(--accent); }
 .card-header {

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseMatch } from "../src/engine.ts";
-import { filterMatches } from "../src/matchSearch.ts";
+import { filterMatches, lookalikes } from "../src/matchSearch.ts";
 
 const matches = [
   "abc__abcAig.bc\t@Abc_AigAnd\t{?a = %1, ?b = -1}",
@@ -41,4 +41,18 @@ test("a binding value with spaces is quoted", () => {
   const vector = [parseMatch(0, 'm.bc\t@f\t{?v = <2 x i32> <i32 1, i32 2>, ?w = 1}')];
   assert.equal(filterMatches(vector, '?v = "<2 x i32> <i32 1, i32 2>"').length, 1);
   assert.equal(filterMatches(vector, '?v = "<2 x i32>"').length, 0);
+});
+
+test("finds the matches that print like others", () => {
+  const rows = [
+    "m.bc\t@f\t{?x = %x}\t{%rem@1 = #3, %cmp@2 = #9}",
+    "m.bc\t@f\t{?x = %x}\t{%rem@1 = #7, %cmp@2 = #9}",
+    "m.bc\t@f\t{?x = %y}\t{%rem@1 = #4, %cmp@2 = #9}",
+    "m.bc\t@g\t{?x = %x}\t{%rem@1 = #3, %cmp@2 = #9}",
+  ].map((line, i) => parseMatch(i, line));
+  const alike = lookalikes(rows);
+  assert.deepEqual(alike.get(rows[0]), { index: 1, count: 2 });
+  assert.deepEqual(alike.get(rows[1]), { index: 2, count: 2 });
+  assert.equal(alike.has(rows[2]), false);
+  assert.equal(alike.has(rows[3]), false);
 });

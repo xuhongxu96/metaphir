@@ -13,7 +13,7 @@ import {
   type Match,
   type Rejection,
 } from "./engine.ts";
-import { filterMatches } from "./matchSearch.ts";
+import { filterMatches, lookalikes } from "./matchSearch.ts";
 import type { FunctionResult } from "./yourIR.ts";
 
 export type MatchesTab = "matches" | "rejected";
@@ -42,6 +42,7 @@ export function MatchesPane(props: {
   const body = useRef<HTMLTableSectionElement>(null);
   const found = useMemo(() => filterMatches(matches, query), [matches, query]);
   const shown = found.slice(0, MAX_ROWS);
+  const alike = useMemo(() => lookalikes(matches), [matches]);
   const index = selected ? shown.indexOf(selected) : -1;
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -152,7 +153,17 @@ export function MatchesPane(props: {
                 >
                   <td title={match.module}>{match.module}</td>
                   <td title={match.fn}>{match.fn}</td>
-                  <td title={match.bindings}>{match.bindings}</td>
+                  <td title={match.bindings}>
+                    {alike.has(match) && (
+                      <span
+                        className="lookalike"
+                        title={`${alike.get(match)!.count} matches have these bindings: they matched other instructions, which no variable captures. Select each to see its instructions.`}
+                      >
+                        {alike.get(match)!.index}/{alike.get(match)!.count}
+                      </span>
+                    )}
+                    {match.bindings}
+                  </td>
                 </tr>
               ))}
             </tbody>
