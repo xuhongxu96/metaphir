@@ -4,6 +4,7 @@
 import { useState } from "react";
 import type { Diagnostic } from "./diagnostics.ts";
 import type { Match } from "./engine.ts";
+import type { MatchesTab } from "./MatchesPane.tsx";
 import type { Status } from "./status.ts";
 import type { FunctionResult } from "./yourIR.ts";
 
@@ -19,7 +20,11 @@ export function useResults(initial: Status) {
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   // Whether a run is going on: one per source at a time.
   const [running, setRunning] = useState(false);
+  // The tab of the matches pane it shows.
+  const [tab, setTab] = useState<MatchesTab>("matches");
   return {
+    tab,
+    setTab,
     running,
     setRunning,
     matches,
@@ -36,5 +41,3 @@ export function useResults(initial: Status) {
     setDiagnostics,
   };
 }
-
-export type Results = ReturnType<typeof useResults>;

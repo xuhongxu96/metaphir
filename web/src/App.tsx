@@ -16,7 +16,7 @@ import { IRPane } from "./IRPane.tsx";
 import { definitionLink, definitionsIn, type DefinitionFile } from "./mpirDefinitions.ts";
 import type { Definition } from "./irDefinition.ts";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
-import { MatchesPane, type MatchesTab } from "./MatchesPane.tsx";
+import { MatchesPane } from "./MatchesPane.tsx";
 import { patternLink, type Link } from "./navigation.ts";
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
@@ -107,7 +107,6 @@ export function App() {
   const [copied, setCopied] = useState(false);
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
   const [patternTab, setPatternTab] = useState<PatternTab>("pattern");
-  const [matchesTab, setMatchesTab] = useState<MatchesTab>("matches");
   const [rejectionFocus, setRejectionFocus] = useState<{ key: string }>();
   // What a run found wrong in the pattern is gone once it is edited.
   useEffect(() => {
@@ -379,7 +378,7 @@ export function App() {
           status={status}
           control={yourIR ? undefined : control}
           onRejection={(r) => {
-            setMatchesTab("rejected");
+            shown.setTab("rejected");
             // A new object each time, brought into view even if the same.
             setRejectionFocus({ key: rejectionKey(r) });
           }}
@@ -473,8 +472,8 @@ export function App() {
                   running={running}
                   misses={yourIR ? misses : undefined}
                   rejections={yourIR ? undefined : status.rejections}
-                  tab={matchesTab}
-                  onTab={setMatchesTab}
+                  tab={shown.tab}
+                  onTab={shown.setTab}
                   focus={rejectionFocus}
                 />
               </Panel>
