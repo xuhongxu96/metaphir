@@ -94,6 +94,9 @@ bool MIRParser::makeOperator(Constraint *&Result, Constraint::ConstraintID Kind,
 }
 
 bool MIRParser::parseConstraint(Constraint *&Result) {
+  Nesting Nest(*this);
+  if (Nest.tooDeep())
+    return true;
   return parseConstraintBinary(Result, 1);
 }
 
@@ -128,6 +131,9 @@ bool MIRParser::parseConstraintBinary(Constraint *&Result,
 }
 
 bool MIRParser::parseConstraintUnary(Constraint *&Result) {
+  Nesting Nest(*this);
+  if (Nest.tooDeep())
+    return true;
   if (Lex.getKind() != tok::exclaim && Lex.getKind() != tok::minus)
     return parseConstraintPostfix(Result);
   StringRef Spelling = Lex.getKind() == tok::exclaim ? "!" : "-";

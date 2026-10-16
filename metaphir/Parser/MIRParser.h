@@ -51,6 +51,19 @@ private:
   StringMap<MetaVariable *> MetaVariables;
   StringMap<Instruction *> Instructions;
   Pattern *CurrentPattern = nullptr;
+  /// How deep the parse nests, which bounds the parser's recursion.
+  unsigned Depth = 0;
+  static constexpr unsigned MaxDepth = 256;
+  /// One level of nesting, while it lives; tooDeep says whether it is one
+  /// too many.
+  struct Nesting {
+    MIRParser &Parser;
+    explicit Nesting(MIRParser &Parser) : Parser(Parser) { ++Parser.Depth; }
+    ~Nesting() { --Parser.Depth; }
+    bool tooDeep() {
+      return Parser.Depth > MaxDepth && Parser.error("nesting is too deep");
+    }
+  };
   /// Numbers the variables the '?_' wildcards stand for.
   unsigned NextWildcard = 0;
   MetaVariable *CurrentBlock = nullptr;

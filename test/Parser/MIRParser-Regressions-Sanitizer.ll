@@ -4,6 +4,7 @@
 ; RUN: %metaphir-parse %t/composite-or-self.mpir | FileCheck %s --check-prefix=COMPOSITE-OR-SELF
 ; RUN: not %metaphir-parse %t/empty-block.mpir 2>&1 | FileCheck %s --check-prefix=EMPTY-BLOCK
 ; RUN: %metaphir-parse %t/branch-target.mpir | FileCheck %s --check-prefix=BRANCH-TARGET
+; RUN: not %metaphir-parse %t/deep.mpir 2>&1 | FileCheck %s --check-prefix=DEEP
 
 ; ':o' on a composite matcher's use is checked against its operands, as on
 ; a built-in instruction.
@@ -48,3 +49,9 @@ br label ?b
 ; BRANCH-TARGET-NOT: {{.}}
 
 ?b:
+
+; Nesting is bounded, rather than the parser's recursion.
+;--- deep.mpir
+%r = add i32 ?x, ?y
+;; ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((true))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+; DEEP: nesting is too deep

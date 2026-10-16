@@ -148,6 +148,9 @@ bool MIRParser::parseSemanticFlags(
 /// Resolving the flag -- built-in schema or 'metaflag' definition -- happens
 /// here, so callers need not look it up again.
 bool MIRParser::parseMetaFlag(MetaFlag *&Result, MetaFlag::Placement &Allowed) {
+  Nesting Nest(*this);
+  if (Nest.tooDeep())
+    return true;
   if (Lex.getKind() != tok::MetaFlag)
     return error("expected metaflag");
   LocTy Loc = Lex.getLoc();
@@ -245,6 +248,9 @@ bool MIRParser::parseMetaFlags(SmallVectorImpl<MetaFlag *> &Result,
 }
 
 bool MIRParser::parseType(Type *&Result, bool AllowVoid) {
+  Nesting Nest(*this);
+  if (Nest.tooDeep())
+    return true;
   return parseBaseType(Result, AllowVoid) || parseTypeSuffixes(Result);
 }
 
