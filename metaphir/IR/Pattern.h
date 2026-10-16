@@ -43,6 +43,10 @@ public:
   void addConstraint(Constraint *Constraint) {
     Constraints.push_back(Constraint);
   }
+  /// Adds New before the constraints there are, in order.
+  void prependConstraints(ArrayRef<Constraint *> New) {
+    Constraints.insert(Constraints.begin(), New.begin(), New.end());
+  }
   void addFixedFlag(const MetaVariable *Var, bool Value) {
     FixedFlags.push_back({Var, Value});
   }

@@ -46,11 +46,11 @@ entry:
 }
 ; NAT-NEXT: target 2: @dynamic_divisor
 ; NAT-NEXT:   no match
-; NAT-NEXT:   constraint not satisfied: (slt ?c 0) (cannot evaluate: expected an integer-valued constant operand)
+; NAT-NEXT:   constraint not satisfied: (isConstantInt ?c)
 
 ; U-NEXT: target 2: @dynamic_divisor
 ; U-NEXT:   no match
-; U-NEXT:   constraint not satisfied: (ugt ?c 1) (cannot evaluate: expected an integer-valued constant operand)
+; U-NEXT:   constraint not satisfied: (isConstantInt ?c)
 
 ; Constants coerce to signed integers, so 'slt' on a negative constant is
 ; correct, while unsigned comparisons still operate on the bit pattern.

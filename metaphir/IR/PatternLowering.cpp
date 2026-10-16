@@ -772,8 +772,10 @@ Error Desugarer::desugar(Pattern &P) {
   for (const Pattern::OperandFlags &F : P.getOperandFlags())
     if (Error E = LowerAll(F.Flags, F.Subject, F.ContextInstruction))
       return E;
-  for (Constraint *C : Lowered)
-    P.addConstraint(C);
+  // Metaflags mostly say what a binding is (':constantInt', ':lowBitMask'),
+  // so they are checked first: a constraint that could not be evaluated on
+  // such a binding then is not what is reported to reject it.
+  P.prependConstraints(Lowered);
   return Error::success();
 }
 

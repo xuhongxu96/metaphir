@@ -52,10 +52,11 @@ MatchResults PatternMatcher::applyConstraints(
       Expected<bool> Holds = Result
                                  ? detail::requireBoolean(*Result, *Expression)
                                  : Expected<bool>(Result.takeError());
+      // A constraint that cannot be evaluated for this binding (e.g.
+      // arithmetic on a non-constant value) rejects it, and the remaining
+      // constraints are not evaluated. Once another constraint is false, it
+      // is not reported: the binding it cannot handle was rejected already.
       if (!Holds) {
-        // A constraint that cannot be evaluated for this binding (e.g.
-        // arithmetic on a non-constant value) rejects it, and the remaining
-        // constraints are not evaluated.
         std::string Reason = "constraint could not be evaluated";
         handleAllErrors(
             Holds.takeError(),
@@ -63,7 +64,8 @@ MatchResults PatternMatcher::applyConstraints(
               Reason = E.Message;
             },
             [&](const ErrorInfoBase &E) { Reason = E.message(); });
-        Record(Expression, std::move(Reason), Match);
+        if (Satisfies)
+          Record(Expression, std::move(Reason), Match);
         Satisfies = false;
         break;
       }
