@@ -119,7 +119,7 @@ body { background: var(--bg); color: var(--fg); }
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
 }
-.card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg); }
+.card { border: 1px solid var(--border); border-radius: 6px; overflow: auto; background: var(--bg); }
 .card.focused { box-shadow: 0 0 0 2px var(--accent); }
 .card-header {
   display: flex;
@@ -362,6 +362,30 @@ td {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.data-table th .column-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 1;
+}
+.data-table th .column-resize:hover { background: var(--accent); opacity: 0.4; }
+.data-table td { position: relative; }
+.data-table .cell-copy {
+  display: none;
+  position: absolute;
+  top: 50%;
+  right: 0.3rem;
+  transform: translateY(-50%);
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  font-family: inherit;
+}
+.data-table td:hover .cell-copy { display: inline-block; }
 tbody tr { cursor: pointer; }
 tbody tr:hover { background: var(--bg-alt); }
 tbody tr.selected { background: var(--accent-bg); }

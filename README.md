@@ -596,6 +596,9 @@ The page is React, in resizable panes:
   if it defines one, or else in the `stdlib.mpir` tab.
 - Each constraint the status panel lists as rejecting structural matches
   links to the Rejected tab, at the functions it rejected.
+- In the tables, dragging the right edge of a column's header resizes the
+  column (double-click to reset; the widths are kept in the browser), and a
+  hovered cell shows a button that copies its full text.
 - Hovering a matched instruction in either editor highlights its counterpart
   in the other.
 - The search above the matches keeps those with every word of it in their

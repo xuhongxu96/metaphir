@@ -20,8 +20,58 @@ import {
   type Match,
   type Rejection,
 } from "./engine.ts";
-import { filterMatches, lookalikes } from "./matchSearch.ts";
-import type { FunctionResult } from "./yourIR.ts";
+import { DataTable, type Column } from "./DataTable.tsx";
+import { filterMatches, lookalikes, type Lookalike } from "./matchSearch.ts";
+import type { FunctionResult, RejectedBy } from "./yourIR.ts";
+
+const lookalikeHint = (count: number) =>
+  `${count} matches have these bindings: they matched other instructions, which no variable captures. Select each to see its instructions.`;
+
+/** The matches' columns; the bindings mark those that print alike. */
+const MATCH_COLUMNS = (alike: Map<Match, Lookalike>): Column<Match>[] => [
+  { title: "Module", className: "module", text: (m) => m.module },
+  { title: "Function", className: "function", text: (m) => m.fn },
+  {
+    title: "Bindings",
+    text: (m) => m.bindings,
+    render: (m) => {
+      const like = alike.get(m);
+      return (
+        <>
+          {like && (
+            <span className="lookalike" title={lookalikeHint(like.count)}>
+              {like.index}/{like.count}
+            </span>
+          )}
+          {m.bindings}
+        </>
+      );
+    },
+  },
+];
+
+const REJECTED_HINT = "The structural match the constraint rejected";
+
+const SAMPLE_COLUMNS: Column<Match>[] = [
+  { title: "Module", className: "module", text: (m) => m.module },
+  { title: "Function", className: "function", text: (m) => m.fn },
+  { title: "Rejected bindings", hint: REJECTED_HINT, text: (m) => m.bindings },
+];
+
+const REJECTED_BY_COLUMNS: Column<RejectedBy>[] = [
+  {
+    title: "Constraint",
+    className: "constraint",
+    text: (by) => by.constraint,
+    render: (by) => (
+      <>
+        {by.constraint}
+        {by.reason && <span className="warn"> cannot evaluate: {by.reason}</span>}
+      </>
+    ),
+  },
+  { title: "Rejected bindings", hint: REJECTED_HINT, text: (by) => by.bindings },
+];
 
 export type MatchesTab = "matches" | "rejected";
 
@@ -152,43 +202,16 @@ export function MatchesPane(props: {
       ) : (
       <div className="pane-body results" tabIndex={0} onKeyDown={onKeyDown}>
         {shown.length ? (
-          <table>
-            <colgroup>
-              <col className="module" />
-              <col className="function" />
-              <col />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Module</th>
-                <th>Function</th>
-                <th>Bindings</th>
-              </tr>
-            </thead>
-            <tbody id="matches" ref={body}>
-              {shown.map((match) => (
-                <tr
-                  key={match.key}
-                  className={match === selected ? "selected" : undefined}
-                  onClick={() => onSelect(match)}
-                >
-                  <td title={match.module}>{match.module}</td>
-                  <td title={match.fn}>{match.fn}</td>
-                  <td title={match.bindings}>
-                    {alike.has(match) && (
-                      <span
-                        className="lookalike"
-                        title={`${alike.get(match)!.count} matches have these bindings: they matched other instructions, which no variable captures. Select each to see its instructions.`}
-                      >
-                        {alike.get(match)!.index}/{alike.get(match)!.count}
-                      </span>
-                    )}
-                    {match.bindings}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DataTable
+            id="matches"
+            columns={MATCH_COLUMNS(alike)}
+            rows={shown}
+            rowKey={(match) => match.key}
+            selected={selected}
+            onSelect={onSelect}
+            bodyId="matches"
+            bodyRef={body}
+          />
         ) : (
           <p className="empty">
             {matches.length
@@ -232,33 +255,15 @@ function Misses(props: {
             </span>
           </header>
           {miss.rejected.length > 0 ? (
-            <table className="samples">
-              <colgroup>
-                <col className="constraint" />
-                <col />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Constraint</th>
-                  <th title="The structural match the constraint rejected">Rejected bindings</th>
-                </tr>
-              </thead>
-              <tbody>
-                {miss.rejected.map((by, i) => (
-                  <tr
-                    key={i}
-                    className={by.match && by.match === selected ? "selected" : undefined}
-                    onClick={() => by.match && onSelect(by.match)}
-                  >
-                    <td title={by.reason ? `could not be evaluated: ${by.reason}` : "was false"}>
-                      {by.constraint}
-                      {by.reason && <span className="warn"> cannot evaluate: {by.reason}</span>}
-                    </td>
-                    <td title={by.bindings}>{by.bindings}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              id="rejected-by"
+              className="samples"
+              columns={REJECTED_BY_COLUMNS}
+              rows={miss.rejected}
+              rowKey={(by) => by.constraint}
+              selected={miss.rejected.find((by) => by.match && by.match === selected)}
+              onSelect={(by) => by.match && onSelect(by.match)}
+            />
           ) : (
             <ul className="card-list">
               {miss.structure.map((reason, i) => (
@@ -302,33 +307,15 @@ function Rejections(props: {
               ? `Could not be evaluated: ${r.reason}`
               : "False for every structural match of these functions."}
           </p>
-          <table className="samples">
-            <colgroup>
-              <col className="module" />
-              <col className="function" />
-              <col />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Module</th>
-                <th>Function</th>
-                <th title="The structural match the constraint rejected">Rejected bindings</th>
-              </tr>
-            </thead>
-            <tbody>
-              {r.samples.map((sample) => (
-                <tr
-                  key={sample.key}
-                  className={sample === selected ? "selected" : undefined}
-                  onClick={() => onSelect(sample)}
-                >
-                  <td title={sample.module}>{sample.module}</td>
-                  <td title={sample.fn}>{sample.fn}</td>
-                  <td title={sample.bindings}>{sample.bindings}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DataTable
+            id="samples"
+            className="samples"
+            columns={SAMPLE_COLUMNS}
+            rows={r.samples}
+            rowKey={(sample) => sample.key}
+            selected={selected}
+            onSelect={onSelect}
+          />
           {r.functions > r.samples.length && (
             <p className="card-foot">
               First {Math.min(REJECTION_SAMPLES, r.samples.length)} of{" "}
