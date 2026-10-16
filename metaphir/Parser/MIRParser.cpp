@@ -75,6 +75,10 @@ bool MIRParser::infer(MetaVariable *M, Sort Expected, LocTy Loc) {
 }
 
 MetaVariable *MIRParser::getMeta(StringRef Name, Sort Expected, LocTy Loc) {
+  // Each '?_' is a variable of its own, of any sort: it matches anything
+  // and binds nothing a match reports (as any '?_name').
+  if (Name == "_")
+    Name = Context.saveString(("_$" + Twine(NextWildcard++)).str());
   auto It = MetaVariables.find(Name);
   if (It != MetaVariables.end()) {
     if (infer(It->second, Expected, Loc))

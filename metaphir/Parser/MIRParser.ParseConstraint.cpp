@@ -254,6 +254,9 @@ bool MIRParser::parseConstraintPrimary(Constraint *&Result) {
   case tok::lsquare:
     return parseConstraintArray(Result);
   case tok::MetaVar: {
+    if (Lex.getStrVal() == "_")
+      return error("a constraint cannot refer to '?_', which stands for a "
+                   "different value each time; name the variable");
     auto It = MetaVariables.find(Lex.getStrVal());
     if (It == MetaVariables.end())
       return error("constraint references unknown meta variable '?" +

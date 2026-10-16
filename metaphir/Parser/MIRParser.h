@@ -51,6 +51,8 @@ private:
   StringMap<MetaVariable *> MetaVariables;
   StringMap<Instruction *> Instructions;
   Pattern *CurrentPattern = nullptr;
+  /// Numbers the variables the '?_' wildcards stand for.
+  unsigned NextWildcard = 0;
   MetaVariable *CurrentBlock = nullptr;
   PatternSettings Settings;
   /// Set while parsing a 'constraint'/'metaflag' body, whose expression may
