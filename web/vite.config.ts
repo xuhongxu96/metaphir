@@ -12,39 +12,46 @@ import { defineConfig, type Connect, type Plugin } from "vite";
 function localData(): Plugin {
   const dir = process.env.METAPHIR_DATA;
   const serve = (server: { middlewares: Connect.Server }) => {
-      if (!dir) return;
-      const root = resolve(dir);
-      server.middlewares.use((request, response, next) => {
-        const url = new URL(request.url ?? "/", "http://localhost");
-        if (url.pathname.endsWith("/config.json")) {
-          response.setHeader("content-type", "application/json");
-          response.end(JSON.stringify({ data: "/data" }));
-          return;
-        }
-        if (!url.pathname.startsWith("/data/")) return next();
-        const file = normalize(join(root, url.pathname.slice("/data/".length)));
-        if (!file.startsWith(root)) return next();
-        let size: number;
-        try {
-          size = statSync(file).size;
-        } catch {
-          response.statusCode = 404;
-          response.end();
-          return;
-        }
-        const range = /bytes=(\d+)-(\d+)/.exec(request.headers.range ?? "");
-        if (!range) {
-          response.setHeader("content-length", size);
-          createReadStream(file).pipe(response);
-          return;
-        }
-        const start = Number(range[1]);
-        const end = Math.min(Number(range[2]), size - 1);
-        response.statusCode = 206;
-        response.setHeader("content-range", `bytes ${start}-${end}/${size}`);
-        response.setHeader("content-length", end - start + 1);
-        createReadStream(file, { start, end }).pipe(response);
-      });
+    if (!dir) return;
+    const root = resolve(dir);
+    server.middlewares.use((request, response, next) => {
+      const url = new URL(request.url ?? "/", "http://localhost");
+      if (url.pathname.endsWith("/config.json")) {
+        response.setHeader("content-type", "application/json");
+        response.end(JSON.stringify({ data: "/data" }));
+        return;
+      }
+      if (!url.pathname.startsWith("/data/")) return next();
+      const file = normalize(join(root, url.pathname.slice("/data/".length)));
+      if (!file.startsWith(root)) return next();
+      let size: number;
+      try {
+        size = statSync(file).size;
+      } catch {
+        response.statusCode = 404;
+        response.end();
+        return;
+      }
+      // "bytes=start-end" or "bytes=start-", as HTTP has them.
+      const range = /^bytes=(\d+)-(\d*)$/.exec(request.headers.range ?? "");
+      if (!range) {
+        response.setHeader("content-length", size);
+        createReadStream(file).pipe(response);
+        return;
+      }
+      const start = Number(range[1]);
+      if (start >= size) {
+        response.statusCode = 416;
+        response.setHeader("content-range", `bytes */${size}`);
+        response.end();
+        return;
+      }
+      const end = Math.min(range[2] ? Number(range[2]) : size - 1, size - 1);
+      response.statusCode = 206;
+      response.setHeader("content-range", `bytes ${start}-${end}/${size}`);
+      response.setHeader("content-length", end - start + 1);
+      createReadStream(file, { start, end }).pipe(response);
+    });
   };
   return {
     name: "metaphir-local-data",
