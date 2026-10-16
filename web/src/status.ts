@@ -20,8 +20,10 @@ export interface Status {
 function headline(progress: Progress): string {
   const pause = progress.paused;
   if (!pause) return progress.stage;
+  // The matches of the functions being matched when the query paused are
+  // counted too, so the line says what the counter does.
   return pause.kind === "matches"
-    ? `paused at ${count(pause.matches, "match", "matches")}`
+    ? `paused at ${count(progress.matches, "match", "matches")}`
     : `paused: ${count(pause.candidates, "candidate function")}`;
 }
 
