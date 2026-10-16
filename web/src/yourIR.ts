@@ -132,7 +132,13 @@ export async function matchYourIR(ir: string, pattern: string): Promise<IRResult
   const functions = parseReport(report.out);
   let key = 0;
   for (const f of functions) {
-    f.open = withIR(makeMatch(key++, IR_FILE, f.fn, "", ""), ir);
+    // The function opened whole: each of its instructions highlighted.
+    const whole = makeMatch(key++, IR_FILE, f.fn, "", "");
+    whole.instructions = moduleInstructionLines(ir, f.fn).map((_, position) => ({
+      name: "",
+      position,
+    }));
+    f.open = withIR(whole, ir);
     for (const by of f.rejected)
       by.match = withIR(makeMatch(key++, IR_FILE, f.fn, by.bindings, by.instructions), ir);
   }

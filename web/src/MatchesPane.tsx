@@ -252,7 +252,7 @@ function Misses(props: {
             <button
               className={`link fn${miss.open && miss.open === selected ? " selected" : ""}`}
               onClick={() => miss.open && onSelect(miss.open)}
-              title="Show the function"
+              title="Show the function in your IR"
             >
               {miss.fn}
             </button>
