@@ -6,6 +6,7 @@
 #include "metaphir/IR/MIRContextImpl.h"
 #include "metaphir/IR/Pattern.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -859,6 +860,128 @@ Expected<Constraint *> Desugarer::lowerUserDefined(const MetaFlag &MF,
   return Subst.constraint(Def.getBody());
 }
 
+namespace {
+
+/// The meta variables a match binds, and the instructions it matches.
+struct Bindings {
+  SmallPtrSet<const MetaVariable *, 16> Variables;
+  SmallVector<const Instruction *, 8> Instructions;
+
+  void addType(const Type *T) {
+    if (!T)
+      return;
+    if (auto *MIT = dyn_cast<MetaIntegerType>(T))
+      Variables.insert(MIT->getBitWidthVariable());
+    else if (auto *MT = dyn_cast<MetaIRType>(T))
+      Variables.insert(MT->getVariable());
+    else if (auto *PT = dyn_cast<PointerType>(T))
+      addType(PT->getElementType());
+    else if (auto *ST = dyn_cast<SequenceType>(T)) {
+      addType(ST->getElementType());
+      if (MetaVariable *Count = ST->getCountVariable())
+        Variables.insert(Count);
+    } else if (auto *ST = dyn_cast<StructType>(T)) {
+      for (const Type *E : ST->getElementTypes())
+        addType(E);
+    } else if (auto *FT = dyn_cast<FunctionType>(T)) {
+      addType(FT->getReturnType());
+      for (const Type *Parameter : FT->getParameterTypes())
+        addType(Parameter);
+    }
+  }
+
+  void addValue(const Value *V) {
+    if (auto *MV = dyn_cast_or_null<MetaVariable>(V))
+      Variables.insert(MV);
+    else if (auto *I = dyn_cast_or_null<Instruction>(V))
+      Instructions.push_back(I);
+    else if (auto *Aggregate = dyn_cast_or_null<AggregateConstant>(V)) {
+      for (const Type *T : Aggregate->getElementTypes())
+        addType(T);
+      for (const Value *E : Aggregate->getElements())
+        addValue(E);
+    }
+  }
+
+  void addVariable(const MetaVariable *V) {
+    if (V)
+      Variables.insert(V);
+  }
+
+  void addOperand(const MatcherOperand &Op) {
+    addType(Op.Ty);
+    addValue(Op.Val);
+    addVariable(Op.TypeArray);
+    addVariable(Op.ValueArray);
+  }
+
+  /// What matching I binds; with OnlySelf, what it binds when ':o' lets it
+  /// match its operand instead: itself, its capture and that operand.
+  void addInstruction(const Instruction &I, bool OnlySelf) {
+    addVariable(I.getCapture());
+    if (OnlySelf) {
+      if (const Value *Self = I.getOrSelfValue())
+        return addValue(Self);
+      unsigned Position = *I.getOrSelfOperandIndex();
+      for (const MatcherOperand &Op : I.getUnkeyedOperands())
+        if (Op.IsInstructionOperand && Position-- == 0)
+          return addValue(Op.Val);
+      return;
+    }
+    addVariable(I.getParentBlock());
+    for (const InstructionFlag &Flag : I.getFlags())
+      addVariable(Flag.Capture);
+    for (const MatcherOperand &Op : I.getUnkeyedOperands())
+      addOperand(Op);
+    for (const MatcherOperand &Op : I.getKeyedOperands())
+      addOperand(Op);
+  }
+};
+
+} // namespace
+
+/// Rejects a named meta variable of P that a match may leave unbound: one
+/// that only the parts of an ':o' instruction other than its operand bind,
+/// when the instruction matches that operand instead.
+static Error checkOrSelfBindings(const Pattern &P) {
+  Bindings Always;
+  SmallPtrSet<const Instruction *, 16> Visited;
+  // The variables each ':o' instruction binds when it matches itself.
+  DenseMap<const MetaVariable *, const Instruction *> BoundBy;
+  for (Instruction *Root : P.getRoots())
+    Always.Instructions.push_back(Root);
+  while (!Always.Instructions.empty()) {
+    const Instruction *I = Always.Instructions.pop_back_val();
+    if (!Visited.insert(I).second)
+      continue;
+    bool OrSelf = I->getOrSelfOperandIndex().has_value();
+    if (OrSelf) {
+      Bindings Itself;
+      Itself.addInstruction(*I, /*OnlySelf=*/false);
+      for (const MetaVariable *V : Itself.Variables)
+        BoundBy.try_emplace(V, I);
+    }
+    Always.addInstruction(*I, OrSelf);
+  }
+  for (const MetaVariable *V : P.getMetaVariables()) {
+    StringRef Name = V->getName();
+    if (Name.empty() || Name.starts_with("_") || Always.Variables.contains(V))
+      continue;
+    const Instruction *OrSelf = BoundBy.lookup(V);
+    if (!OrSelf)
+      continue;
+    return makeError(
+        V->getSourceRange().Begin.isValid() ? V->getSourceRange()
+                                            : OrSelf->getSourceRange(),
+        "meta variable '?" + Name +
+            "' is not bound when ':o' "
+            "lets '" +
+            OrSelf->getOpcodeName() + "' match its operand; name it '?_" +
+            Name + "' if it need not be bound");
+  }
+  return Error::success();
+}
+
 Expected<PatternVariants> PatternLowering::lower(const Pattern *P) {
   if (!P)
     return PatternVariants();
@@ -874,6 +997,8 @@ Expected<PatternVariants> PatternLowering::lower(const Pattern *P) {
     // in place; P is copied so that lowering leaves it untouched.
     Pattern *Owned = Leaf == P ? P->copy() : const_cast<Pattern *>(Leaf);
     if (Error E = Desugar.desugar(*Owned))
+      return E;
+    if (Error E = checkOrSelfBindings(*Owned))
       return E;
     Leaves.push_back(Owned);
   }

@@ -10,6 +10,8 @@
 ; RUN: %metaphir-match %t/concrete-width.mpir %t/signum.ll | FileCheck %s --check-prefix=CONCRETE-WIDTH
 ; RUN: %metaphir-match %t/nested-composite.mpir %t/nested-composite.ll | FileCheck %s --check-prefix=NESTED-COMPOSITE
 ; RUN: not %metaphir-match %t/meta-for-fixed.mpir %t/add.ll 2>&1 | FileCheck %s --check-prefix=META-FOR-FIXED
+; RUN: not %metaphir-match %t/or-self-unbound.mpir %t/zext.ll 2>&1 | FileCheck %s --check-prefix=OR-SELF-UNBOUND
+; RUN: %metaphir-match --matches-only %t/or-self-unnamed.mpir %t/zext.ll | FileCheck %s --check-prefix=OR-SELF-UNNAMED
 
 ; A value-tracking operator nested inside a metaflag body is evaluated at the
 ; instruction the flag is written on, like a top-level one.
@@ -179,3 +181,23 @@ define i32 @add(i32 %a, i32 %b) {
 ; META-FOR-FIXED: meta-for-fixed.mpir:4:16: error: matcher 'addi8' requires type 'i8' for a parameter, but this use passes 'i?n'
 ; META-FOR-FIXED-NEXT: %r = addi8 i?n ?a, ?b
 ; META-FOR-FIXED-NEXT: {{^}}               ^
+
+; When ':o' lets an instruction match its operand, the variables only its
+; other parts bind would be left unbound: such a variable must be named '?_'.
+;--- or-self-unbound.mpir
+%z = zext:o i?n ?x to i32
+%r = add i32 %z, 1
+; OR-SELF-UNBOUND: or-self-unbound.mpir:1:13: error: meta variable '?n' is not bound when ':o' lets 'zext' match its operand; name it '?_n' if it need not be bound
+
+;--- or-self-unnamed.mpir
+%z = zext:o i?_n ?x to i32
+%r = add i32 %z, 1
+; OR-SELF-UNNAMED: zext.ll	@g	{?x = %z}
+; OR-SELF-UNNAMED-NEXT: zext.ll	@g	{?x = %x}
+
+;--- zext.ll
+define i32 @g(i8 %x) {
+  %z = zext i8 %x to i32
+  %r = add i32 %z, 1
+  ret i32 %r
+}
