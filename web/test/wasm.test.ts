@@ -174,6 +174,18 @@ test("finds each instruction's line in printed IR", async () => {
   }
 });
 
+test("answers with errors without a header or a pattern", () => {
+  const broken = new module.Session(new Uint8Array([1, 2, 3]));
+  assert.notEqual(broken.error(), "");
+  assert.ok("error" in broken.compile("%r = add i32 ?x, ?y\n", "p.mpir"));
+  assert.ok("error" in broken.printFunction(new Uint8Array()));
+  assert.ok("error" in broken.findLists());
+  assert.ok("error" in broken.match(0, new Uint8Array()));
+  assert.equal(broken.numCandidates(), 0);
+  assert.deepEqual(broken.matchable(), []);
+  broken.delete();
+});
+
 test("reports pattern errors", async () => {
   const fetcher = await RangeFetcher.open(base, "test");
   const session = new module.Session(await fetcher.fetchFile("header.bin.zst"));

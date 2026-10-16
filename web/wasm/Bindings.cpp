@@ -71,6 +71,8 @@ public:
 
   /// Compiles Pattern, named Name in diagnostics, for the stages and match.
   val compile(const std::string &Pattern, const std::string &Name) {
+    if (!Index)
+      return noIndex();
     Query.reset();
     // Each query reads its bytes anew, from the page's cache: the session
     // does not keep every query's.
@@ -93,12 +95,15 @@ public:
   val findFeatures() { return stage(&WebQuery::findFeatures); }
   val filterCandidates() { return stage(&WebQuery::filterCandidates); }
 
-  unsigned numCandidates() const { return Query->getCandidates().size(); }
+  unsigned numCandidates() const {
+    return Query ? Query->getCandidates().size() : 0;
+  }
 
   /// The functions whose features may match, each with where its pack is.
   val matchable() const {
     val Array = val::array();
-    for (uint32_t Function : Query->getMatchable()) {
+    for (uint32_t Function :
+         Query ? Query->getMatchable() : ArrayRef<uint32_t>()) {
       val Entry = rangeValue(Query->getPackRange(Function));
       Entry.set("function", Function);
       Array.call<void>("push", Entry);
@@ -110,6 +115,8 @@ public:
   /// instructions each matched; and if it has none, the constraints that
   /// rejected its structural matches.
   val match(uint32_t Function, const std::string &Frame) {
+    if (!Query)
+      return noQuery();
     std::string Lines;
     raw_string_ostream OS(Lines);
     std::vector<RejectingConstraint> Rejecting;
@@ -136,12 +143,14 @@ public:
 
   /// The module of Function.
   std::string moduleOf(uint32_t Function) const {
-    return Index->getModuleOf(Function).Path;
+    return Index ? Index->getModuleOf(Function).Path : "";
   }
 
   /// The IR of the function whose pack is Frame, and the line of each of
   /// its instructions.
   val printFunction(const std::string &Frame) const {
+    if (!Index)
+      return noIndex();
     Expected<PrintedFunction> Printed = WebQuery::printFunction(*Index, Frame);
     if (!Printed)
       return errorValue(Printed.takeError());
@@ -158,7 +167,18 @@ private:
   using Stage =
       Expected<std::vector<ByteRange>> (WebQuery::*)(const ByteCache &);
 
+  // A session whose header could not be read, or that has compiled no
+  // pattern, answers with an error rather than crashing.
+  val noIndex() const {
+    return errorValue(createStringError("no corpus header: " + Problem));
+  }
+  static val noQuery() {
+    return errorValue(createStringError("no pattern is compiled"));
+  }
+
   val stage(Stage Next) {
+    if (!Query)
+      return noQuery();
     Expected<std::vector<ByteRange>> Ranges = ((*Query).*Next)(Cache);
     if (!Ranges)
       return errorValue(Ranges.takeError());
