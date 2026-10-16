@@ -29,3 +29,4 @@ consumer:
 }
 ; CHECK-NEXT: target 1: @different_blocks
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

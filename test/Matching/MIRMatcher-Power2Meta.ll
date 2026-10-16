@@ -58,7 +58,9 @@ entry:
 ; P2-NEXT: target 3: @dynamic
 ; P2-NEXT:   no match
 ; P2-NEXT:   constraint not satisfied: (isPower2 ?d)
+; P2-NOT: {{.}}
 
 ; ORC-NEXT: target 3: @dynamic
 ; ORC-NEXT:   no match
 ; ORC-NEXT:   constraint not satisfied: (|| (isPower2 ?d) (isConstantInt ?d))
+; ORC-NOT: {{.}}

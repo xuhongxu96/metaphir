@@ -72,20 +72,26 @@ define <2 x i32> @vec(<2 x i32> %x, <2 x i32> %y) {
 }
 ; NONE: target 0: @vec
 ; NONE-NEXT:   no match
+; NONE-NOT: {{.}}
 
 ; USE: target 0: @vec
 ; USE-NEXT:   match 0:
 ; USE-NEXT:     {?a = %x, ?anch = %r, ?b = %y, ?bits = 32}
+; USE-NOT: {{.}}
 
 ; BODY: target 0: @vec
 ; BODY-NEXT:   match 0:
 ; BODY-NEXT:     {?a = %x, ?anch = %r, ?b = %y, ?bits = 32}
+; BODY-NOT: {{.}}
 
 ; OVERRIDE: target 0: @vec
 ; OVERRIDE-NEXT:   no match
+; OVERRIDE-NOT: {{.}}
 
 ; OFFUSE: target 0: @vec
 ; OFFUSE-NEXT:   no match
+; OFFUSE-NOT: {{.}}
 
 ; DECL: target 0: @vec
 ; DECL-NEXT:   no match
+; DECL-NOT: {{.}}

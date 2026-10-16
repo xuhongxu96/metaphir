@@ -277,27 +277,34 @@ define i32 @negative(i32 %x, i32 range(i32 -2, 3) %y) {
 ; P2-NEXT: target 7: @negative
 ; P2-NEXT:   no match
 ; P2-NEXT:   constraint not satisfied: (isKnownPowerOfTwo ?y)
+; P2-NOT: {{.}}
 
 ; P2Z-NEXT: target 7: @negative
 ; P2Z-NEXT:   no match
 ; P2Z-NEXT:   constraint not satisfied: (isKnownPowerOfTwoOrZero ?y)
+; P2Z-NOT: {{.}}
 
 ; NP-NEXT: target 7: @negative
 ; NP-NEXT:   no match
 ; NP-NEXT:   constraint not satisfied: (isGuaranteedNotToBePoison ?x)
+; NP-NOT: {{.}}
 
 ; NUP-NEXT: target 7: @negative
 ; NUP-NEXT:   no match
 ; NUP-NEXT:   constraint not satisfied: (isGuaranteedNotToBeUndefOrPoison ?x)
+; NUP-NOT: {{.}}
 
 ; NPDIV-NEXT: target 7: @negative
 ; NPDIV-NEXT:   match 0:
 ; NPDIV-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
+; NPDIV-NOT: {{.}}
 
 ; URANGE-NEXT: target 7: @negative
 ; URANGE-NEXT:   no match
 ; URANGE-NEXT:   constraint not satisfied: (inUnsignedRange ?y 1 15)
+; URANGE-NOT: {{.}}
 
 ; SRANGE-NEXT: target 7: @negative
 ; SRANGE-NEXT:   no match
 ; SRANGE-NEXT:   constraint not satisfied: (inSignedRange ?y 1 15)
+; SRANGE-NOT: {{.}}

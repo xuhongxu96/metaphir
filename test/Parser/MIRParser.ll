@@ -33,3 +33,4 @@ br i1 %cmp, label %yes, label ?no
 ; CHECK-NEXT: meta ?anch type=Instruction
 ; CHECK-NEXT: meta ?yes type=BasicBlock
 ; CHECK-NEXT: meta ?no type=BasicBlock
+; CHECK-NOT: {{.}}

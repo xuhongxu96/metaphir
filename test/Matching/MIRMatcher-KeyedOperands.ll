@@ -23,3 +23,4 @@ define ptr addrspace(5) @wrong_element_type(i32 %index) {
 }
 ; CHECK-NEXT: target 1: @wrong_element_type
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

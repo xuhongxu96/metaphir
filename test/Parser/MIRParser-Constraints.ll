@@ -71,3 +71,4 @@ constraint custom_predicate(?a, ?b) {
 ; CHECK-NEXT: meta ?intrinsic type=Intrinsic::ID
 ; CHECK-NEXT: meta ?types type=Type[]
 ; CHECK-NEXT: meta ?values type=Value[]
+; CHECK-NOT: {{.}}

@@ -62,7 +62,9 @@ define i32 @argument(i32 %x, i32 %y) {
 ; SIGN-NEXT: target 3: @argument
 ; SIGN-NEXT:   no match
 ; SIGN-NEXT:   constraint not satisfied: (uge (numSignBits ?x) 25)
+; SIGN-NOT: {{.}}
 
 ; SIGNIFICANT-NEXT: target 3: @argument
 ; SIGNIFICANT-NEXT:   no match
 ; SIGNIFICANT-NEXT:   constraint not satisfied: (ule (maxSignificantBits ?x) 8)
+; SIGNIFICANT-NOT: {{.}}

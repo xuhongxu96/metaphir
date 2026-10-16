@@ -35,3 +35,4 @@ define i32 @intrinsic_no_match(i32 %x) {
 }
 ; CHECK-NEXT: target 2: @intrinsic_no_match
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

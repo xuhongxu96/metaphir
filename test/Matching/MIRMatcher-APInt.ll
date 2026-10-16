@@ -91,11 +91,14 @@ define <2 x float> @float_splat() {
 ; APINT-NEXT: target 4: @float_splat
 ; APINT-NEXT:   no match
 ; APINT-NEXT:   constraint not satisfied: (isAPInt ?c)
+; APINT-NOT: {{.}}
 
 ; ALLOW-NEXT: target 4: @float_splat
 ; ALLOW-NEXT:   no match
 ; ALLOW-NEXT:   constraint not satisfied: (isAPIntAllowPoison ?c)
+; ALLOW-NOT: {{.}}
 
 ; ANY-NEXT: target 4: @float_splat
 ; ANY-NEXT:   no match
 ; ANY-NEXT:   constraint not satisfied: (isAnyIntegralConstant ?c)
+; ANY-NOT: {{.}}

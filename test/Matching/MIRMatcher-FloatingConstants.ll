@@ -28,3 +28,4 @@ define float @wrong_zero() {
 }
 ; CHECK-NEXT: target 2: @wrong_zero
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

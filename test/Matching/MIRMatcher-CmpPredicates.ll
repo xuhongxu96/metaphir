@@ -404,43 +404,54 @@ define i1 @ugt(i32 %a, i32 %b) {
 ; EQUALITY-NEXT: target 7: @ugt
 ; EQUALITY-NEXT:   no match
 ; EQUALITY-NEXT:   constraint not satisfied: (isEquality ?pred)
+; EQUALITY-NOT: {{.}}
 
 ; SIGNED-NEXT: target 7: @ugt
 ; SIGNED-NEXT:   no match
 ; SIGNED-NEXT:   constraint not satisfied: (isSigned ?pred)
+; SIGNED-NOT: {{.}}
 
 ; UNSIGNED-NEXT: target 7: @ugt
 ; UNSIGNED-NEXT:   match 0:
 ; UNSIGNED-NEXT:     {?anch = %c, ?pred = ugt, ?x = %a, ?y = %b}
+; UNSIGNED-NOT: {{.}}
 
 ; LT-NEXT: target 7: @ugt
 ; LT-NEXT:   no match
 ; LT-NEXT:   constraint not satisfied: (isLT ?pred)
+; LT-NOT: {{.}}
 
 ; GE-NEXT: target 7: @ugt
 ; GE-NEXT:   no match
 ; GE-NEXT:   constraint not satisfied: (isGE ?pred)
+; GE-NOT: {{.}}
 
 ; SWAPPED-NEXT: target 7: @ugt
 ; SWAPPED-NEXT:   no match
 ; SWAPPED-NEXT:   constraint not satisfied: (== (swappedPredicate ?pred) "sgt")
+; SWAPPED-NOT: {{.}}
 
 ; INVERSE-NEXT: target 7: @ugt
 ; INVERSE-NEXT:   no match
 ; INVERSE-NEXT:   constraint not satisfied: (== (inversePredicate ?pred) "sge")
+; INVERSE-NOT: {{.}}
 
 ; STRICT-NEXT: target 7: @ugt
 ; STRICT-NEXT:   no match
 ; STRICT-NEXT:   constraint not satisfied: (== (strictPredicate ?pred) "ult")
+; STRICT-NOT: {{.}}
 
 ; NONSTRICT-NEXT: target 7: @ugt
 ; NONSTRICT-NEXT:   no match
 ; NONSTRICT-NEXT:   constraint not satisfied: (== (nonStrictPredicate ?pred) "sle")
+; NONSTRICT-NOT: {{.}}
 
 ; FLIPPED-NEXT: target 7: @ugt
 ; FLIPPED-NEXT:   no match
 ; FLIPPED-NEXT:   constraint not satisfied: (== (flippedSignednessPredicate ?pred) "ult")
+; FLIPPED-NOT: {{.}}
 
 ; CAPTURED-NEXT: target 7: @ugt
 ; CAPTURED-NEXT:   no match
 ; CAPTURED-NEXT:   constraint not satisfied: (== (predicate ?cmp) "ne")
+; CAPTURED-NOT: {{.}}

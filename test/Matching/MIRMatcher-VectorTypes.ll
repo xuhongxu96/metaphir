@@ -57,13 +57,17 @@ define <vscale x 2 x i128> @scalable(<vscale x 2 x i128> %x) {
 }
 ; ZEROINIT-NEXT: target 1: @scalable
 ; ZEROINIT-NEXT:   no match
+; ZEROINIT-NOT: {{.}}
 
 ; ZEROFLAG-NEXT: target 1: @scalable
 ; ZEROFLAG-NEXT:   no match
+; ZEROFLAG-NOT: {{.}}
 
 ; SCALABLE-NEXT: target 1: @scalable
 ; SCALABLE-NEXT:   match 0:
 ; SCALABLE-NEXT:     {?anch = %z, ?big = 128, ?small = 64, ?x = %x}
+; SCALABLE-NOT: {{.}}
 
 ; SCALAR-NEXT: target 1: @scalable
 ; SCALAR-NEXT:   no match
+; SCALAR-NOT: {{.}}

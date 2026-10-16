@@ -25,6 +25,7 @@ add i?bits ?x:future_pred:not(:poison), ?y
 ; OK-NEXT: meta ?bits type=Nat
 ; OK-NEXT: meta ?x type=Value
 ; OK-NEXT: meta ?y type=Value
+; OK-NOT: {{.}}
 
 ;--- unknown-flag.ll
 add i?bits ?x:no_such_pred, ?y

@@ -54,6 +54,7 @@ metaflag:i :oninstruction(?i) {
 ; NOCAP-NEXT: %r = add:oninstruction i32 ?x, ?y
 ; NOCAP-NEXT: meta ?x type=Value
 ; NOCAP-NEXT: meta ?y type=Value
+; NOCAP-NOT: {{.}}
 
 ; ':i:o' permits both positions.
 ;--- marks.ll
@@ -67,3 +68,4 @@ metaflag:i:o :anyvalue(?v) {
 ; MARKS-NEXT: meta ?anch type=Instruction
 ; MARKS-NEXT: meta ?x type=Value
 ; MARKS-NEXT: meta ?y type=Value
+; MARKS-NOT: {{.}}

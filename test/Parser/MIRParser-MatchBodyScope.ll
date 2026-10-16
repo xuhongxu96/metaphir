@@ -49,3 +49,4 @@ match afterwards [] Binary (?ty ?x, ?y) {
 ; OK-NEXT: %r = afterwards i32 ?p, ?q
 ; OK-NEXT: meta ?p type=Value
 ; OK-NEXT: meta ?q type=Value
+; OK-NOT: {{.}}

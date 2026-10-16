@@ -177,16 +177,21 @@ define <2 x i1> @vec_select(<2 x i1> %a, <2 x i1> %b) {
 }
 ; AND-NEXT: target 6: @vec_select
 ; AND-NEXT:   no match
+; AND-NOT: {{.}}
 
 ; CAND-NEXT: target 6: @vec_select
 ; CAND-NEXT:   no match
+; CAND-NOT: {{.}}
 
 ; OR-NEXT: target 6: @vec_select
 ; OR-NEXT:   no match
+; OR-NOT: {{.}}
 
 ; OP-NEXT: target 6: @vec_select
 ; OP-NEXT:   no match
+; OP-NOT: {{.}}
 
 ; VEC-NEXT: target 6: @vec_select
 ; VEC-NEXT:   match 0:
 ; VEC-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+; VEC-NOT: {{.}}

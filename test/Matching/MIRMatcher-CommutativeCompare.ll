@@ -128,13 +128,17 @@ define i1 @fcmp_swapped(float %p, float %y) {
 }
 ; LITERAL-NEXT: target 5: @fcmp_swapped
 ; LITERAL-NEXT:   no match
+; LITERAL-NOT: {{.}}
 
 ; PRED-NEXT: target 5: @fcmp_swapped
 ; PRED-NEXT:   no match
+; PRED-NOT: {{.}}
 
 ; PLAIN-NEXT: target 5: @fcmp_swapped
 ; PLAIN-NEXT:   no match
+; PLAIN-NOT: {{.}}
 
 ; FCMP-NEXT: target 5: @fcmp_swapped
 ; FCMP-NEXT:   match 0:
 ; FCMP-NEXT:     {?anch = %c, ?p = %p, ?y = %y}
+; FCMP-NOT: {{.}}

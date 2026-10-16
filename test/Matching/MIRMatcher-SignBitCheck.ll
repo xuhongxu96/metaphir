@@ -190,10 +190,13 @@ define <2 x i1> @vec_poison(<2 x i8> %a) {
 }
 ; CHECK-NEXT: target 11: @vec_poison
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}
 
 ; SET-NEXT: target 11: @vec_poison
 ; SET-NEXT:   no match
+; SET-NOT: {{.}}
 
 ; VEC-NEXT: target 11: @vec_poison
 ; VEC-NEXT:   no match
 ; VEC-NEXT:   constraint not satisfied: (isAPInt ?_c$_c)
+; VEC-NOT: {{.}}

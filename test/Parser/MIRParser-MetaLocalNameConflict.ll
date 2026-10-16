@@ -25,6 +25,7 @@
 ; CONFLICT-NEXT: meta ?nuw type=i1
 ; CONFLICT-NEXT: meta ?nsw type=i1
 ; CONFLICT-NEXT: meta ?shr type=Value
+; CONFLICT-NOT: {{.}}
 
 ; Legitimate self/flag captures that share a name must NOT warn.
 ;--- fine.ll
@@ -38,3 +39,4 @@
 ; FINE-NEXT: meta ?a type=Value
 ; FINE-NEXT: meta ?b type=Value
 ; FINE-NEXT: meta ?disjoint type=i1
+; FINE-NOT: {{.}}

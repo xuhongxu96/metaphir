@@ -122,21 +122,27 @@ define i32 @disjoint(i32 %a, i32 %b) {
 }
 ; OMITTED-NEXT: target 3: @disjoint
 ; OMITTED-NEXT:   no match
+; OMITTED-NOT: {{.}}
 
 ; REQUIRED-NEXT: target 3: @disjoint
 ; REQUIRED-NEXT:   no match
+; REQUIRED-NOT: {{.}}
 
 ; NEGATED-NEXT: target 3: @disjoint
 ; NEGATED-NEXT:   no match
+; NEGATED-NOT: {{.}}
 
 ; CAPTURED-NEXT: target 3: @disjoint
 ; CAPTURED-NEXT:   no match
+; CAPTURED-NOT: {{.}}
 
 ; ADDLIKE-NEXT: target 3: @disjoint
 ; ADDLIKE-NEXT:   match 0:
 ; ADDLIKE-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+; ADDLIKE-NOT: {{.}}
 ; ADDLIKE-NOT-NSW-NEXT: target 3: @disjoint
 ; ADDLIKE-NOT-NSW-NEXT:   no match
+; ADDLIKE-NOT-NSW-NOT: {{.}}
 
 ;--- fp.ll
 define float @fast(float %a, float %b) {
@@ -156,6 +162,8 @@ define float @nsz(float %a, float %b) {
 ; FMF-NEXT: target 1: @nsz
 ; FMF-NEXT:   match 0:
 ; FMF-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+; FMF-NOT: {{.}}
 ; FMF-NOT-NNAN-NEXT: target 1: @nsz
 ; FMF-NOT-NNAN-NEXT:   match 0:
 ; FMF-NOT-NNAN-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+; FMF-NOT-NNAN-NOT: {{.}}

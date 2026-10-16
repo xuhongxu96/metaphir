@@ -68,3 +68,4 @@ define i32 @bad_instruction_s(i32 %shared, i32 %single) {
 ; CHECK-NEXT: target 4: @bad_instruction_s
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (hasOneUse %one)
+; CHECK-NOT: {{.}}

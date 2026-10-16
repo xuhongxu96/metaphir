@@ -40,3 +40,4 @@ no:
 ; CHECK-NEXT: target 1: @meta_i64
 ; CHECK-NEXT:   match 0:
 ; CHECK-NEXT:     {?argument = %argument, ?bits = 64, ?callee = @callee64, ?condition = %condition, ?instruction = %call, ?no = %no, ?return_type = i64, ?yes = %yes}
+; CHECK-NOT: {{.}}

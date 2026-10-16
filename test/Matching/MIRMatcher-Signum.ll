@@ -88,3 +88,4 @@ define <2 x i32> @vector_poison_zero(<2 x i32> %x) {
 ; SIGNUM-NEXT: target 6: @vector_poison_zero
 ; SIGNUM-NEXT:   match 0:
 ; SIGNUM-NEXT:     {?anch = %r, ?bits = 32, ?x = %x}
+; SIGNUM-NOT: {{.}}

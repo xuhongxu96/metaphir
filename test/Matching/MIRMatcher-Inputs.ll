@@ -27,7 +27,9 @@ entry:
 ; DIR-NEXT: target 1: @from_bc
 ; DIR-NEXT:   match 0:
 ; DIR-NEXT:     {?x = %x, ?y = %y}
+; DIR-NOT: {{.}}
 
 ; BC: target 0: @from_bc
 ; BC-NEXT:   match 0:
 ; BC-NEXT:     {?x = %x, ?y = %y}
+; BC-NOT: {{.}}

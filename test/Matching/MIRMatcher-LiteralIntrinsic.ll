@@ -37,3 +37,4 @@ define i32 @ordinary_nomatch(i32 %x) {
 }
 ; CHECK-NEXT: target 2: @ordinary_nomatch
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

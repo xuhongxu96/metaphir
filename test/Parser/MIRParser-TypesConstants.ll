@@ -14,3 +14,4 @@ call ?ret @llvm.?id(i32 %elt, ...?types ?values)
 ; CHECK-NEXT: meta ?id type=Intrinsic::ID
 ; CHECK-NEXT: meta ?types type=Type[]
 ; CHECK-NEXT: meta ?values type=Value[]
+; CHECK-NOT: {{.}}

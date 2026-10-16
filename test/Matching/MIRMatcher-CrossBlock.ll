@@ -55,18 +55,23 @@ end:
 ; CHECK: target 0: @cross_block
 ; CHECK-NEXT:   match 0:
 ; CHECK-NEXT:     {?anch = %z, ?big = 128, ?small = 64, ?x = %x}
+; CHECK-NOT: {{.}}
 
 ; ANYBLOCK: target 0: @cross_block
 ; ANYBLOCK-NEXT:   match 0:
 ; ANYBLOCK-NEXT:     {?anch = %z, ?big = 128, ?small = 64, ?x = %x}
+; ANYBLOCK-NOT: {{.}}
 
 ; ANYBLOCK2: target 0: @cross_block
 ; ANYBLOCK2-NEXT:   match 0:
 ; ANYBLOCK2-NEXT:     {?anch = %z, ?big = 128, ?entry = %entry, ?small = 64, ?x = %x}
+; ANYBLOCK2-NOT: {{.}}
 
 ; NOMATCH: target 0: @cross_block
 ; NOMATCH-NEXT:   no match
+; NOMATCH-NOT: {{.}}
 
 ; EXPLICIT: target 0: @cross_block
 ; EXPLICIT-NEXT:   match 0:
 ; EXPLICIT-NEXT:     {?anch = %z, ?big = 128, ?entry = %entry, ?final = %end, ?other = %neg, ?small = 64, ?x = %x}
+; EXPLICIT-NOT: {{.}}

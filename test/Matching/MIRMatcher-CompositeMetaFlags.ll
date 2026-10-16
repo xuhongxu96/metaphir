@@ -42,7 +42,9 @@ entry:
 }
 ; COMMUTATIVE-NEXT: target 1: @or_self
 ; COMMUTATIVE-NEXT:   no match
+; COMMUTATIVE-NOT: {{.}}
 
 ; OR-SELF-NEXT: target 1: @or_self
 ; OR-SELF-NEXT:   match 0:
 ; OR-SELF-NEXT:     {?x = %x, ?y = %y}
+; OR-SELF-NOT: {{.}}

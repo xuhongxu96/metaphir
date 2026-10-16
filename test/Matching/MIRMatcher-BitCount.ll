@@ -46,6 +46,7 @@ entry:
 ; PC-NEXT: target 2: @bits3
 ; PC-NEXT:   no match
 ; PC-NEXT:   constraint not satisfied: (== (popcount ?amt) 1)
+; PC-NOT: {{.}}
 
 ;--- input.ll
 define i32 @pow2_8(i32 %x) {
@@ -95,10 +96,12 @@ entry:
 ; L2-NEXT: target 3: @pow2_1
 ; L2-NEXT:   no match
 ; L2-NEXT:   constraint not satisfied: (== (log2 ?d) 3)
+; L2-NOT: {{.}}
 
 ; L2O-NEXT: target 3: @pow2_1
 ; L2O-NEXT:   no match
 ; L2O-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
+; L2O-NOT: {{.}}
 
 ; 'isPower2' checks whether a constant is a power of two.
 ;--- ispowertwo.mpir
@@ -141,3 +144,4 @@ entry:
 ; POW-NEXT: target 3: @d0
 ; POW-NEXT:   no match
 ; POW-NEXT:   constraint not satisfied: (isPower2 ?d)
+; POW-NOT: {{.}}

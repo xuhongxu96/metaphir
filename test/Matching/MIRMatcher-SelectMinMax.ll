@@ -81,6 +81,8 @@ define i32 @other_arm(i32 %p, i32 %b) {
 }
 ; MINMAX-NEXT: target 4: @other_arm
 ; MINMAX-NEXT:   no match
+; MINMAX-NOT: {{.}}
 
 ; COMMUTED-NEXT: target 4: @other_arm
 ; COMMUTED-NEXT:   no match
+; COMMUTED-NOT: {{.}}

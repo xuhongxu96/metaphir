@@ -42,3 +42,4 @@ entry:
 ; CHECK-NEXT: target 2: @f_mod8
 ; CHECK-NEXT:   match 0:
 ; CHECK-NEXT:     {?anch = %r, ?c = 11, ?x = %x}
+; CHECK-NOT: {{.}}

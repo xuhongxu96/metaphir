@@ -30,10 +30,12 @@ define i8 @unbounded(i8 %a, i8 %b, i8 %c) {
 ; CHECK-NEXT: target 1: @unbounded
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (&& (isKnownNonZero ?z) (noOverflow "umul" ?y ?z))
+; CHECK-NOT: {{.}}
 
 ; EXPLICIT-NEXT: target 1: @unbounded
 ; EXPLICIT-NEXT:   no match
 ; EXPLICIT-NEXT:   constraint not satisfied: (&& (isKnownNonZero ?z ?anch) (noOverflow "umul" ?y ?z ?anch))
+; EXPLICIT-NOT: {{.}}
 
 ; Explicit ?ctx overrides the constraint's default context instruction.
 ;--- explicit.mpir

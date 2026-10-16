@@ -24,3 +24,4 @@ define i32 @plain_load(ptr %p) {
 ; CHECK-NEXT: target 1: @plain_load
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (isGuaranteedNotToBeUndef ?x)
+; CHECK-NOT: {{.}}

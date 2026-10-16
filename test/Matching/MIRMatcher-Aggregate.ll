@@ -20,3 +20,4 @@ define i8 @aggregate_no_match({i64, {i8, i16}} %aggregate) {
 }
 ; CHECK-NEXT: target 1: @aggregate_no_match
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

@@ -162,13 +162,17 @@ define i64 @ptrtoaddr(ptr %a) {
 }
 ; SEXT-NEXT: target 8: @ptrtoaddr
 ; SEXT-NEXT:   no match
+; SEXT-NOT: {{.}}
 
 ; ITOFP-NEXT: target 8: @ptrtoaddr
 ; ITOFP-NEXT:   no match
+; ITOFP-NOT: {{.}}
 
 ; FPTOI-NEXT: target 8: @ptrtoaddr
 ; FPTOI-NEXT:   no match
+; FPTOI-NOT: {{.}}
 
 ; PTR-NEXT: target 8: @ptrtoaddr
 ; PTR-NEXT:   match 0:
 ; PTR-NEXT:     {?anch = %r, ?x = %a}
+; PTR-NOT: {{.}}

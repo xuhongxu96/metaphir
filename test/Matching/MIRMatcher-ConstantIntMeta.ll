@@ -3,7 +3,7 @@
 ; RUN: %metaphir-match %t/nat-unsigned.mpir %t/nat.ll | FileCheck %s --check-prefix=U
 ; RUN: %metaphir-match %t/icmp-rhs.mpir %t/icmp-rhs.ll | FileCheck %s --check-prefix=ICMP
 ; RUN: not %metaphir-parse %t/notvar.mpir 2>&1 | FileCheck %s --check-prefix=ERR
-; RUN: %metaphir-match --matches-only %t/local.mpir %t/local.ll | FileCheck %s --check-prefix=LOCAL
+; RUN: %metaphir-match %t/local.mpir %t/local.ll | FileCheck %s --check-prefix=LOCAL
 
 ; The ':constantInt' meta flag lowers to an 'isConstantInt' constraint, so the
 ; operand keeps its value binding and constraint arithmetic reaches the integer
@@ -47,10 +47,12 @@ entry:
 ; NAT-NEXT: target 2: @dynamic_divisor
 ; NAT-NEXT:   no match
 ; NAT-NEXT:   constraint not satisfied: (isConstantInt ?c)
+; NAT-NOT: {{.}}
 
 ; U-NEXT: target 2: @dynamic_divisor
 ; U-NEXT:   no match
 ; U-NEXT:   constraint not satisfied: (isConstantInt ?c)
+; U-NOT: {{.}}
 
 ; Constants coerce to signed integers, so 'slt' on a negative constant is
 ; correct, while unsigned comparisons still operate on the bit pattern.
@@ -90,6 +92,7 @@ entry:
 ; ICMP-NEXT: target 1: @two
 ; ICMP-NEXT:   no match
 ; ICMP-NEXT:   constraint not satisfied: (|| (== ?c 0) (== ?c 1))
+; ICMP-NOT: {{.}}
 
 ; ':constantInt' requires a meta variable or a local value, not a constant.
 ;--- notvar.mpir
@@ -101,8 +104,6 @@ entry:
 ;--- local.mpir
 %a = add i64 ?x, ?y
 %b = add:?anch i64 %a:s, 1
-; LOCAL:     local.ll	@one	{?anch = %b, ?x = %p, ?y = %q}
-; LOCAL-NOT: @two
 
 ;--- local.ll
 define i64 @one(i64 %p, i64 %q) {
@@ -110,9 +111,17 @@ define i64 @one(i64 %p, i64 %q) {
   %b = add i64 %a, 1
   ret i64 %b
 }
+; LOCAL: target 0: @one
+; LOCAL-NEXT:   match 0:
+; LOCAL-NEXT:     {?anch = %b, ?x = %p, ?y = %q}
+
 define i64 @two(i64 %p, i64 %q) {
   %a = add i64 %p, %q
   %b = add i64 %a, 1
   %c = mul i64 %a, %b
   ret i64 %c
 }
+; LOCAL-NEXT: target 1: @two
+; LOCAL-NEXT:   no match
+; LOCAL-NEXT:   constraint not satisfied: (hasOneUse %a)
+; LOCAL-NOT: {{.}}

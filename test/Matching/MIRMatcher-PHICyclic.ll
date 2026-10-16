@@ -20,3 +20,4 @@ exit:
 ; CHECK: error: undefined or forward local reference '%value'
 ; CHECK-NEXT: %value = phi i32 [0, ?entry], [%value, ?loop]
 ; CHECK-NEXT:                                ^
+; CHECK-NOT: {{.}}

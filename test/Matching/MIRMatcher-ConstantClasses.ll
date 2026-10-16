@@ -828,63 +828,79 @@ define i8 @argument(i8 %a) {
 ; IMM-CONSTANT-NEXT: target 11: @argument
 ; IMM-CONSTANT-NEXT:   no match
 ; IMM-CONSTANT-NEXT:   constraint not satisfied: (isImmConstant ?c)
+; IMM-CONSTANT-NOT: {{.}}
 
 ; UNDEF-NEXT: target 11: @argument
 ; UNDEF-NEXT:   no match
 ; UNDEF-NEXT:   constraint not satisfied: (isUndef ?c)
+; UNDEF-NOT: {{.}}
 
 ; ZERO-OR-POISON-NEXT: target 11: @argument
 ; ZERO-OR-POISON-NEXT:   no match
 ; ZERO-OR-POISON-NEXT:   constraint not satisfied: (isZeroOrPoison ?c)
+; ZERO-OR-POISON-NOT: {{.}}
 
 ; ALL-ONES-OR-POISON-NEXT: target 11: @argument
 ; ALL-ONES-OR-POISON-NEXT:   no match
 ; ALL-ONES-OR-POISON-NEXT:   constraint not satisfied: (isAllOnesOrPoison ?c)
+; ALL-ONES-OR-POISON-NOT: {{.}}
 
 ; SIGN-MASK-NEXT: target 11: @argument
 ; SIGN-MASK-NEXT:   no match
 ; SIGN-MASK-NEXT:   constraint not satisfied: (isSignMask ?c)
+; SIGN-MASK-NOT: {{.}}
 
 ; MAX-SIGNED-VALUE-NEXT: target 11: @argument
 ; MAX-SIGNED-VALUE-NEXT:   no match
 ; MAX-SIGNED-VALUE-NEXT:   constraint not satisfied: (isMaxSignedValue ?c)
+; MAX-SIGNED-VALUE-NOT: {{.}}
 
 ; NEGATED-POWER2-NEXT: target 11: @argument
 ; NEGATED-POWER2-NEXT:   no match
 ; NEGATED-POWER2-NEXT:   constraint not satisfied: (isNegatedPower2 ?c)
+; NEGATED-POWER2-NOT: {{.}}
 
 ; NEGATED-POWER2-OR-ZERO-NEXT: target 11: @argument
 ; NEGATED-POWER2-OR-ZERO-NEXT:   no match
 ; NEGATED-POWER2-OR-ZERO-NEXT:   constraint not satisfied: (isNegatedPower2OrZero ?c)
+; NEGATED-POWER2-OR-ZERO-NOT: {{.}}
 
 ; POWER2-OR-ZERO-NEXT: target 11: @argument
 ; POWER2-OR-ZERO-NEXT:   no match
 ; POWER2-OR-ZERO-NEXT:   constraint not satisfied: (isPower2OrZero ?c)
+; POWER2-OR-ZERO-NOT: {{.}}
 
 ; LOW-BIT-MASK-OR-ZERO-NEXT: target 11: @argument
 ; LOW-BIT-MASK-OR-ZERO-NEXT:   no match
 ; LOW-BIT-MASK-OR-ZERO-NEXT:   constraint not satisfied: (isLowBitMaskOrZero ?c)
+; LOW-BIT-MASK-OR-ZERO-NOT: {{.}}
 
 ; SHIFTED-MASK-NEXT: target 11: @argument
 ; SHIFTED-MASK-NEXT:   no match
 ; SHIFTED-MASK-NEXT:   constraint not satisfied: (isShiftedMask ?c)
+; SHIFTED-MASK-NOT: {{.}}
 
 ; NEGATIVE-NEXT: target 11: @argument
 ; NEGATIVE-NEXT:   no match
 ; NEGATIVE-NEXT:   constraint not satisfied: (isNegative ?c)
+; NEGATIVE-NOT: {{.}}
 
 ; NON-NEGATIVE-NEXT: target 11: @argument
 ; NON-NEGATIVE-NEXT:   no match
 ; NON-NEGATIVE-NEXT:   constraint not satisfied: (isNonNegative ?c)
+; NON-NEGATIVE-NOT: {{.}}
 
 ; STRICTLY-POSITIVE-NEXT: target 11: @argument
 ; STRICTLY-POSITIVE-NEXT:   no match
 ; STRICTLY-POSITIVE-NEXT:   constraint not satisfied: (isStrictlyPositive ?c)
+; STRICTLY-POSITIVE-NOT: {{.}}
 
 ; NON-POSITIVE-NEXT: target 11: @argument
 ; NON-POSITIVE-NEXT:   no match
 ; NON-POSITIVE-NEXT:   constraint not satisfied: (isNonPositive ?c)
+; NON-POSITIVE-NOT: {{.}}
 
 ; NON-ZERO-INT-NEXT: target 11: @argument
 ; NON-ZERO-INT-NEXT:   no match
 ; NON-ZERO-INT-NEXT:   constraint not satisfied: (isNonZeroInt ?c)
+; NON-ZERO-INT-NOT: {{.}}

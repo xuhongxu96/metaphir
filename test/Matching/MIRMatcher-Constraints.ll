@@ -28,3 +28,4 @@ entry:
 ; CHECK-NEXT: target 1: @constraint_i64
 ; CHECK-NEXT:   match 0:
 ; CHECK-NEXT:     {?argument = %argument, ?bits = 64, ?callee = @callee64, ?instruction = %call, ?return_type = i64}
+; CHECK-NOT: {{.}}

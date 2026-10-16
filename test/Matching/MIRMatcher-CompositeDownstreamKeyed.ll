@@ -35,10 +35,12 @@ entry:
 ; KEYED: target 0: @match_eq
 ; KEYED-NEXT:   match 0:
 ; KEYED-NEXT:     {?anch = %c, ?x = %a, ?y = %b}
+; KEYED-NOT: {{.}}
 
 ; NOROOT: target 0: @match_eq
 ; NOROOT-NEXT:   match 0:
 ; NOROOT-NEXT:     {?anch = %c, ?x = %a, ?y = %b}
+; NOROOT-NOT: {{.}}
 
 ;--- same-name.ll
 define i32 @same_name(i32 %a, i32 %b) {
@@ -59,3 +61,4 @@ entry:
 }
 ; SAME-NAME-NEXT: target 1: @mismatch_ne
 ; SAME-NAME-NEXT:   no match
+; SAME-NAME-NOT: {{.}}

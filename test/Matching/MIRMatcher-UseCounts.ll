@@ -84,11 +84,14 @@ define void @thrice(i32 %x) {
 ; ONE-NEXT: target 3: @thrice
 ; ONE-NEXT:   no match
 ; ONE-NEXT:   constraint not satisfied: (hasNUses ?anch 1)
+; ONE-NOT: {{.}}
 
 ; TWO-NEXT: target 3: @thrice
 ; TWO-NEXT:   no match
 ; TWO-NEXT:   constraint not satisfied: (hasNUses ?anch 2)
+; TWO-NOT: {{.}}
 
 ; TWOPLUS-NEXT: target 3: @thrice
 ; TWOPLUS-NEXT:   match 0:
 ; TWOPLUS-NEXT:     {?anch = %a, ?x = %x}
+; TWOPLUS-NOT: {{.}}

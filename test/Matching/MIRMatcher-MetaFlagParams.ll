@@ -37,6 +37,7 @@ define i32 @out_of_range(i32 %x) {
 ; ARGS-NEXT: target 1: @out_of_range
 ; ARGS-NEXT:   no match
 ; ARGS-NEXT:   constraint not satisfied: (&& (sle 5 ?c) (sle ?c 8))
+; ARGS-NOT: {{.}}
 
 ; The pattern need not name the instruction: lowering uses the instruction
 ; directly as the flag's subject, avoiding any synthetic capture variable.
@@ -79,15 +80,19 @@ define i32 @is_add(i32 %x, i32 %y) {
 ; INSTR: target 0: @is_add
 ; INSTR-NEXT:   match 0:
 ; INSTR-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
+; INSTR-NOT: {{.}}
 
 ; FAILS: target 0: @is_add
 ; FAILS-NEXT:   no match
 ; FAILS-NEXT:   constraint not satisfied: (== (opcode ?anch) "mul")
+; FAILS-NOT: {{.}}
 
 ; BOTH: target 0: @is_add
 ; BOTH-NEXT:   match 0:
 ; BOTH-NEXT:     {?anch = %r, ?x = %x, ?y = %y}
+; BOTH-NOT: {{.}}
 
 ; NOCAP: target 0: @is_add
 ; NOCAP-NEXT:   no match
 ; NOCAP-NEXT:   constraint not satisfied: (== (opcode %r) "mul")
+; NOCAP-NOT: {{.}}

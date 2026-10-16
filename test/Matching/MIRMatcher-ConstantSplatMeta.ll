@@ -58,7 +58,9 @@ define <2 x i32> @non_splat(<2 x i32> %x) {
 ; SPLAT-NEXT: target 3: @non_splat
 ; SPLAT-NEXT:   no match
 ; SPLAT-NEXT:   constraint not satisfied: (isConstantSplat ?c)
+; SPLAT-NOT: {{.}}
 
 ; NONSPLAT-NEXT: target 3: @non_splat
 ; NONSPLAT-NEXT:   no match
 ; NONSPLAT-NEXT:   constraint not satisfied: (isConstantSplat ?c)
+; NONSPLAT-NOT: {{.}}

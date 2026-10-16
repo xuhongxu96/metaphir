@@ -29,3 +29,4 @@ define i32 @array_no_match(i32 %x, i8 %y, ptr %p, i8 %z) {
 }
 ; CHECK-NEXT: target 1: @array_no_match
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

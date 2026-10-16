@@ -67,18 +67,22 @@ define i32 @wide(i32 %x, i32 %y) {
 }
 ; FIXED-NEXT: target 1: @wide
 ; FIXED-NEXT:   no match
+; FIXED-NOT: {{.}}
 
 ; OPEN-NEXT: target 1: @wide
 ; OPEN-NEXT:   match 0:
 ; OPEN-NEXT:     {?a = %x, ?anch = %r, ?b = %y, ?ty2 = i32}
+; OPEN-NOT: {{.}}
 
 ; USEFIX-NEXT: target 1: @wide
 ; USEFIX-NEXT:   match 0:
 ; USEFIX-NEXT:     {?a = %x, ?anch = %r, ?b = %y}
+; USEFIX-NOT: {{.}}
 
 ; USEBITS-NEXT: target 1: @wide
 ; USEBITS-NEXT:   match 0:
 ; USEBITS-NEXT:     {?a = %x, ?anch = %r, ?b = %y, ?bits = 32}
+; USEBITS-NOT: {{.}}
 
 ; Nary operands are typed individually, so the list has a type before each.
 ;--- nary.mpir
@@ -96,3 +100,4 @@ define i32 @sel(i1 %c, i32 %a, i32 %b) {
 ; NARY: target 0: @sel
 ; NARY-NEXT:   match 0:
 ; NARY-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?cond = %c}
+; NARY-NOT: {{.}}

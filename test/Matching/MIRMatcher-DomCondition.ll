@@ -37,3 +37,4 @@ define i64 @unguarded(i64 %x, i32 %a, i32 %b) {
 ; CHECK-NEXT: target 1: @unguarded
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (noOverflow "umul" ?y ?z)
+; CHECK-NOT: {{.}}

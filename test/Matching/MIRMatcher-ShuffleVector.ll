@@ -82,13 +82,17 @@ define <2 x i32> @narrow(<4 x i32> %a, <4 x i32> %b) {
 }
 ; ANY-NEXT: target 3: @narrow
 ; ANY-NEXT:   no match
+; ANY-NOT: {{.}}
 
 ; SPLAT-NEXT: target 3: @narrow
 ; SPLAT-NEXT:   no match
+; SPLAT-NOT: {{.}}
 
 ; SPECIFIC-NEXT: target 3: @narrow
 ; SPECIFIC-NEXT:   no match
+; SPECIFIC-NOT: {{.}}
 
 ; NARROW-NEXT: target 3: @narrow
 ; NARROW-NEXT:   match 0:
 ; NARROW-NEXT:     {?a = %a, ?anch = %s, ?b = %b, ?mask = <i32 3, i32 7>}
+; NARROW-NOT: {{.}}

@@ -40,3 +40,4 @@ no:
 }
 ; CHECK-NEXT: target 1: @wrong_opcode
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

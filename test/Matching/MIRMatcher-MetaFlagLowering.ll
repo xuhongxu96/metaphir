@@ -28,6 +28,7 @@ define i32 @nested_flags_no_match(i32 %x, i32 %y) {
 ; CHECK-NEXT: target 1: @nested_flags_no_match
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (! (hasOneUse ?y))
+; CHECK-NOT: {{.}}
 
 ; Malformed nested flags are diagnosed instead of being silently preserved.
 
@@ -41,11 +42,14 @@ define i32 @nested_flags_no_match(i32 %x, i32 %y) {
 ; NOT-ERROR: error: invalid number of arguments for metaflag ':not'
 ; NOT-ERROR-NEXT: %r = add i32 ?x:not(), ?y
 ; NOT-ERROR-NEXT:                ^
+; NOT-ERROR-NOT: {{.}}
 
 ; OR-ERROR: error: invalid number of arguments for metaflag ':or'
 ; OR-ERROR-NEXT: %r = add i32 ?x:or(), ?y
 ; OR-ERROR-NEXT:                ^
+; OR-ERROR-NOT: {{.}}
 
 ; NESTED-ERROR: error: metaflag ':c' is not valid as a nested metaflag
 ; NESTED-ERROR-NEXT: %r = add i32 ?x:or(:c), ?y
 ; NESTED-ERROR-NEXT:                    ^
+; NESTED-ERROR-NOT: {{.}}

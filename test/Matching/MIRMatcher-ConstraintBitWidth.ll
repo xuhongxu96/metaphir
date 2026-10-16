@@ -162,25 +162,32 @@ entry:
 }
 ; ADDBW-NEXT: target 5: @neg_five
 ; ADDBW-NEXT:   no match
+; ADDBW-NOT: {{.}}
 
 ; ADDBW2-NEXT: target 5: @neg_five
 ; ADDBW2-NEXT:   no match
+; ADDBW2-NOT: {{.}}
 
 ; ADDWIDE-NEXT: target 5: @neg_five
 ; ADDWIDE-NEXT:   no match
+; ADDWIDE-NOT: {{.}}
 
 ; MULBW-NEXT: target 5: @neg_five
 ; MULBW-NEXT:   no match
+; MULBW-NOT: {{.}}
 
 ; MULWIDE-NEXT: target 5: @neg_five
 ; MULWIDE-NEXT:   no match
+; MULWIDE-NOT: {{.}}
 
 ; SHLBW-NEXT: target 5: @neg_five
 ; SHLBW-NEXT:   no match
+; SHLBW-NOT: {{.}}
 
 ; NEGBW-NEXT: target 5: @neg_five
 ; NEGBW-NEXT:   match 0:
 ; NEGBW-NEXT:     {?a = -5, ?anch = %r, ?bits = 8}
+; NEGBW-NOT: {{.}}
 
 ;--- add-bw.mpir
 %add = add:?anch i?bits ?c1:constantInt, ?c2:constantInt

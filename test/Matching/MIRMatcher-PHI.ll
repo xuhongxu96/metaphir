@@ -53,3 +53,4 @@ exit:
 }
 ; CHECK-NEXT: target 2: @phi_no_match
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

@@ -200,18 +200,24 @@ define i32 @mul(i32 %a, i32 %b) {
 }
 ; SHIFT-NEXT: target 7: @mul
 ; SHIFT-NEXT:   no match
+; SHIFT-NOT: {{.}}
 
 ; SHIFTX-NEXT: target 7: @mul
 ; SHIFTX-NEXT:   no match
+; SHIFTX-NOT: {{.}}
 
 ; LSHIFT-NEXT: target 7: @mul
 ; LSHIFT-NEXT:   no match
+; LSHIFT-NOT: {{.}}
 
 ; IDIV-NEXT: target 7: @mul
 ; IDIV-NEXT:   no match
+; IDIV-NOT: {{.}}
 
 ; IDIVX-NEXT: target 7: @mul
 ; IDIVX-NEXT:   no match
+; IDIVX-NOT: {{.}}
 
 ; IREM-NEXT: target 7: @mul
 ; IREM-NEXT:   no match
+; IREM-NOT: {{.}}

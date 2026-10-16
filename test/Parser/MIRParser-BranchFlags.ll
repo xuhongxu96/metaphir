@@ -17,6 +17,7 @@ match:c myadd [nsw, nuw] Binary (?ty ?x, ?y) {
 ; OK-NEXT: %r = myadd i32 ?a, ?b
 ; OK-NEXT: meta ?a type=Value
 ; OK-NEXT: meta ?b type=Value
+; OK-NOT: {{.}}
 
 ;--- undeclared.ll
 match:c badflags [nsw] Binary (?ty ?x, ?y) {

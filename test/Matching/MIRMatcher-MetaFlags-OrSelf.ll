@@ -33,3 +33,4 @@ define i32 @no_match(i32 %x, i32 %y) {
 }
 ; CHECK-NEXT: target 2: @no_match
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

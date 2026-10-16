@@ -32,3 +32,4 @@ entry:
 }
 ; CHECK-NEXT: target 1: @bad
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

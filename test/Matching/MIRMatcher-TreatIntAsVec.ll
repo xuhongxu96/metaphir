@@ -72,10 +72,13 @@ define <4 x i8> @vec8(<4 x i8> %x) {
 ; TIV-NEXT: target 2: @vec8
 ; TIV-NEXT:   match 0:
 ; TIV-NEXT:     {?anch = %z, ?big = 8, ?small = 4, ?x = %x}
+; TIV-NOT: {{.}}
 
 ; FIXED-NEXT: target 2: @vec8
 ; FIXED-NEXT:   match 0:
 ; FIXED-NEXT:     {?anch = %z, ?x = %x}
+; FIXED-NOT: {{.}}
 
 ; SWITCH-NEXT: target 2: @vec8
 ; SWITCH-NEXT:   no match
+; SWITCH-NOT: {{.}}

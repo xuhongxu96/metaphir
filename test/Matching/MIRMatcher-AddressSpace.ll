@@ -14,6 +14,7 @@
 ; PRINT-NEXT: %r = load:?anch i32, ptr addrspace(1) ?p
 ; PRINT-NEXT: meta ?anch type=Instruction
 ; PRINT-NEXT: meta ?p type=Value
+; PRINT-NOT: {{.}}
 
 ;--- input.ll
 define i32 @generic(ptr %p) {
@@ -34,7 +35,9 @@ define i32 @global(ptr addrspace(1) %p) {
 ; ANY-NEXT: target 1: @global
 ; ANY-NEXT:   match 0:
 ; ANY-NEXT:     {?anch = %r, ?p = %p}
+; ANY-NOT: {{.}}
 
 ; SPECIFIC-NEXT: target 1: @global
 ; SPECIFIC-NEXT:   match 0:
 ; SPECIFIC-NEXT:     {?anch = %r, ?p = %p}
+; SPECIFIC-NOT: {{.}}

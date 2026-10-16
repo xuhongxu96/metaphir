@@ -162,6 +162,12 @@ def format_directives(
     ]
 
 
+def end_directive(prefix: str, comment: str) -> str:
+    """A directive that nothing but blank lines follows: a trailing -NOT is
+    checked to the end of the input, so output not checked fails the test."""
+    return f"{comment} {prefix}-NOT: {{{{.}}}}"
+
+
 def strip_error_prefix(lines: list[str]) -> list[str]:
     """Drop the volatile '<tool>: <path>:<line>:<col>: ' prefix from tool error
     diagnostics so generated CHECKs don't embed the temp path."""
@@ -622,6 +628,10 @@ def gen_parser_checks(
         for i, (target, line) in enumerate(zip(targets, run_output, strict=True)):
             directive = run.prefix if i == 0 else f"{run.prefix}-NEXT"
             checks_by_line[target].append(f"{comment} {directive}: {line}")
+        # A failed parse is checked by its messages only, not the source
+        # lines that follow them.
+        if run.diagnostic_line is None and targets:
+            checks_by_line[targets[-1]].append(end_directive(run.prefix, comment))
 
         if run.warnings and targets:
             checks_by_line[targets[0]][0:0] = [
@@ -679,6 +689,7 @@ def gen_matcher_checks(
                 raise ValueError(f"{path}: metaphir-match error run produced no output")
             cleaned = strip_error_prefix([sanitize_pointers(ln) for ln in output])
             error_directives.extend(format_directives(cleaned, prefix, comment))
+            error_directives.append(end_directive(prefix, comment))
             continue
 
         if result.returncode:
@@ -722,17 +733,32 @@ def gen_matcher_checks(
             directives = format_directives(
                 group.lines, prefix, comment, is_first=(idx == 0)
             )
+            if idx == len(target_groups) - 1:
+                directives.append(end_directive(prefix, comment))
             generated.append(
                 MatcherGroup(expected.section, expected.function, directives)
             )
 
     checks_by_line: dict[int, list[str]] = collections.defaultdict(list)
     for group in generated:
+        # Another section may define a function of the same name. An input a
+        # RUN line builds, such as a directory, is no section: the whole file
+        # is searched.
+        has_section = group.section is not None and any(
+            (m := SPLIT_RE.match(line)) and m["name"] == group.section
+            for line in clean_lines
+        )
+        start, end = (
+            section_bounds(clean_lines, path, group.section)
+            if has_section
+            else (0, len(clean_lines))
+        )
         definition = next(
             (
                 i
-                for i, line in enumerate(clean_lines)
-                if (m := LLVM_FUNCTION_RE.match(line)) and m["name"] == group.function
+                for i in range(start, end)
+                if (m := LLVM_FUNCTION_RE.match(clean_lines[i]))
+                and m["name"] == group.function
             ),
             None,
         )

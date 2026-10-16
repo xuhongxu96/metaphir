@@ -19,6 +19,7 @@ match addlike2 [] Binary (?ty ?x, ?y) {
 ; OK-NEXT: %r = addlike2 i32 ?a, ?b
 ; OK-NEXT: meta ?a type=Value
 ; OK-NEXT: meta ?b type=Value
+; OK-NOT: {{.}}
 
 ;--- flag-keyword.ll
 match nsw [] Binary (?ty ?x, ?y) {

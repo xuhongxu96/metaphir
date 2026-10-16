@@ -39,6 +39,7 @@ entry:
 }
 ; ZOS-NEXT: target 2: @f_bitcast
 ; ZOS-NEXT:   no match
+; ZOS-NOT: {{.}}
 
 ; bitwiseLogic matches and/or/xor in natural operand order.
 ;--- bitwise-logic.mpir
@@ -100,9 +101,11 @@ entry:
 }
 ; BL-NEXT: target 3: @f_add
 ; BL-NEXT:   no match
+; BL-NOT: {{.}}
 
 ; BLC-NEXT: target 3: @f_add
 ; BLC-NEXT:   no match
+; BLC-NOT: {{.}}
 
 ; A comparison predicate can be captured into a meta variable and constrained
 ; on by name, instead of hard-coding the predicate in the instruction.
@@ -131,3 +134,4 @@ entry:
 ; PRED-NEXT: target 1: @f_ult
 ; PRED-NEXT:   no match
 ; PRED-NEXT:   constraint not satisfied: (&& (== ?pred "ugt") (ugt ?c 1))
+; PRED-NOT: {{.}}

@@ -29,3 +29,4 @@ define <2 x i32> @nonsplat_vec(<2 x i32> %x) {
 ; CHECK-NEXT: target 2: @nonsplat_vec
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (|| (isScalar ?c) (isConstantSplat ?c))
+; CHECK-NOT: {{.}}

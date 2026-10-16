@@ -94,10 +94,13 @@ define i32 @uadd_sat(i32 %a, i32 %b) {
 }
 ; SIGNED-NEXT: target 4: @uadd_sat
 ; SIGNED-NEXT:   no match
+; SIGNED-NOT: {{.}}
 
 ; ANY-NEXT: target 4: @uadd_sat
 ; ANY-NEXT:   no match
+; ANY-NOT: {{.}}
 
 ; ID-NEXT: target 4: @uadd_sat
 ; ID-NEXT:   match 0:
 ; ID-NEXT:     {?a = %a, ?b = %b, ?id = llvm.uadd.sat, ?mm = %m}
+; ID-NOT: {{.}}

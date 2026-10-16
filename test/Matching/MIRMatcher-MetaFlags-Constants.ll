@@ -97,3 +97,4 @@ define void @bad_lowbitmask() {
 ; CHECK-NEXT: target 10: @bad_lowbitmask
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (isLowBitMask ?low)
+; CHECK-NOT: {{.}}

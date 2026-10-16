@@ -84,6 +84,8 @@ define i32 @gen_slt(i32 %x, i32 %y, i32 %a, i32 %b) {
 }
 ; ZERO-NEXT: target 5: @gen_slt
 ; ZERO-NEXT:   no match
+; ZERO-NOT: {{.}}
 
 ; GEN-NEXT: target 5: @gen_slt
 ; GEN-NEXT:   no match
+; GEN-NOT: {{.}}

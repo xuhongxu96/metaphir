@@ -29,3 +29,4 @@ entry:
 ; CHECK-NEXT: target 1: @f_odd
 ; CHECK-NEXT:   no match
 ; CHECK-NEXT:   constraint not satisfied: (iseven ?c)
+; CHECK-NOT: {{.}}

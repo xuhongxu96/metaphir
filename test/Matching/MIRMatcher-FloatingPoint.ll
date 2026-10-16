@@ -333,39 +333,49 @@ define float @argument(float %x) {
 }
 ; FNEG-NEXT: target 7: @argument
 ; FNEG-NEXT:   no match
+; FNEG-NOT: {{.}}
 
 ; NONAN-NEXT: target 7: @argument
 ; NONAN-NEXT:   no match
 ; NONAN-NEXT:   constraint not satisfied: (isKnownNeverNaN ?x)
+; NONAN-NOT: {{.}}
 
 ; NOINF-NEXT: target 7: @argument
 ; NOINF-NEXT:   no match
 ; NOINF-NEXT:   constraint not satisfied: (isKnownNeverInfinity ?x)
+; NOINF-NOT: {{.}}
 
 ; NOINFNAN-NEXT: target 7: @argument
 ; NOINFNAN-NEXT:   no match
 ; NOINFNAN-NEXT:   constraint not satisfied: (isKnownNeverInfOrNaN ?x)
+; NOINFNAN-NOT: {{.}}
 
 ; NONEGZERO-NEXT: target 7: @argument
 ; NONEGZERO-NEXT:   no match
 ; NONEGZERO-NEXT:   constraint not satisfied: (cannotBeNegativeZero ?x)
+; NONEGZERO-NOT: {{.}}
 
 ; NOTNEG-NEXT: target 7: @argument
 ; NOTNEG-NEXT:   no match
 ; NOTNEG-NEXT:   constraint not satisfied: (cannotBeOrderedLessThanZero ?x)
+; NOTNEG-NOT: {{.}}
 
 ; POSZERO-NEXT: target 7: @argument
 ; POSZERO-NEXT:   no match
 ; POSZERO-NEXT:   constraint not satisfied: (isPosZeroFP ?c)
+; POSZERO-NOT: {{.}}
 
 ; NEGZERO-NEXT: target 7: @argument
 ; NEGZERO-NEXT:   no match
 ; NEGZERO-NEXT:   constraint not satisfied: (isNegZeroFP ?c)
+; NEGZERO-NOT: {{.}}
 
 ; INF-NEXT: target 7: @argument
 ; INF-NEXT:   no match
 ; INF-NEXT:   constraint not satisfied: (isInf ?c)
+; INF-NOT: {{.}}
 
 ; NAN-NEXT: target 7: @argument
 ; NAN-NEXT:   match 0:
 ; NAN-NEXT:     {?anch = %r, ?c = +qnan, ?x = %x}
+; NAN-NOT: {{.}}

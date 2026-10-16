@@ -168,3 +168,4 @@ ret i32 %call
 ; CHECK-NEXT: meta ?left type=BasicBlock
 ; CHECK-NEXT: meta ?right type=BasicBlock
 ; CHECK-NEXT: meta ?cond type=i1
+; CHECK-NOT: {{.}}

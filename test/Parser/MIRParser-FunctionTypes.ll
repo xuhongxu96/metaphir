@@ -10,3 +10,4 @@
 ; CHECK-NEXT: meta ?f type=Function
 ; CHECK-NEXT: meta ?x type=Value
 ; CHECK-NEXT: meta ?g type=Function
+; CHECK-NOT: {{.}}

@@ -23,6 +23,7 @@ metaflag :i32(?v) {
 ; OK-NEXT: %r = add i32 ?x, ?c:add
 ; OK-NEXT: meta ?x type=Value
 ; OK-NEXT: meta ?c type=Value
+; OK-NOT: {{.}}
 
 ;--- no-colon.ll
 metaflag even(?v) {

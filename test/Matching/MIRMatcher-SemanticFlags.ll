@@ -46,3 +46,4 @@ define void @no_flags() {
 ; CHECK-NEXT: target 1: @no_flags
 ; CHECK-NEXT:   match 0:
 ; CHECK-NEXT:     {?afn = false, ?arcp = false, ?contract = false, ?disjoint = false, ?exact = false, ?fast = false, ?gep_nuw = false, ?inalloca = false, ?inbounds = false, ?ninf = false, ?nnan = false, ?nneg = false, ?nsw = false, ?nsz = false, ?nusw = false, ?nuw = false, ?reassoc = false, ?samesign = false, ?volatile = false}
+; CHECK-NOT: {{.}}

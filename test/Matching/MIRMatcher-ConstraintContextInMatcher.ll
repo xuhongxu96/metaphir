@@ -96,13 +96,17 @@ else:
 }
 ; PLAIN-NEXT: target 1: @guarded_udiv
 ; PLAIN-NEXT:   no match
+; PLAIN-NOT: {{.}}
 
 ; BODY-NEXT: target 1: @guarded_udiv
 ; BODY-NEXT:   no match
+; BODY-NOT: {{.}}
 
 ; COMP-NEXT: target 1: @guarded_udiv
 ; COMP-NEXT:   no match
+; COMP-NOT: {{.}}
 
 ; BRANCH-NEXT: target 1: @guarded_udiv
 ; BRANCH-NEXT:   match 0:
 ; BRANCH-NEXT:     {?a = %x, ?anch = %rt, ?b = %y}
+; BRANCH-NOT: {{.}}

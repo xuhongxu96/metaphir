@@ -39,3 +39,4 @@ elsewhere:
 }
 ; CHECK-NEXT: target 1: @wrong_block
 ; CHECK-NEXT:   no match
+; CHECK-NOT: {{.}}

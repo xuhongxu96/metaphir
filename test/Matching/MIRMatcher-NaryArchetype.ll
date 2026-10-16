@@ -41,7 +41,9 @@ define i32 @neg(i32 %v) {
 }
 ; NARY-NEXT: target 1: @neg
 ; NARY-NEXT:   no match
+; NARY-NOT: {{.}}
 
 ; UNARY-NEXT: target 1: @neg
 ; UNARY-NEXT:   match 0:
 ; UNARY-NEXT:     {?anch = %r, ?v = %v}
+; UNARY-NOT: {{.}}

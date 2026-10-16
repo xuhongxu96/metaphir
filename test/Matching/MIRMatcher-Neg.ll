@@ -118,13 +118,17 @@ define <2 x i32> @vec_poison(<2 x i32> %a) {
 }
 ; NEG-NEXT: target 5: @vec_poison
 ; NEG-NEXT:   no match
+; NEG-NOT: {{.}}
 
 ; NSW-NEXT: target 5: @vec_poison
 ; NSW-NEXT:   no match
+; NSW-NOT: {{.}}
 
 ; NOTNSW-NEXT: target 5: @vec_poison
 ; NOTNSW-NEXT:   no match
+; NOTNSW-NOT: {{.}}
 
 ; VEC-NEXT: target 5: @vec_poison
 ; VEC-NEXT:   match 0:
 ; VEC-NEXT:     {?anch = %r, ?x = %a}
+; VEC-NOT: {{.}}

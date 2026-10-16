@@ -176,27 +176,34 @@ define i8 @known(i8 %a) {
 ; CLZ-NEXT: target 4: @known
 ; CLZ-NEXT:   match 0:
 ; CLZ-NEXT:     {?anch = %r, ?c = 15, ?n = 8, ?x = %x}
+; CLZ-NOT: {{.}}
 
 ; CTZ-NEXT: target 4: @known
 ; CTZ-NEXT:   no match
 ; CTZ-NEXT:   constraint not satisfied: (== (countr_zero ?c) 3)
+; CTZ-NOT: {{.}}
 
 ; CLO-NEXT: target 4: @known
 ; CLO-NEXT:   no match
 ; CLO-NEXT:   constraint not satisfied: (== (countl_one ?c) 5)
+; CLO-NOT: {{.}}
 
 ; CTO-NEXT: target 4: @known
 ; CTO-NEXT:   match 0:
 ; CTO-NEXT:     {?anch = %r, ?c = 15, ?n = 8, ?x = %x}
+; CTO-NOT: {{.}}
 
 ; WIDTH-NEXT: target 4: @known
 ; WIDTH-NEXT:   match 0:
 ; WIDTH-NEXT:     {?anch = %r, ?c = 15, ?n = 8, ?x = %x}
+; WIDTH-NOT: {{.}}
 
 ; KNOWN-NEXT: target 4: @known
 ; KNOWN-NEXT:   match 0:
 ; KNOWN-NEXT:     {?anch = %r, ?c = 15, ?n = 8, ?x = %x}
+; KNOWN-NOT: {{.}}
 
 ; BITS-NEXT: target 4: @known
 ; BITS-NEXT:   match 0:
 ; BITS-NEXT:     {?anch = %r, ?c = 15, ?ty = i8, ?x = %x}
+; BITS-NOT: {{.}}

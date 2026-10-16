@@ -132,25 +132,32 @@ entry:
 }
 ; FLAGS-NEXT: target 3: @f_add_nsw
 ; FLAGS-NEXT:   no match
+; FLAGS-NOT: {{.}}
 
 ; PLAIN-NEXT: target 3: @f_add_nsw
 ; PLAIN-NEXT:   match 0:
 ; PLAIN-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+; PLAIN-NOT: {{.}}
 
 ; NEG-NEXT: target 3: @f_add_nsw
 ; NEG-NEXT:   no match
+; NEG-NOT: {{.}}
 
 ; CAP-NEXT: target 3: @f_add_nsw
 ; CAP-NEXT:   match 0:
 ; CAP-NEXT:     {?anch = %r, ?mynsw = true, ?mynuw = false, ?x = %a, ?y = %b}
+; CAP-NOT: {{.}}
 
 ; NSW-NEXT: target 3: @f_add_nsw
 ; NSW-NEXT:   match 0:
 ; NSW-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+; NSW-NOT: {{.}}
 
 ; ORDINARY-NEXT: target 3: @f_add_nsw
 ; ORDINARY-NEXT:   match 0:
 ; ORDINARY-NEXT:     {?anch = %r, ?x = %a, ?y = %b}
+; ORDINARY-NOT: {{.}}
 
 ; ORDINARY-NEG-NEXT: target 3: @f_add_nsw
 ; ORDINARY-NEG-NEXT:   no match
+; ORDINARY-NEG-NOT: {{.}}

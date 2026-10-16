@@ -128,17 +128,21 @@ define i32 @nonzero_rhs(i32 %x) {
 ; ONE-NEXT: target 1: @nonzero_rhs
 ; ONE-NEXT:   no match
 ; ONE-NEXT:   constraint not satisfied: (isZero ?b)
+; ONE-NOT: {{.}}
 
 ; LIT-NEXT: target 1: @nonzero_rhs
 ; LIT-NEXT:   no match
+; LIT-NOT: {{.}}
 
 ; INSTRUCTION-NEXT: target 1: @nonzero_rhs
 ; INSTRUCTION-NEXT:   match 0:
 ; INSTRUCTION-NEXT:     {?a = %x, ?anch = %r, ?b = 7}
+; INSTRUCTION-NOT: {{.}}
 
 ; INSTRUCTION-FAILS-NEXT: target 1: @nonzero_rhs
 ; INSTRUCTION-FAILS-NEXT:   no match
 ; INSTRUCTION-FAILS-NEXT:   constraint not satisfied: (== (opcode ?anch) "mul")
+; INSTRUCTION-FAILS-NOT: {{.}}
 
 ;--- instruction-chain.ll
 define i32 @chain(i32 %x, i32 %y) {
@@ -149,14 +153,17 @@ define i32 @chain(i32 %x, i32 %y) {
 ; NONROOT: target 0: @chain
 ; NONROOT-NEXT:   match 0:
 ; NONROOT-NEXT:     {?a = %x, ?anch = %r, ?b = %y}
+; NONROOT-NOT: {{.}}
 
 ; BOTH-INSTRUCTIONS: target 0: @chain
 ; BOTH-INSTRUCTIONS-NEXT:   match 0:
 ; BOTH-INSTRUCTIONS-NEXT:     {?a = %x, ?anch = %r, ?b = %y}
+; BOTH-INSTRUCTIONS-NOT: {{.}}
 
 ; NONROOT-FAILS: target 0: @chain
 ; NONROOT-FAILS-NEXT:   no match
 ; NONROOT-FAILS-NEXT:   constraint not satisfied: (== (opcode ?r$inner) "mul")
+; NONROOT-FAILS-NOT: {{.}}
 
 ;--- two-branch.ll
 define i32 @add_zero(i32 %x) {
@@ -182,3 +189,4 @@ define i32 @mul_three(i32 %x) {
 ; TWO-NEXT: target 2: @mul_three
 ; TWO-NEXT:   no match
 ; TWO-NEXT:   constraint not satisfied: (isPower2 ?b)
+; TWO-NOT: {{.}}

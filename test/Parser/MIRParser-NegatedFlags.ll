@@ -13,6 +13,7 @@
 ; OK-NEXT: %r = add nsw !nuw i32 ?x, ?y
 ; OK-NEXT: meta ?x type=Value
 ; OK-NEXT: meta ?y type=Value
+; OK-NOT: {{.}}
 
 ;--- negated-capture.mpir
 %r = add !nsw:?f i32 ?x, ?y

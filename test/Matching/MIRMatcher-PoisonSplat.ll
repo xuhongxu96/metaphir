@@ -22,7 +22,9 @@ define <2 x i8> @poison_lane(<2 x i8> %y) {
 ; LIT: target 0: @poison_lane
 ; LIT-NEXT:   match 0:
 ; LIT-NEXT:     {?anch = %r, ?bits = 8, ?y = %y}
+; LIT-NOT: {{.}}
 
 ; META: target 0: @poison_lane
 ; META-NEXT:   no match
 ; META-NEXT:   constraint not satisfied: (isConstantInt ?c)
+; META-NOT: {{.}}
