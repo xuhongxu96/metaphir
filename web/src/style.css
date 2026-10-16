@@ -377,9 +377,10 @@ td {
   font-family: inherit;
 }
 .data-table td:hover .cell-copy { display: inline-block; }
-tbody tr { cursor: pointer; }
-tbody tr:hover { background: var(--bg-alt); }
-tbody tr.selected { background: var(--accent-bg); }
+/* The rows of a data table are to select. */
+.data-table tbody tr { cursor: pointer; }
+.data-table tbody tr:hover { background: var(--bg-alt); }
+.data-table tbody tr.selected { background: var(--accent-bg); }
 
 .bound-line, .matched-line { background: var(--accent-bg); }
 /* What a Ctrl/⌘+click goes from, while the key is held. */
