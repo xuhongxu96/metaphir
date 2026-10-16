@@ -1,4 +1,5 @@
 :root {
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --border: #d0d7de;
@@ -109,16 +110,14 @@ body { background: var(--bg); color: var(--fg); }
 .status-notes ul { margin: 0; padding-left: 16px; font-size: 12px; overflow-wrap: anywhere; }
 .status-notes .hint { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
 .cards { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.75rem; font-size: 0.8rem; }
-.lookalike {
-  display: inline-block;
-  margin-right: 0.4rem;
-  padding: 0 0.35rem;
+/* Small rounded labels: a match's place among lookalikes, a card's count. */
+.lookalike, .card-header .badge {
   border-radius: 999px;
   background: var(--accent-bg);
   color: var(--fg);
-  font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
 }
+.lookalike { display: inline-block; margin-right: 0.4rem; padding: 0 0.35rem; font-size: 0.7rem; }
 .card { border: 1px solid var(--border); border-radius: 6px; overflow: auto; background: var(--bg); }
 .card.focused { box-shadow: 0 0 0 2px var(--accent); }
 .card-header {
@@ -132,26 +131,19 @@ body { background: var(--bg); color: var(--fg); }
 }
 .card-header code { font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
 .card-header .where { color: var(--muted); }
-.card-header .badge {
-  margin-left: auto;
-  padding: 0 0.5rem;
-  border-radius: 999px;
-  background: var(--accent-bg);
-  color: var(--fg);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
+.card-header .badge { margin-left: auto; padding: 0 0.5rem; white-space: nowrap; }
 .card-note { margin: 0; padding: 0.35rem 0.6rem; color: var(--muted); overflow-wrap: anywhere; }
-.card-note.warn, .card-list li.warn { color: var(--warning); }
-.card-header button.link {
+.card-note.warn { color: var(--warning); }
+/* A button that reads as a link. */
+button.link {
   padding: 0;
   border: 0;
   background: none;
   color: var(--accent);
-  font: 600 0.8rem ui-monospace, SFMono-Regular, Menlo, monospace;
-  cursor: pointer;
+  text-align: left;
 }
-.card-header button.link:hover, .card-header button.link.selected { text-decoration: underline; }
+button.link:hover, button.link.selected { text-decoration: underline; }
+.card-header button.link { font: 600 0.8rem var(--mono); }
 .card table.samples col.constraint { width: 55%; }
 .card table.samples td .warn { color: var(--warning); font-family: inherit; }
 .card-list { margin: 0; padding: 0.35rem 0.6rem 0.35rem 1.6rem; overflow-wrap: anywhere; }
@@ -159,24 +151,12 @@ body { background: var(--bg); color: var(--fg); }
 .card table.samples td { padding: 0.2rem 0.6rem; }
 .card-foot { margin: 0; padding: 0.3rem 0.6rem; color: var(--muted); border-top: 1px solid var(--border); font-size: 0.75rem; }
 .cards-hint { margin: 0; color: var(--muted); font-size: 0.75rem; }
-.status-notes button.link {
-  vertical-align: top;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.status-notes button.link:hover { text-decoration: underline; }
+.status-notes button.link { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
 .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-.segmented button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--bg); color: var(--muted); font: inherit; cursor: pointer; }
+.segmented button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--bg); color: var(--muted); }
 .segmented button + button { border-left: 1px solid var(--border); }
 .segmented button[aria-pressed="true"] { background: var(--accent-bg); color: var(--fg); font-weight: 600; }
-.status-source { margin: 6px 0 0; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; overflow-x: auto; }
+.status-source { margin: 6px 0 0; font: 12px/1.4 var(--mono); white-space: pre; overflow-x: auto; }
 .status-details { margin: 0.4rem 0 0; display: grid; gap: 0.15rem; }
 .status-details > div { display: flex; justify-content: space-between; gap: 1rem; }
 .status-details dt { color: var(--muted); }
@@ -278,20 +258,16 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
   background: var(--bg-alt);
   min-height: 2.1rem;
 }
-.pane-header .title { color: var(--fg); font-weight: 600; white-space: nowrap; }
+.pane-header .title { color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .pane-header .hint { margin-left: auto; }
-.pane-header .title { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .pane-header .spacer { flex: 1; }
 .pane-body[hidden] { display: none; }
 .tabs { display: flex; gap: 0.25rem; }
 .tabs button {
   padding: 0.1rem 0.5rem;
   border: 1px solid transparent;
-  border-radius: 4px;
   background: none;
   color: var(--muted);
-  font: inherit;
-  cursor: pointer;
 }
 .tabs button[aria-selected="true"] { color: var(--fg); font-weight: 600; border-color: var(--border); background: var(--bg); }
 .binding-list {
@@ -304,7 +280,7 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
   overflow: auto;
 }
 .binding {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--mono);
   font-size: 12px;
   padding: 0.05rem 0.45rem;
   border: 1px solid var(--border);
@@ -355,7 +331,7 @@ thead th {
   border-bottom: 1px solid var(--border);
 }
 td {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--mono);
   padding: 0.25rem 0.75rem;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
