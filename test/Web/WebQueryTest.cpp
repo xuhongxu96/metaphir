@@ -135,14 +135,15 @@ protected:
     R.Warnings = (*Query)->getWarnings().vec();
     raw_string_ostream OS(R.Matches);
     for (uint32_t Function : (*Query)->getMatchable()) {
-      Expected<StringRef> Frame = Cache.read((*Query)->getPackRange(Function));
+      PackLocation Pack = (*Query)->getPackLocation(Function);
+      Expected<StringRef> Frame = Cache.read(Pack.Frame);
       EXPECT_TRUE(static_cast<bool>(Frame)) << toString(Frame.takeError());
       if (!Frame)
         return R;
       bool Structural = false;
-      Error E = (*Query)->match(Function, *Frame, OS, PrintInstructions,
-                                ReportRejecting ? &R.Rejecting : nullptr,
-                                &Structural);
+      Error E = (*Query)->match(
+          Function, *Frame, Pack.Slot, OS, PrintInstructions,
+          ReportRejecting ? &R.Rejecting : nullptr, &Structural);
       R.Structural += Structural;
       EXPECT_FALSE(static_cast<bool>(E)) << toString(std::move(E));
     }
@@ -187,15 +188,27 @@ TEST_F(WebQueryTest, MatchesWhatTheCorpusHas) {
             "other.ll\t@muls\t{?x = %x}\n");
   EXPECT_EQ(query("%r = sdiv i32 ?x, 3\n").Matches, "");
 
-  // The function's IR can be shown.
+  // A module's consecutive packs share frames.
   StringRef Packs = Files[unsigned(WebFile::Packs)]->getBuffer();
   StringRef Entries = Files[unsigned(WebFile::Index)]->getBuffer();
-  auto Offset = [&](uint32_t Function) {
-    return support::endian::read64le(Entries.data() +
-                                     Function * WebIndexEntrySize + 8);
+  auto Location = [&](uint32_t Function) {
+    return PackLocation::decode(support::endian::read64le(
+        Entries.data() + Function * WebIndexEntrySize + 8));
   };
-  Expected<PrintedFunction> Printed =
-      WebQuery::printFunction(*Web, Packs.slice(Offset(42), Offset(43)));
+  EXPECT_EQ(Location(40).Frame, Location(41).Frame);
+  EXPECT_EQ(Location(41).Slot, Location(40).Slot + 1);
+  EXPECT_LT(Location(47).Slot, PublishOptions().PacksPerFrame);
+
+  // The function's IR can be shown, and so can its frame's other packs'.
+  auto Print = [&](uint32_t Function) {
+    PackLocation Pack = Location(Function);
+    return WebQuery::printFunction(
+        *Web, Packs.slice(Pack.Frame.Offset, Pack.Frame.getEnd()), Pack.Slot);
+  };
+  Expected<PrintedFunction> Neighbor = Print(41);
+  ASSERT_TRUE(static_cast<bool>(Neighbor)) << toString(Neighbor.takeError());
+  EXPECT_NE(Neighbor->IR.find("define i32 @f41()"), std::string::npos);
+  Expected<PrintedFunction> Printed = Print(42);
   ASSERT_TRUE(static_cast<bool>(Printed)) << toString(Printed.takeError());
   EXPECT_NE(Printed->IR.find("define i32 @f42()"), std::string::npos);
   // Each instruction's line, counted from 1.

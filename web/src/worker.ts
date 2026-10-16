@@ -21,9 +21,9 @@ const methods: Record<string, (...args: any[]) => unknown> = {
     session!.add(file, offset, bytes),
   matchable: () => session!.matchable(),
   numCandidates: () => session!.numCandidates(),
-  match: (fn: number, frame: Uint8Array) => session!.match(fn, frame),
+  match: (fn: number, frame: Uint8Array, slot: number) => session!.match(fn, frame, slot),
   moduleOf: (fn: number) => session!.moduleOf(fn),
-  printFunction: (frame: Uint8Array) => session!.printFunction(frame),
+  printFunction: (frame: Uint8Array, slot: number) => session!.printFunction(frame, slot),
 };
 
 self.onmessage = async (event: MessageEvent<Call>) => {

@@ -13,7 +13,8 @@ namespace metaphir {
 
 static constexpr StringLiteral Magic = "MPIRWEB";
 // 3: packs keep the order of their functions' use lists.
-static constexpr uint32_t FormatVersion = 3;
+// 4: a module's consecutive packs share frames.
+static constexpr uint32_t FormatVersion = 4;
 
 StringRef getWebFileName(WebFile File) {
   switch (File) {

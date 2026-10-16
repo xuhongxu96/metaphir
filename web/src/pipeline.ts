@@ -40,8 +40,11 @@ export type MatchResult =
     }
   | { error: string };
 
+/** A function whose features may match: the frame of packs its pack is
+ * in, and its slot in the frame. */
 export interface Matchable extends ByteRange {
   function: number;
+  slot: number;
 }
 
 /** The session that runs the stages. */
@@ -56,7 +59,7 @@ export interface Coordinator {
 /** A session that matches functions, one at a time. */
 export interface Matcher {
   compile(pattern: string, name: string): Promise<StageResult>;
-  match(fn: number, frame: Uint8Array): Promise<MatchResult>;
+  match(fn: number, frame: Uint8Array, slot: number): Promise<MatchResult>;
 }
 
 export type StageName =
@@ -190,7 +193,7 @@ export async function runQuery(
   events.onStage?.("matching");
 
   // Each matcher takes the next pack once it is done with its last.
-  const queue: { fn: number; frame: Uint8Array }[] = [];
+  const queue: { fn: number; frame: Uint8Array; slot: number }[] = [];
   let reading = true;
   let waiting: (() => void)[] = [];
   const wakeAll = () => {
@@ -208,7 +211,7 @@ export async function runQuery(
         await new Promise<void>((resolve) => waiting.push(resolve));
         continue;
       }
-      const result = await matcher.match(next.fn, next.frame);
+      const result = await matcher.match(next.fn, next.frame, next.slot);
       if ("error" in result) {
         failure ??= new Error(result.error);
         wakeAll();
@@ -228,20 +231,26 @@ export async function runQuery(
     }
   };
   const workers = matchers.map(work);
-  const byOffset = new Map(matchable.map((m) => [m.offset, m.function]));
+  // A frame holds the packs of a few functions: it is read once, and each
+  // of them matched.
+  const frames = new Map<number, { range: Matchable; of: Matchable[] }>();
+  for (const m of matchable) {
+    const frame = frames.get(m.offset);
+    if (frame) frame.of.push(m);
+    else frames.set(m.offset, { range: m, of: [m] });
+  }
+  const toRead = [...frames.values()].map((f) => f.range);
   try {
     for (
       let start = 0;
-      start < matchable.length && !failure && (await control.proceed());
+      start < toRead.length && !failure && (await control.proceed());
       start += PACK_BATCH
     )
-      await fetcher.fetchRanges(
-        matchable.slice(start, start + PACK_BATCH),
-        (range, frame) => {
-          queue.push({ fn: byOffset.get(range.offset)!, frame });
-          wakeAll();
-        },
-      );
+      await fetcher.fetchRanges(toRead.slice(start, start + PACK_BATCH), (range, frame) => {
+        for (const m of frames.get(range.offset)!.of)
+          queue.push({ fn: m.function, frame, slot: m.slot });
+        wakeAll();
+      });
   } finally {
     reading = false;
     wakeAll();

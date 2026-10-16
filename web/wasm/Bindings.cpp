@@ -99,30 +99,35 @@ public:
     return Query ? Query->getCandidates().size() : 0;
   }
 
-  /// The functions whose features may match, each with where its pack is.
+  /// The functions whose features may match, each with where its pack is:
+  /// the frame it is in, and its slot in the frame.
   val matchable() const {
     val Array = val::array();
     for (uint32_t Function :
          Query ? Query->getMatchable() : ArrayRef<uint32_t>()) {
-      val Entry = rangeValue(Query->getPackRange(Function));
+      PackLocation Pack = Query->getPackLocation(Function);
+      val Entry = rangeValue(Pack.Frame);
       Entry.set("function", Function);
+      Entry.set("slot", Pack.Slot);
       Array.call<void>("push", Entry);
     }
     return Array;
   }
 
-  /// The matches of Function, whose pack is Frame, one per line, with the
+  /// The matches of Function, whose pack is the one at Slot of Frame, one
+  /// per line, with the
   /// instructions each matched; and if it has none, the constraints that
   /// rejected its structural matches; and whether it has any.
-  val match(uint32_t Function, const std::string &Frame) {
+  val match(uint32_t Function, const std::string &Frame, unsigned Slot) {
     if (!Query)
       return noQuery();
     std::string Lines;
     raw_string_ostream OS(Lines);
     std::vector<RejectingConstraint> Rejecting;
     bool Structural = false;
-    if (Error E = Query->match(Function, Frame, OS, /*PrintInstructions=*/true,
-                               &Rejecting, &Structural))
+    if (Error E =
+            Query->match(Function, Frame, Slot, OS,
+                         /*PrintInstructions=*/true, &Rejecting, &Structural))
       return errorValue(std::move(E));
     val Result = val::object();
     Result.set("lines", Lines);
@@ -148,12 +153,13 @@ public:
     return Index ? Index->getModuleOf(Function).Path : "";
   }
 
-  /// The IR of the function whose pack is Frame, and the line of each of
-  /// its instructions.
-  val printFunction(const std::string &Frame) const {
+  /// The IR of the function whose pack is the one at Slot of Frame, and the
+  /// line of each of its instructions.
+  val printFunction(const std::string &Frame, unsigned Slot) const {
     if (!Index)
       return noIndex();
-    Expected<PrintedFunction> Printed = WebQuery::printFunction(*Index, Frame);
+    Expected<PrintedFunction> Printed =
+        WebQuery::printFunction(*Index, Frame, Slot);
     if (!Printed)
       return errorValue(Printed.takeError());
     val Lines = val::array();

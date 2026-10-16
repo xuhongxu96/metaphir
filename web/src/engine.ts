@@ -247,11 +247,12 @@ export class PublishedCorpus {
       void control.proceed().then(() => report());
     };
     let nextPause = MATCH_BATCH;
-    const packs = new Map<number, ByteRange>();
+    const packs = new Map<number, Matchable>();
     const irOf = (fn: number) => async () => {
+      const pack = packs.get(fn)!;
       let frame: Uint8Array | undefined;
-      await fetcher.fetchRanges([packs.get(fn)!], (_, bytes) => (frame = bytes));
-      const printed = await pool.coordinator.printFunction(frame!);
+      await fetcher.fetchRanges([pack], (_, bytes) => (frame = bytes));
+      const printed = await pool.coordinator.printFunction(frame!, pack.slot);
       if ("error" in printed) throw new Error(printed.error);
       return { text: printed.ir, lines: printed.lines };
     };

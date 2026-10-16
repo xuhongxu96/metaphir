@@ -85,13 +85,14 @@ public:
   /// The candidates whose features may match, once filtered.
   ArrayRef<uint32_t> getMatchable() const { return Matchable; }
   /// Where the pack of a matchable function is.
-  ByteRange getPackRange(uint32_t Function) const;
+  PackLocation getPackLocation(uint32_t Function) const;
 
-  /// The function whose pack is Frame, printed.
-  static Expected<PrintedFunction> printFunction(const WebIndex &Index,
-                                                 StringRef Frame);
+  /// The function whose pack is the one at Slot of Frame, printed.
+  static Expected<PrintedFunction>
+  printFunction(const WebIndex &Index, StringRef Frame, unsigned Slot);
 
-  /// Matches the function numbered Function, whose pack is Frame, and
+  /// Matches the function numbered Function, whose pack is the one at Slot
+  /// of Frame, and
   /// prints its matches to Out, one per line: the module, @function and
   /// bindings, and with PrintInstructions the instructions matched (see
   /// Instantiation::printInstructions), separated by tabs. With Rejecting,
@@ -99,8 +100,8 @@ public:
   /// adds the constraints that rejected them, as metaphir-match prints.
   /// HadStructuralMatch tells whether the function had any structural
   /// match, whether or not one satisfied the constraints.
-  Error match(uint32_t Function, StringRef Frame, raw_ostream &Out,
-              bool PrintInstructions = false,
+  Error match(uint32_t Function, StringRef Frame, unsigned Slot,
+              raw_ostream &Out, bool PrintInstructions = false,
               std::vector<RejectingConstraint> *Rejecting = nullptr,
               bool *HadStructuralMatch = nullptr);
 
@@ -110,7 +111,7 @@ private:
   explicit WebQuery(const WebIndex &Index);
 
   /// Where the features and pack of the candidate at Position are.
-  Expected<std::pair<ByteRange, ByteRange>>
+  Expected<std::pair<ByteRange, PackLocation>>
   locate(size_t Position, const ByteCache &Cache) const;
 
   const WebIndex &Index;
@@ -125,8 +126,8 @@ private:
   std::vector<ChosenList> Lists;
   std::vector<uint32_t> Candidates;
   std::vector<uint32_t> Matchable;
-  /// The packs of the matchable functions, in the same order.
-  std::vector<ByteRange> Packs;
+  /// Where the packs of the matchable functions are, in the same order.
+  std::vector<PackLocation> Packs;
 };
 
 } // namespace metaphir

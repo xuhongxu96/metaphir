@@ -18,6 +18,10 @@ struct PublishOptions {
   unsigned SampleEvery = 50;
   size_t FeatureDictionarySize = size_t(1) << 17;
   size_t PackDictionarySize = size_t(1) << 20;
+  /// A module's consecutive packs are compressed together, up to this many
+  /// (at most 16), and while together they are at most MaxFrameInput bytes.
+  unsigned PacksPerFrame = 8;
+  size_t MaxFrameInput = size_t(128) << 10;
   int CompressionLevel = 19;
   /// Where to report progress, if anywhere.
   raw_ostream *Progress = nullptr;

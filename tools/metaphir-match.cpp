@@ -617,10 +617,11 @@ static int matchPacks(StringRef ToolName) {
       Output Matched;
       raw_string_ostream Out(Matched.Out);
       Error E = [&]() -> Error {
-        if (Own)
-          return (*Own)->match(Matchable[I],
-                               *Cache.get((*Query)->getPackRange(Matchable[I])),
+        if (Own) {
+          PackLocation Pack = (*Query)->getPackLocation(Matchable[I]);
+          return (*Own)->match(Matchable[I], *Cache.get(Pack.Frame), Pack.Slot,
                                Out, PrintInstructions);
+        }
         Failed = true;
         if (!CompileError)
           return Error::success();

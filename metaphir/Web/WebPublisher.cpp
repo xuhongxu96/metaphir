@@ -13,6 +13,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/JSON.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/Parallel.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
@@ -109,6 +110,32 @@ static Expected<EncodedModule> encodeModule(const CorpusIndex &Index,
   return Encoded;
 }
 
+/// A module's packs, grouped to be compressed together: each frame's packs,
+/// each after its size; and for each pack, its frame and slot in it.
+struct PackFrames {
+  std::vector<std::string> Frames;
+  std::vector<std::pair<size_t, unsigned>> Of;
+};
+
+static PackFrames groupPacks(ArrayRef<std::string> Packs,
+                             const PublishOptions &Options) {
+  PackFrames Grouped;
+  for (size_t I = 0; I != Packs.size();) {
+    std::string Frame;
+    raw_string_ostream OS(Frame);
+    unsigned Slot = 0;
+    do {
+      encodeULEB128(Packs[I].size(), OS);
+      OS << Packs[I];
+      Grouped.Of.emplace_back(Grouped.Frames.size(), Slot++);
+      ++I;
+    } while (I != Packs.size() && Slot != Options.PacksPerFrame &&
+             Frame.size() + Packs[I].size() <= Options.MaxFrameInput);
+    Grouped.Frames.push_back(std::move(Frame));
+  }
+  return Grouped;
+}
+
 /// A dictionary trained on Samples, of at most Capacity bytes.
 static std::string trainDictionary(ArrayRef<std::string> Samples,
                                    size_t Capacity) {
@@ -152,6 +179,10 @@ static Error writeFile(StringRef Directory, StringRef Name, StringRef Bytes) {
 
 Error publishCorpus(const CorpusIndex &Index, StringRef Output,
                     const PublishOptions &Options) {
+  if (Options.PacksPerFrame == 0 ||
+      Options.PacksPerFrame > (1u << PackLocation::SlotBits))
+    return createStringError("packs per frame must be from 1 to " +
+                             Twine(1u << PackLocation::SlotBits));
   if (std::error_code EC = sys::fs::create_directories(Output))
     return createFileError(Output, EC);
   parallel::strategy = hardware_concurrency(Options.Jobs);
@@ -196,8 +227,8 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
   if (Error E = EncodeAll(Sampled, [&](size_t, EncodedModule Module) {
         for (std::string &Features : Module.Features)
           FeatureSamples.push_back(std::move(Features));
-        for (std::string &Pack : Module.Packs)
-          PackSamples.push_back(std::move(Pack));
+        for (std::string &Frame : groupPacks(Module.Packs, Options).Frames)
+          PackSamples.push_back(std::move(Frame));
         return Error::success();
       }))
     return E;
@@ -232,9 +263,9 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
     return E;
   support::endian::Writer IndexW(*IndexOS, llvm::endianness::little);
   uint64_t FeaturesSize = 0, PacksSize = 0;
-  auto WriteEntry = [&] {
+  auto WriteEntry = [&](uint64_t Pack) {
     IndexW.write<uint64_t>(FeaturesSize);
-    IndexW.write<uint64_t>(PacksSize);
+    IndexW.write<uint64_t>(Pack);
   };
   if (Error E =
           EncodeAll(All, [&](size_t Entry, EncodedModule Module) -> Error {
@@ -245,29 +276,43 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
             Header.NumFunctions += Module.Packs.size();
             // Compressing is what takes long, so it is done in parallel too.
             size_t N = Module.Packs.size();
-            std::vector<std::optional<Expected<std::string>>> Frames(2 * N);
-            parallelFor(0, 2 * N, [&](size_t I) {
+            PackFrames Grouped = groupPacks(Module.Packs, Options);
+            size_t M = Grouped.Frames.size();
+            std::vector<std::optional<Expected<std::string>>> Frames(N + M);
+            parallelFor(0, N + M, [&](size_t I) {
               Frames[I].emplace(
                   I < N ? FeatureCompressor.compress(Module.Features[I])
-                        : PackCompressor.compress(Module.Packs[I - N]));
+                        : PackCompressor.compress(Grouped.Frames[I - N]));
             });
+            // Where each frame of packs is.
+            std::vector<uint64_t> FrameOffsets;
+            for (size_t I = 0; I != M; ++I) {
+              Expected<std::string> &Packs = *Frames[N + I];
+              if (!Packs)
+                return Packs.takeError();
+              FrameOffsets.push_back(PacksSize);
+              *PacksOS << *Packs;
+              PacksSize += Packs->size();
+            }
             for (size_t I = 0; I != N; ++I) {
               Expected<std::string> &Features = *Frames[I];
-              Expected<std::string> &Pack = *Frames[N + I];
               if (!Features)
                 return Features.takeError();
-              if (!Pack)
-                return Pack.takeError();
-              WriteEntry();
+              auto [Frame, Slot] = Grouped.Of[I];
+              uint64_t Size = (*Frames[N + Frame])->size();
+              if (!PackLocation::fits(FrameOffsets[Frame], Size, Slot))
+                return createStringError(
+                    Indexed.Path + ": the packs are too large to publish");
+              WriteEntry(PackLocation::encode(FrameOffsets[Frame], Size, Slot));
               *FeaturesOS << *Features;
-              *PacksOS << *Pack;
               FeaturesSize += Features->size();
-              PacksSize += Pack->size();
             }
             return Error::success();
           }))
     return E;
-  WriteEntry();
+  if (!PackLocation::fits(PacksSize, 0, 0))
+    return createStringError("the packs are too large to publish");
+  WriteEntry(PackLocation::encode(PacksSize, 0, 0));
   if (Header.NumFunctions != Index.getNumFunctions())
     return createStringError("the index's functions differ from its modules'");
   for (std::optional<raw_fd_ostream> *OS : {&FeaturesOS, &PacksOS, &IndexOS}) {

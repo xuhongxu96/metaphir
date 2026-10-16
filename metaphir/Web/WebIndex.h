@@ -24,12 +24,14 @@ namespace metaphir {
 //   keys.bin        the posting key records, sorted (see PostingRecord)
 //   lists.bin       the posting lists
 //   functions.idx   per function, and once more past the last, where its
-//                   features and pack start (two 64-bit little-endian
-//                   offsets)
+//                   features start, and where its pack is (see
+//                   PackLocation): two 64-bit little-endian words
 //   features.bin    per function, its features (see writeFunctionFeatures),
 //                   a zstd frame with the header's feature dictionary
-//   packs.bin       per function, its pack (see FunctionPack), a zstd frame
-//                   with the header's pack dictionary
+//   packs.bin       the packs (see FunctionPack) of up to a few consecutive
+//                   functions of a module, each after its size (ULEB128),
+//                   in a zstd frame with the header's pack dictionary: they
+//                   share much, as the declarations they use
 //   manifest.json   the build and the sizes of the files, for the site
 //
 // Functions are numbered as in the corpus index the files are published
@@ -53,6 +55,30 @@ struct ByteRange {
   uint64_t getEnd() const { return Offset + Size; }
   bool operator==(const ByteRange &Other) const {
     return File == Other.File && Offset == Other.Offset && Size == Other.Size;
+  }
+};
+
+/// Where a function's pack is: the frame of packs.bin it is in, and which
+/// of the frame's packs it is.
+struct PackLocation {
+  ByteRange Frame;
+  unsigned Slot = 0;
+
+  /// The word of functions.idx that holds it: the frame's offset, its size
+  /// and the slot, in the bits below. None of them may be larger.
+  static constexpr unsigned OffsetBits = 36, SizeBits = 24, SlotBits = 4;
+  static bool fits(uint64_t Offset, uint64_t Size, unsigned Slot) {
+    return Offset >> OffsetBits == 0 && Size >> SizeBits == 0 &&
+           Slot >> SlotBits == 0;
+  }
+  static uint64_t encode(uint64_t Offset, uint64_t Size, unsigned Slot) {
+    return Offset << (SizeBits + SlotBits) | Size << SlotBits | Slot;
+  }
+  static PackLocation decode(uint64_t Word) {
+    uint64_t Size = Word >> SlotBits & ((uint64_t(1) << SizeBits) - 1);
+    return PackLocation{
+        ByteRange{WebFile::Packs, Word >> (SizeBits + SlotBits), Size},
+        unsigned(Word & ((1u << SlotBits) - 1))};
   }
 };
 

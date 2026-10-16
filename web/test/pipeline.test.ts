@@ -103,3 +103,11 @@ test("stops after running to the end was asked", async () => {
   await done;
   assert.ok(corpus.matched.length <= 3, `${corpus.matched.length} matched`);
 });
+
+test("reads a frame once, and matches each function whose pack it holds", async () => {
+  const corpus = new FakeCorpus(7, 3);
+  await run(corpus, new QueryControl());
+  assert.deepEqual([...corpus.matched].sort(), [0, 1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(corpus.slots, [0, 1, 2, 0, 1, 2, 0]);
+  assert.deepEqual(corpus.read, [0, 1, 2]);
+});

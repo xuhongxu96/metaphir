@@ -16,6 +16,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/ModuleSlotTracker.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -144,7 +145,7 @@ WebQuery::findCandidates(const ByteCache &Cache) {
   return mergeRanges(std::move(Ranges));
 }
 
-Expected<std::pair<ByteRange, ByteRange>>
+Expected<std::pair<ByteRange, PackLocation>>
 WebQuery::locate(size_t Position, const ByteCache &Cache) const {
   uint32_t Function = Candidates[Position];
   Expected<StringRef> Entries = Cache.read(
@@ -154,21 +155,20 @@ WebQuery::locate(size_t Position, const ByteCache &Cache) const {
     return Entries.takeError();
   const char *Entry = Entries->data();
   uint64_t Features = support::endian::read64le(Entry);
-  uint64_t Pack = support::endian::read64le(Entry + 8);
+  PackLocation Pack =
+      PackLocation::decode(support::endian::read64le(Entry + 8));
   uint64_t FeaturesEnd = support::endian::read64le(Entry + 16);
-  uint64_t PackEnd = support::endian::read64le(Entry + 24);
-  if (FeaturesEnd < Features || PackEnd < Pack)
+  if (FeaturesEnd < Features)
     return createStringError("function index out of order");
   return std::make_pair(
-      ByteRange{WebFile::Features, Features, FeaturesEnd - Features},
-      ByteRange{WebFile::Packs, Pack, PackEnd - Pack});
+      ByteRange{WebFile::Features, Features, FeaturesEnd - Features}, Pack);
 }
 
 Expected<std::vector<ByteRange>>
 WebQuery::findFeatures(const ByteCache &Cache) {
   std::vector<ByteRange> Ranges;
   for (size_t Position = 0; Position != Candidates.size(); ++Position) {
-    Expected<std::pair<ByteRange, ByteRange>> Location =
+    Expected<std::pair<ByteRange, PackLocation>> Location =
         locate(Position, Cache);
     if (!Location)
       return Location.takeError();
@@ -182,7 +182,7 @@ WebQuery::filterCandidates(const ByteCache &Cache) {
   Matchable.clear();
   Packs.clear();
   for (size_t Position = 0; Position != Candidates.size(); ++Position) {
-    Expected<std::pair<ByteRange, ByteRange>> Location =
+    Expected<std::pair<ByteRange, PackLocation>> Location =
         locate(Position, Cache);
     if (!Location)
       return Location.takeError();
@@ -201,10 +201,13 @@ WebQuery::filterCandidates(const ByteCache &Cache) {
     Matchable.push_back(Candidates[Position]);
     Packs.push_back(Location->second);
   }
-  return mergeRanges(Packs);
+  std::vector<ByteRange> Frames;
+  for (const PackLocation &Pack : Packs)
+    Frames.push_back(Pack.Frame);
+  return mergeRanges(std::move(Frames));
 }
 
-ByteRange WebQuery::getPackRange(uint32_t Function) const {
+PackLocation WebQuery::getPackLocation(uint32_t Function) const {
   auto It = llvm::lower_bound(Matchable, Function);
   assert(It != Matchable.end() && *It == Function &&
          "not a matchable function");
@@ -226,23 +229,37 @@ private:
 };
 } // namespace
 
-/// The function whose pack is Frame, read into Context.
+/// The function whose pack is the one at Slot of Frame, read into Context.
 static Expected<std::unique_ptr<UnpackedFunction>>
-unpack(const WebIndex &Index, StringRef Frame, LLVMContext &Context) {
+unpack(const WebIndex &Index, StringRef Frame, unsigned Slot,
+       LLVMContext &Context) {
   Expected<std::string> Bytes = Index.getPackDictionary().decompress(Frame);
   if (!Bytes)
     return Bytes.takeError();
-  Expected<FunctionPack> Pack = FunctionPack::decode(*Bytes);
+  // The frame's packs, each after its size.
+  DataExtractor Data(*Bytes, /*IsLittleEndian=*/true);
+  DataExtractor::Cursor C(0);
+  StringRef Packed;
+  for (unsigned I = 0; I <= Slot && C; ++I) {
+    uint64_t Size = Data.getULEB128(C);
+    if (C && Size > Bytes->size() - C.tell())
+      return createStringError("pack frame: a pack past the end");
+    Packed = Data.getBytes(C, Size);
+  }
+  if (!C)
+    return createStringError("pack frame: no pack " + Twine(Slot) + ": " +
+                             toString(C.takeError()));
+  Expected<FunctionPack> Pack = FunctionPack::decode(Packed);
   if (!Pack)
     return Pack.takeError();
   return UnpackedFunction::read(*Pack, Context);
 }
 
-Expected<PrintedFunction> WebQuery::printFunction(const WebIndex &Index,
-                                                  StringRef Frame) {
+Expected<PrintedFunction>
+WebQuery::printFunction(const WebIndex &Index, StringRef Frame, unsigned Slot) {
   LLVMContext Context;
   Expected<std::unique_ptr<UnpackedFunction>> Unpacked =
-      unpack(Index, Frame, Context);
+      unpack(Index, Frame, Slot, Context);
   if (!Unpacked)
     return Unpacked.takeError();
   PrintedFunction Printed;
@@ -256,8 +273,8 @@ ArrayRef<PatternNote> WebQuery::getWarnings() const {
   return Pattern->Warnings;
 }
 
-Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
-                      bool PrintInstructions,
+Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned Slot,
+                      raw_ostream &Out, bool PrintInstructions,
                       std::vector<RejectingConstraint> *Rejecting,
                       bool *HadStructuralMatch) {
   const WebModule &Module = Index.getModuleOf(Function);
@@ -268,7 +285,7 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, raw_ostream &Out,
   };
   LLVMContext Context;
   Expected<std::unique_ptr<UnpackedFunction>> Unpacked =
-      unpack(Index, Frame, Context);
+      unpack(Index, Frame, Slot, Context);
   if (!Unpacked)
     return Located(Unpacked.takeError());
   const llvm::Function &F = (*Unpacked)->getFunction();

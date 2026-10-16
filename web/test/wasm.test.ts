@@ -127,7 +127,7 @@ function direct(session: Session): Coordinator & Matcher {
     add: async (file, offset, bytes) => session.add(file, offset, bytes),
     matchable: async () => session.matchable(),
     numCandidates: async () => session.numCandidates(),
-    match: async (fn, frame) => session.match(fn, frame),
+    match: async (fn, frame, slot) => session.match(fn, frame, slot),
   };
 }
 
@@ -169,9 +169,12 @@ test("finds each instruction's line in printed IR", async () => {
   const packs = readFileSync(join(work, "published", "packs.bin"));
   const functions = index.length / 16 - 1;
   for (let fn = 0; fn < functions; fn++) {
-    const start = Number(index.readBigUInt64LE(fn * 16 + 8));
-    const end = Number(index.readBigUInt64LE(fn * 16 + 24));
-    const printed = session.printFunction(packs.subarray(start, end));
+    // Where its pack is: the frame's offset, size and the slot in it (see
+    // PackLocation).
+    const word = index.readBigUInt64LE(fn * 16 + 8);
+    const start = Number(word >> 28n);
+    const size = Number((word >> 4n) & 0xffffffn);
+    const printed = session.printFunction(packs.subarray(start, start + size), Number(word & 15n));
     assert.ok(!("error" in printed));
     // As your IR's instructions are found, from the text alone.
     assert.deepEqual(instructionLines(printed.ir), printed.lines);
@@ -182,9 +185,9 @@ test("answers with errors without a header or a pattern", () => {
   const broken = new module.Session(new Uint8Array([1, 2, 3]));
   assert.notEqual(broken.error(), "");
   assert.ok("error" in broken.compile("%r = add i32 ?x, ?y\n", "p.mpir"));
-  assert.ok("error" in broken.printFunction(new Uint8Array()));
+  assert.ok("error" in broken.printFunction(new Uint8Array(), 0));
   assert.ok("error" in broken.findLists());
-  assert.ok("error" in broken.match(0, new Uint8Array()));
+  assert.ok("error" in broken.match(0, new Uint8Array(), 0));
   assert.equal(broken.numCandidates(), 0);
   assert.deepEqual(broken.matchable(), []);
   broken.delete();
