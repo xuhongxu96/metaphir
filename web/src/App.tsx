@@ -1,29 +1,50 @@
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
+import {
+  Group,
+  Panel,
+  Separator,
+  useDefaultLayout,
+} from "react-resizable-panels";
 import { useColorScheme, type SchemePreference } from "./colorScheme.ts";
 import {
   EDITOR_OPTIONS,
   selectRange,
   useHoveredLine,
   useLineDecorations,
+  useLinkOpener,
   useMarkers,
   useModifierLinks,
   type CodeEditor,
 } from "./editor.ts";
 import { inFile, parseDiagnostics } from "./diagnostics.ts";
-import { PublishedCorpus, rejectionKey, type Match, type Progress } from "./engine.ts";
+import {
+  PublishedCorpus,
+  rejectionKey,
+  type Match,
+  type Progress,
+  type Rejection,
+} from "./engine.ts";
 import { IRPane } from "./IRPane.tsx";
-import { definitionLink, definitionsIn, type DefinitionFile } from "./mpirDefinitions.ts";
+import {
+  definitionLink,
+  definitionsIn,
+  type DefinitionFile,
+} from "./mpirDefinitions.ts";
 import type { Definition } from "./irDefinition.ts";
 import { LargeSearchDialog } from "./LargeSearchDialog.tsx";
 import { MatchesPane } from "./MatchesPane.tsx";
-import { linkLines, patternLink, type Link, type NavLink } from "./navigation.ts";
+import {
+  linkLines,
+  patternLink,
+  type Link,
+  type NavLink,
+} from "./navigation.ts";
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
 import { patternHash, readPatternHash } from "./share/patternLink.ts";
-import { describe, statusDiagnostics } from "./status.ts";
+import { describe, linkedRejection, statusDiagnostics } from "./status.ts";
 import { StatusChip } from "./StatusChip.tsx";
 import { CopyButton } from "./CopyButton.tsx";
 import { useResults } from "./results.ts";
@@ -40,7 +61,10 @@ const EXAMPLES: Record<string, string> = Object.fromEntries(
       eager: true,
     }) as Record<string, string>,
   )
-    .map(([path, text]) => [path.slice(path.lastIndexOf("/") + 1, -".mpir".length), text])
+    .map(([path, text]) => [
+      path.slice(path.lastIndexOf("/") + 1, -".mpir".length),
+      text,
+    ])
     .sort(([a], [b]) => (a < b ? -1 : 1)),
 );
 // The standard library the patterns use, shown beside the pattern.
@@ -64,7 +88,6 @@ function savedIR(): string {
 }
 type PatternTab = "pattern" | "stdlib";
 const STDLIB_DEFINITIONS = definitionsIn(STDLIB);
-
 
 export function App() {
   const { preference, setPreference, dark } = useColorScheme();
@@ -95,8 +118,16 @@ export function App() {
     ir: useResults({ text: "Ready" }),
   };
   const shown = results[source];
-  const { matches, selected, setSelected, misses, status, matchedPattern, diagnostics, running } =
-    shown;
+  const {
+    matches,
+    selected,
+    setSelected,
+    misses,
+    status,
+    matchedPattern,
+    diagnostics,
+    running,
+  } = shown;
   // The published query running, to pause, continue or stop.
   const [control, setControl] = useState<QueryControl>();
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
@@ -126,29 +157,43 @@ export function App() {
   const patternLinked = pattern === matchedPattern;
   // The pattern's errors, and the warnings of the run, while it is as run.
   const notes = useMemo(() => statusDiagnostics(status), [status]);
+  const showRejection = (r: Rejection) => {
+    shown.setTab("rejected");
+    // A new object each time, brought into view even if the same.
+    setRejectionFocus({ key: rejectionKey(r) });
+  };
+  // The links of the notes' hovers in the pattern.
+  useLinkOpener((path) => {
+    const r = linkedRejection(status.rejections ?? [], path);
+    if (r) showRejection(r);
+  });
   useMarkers(
     patternEditor,
-    useMemo(
-      () => {
-        const own = diagnostics.filter((d) => inFile(d, "pattern.mpir"));
-        return patternLinked ? [...own, ...notes] : own;
-      },
-      [patternLinked, diagnostics, notes],
-    ),
+    useMemo(() => {
+      const own = diagnostics.filter((d) => inFile(d, "pattern.mpir"));
+      return patternLinked ? [...own, ...notes] : own;
+    }, [patternLinked, diagnostics, notes]),
   );
   const patternLines = useMemo(
-    () =>
-      patternLinked ? linkLines(links, "patternLine") : [],
+    () => (patternLinked ? linkLines(links, "patternLine") : []),
     [links, patternLinked],
   );
   const hoveredPatternLines = useMemo(
     () => linkLines(hovered, "patternLine"),
     [hovered],
   );
-  useLineDecorations(patternEditor, patternLines, hoveredPatternLines, "matched-line", false);
+  useLineDecorations(
+    patternEditor,
+    patternLines,
+    hoveredPatternLines,
+    "matched-line",
+    false,
+  );
   // Hovering a linked line in either editor lights up both ends.
   useHoveredLine(patternEditor, (line) =>
-    setHovered(patternLinked && line ? links.filter((l) => l.patternLine === line) : []),
+    setHovered(
+      patternLinked && line ? links.filter((l) => l.patternLine === line) : [],
+    ),
   );
   const onIRHover = (line: number | undefined) =>
     setHovered(irCurrent && line ? links.filter((l) => l.irLine === line) : []);
@@ -172,13 +217,21 @@ export function App() {
       const definition = definitionAt(text, column);
       if (definition) return definition;
       if (!patternLinked || !irCurrent || !selected || !ir) return undefined;
-      const toIR = patternLink({ line, column, text, links, bindings: selected.bindings, ir: ir.text });
+      const toIR = patternLink({
+        line,
+        column,
+        text,
+        links,
+        bindings: selected.bindings,
+        ir: ir.text,
+      });
       return toIR && { ...toIR, file: "ir" };
     },
     // A new object each time, gone to even if the same.
     (to, { file }) => {
       if (file === "ir") setIRTarget({ ...to });
-      else if (file === "pattern") patternEditor && selectRange(patternEditor, to);
+      else if (file === "pattern")
+        patternEditor && selectRange(patternEditor, to);
       else {
         setPatternTab("stdlib");
         setStdlibTarget({ ...to });
@@ -187,7 +240,8 @@ export function App() {
   );
   useModifierLinks(
     stdlibEditor,
-    (_, column, text) => definitionLink(text, column, [["stdlib", STDLIB_DEFINITIONS]]),
+    (_, column, text) =>
+      definitionLink(text, column, [["stdlib", STDLIB_DEFINITIONS]]),
     (to) => setStdlibTarget({ ...to }),
   );
   // The library's editor is laid out once its tab is shown.
@@ -212,12 +266,14 @@ export function App() {
           ],
         });
       },
-      (error: Error) => results.published.setStatus({ text: error.message, error: true }),
+      (error: Error) =>
+        results.published.setStatus({ text: error.message, error: true }),
     );
   }, []);
 
   const irDiagnostics = useMemo(
-    () => (irLinked ? diagnostics.filter((d) => d.file && inFile(d, IR_FILE)) : []),
+    () =>
+      irLinked ? diagnostics.filter((d) => d.file && inFile(d, IR_FILE)) : [],
     [irLinked, diagnostics],
   );
   const canRun =
@@ -236,7 +292,9 @@ export function App() {
       setDiagnostics,
       setRunning,
     } = into;
-    void patternHash(pattern).then((hash) => history.replaceState(null, "", hash));
+    void patternHash(pattern).then((hash) =>
+      history.replaceState(null, "", hash),
+    );
     setMatchedPattern(pattern);
     setRunning(true);
     setMatches([]);
@@ -252,7 +310,9 @@ export function App() {
       const arrived = pending;
       pending = [];
       if (arrived.length)
-        setMatches((shown) => [...shown, ...arrived].sort((a, b) => a.key - b.key));
+        setMatches((shown) =>
+          [...shown, ...arrived].sort((a, b) => a.key - b.key),
+        );
     };
     const onMatches = (found: Match[]) => {
       pending.push(...found);
@@ -269,7 +329,10 @@ export function App() {
         setStatus({
           text: "done",
           details: [
-            ["functions", `${matched.toLocaleString()} of ${result.functions.length.toLocaleString()} matched`],
+            [
+              "functions",
+              `${matched.toLocaleString()} of ${result.functions.length.toLocaleString()} matched`,
+            ],
           ],
           matches: result.matches.length,
           warnings: parseDiagnostics(result.messages)
@@ -350,7 +413,12 @@ export function App() {
             Your IR
           </button>
         </div>
-        <button id="run" className="primary" disabled={!canRun} onClick={() => void run()}>
+        <button
+          id="run"
+          className="primary"
+          disabled={!canRun}
+          onClick={() => void run()}
+        >
           Match
         </button>
         <CopyButton
@@ -363,11 +431,7 @@ export function App() {
         <StatusChip
           status={status}
           control={yourIR ? undefined : control}
-          onRejection={(r) => {
-            shown.setTab("rejected");
-            // A new object each time, brought into view even if the same.
-            setRejectionFocus({ key: rejectionKey(r) });
-          }}
+          onRejection={showRejection}
         />
         <label className="picker">
           theme
@@ -383,7 +447,10 @@ export function App() {
         <ProgressBar status={status} />
       </header>
       {!yourIR && control && status.pause?.kind === "candidates" && (
-        <LargeSearchDialog candidates={status.pause.candidates} control={control} />
+        <LargeSearchDialog
+          candidates={status.pause.candidates}
+          control={control}
+        />
       )}
       <main className="panes">
         <Group

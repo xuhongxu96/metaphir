@@ -3,7 +3,7 @@
 
 import type { OnMount } from "@monaco-editor/react";
 import { useEffect, useMemo, useRef } from "react";
-import type { Diagnostic } from "./diagnostics.ts";
+import { PAGE_SCHEME, type Diagnostic } from "./diagnostics.ts";
 import type { Definition } from "./irDefinition.ts";
 import { monaco } from "./monaco.ts";
 import { irLink, linkLines, type Link, type NavLink } from "./navigation.ts";
@@ -38,7 +38,10 @@ export function useLineDecorations(
   reveal: boolean,
 ) {
   // Each editor has its own collection: a new run can mount a new one.
-  const collection = useMemo(() => editor?.createDecorationsCollection(), [editor]);
+  const collection = useMemo(
+    () => editor?.createDecorationsCollection(),
+    [editor],
+  );
   useEffect(() => {
     if (!collection) return;
     const hover = new Set(hovered);
@@ -57,7 +60,8 @@ export function useLineDecorations(
     );
   }, [collection, lines, hovered, className]);
   useEffect(() => {
-    if (editor && reveal && lines.length) editor.revealLineInCenterIfOutsideViewport(Math.min(...lines));
+    if (editor && reveal && lines.length)
+      editor.revealLineInCenterIfOutsideViewport(Math.min(...lines));
   }, [editor, lines, reveal]);
 }
 
@@ -77,7 +81,10 @@ export function useModifierLinks<L extends NavLink>(
 ) {
   const callbacks = useRef({ resolve, go });
   callbacks.current = { resolve, go };
-  const collection = useMemo(() => editor?.createDecorationsCollection(), [editor]);
+  const collection = useMemo(
+    () => editor?.createDecorationsCollection(),
+    [editor],
+  );
   useEffect(() => {
     if (!editor || !collection) return;
     let mouse: { lineNumber: number; column: number } | undefined;
@@ -85,7 +92,11 @@ export function useModifierLinks<L extends NavLink>(
       const model = editor.getModel();
       if (!mouse || !model) return undefined;
       const text = model.getLineContent(mouse.lineNumber);
-      const link = callbacks.current.resolve(mouse.lineNumber, mouse.column, text);
+      const link = callbacks.current.resolve(
+        mouse.lineNumber,
+        mouse.column,
+        text,
+      );
       return link && { line: mouse.lineNumber, link };
     };
     const underline = (held: boolean) => {
@@ -168,7 +179,10 @@ const SEVERITIES = {
 
 /** Shows diagnostics as markers on editor: a squiggle under the word each
  * points at, with its message on hover. */
-export function useMarkers(editor: CodeEditor | undefined, diagnostics: Diagnostic[]) {
+export function useMarkers(
+  editor: CodeEditor | undefined,
+  diagnostics: Diagnostic[],
+) {
   useEffect(() => {
     const model = editor?.getModel();
     if (!model) return;
@@ -178,6 +192,10 @@ export function useMarkers(editor: CodeEditor | undefined, diagnostics: Diagnost
       diagnostics.map((d) => ({
         severity: SEVERITIES[d.severity],
         message: d.message,
+        code: d.link && {
+          value: d.link.text,
+          target: monaco.Uri.parse(d.link.target),
+        },
         startLineNumber: d.line,
         startColumn: d.column,
         endLineNumber: d.line,
@@ -188,9 +206,29 @@ export function useMarkers(editor: CodeEditor | undefined, diagnostics: Diagnost
   }, [editor, diagnostics]);
 }
 
+/** Opens the page's own links (PAGE_SCHEME) with open, given their path. */
+export function useLinkOpener(open: (path: string) => void) {
+  const current = useRef(open);
+  current.current = open;
+  useEffect(() => {
+    const opener = monaco.editor.registerLinkOpener({
+      open(uri) {
+        if (uri.scheme !== PAGE_SCHEME) return false;
+        current.current(uri.path);
+        return true;
+      },
+    });
+    return () => opener.dispose();
+  }, []);
+}
+
 /** The column after the token at line and column of model, such as a meta
  * variable '?a' or a value '%r'; Monaco's words leave out their sigils. */
-function tokenEnd(model: monaco.editor.ITextModel, line: number, column: number): number {
+function tokenEnd(
+  model: monaco.editor.ITextModel,
+  line: number,
+  column: number,
+): number {
   if (line < 1 || line > model.getLineCount()) return column;
   const text = model.getLineContent(line);
   const token = /^[\w?%@.$:-]+/.exec(text.slice(column - 1));
@@ -199,14 +237,22 @@ function tokenEnd(model: monaco.editor.ITextModel, line: number, column: number)
 
 /** Selects to in editor, in view, and focuses it. */
 export function selectRange(editor: CodeEditor, to: Definition) {
-  const range = new monaco.Range(to.line, to.column, to.line, to.column + to.length);
+  const range = new monaco.Range(
+    to.line,
+    to.column,
+    to.line,
+    to.column + to.length,
+  );
   editor.setSelection(range);
   editor.revealRangeInCenterIfOutsideViewport(range);
   editor.focus();
 }
 
 /** Selects target in editor each time it is set anew (a new object). */
-export function useJumpTarget(editor: CodeEditor | undefined, target: Definition | undefined) {
+export function useJumpTarget(
+  editor: CodeEditor | undefined,
+  target: Definition | undefined,
+) {
   useEffect(() => {
     if (editor && target) selectRange(editor, target);
     // Only a new target is gone to, not the same once the editor changes.
@@ -227,7 +273,10 @@ export function useIRLinks(
   linked: boolean,
   onHover: (line: number | undefined) => void,
 ): number[] {
-  const lines = useMemo(() => (linked ? linkLines(links, "irLine") : []), [links, linked]);
+  const lines = useMemo(
+    () => (linked ? linkLines(links, "irLine") : []),
+    [links, linked],
+  );
   const hoveredLines = useMemo(
     () => (linked ? linkLines(hovered, "irLine") : []),
     [hovered, linked],
@@ -236,7 +285,8 @@ export function useIRLinks(
   useHoveredLine(editor, onHover);
   useModifierLinks(
     editor,
-    (_, column, line) => (text !== undefined ? irLink({ column, text: line, ir: text }) : undefined),
+    (_, column, line) =>
+      text !== undefined ? irLink({ column, text: line, ir: text }) : undefined,
     (to) => editor && selectRange(editor, to),
   );
   return lines;
