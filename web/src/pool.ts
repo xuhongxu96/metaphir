@@ -35,7 +35,7 @@ class WorkerSession implements Coordinator, Matcher {
     const id = this.next++;
     return new Promise<T>((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.worker.postMessage({ id, method, args });
+      this.worker.postMessage({ id, method, args: args.map(compact) });
     });
   }
 
@@ -51,6 +51,15 @@ class WorkerSession implements Coordinator, Matcher {
   moduleOf = (fn: number) => this.call<string>("moduleOf", fn);
   printFunction = (frame: Uint8Array, slot: number) =>
     this.call<PrintedFunction | { error: string }>("printFunction", frame, slot);
+}
+
+/**
+ * Bytes to post, as only the bytes: posting a view, such as a pack in a
+ * block read with its neighbors, copies all of the buffer it views, which
+ * can be megabytes for a few kilobytes.
+ */
+function compact(arg: unknown): unknown {
+  return arg instanceof Uint8Array && arg.byteLength !== arg.buffer.byteLength ? arg.slice() : arg;
 }
 
 export class SessionPool {
