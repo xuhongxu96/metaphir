@@ -211,19 +211,14 @@ raw_ostream &operator<<(raw_ostream &OS, const Instruction &I) {
   for (const InstructionFlag &F : I.getFlags())
     OS << ' ' << F;
 
-  if (I.isComposite()) {
-    if (Ops.empty())
-      return OS;
-    OS << ' ' << Ops[0];
-    for (const MatcherOperand &Op : Ops.drop_front()) {
-      OS << ", ";
-      printWithoutType(OS, Op);
-    }
+  // A composite matcher's use is written as its archetype's instructions.
+  Instruction::OperandSyntax Syntax =
+      I.isComposite() ? I.getCompositeMatcher()->getSyntax()
+                      : Instruction::getOperandSyntax(I.getInstructionID());
+  if (Ops.empty() && Syntax != Instruction::OperandSyntax::Custom)
     return OS;
-  }
-
   using ID = Instruction::InstructionID;
-  switch (Instruction::getOperandSyntax(I.getInstructionID())) {
+  switch (Syntax) {
   case Instruction::OperandSyntax::Binary:
     // The second operand shares the first's type, which is written once.
     OS << ' ' << Ops[0] << ", ";

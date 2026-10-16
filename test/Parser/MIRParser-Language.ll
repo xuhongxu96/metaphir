@@ -8,6 +8,7 @@
 ; RUN: not %metaphir-parse %t/builtin-metaflag-name.ll 2>&1 | FileCheck %s --check-prefix=BUILTIN-METAFLAG
 ; RUN: not %metaphir-parse %t/redefine-matcher.ll 2>&1 | FileCheck %s --check-prefix=REDEF-MATCHER
 ; RUN: %metaphir-parse %t/multiline-bodies.ll | FileCheck %s --check-prefix=MULTILINE
+; RUN: %metaphir-parse %t/composite-print.ll | FileCheck %s --check-prefix=COMPOSITE-PRINT
 ; RUN: %metaphir-parse %t/minus-after-variable.ll | FileCheck %s --check-prefix=MINUS
 ; RUN: not %metaphir-parse %t/hyphen-in-pattern.ll 2>&1 | FileCheck %s --check-prefix=HYPHEN
 ; RUN: not %metaphir-parse %t/hyphen-in-capture.ll 2>&1 | FileCheck %s --check-prefix=HYPHEN-CAPTURE
@@ -148,3 +149,12 @@ add i32 ?x, ?y
 add i?bits ?x, ?y
 ;; ?bits && ult(?x, true)
 ; COERCIBLE: constraint (&& ?bits (ult ?x true))
+
+; A composite matcher's use prints as its archetype's instructions do: a cast
+; with its destination type.
+;--- composite-print.ll
+%trunc = trunc i?big ?x to i?small
+%ext = zextOrSext:?anch i?small %trunc to i?big
+%sum = addLike nsw i?big %ext, 1
+; COMPOSITE-PRINT:      %ext = zextOrSext:?anch i?small %trunc to i?big
+; COMPOSITE-PRINT-NEXT: %sum = addLike nsw i?big %ext, 1
