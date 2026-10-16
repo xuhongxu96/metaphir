@@ -189,6 +189,7 @@ Sort Constraint::getArgumentType(OperatorID ID, unsigned Index) {
   case O_Subtract:
   case O_Multiply:
   case O_Negate:
+  case O_BitEqual:
   case O_SLT:
   case O_ULT:
   case O_SLE:

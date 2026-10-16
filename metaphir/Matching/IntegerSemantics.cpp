@@ -23,6 +23,10 @@ std::pair<APSInt, APSInt> widen(const APSInt &Left, const APSInt &Right,
   return {extend(Left, Width, IsUnsigned), extend(Right, Width, IsUnsigned)};
 }
 
+APSInt readForComparison(const APSInt &Value, bool Modular, bool IsUnsigned) {
+  return Modular ? APSInt(Value, IsUnsigned) : Value;
+}
+
 APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth) {
   return Value.extOrTrunc(BitWidth);
 }

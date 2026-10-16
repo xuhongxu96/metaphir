@@ -34,6 +34,10 @@ APSInt castToBitWidth(const APSInt &Value, unsigned BitWidth);
 /// An integer constraint value.
 ConstraintValue integerResult(APInt Value, bool IsUnsigned);
 
+/// Value read as a comparison with the signedness of IsUnsigned reads it: a
+/// bit pattern (Modular) as signed or unsigned, a number as itself.
+APSInt readForComparison(const APSInt &Value, bool Modular, bool IsUnsigned);
+
 } // namespace detail
 } // namespace metaphir
 } // namespace llvm

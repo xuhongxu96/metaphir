@@ -94,6 +94,30 @@ TEST_F(ConstraintInterpreterTest, EvaluatesWideIntegersExactly) {
             -128);
 }
 
+TEST_F(ConstraintInterpreterTest, ReadsBitWidthResultsAsLLVMDoes) {
+  auto withWidth = [&](StringRef Name, int64_t L, int64_t R, int64_t W) {
+    return operation(Constraint::Call, Name,
+                     {integer(L), integer(R), integer(W)});
+  };
+  // '==' compares values, and reads a W-bit result as signed.
+  EXPECT_TRUE(evaluateBoolean(
+      *binary("==", withWidth("add", 127, 1, 8), integer(-128))));
+  EXPECT_FALSE(evaluateBoolean(
+      *binary("==", withWidth("add", 127, 1, 8), integer(128))));
+  EXPECT_TRUE(evaluateBoolean(*binary(
+      "==", operation(Constraint::Call, "neg", {integer(1), integer(8)}),
+      integer(-1))));
+  // The unsigned comparisons read it as unsigned, as 'icmp ult' does.
+  EXPECT_TRUE(
+      evaluateBoolean(*call("ugt", withWidth("add", 127, 1, 8), integer(127))));
+  EXPECT_TRUE(
+      evaluateBoolean(*call("slt", withWidth("add", 127, 1, 8), integer(0))));
+  // 'eq' compares the low W bits.
+  EXPECT_TRUE(evaluateBoolean(*withWidth("eq", -1, 255, 8)));
+  EXPECT_TRUE(evaluateBoolean(*withWidth("eq", 300, 44, 8)));
+  EXPECT_FALSE(evaluateBoolean(*withWidth("eq", 1, 257, 16)));
+}
+
 TEST_F(ConstraintInterpreterTest, EvaluatesBooleanAndEqualityOperators) {
   EXPECT_TRUE(evaluateBoolean(*binary("||", boolean(false), boolean(true))));
   EXPECT_FALSE(evaluateBoolean(*binary("&&", boolean(true), boolean(false))));
@@ -500,13 +524,15 @@ TEST_F(ConstraintInterpreterTest, ReportsEvaluationErrors) {
             "cannot evaluate constraint '?values[0]': array index is out of "
             "bounds");
 
-  OperatorConstraint *InvalidShift = operation(Constraint::Call, "lshr", {integer(1), integer(64), integer(64)});
+  OperatorConstraint *InvalidShift = operation(
+      Constraint::Call, "lshr", {integer(1), integer(64), integer(64)});
   Expected<ConstraintValue> ShiftResult =
       Interpreter.evaluate(*InvalidShift, State);
   ASSERT_FALSE(ShiftResult);
-  EXPECT_EQ(toString(ShiftResult.takeError()),
-            "cannot evaluate constraint '(lshr 1 64 64)': shift amount is out of "
-            "range");
+  EXPECT_EQ(
+      toString(ShiftResult.takeError()),
+      "cannot evaluate constraint '(lshr 1 64 64)': shift amount is out of "
+      "range");
 
   OperatorConstraint *NegativeShift = call("ashr", integer(1), integer(-1));
   Expected<ConstraintValue> NegativeShiftResult =

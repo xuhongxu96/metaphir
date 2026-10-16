@@ -20,6 +20,10 @@ namespace metaphir {
 /// Arithmetic and comparisons widen their operands until both values fit
 /// (see detail::widen), so no operation wraps unless an explicit bitwidth
 /// argument asks for modular arithmetic at that width.
+///  - The result of such an operator is a W-bit pattern, as an LLVM iW
+///    value is (isModular). It is read as signed, but by the unsigned
+///    comparisons, which read it as unsigned as 'icmp ult' does. 'eq'
+///    compares the low bits of any two integers.
 class ConstraintValue {
 public:
   enum ValueKind {
@@ -39,6 +43,8 @@ public:
 
   ValueKind getKind() const;
   const APSInt &getInteger() const;
+  /// Whether this integer is a bit pattern of its width (see above).
+  bool isModular() const { return Modular; }
   bool getBoolean() const;
   StringRef getString() const;
   const llvm::Type *getType() const;
@@ -49,6 +55,7 @@ public:
   const llvm::KnownBits &getKnownBits() const;
 
   static ConstraintValue getInteger(APSInt Value);
+  static ConstraintValue getModularInteger(APInt Bits);
   static ConstraintValue getBoolean(bool Value);
   static ConstraintValue getString(StringRef Value);
   static ConstraintValue getType(const llvm::Type *Value);
@@ -65,6 +72,7 @@ private:
                                llvm::KnownBits>;
 
   Storage Data;
+  bool Modular = false;
 
   explicit ConstraintValue(Storage Value) : Data(std::move(Value)) {}
 };

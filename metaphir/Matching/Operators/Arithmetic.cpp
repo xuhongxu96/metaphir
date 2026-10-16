@@ -80,6 +80,22 @@ AbstractValue OpEqual::abstract(const AbstractCall &Call) {
   return AbstractValue::unknown();
 }
 
+Expected<ConstraintValue> OpBitEqual::concrete(const ConcreteCall &Call) {
+  // 'icmp eq' on iW: both operands cast to W bits, then compared.
+  Expected<std::optional<unsigned>> BitWidth = optionalBitWidth(Call, 2);
+  if (!BitWidth)
+    return BitWidth.takeError();
+  Expected<APSInt> Left = requireInteger(Call.Operands[0], Call.Expression);
+  if (!Left)
+    return Left.takeError();
+  Expected<APSInt> Right = requireInteger(Call.Operands[1], Call.Expression);
+  if (!Right)
+    return Right.takeError();
+  return ConstraintValue::getBoolean(
+      static_cast<const APInt &>(castToBitWidth(*Left, **BitWidth)) ==
+      static_cast<const APInt &>(castToBitWidth(*Right, **BitWidth)));
+}
+
 Expected<ConstraintValue> OpNotEqual::concrete(const ConcreteCall &Call) {
   return evaluateEqual(Call, /*Negated=*/true);
 }
@@ -98,18 +114,17 @@ Expected<ConstraintValue> OpNegate::concrete(const ConcreteCall &Call) {
   Expected<APSInt> Operand = requireInteger(Call.Operands[0], Call.Expression);
   if (!Operand)
     return Operand.takeError();
-  if (*BitWidth) {
-    *Operand = castToBitWidth(*Operand, **BitWidth);
-    return integerResult(-static_cast<const APInt &>(*Operand),
-                         Operand->isUnsigned());
-  }
+  if (*BitWidth)
+    return ConstraintValue::getModularInteger(
+        -static_cast<const APInt &>(castToBitWidth(*Operand, **BitWidth)));
   APSInt Extended = extend(*Operand, Operand->getBitWidth() + 1, false);
   return integerResult(-static_cast<const APInt &>(Extended), false);
 }
 
 /// A binary integer operator or comparison: both operands are coerced to
 /// integers and widened so that the result is exact, unless an explicit bit
-/// width asks for modular arithmetic.
+/// width W asks for the LLVM instruction on iW: then the operands are cast to
+/// W bits and the result is a W-bit pattern.
 static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
                                                 const ConcreteCall &Call) {
   Expected<APSInt> Left = requireInteger(Call.Operands[0], Call.Expression);
@@ -122,11 +137,35 @@ static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
   if (!BitWidth)
     return BitWidth.takeError();
 
+  // A comparison reads a bit pattern as its signedness says.
+  switch (ID) {
+  case Constraint::O_SLT:
+  case Constraint::O_SLE:
+  case Constraint::O_SGT:
+  case Constraint::O_SGE:
+  case Constraint::O_ULT:
+  case Constraint::O_ULE:
+  case Constraint::O_UGT:
+  case Constraint::O_UGE: {
+    bool UnsignedComparison =
+        ID == Constraint::O_ULT || ID == Constraint::O_ULE ||
+        ID == Constraint::O_UGT || ID == Constraint::O_UGE;
+    *Left = readForComparison(*Left, Call.Operands[0].isModular(),
+                              UnsignedComparison);
+    *Right = readForComparison(*Right, Call.Operands[1].isModular(),
+                               UnsignedComparison);
+    break;
+  }
+  default:
+    break;
+  }
+
   bool Unsigned = Left->isUnsigned() && Right->isUnsigned();
   unsigned ExtraBits = 0;
+  APInt L, R;
   if (*BitWidth) {
-    *Left = castToBitWidth(*Left, **BitWidth);
-    *Right = castToBitWidth(*Right, **BitWidth);
+    L = castToBitWidth(*Left, **BitWidth);
+    R = castToBitWidth(*Right, **BitWidth);
   } else {
     switch (ID) {
     case Constraint::O_Multiply:
@@ -141,24 +180,29 @@ static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
     default:
       break;
     }
+    auto [LHS, RHS] = widen(*Left, *Right, ExtraBits);
+    L = LHS;
+    R = RHS;
   }
-  auto [LHS, RHS] = widen(*Left, *Right, ExtraBits);
-  const APInt &L = LHS;
-  const APInt &R = RHS;
+  // The result, a number or with a bit width a bit pattern.
+  auto Result = [&](APInt Value, bool IsUnsigned) {
+    return *BitWidth ? ConstraintValue::getModularInteger(std::move(Value))
+                     : integerResult(std::move(Value), IsUnsigned);
+  };
 
   switch (ID) {
   case Constraint::O_Add:
-    return integerResult(L + R, Unsigned);
+    return Result(L + R, Unsigned);
   case Constraint::O_Subtract:
-    return integerResult(L - R, false);
+    return Result(L - R, false);
   case Constraint::O_Multiply:
-    return integerResult(L * R, Unsigned);
+    return Result(L * R, Unsigned);
   case Constraint::O_And:
-    return integerResult(L & R, Unsigned);
+    return Result(L & R, Unsigned);
   case Constraint::O_Or:
-    return integerResult(L | R, Unsigned);
+    return Result(L | R, Unsigned);
   case Constraint::O_Xor:
-    return integerResult(L ^ R, Unsigned);
+    return Result(L ^ R, Unsigned);
   case Constraint::O_SDiv:
   case Constraint::O_UDiv:
   case Constraint::O_SRem:
@@ -167,12 +211,12 @@ static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
       return make_error<ConstraintEvaluationError>(Call.Expression,
                                                    "division by zero");
     if (ID == Constraint::O_SDiv)
-      return integerResult(L.sdiv(R), false);
+      return Result(L.sdiv(R), false);
     if (ID == Constraint::O_UDiv)
-      return integerResult(L.udiv(R), true);
+      return Result(L.udiv(R), true);
     if (ID == Constraint::O_SRem)
-      return integerResult(L.srem(R), false);
-    return integerResult(L.urem(R), true);
+      return Result(L.srem(R), false);
+    return Result(L.urem(R), true);
   case Constraint::O_SLT:
     return ConstraintValue::getBoolean(L.slt(R));
   case Constraint::O_ULT:
@@ -264,6 +308,8 @@ static Expected<ConstraintValue> evaluateShift(Constraint::OperatorID ID,
   default:
     llvm_unreachable("invalid shift operator");
   }
+  if (*BitWidth)
+    return ConstraintValue::getModularInteger(std::move(Result));
   return integerResult(std::move(Result),
                        ID != Constraint::O_Ashr && Value->isUnsigned());
 }

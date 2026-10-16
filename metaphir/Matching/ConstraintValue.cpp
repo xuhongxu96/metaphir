@@ -72,6 +72,12 @@ ConstraintValue ConstraintValue::getInteger(APSInt Value) {
   return ConstraintValue(std::move(Value));
 }
 
+ConstraintValue ConstraintValue::getModularInteger(APInt Bits) {
+  ConstraintValue Result(APSInt(std::move(Bits), /*isUnsigned=*/false));
+  Result.Modular = true;
+  return Result;
+}
+
 ConstraintValue ConstraintValue::getBoolean(bool Value) {
   return ConstraintValue(Value);
 }
