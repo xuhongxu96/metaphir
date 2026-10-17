@@ -1,7 +1,8 @@
 // Matches a pattern in the production build of the site, in headless
 // Chromium, against a published directory, and prints the matches as
 // metaphir-match --matches-only --packs does, then the page's status and
-// the IR of the first match. The query is then run again in the page, whose
+// how many of the first match's lines are highlighted in its IR. The query
+// is then run again in the page, whose
 // matched instructions must be highlighted again; then the page is reloaded
 // and the query run again, which must read nothing over the network, the
 // blocks read the first time being kept.
@@ -84,8 +85,17 @@ try {
     return describe();
   };
   const first = await run(false);
+  // The cells' text, without their copy buttons and lookalike badges.
   const rows = await page.$$eval("#matches tr", (rows) =>
-    rows.map((row) => [...row.children].map((cell) => cell.textContent).join("\t")),
+    rows.map((row) =>
+      [...row.children]
+        .map((cell) => {
+          const text = cell.cloneNode(true) as Element;
+          for (const extra of text.querySelectorAll(".cell-copy, .lookalike")) extra.remove();
+          return text.textContent;
+        })
+        .join("\t"),
+    ),
   );
   for (const row of rows) console.log(row);
   console.error(first);
