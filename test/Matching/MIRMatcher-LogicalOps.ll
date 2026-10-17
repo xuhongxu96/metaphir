@@ -77,7 +77,8 @@ define i1 @select_and(i32 %p, i32 %q, i1 %b) {
 ; VEC-NEXT: target 1: @select_and
 ; VEC-NEXT:   no match
 
-; The condition is the second operand: only the commuted form matches.
+; The compare is the select's true value, not its condition: only the
+; commuted form matches.
 define i1 @select_and_swapped(i32 %p, i32 %q, i1 %b) {
   %a = icmp eq i32 %p, %q
   %r = select i1 %b, i1 %a, i1 false

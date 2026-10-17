@@ -191,15 +191,17 @@ define i32 @add(i32 %a, i32 %b) {
 ; FLAG-RENAMED-NOT: {{.}}
 
 ; When ':o' lets an instruction match its operand, the variables only its
-; other parts bind would be left unbound: such a variable must be named '?_'.
+; other parts bind would be left unbound: such a variable must be given a
+; '_'-prefixed name (e.g. '?_n').
 ;--- or-self-unbound.mpir
 %z = zext:o i?n ?x to i32
 %r = add i32 %z, 1
+; Also those of an operand instruction it would match.
 ;--- or-self-nested.mpir
 %y = mul i32 ?c, ?d
 %x = add:o(1) i32 %y, ?b
 %r = sub i32 %x, 1
-; Also those of an operand instruction it would match.
+; A '_'-prefixed name may be left unbound.
 ;--- or-self-unnamed.mpir
 %z = zext:o i?_n ?x to i32
 %r = add i32 %z, 1

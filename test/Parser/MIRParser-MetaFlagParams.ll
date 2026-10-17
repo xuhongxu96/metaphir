@@ -43,7 +43,8 @@ metaflag:i :oninstruction(?i) {
 ; IONLY: metaflag ':oninstruction' is not valid in this position
 
 ; The subject of an instruction flag is named through the instruction's capture,
-; but the pattern need not write one: lowering synthesizes a hidden capture.
+; but the pattern need not write one: lowering then uses the instruction
+; itself as the subject.
 ;--- no-capture.ll
 metaflag:i :oninstruction(?i) {
 	opcode(?i) == "add"

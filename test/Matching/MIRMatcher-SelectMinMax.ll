@@ -3,7 +3,8 @@
 ; RUN: %metaphir-match %t/commuted.mpir %t/input.ll | FileCheck %s --check-prefix=COMMUTED
 
 ; 'selectMinMax' is an integer min or max as matchSelectPattern finds it:
-; select (icmp pred A, B), A, B for a relational pred, in any order.
+; select (icmp pred A, B), A, B for a relational pred, the compare's
+; operands in either order; with ':c', the select's arms too.
 
 ;--- select-min-max.mpir
 %a = add i32 ?p, 1

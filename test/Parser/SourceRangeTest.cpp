@@ -7,11 +7,10 @@
 #include "test/TestUtils.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
-// Every meta variable carries a source range. MetaVariable::get requires one,
-// so the interesting cases are the ones a caller could previously have left
-// empty by omission: the parameters of a 'constraint' or 'metaflag' definition,
-// the parameters bound per branch of a 'match', and the variables
-// PatternLowering synthesizes.
+// Every meta variable carries a source range: MetaVariable::create requires
+// one. Worth testing are the cases a caller could leave empty by mistake: the
+// parameters of a 'constraint' or 'metaflag' definition, and those bound in
+// each branch of a 'match'.
 
 using namespace llvm;
 using namespace llvm::metaphir;

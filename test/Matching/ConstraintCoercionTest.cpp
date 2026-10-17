@@ -60,7 +60,8 @@ TEST_F(ConstraintCoercionTest, CoercesBooleanAndInteger) {
   EXPECT_FALSE(ZeroBool->getBoolean());
 }
 
-// A Value binding is coercible to an integer only when it is a constant int.
+// A Value binding is coercible to an integer only when it is an integer
+// constant or a splat of one.
 TEST_F(ConstraintCoercionTest, CoercesConstantIntegerValueToInteger) {
   LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);

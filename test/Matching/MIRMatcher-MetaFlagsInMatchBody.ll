@@ -21,7 +21,7 @@ match addzero [] Binary (?ty ?x, ?y) {
 %r = addzero:?anch i32 ?a, ?b
 
 ; Instruction meta flags in a match body are lowered after the body is
-; inlined, against that instruction's capture.
+; inlined, against that instruction (through its capture, when it has one).
 ;--- instruction-flag.mpir
 metaflag:i :isaddop(?i) {
 	opcode(?i) == "add"

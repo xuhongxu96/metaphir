@@ -8,7 +8,7 @@
 
 ; RUN: split-file %s %t
 ; RUN: not %metaphir-parse %t/captures-local.ll 2>&1 | FileCheck %s --check-prefix=LOCAL
-; RUN: not %metaphir-parse %t/captures-block.ll 2>&1 | FileCheck %s --check-prefix=BLOCK
+; RUN: not %metaphir-parse %t/captures-earlier-local.ll 2>&1 | FileCheck %s --check-prefix=BLOCK
 ; RUN: %metaphir-parse %t/closed.ll | FileCheck %s --check-prefix=OK
 
 ; The body must not see '%outer' from the enclosing pattern.
@@ -22,8 +22,9 @@ match leaky [] Binary (?ty ?x, ?y) {
 }
 
 %r = leaky i32 ?a, ?b
-; Nor an instruction defined earlier in the same enclosing pattern by label.
-;--- captures-block.ll
+; Nor an instruction defined earlier in the same enclosing pattern, even
+; through another local.
+;--- captures-earlier-local.ll
 %first = add i32 ?p, ?q
 %second = mul i32 %first, ?p
 

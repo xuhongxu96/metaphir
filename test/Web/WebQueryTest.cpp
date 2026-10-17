@@ -263,7 +263,8 @@ TEST_F(WebQueryTest, ReportsWarningsAndRejectingConstraints) {
             "local variable '%x' shares a name with meta variable '?x'");
   EXPECT_EQ(Shadowed.Warnings[0].Line, 1u);
 
-  // The index cannot tell how often ?x is used, so the function is matched.
+  // The index cannot tell how often ?x is used, so the function reaches the
+  // matcher: it matches structurally, and hasNUses(?x, 2) rejects the match.
   Result False = query("%r = add i32 ?x, ?c\n;; hasNUses(?x, 2)\n",
                        /*PrintInstructions=*/false, /*ReportRejecting=*/true);
   EXPECT_EQ(False.Matches, "");

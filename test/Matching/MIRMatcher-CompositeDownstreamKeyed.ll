@@ -53,12 +53,12 @@ entry:
 ; SAME-NAME-NEXT:   match 0:
 ; SAME-NAME-NEXT:     {?a = %a, ?b = %b}
 
-define i1 @mismatch_ne(i32 %a, i32 %b) {
+define i1 @no_mul(i32 %a, i32 %b) {
 entry:
   %s = add i32 %a, %b
   %c = icmp ne i32 %s, 0
   ret i1 %c
 }
-; SAME-NAME-NEXT: target 1: @mismatch_ne
+; SAME-NAME-NEXT: target 1: @no_mul
 ; SAME-NAME-NEXT:   no match
 ; SAME-NAME-NOT: {{.}}

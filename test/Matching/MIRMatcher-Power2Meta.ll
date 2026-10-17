@@ -6,7 +6,8 @@
 ;--- pow2.mpir
 %udiv = udiv:?anch i?bits ?x, ?d:power2
 
-; It can be combined with other flags via ':or' (power of two, or 0).
+; It can be combined with other flags via ':or' (a power of two, or any
+; integer constant).
 ;--- pow2-or-const.mpir
 %udiv = udiv:?anch i?bits ?x, ?d:or(:power2, :constantInt)
 

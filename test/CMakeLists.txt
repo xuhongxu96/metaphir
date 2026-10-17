@@ -33,7 +33,8 @@ add_test(
 set_tests_properties(MetaphIR.lit PROPERTIES ENVIRONMENT
                      "${METAPHIR_TEST_ENVIRONMENT}")
 
-# Unit tests for the evaluation harness scripts.
+# Python tests: metaphir-match's differential test and the evaluation
+# scripts' unit tests.
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_FOUND)
   # metaphir-match's faster modes must not change what it prints.

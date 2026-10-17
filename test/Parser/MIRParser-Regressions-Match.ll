@@ -1,5 +1,6 @@
 ; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
-; A match branch body is validated like a top-level pattern body.
+; Validation of match declarations and their branch bodies, and of the
+; instructions around them.
 ; RUN: split-file %s %t
 ; RUN: not %metaphir-parse %t/integer-constraint.ll 2>&1 | FileCheck %s --check-prefix=INTEGER-CONSTRAINT
 ; RUN: not %metaphir-parse %t/trailing-instruction.ll 2>&1 | FileCheck %s --check-prefix=TRAILING-INSTRUCTION

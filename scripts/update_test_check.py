@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate FileCheck directives in MetaphIR parser and matcher tests."""
+"""Regenerate FileCheck directives in MetaphIR lexer, parser and matcher tests."""
 
 from __future__ import annotations
 
@@ -356,7 +356,8 @@ def section_bounds(
 
 
 def run_setup_commands(lines: list[str], temporary_path: Path, path: Path) -> None:
-    """Execute non-tool RUN commands in the temp dir before matching."""
+    """Execute non-tool RUN commands other than split-file in the temp dir
+    before running the parser or matcher."""
     for line in lines:
         match = RUN_RE.match(line)
         if not match:

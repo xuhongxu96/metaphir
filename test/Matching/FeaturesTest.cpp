@@ -834,8 +834,7 @@ TEST_F(FeaturesTest, RequiresUnsignedRanges) {
   EXPECT_FALSE(passesWithValueFacts("half"));
 }
 
-// The constant classes added after PatternMatch.h's matchers are recorded
-// too.
+// ':signMask' (m_SignMask) is one of the constant classes the index records.
 TEST_F(FeaturesTest, RequiresSignMasks) {
   parse(R"(
     %r = and i32 ?x, ?c:signMask

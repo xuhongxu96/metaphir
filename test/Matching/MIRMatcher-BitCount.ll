@@ -1,6 +1,6 @@
 ; RUN: split-file %s %t
 ; RUN: %metaphir-match %t/log2.mpir %t/input.ll | FileCheck %s --check-prefix=L2
-; RUN: %metaphir-match %t/log2-or.mpir %t/input.ll | FileCheck %s --check-prefix=L2O
+; RUN: %metaphir-match %t/log2-nested.mpir %t/input.ll | FileCheck %s --check-prefix=L2N
 ; RUN: %metaphir-match %t/popcount.mpir %t/popcount.ll | FileCheck %s --check-prefix=PC
 ; RUN: %metaphir-match %t/ispowertwo.mpir %t/ispowertwo.ll | FileCheck %s --check-prefix=POW
 
@@ -10,7 +10,7 @@
 ;; log2(?d) == 3
 
 ; It can be nested in arithmetic expressions.
-;--- log2-or.mpir
+;--- log2-nested.mpir
 %udiv = udiv:?anch i?bits ?x, ?d:constantInt
 ;; (log2(?d) + 1) == 5
 
@@ -58,9 +58,9 @@ entry:
 ; L2-NEXT:   match 0:
 ; L2-NEXT:     {?anch = %r, ?bits = 32, ?d = 8, ?x = %x}
 
-; L2O: target 0: @pow2_8
-; L2O-NEXT:   no match
-; L2O-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
+; L2N: target 0: @pow2_8
+; L2N-NEXT:   no match
+; L2N-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
 
 define i32 @pow2_16(i32 %x) {
 entry:
@@ -71,9 +71,9 @@ entry:
 ; L2-NEXT:   no match
 ; L2-NEXT:   constraint not satisfied: (== (log2 ?d) 3)
 
-; L2O-NEXT: target 1: @pow2_16
-; L2O-NEXT:   match 0:
-; L2O-NEXT:     {?anch = %r, ?bits = 32, ?d = 16, ?x = %x}
+; L2N-NEXT: target 1: @pow2_16
+; L2N-NEXT:   match 0:
+; L2N-NEXT:     {?anch = %r, ?bits = 32, ?d = 16, ?x = %x}
 
 define i32 @pow2_6(i32 %x) {
 entry:
@@ -84,9 +84,9 @@ entry:
 ; L2-NEXT:   no match
 ; L2-NEXT:   constraint not satisfied: (== (log2 ?d) 3)
 
-; L2O-NEXT: target 2: @pow2_6
-; L2O-NEXT:   no match
-; L2O-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
+; L2N-NEXT: target 2: @pow2_6
+; L2N-NEXT:   no match
+; L2N-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
 
 define i32 @pow2_1(i32 %x) {
 entry:
@@ -98,10 +98,10 @@ entry:
 ; L2-NEXT:   constraint not satisfied: (== (log2 ?d) 3)
 ; L2-NOT: {{.}}
 
-; L2O-NEXT: target 3: @pow2_1
-; L2O-NEXT:   no match
-; L2O-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
-; L2O-NOT: {{.}}
+; L2N-NEXT: target 3: @pow2_1
+; L2N-NEXT:   no match
+; L2N-NEXT:   constraint not satisfied: (== (+ (log2 ?d) 1) 5)
+; L2N-NOT: {{.}}
 
 ; 'isPower2' checks whether a constant is a power of two.
 ;--- ispowertwo.mpir

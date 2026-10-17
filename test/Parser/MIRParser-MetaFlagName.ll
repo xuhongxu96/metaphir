@@ -1,6 +1,7 @@
 ; A metaflag name is always written directly after ':', which keeps it
-; unambiguous, so it may be spelled like a keyword. Built-in metaflags rely on
-; this: ':poison' and ':or' share their spelling with keywords.
+; unambiguous, so it may be spelled like a keyword. The built-in ':or' and the
+; standard library's ':poison' rely on this: both share their spelling with
+; keywords.
 
 ; RUN: split-file %s %t
 ; RUN: %metaphir-parse %t/keyword-names.ll | FileCheck %s --check-prefix=OK

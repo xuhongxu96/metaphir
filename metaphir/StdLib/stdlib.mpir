@@ -249,7 +249,7 @@ match irem [] Binary (?ty ?x, ?y) {
 	%ret = srem ?ty ?x, ?y
 }
 
-; m_SExtLike: sext, or a zext of a value known non-negative.
+; m_SExtLike: sext, or zext nneg.
 match sextLike [] Cast (?ty1 ?x to ?ty2) {
 	%ret = sext ?ty1 ?x to ?ty2
 } or {
