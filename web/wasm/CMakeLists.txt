@@ -1,10 +1,10 @@
 # MetaphIR for the browser, built with Emscripten against LLVM built for
-# WebAssembly from the same llvm-project checkout (see web/scripts/
-# build-wasm.sh):
+# WebAssembly from the same llvm-project checkout (see scripts/
+# build_wasm.sh):
 #
 #   metaphir.js/.wasm        matches published corpora (see Bindings.cpp)
-#   metaphir-match.js/.wasm  the metaphir-match tool, for matching local files
-#                            in the development server only
+#   metaphir-match.js/.wasm  the metaphir-match tool, which matches the IR
+#                            written in the page (web/src/yourIR.ts)
 cmake_minimum_required(VERSION 3.20)
 
 project(MetaphIRWeb LANGUAGES C CXX)
