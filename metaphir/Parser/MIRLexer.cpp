@@ -481,7 +481,6 @@ tok::Kind MIRLexer::LexQuote() {
 ///    IntegerType     i[0-9]+
 ///    Keyword         sdiv, float, ...
 ///    HexIntConstant  [us]0x[0-9A-Fa-f]+
-///    HexFloatConstant f0x[0-9A-Fa-f]+
 tok::Kind MIRLexer::LexIdentifier() {
   const char *StartChar = CurPtr;
   const char IntOrByteIdentifier = CurPtr[-1];
@@ -618,10 +617,8 @@ tok::Kind MIRLexer::Lex0x() {
 ///    NInteger          -[0-9]+
 ///    FPConstant        [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
 ///    PInteger          [0-9]+
-///    HexFPConstant     0x[0-9A-Fa-f]+
-///    HexFP80Constant   0xK[0-9A-Fa-f]+
-///    HexFP128Constant  0xL[0-9A-Fa-f]+
-///    HexPPC128Constant 0xM[0-9A-Fa-f]+
+///    HexFPConstant     0x[0-9A-Fa-f]+ (0xK, 0xL, 0xM, 0xH and 0xR forms are
+///                      rejected as unsupported)
 tok::Kind MIRLexer::LexDigitOrNegative() {
   // If the character after the '-' is not a digit, this is probably a label.
   if (!isdigit(static_cast<unsigned char>(TokStart[0])) &&

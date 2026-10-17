@@ -11,7 +11,7 @@ MetaFlag *MetaFlag::createBuiltin(MIRContext &Context, MetaFlagID ID,
                                   ArrayRef<Argument> Arguments,
                                   SourceRange Range) {
   assert(ID != UnknownMetaFlag &&
-         "built-in MetaFlag::getBuiltin requires a known MetaFlagID");
+         "built-in MetaFlag::createBuiltin requires a known MetaFlagID");
   return new (Context.pImpl->Alloc)
       MetaFlag(ID, Context.pImpl->copyArray<Argument>(Arguments), Range);
 }
@@ -19,10 +19,10 @@ MetaFlag *MetaFlag::createBuiltin(MIRContext &Context, MetaFlagID ID,
 MetaFlag *MetaFlag::createUserDefined(MIRContext &Context, StringRef Name,
                                       ArrayRef<Argument> Arguments,
                                       SourceRange Range) {
-  assert(
-      getMetaFlagID(Name) == UnknownMetaFlag &&
-      "custom MetaFlag::getUserDefined cannot be called with a built-in flag "
-      "name");
+  assert(getMetaFlagID(Name) == UnknownMetaFlag &&
+         "custom MetaFlag::createUserDefined cannot be called with a built-in "
+         "flag "
+         "name");
   return new (Context.pImpl->Alloc)
       MetaFlag(Context.pImpl->Saver.save(Name),
                Context.pImpl->copyArray<Argument>(Arguments), Range);

@@ -65,8 +65,9 @@ ArrayAccessConstraint::create(MIRContext &Context, Sort Type, Constraint *Array,
 OperatorConstraint *OperatorConstraint::createBuiltin(
     MIRContext &Context, ConstraintID ID, Sort Type, OperatorID OpID,
     ArrayRef<Constraint *> Arguments, SourceRange Range) {
-  assert(OpID != UnknownOperator &&
-         "built-in OperatorConstraint::getBuiltin requires a known OperatorID");
+  assert(
+      OpID != UnknownOperator &&
+      "built-in OperatorConstraint::createBuiltin requires a known OperatorID");
   return new (Context.pImpl->Alloc) OperatorConstraint(
       ID, Type, OpID, Context.pImpl->copyArray<Constraint *>(Arguments), Range);
 }
@@ -75,7 +76,7 @@ OperatorConstraint *OperatorConstraint::createUserDefined(
     MIRContext &Context, ConstraintID ID, Sort Type, StringRef Operator,
     ArrayRef<Constraint *> Arguments, SourceRange Range) {
   assert(Constraint::getOperatorID(Operator, ID) == UnknownOperator &&
-         "custom OperatorConstraint::getUserDefined cannot be called with a "
+         "custom OperatorConstraint::createUserDefined cannot be called with a "
          "built-in operator name");
   StringRef SavedOperator = Context.pImpl->Saver.save(Operator);
   return new (Context.pImpl->Alloc) OperatorConstraint(

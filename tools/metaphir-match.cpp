@@ -58,8 +58,8 @@ static cl::opt<bool> PrintInstructions(
     cl::cat(Category));
 static cl::opt<unsigned>
     Jobs("j",
-         cl::desc("Match this many files at once (0: one per hardware "
-                  "thread); needs --matches-only"),
+         cl::desc("Match this many files (with --packs, functions) at once "
+                  "(0: one per hardware thread); needs --matches-only"),
          cl::init(1), cl::cat(Category));
 static cl::opt<std::string> IndexFile(
     "index",

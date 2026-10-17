@@ -95,11 +95,11 @@ private:
   bool parseInstruction(Instruction *&Result);
   /// Parses an optional '%name =' into Name.
   bool parseInstructionResult(SmallVectorImpl<char> &Name);
-  /// Checks what the operand grammar cannot: ':o' and ':c' against the
-  /// operands, and that no keyed operand is given twice.
   /// Checks the ':o' operand indices of MFlags against Ops.
   bool validateOrSelf(ArrayRef<MetaFlag *> MFlags,
                       ArrayRef<MatcherOperand> Ops);
+  /// Checks what the operand grammar cannot: ':o' and ':c' against the
+  /// operands, and that no keyed operand is given twice.
   bool validateInstruction(Instruction::InstructionID ID,
                            ArrayRef<MetaFlag *> MFlags,
                            ArrayRef<MatcherOperand> Ops);

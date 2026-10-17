@@ -92,7 +92,7 @@ public:
   /// PatternMatcher::findConflicts).
   void relax() { Relaxed = true; }
   ArrayRef<Conflict> getConflicts() const { return Conflicts; }
-  /// Prints a conflict as "?x is both %a and %b"; Slots as for print.
+  /// Prints a conflict as "?x would be both %a and %b"; Slots as for print.
   static void printConflict(raw_ostream &OS, const Conflict &C,
                             ModuleSlotTracker *Slots = nullptr);
 

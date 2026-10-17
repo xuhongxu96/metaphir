@@ -455,8 +455,9 @@ Expected<bool> Expander::bindParameters(const Instruction &Use,
         Subst.Values[Var] = Op.Val;
   };
 
-  // Each archetype lays its parameters out as (type, operand) pairs; see
-  // MIRParser::parseMatchParameters.
+  // Each archetype lays its parameters out as parseMatchParameters parses
+  // them: Nary as (type, operand) pairs, Binary as (type, operand, operand),
+  // Cast as (type, operand, result type).
   SmallVector<std::pair<unsigned, unsigned>, 8> TypePositions, ValuePositions;
   switch (CM.getSyntax()) {
   case Instruction::OperandSyntax::Nary:

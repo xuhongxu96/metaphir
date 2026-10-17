@@ -14,10 +14,11 @@ namespace metaphir {
 namespace detail {
 
 // Lazily-constructed, per-function analysis context for ValueTracking-backed
-// constraint operators. Nothing is materialized until a ValueTracking operator
-// is actually evaluated; each component (DataLayout, DominatorTree,
-// AssumptionCache, DomConditionCache, TargetLibraryInfo) is built on first use
-// and memoized for the enclosing function.
+// constraint operators, and for the value facts the index records. Nothing is
+// built until the first query for a function; that query builds all of its
+// analyses (DominatorTree, AssumptionCache, DomConditionCache,
+// TargetLibraryInfo) at once, and they are kept until the function changes or
+// reset() is called.
 class ValueTrackContext {
 public:
   // Returns a query anchored at CtxI, materializing the enclosing function's

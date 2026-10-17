@@ -25,7 +25,8 @@ enum CoercionOp {
 // coercion operator converting a source kind into a destination kind, or
 // UnknownCoercion when no such conversion exists. The matrix is zero-filled
 // (UnknownCoercion) and the admissible edges are stamped in from
-// Coercions.def, so lookup is O(1) and the whole lattice stays explicit.
+// ConstraintCoercions.def, so lookup is O(1) and the whole lattice stays
+// explicit.
 static const std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
                         ConstraintValue::NumValueKinds>
     CoercionMatrix = [] {

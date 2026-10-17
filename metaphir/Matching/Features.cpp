@@ -28,7 +28,7 @@ static_assert(NumInstructionIDs <= 64,
               "instruction matchers must fit in a 64-bit mask");
 
 static constexpr unsigned NumFlagIDs = InstructionFlag::NumFlagIDs;
-static_assert(NumFlagIDs <= 18, "flags must fit in a shape key");
+static_assert(NumFlagIDs <= 32, "flags must fit in a 32-bit mask");
 
 static uint32_t flagBit(unsigned Flag) { return uint32_t(1) << Flag; }
 

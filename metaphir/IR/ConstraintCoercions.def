@@ -2,13 +2,13 @@
 //
 // Admissible value coercions of constraint expressions. Each entry
 // declares a directed conversion from a source ConstraintValue kind to a
-// destination kind, implemented by the converter function Coerce<Op>. The
+// destination kind, implemented by the converter function coerce<Op> (enum value Coerce<Op>). The
 // table is the single source of truth for which cross-kind conversions are
 // permitted; see ConstraintCoercion.cpp for the dispatch logic.
 //
 // Identity coercions (Src == Dst) are handled by a fast path in coerce() and
 // are intentionally not listed here. Conversions that are only admissible for
-// some values (e.g. Value -> Integer requires a ConstantInt) are still listed;
+// some values (e.g. Value -> Integer requires an integer constant or a splat of one) are still listed;
 // their converter reports the precise rejection reason.
 //
 //===----------------------------------------------------------------------===//
