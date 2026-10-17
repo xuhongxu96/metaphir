@@ -30,7 +30,8 @@ export const DICTIONARY: ReadonlyArray<DictEntry> = [
   // Meta-flags and matchers.
   ...fragments(":?anch", ":?_", ":c", ":s", ":o", ":or(", ":not(", ":constantInt"),
   ...fragments(":constantSplat", ":lowBitMask", ":knownPowerOfTwo"),
-  // Settings and the functions of constraints.
+  // Settings and the functions of constraints. isPowerOfTwo( is kept for the
+  // links made with it: the operator is now isPower2.
   ...fragments("treatIntAsVec(true)", "hasOneUse(", "noOverflow(", "opcode(", "isPowerOfTwo("),
   ...fragments("isZero(", "isAllOnes(", "isLowBitMask(", "isGuaranteedNotToBeUndef("),
   ...fragments("inSignedRange(", "knownBits(", "isKnownNonZero(", "isKnownNegative("),

@@ -35,7 +35,8 @@ export interface Match {
   fn: string;
   bindings: string;
   instructions: MatchedInstruction[];
-  /** The IR of the matched function, when it can be shown. */
+  /** Loads the IR of the matched function; every match the page shows has
+   * it, once made (see makeMatch). */
   ir?: () => Promise<FunctionIR>;
 }
 

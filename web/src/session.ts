@@ -35,7 +35,6 @@ export function runStage(session: Session, name: StageName): StageResult {
   return session[name]();
 }
 
-/** Loads the module built by scripts/build_wasm.sh from url. */
 /** Where the module whose script is at url finds its files, such as its
  * .wasm: beside the script, with the same version (see wasmUrl). */
 export const locateBeside = (url: string) => (path: string) => {
@@ -46,6 +45,7 @@ export const locateBeside = (url: string) => (path: string) => {
   return located.href;
 };
 
+/** Loads the module built by scripts/build_wasm.sh from url. */
 export async function loadModule(url: string): Promise<MetaphIRModule> {
   const { default: create } = await import(/* @vite-ignore */ url);
   return create({ locateFile: locateBeside(url) });

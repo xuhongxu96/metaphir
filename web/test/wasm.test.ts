@@ -202,7 +202,7 @@ test("reports pattern errors", async () => {
   );
 });
 
-test("matches files in the page as metaphir-match does", async () => {
+test("runs the WebAssembly metaphir-match as the native one does", async () => {
   const files = Object.keys(SOURCES).map((path) => {
     const bc = path.replace(/\.ll$/, ".bc");
     return { path: bc, bytes: readFileSync(join(work, "corpus", bc)) };

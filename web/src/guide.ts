@@ -1,4 +1,5 @@
-// The pattern guide the Help button shows. First a few demonstrations, each a
+// The pattern guide, which opens with the page until dismissed, and from
+// the Help button. First a few demonstrations, each a
 // small pattern beside IR it matches, with its parts marked; then patterns
 // that put them together, to try; then, for reference, everything there is:
 // the meta flags, constraint operators and matchers of the standard

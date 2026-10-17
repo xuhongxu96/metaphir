@@ -64,7 +64,7 @@ export function IRPane(props: {
         {!match ? (
           <p className="empty">Select a match to see its function.</p>
         ) : !match.ir ? (
-          <p className="empty">This function's IR cannot be shown (bitcode).</p>
+          <p className="empty">This function's IR cannot be shown.</p>
         ) : (
           <Editor
             language="llvm"

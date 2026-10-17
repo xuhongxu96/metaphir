@@ -1,7 +1,7 @@
 // Runs a query against a published corpus: each stage of the WebAssembly
 // session says which bytes the next one reads, which the fetcher reads and
-// hands back. The functions that may match are then matched as their packs
-// arrive, by as many matchers as there are. A QueryControl pauses or stops
+// hands back. The functions that may match are then matched as the frames
+// holding their packs arrive, by as many matchers as there are. A QueryControl pauses or stops
 // the query between stages and between the functions it matches.
 
 import type { ByteRange, RangeFetcher } from "./fetcher.ts";
@@ -142,7 +142,8 @@ export interface QueryEvents {
   ): void;
 }
 
-/** Packs read per batch, so matching starts before all have arrived. */
+/** Frames of packs read per batch, so matching starts before all have
+ * arrived. */
 const PACK_BATCH = 256;
 
 export async function runQuery(
@@ -192,7 +193,7 @@ export async function runQuery(
   events.onCandidates?.(await coordinator.numCandidates(), matchable);
   events.onStage?.("matching");
 
-  // Each matcher takes the next pack once it is done with its last.
+  // Each matcher takes the next function once it is done with its last.
   const queue: { fn: number; frame: Uint8Array; slot: number }[] = [];
   let reading = true;
   let waiting: (() => void)[] = [];
