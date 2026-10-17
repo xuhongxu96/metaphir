@@ -1,4 +1,5 @@
-# Directory holding llvm-lit, FileCheck and not. These are build-tree utilities
+# Directory holding llvm-lit, FileCheck and not, and the split-file and llvm-as
+# the differential test runs. These are build-tree utilities
 # that `cmake --install` does not copy, so they are taken from the LLVM build
 # directory rather than from LLVM_TOOLS_BINARY_DIR (the install prefix).
 set(METAPHIR_LLVM_UTILS_DIR

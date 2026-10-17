@@ -120,8 +120,8 @@ Every FP/FN listed below was reproduced by running the instrumented `opt` (`META
 - **Pattern File (`eval/patterns/pr215130.mpir`)**:
   ```mpir
   ;; treatIntAsVec(true)
-  %sat = call:s i?bits @llvm.uadd.sat(i?bits ?x, i?bits ?c:or(:constantInt, :constantSplat))
-  %res = add:?anch:c i?bits %sat, ?negc:or(:constantInt, :constantSplat)
+  %sat = call:s i?bits @llvm.uadd.sat(i?bits ?x, i?bits ?c:apIntAllowPoison)
+  %res = add:?anch:c i?bits %sat, ?negc:apIntAllowPoison
   ;; add(?c, ?negc, ?bits) == 0
   ```
 
@@ -418,7 +418,7 @@ All 5 divergences are in `pr214381__icmp-floor-align.ll`. They have three causes
     %xor = xor:c i?bits %ctlz, ?bm1:constantInt
     %sel = selectEqZero:?anch i?bits ?x, i?bits ?bits, i?bits %xor
     ;; ?bm1 == ?bits - 1
-    ;; isPowerOfTwo(?bits)
+    ;; isPower2(?bits)
     ```
 
 - **LLVM Implementation (`InstCombineSelect.cpp:1494-1529`, anchor at `2458-2465`)**:

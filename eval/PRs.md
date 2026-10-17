@@ -1,7 +1,8 @@
 # InstCombine Evaluation — 20 merged PRs
 
 All 20 PRs are **merged** InstCombine folds with a clear `src -> tgt` transform
-and an existing test under `llvm-project/test/Transforms/InstCombine/`.
+and an existing test under `llvm-project/llvm/test/Transforms/InstCombine/`
+(pr204089's is under `InstSimplify/`).
 
 | #   | PR     | Title (src -> tgt)                                                |
 | --- | ------ | ----------------------------------------------------------------- |

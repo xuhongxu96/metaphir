@@ -21,7 +21,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --data) DATA="$2"; shift 2 ;;
         --commit) COMMIT=1; shift ;;
-        -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
         *)
             if [ -n "$TARGET" ]; then
                 echo "Error: unexpected argument '$1'." >&2

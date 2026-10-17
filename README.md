@@ -58,7 +58,7 @@ scripts/prepare_llvm.sh [debug|release] [--force] [--source-only]
 | Option | Default | |
 |---|---|---|
 | `LLVM_DIR` | `llvm-project/build/install/lib/cmake/llvm` | LLVM to build against |
-| `METAPHIR_LLVM_UTILS_DIR` | `llvm-project/build/bin` | where `llvm-lit`, `FileCheck` and `not` are |
+| `METAPHIR_LLVM_UTILS_DIR` | `llvm-project/build/bin` | where `llvm-lit`, `FileCheck`, `not`, `split-file` and `llvm-as` are |
 | `METAPHIR_USE_SANITIZER` | (none) | sanitizer to build MetaphIR with, e.g. `address` |
 
 
@@ -235,8 +235,8 @@ a.ll	@odd	{?c = 1, ?x = %x}
 Each function is packed with the order of its use lists as the module has
 it, so value-tracking constraints, which look at a bounded number of a
 value's uses, answer on the website as `metaphir-match` does on the module.
-A corpus published by an earlier version (format 2) is refused: publish it
-again.
+A corpus published in an earlier format (before version 4) is refused:
+publish it again.
 
 Next: the [Wiki](https://github.com/xuhongxu96/metaphir/wiki) for the
 language, and [Tools](#tools) for every option.
@@ -619,7 +619,13 @@ The page is React, in resizable panes:
   warnings, and the constraints that rejected the structural matches of the
   functions matched, with how many functions each rejected; those that could
   not be evaluated are marked in the editor as warnings.
-- A progress bar follows each stage's reads, then the matching.
+- A progress bar follows each stage's reads, then the matching. A query with
+  very many candidates asks before reading their features.
+- **Help** opens the pattern guide: the syntax by example, a reference of
+  every meta flag, constraint operator and matcher, and PatternMatch.h's
+  idioms beside patterns. It opens with the page until you ask it not to.
+- The **example** picker loads a pattern of the evaluation, named by what it
+  folds, with a link to its LLVM pull request.
 - The theme follows the system unless one is chosen.
 
 **Share** copies a link that carries the pattern. Links of either kind open
@@ -666,13 +672,14 @@ metaphir-index publish -j 32 corpus.mpidx -o published
 web/scripts/publish.py published
 ```
 
-`metaphir-index publish` writes, compressed with zstd and trained
-dictionaries (see `metaphir/Web/WebIndex.h`):
+`metaphir-index publish` writes (see `metaphir/Web/WebIndex.h`):
 
-- the posting keys and lists of the index,
-- each function's features,
+- the posting keys and lists of the index, as they are;
+- each function's features, compressed with zstd and a trained dictionary;
 - a pack of each function alone, with stubs for the globals it uses and how
-  its module uses its constants.
+  its module uses its constants. Up to 8 consecutive packs of a module are
+  compressed together, in one zstd frame with a trained dictionary, as they
+  share much; `functions.idx` tells which frame and slot hold each pack.
 
 `web/scripts/publish.py` uploads them to `builds/<build>/` in the bucket,
 uploading `manifest.json` last, and points `web/public/config.json` at the
@@ -753,11 +760,12 @@ Run `scripts/build_wasm.sh` first; the script builds the site itself.
    |---|---|
    | 1 | the blocks holding the pattern's posting keys |
    | 2 | the shortest posting lists |
-   | 3 | the index entries and features of the functions on all of them |
-   | 4 | the packs of the functions whose features may match |
+   | 3 | the `functions.idx` entries of the functions on all of them |
+   | 4 | those functions' features |
+   | 5 | the frames holding the packs of the functions whose features may match |
 
-3. Workers, each with its own WebAssembly instance, match the packs as they
-   arrive (`web/src/pool.ts`).
+3. Workers, each with its own WebAssembly instance, match the packs as their
+   frames arrive (`web/src/pool.ts`).
 
 #### Reading and caching
 

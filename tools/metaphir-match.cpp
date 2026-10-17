@@ -85,8 +85,8 @@ static cl::opt<bool> Explain(
     cl::cat(Category));
 static cl::opt<bool>
     PrintSummary("summary",
-                 cl::desc("Print how many functions and files were matched "
-                          "to stderr"),
+                 cl::desc("Print to stderr how many functions and files were "
+                          "checked"),
                  cl::cat(Category));
 static cl::opt<bool>
     NoPrefilter("no-prefilter", cl::Hidden,
