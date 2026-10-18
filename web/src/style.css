@@ -99,6 +99,9 @@ body { background: var(--bg); color: var(--fg); }
   background: var(--bg);
 }
 .toolbar h1 { font-size: 1rem; margin: 0; font-weight: 600; }
+/* A link shown as an icon, in the color of the text, the accent on hover. */
+.icon-link { display: inline-flex; align-items: center; color: var(--fg); }
+.icon-link:hover, .icon-link:focus-visible { color: var(--accent); }
 /* The status, in the toolbar's free space; it opens a popover. */
 .status-chip-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; justify-content: flex-end; }
 .status-chip {
