@@ -8,6 +8,7 @@ if(TARGET zstd::libzstd_shared)
 elseif(TARGET zstd::libzstd_static)
   set(METAPHIR_ZSTD zstd::libzstd_static)
 else()
+  enable_language(C)
   include(FetchContent)
   FetchContent_Declare(
     zstd
