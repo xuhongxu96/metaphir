@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(METAPHIR_USE_SANITIZER "" CACHE STRING
     "Build MetaphIR with a sanitizer (e.g. 'address'); LLVM stays uninstrumented")
 
-add_compile_options(-fno-rtti)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
 if(METAPHIR_USE_SANITIZER)
   add_compile_options(-fsanitize=${METAPHIR_USE_SANITIZER} -fno-omit-frame-pointer)
   add_link_options(-fsanitize=${METAPHIR_USE_SANITIZER})
