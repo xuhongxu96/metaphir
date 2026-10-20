@@ -6,8 +6,10 @@
 #     libraries and the tools the tests run (scripts/prepare_llvm.sh
 #     --libraries-only --prune), and restored whole while its commit, its
 #     patches and the script stay the same.
-#   - MetaphIR's compiles, native and for WebAssembly (with LLVM's libraries
-#     for it), go through ccache, whose directory is cached per job.
+#   - LLVM's libraries for WebAssembly are built once too, and restored whole
+#     (scripts/build_wasm.sh skips them while they would not change).
+#   - MetaphIR's compiles, native and for WebAssembly, go through ccache,
+#     whose directory is cached per job.
 #   - The Emscripten SDK, and npm's downloads.
 name: CI
 
@@ -48,6 +50,10 @@ jobs:
             llvm-project/build-release
             llvm-project/build
           lookup-only: true
+      # Room for LLVM's build: the runner's SDKs it does not use go.
+      - name: Free disk space
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
       - name: Install the build tools
         if: steps.cache.outputs.cache-hit != 'true'
         run: sudo apt-get update && sudo apt-get install -y ninja-build
@@ -120,8 +126,17 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ninja-build ccache
       - name: Fetch the LLVM source
         run: scripts/prepare_llvm.sh --source-only
-      # For the native llvm-tblgen the WebAssembly build of LLVM uses.
+      # LLVM's libraries for WebAssembly, which scripts/build_wasm.sh builds
+      # again only when they would change (its stamp says when).
+      - name: Restore LLVM for WebAssembly
+        id: wasm-llvm
+        uses: actions/cache@v4
+        with:
+          key: wasm-${{ needs.llvm.outputs.key }}-${{ hashFiles('scripts/build_wasm.sh') }}
+          path: build-wasm/llvm
+      # For the native llvm-tblgen that building them uses.
       - name: Restore LLVM
+        if: steps.wasm-llvm.outputs.cache-hit != 'true'
         uses: actions/cache/restore@v4
         with:
           key: ${{ needs.llvm.outputs.key }}
@@ -129,10 +144,13 @@ jobs:
             llvm-project/build-release
             llvm-project/build
           fail-on-cache-miss: true
+      - name: Name the Emscripten SDK
+        id: emsdk
+        run: echo "version=$(sed -n 's/^EMSDK_VERSION="\(.*\)"$/\1/p' scripts/build_wasm.sh)" >> "$GITHUB_OUTPUT"
       - name: Restore the Emscripten SDK
         uses: actions/cache@v4
         with:
-          key: emsdk-${{ runner.os }}-${{ hashFiles('scripts/build_wasm.sh') }}
+          key: emsdk-${{ runner.os }}-${{ steps.emsdk.outputs.version }}
           path: build-wasm/emsdk
       - name: Restore ccache
         uses: actions/cache/restore@v4
