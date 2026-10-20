@@ -886,3 +886,12 @@ uv run eval/scripts/run_eval.py check-index -j 32
 | `METAPHIR_OPT` | `llvm-project/build/bin/opt` | the instrumented `opt` for `gt` |
 | `METAPHIR_MATCH` | `build/tools/metaphir-match` | the matcher for `pattern` and `check-index` |
 | `METAPHIR_INDEX` | `build/tools/metaphir-index` | the indexer for `index` |
+
+## License
+
+MetaphIR is under the Apache License v2.0 (see [LICENSE](LICENSE)).
+Redistributions must keep its copyright and license, and pass on
+[NOTICE](NOTICE). To cite MetaphIR, see [CITATION.cff](CITATION.cff).
+
+`eval/patches` change LLVM's own code. They are under LLVM's license, the
+Apache License v2.0 with LLVM Exceptions.

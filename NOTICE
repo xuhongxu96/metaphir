@@ -1,0 +1,8 @@
+MetaphIR
+Copyright 2026 Hongxu Xu
+https://github.com/xuhongxu96/metaphir
+
+This product includes MetaphIR, developed by Hongxu Xu.
+
+eval/patches change LLVM's own code, and are under LLVM's license, the
+Apache License v2.0 with LLVM Exceptions (https://llvm.org/LICENSE.txt).

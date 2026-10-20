@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use MetaphIR, please cite it as below."
+title: "MetaphIR"
+type: software
+authors:
+  - family-names: "Xu"
+    given-names: "Hongxu"
+repository-code: "https://github.com/xuhongxu96/metaphir"
+license: Apache-2.0
