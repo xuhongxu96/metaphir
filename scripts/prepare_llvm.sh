@@ -3,14 +3,21 @@
 # MetaphIR builds against.
 #
 # Usage: scripts/prepare_llvm.sh [debug|release] [--force] [--source-only]
+#                                [--libraries-only] [--prune]
 #
-# --source-only stops once the source is patched, e.g. for
-# scripts/build_wasm.sh alone.
+# --source-only     stops once the source is patched, e.g. for
+#                   scripts/build_wasm.sh alone.
+# --libraries-only  builds LLVM's libraries and only the tools MetaphIR's
+#                   tests run (TEST_TOOLS below), not all of LLVM's tools.
+# --prune           keeps only the install, llvm-lit and TEST_TOOLS of the
+#                   build, e.g.
+#                   to cache it (as CI does, .github/workflows/ci.yml).
 #
 # Environment:
 #   LLVM_BUILD_TYPE  default build type when none is given (Release)
 #   LLVM_BUILD_DIR   build directory (llvm-project/build-<type>)
-#   CACHE_DIR        ccache directory (ccache default when unset)
+#   CACHE_DIR        ccache directory (ccache default when unset); ccache is
+#                    used when it is installed
 #   JOBS             parallel build jobs (nproc)
 #
 # The selected build directory is linked as llvm-project/build, which is where
@@ -21,17 +28,24 @@ BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LLVM_COMMIT="53a7028134738d799d8b758a5675873e325dd9e0"
 LLVM_DIR="$BASE_DIR/llvm-project"
 JOBS="${JOBS:-$(nproc)}"
+# What MetaphIR's build and tests run from the build tree; llvm-lit is
+# written when LLVM is configured, the others built.
+TEST_TOOLS=(FileCheck not split-file llvm-as llvm-tblgen llvm-min-tblgen)
 
 usage() {
-    echo "Usage: $0 [debug|release] [--force] [--source-only]"
+    echo "Usage: $0 [debug|release] [--force] [--source-only] [--libraries-only] [--prune]"
 }
 
 BUILD_TYPE_ARG="${LLVM_BUILD_TYPE:-Release}"
 FORCE=0
 SOURCE_ONLY=0
+LIBRARIES_ONLY=0
+PRUNE=0
 for arg in "$@"; do
     case "${arg,,}" in
         --source-only) SOURCE_ONLY=1 ;;
+        --libraries-only) LIBRARIES_ONLY=1 ;;
+        --prune) PRUNE=1 ;;
         release|--release|debug|--debug) BUILD_TYPE_ARG="$arg" ;;
         -f|--force) FORCE=1 ;;
         -h|--help|help) usage; exit 0 ;;
@@ -117,19 +131,38 @@ CMAKE_ARGS=(
     -DLLVM_INCLUDE_BENCHMARKS=OFF
     -DLLVM_INCLUDE_EXAMPLES=OFF
     -DLLVM_ENABLE_RTTI=OFF
-    -DLLVM_CCACHE_BUILD=ON
-    -DLLVM_CCACHE_MAXSIZE=10GB
 )
-if [ -n "${CACHE_DIR:-}" ]; then
-    CMAKE_ARGS+=(-DLLVM_CCACHE_DIR="$CACHE_DIR")
+if command -v ccache >/dev/null; then
+    CMAKE_ARGS+=(-DLLVM_CCACHE_BUILD=ON -DLLVM_CCACHE_MAXSIZE=10GB)
+    if [ -n "${CACHE_DIR:-}" ]; then
+        CMAKE_ARGS+=(-DLLVM_CCACHE_DIR="$CACHE_DIR")
+    fi
+fi
+if [ "$LIBRARIES_ONLY" -eq 1 ]; then
+    CMAKE_ARGS+=(-DLLVM_BUILD_TOOLS=OFF)
 fi
 cmake -G Ninja -S "$LLVM_DIR/llvm" -B "$LLVM_BUILD_DIR" "${CMAKE_ARGS[@]}"
 
 # Build
 cmake --build "$LLVM_BUILD_DIR" --target all -- -j"$JOBS"
+if [ "$LIBRARIES_ONLY" -eq 1 ]; then
+    cmake --build "$LLVM_BUILD_DIR" -- -j"$JOBS" "${TEST_TOOLS[@]}"
+fi
 
 # Install
 cmake --install "$LLVM_BUILD_DIR" --prefix "$LLVM_BUILD_DIR/install"
+
+if [ "$PRUNE" -eq 1 ]; then
+    echo "[$(date)] Pruning the build to its install and test tools..."
+    KEEP="$(mktemp -d)"
+    mv "$LLVM_BUILD_DIR/install" "$KEEP/install"
+    mkdir -p "$KEEP/bin"
+    for tool in llvm-lit "${TEST_TOOLS[@]}"; do
+        mv "$LLVM_BUILD_DIR/bin/$tool" "$KEEP/bin/"
+    done
+    rm -rf "$LLVM_BUILD_DIR"
+    mv "$KEEP" "$LLVM_BUILD_DIR"
+fi
 
 # Point llvm-project/build at the selected build.
 if [ "$(dirname "$LLVM_BUILD_DIR")" = "$LLVM_DIR" ]; then

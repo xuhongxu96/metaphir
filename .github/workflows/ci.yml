@@ -1,0 +1,213 @@
+# Builds MetaphIR, natively and for WebAssembly, and runs its tests and the
+# website's.
+#
+# What takes long is cached:
+#   - LLVM: the pinned, patched llvm-project is built once, with its
+#     libraries and the tools the tests run (scripts/prepare_llvm.sh
+#     --libraries-only --prune), and restored whole while its commit, its
+#     patches and the script stay the same.
+#   - MetaphIR's compiles, native and for WebAssembly (with LLVM's libraries
+#     for it), go through ccache, whose directory is cached per job.
+#   - The Emscripten SDK, and npm's downloads.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_MAXSIZE: 2G
+  CCACHE_COMPRESS: "true"
+
+jobs:
+  llvm:
+    name: LLVM
+    runs-on: ubuntu-24.04
+    outputs:
+      key: ${{ steps.key.outputs.key }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name the build
+        id: key
+        run: |
+          commit=$(sed -n 's/^LLVM_COMMIT="\(.*\)"$/\1/p' scripts/prepare_llvm.sh)
+          echo "key=llvm-${{ runner.os }}-${commit}-${{ hashFiles('scripts/prepare_llvm.sh', 'eval/patches/**') }}" >> "$GITHUB_OUTPUT"
+      - name: Look for it
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ steps.key.outputs.key }}
+          path: |
+            llvm-project/build-release
+            llvm-project/build
+          lookup-only: true
+      - name: Install the build tools
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Build it
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: scripts/prepare_llvm.sh release --libraries-only --prune
+      - name: Keep it
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.key.outputs.key }}
+          path: |
+            llvm-project/build-release
+            llvm-project/build
+
+  native:
+    name: Native build and tests
+    needs: llvm
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the build tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build ccache
+      # The source holds googletest and lit; the build goes in it after.
+      - name: Fetch the LLVM source
+        run: scripts/prepare_llvm.sh --source-only
+      - name: Restore LLVM
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ needs.llvm.outputs.key }}
+          path: |
+            llvm-project/build-release
+            llvm-project/build
+          fail-on-cache-miss: true
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          key: ccache-native-${{ github.sha }}
+          restore-keys: ccache-native-
+          path: .ccache
+      - name: Build
+        run: |
+          cmake -G Ninja -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build build
+          ccache --show-stats
+      - name: Keep ccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          key: ccache-native-${{ github.sha }}
+          path: .ccache
+      - name: Test
+        run: ctest --test-dir build -j"$(nproc)" --output-on-failure
+      - name: Keep the tools for the website's tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-tools
+          path: build/tools/metaphir-*
+          retention-days: 1
+
+  wasm:
+    name: WebAssembly build
+    needs: llvm
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the build tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build ccache
+      - name: Fetch the LLVM source
+        run: scripts/prepare_llvm.sh --source-only
+      # For the native llvm-tblgen the WebAssembly build of LLVM uses.
+      - name: Restore LLVM
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ needs.llvm.outputs.key }}
+          path: |
+            llvm-project/build-release
+            llvm-project/build
+          fail-on-cache-miss: true
+      - name: Restore the Emscripten SDK
+        uses: actions/cache@v4
+        with:
+          key: emsdk-${{ runner.os }}-${{ hashFiles('scripts/build_wasm.sh') }}
+          path: build-wasm/emsdk
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          key: ccache-wasm-${{ github.sha }}
+          restore-keys: ccache-wasm-
+          path: .ccache
+      - name: Build
+        run: |
+          scripts/build_wasm.sh
+          ccache --show-stats
+      - name: Keep ccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          key: ccache-wasm-${{ github.sha }}
+          path: .ccache
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm
+          path: web/public/wasm
+          retention-days: 1
+
+  web:
+    name: Website tests
+    needs: [llvm, native, wasm]
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      # The tests run the native tools, and llvm-as, beside the WebAssembly
+      # ones to compare them.
+      - name: Restore LLVM
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ needs.llvm.outputs.key }}
+          path: |
+            llvm-project/build-release
+            llvm-project/build
+          fail-on-cache-miss: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-tools
+          path: build/tools
+      - uses: actions/download-artifact@v4
+        with:
+          name: wasm
+          path: web/public/wasm
+      - name: Install
+        run: |
+          chmod +x ../build/tools/metaphir-*
+          npm ci
+      - name: Type-check
+        run: npx tsc --noEmit -p .
+      - name: Test
+        run: npm test
+      - name: Build the site
+        run: npm run build
+
+  format:
+    name: Formatting
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      # The clang-format of pyproject.toml's dev group.
+      - name: Check the C++ formatting
+        run: |
+          python3 -m venv "$RUNNER_TEMP/format"
+          "$RUNNER_TEMP/format/bin/pip" install --quiet "clang-format==23.1.1"
+          git ls-files '*.cpp' '*.h' '*.c' |
+            xargs "$RUNNER_TEMP/format/bin/clang-format" --dry-run --Werror
