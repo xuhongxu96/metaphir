@@ -59,5 +59,33 @@ class CollectPRTestsTest(unittest.TestCase):
         self.assertEqual(len(list(self.corpus.iterdir())), len(names))
 
 
+class PipelineWithoutTest(unittest.TestCase):
+    def test_every_occurrence_is_removed(self) -> None:
+        self.assertEqual(
+            prepare_corpus.pipeline_without(
+                "a,instcombine<y>,function<x>(b,instcombine<z>,c),instcombine",
+                "instcombine",
+            ),
+            "a,function<x>(b,c)",
+        )
+
+    def test_empty_adaptors_are_dropped(self) -> None:
+        self.assertEqual(
+            prepare_corpus.pipeline_without(
+                "a,cgscc(function<x>(instcombine<y>)),d", "instcombine"
+            ),
+            "a,d",
+        )
+
+    def test_similar_names_are_kept(self) -> None:
+        self.assertEqual(
+            prepare_corpus.pipeline_without(
+                "aggressive-instcombine,instcombine,function(instcombine-x)",
+                "instcombine",
+            ),
+            "aggressive-instcombine,function(instcombine-x)",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

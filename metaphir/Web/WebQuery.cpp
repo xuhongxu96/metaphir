@@ -304,7 +304,7 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned Slot,
       /*Filter=*/nullptr);
   if (HadStructuralMatch)
     *HadStructuralMatch = Structural;
-  ModuleSlotTracker Slots(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
+  ModuleSlotTracker Slots(F.getParent());
   Slots.incorporateFunction(F);
   if (Matches.empty()) {
     if (Structural && Rejecting)

@@ -1,3 +1,3 @@
 ;; treatIntAsVec(true)
 %mul = mul i?bits ?x, ?c:apIntAllowPoison:odd
-%cttz = call:?anch i?bits @llvm.cttz(i?bits %mul, i1 ?isz)
+%cttz = call i?bits @llvm.cttz(i?bits %mul, i1 ?isz)

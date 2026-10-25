@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
 %neg = neg i?bits ?a
 %and = and:c:s i?bits %neg, ?cm:lowBitMask:or(:scalar, :constantSplat)
-%add = add:?anch:c i?bits ?a, %and
+%add = add:c i?bits ?a, %and

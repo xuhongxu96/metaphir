@@ -2,6 +2,6 @@
 %and = and:c i?bits %neg, ?x
 %ctlz = call i?bits @llvm.ctlz(i?bits %and, i1 ?_)
 %xor = xor:c i?bits %ctlz, ?bm1:constantInt
-%sel = selectEqZero:?anch i?bits ?x, i?bits ?bits, i?bits %xor
+%sel = selectEqZero i?bits ?x, i?bits ?bits, i?bits %xor
 ;; ?bm1 == ?bits - 1
 ;; isPower2(?bits)

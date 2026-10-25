@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -71,6 +72,35 @@ def is_pr_test(path: Path) -> bool:
     return path.suffix == ".ll" and path.name.startswith(PR_TEST_PREFIX)
 
 
+def pipeline_without(pipeline: str, pass_name: str) -> str:
+    """A textual pass pipeline with every occurrence of ``pass_name`` removed.
+
+    Pass managers left empty, e.g. "function<eager-inv>()", are dropped too.
+    """
+    name = rf"(?<![\w-]){re.escape(pass_name)}(?:<[^<>()]*>)?(?![\w<(-])"
+    if not re.search(name, pipeline):
+        sys.exit(f"{pass_name} is not in the pipeline")
+    out = re.sub(name, "", pipeline)
+    while True:
+        tidy = re.sub(r",(?=[,)])|(?<=\(),|^,|,$", "", out)
+        tidy = re.sub(r"[\w-]+(?:<[^<>()]*>)?\(\)", "", tidy)
+        if tidy == out:
+            return out
+        out = tidy
+
+
+def default_pipeline(opt: Path, passes: str) -> str:
+    """The textual pipeline that ``opt -passes=<passes>`` runs."""
+    proc = subprocess.run(
+        [str(opt), f"-passes={passes}", "-print-pipeline-passes", "-disable-output"],
+        input="",
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return proc.stdout.strip()
+
+
 def preprocess_benchmark(
     bench_root: Path, corpus: Path, passes: str, jobs: int, opt: Path
 ) -> tuple[int, int]:
@@ -91,7 +121,7 @@ def preprocess_benchmark(
         index, (name, src) = item
         tmp_bc = tmp / f"{index}.bc"
         env = dict(os.environ)
-        env.pop("METAPHIR_EVAL_ANCHOR", None)  # ensure folds stay disabled
+        env.pop("METAPHIR_EVAL_ENABLED", None)  # ensure folds stay disabled
         proc = subprocess.run(
             [str(opt), f"-passes={passes}", str(src), "-o", str(tmp_bc)],
             capture_output=True,
@@ -132,6 +162,14 @@ def main() -> int:
     ap.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1)
     ap.add_argument(
+        "--drop-pass",
+        action="append",
+        default=[],
+        metavar="PASS",
+        help="remove every occurrence of PASS from --passes (repeatable), "
+        "e.g. --drop-pass instcombine",
+    )
+    ap.add_argument(
         "--skip-benchmark",
         action="store_true",
         help="only copy the PR test cases into the corpus",
@@ -163,8 +201,14 @@ def main() -> int:
     if args.skip_benchmark:
         return 0
 
+    passes = args.passes
+    if args.drop_pass:
+        passes = default_pipeline(args.opt, passes)
+        for name in args.drop_pass:
+            passes = pipeline_without(passes, name)
+        print(f"  passes: {passes}")
     ok, fail = preprocess_benchmark(
-        args.bench_root, args.corpus, args.passes, args.jobs, args.opt
+        args.bench_root, args.corpus, passes, args.jobs, args.opt
     )
     print(f"  preprocessed {ok} benchmark modules, {fail} failed")
     print(f"  corpus: {args.corpus}")

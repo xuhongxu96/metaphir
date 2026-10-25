@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
-%trunc = trunc:?anch nuw:?nuw nsw:?nsw i?big ?x to i?small
+%trunc = trunc nuw:?nuw nsw:?nsw i?big ?x to i?small
 %ext = zextOrSext:?ext i?small %trunc to i?big
 ;; ((opcode(?ext) == "zext" && ?nuw) || (opcode(?ext) == "sext" && ?nsw))

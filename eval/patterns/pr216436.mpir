@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
 %sub = add i?bits ?x, ?c:allOnes
 %or = or:s i?bits %sub, ?cm:lowBitMask
-%add = add:?anch i?bits %or, 1
+%add = add i?bits %or, 1

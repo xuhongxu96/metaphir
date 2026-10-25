@@ -5,7 +5,10 @@ __pycache__/
 /build-*/
 .cache/
 /Testing/
+/eval/baselines/*/build/
 /eval/corpus/
+/eval/corpus-*/
+/eval/*.mpidx
 /eval/corpus.mpidx
 /web/public/wasm/
 /web/node_modules/

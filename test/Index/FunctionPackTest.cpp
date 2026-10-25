@@ -6,11 +6,13 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
+#include <regex>
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -49,11 +51,14 @@ protected:
     return Unpacked ? std::move(*Unpacked) : nullptr;
   }
 
+  // The function as text, with metadata references written as "!N": a
+  // function printed alone numbers its metadata by what the rest of its module
+  // holds, so the numbers differ between the packed and the unpacked module.
   static std::string print(const Function &F) {
     std::string Str;
     raw_string_ostream OS(Str);
     F.print(OS);
-    return Str;
+    return std::regex_replace(Str, std::regex("![0-9]+"), "!N");
   }
 
   static std::string printOperand(const llvm::Value &V) {
@@ -95,6 +100,14 @@ TEST_F(FunctionPackTest, RoundTripsTheFunction) {
   std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
   ASSERT_NE(F, nullptr);
   EXPECT_EQ(print(F->getFunction()), print(*M->getFunction("f")));
+  const auto &Load = cast<LoadInst>(F->getFunction().front().front());
+  const MDNode *Range = Load.getMetadata(LLVMContext::MD_range);
+  ASSERT_NE(Range, nullptr);
+  ASSERT_EQ(Range->getNumOperands(), 2u);
+  EXPECT_EQ(mdconst::extract<ConstantInt>(Range->getOperand(0))->getZExtValue(),
+            0u);
+  EXPECT_EQ(mdconst::extract<ConstantInt>(Range->getOperand(1))->getZExtValue(),
+            10u);
   // Without debug info, reading the pack finds none to drop.
   EXPECT_EQ(Diagnostics, 0u);
 

@@ -2,5 +2,5 @@
 %and = and:c i?bits %neg, ?x
 %ctlz = call i?bits @llvm.ctlz(i?bits %and, i1 ?_)
 %sub = sub i?bits ?bm1:constantInt, %ctlz
-%sel = selectEqZero:?anch i?bits ?x, i?bits ?bits, i?bits %sub
+%sel = selectEqZero i?bits ?x, i?bits ?bits, i?bits %sub
 ;; ?bm1 == ?bits - 1

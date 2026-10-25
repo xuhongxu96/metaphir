@@ -1,2 +1,3 @@
-%scmp = call:?anch ?rty @llvm.scmp(?ity ?x, ?ity 0)
+;; treatIntAsVec(true)
+%scmp = call ?rty @llvm.scmp(?ity ?x, ?ity 0)
 ;; inSignedRange(?x, -1, 1)

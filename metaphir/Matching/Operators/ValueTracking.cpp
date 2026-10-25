@@ -154,7 +154,7 @@ OpIsGuaranteedNotToBeUndef::concrete(const ConcreteCall &Call) {
     return Value.takeError();
   const SimplifyQuery &Query = query(Call);
   return ConstraintValue::getBoolean(
-      isGuaranteedNotToBeUndef(*Value, Query.AC, Query.CxtI, Query.DT));
+      isGuaranteedNotToBeUndef(*Value, Query.AC, Query.CtxI, Query.DT));
 }
 
 Expected<ConstraintValue>
@@ -165,7 +165,7 @@ OpIsGuaranteedNotToBePoison::concrete(const ConcreteCall &Call) {
     return Value.takeError();
   const SimplifyQuery &Query = query(Call);
   return ConstraintValue::getBoolean(
-      isGuaranteedNotToBePoison(*Value, Query.AC, Query.CxtI, Query.DT));
+      isGuaranteedNotToBePoison(*Value, Query.AC, Query.CtxI, Query.DT));
 }
 
 Expected<ConstraintValue>
@@ -176,7 +176,7 @@ OpIsGuaranteedNotToBeUndefOrPoison::concrete(const ConcreteCall &Call) {
     return Value.takeError();
   const SimplifyQuery &Query = query(Call);
   return ConstraintValue::getBoolean(
-      isGuaranteedNotToBeUndefOrPoison(*Value, Query.AC, Query.CxtI, Query.DT));
+      isGuaranteedNotToBeUndefOrPoison(*Value, Query.AC, Query.CtxI, Query.DT));
 }
 
 Expected<ConstraintValue>
@@ -331,7 +331,7 @@ Expected<ConstraintValue> OpNumSignBits::concrete(const ConcreteCall &Call) {
     return Value.takeError();
   const SimplifyQuery &Query = query(Call);
   return integerResult(APInt(32, ComputeNumSignBits(*Value, Query.DL, Query.AC,
-                                                    Query.CxtI, Query.DT)),
+                                                    Query.CtxI, Query.DT)),
                        /*IsUnsigned=*/true);
 }
 
@@ -344,7 +344,7 @@ OpMaxSignificantBits::concrete(const ConcreteCall &Call) {
   const SimplifyQuery &Query = query(Call);
   return integerResult(
       APInt(32, ComputeMaxSignificantBits(*Value, Query.DL, Query.AC,
-                                          Query.CxtI, Query.DT)),
+                                          Query.CtxI, Query.DT)),
       /*IsUnsigned=*/true);
 }
 

@@ -1,4 +1,4 @@
 ;; treatIntAsVec(true)
 %trunc = trunc nuw i?big ?x to i?small
 %logic = bitwiseLogic:c:s i?small %trunc, ?y
-%zext = zext:?anch i?small %logic to i?big
+%zext = zext i?small %logic to i?big

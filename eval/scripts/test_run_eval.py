@@ -13,115 +13,63 @@ import run_eval
 
 def write_tool(directory: Path, body: str) -> Path:
     tool = directory / "fake-metaphir-match"
-    tool.write_text("#!/bin/sh\n" + body)
+    tool.write_text("#!/bin/sh\n" + body.replace("$DIR", str(directory)))
     tool.chmod(0o755)
     return tool
 
 
-class CollectPatternsTest(unittest.TestCase):
+class RunMetaphirTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)
         self.pattern = self.dir / "p.mpir"
-        self.pattern.write_text("")
         self.files = [self.dir / "a.bc", self.dir / "b.bc"]
-        for f in self.files:
-            f.write_text("")
+        self.index = self.dir / "corpus.mpidx"
         self.saved_tool = run_eval.METAPHIR_MATCH
 
     def tearDown(self) -> None:
         run_eval.METAPHIR_MATCH = self.saved_tool
         self.tmp.cleanup()
 
-    def collect(self) -> bool:
+    def run_tool(self, body: str, index: Path | None = None):
+        run_eval.METAPHIR_MATCH = write_tool(self.dir, body)
         with redirect_stdout(io.StringIO()):
-            return run_eval.collect_patterns(
-                self.files, "prX", [self.pattern], self.dir, jobs=2
-            )
+            return run_eval.run_metaphir(self.pattern, self.files, 3, index)
 
-    def test_tool_failure_is_reported_not_treated_as_no_match(self) -> None:
-        run_eval.METAPHIR_MATCH = write_tool(
-            self.dir, 'case "$2" in *b.bc) echo boom >&2; exit 1;; esac\n'
-        )
-        self.assertFalse(self.collect())
-        failures = (self.dir / "prX_P_failures.txt").read_text()
-        self.assertIn("b.bc", failures)
-        self.assertIn("boom", failures)
-        self.assertNotIn("a.bc", failures)
-
-    def test_anchors_are_collected(self) -> None:
-        run_eval.METAPHIR_MATCH = write_tool(
-            self.dir, 'echo "target 0: @f"\necho "  { ?anch = %r }"\n'
-        )
-        self.assertTrue(self.collect())
-        anchors = run_eval.load_anchors(self.dir / "prX_P.anchors")
-        self.assertEqual(anchors, {("a.bc", "f", "r"), ("b.bc", "f", "r")})
-        self.assertFalse((self.dir / "prX_P_failures.txt").exists())
-
-
-class IndexedPatternsTest(CollectPatternsTest):
-    def setUp(self) -> None:
-        super().setUp()
-        self.index = self.dir / "corpus.mpidx"
-        self.index.write_text("")
-
-    def collect(self) -> bool:
-        with redirect_stdout(io.StringIO()):
-            return run_eval.collect_patterns(
-                self.files, "prX", [self.pattern], self.dir, jobs=3, index=self.index
-            )
-
-    def test_tool_failure_is_reported_not_treated_as_no_match(self) -> None:
-        run_eval.METAPHIR_MATCH = write_tool(
-            self.dir,
-            'echo "$DIR/a.bc\t@f\t{?anch = %r, ?x = %x}"\n'
-            'echo "metaphir-match: error: $DIR/b.bc: boom" >&2\n'
-            "exit 1\n".replace("$DIR", str(self.dir)),
-        )
-        self.assertFalse(self.collect())
-        failures = (self.dir / "prX_P_failures.txt").read_text()
-        self.assertIn("b.bc: boom", failures)
-        anchors = run_eval.load_anchors(self.dir / "prX_P.anchors")
-        self.assertEqual(anchors, {("a.bc", "f", "r")})
-
-    def test_anchors_are_collected(self) -> None:
-        run_eval.METAPHIR_MATCH = write_tool(
-            self.dir,
+    def test_functions_are_collected(self) -> None:
+        funcs, errors = self.run_tool(
             'echo "$@" > "$DIR/args"\n'
             'cat "$(echo "$@" | sed "s/.*@//")" > "$DIR/files"\n'
-            'echo "$DIR/a.bc\t@f\t{?anch = %r}"\n'
-            'echo "$DIR/b.bc\t@g\t{?x = %x, ?anch = %s}"\n'
-            'echo "$DIR/b.bc\t@h\t{?x = %x}"\n'.replace("$DIR", str(self.dir)),
+            'echo "$DIR/a.bc\t@f\t{?x = %r}"\n'
+            'echo "$DIR/a.bc\t@f\t{?x = %s}"\n'
+            'echo "$DIR/b.bc\t@g\t{}"\n',
+            self.index,
         )
-        self.assertTrue(self.collect())
-        anchors = run_eval.load_anchors(self.dir / "prX_P.anchors")
-        self.assertEqual(anchors, {("a.bc", "f", "r"), ("b.bc", "g", "s")})
-        args = (self.dir / "args").read_text().split()
+        self.assertEqual(funcs, {("a.bc", "f"), ("b.bc", "g")})
+        self.assertEqual(errors, [])
         self.assertEqual(
-            args[:6],
-            [
-                "--matches-only",
-                "-j",
-                "3",
-                "--index",
-                str(self.index),
-                str(self.pattern),
-            ],
+            (self.dir / "args").read_text().split()[:6],
+            ["--matches-only", "-j", "3", "--index", str(self.index), str(self.pattern)],
         )
         self.assertEqual(
             (self.dir / "files").read_text().splitlines(),
             [f'"{f}"' for f in self.files],
         )
-        timing = (self.dir / "prX_P_timing.txt").read_text()
-        self.assertIn("pattern_mode=indexed", timing)
 
-    def test_crash_fails_the_pattern(self) -> None:
-        run_eval.METAPHIR_MATCH = write_tool(
-            self.dir, 'echo "$DIR/a.bc\t@f\t{?anch = %r}"\nkill -SEGV $$\n'
+    def test_module_error_is_reported_with_the_other_functions(self) -> None:
+        funcs, errors = self.run_tool(
+            'echo "$DIR/a.bc\t@f\t{}"\n'
+            'echo "metaphir-match: error: $DIR/b.bc: boom" >&2\n'
+            "exit 1\n"
         )
-        self.assertFalse(self.collect())
-        failures = (self.dir / "prX_P_failures.txt").read_text()
-        self.assertIn("rc=-11", failures)
+        self.assertEqual(funcs, {("a.bc", "f")})
+        self.assertEqual(len(errors), 1)
+        self.assertIn("b.bc: boom", errors[0])
+
+    def test_crash_is_an_error(self) -> None:
+        _, errors = self.run_tool('echo "$DIR/a.bc\t@f\t{}"\nkill -SEGV $$\n')
+        self.assertEqual(len(errors), 1)
+        self.assertIn("rc=-11", errors[0])
 
 
 class ResponseFileTest(unittest.TestCase):
@@ -132,12 +80,32 @@ class ResponseFileTest(unittest.TestCase):
         )
 
 
-class MetricsTest(unittest.TestCase):
-    def test_identical_empty_sets_have_no_difference(self) -> None:
-        out = io.StringIO()
-        with redirect_stdout(out):
-            run_eval.print_metrics(set(), set(), "x")
-        self.assertIn("diff_rate=0.0000", out.getvalue())
+class FunctionsTest(unittest.TestCase):
+    def test_round_trip(self) -> None:
+        funcs = {("b.bc", "g"), ("a.bc", "f")}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "x.functions"
+            run_eval.save_functions(path, funcs)
+            self.assertEqual(path.read_text(), "a.bc\tf\nb.bc\tg\n")
+            self.assertEqual(run_eval.load_functions(path), funcs)
+
+
+class ScoresTest(unittest.TestCase):
+    def test_scores(self) -> None:
+        s = run_eval.scores({1, 2, 3}, {2, 3, 4, 5})
+        self.assertEqual((s["TP"], s["FP"], s["FN"]), (2, 2, 1))
+        self.assertAlmostEqual(s["f1"], 4 / 7)
+
+    def test_empty_sets_are_exact(self) -> None:
+        s = run_eval.scores(set(), set())
+        self.assertEqual((s["precision"], s["recall"], s["f1"]), (1.0, 1.0, 1.0))
+
+
+class FoldIdTest(unittest.TestCase):
+    def test_suffixes_belong_to_their_pr_only(self) -> None:
+        self.assertTrue(run_eval.fold_id_matches("pr213313_and", "pr213313"))
+        self.assertTrue(run_eval.fold_id_matches("pr213313", "pr213313"))
+        self.assertFalse(run_eval.fold_id_matches("pr2133130", "pr213313"))
 
 
 if __name__ == "__main__":

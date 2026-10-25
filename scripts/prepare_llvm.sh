@@ -25,7 +25,7 @@
 set -euo pipefail
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LLVM_COMMIT="53a7028134738d799d8b758a5675873e325dd9e0"
+LLVM_COMMIT="79b321b1238ceaf8261a5b177185a3ec5111918a"
 LLVM_DIR="$BASE_DIR/llvm-project"
 JOBS="${JOBS:-$(nproc)}"
 # What MetaphIR's build and tests run from the build tree; llvm-lit is
@@ -113,7 +113,8 @@ echo "[$(date)] Resetting to $LLVM_COMMIT and applying patches..."
 git -C "$LLVM_DIR" reset --hard "$LLVM_COMMIT"
 git -C "$LLVM_DIR" clean -fd
 if [ "${#PATCHES[@]}" -gt 0 ]; then
-    git -C "$LLVM_DIR" apply "${PATCHES[@]}"
+    # --intent-to-add keeps new files in `git diff HEAD`, for the check above.
+    git -C "$LLVM_DIR" apply --intent-to-add "${PATCHES[@]}"
 fi
 if [ "$SOURCE_ONLY" -eq 1 ]; then
     echo "[$(date)] Done: $LLVM_DIR is at $LLVM_COMMIT with eval/patches."

@@ -2,7 +2,7 @@
 %div = udiv:s i?bits ?x, ?c0:constantInt
 %divshl = shl:s i?bits %div, ?k:constantInt
 %rem = urem:s i?bits ?x, ?c0
-%add = add:?anch i?bits %rem, %divshl
+%add = add i?bits %rem, %divshl
 ;; (?c0 != 0)
 ;; ((shl(1, ?k)) - ?c0) != 0
 ;; isGuaranteedNotToBeUndef(?x)

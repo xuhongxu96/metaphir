@@ -382,7 +382,7 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
   std::optional<ModuleSlotTracker> Slots;
   auto SlotsFor = [&](const Function &F) {
     if (!Slots)
-      Slots.emplace(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
+      Slots.emplace(F.getParent());
     if (Slots->getCurrentFunction() != &F)
       Slots->incorporateFunction(F);
     return &*Slots;
