@@ -2,6 +2,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalIFunc.h"
@@ -103,12 +104,14 @@ public:
                       Returns,
                       /*NameSuffix=*/"", /*CodeInfo=*/nullptr,
                       /*TypeMapper=*/nullptr, this);
-    // Cloning lists the compile units the function's debug info is in, even
-    // when there are none, which reading the pack would take for invalid
-    // debug info.
-    if (NamedMDNode *Units = Packed->getNamedMetadata("llvm.dbg.cu");
-        Units && Units->getNumOperands() == 0)
+    // Debug info and other metadata can refer to values outside the pack and
+    // crash the bitcode writer; neither is part of a pattern.
+    stripDebugInfo(*Clone);
+    if (NamedMDNode *Units = Packed->getNamedMetadata("llvm.dbg.cu"))
       Packed->eraseNamedMetadata(Units);
+    for (BasicBlock &BB : *Clone)
+      for (Instruction &I : BB)
+        I.dropUnknownNonDebugMetadata();
     completeIndirections();
     addPlaceholders();
     sortGlobals();
