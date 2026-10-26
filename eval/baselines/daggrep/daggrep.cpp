@@ -3,6 +3,12 @@
 // This file is licensed under the MIT License.
 // See the LICENSE file for more information.
 
+#include <atomic>
+#include <condition_variable>
+#include <cstdint>
+#include <cstdlib>
+#include <exception>
+#include <filesystem>
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/DenseMap.h>
@@ -44,12 +50,6 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/ToolOutputFile.h>
 #include <llvm/Support/raw_ostream.h>
-#include <atomic>
-#include <condition_variable>
-#include <cstdint>
-#include <cstdlib>
-#include <exception>
-#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <queue>
