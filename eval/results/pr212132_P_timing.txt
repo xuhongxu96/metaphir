@@ -1,5 +1,0 @@
-modules=50838
-pattern_mode=indexed
-pattern_seconds=8.328
-patterns=2
-P_anchors=5

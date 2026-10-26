@@ -1,5 +1,0 @@
-pr214376__cttz.ll	cttz_odd_mul	r
-pr214376__cttz.ll	cttz_odd_mul_multiuse	r
-pr214376__cttz.ll	cttz_odd_mul_nsw	r
-pr214376__cttz.ll	cttz_odd_mul_splat	r
-pr214376__cttz.ll	cttz_odd_mul_zero_poison	r

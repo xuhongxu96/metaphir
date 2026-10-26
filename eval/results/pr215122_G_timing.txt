@@ -1,4 +1,0 @@
-modules=50838
-gt_seconds=60064.960
-gt_shared_prs=20
-G_anchors=30
