@@ -267,49 +267,97 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
     IndexW.write<uint64_t>(FeaturesSize);
     IndexW.write<uint64_t>(Pack);
   };
-  if (Error E =
-          EncodeAll(All, [&](size_t Entry, EncodedModule Module) -> Error {
-            const IndexEntry &Indexed = Index.getEntry(Entry);
-            Header.Modules.push_back(WebModule{Indexed.Path.str(),
-                                               Header.NumFunctions,
-                                               uint32_t(Module.Packs.size())});
-            Header.NumFunctions += Module.Packs.size();
-            // Compressing is what takes long, so it is done in parallel too.
-            size_t N = Module.Packs.size();
-            PackFrames Grouped = groupPacks(Module.Packs, Options);
-            size_t M = Grouped.Frames.size();
-            std::vector<std::optional<Expected<std::string>>> Frames(N + M);
-            parallelFor(0, N + M, [&](size_t I) {
-              Frames[I].emplace(
-                  I < N ? FeatureCompressor.compress(Module.Features[I])
-                        : PackCompressor.compress(Grouped.Frames[I - N]));
-            });
-            // Where each frame of packs is.
-            std::vector<uint64_t> FrameOffsets;
-            for (size_t I = 0; I != M; ++I) {
-              Expected<std::string> &Packs = *Frames[N + I];
-              if (!Packs)
-                return Packs.takeError();
-              FrameOffsets.push_back(PacksSize);
-              *PacksOS << *Packs;
-              PacksSize += Packs->size();
-            }
-            for (size_t I = 0; I != N; ++I) {
-              Expected<std::string> &Features = *Frames[I];
-              if (!Features)
-                return Features.takeError();
-              auto [Frame, Slot] = Grouped.Of[I];
-              uint64_t Size = (*Frames[N + Frame])->size();
-              if (!PackLocation::fits(FrameOffsets[Frame], Size, Slot))
-                return createStringError(
-                    Indexed.Path + ": the packs are too large to publish");
-              WriteEntry(PackLocation::encode(FrameOffsets[Frame], Size, Slot));
-              *FeaturesOS << *Features;
-              FeaturesSize += Features->size();
-            }
-            return Error::success();
-          }))
-    return E;
+  struct CompressionModule {
+    PackFrames Grouped;
+    std::vector<std::optional<Expected<std::string>>> Results;
+  };
+  struct CompressionTask {
+    size_t Module;
+    size_t Item;
+    bool Feature;
+  };
+  constexpr size_t Batch = 512;
+  for (size_t Start = 0; Start < All.size(); Start += Batch) {
+    size_t End = std::min(All.size(), Start + Batch);
+    std::vector<std::optional<Expected<EncodedModule>>> Encoded(End - Start);
+    parallelFor(Start, End, [&](size_t I) {
+      Encoded[I - Start].emplace(
+          encodeModule(Index, Index.getEntry(All[I])));
+    });
+
+    std::vector<CompressionModule> Modules(End - Start);
+    std::vector<CompressionTask> Tasks;
+    for (size_t I = Start; I != End; ++I) {
+      Expected<EncodedModule> &Module = *Encoded[I - Start];
+      if (!Module)
+        return Module.takeError();
+      CompressionModule &Work = Modules[I - Start];
+      Work.Grouped = groupPacks(Module->Packs, Options);
+      size_t NumFeatures = Module->Features.size();
+      size_t NumFrames = Work.Grouped.Frames.size();
+      Work.Results.resize(NumFeatures + NumFrames);
+      for (size_t Feature = 0; Feature != NumFeatures; ++Feature)
+        Tasks.push_back({I - Start, Feature, true});
+      for (size_t Frame = 0; Frame != NumFrames; ++Frame)
+        Tasks.push_back({I - Start, NumFeatures + Frame, false});
+    }
+
+    // Compress across modules as well as within them. Compressing each module
+    // in turn left most workers idle when modules had only a few functions.
+    parallelFor(0, Tasks.size(), [&](size_t I) {
+      const CompressionTask &Task = Tasks[I];
+      const EncodedModule &Module = **Encoded[Task.Module];
+      size_t NumFeatures = Module.Features.size();
+      StringRef Input = Task.Feature
+                            ? StringRef(Module.Features[Task.Item])
+                            : StringRef(Modules[Task.Module]
+                                            .Grouped.Frames[Task.Item -
+                                                           NumFeatures]);
+      Modules[Task.Module].Results[Task.Item].emplace(
+          Task.Feature ? FeatureCompressor.compress(Input)
+                       : PackCompressor.compress(Input));
+    });
+
+    // Write in corpus order so the packed offsets and module directory stay
+    // deterministic regardless of the compression task completion order.
+    for (size_t I = Start; I != End; ++I) {
+      size_t Local = I - Start;
+      const IndexEntry &Indexed = Index.getEntry(All[I]);
+      EncodedModule &Module = **Encoded[Local];
+      CompressionModule &Work = Modules[Local];
+      size_t NumFeatures = Module.Features.size();
+      size_t NumFrames = Work.Grouped.Frames.size();
+      Header.Modules.push_back(WebModule{Indexed.Path.str(),
+                                         Header.NumFunctions,
+                                         uint32_t(Module.Packs.size())});
+      Header.NumFunctions += Module.Packs.size();
+
+      std::vector<uint64_t> FrameOffsets;
+      for (size_t Frame = 0; Frame != NumFrames; ++Frame) {
+        Expected<std::string> &Packs = *Work.Results[NumFeatures + Frame];
+        if (!Packs)
+          return Packs.takeError();
+        FrameOffsets.push_back(PacksSize);
+        *PacksOS << *Packs;
+        PacksSize += Packs->size();
+      }
+      for (size_t Feature = 0; Feature != NumFeatures; ++Feature) {
+        Expected<std::string> &Features = *Work.Results[Feature];
+        if (!Features)
+          return Features.takeError();
+        auto [Frame, Slot] = Work.Grouped.Of[Feature];
+        uint64_t Size = (*Work.Results[NumFeatures + Frame])->size();
+        if (!PackLocation::fits(FrameOffsets[Frame], Size, Slot))
+          return createStringError(
+              Indexed.Path + ": the packs are too large to publish");
+        WriteEntry(PackLocation::encode(FrameOffsets[Frame], Size, Slot));
+        *FeaturesOS << *Features;
+        FeaturesSize += Features->size();
+      }
+    }
+    Report("published " + Twine(End) + " of " + Twine(All.size()) +
+           " modules");
+  }
   if (!PackLocation::fits(PacksSize, 0, 0))
     return createStringError("the packs are too large to publish");
   WriteEntry(PackLocation::encode(PacksSize, 0, 0));
