@@ -1,0 +1,216 @@
+--- a/daggrep.cpp
++++ b/daggrep.cpp
+@@ -60,15 +60,18 @@
+ using namespace PatternMatch;
+ namespace fs = std::filesystem;
+ 
+-static cl::opt<std::string>
+-    InputDir(cl::Positional, cl::desc("<directory for input LLVM IR files>"),
+-             cl::Required, cl::value_desc("inputdir"));
+-
++// MetaphIR eval: the pattern comes first, followed by any number of IR files,
++// directories (searched recursively for .ll and .bc files) or @response files.
+ static cl::opt<std::string> PatternFile(cl::Positional,
+                                         cl::desc("<DAG pattern>"), cl::Required,
+                                         cl::value_desc("inputfile"));
+ 
+-constexpr uint32_t MaxCount = 20;
++static cl::list<std::string> Inputs(cl::Positional,
++                                    cl::desc("<input LLVM IR files or dirs>"),
++                                    cl::OneOrMore);
++
++static cl::opt<unsigned> Jobs("j", cl::desc("worker threads (0 = all)"),
++                              cl::init(0));
+ 
+ static bool isSupportedType(Type *Ty) {
+   if (Ty->isIntegerTy())
+@@ -369,79 +372,24 @@
+   return false;
+ }
+ 
+-static bool matchPattern(Module &M, Module &Pattern, std::string &Out) {
++// MetaphIR eval: report every function with a match, not only the first one
++// in the module, as "<file>\t@<function>".
++static void matchPattern(Module &M, Module &Pattern, StringRef File,
++                         std::vector<std::string> &Out) {
+   for (auto &F : M) {
+     if (F.empty())
+       continue;
+ 
+-    if (matchPattern(F, *Pattern.begin(), Out))
+-      return true;
++    std::string Matched;
++    if (matchPattern(F, *Pattern.begin(), Matched))
++      Out.push_back((File + "\t@" + F.getName()).str());
+   }
+-  return false;
+ }
+ 
+-struct Shared final {
+-  fs::path BaseDir;
+-  std::mutex Lock;
+-  std::condition_variable CV;
+-  std::queue<std::string> Tasks;
+-  std::atomic_uint32_t TaskCount{0};
+-  std::atomic_uint32_t Count{0};
+-};
+-
+-struct Worker final {
+-  Shared &SharedData;
+-  std::jthread Thread;
+-
+-  explicit Worker(Shared &SharedDataRef)
+-      : SharedData(SharedDataRef),
+-        Thread(std::jthread([this](std::stop_token StopToken) {
+-          LLVMContext Context;
+-          SMDiagnostic Err;
+-          auto Pattern = parseIRFile(PatternFile, Err, Context);
+-          canonicalizePattern(*Pattern);
+-
+-          while (!StopToken.stop_requested()) {
+-            std::unique_lock Guard(SharedData.Lock);
+-            // SharedData.CV.wait(Guard);
+-
+-            if (SharedData.Tasks.empty())
+-              continue;
+-            auto Path = std::move(SharedData.Tasks.front());
+-            //   errs() << Path << '\n';
+-            SharedData.Tasks.pop();
+-            Guard.unlock();
+-
+-            if (SharedData.Count < MaxCount) {
+-              SMDiagnostic Err;
+-              auto M = parseIRFile(Path, Err, Context);
+-              if (M) {
+-                std::string Out;
+-                if (matchPattern(*M, *Pattern, Out)) {
+-                  Guard.lock();
+-                  outs() << fs::relative(fs::absolute(Path), SharedData.BaseDir)
+-                                .string()
+-                         << '\n';
+-                  outs() << Out << '\n';
+-                  ++SharedData.Count;
+-                }
+-              }
+-            }
+-            SharedData.TaskCount--;
+-          }
+-        })) {}
+-};
+-
+ int main(int argc, char **argv) {
+   InitLLVM Init{argc, argv};
+   cl::ParseCommandLineOptions(argc, argv, "scanner\n");
+ 
+-  std::vector<std::string> BlockList{
+-      "ruby/optimized/vm.ll",
+-      "/regexec.ll",
+-      "quickjs/optimized/quickjs.ll",
+-  };
+-
+   {
+     LLVMContext Context;
+ 
+@@ -459,49 +407,63 @@
+       return EXIT_FAILURE;
+   }
+ 
+-  uint32_t Count = 0;
+-  uint32_t Threads = std::thread::hardware_concurrency();
+-  Shared SharedData;
+-  SharedData.BaseDir = fs::absolute(std::string(InputDir));
+-  std::vector<std::unique_ptr<Worker>> Workers;
+-  for (uint32_t I = 0; I < Threads; ++I)
+-    Workers.push_back(std::make_unique<Worker>(SharedData));
+-
+-  for (auto &Entry : fs::recursive_directory_iterator(std::string(InputDir))) {
+-    if (!Entry.is_regular_file())
+-      continue;
+-    auto &Path = Entry.path();
+-    if (Path.extension() != ".ll" ||
+-        Path.string().find("/optimized/") == std::string::npos)
++  std::vector<std::string> Files;
++  for (auto &Input : Inputs) {
++    if (!fs::is_directory(Input)) {
++      Files.push_back(Input);
+       continue;
+-    auto Str = Path.string();
+-    bool Blocked = false;
+-    for (auto &Pattern : BlockList)
+-      if (Str.find(Pattern) != std::string::npos) {
+-        Blocked = true;
+-        break;
+-      }
+-    if (Blocked)
+-      continue;
+-
+-    {
+-      std::unique_lock Guard(SharedData.Lock);
+-      SharedData.TaskCount++;
+-      SharedData.Tasks.push(Str);
+     }
+-    SharedData.CV.notify_one();
++    for (auto &Entry : fs::recursive_directory_iterator(Input)) {
++      auto &Path = Entry.path();
++      if (Entry.is_regular_file() &&
++          (Path.extension() == ".ll" || Path.extension() == ".bc"))
++        Files.push_back(Path.string());
++    }
++  }
+ 
+-    if (SharedData.Count >= MaxCount)
+-      break;
++  uint32_t Threads = Jobs ? Jobs : std::thread::hardware_concurrency();
++  std::atomic_size_t Next{0};
++  std::mutex Lock;
++  std::vector<std::string> Matches;
++  std::atomic_uint32_t Failed{0};
++  {
++    std::vector<std::jthread> Workers;
++    for (uint32_t I = 0; I < Threads; ++I)
++      Workers.emplace_back([&] {
++        LLVMContext Context;
++        SMDiagnostic Err;
++        auto Pattern = parseIRFile(PatternFile, Err, Context);
++        canonicalizePattern(*Pattern);
++
++        for (size_t Idx; (Idx = Next++) < Files.size();) {
++          auto &Path = Files[Idx];
++          LLVMContext ModuleContext;
++          SMDiagnostic ModuleErr;
++          auto M = parseIRFile(Path, ModuleErr, ModuleContext);
++          if (!M) {
++            std::lock_guard Guard(Lock);
++            ModuleErr.print(argv[0], errs());
++            ++Failed;
++            continue;
++          }
++          std::vector<std::string> Out;
++          matchPattern(*M, *Pattern, Path, Out);
++          if (Out.empty())
++            continue;
++          std::lock_guard Guard(Lock);
++          for (auto &Line : Out)
++            Matches.push_back(std::move(Line));
++        }
++      });
+   }
+ 
+-  using namespace std::literals;
+-  while (SharedData.TaskCount > 0 && SharedData.Count < MaxCount)
+-    std::this_thread::sleep_for(100ms);
+-
+-  SharedData.CV.notify_all();
+-  Workers.clear();
+-  outs() << SharedData.Count << " Occurrences\n";
++  sort(Matches);
++  for (auto &Line : Matches)
++    outs() << Line << '\n';
++  errs() << Matches.size() << " Occurrences in " << Files.size() << " files";
++  if (Failed)
++    errs() << " (" << Failed << " failed to parse)";
++  errs() << '\n';
+ 
+-  return EXIT_SUCCESS;
++  return Failed ? EXIT_FAILURE : EXIT_SUCCESS;
+ }
