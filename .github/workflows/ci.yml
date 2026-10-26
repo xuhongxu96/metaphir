@@ -1,5 +1,5 @@
-# Builds MetaphIR, natively and for WebAssembly, and runs its tests and the
-# website's.
+# Builds MetaphIR, natively and for WebAssembly, runs its tests and the
+# website's, and deploys the website to GitHub Pages on main.
 #
 # What takes long is cached:
 #   - LLVM: the pinned, patched llvm-project is built once, with its
@@ -216,6 +216,30 @@ jobs:
         run: npm test
       - name: Build the site
         run: npm run build
+      - name: Package the site for GitHub Pages
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: web
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   format:
     name: Formatting
