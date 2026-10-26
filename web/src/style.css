@@ -186,8 +186,8 @@ button.link:hover, button.link.selected { text-decoration: underline; }
 .card-foot { margin: 0; padding: 0.3rem 0.6rem; color: var(--muted); border-top: 1px solid var(--border); font-size: 0.75rem; }
 .cards-hint { margin: 0; color: var(--muted); font-size: 0.75rem; }
 .status-notes button.link { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
-.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-.segmented button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--bg); color: var(--muted); }
+.segmented { display: inline-flex; flex: none; white-space: nowrap; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.segmented button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--bg); color: var(--muted); white-space: nowrap; }
 .segmented button + button { border-left: 1px solid var(--border); }
 .segmented button[aria-pressed="true"] { background: var(--accent-bg); color: var(--fg); font-weight: 600; }
 .status-source { margin: 6px 0 0; font: 12px/1.4 var(--mono); white-space: pre; overflow-x: auto; }
@@ -453,7 +453,7 @@ button.small { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
   to { transform: translateX(340%); }
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
   .toolbar { flex-wrap: wrap; }
 }
 
