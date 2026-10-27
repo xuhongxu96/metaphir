@@ -2,6 +2,7 @@ import Editor, { type OnMount } from "@monaco-editor/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { useColorScheme, type SchemePreference } from "./colorScheme.ts";
+import { findCorpus, loadConfig, type SiteConfig } from "./corpora.ts";
 import {
   EDITOR_OPTIONS,
   selectRange,
@@ -84,6 +85,8 @@ const STDLIB_DEFINITIONS = definitionsIn(STDLIB);
 export function App() {
   const { preference, setPreference, dark } = useColorScheme();
   const theme = themeName(dark);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>();
+  const [corpusId, setCorpusId] = useState<string>();
   const [corpus, setCorpus] = useState<PublishedCorpus>();
   const [source, setSource] = useState<Source>("published");
   // The guide opens with the page, until asked not to.
@@ -119,6 +122,11 @@ export function App() {
     shown;
   // The published query running, to pause, continue or stop.
   const [control, setControl] = useState<QueryControl>();
+  // Bumped when the corpus changes, so a run of the old corpus cannot update
+  // the new one's status.
+  const generation = useRef(0);
+  const controlRef = useRef<QueryControl | undefined>(undefined);
+  controlRef.current = control;
   const [patternEditor, setPatternEditor] = useState<CodeEditor>();
   const [patternTab, setPatternTab] = useState<PatternTab>("pattern");
   const [rejectionFocus, setRejectionFocus] = useState<{ key: string }>();
@@ -230,18 +238,88 @@ export function App() {
     return () => cancelAnimationFrame(frame);
   }, [patternTab, stdlibEditor, stdlibTarget]);
 
+  // Load the corpus list once. ?corpus= selects one, else config.default.
   useEffect(() => {
-    PublishedCorpus.open().then(
-      (opened) => {
-        setCorpus(opened);
-        results.published.setStatus({
-          text: "Ready",
-          details: corpusDetails(opened.functions, opened.modules),
-        });
+    loadConfig().then(
+      (config) => {
+        const requested = new URLSearchParams(location.search).get("corpus");
+        setSiteConfig(config);
+        setCorpusId(findCorpus(config, requested).id);
       },
-      (error: Error) => results.published.setStatus({ text: error.message, error: true }),
+      (error: Error) =>
+        results.published.setStatus({ text: error.message, error: true }),
     );
   }, []);
+
+  // Keep the selected corpus in the address bar (?corpus=<id>), preserving
+  // the pattern hash.
+  useEffect(() => {
+    if (!siteConfig || !corpusId) return;
+    const params = new URLSearchParams(location.search);
+    if (corpusId !== siteConfig.default) params.set("corpus", corpusId);
+    else params.delete("corpus");
+    const search = params.toString();
+    history.replaceState(
+      null,
+      "",
+      `${location.pathname}${search ? `?${search}` : ""}${location.hash}`,
+    );
+  }, [siteConfig, corpusId]);
+
+  // Open the selected corpus; cancel and dispose the previous one on switch.
+  useEffect(() => {
+    if (!siteConfig || !corpusId) return;
+    const selected = findCorpus(siteConfig, corpusId);
+    if (selected.id !== corpusId) {
+      setCorpusId(selected.id);
+      return;
+    }
+    generation.current++;
+    controlRef.current?.stop();
+    setControl(undefined);
+    const abort = new AbortController();
+    let opened: PublishedCorpus | undefined;
+    const {
+      setStatus,
+      setMatches,
+      setSelected,
+      setMisses,
+      setDiagnostics,
+      setMatchedPattern,
+      setRunning,
+    } = results.published;
+    setCorpus(undefined);
+    setRunning(false);
+    setMatches([]);
+    setSelected(undefined);
+    setMisses([]);
+    setDiagnostics([]);
+    setMatchedPattern("");
+    setStatus({ text: `Loading ${selected.label}…`, running: true });
+    PublishedCorpus.open(selected, abort.signal).then(
+      (next) => {
+        if (abort.signal.aborted) {
+          next.dispose();
+          return;
+        }
+        opened = next;
+        setCorpus(next);
+        setStatus({
+          text: "Ready",
+          details: corpusDetails(next.functions, next.modules),
+        });
+      },
+      (error: Error) => {
+        if (!abort.signal.aborted)
+          setStatus({ text: error.message, error: true });
+      },
+    );
+    return () => {
+      abort.abort();
+      opened?.dispose();
+      setCorpus((current) => (current === opened ? undefined : current));
+    };
+  }, [siteConfig, corpusId]);
 
   const irDiagnostics = useMemo(
     () => (irLinked ? diagnostics.filter((d) => d.file && inFile(d, IR_FILE)) : []),
@@ -250,9 +328,23 @@ export function App() {
   const canRun =
     !running && pattern.trim() !== "" && (yourIR || corpus !== undefined);
 
+  // The page URL: ?corpus=<id> (when non-default) plus the pattern hash.
+  const urlFor = useCallback(
+    (hash: string) => {
+      const params = new URLSearchParams(location.search);
+      if (siteConfig && corpusId && corpusId !== siteConfig.default)
+        params.set("corpus", corpusId);
+      else params.delete("corpus");
+      const search = params.toString();
+      return `${location.origin}${location.pathname}${search ? `?${search}` : ""}${hash}`;
+    },
+    [siteConfig, corpusId],
+  );
+
   const run = useCallback(async () => {
     // A run's results go to the source it started in, even if another is
     // shown meanwhile.
+    const gen = generation.current;
     const into = results[source];
     const {
       setMatches,
@@ -263,7 +355,9 @@ export function App() {
       setDiagnostics,
       setRunning,
     } = into;
-    void patternHash(pattern).then((hash) => history.replaceState(null, "", hash));
+    void patternHash(pattern).then((hash) =>
+      history.replaceState(null, "", urlFor(hash)),
+    );
     setMatchedPattern(pattern);
     setRunning(true);
     setMatches([]);
@@ -282,10 +376,13 @@ export function App() {
         setMatches((shown) => [...shown, ...arrived].sort((a, b) => a.key - b.key));
     };
     const onMatches = (found: Match[]) => {
+      if (gen !== generation.current) return;
       pending.push(...found);
       frame ||= requestAnimationFrame(flush);
     };
-    const onProgress = (progress: Progress) => setStatus(describe(progress));
+    const onProgress = (progress: Progress) => {
+      if (gen === generation.current) setStatus(describe(progress));
+    };
     try {
       if (yourIR) {
         setStatus({ text: "matching your IR", running: true });
@@ -316,16 +413,20 @@ export function App() {
         await corpus!.match(pattern, onProgress, onMatches, control);
       }
     } catch (error) {
-      const message = (error as Error).message;
-      setStatus({ text: message, error: true });
-      setDiagnostics(parseDiagnostics(message));
+      if (gen === generation.current) {
+        const message = (error as Error).message;
+        setStatus({ text: message, error: true });
+        setDiagnostics(parseDiagnostics(message));
+      }
     } finally {
       if (frame) cancelAnimationFrame(frame);
-      flush();
-      setRunning(false);
-      if (!yourIR) setControl(undefined);
+      if (gen === generation.current) {
+        flush();
+        setRunning(false);
+        if (!yourIR) setControl(undefined);
+      }
     }
-  }, [pattern, source, yourIR, userIR, corpus]);
+  }, [pattern, source, yourIR, userIR, corpus, urlFor]);
 
   // The editor's command is added once: it calls the run of the moment.
   const runRef = useRef<typeof run | undefined>(run);
@@ -339,8 +440,7 @@ export function App() {
   };
 
   // The link Share copies; the address bar has it too.
-  const shareLink = async () =>
-    `${location.origin}${location.pathname}${await patternHash(pattern)}`;
+  const shareLink = async () => urlFor(await patternHash(pattern));
 
   const horizontal = useDefaultLayout({ id: "metaphir-horizontal" });
   const vertical = useDefaultLayout({ id: "metaphir-vertical" });
@@ -397,6 +497,22 @@ export function App() {
             Your IR
           </button>
         </div>
+        {source === "published" && siteConfig && siteConfig.corpora.length > 1 && (
+          <label className="picker">
+            corpus
+            <select
+              id="corpus-picker"
+              value={corpusId ?? siteConfig.default}
+              onChange={(event) => setCorpusId(event.target.value)}
+            >
+              {siteConfig.corpora.map((corpus) => (
+                <option key={corpus.id} value={corpus.id} title={corpus.description}>
+                  {corpus.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <button id="run" className="primary" disabled={!canRun} onClick={() => void run()}>
           Match
         </button>

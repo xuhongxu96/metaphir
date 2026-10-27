@@ -52,14 +52,16 @@ export class BlockCache {
     this.nextId = infos.reduce((max, info) => Math.max(max, info.id + 1), 0);
   }
 
-  /** The cache of build, dropping those of other builds. */
-  static async open(build: string): Promise<BlockCache> {
+  /** The cache of a corpus's build, dropping its own other builds. */
+  static async open(corpus: string, build: string): Promise<BlockCache> {
     if (typeof indexedDB === "undefined") return new BlockCache(undefined, []);
     try {
-      const name = DATABASE_PREFIX + build;
-      // Other builds' blocks have expired.
+      // Another corpus's cache is kept: switching back must not reread it.
+      const prefix = `${DATABASE_PREFIX}${encodeURIComponent(corpus)}:`;
+      const name = prefix + build;
+      // This corpus's other builds' blocks have expired.
       for (const other of (await indexedDB.databases?.()) ?? [])
-        if (other.name?.startsWith(DATABASE_PREFIX) && other.name !== name)
+        if (other.name?.startsWith(prefix) && other.name !== name)
           indexedDB.deleteDatabase(other.name);
       const open = indexedDB.open(name, 1);
       open.onupgradeneeded = () => {

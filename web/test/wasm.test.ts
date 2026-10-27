@@ -132,7 +132,7 @@ function direct(session: Session): Coordinator & Matcher {
 }
 
 test("matches the published corpus as metaphir-match --packs does", async () => {
-  const fetcher = await RangeFetcher.open(base, "test");
+  const fetcher = await RangeFetcher.open(base, "corpus", "test");
   const header = await fetcher.fetchFile("header.bin.zst");
   const coordinator = new module.Session(header);
   assert.equal(coordinator.error(), "");
@@ -163,7 +163,7 @@ test("matches the published corpus as metaphir-match --packs does", async () => 
 });
 
 test("finds each instruction's line in printed IR", async () => {
-  const fetcher = await RangeFetcher.open(base, "test");
+  const fetcher = await RangeFetcher.open(base, "corpus", "test");
   const session = new module.Session(await fetcher.fetchFile("header.bin.zst"));
   const index = readFileSync(join(work, "published", "functions.idx"));
   const packs = readFileSync(join(work, "published", "packs.bin"));
@@ -194,7 +194,7 @@ test("answers with errors without a header or a pattern", () => {
 });
 
 test("reports pattern errors", async () => {
-  const fetcher = await RangeFetcher.open(base, "test");
+  const fetcher = await RangeFetcher.open(base, "corpus", "test");
   const session = new module.Session(await fetcher.fetchFile("header.bin.zst"));
   await assert.rejects(
     runQuery("%w = frobnicate i32 ?a\n", "bad.mpir", direct(session), [], fetcher),

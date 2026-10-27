@@ -1,5 +1,6 @@
 // Opening the published corpus and running queries, apart from the page.
 
+import type { CorpusConfig } from "./corpora.ts";
 import { RangeFetcher, type ByteRange } from "./fetcher.ts";
 import type { Matchable, Note, Rejected } from "./pipeline.ts";
 import { QueryControl, runQuery } from "./pipeline.ts";
@@ -160,6 +161,8 @@ export interface Progress {
 export class PublishedCorpus {
   readonly functions: number;
   readonly modules: number;
+  readonly id: string;
+  readonly label: string;
   private readonly fetcher: RangeFetcher;
   private readonly pool: SessionPool;
 
@@ -169,31 +172,55 @@ export class PublishedCorpus {
     pool: SessionPool,
     functions: number,
     modules: number,
+    id = "",
+    label = "",
   ) {
     this.fetcher = fetcher;
     this.pool = pool;
     this.functions = functions;
     this.modules = modules;
+    this.id = id;
+    this.label = label;
   }
 
-  /** Opens the corpus config.json names, with a worker per core (up to 8). */
-  static async open(): Promise<PublishedCorpus> {
-    const config = await (await fetch("config.json", { cache: "no-cache" })).json();
-    const data: string = config.data;
-    if (data.includes("OWNER"))
-      throw new Error("No corpus is configured: set data in config.json.");
+  /** Opens a configured corpus, with a worker per core (up to 8). */
+  static async open(
+    corpus: CorpusConfig,
+    signal?: AbortSignal,
+  ): Promise<PublishedCorpus> {
+    const aborted = () => new DOMException("Aborted", "AbortError");
+    if (signal?.aborted) throw aborted();
+    const base = corpus.data.replace(/\/$/, "");
     const manifest = await (
-      await fetch(`${data.replace(/\/$/, "")}/manifest.json`, { cache: "no-cache" })
+      await fetch(`${base}/manifest.json`, { cache: "no-cache", signal })
     ).json();
-    const fetcher = await RangeFetcher.open(data, manifest.build);
+    if (signal?.aborted) throw aborted();
+    const fetcher = await RangeFetcher.open(corpus.data, corpus.id, manifest.build);
     const header = await fetcher.fetchFile("header.bin.zst");
+    if (signal?.aborted) throw aborted();
     const workers = Math.max(1, Math.min(navigator.hardwareConcurrency || 4, 8));
     const { pool, functions, modules } = await SessionPool.start(
       workers,
       wasmUrl("metaphir.js"),
       header,
     );
-    return new PublishedCorpus(fetcher, pool, functions, modules);
+    if (signal?.aborted) {
+      pool.dispose();
+      throw aborted();
+    }
+    return new PublishedCorpus(
+      fetcher,
+      pool,
+      functions,
+      modules,
+      corpus.id,
+      corpus.label,
+    );
+  }
+
+  /** Stops this corpus's workers; its IndexedDB cache is kept. */
+  dispose(): void {
+    this.pool.dispose();
   }
 
   /**

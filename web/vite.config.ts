@@ -18,7 +18,18 @@ function localData(): Plugin {
       const url = new URL(request.url ?? "/", "http://localhost");
       if (url.pathname.endsWith("/config.json")) {
         response.setHeader("content-type", "application/json");
-        response.end(JSON.stringify({ data: "/data" }));
+        response.end(
+          JSON.stringify({
+            default: process.env.METAPHIR_CORPUS ?? "local",
+            corpora: [
+              {
+                id: process.env.METAPHIR_CORPUS ?? "local",
+                label: "Local corpus",
+                data: "/data",
+              },
+            ],
+          }),
+        );
         return;
       }
       if (!url.pathname.startsWith("/data/")) return next();

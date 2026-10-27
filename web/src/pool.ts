@@ -39,6 +39,14 @@ class WorkerSession implements Coordinator, Matcher {
     });
   }
 
+  /** Terminates the worker and rejects calls still in flight. */
+  dispose(): void {
+    this.worker.terminate();
+    for (const call of this.pending.values())
+      call.reject(new Error("corpus closed"));
+    this.pending.clear();
+  }
+
   compile = (pattern: string, name: string) =>
     this.call<StageResult>("compile", pattern, name);
   stage = (name: StageName) => this.call<StageResult>("stage", name);
@@ -98,5 +106,10 @@ export class SessionPool {
 
   get coordinator(): WorkerSession {
     return this.sessions[0];
+  }
+
+  /** Terminates every worker. */
+  dispose(): void {
+    for (const session of this.sessions) session.dispose();
   }
 }

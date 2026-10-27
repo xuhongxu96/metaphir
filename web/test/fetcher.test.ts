@@ -25,7 +25,7 @@ test("waits when the server asks it to slow down", async () => {
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
   const port = (server.address() as { port: number }).port;
   try {
-    const fetcher = await RangeFetcher.open(`http://127.0.0.1:${port}`, "test");
+    const fetcher = await RangeFetcher.open(`http://127.0.0.1:${port}`, "corpus", "test");
     const ranges = [0, 300_000, 900_000].map((offset) => ({
       file: "packs.bin",
       offset,

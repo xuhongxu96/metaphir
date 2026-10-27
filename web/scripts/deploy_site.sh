@@ -3,9 +3,10 @@
 # to GitHub Pages as it is (with web/site/'s workflow), so that this
 # repository can stay private.
 #
-# Usage: web/scripts/deploy_site.sh <site repository> [--data <url>] [--commit]
+# Usage: web/scripts/deploy_site.sh <site repository> [--config <file> | --data <url>] [--commit]
 #
-#   --data <url>  the published corpus the site reads (its config.json);
+#   --config <f>  copy this config.json to the site (the corpus list)
+#   --data <url>  one published corpus, written as a legacy config.json;
 #                 web/public/config.json's otherwise
 #   --commit      commit the site in the site repository (then push it)
 #
@@ -16,12 +17,14 @@ set -euo pipefail
 WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET=""
 DATA=""
+CONFIG=""
 COMMIT=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --data) DATA="$2"; shift 2 ;;
+        --config) CONFIG="$2"; shift 2 ;;
         --commit) COMMIT=1; shift ;;
-        -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
         *)
             if [ -n "$TARGET" ]; then
                 echo "Error: unexpected argument '$1'." >&2
@@ -30,8 +33,12 @@ while [ $# -gt 0 ]; do
             TARGET="$1"; shift ;;
     esac
 done
+if [ -n "$DATA" ] && [ -n "$CONFIG" ]; then
+    echo "Error: --data and --config are mutually exclusive." >&2
+    exit 1
+fi
 if [ -z "$TARGET" ]; then
-    echo "Usage: $0 <site repository> [--data <url>] [--commit]" >&2
+    echo "Usage: $0 <site repository> [--config <file> | --data <url>] [--commit]" >&2
     exit 1
 fi
 if [ ! -f "$WEB_DIR/public/wasm/metaphir.wasm" ]; then
@@ -51,10 +58,13 @@ cp -r "$WEB_DIR/dist/." "$TARGET/"
 cp -r "$WEB_DIR/site/." "$TARGET/"
 # Served as it is, without Jekyll.
 touch "$TARGET/.nojekyll"
-if [ -n "$DATA" ]; then
+if [ -n "$CONFIG" ]; then
+    cp "$CONFIG" "$TARGET/config.json"
+elif [ -n "$DATA" ]; then
     printf '{\n  "data": "%s"\n}\n' "$DATA" > "$TARGET/config.json"
 fi
-echo "[$(date)] The site is in $TARGET; it reads $(sed -n 's/.*"data": "\(.*\)".*/\1/p' "$TARGET/config.json")"
+echo "[$(date)] The site is in $TARGET; it reads $TARGET/config.json:"
+cat "$TARGET/config.json"
 
 if [ "$COMMIT" -eq 1 ]; then
     SOURCE="$(git -C "$WEB_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"

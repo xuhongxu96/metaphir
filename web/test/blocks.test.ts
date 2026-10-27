@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BlockCache } from "../src/blocks.ts";
 
 test("finds ranges in blocks that later blocks overlap", async () => {
-  const cache = await BlockCache.open("test");
+  const cache = await BlockCache.open("corpus", "test");
   const bytes = Uint8Array.from({ length: 1000 }, (_, i) => i & 0xff);
   cache.put("features.bin", 0, bytes);
   // Many later, smaller blocks start within the first, before the range.

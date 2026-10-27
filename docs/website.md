@@ -3,7 +3,7 @@
 https://xuhongxu.com/metaphir
 
 A static site that matches MetaphIR patterns against a published corpus in
-the browser.
+the browser, chosen from the corpora `config.json` lists.
 
 | Part | Where it runs |
 |---|---|
@@ -21,7 +21,9 @@ The page is React, in resizable panes:
 | matches | matches below the pattern; use the arrow keys to move through them. The **Rejected** tab lists constraints that rejected structural matches, with counts and up to 10 examples. For your IR, it also lists each unmatched function and why. |
 | IR | the selected match's function, with its bindings listed and the instructions it matched highlighted (as `metaphir-match --print-instructions` reports them) |
 
-- **Corpus** or **Your IR** chooses what Match searches. Your IR opens an
+- **Corpus** or **Your IR** chooses what Match searches. When more than one
+  corpus is configured, a picker beside it chooses which one; the choice is
+  kept in `?corpus=<id>` and in share links. Your IR opens an
   editor for LLVM IR, stored in the browser and matched by the WebAssembly
   `metaphir-match` tool. Results include bindings and, for unmatched
   functions, the failed constraints or missing instructions. Selecting a
@@ -98,10 +100,13 @@ into `web/public/wasm/`:
 ### Publishing a corpus
 
 ```sh
-metaphir-index build -j 32 corpus -o corpus.mpidx
-metaphir-index publish -j 32 corpus.mpidx -o published
-web/scripts/publish.py published
+metaphir-index build -j 32 eval/corpus-o2-final -o eval/corpus-o2-final.mpidx
+metaphir-index publish -j 32 eval/corpus-o2-final.mpidx -o published
+web/scripts/publish.py published --corpus o2-final --label "O2 final"
 ```
+
+Publish each corpus the same way (`--corpus original`, `--corpus
+thinlto-prelink`); each keeps its own builds and config entry.
 
 `metaphir-index publish` writes (see `metaphir/Web/WebIndex.h`):
 
@@ -111,25 +116,45 @@ web/scripts/publish.py published
   uses. Up to eight consecutive packs share a zstd frame and trained
   dictionary. `functions.idx` maps each pack to its frame and slot.
 
-`web/scripts/publish.py` uploads them to `builds/<build>/` in the bucket,
-uploading `manifest.json` last, and points `web/public/config.json` at the
-build:
+`web/scripts/publish.py` uploads them to **`builds/<corpus>/<build>/`** in the
+bucket, uploading `manifest.json` last, and upserts that corpus in
+`web/public/config.json`:
+
+```json
+{
+  "default": "o2-final",
+  "corpora": [
+    {"id": "o2-final", "label": "O2 final", "data": "https://…/builds/o2-final/<build>"},
+    {"id": "original", "label": "Original IR", "data": "https://…/builds/original/<build>"}
+  ]
+}
+```
 
 ```
-web/scripts/publish.py [--keep <n>] [--config <file> | --no-config] <published> [<owner>/<bucket>]
+web/scripts/publish.py <published> --corpus <id> [<owner>/<bucket>]
+    [--label <label>] [--description <text>] [--default]
+    [--keep <n>] [--config <file> | --no-config]
 ```
 
 | Argument | Default | |
 |---|---|---|
 | `<published>` | | the directory `metaphir-index publish` wrote |
+| `--corpus <id>` | | the corpus id; required, and used in the bucket path and config |
 | `<owner>/<bucket>` | `xuhongxu96/llvm-opt-benchmark-index` | the bucket to upload to |
-| `--keep <n>` | `3` | how many builds the bucket keeps, this one among them; older ones are removed |
-| `--config <file>` | `web/public/config.json` | the site's config to point at the build |
+| `--label <label>` | the id | the display label in the config |
+| `--description <text>` | existing | the description in the config |
+| `--default` | | make this corpus the site's default |
+| `--keep <n>` | `3` | how many builds **of this corpus** the bucket keeps; other corpora are untouched |
+| `--config <file>` | `web/public/config.json` | the site's config to upsert |
 | `--no-config` | | leave the site's config as it is |
 
+Other corpus entries and the `default` are preserved. Uploading one corpus
+never prunes another corpus's builds.
+
 > [!WARNING]
-> A deployed site reads one build. Deploy it again before `--keep` newer
-> builds are published, or its build is removed.
+> The site's config names a build per corpus. Publish with `--keep` large
+> enough for the deployed config, and deploy again after republishing a
+> corpus, or a referenced build can be pruned.
 
 The same files can be matched from the command line, as the site does,
 without the corpus. For the corpus from
@@ -188,8 +213,8 @@ also run the deploy workflow manually from the Actions tab on `main`.
 |---|---|---|
 | fetching (`web/src/fetcher.ts`) | resolves each file's bucket URL once, then reads ranges from the signed CDN URL it redirects to | only a few requests count toward the Hub's rate limit |
 | | merges nearby ranges into one request | fewer requests |
-| caching (`web/src/blocks.ts`) | keeps every block it reads in IndexedDB, one database per build, with recently used blocks in memory | no byte is read twice while the build is current |
-| expiry | a build's files never change, so its blocks expire only when `manifest.json` names another build; that build's first visit drops them | |
+| caching (`web/src/blocks.ts`) | keeps every block it reads in IndexedDB, one database per `<corpus>:<build>`, with recently used blocks in memory | no byte is read twice while the build is current |
+| expiry | a build's files never change, so a corpus's older builds expire when its `manifest.json` names another build; another corpus's cache is kept | switching corpora does not reread the one switched back to |
 
 ### Developing
 
@@ -199,4 +224,4 @@ cd web && METAPHIR_DATA=/path/to/published npm run dev
 
 | | |
 |---|---|
-| `METAPHIR_DATA` | a directory from `metaphir-index publish`; the development server serves it at `/data` and points the site at it |
+| `METAPHIR_DATA` | a directory from `metaphir-index publish`; the development server serves it at `/data` and emits a one-corpus config naming it (`METAPHIR_CORPUS` sets its id, default `local`) |

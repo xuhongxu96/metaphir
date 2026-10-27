@@ -124,10 +124,14 @@ export class RangeFetcher {
   }
 
   /**
-   * A fetcher for the build named build, whose files are under the URL base.
+   * A fetcher for a corpus's build, whose files are under the URL base.
    */
-  static async open(base: string, build: string): Promise<RangeFetcher> {
-    return new RangeFetcher(base, await BlockCache.open(build));
+  static async open(
+    base: string,
+    corpus: string,
+    build: string,
+  ): Promise<RangeFetcher> {
+    return new RangeFetcher(base, await BlockCache.open(corpus, build));
   }
 
   url(file: string): string {
