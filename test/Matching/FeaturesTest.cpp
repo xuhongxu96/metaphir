@@ -148,6 +148,23 @@ TEST_F(FeaturesTest, AConstraintOnBindingsIsNotDecidedEarly) {
   EXPECT_TRUE(passes("add"));
 }
 
+TEST_F(FeaturesTest, WithoutDefinitionsConstraintsDoNotFilter) {
+  parse(R"(
+    %r = and i32 ?x, ?m:constantInt
+  )",
+        R"(
+    define i32 @variable(i32 %x, i32 %y) {
+      %r = and i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_FALSE(passes("variable"));
+  // The feature prefilter still runs, but without evaluating the constraints.
+  Query = FeatureQuery::compute(Variants, /*Definitions=*/nullptr);
+  EXPECT_TRUE(passes("variable"));
+  EXPECT_FALSE(matches(*M->getFunction("variable")));
+}
+
 TEST_F(FeaturesTest, RequiresOperandEdges) {
   parse(R"(
     %a = add i32 ?x, ?y

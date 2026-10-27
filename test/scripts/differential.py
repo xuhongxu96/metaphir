@@ -20,10 +20,11 @@ from pathlib import Path
 
 # Groups of modes that must print the same, each mode's arguments first.
 GROUPS = [
-    [[], ["--no-prefilter"]],
+    [[], ["--no-prefilter"], ["--no-constraint-prefilter"]],
     [
         ["--matches-only"],
         ["--matches-only", "--no-prefilter"],
+        ["--matches-only", "--no-constraint-prefilter"],
         ["--matches-only", "-j", "4"],
     ],
 ]
@@ -35,6 +36,7 @@ BITCODE_GROUPS = [
         ["--matches-only", "--index", INDEX],
         ["--matches-only", "--index", INDEX, "-j", "4"],
         ["--matches-only", "--index", INDEX, "--no-prefilter"],
+        ["--matches-only", "--index", INDEX, "--no-constraint-prefilter"],
         ["--matches-only", "--index", INDEX, "--trust-index", "-j", "4"],
     ],
 ]

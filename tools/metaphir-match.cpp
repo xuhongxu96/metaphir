@@ -93,6 +93,11 @@ static cl::opt<bool>
                 cl::desc("Match every variant, even in functions that lack "
                          "the instructions it needs (for testing)"),
                 cl::cat(Category));
+static cl::opt<bool> NoConstraintPrefilter(
+    "no-constraint-prefilter", cl::Hidden,
+    cl::desc("Filter candidates by their features but not by evaluating the "
+             "variants' constraints on them (for testing)"),
+    cl::cat(Category));
 
 namespace {
 
@@ -183,7 +188,10 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
     return nullptr;
   }
   Loaded->Variants = std::move(*Lowered);
-  Loaded->Query = FeatureQuery::compute(*Loaded->Variants, &Loaded->Context);
+  // Without the definitions, the query still filters by features but cannot
+  // evaluate the constraints on them.
+  Loaded->Query = FeatureQuery::compute(
+      *Loaded->Variants, NoConstraintPrefilter ? nullptr : &Loaded->Context);
   return Loaded;
 }
 
