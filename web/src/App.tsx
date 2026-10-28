@@ -576,6 +576,12 @@ export function App() {
             setPatternTab("pattern");
             setHelpOpen(false);
           }}
+          corpora={corpusItems.map((c) => c.id)}
+          onUseCorpus={(id) => {
+            setCorpusId(id);
+            setSource("published");
+            setHelpOpen(false);
+          }}
           onClose={() => setHelpOpen(false)}
         />
       )}

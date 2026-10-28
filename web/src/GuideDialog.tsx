@@ -8,6 +8,10 @@
 
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
+  CORPORA,
+  CORPORA_INTRO,
+  CORPORA_NOTES,
+  PIPELINE,
   DEMOS,
   IDIOMS,
   MATCHERS,
@@ -271,6 +275,7 @@ function Groups({ groups }: { groups: Group[] }) {
 const LEARN: [string, string][] = [
   ...DEMOS.map((d): [string, string] => [d.id, d.title]),
   ["try", "Try These"],
+  ["corpora", "Corpora"],
 ];
 const REFERENCE: [string, string][] = [
   ["ref-flags", "Meta Flags"],
@@ -309,8 +314,14 @@ function setGuideDismissed(dismissed: boolean) {
   }
 }
 
-export function GuideDialog(props: { onTry: (pattern: string) => void; onClose: () => void }) {
-  const { onTry, onClose } = props;
+export function GuideDialog(props: {
+  onTry: (pattern: string) => void;
+  /** The ids of the corpora the page can search. */
+  corpora: string[];
+  onUseCorpus: (id: string) => void;
+  onClose: () => void;
+}) {
+  const { onTry, corpora, onUseCorpus, onClose } = props;
   const [dismissed, setDismissed] = useState(guideDismissed);
   const close = useRef<HTMLButtonElement>(null);
   const body = useRef<HTMLDivElement>(null);
@@ -414,6 +425,48 @@ export function GuideDialog(props: { onTry: (pattern: string) => void; onClose: 
                 </div>
               ))}
             </div>
+          </section>
+          <section id="help-corpora" className="help-section">
+            <h3>Corpora</h3>
+            <p>{CORPORA_INTRO}</p>
+            <ul className="help-corpora-notes">
+              {CORPORA_NOTES.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+            <ol className="help-pipeline" aria-label="The passes of the O2 pipeline, and the cuts">
+              {PIPELINE.map((step, i) =>
+                "cut" in step ? (
+                  <li key={i} className="help-cut">
+                    <span className="help-arrow" aria-hidden="true">
+                      ➜
+                    </span>
+                    <strong>{CORPORA[step.cut].title}</strong>
+                    {corpora.includes(step.cut) && (
+                      <button className="link" onClick={() => onUseCorpus(step.cut)}>
+                        use
+                      </button>
+                    )}
+                    <span className="help-gives">{CORPORA[step.cut].gives}</span>
+                  </li>
+                ) : (
+                  <li key={i} className="help-stage">
+                    <h4>{step.stage}</h4>
+                    <div className="help-passes">
+                      {step.passes.map((pass) => (
+                        <code key={pass} className={pass === "instcombine" ? "help-pass fold" : "help-pass"}>
+                          {pass}
+                        </code>
+                      ))}
+                    </div>
+                  </li>
+                ),
+              )}
+            </ol>
+            <p className="help-about">
+              Passes of <code>opt -passes='default&lt;O2&gt;'</code>, each listed once per
+              step. The folds run in InstCombine, marked in blue.
+            </p>
           </section>
           <h2 className="help-part">Reference</h2>
           <Reference id="ref-flags" title="Meta Flags">

@@ -248,6 +248,67 @@ export const TRY: { title: string; pattern: string; matches: string }[] = [
   },
 ];
 
+/** The corpora, which are the same modules cut at three points of the
+ * pipeline. Their ids are those of config.json. */
+export const CORPORA_INTRO =
+  "Three versions of the same code, taken at different points while LLVM optimizes it. Pick one with the Corpus menu.";
+
+export const CORPORA_NOTES = [
+  "Each version has the same 68,843 benchmark modules and 1,912 InstCombine and InstSimplify test files.",
+  "In ThinLTO pre-link and O2 final, the folds from the examples are turned off, so the code they would have changed is still there to match.",
+];
+
+/** What each corpus gives, by its id in config.json. */
+export const CORPORA: Record<string, { title: string; gives: string }> = {
+  original: { title: "Original IR", gives: "The code before LLVM changes anything." },
+  "thinlto-prelink": {
+    title: "ThinLTO pre-link",
+    gives: "Cleaned up and inlined, but before the late loop and vector passes.",
+  },
+  "o2-final": { title: "O2 final", gives: "The code after all of O2." },
+};
+
+/** The passes of `opt -passes='default<O2>'`, in the order they first run,
+ * with the corpora cut between them; `thinlto-pre-link<O2>` is the same up to
+ * its cut. Repeated passes are listed once in a stage. */
+export type PipelineStep =
+  | { stage: string; passes: string[] }
+  | { cut: keyof typeof CORPORA };
+
+export const PIPELINE: PipelineStep[] = [
+  { cut: "original" },
+  {
+    stage: "Early cleanup",
+    passes: [
+      "forceattrs", "inferattrs", "lower-expect", "simplifycfg", "sroa", "early-cse",
+      "ipsccp", "globalopt", "mem2reg", "instcombine", "always-inline",
+    ],
+  },
+  {
+    stage: "Inlining and cleanup of each function",
+    passes: [
+      "inline", "function-attrs", "sroa", "early-cse", "jump-threading",
+      "correlated-propagation", "simplifycfg", "instcombine", "aggressive-instcombine",
+      "reassociate", "licm", "loop-rotate", "simple-loop-unswitch", "indvars",
+      "loop-deletion", "loop-unroll-full", "vector-combine", "gvn", "sccp", "bdce",
+      "adce", "memcpyopt", "dse",
+    ],
+  },
+  { stage: "Module cleanup", passes: ["deadargelim", "globalopt", "globaldce"] },
+  { cut: "thinlto-prelink" },
+  {
+    stage: "Late optimizations",
+    passes: [
+      "elim-avail-extern", "rpo-function-attrs", "float2int", "loop-rotate",
+      "loop-interchange", "loop-distribute", "loop-vectorize", "loop-load-elim",
+      "instcombine", "simplifycfg", "slp-vectorizer", "vector-combine", "loop-unroll",
+      "sroa", "licm", "loop-sink", "instsimplify", "div-rem-pairs", "mergeicmps",
+      "expand-memcmp", "tailcallelim", "globaldce", "constmerge",
+    ],
+  },
+  { cut: "o2-final" },
+];
+
 /** The text of a marked pattern or IR, as written. */
 export const unmarked = (text: string) =>
   text.replace(/\[\[\w+:(.*?)(?:\|[^\]]*)?\]\]/g, "$1");
