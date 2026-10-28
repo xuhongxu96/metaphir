@@ -1,0 +1,8 @@
+InstCombine__add-mask-neg.ll	align_up
+InstCombine__add-mask-neg.ll	align_up_commuted
+InstCombine__add-mask-neg.ll	align_up_commuted_and
+InstCombine__add-mask-neg.ll	align_up_multiuse_neg
+InstCombine__add-mask-neg.ll	align_up_nsw_nuw
+InstCombine__add-mask-neg.ll	align_up_scalable_vec
+InstCombine__add-mask-neg.ll	align_up_vec
+InstCombine__add-mask-neg.ll	align_up_vec_poison_elt

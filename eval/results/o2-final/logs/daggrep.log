@@ -1,0 +1,76 @@
+== daggrep pr216436: 70755 modules, 1 pattern(s) ==
+  pr216436.ll: 58 functions, 21.52s
+  saved 58 functions
+== daggrep pr215122: 70755 modules, 1 pattern(s) ==
+  pr215122.ll: 179 functions, 21.48s
+  saved 179 functions
+== daggrep pr215130: 70755 modules, 1 pattern(s) ==
+  pr215130.ll: 14 functions, 21.86s
+  saved 14 functions
+== daggrep pr214541: 70755 modules, 1 pattern(s) ==
+  pr214541.ll: 299 functions, 21.50s
+  saved 299 functions
+== daggrep pr214517: 70755 modules, 1 pattern(s) ==
+  pr214517.ll: 478 functions, 21.93s
+  saved 478 functions
+== daggrep pr214381: 70755 modules, 1 pattern(s) ==
+  pr214381.ll: 26 functions, 21.83s
+  saved 26 functions
+== daggrep pr214376: 70755 modules, 1 pattern(s) ==
+  pr214376.ll: 18 functions, 21.71s
+  saved 18 functions
+== daggrep pr213709: 70755 modules, 2 pattern(s) ==
+  pr213709_c0.ll: 25 functions, 21.16s
+  pr213709_c1.ll: 11 functions, 21.38s
+  saved 36 functions
+== daggrep pr213313: 70755 modules, 2 pattern(s) ==
+  pr213313_and.ll: 5 functions, 21.31s
+  pr213313_or.ll: 5 functions, 22.20s
+  saved 10 functions
+== daggrep pr212132: 70755 modules, 2 pattern(s) ==
+  pr212132_case1.ll: 4 functions, 21.48s
+  pr212132_case2.ll: 1 functions, 21.34s
+  saved 5 functions
+== daggrep pr210499: 70755 modules, 4 pattern(s) ==
+  pr210499_ashr_nsw.ll: 446 functions, 21.82s
+  pr210499_ashr_nuw.ll: 1380 functions, 21.88s
+  pr210499_lshr_nsw.ll: 3413 functions, 21.41s
+  pr210499_lshr_nuw.ll: 4034 functions, 21.43s
+  saved 5534 functions
+== daggrep pr209322: 70755 modules, 1 pattern(s) ==
+  pr209322.ll: 68811 functions, 21.97s
+  saved 68811 functions
+== daggrep pr207564: 70755 modules, 1 pattern(s) ==
+  pr207564.ll: 61 functions, 22.39s
+  saved 61 functions
+== daggrep pr207462: 70755 modules, 2 pattern(s) ==
+  pr207462.ll: 215 functions, 22.18s
+  pr207462_mul.ll: 3 functions, 21.77s
+  saved 218 functions
+== daggrep pr205383: 70755 modules, 4 pattern(s) ==
+  pr205383_sub_eq.ll: 2 functions, 21.26s
+  pr205383_sub_ne.ll: 0 functions, 21.53s
+  pr205383_xor_eq.ll: 13 functions, 21.68s
+  pr205383_xor_ne.ll: 1 functions, 21.46s
+  saved 16 functions
+== daggrep pr204928: 70755 modules, 3 pattern(s) ==
+  pr204928_and.ll: 1 functions, 21.36s
+  pr204928_or.ll: 5162 functions, 21.48s
+  pr204928_xor.ll: 7 functions, 22.11s
+  saved 5170 functions
+== daggrep pr204927: 70755 modules, 3 pattern(s) ==
+  pr204927_and.ll: 492 functions, 21.94s
+  pr204927_or.ll: 2225 functions, 21.26s
+  pr204927_xor.ll: 1641 functions, 21.55s
+  saved 4350 functions
+== daggrep pr216470: 70755 modules, 2 pattern(s) ==
+  pr216470_self.ll: 3833 functions, 21.56s
+  pr216470_zext.ll: 4 functions, 21.20s
+  saved 3836 functions
+== daggrep pr216046: 70755 modules, 1 pattern(s) ==
+  pr216046.ll: 1695 functions, 21.51s
+  saved 1695 functions
+== daggrep pr204089: 70755 modules, 2 pattern(s) ==
+  pr204089_sext.ll: 2 functions, 21.99s
+  pr204089_zext.ll: 14 functions, 22.02s
+  saved 16 functions

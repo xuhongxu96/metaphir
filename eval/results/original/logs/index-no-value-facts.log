@@ -1,0 +1,17 @@
+DICompileUnit not listed in llvm.dbg.cu
+!258 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !373, producer: "Ubuntu clang version 24.0.0 (++20260802081851+e18c3ea02484-1~exp1~20260802082001.1761)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !496, retainedTypes: !503, globals: !1535, imports: !3058, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-original/folly__ExecutorWithPriority.bc
+DICompileUnit not listed in llvm.dbg.cu
+!15911 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !15921, producer: "Ubuntu clang version 24.0.0 (++20260802081851+e18c3ea02484-1~exp1~20260802082001.1761)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !16186, retainedTypes: !16695, globals: !21299, imports: !23278, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-original/folly__EventBase.bc
+DICompileUnit not listed in llvm.dbg.cu
+!8747 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !8755, producer: "Ubuntu clang version 24.0.0 (++20260802081851+e18c3ea02484-1~exp1~20260802082001.1761)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !9193, retainedTypes: !9523, globals: !12996, imports: !14729, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-original/folly__ThreadPoolExecutor.bc
+DICompileUnit not listed in llvm.dbg.cu
+!3097 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !32567, producer: "Ubuntu clang version 24.0.0 (++20260903081701+7ece48b9e5bb-1~exp1~20260903201841.1826)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !33135, retainedTypes: !39281, globals: !69045, imports: !71158, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-original/recastnavigation__catch_amalgamated.bc
+DICompileUnit not listed in llvm.dbg.cu
+!257 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !372, producer: "Ubuntu clang version 23.0.0 (++20260707081847+70646dd3eda3-1~exp1~20260707082012.1709)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !495, retainedTypes: !502, globals: !1534, imports: !3064, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-original/velox__ExecutorWithPriority.bc
+indexed 70755 files
+seconds=320.69

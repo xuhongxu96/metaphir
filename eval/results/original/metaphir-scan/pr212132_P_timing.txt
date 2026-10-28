@@ -1,0 +1,17 @@
+modules=70755
+tool=metaphir-scan
+jobs=80
+repeat=3
+pattern_seconds=74.691
+seconds[pr212132_case1]=37.551
+seconds[pr212132_case2]=37.140
+checked[pr212132_case1]=28726665
+total_functions[pr212132_case1]=28726665
+files_read[pr212132_case1]=70755
+total_files[pr212132_case1]=70755
+checked[pr212132_case2]=28726665
+total_functions[pr212132_case2]=28726665
+files_read[pr212132_case2]=70755
+total_files[pr212132_case2]=70755
+patterns=2
+P_functions=5

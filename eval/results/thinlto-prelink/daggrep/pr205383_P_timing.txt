@@ -1,0 +1,11 @@
+modules=70755
+tool=daggrep
+jobs=80
+repeat=3
+pattern_seconds=94.211
+seconds[pr205383_sub_eq]=23.088
+seconds[pr205383_sub_ne]=23.642
+seconds[pr205383_xor_eq]=24.100
+seconds[pr205383_xor_ne]=23.381
+patterns=4
+P_functions=16

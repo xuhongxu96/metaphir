@@ -1,0 +1,7 @@
+InstCombine__add.ll	ceil_div_by_16_i16
+InstCombine__add.ll	ceil_div_by_8_known_range
+InstCombine__add.ll	ceil_div_by_8_vec_range
+InstCombine__add.ll	ceil_div_by_8_zext
+InstCombine__add.ll	ceil_div_commuted
+InstCombine__add.ll	ceil_div_from_clz
+InstCombine__add.ll	ceil_div_zext_multi_use

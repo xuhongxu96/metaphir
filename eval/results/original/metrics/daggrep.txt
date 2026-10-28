@@ -1,0 +1,256 @@
+== pr216436 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=29.032
+    seconds[pr216436]=29.032
+    patterns=1
+    P_functions=6
+  |G|=58 |P|=6 TP=4 FP=2 FN=54
+  recall=0.0690 precision=0.6667 F1=0.1250
+== pr215122 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=28.945
+    seconds[pr215122]=28.945
+    patterns=1
+    P_functions=11
+  |G|=22 |P|=11 TP=8 FP=3 FN=14
+  recall=0.3636 precision=0.7273 F1=0.4848
+== pr215130 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=30.550
+    seconds[pr215130]=30.550
+    patterns=1
+    P_functions=1
+  |G|=0 |P|=1 TP=0 FP=1 FN=0
+  recall=1.0000 precision=0.0000 F1=0.0000
+== pr214541 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=29.998
+    seconds[pr214541]=29.998
+    patterns=1
+    P_functions=618
+  |G|=18 |P|=618 TP=18 FP=600 FN=0
+  recall=1.0000 precision=0.0291 F1=0.0566
+== pr214517 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=29.698
+    seconds[pr214517]=29.698
+    patterns=1
+    P_functions=3
+  |G|=3 |P|=3 TP=2 FP=1 FN=1
+  recall=0.6667 precision=0.6667 F1=0.6667
+== pr214381 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=29.620
+    seconds[pr214381]=29.620
+    patterns=1
+    P_functions=16
+  |G|=6 |P|=16 TP=5 FP=11 FN=1
+  recall=0.8333 precision=0.3125 F1=0.4545
+== pr214376 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=29.925
+    seconds[pr214376]=29.925
+    patterns=1
+    P_functions=18
+  |G|=14 |P|=18 TP=14 FP=4 FN=0
+  recall=1.0000 precision=0.7778 F1=0.8750
+== pr213709 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=57.892
+    seconds[pr213709_c0]=28.803
+    seconds[pr213709_c1]=29.089
+    patterns=2
+    P_functions=27
+  |G|=21 |P|=27 TP=17 FP=10 FN=4
+  recall=0.8095 precision=0.6296 F1=0.7083
+== pr213313 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=59.389
+    seconds[pr213313_and]=29.027
+    seconds[pr213313_or]=30.361
+    patterns=2
+    P_functions=10
+  |G|=10 |P|=10 TP=10 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr212132 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=60.411
+    seconds[pr212132_case1]=30.383
+    seconds[pr212132_case2]=30.028
+    patterns=2
+    P_functions=5
+  |G|=5 |P|=5 TP=3 FP=2 FN=2
+  recall=0.6000 precision=0.6000 F1=0.6000
+== pr210499 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=119.035
+    seconds[pr210499_ashr_nsw]=28.984
+    seconds[pr210499_ashr_nuw]=30.407
+    seconds[pr210499_lshr_nsw]=29.733
+    seconds[pr210499_lshr_nuw]=29.910
+    patterns=4
+    P_functions=10
+  |G|=11 |P|=10 TP=8 FP=2 FN=3
+  recall=0.7273 precision=0.8000 F1=0.7619
+== pr209322 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=30.910
+    seconds[pr209322]=30.910
+    patterns=1
+    P_functions=195973
+  |G|=64 |P|=195973 TP=64 FP=195909 FN=0
+  recall=1.0000 precision=0.0003 F1=0.0007
+== pr207564 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=30.192
+    seconds[pr207564]=30.192
+    patterns=1
+    P_functions=24
+  |G|=14 |P|=24 TP=12 FP=12 FN=2
+  recall=0.8571 precision=0.5000 F1=0.6316
+== pr207462 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=58.415
+    seconds[pr207462]=28.888
+    seconds[pr207462_mul]=29.526
+    patterns=2
+    P_functions=6
+  |G|=3 |P|=6 TP=3 FP=3 FN=0
+  recall=1.0000 precision=0.5000 F1=0.6667
+== pr205383 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=117.285
+    seconds[pr205383_sub_eq]=29.125
+    seconds[pr205383_sub_ne]=29.623
+    seconds[pr205383_xor_eq]=29.274
+    seconds[pr205383_xor_ne]=29.264
+    patterns=4
+    P_functions=16
+  |G|=5 |P|=16 TP=5 FP=11 FN=0
+  recall=1.0000 precision=0.3125 F1=0.4762
+== pr204928 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=87.588
+    seconds[pr204928_and]=29.357
+    seconds[pr204928_or]=29.050
+    seconds[pr204928_xor]=29.181
+    patterns=3
+    P_functions=7
+  |G|=5 |P|=7 TP=5 FP=2 FN=0
+  recall=1.0000 precision=0.7143 F1=0.8333
+== pr204927 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=89.970
+    seconds[pr204927_and]=29.895
+    seconds[pr204927_or]=29.892
+    seconds[pr204927_xor]=30.184
+    patterns=3
+    P_functions=4781
+  |G|=1697 |P|=4781 TP=1389 FP=3392 FN=308
+  recall=0.8185 precision=0.2905 F1=0.4288
+== pr216470 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=59.137
+    seconds[pr216470_self]=29.265
+    seconds[pr216470_zext]=29.872
+    patterns=2
+    P_functions=19
+  |G|=18 |P|=19 TP=7 FP=12 FN=11
+  recall=0.3889 precision=0.3684 F1=0.3784
+== pr216046 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=29.880
+    seconds[pr216046]=29.880
+    patterns=1
+    P_functions=1659
+  |G|=12 |P|=1659 TP=12 FP=1647 FN=0
+  recall=1.0000 precision=0.0072 F1=0.0144
+== pr204089 ==
+  timing:
+    modules=70755
+    tool=daggrep
+    jobs=80
+    repeat=3
+    pattern_seconds=63.195
+    seconds[pr204089_sext]=29.432
+    seconds[pr204089_zext]=33.763
+    patterns=2
+    P_functions=140803
+  |G|=1485 |P|=140803 TP=1279 FP=139524 FN=206
+  recall=0.8613 precision=0.0091 F1=0.0180

@@ -1,0 +1,22 @@
+== gt: 70755 modules, 20 PR(s), passes=function(instcombine<no-verify-fixpoint>) ==
+  pr216436: 48 functions
+  pr215122: 40 functions
+  pr215130: 3 functions
+  pr214541: 23 functions
+  pr214517: 27 functions
+  pr214381: 14 functions
+  pr214376: 14 functions
+  pr213709: 30 functions
+  pr213313: 10 functions (+3 anchors dropped: IR unchanged without the fold)
+  pr212132: 5 functions
+  pr210499: 18 functions
+  pr209322: 15 functions (+3 anchors dropped: IR unchanged without the fold)
+  pr207564: 57 functions
+  pr207462: 34 functions
+  pr205383: 5 functions
+  pr204928: 1271 functions
+  pr204927: 2016 functions
+  pr216470: 345 functions
+  pr216046: 9 functions
+  pr204089: 1136 functions (+16 anchors dropped: IR unchanged without the fold)
+  71976.28 CPU-seconds, summed over the modules

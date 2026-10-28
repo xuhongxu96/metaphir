@@ -1,0 +1,17 @@
+InstCombine__ctpop-pow2.ll	ctpop_x_and_negx_nz
+InstCombine__icmp-lowbit.ll	lowbit_eq_one_i32
+InstCombine__icmp-lowbit.ll	lowbit_eq_one_nxv2i8
+InstCombine__icmp-lowbit.ll	lowbit_eq_one_v2i8
+InstCombine__icmp-lowbit.ll	lowbit_eq_zero_extra_uses_i8
+InstCombine__icmp-lowbit.ll	lowbit_eq_zero_i2
+InstCombine__icmp-lowbit.ll	lowbit_eq_zero_neg_extra_use_i8
+InstCombine__icmp-lowbit.ll	lowbit_eq_zero_nxv2i8
+InstCombine__icmp-lowbit.ll	lowbit_eq_zero_v2i8
+InstCombine__icmp-lowbit.ll	lowbit_ne_one_commuted_i8
+InstCombine__icmp-lowbit.ll	lowbit_ne_one_i64
+InstCombine__icmp-lowbit.ll	lowbit_ne_one_nxv2i8
+InstCombine__icmp-lowbit.ll	lowbit_ne_one_v2i8
+InstCombine__icmp-lowbit.ll	lowbit_ne_zero_i8
+InstCombine__icmp-lowbit.ll	lowbit_ne_zero_nxv2i8
+InstCombine__icmp-lowbit.ll	lowbit_ne_zero_v2i8
+InstSimplify__ctpop-pow2.ll	ctpop_x_and_negx_nz

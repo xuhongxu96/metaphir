@@ -1,0 +1,2 @@
+InstCombine__scmp.ll	scmp_zero_i1
+InstCombine__scmp.ll	scmp_zero_of_ucmp

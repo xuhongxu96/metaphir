@@ -1,0 +1,23 @@
+== gt: 70755 modules, 20 PR(s), passes=function(instcombine<no-verify-fixpoint>) ==
+  pr216436: 58 functions
+  pr215122: 22 functions
+  warning: the fold of pr215130 fires nowhere; it may be absent from this LLVM revision
+  pr215130: 0 functions
+  pr214541: 18 functions
+  pr214517: 3 functions
+  pr214381: 6 functions
+  pr214376: 14 functions
+  pr213709: 21 functions
+  pr213313: 10 functions
+  pr212132: 5 functions
+  pr210499: 11 functions
+  pr209322: 64 functions (+14 anchors dropped: IR unchanged without the fold)
+  pr207564: 14 functions (+1 anchors dropped: IR unchanged without the fold)
+  pr207462: 3 functions
+  pr205383: 5 functions
+  pr204928: 5 functions
+  pr204927: 1697 functions
+  pr216470: 18 functions
+  pr216046: 12 functions
+  pr204089: 1485 functions (+147189 anchors dropped: IR unchanged without the fold)
+  447862.11 CPU-seconds, summed over the modules

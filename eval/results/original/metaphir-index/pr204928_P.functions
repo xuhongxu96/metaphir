@@ -1,0 +1,5 @@
+InstCombine__set.ll	sext_and_trunc_nsw
+InstCombine__set.ll	sext_or_trunc_nsw
+InstCombine__set.ll	sext_or_trunc_nsw_multi_use
+InstCombine__set.ll	sext_or_trunc_nsw_vec
+InstCombine__set.ll	sext_xor_trunc_nsw

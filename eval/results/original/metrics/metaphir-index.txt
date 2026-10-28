@@ -1,0 +1,335 @@
+== pr216436 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.502
+    seconds[pr216436]=0.502
+    checked[pr216436]=4
+    total_functions[pr216436]=28726665
+    files_read[pr216436]=1
+    total_files[pr216436]=70755
+    patterns=1
+    P_functions=4
+  |G|=58 |P|=4 TP=4 FP=0 FN=54
+  recall=0.0690 precision=1.0000 F1=0.1290
+== pr215122 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=2.326
+    seconds[pr215122]=2.326
+    checked[pr215122]=5489
+    total_functions[pr215122]=28726665
+    files_read[pr215122]=947
+    total_files[pr215122]=70755
+    patterns=1
+    P_functions=8
+  |G|=22 |P|=8 TP=8 FP=0 FN=14
+  recall=0.3636 precision=1.0000 F1=0.5333
+== pr215130 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.549
+    seconds[pr215130]=0.549
+    checked[pr215130]=12
+    total_functions[pr215130]=28726665
+    files_read[pr215130]=9
+    total_files[pr215130]=70755
+    patterns=1
+    P_functions=0
+  |G|=0 |P|=0 TP=0 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr214541 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=1.751
+    seconds[pr214541]=1.751
+    checked[pr214541]=681
+    total_functions[pr214541]=28726665
+    files_read[pr214541]=336
+    total_files[pr214541]=70755
+    patterns=1
+    P_functions=345
+  |G|=18 |P|=345 TP=18 FP=327 FN=0
+  recall=1.0000 precision=0.0522 F1=0.0992
+== pr214517 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.501
+    seconds[pr214517]=0.501
+    checked[pr214517]=3
+    total_functions[pr214517]=28726665
+    files_read[pr214517]=1
+    total_files[pr214517]=70755
+    patterns=1
+    P_functions=3
+  |G|=3 |P|=3 TP=3 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr214381 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=1.304
+    seconds[pr214381]=1.304
+    checked[pr214381]=114
+    total_functions[pr214381]=28726665
+    files_read[pr214381]=73
+    total_files[pr214381]=70755
+    patterns=1
+    P_functions=7
+  |G|=6 |P|=7 TP=5 FP=2 FN=1
+  recall=0.8333 precision=0.7143 F1=0.7692
+== pr214376 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.504
+    seconds[pr214376]=0.504
+    checked[pr214376]=54
+    total_functions[pr214376]=28726665
+    files_read[pr214376]=14
+    total_files[pr214376]=70755
+    patterns=1
+    P_functions=13
+  |G|=14 |P|=13 TP=13 FP=0 FN=1
+  recall=0.9286 precision=1.0000 F1=0.9630
+== pr213709 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=1.088
+    seconds[pr213709]=1.088
+    checked[pr213709]=301
+    total_functions[pr213709]=28726665
+    files_read[pr213709]=184
+    total_files[pr213709]=70755
+    patterns=1
+    P_functions=17
+  |G|=21 |P|=17 TP=17 FP=0 FN=4
+  recall=0.8095 precision=1.0000 F1=0.8947
+== pr213313 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.486
+    seconds[pr213313]=0.486
+    checked[pr213313]=10
+    total_functions[pr213313]=28726665
+    files_read[pr213313]=2
+    total_files[pr213313]=70755
+    patterns=1
+    P_functions=10
+  |G|=10 |P|=10 TP=10 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr212132 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.978
+    seconds[pr212132_case1]=0.493
+    seconds[pr212132_case2]=0.485
+    checked[pr212132_case1]=4
+    total_functions[pr212132_case1]=28726665
+    files_read[pr212132_case1]=2
+    total_files[pr212132_case1]=70755
+    checked[pr212132_case2]=2
+    total_functions[pr212132_case2]=28726665
+    files_read[pr212132_case2]=1
+    total_files[pr212132_case2]=70755
+    patterns=2
+    P_functions=5
+  |G|=5 |P|=5 TP=5 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr210499 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=2.060
+    seconds[pr210499]=2.060
+    checked[pr210499]=9
+    total_functions[pr210499]=28726665
+    files_read[pr210499]=1
+    total_files[pr210499]=70755
+    patterns=1
+    P_functions=8
+  |G|=11 |P|=8 TP=8 FP=0 FN=3
+  recall=0.7273 precision=1.0000 F1=0.8421
+== pr209322 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=2.857
+    seconds[pr209322]=2.857
+    checked[pr209322]=81
+    total_functions[pr209322]=28726665
+    files_read[pr209322]=38
+    total_files[pr209322]=70755
+    patterns=1
+    P_functions=79
+  |G|=64 |P|=79 TP=63 FP=16 FN=1
+  recall=0.9844 precision=0.7975 F1=0.8811
+== pr207564 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.686
+    seconds[pr207564]=0.686
+    checked[pr207564]=96
+    total_functions[pr207564]=28726665
+    files_read[pr207564]=72
+    total_files[pr207564]=70755
+    patterns=1
+    P_functions=23
+  |G|=14 |P|=23 TP=12 FP=11 FN=2
+  recall=0.8571 precision=0.5217 F1=0.6486
+== pr207462 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=1.203
+    seconds[pr207462]=0.723
+    seconds[pr207462_mul]=0.480
+    checked[pr207462]=170
+    total_functions[pr207462]=28726665
+    files_read[pr207462]=82
+    total_files[pr207462]=70755
+    checked[pr207462_mul]=4
+    total_functions[pr207462_mul]=28726665
+    files_read[pr207462_mul]=2
+    total_files[pr207462_mul]=70755
+    patterns=2
+    P_functions=3
+  |G|=3 |P|=3 TP=3 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr205383 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.992
+    seconds[pr205383_sub]=0.495
+    seconds[pr205383_xor]=0.498
+    checked[pr205383_sub]=2
+    total_functions[pr205383_sub]=28726665
+    files_read[pr205383_sub]=1
+    total_files[pr205383_sub]=70755
+    checked[pr205383_xor]=2
+    total_functions[pr205383_xor]=28726665
+    files_read[pr205383_xor]=1
+    total_files[pr205383_xor]=70755
+    patterns=2
+    P_functions=4
+  |G|=5 |P|=4 TP=4 FP=0 FN=1
+  recall=0.8000 precision=1.0000 F1=0.8889
+== pr204928 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.639
+    seconds[pr204928]=0.639
+    checked[pr204928]=5
+    total_functions[pr204928]=28726665
+    files_read[pr204928]=1
+    total_files[pr204928]=70755
+    patterns=1
+    P_functions=5
+  |G|=5 |P|=5 TP=5 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr204927 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=3.408
+    seconds[pr204927]=3.408
+    checked[pr204927]=4598
+    total_functions[pr204927]=28726665
+    files_read[pr204927]=1404
+    total_files[pr204927]=70755
+    patterns=1
+    P_functions=4359
+  |G|=1697 |P|=4359 TP=1389 FP=2970 FN=308
+  recall=0.8185 precision=0.3187 F1=0.4587
+== pr216470 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=0.942
+    seconds[pr216470]=0.942
+    checked[pr216470]=202
+    total_functions[pr216470]=28726665
+    files_read[pr216470]=145
+    total_files[pr216470]=70755
+    patterns=1
+    P_functions=7
+  |G|=18 |P|=7 TP=7 FP=0 FN=11
+  recall=0.3889 precision=1.0000 F1=0.5600
+== pr216046 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=2.269
+    seconds[pr216046]=2.269
+    checked[pr216046]=1529
+    total_functions[pr216046]=28726665
+    files_read[pr216046]=538
+    total_files[pr216046]=70755
+    patterns=1
+    P_functions=12
+  |G|=12 |P|=12 TP=12 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
+== pr204089 ==
+  timing:
+    modules=70755
+    tool=metaphir-index
+    jobs=80
+    repeat=3
+    pattern_seconds=12.546
+    seconds[pr204089]=12.546
+    checked[pr204089]=282668
+    total_functions[pr204089]=28726665
+    files_read[pr204089]=26983
+    total_files[pr204089]=70755
+    patterns=1
+    P_functions=67626
+  |G|=1485 |P|=67626 TP=1278 FP=66348 FN=207
+  recall=0.8606 precision=0.0189 F1=0.0370

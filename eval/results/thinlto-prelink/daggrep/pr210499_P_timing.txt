@@ -1,0 +1,11 @@
+modules=70755
+tool=daggrep
+jobs=80
+repeat=3
+pattern_seconds=94.752
+seconds[pr210499_ashr_nsw]=23.346
+seconds[pr210499_ashr_nuw]=23.767
+seconds[pr210499_lshr_nsw]=23.656
+seconds[pr210499_lshr_nuw]=23.983
+patterns=4
+P_functions=5537

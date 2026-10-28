@@ -1,0 +1,14 @@
+DICompileUnit not listed in llvm.dbg.cu
+!281 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !397, producer: "Ubuntu clang version 24.0.0 (++20260802081851+e18c3ea02484-1~exp1~20260802082001.1761)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !398, retainedTypes: !520, globals: !1546, imports: !3054, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-thinlto-prelink/folly__ExecutorWithPriority.bc
+DICompileUnit not listed in llvm.dbg.cu
+!15720 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !15731, producer: "Ubuntu clang version 24.0.0 (++20260802081851+e18c3ea02484-1~exp1~20260802082001.1761)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !15750, retainedTypes: !16467, globals: !21106, imports: !23065, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-thinlto-prelink/folly__EventBase.bc
+DICompileUnit not listed in llvm.dbg.cu
+!3554 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !28270, producer: "Ubuntu clang version 24.0.0 (++20260903081701+7ece48b9e5bb-1~exp1~20260903201841.1826)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !28507, retainedTypes: !37025, globals: !68153, imports: !70260, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-thinlto-prelink/recastnavigation__catch_amalgamated.bc
+DICompileUnit not listed in llvm.dbg.cu
+!280 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !396, producer: "Ubuntu clang version 23.0.0 (++20260707081847+70646dd3eda3-1~exp1~20260707082012.1709)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !397, retainedTypes: !519, globals: !1545, imports: !3060, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-thinlto-prelink/velox__ExecutorWithPriority.bc
+indexed 70755 files
+seconds=112.56

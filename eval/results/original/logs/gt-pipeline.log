@@ -1,0 +1,22 @@
+== gt: 70755 modules, 20 PR(s), passes=default<O2> ==
+  pr216436: 46 functions (+11 anchors dropped: IR unchanged without the fold)
+  pr215122: 31 functions (+14 anchors dropped: IR unchanged without the fold)
+  pr215130: 5 functions
+  pr214541: 28 functions (+7 anchors dropped: IR unchanged without the fold)
+  pr214517: 16 functions (+26 anchors dropped: IR unchanged without the fold)
+  pr214381: 15 functions (+12 anchors dropped: IR unchanged without the fold)
+  pr214376: 14 functions
+  pr213709: 28 functions (+8 anchors dropped: IR unchanged without the fold)
+  pr213313: 10 functions (+21 anchors dropped: IR unchanged without the fold)
+  pr212132: 5 functions
+  pr210499: 21 functions (+100 anchors dropped: IR unchanged without the fold)
+  pr209322: 40 functions (+163 anchors dropped: IR unchanged without the fold)
+  pr207564: 42 functions (+26 anchors dropped: IR unchanged without the fold)
+  pr207462: 31 functions (+8 anchors dropped: IR unchanged without the fold)
+  pr205383: 5 functions
+  pr204928: 143 functions (+2762 anchors dropped: IR unchanged without the fold)
+  pr204927: 759 functions (+872 anchors dropped: IR unchanged without the fold)
+  pr216470: 158 functions (+169 anchors dropped: IR unchanged without the fold)
+  pr216046: 2 functions (+17 anchors dropped: IR unchanged without the fold)
+  pr204089: 15490 functions (+189498 anchors dropped: IR unchanged without the fold)
+  352280.00 CPU-seconds, summed over the modules

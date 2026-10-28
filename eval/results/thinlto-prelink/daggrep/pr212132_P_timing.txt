@@ -1,0 +1,9 @@
+modules=70755
+tool=daggrep
+jobs=80
+repeat=3
+pattern_seconds=47.529
+seconds[pr212132_case1]=23.699
+seconds[pr212132_case2]=23.830
+patterns=2
+P_functions=5

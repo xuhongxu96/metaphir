@@ -1,0 +1,10 @@
+InstCombine__ashr-demand.ll	ashr_can_be_lshr
+InstCombine__ashr-demand.ll	ashr_can_be_lshr_2
+InstCombine__trunc.ll	trunc_nsw_ashr_exact
+InstCombine__trunc.ll	trunc_nsw_lshr_exact
+InstCombine__trunc.ll	trunc_nuw_ashr_exact
+InstCombine__trunc.ll	trunc_nuw_ashr_exact_use
+InstCombine__trunc.ll	trunc_nuw_ashr_icmp_vec
+InstCombine__trunc.ll	trunc_nuw_lshr_exact
+InstCombine__trunc.ll	trunc_nuw_lshr_exact_use
+InstCombine__trunc.ll	trunc_nuw_lshr_icmp_vec

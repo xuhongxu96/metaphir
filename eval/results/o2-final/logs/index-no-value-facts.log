@@ -1,0 +1,14 @@
+DICompileUnit not listed in llvm.dbg.cu
+!272 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !387, producer: "Ubuntu clang version 24.0.0 (++20260802081851+e18c3ea02484-1~exp1~20260802082001.1761)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !388, retainedTypes: !510, globals: !1536, imports: !3044, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-o2-final/folly__ExecutorWithPriority.bc
+DICompileUnit not listed in llvm.dbg.cu
+!15213 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !15224, producer: "Ubuntu clang version 24.0.0 (++20260802081851+e18c3ea02484-1~exp1~20260802082001.1761)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !15243, retainedTypes: !15960, globals: !20599, imports: !22558, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-o2-final/folly__EventBase.bc
+DICompileUnit not listed in llvm.dbg.cu
+!3552 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !27296, producer: "Ubuntu clang version 24.0.0 (++20260903081701+7ece48b9e5bb-1~exp1~20260903201841.1826)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !27533, retainedTypes: !36051, globals: !67179, imports: !69286, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-o2-final/recastnavigation__catch_amalgamated.bc
+DICompileUnit not listed in llvm.dbg.cu
+!271 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !386, producer: "Ubuntu clang version 23.0.0 (++20260707081847+70646dd3eda3-1~exp1~20260707082012.1709)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !387, retainedTypes: !509, globals: !1535, imports: !3050, splitDebugInlining: false, nameTableKind: None)
+warning: ignoring invalid debug info in /data/h445xu/repo/metaphir/eval/corpus-o2-final/velox__ExecutorWithPriority.bc
+indexed 70755 files
+seconds=103.62

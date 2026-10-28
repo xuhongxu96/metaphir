@@ -1,0 +1,6 @@
+InstCombine__icmp-floor-align.ll	floor_ugt_48
+InstCombine__icmp-floor-align.ll	floor_ugt_low_48
+InstCombine__icmp-floor-align.ll	floor_ugt_mid_48
+InstCombine__icmp-floor-align.ll	floor_ult_eq_48
+InstCombine__icmp-floor-align.ll	floor_ult_low_48
+ruff-rs__criterion-524b2807e12f564b.criterion.5ad8dacf280593c5-cgu.02.bc	_RNvMs6_Cs7NzLGBMhIGf_9criterionNtB5_18ActualSamplingMode16iteration_counts

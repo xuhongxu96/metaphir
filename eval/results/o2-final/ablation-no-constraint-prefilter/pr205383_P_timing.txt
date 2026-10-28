@@ -1,0 +1,17 @@
+modules=70755
+tool=metaphir-index
+jobs=80
+repeat=3
+pattern_seconds=1.124
+seconds[pr205383_sub]=0.553
+seconds[pr205383_xor]=0.571
+checked[pr205383_sub]=29
+total_functions[pr205383_sub]=4776770
+files_read[pr205383_sub]=22
+total_files[pr205383_sub]=70755
+checked[pr205383_xor]=23
+total_functions[pr205383_xor]=4776770
+files_read[pr205383_xor]=9
+total_files[pr205383_xor]=70755
+patterns=2
+P_functions=4

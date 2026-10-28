@@ -1,0 +1,16 @@
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_and_commuted
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_constant_for_zero
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_constant_for_zero_poison_flag
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_extra_use
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_i64
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_i64_wrong_icmp_pred
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_i64_wrong_xor
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_icmp_ne
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_preserve_flag
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_sub_constant_for_zero
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_sub_constant_for_zero_33
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_vec
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_vec_with_undef
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_wrong_constant_for_zero
+InstCombine__select-ctlz-to-cttz.ll	select_clz_to_ctz_xor_non_pot

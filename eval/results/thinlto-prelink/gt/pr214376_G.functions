@@ -1,0 +1,14 @@
+InstCombine__cttz.ll	cttz_odd_mul
+InstCombine__cttz.ll	cttz_odd_mul_multiuse
+InstCombine__cttz.ll	cttz_odd_mul_nsw
+InstCombine__cttz.ll	cttz_odd_mul_splat
+InstCombine__cttz.ll	cttz_odd_mul_zero_poison
+InstCombine__known-non-zero.ll	test0_odd_mul
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_large_odd_mul
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_odd_mul
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_odd_mul_eq
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_odd_mul_multiuse
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_odd_mul_nonzero_cmp
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_odd_mul_vec
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_odd_mul_vec_nonsplat
+InstCombine__select-cmp-cttz-ctlz.ll	test_cttz_not_bw_odd_mul_wrong_op

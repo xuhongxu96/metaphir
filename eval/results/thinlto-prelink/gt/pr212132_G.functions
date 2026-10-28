@@ -1,0 +1,5 @@
+InstCombine__select-and-or-powerof2.ll	select_and_ne_zero_powerof2
+InstCombine__select-and-or-powerof2.ll	select_and_ne_zero_powerof2_commuted
+InstCombine__select-and-or-powerof2.ll	select_or_eq_zero_powerof2
+InstCombine__select-and-or-powerof2.ll	select_or_eq_zero_powerof2_commuted
+InstCombine__select-and-or-powerof2.ll	select_or_eq_zero_powerof2_vec

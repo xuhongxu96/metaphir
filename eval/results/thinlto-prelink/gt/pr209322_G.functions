@@ -1,0 +1,15 @@
+InstCombine__and-or-icmps.ll	simplify_before_foldAndOfICmps
+InstCombine__and-or-icmps.ll	simplify_before_foldAndOfICmps2
+InstCombine__apint-shift.ll	ossfuzz_9880
+InstCombine__div.ll	udiv_by_minus1
+InstCombine__div.ll	udiv_by_minus1_vec
+InstCombine__div.ll	udiv_by_negative
+InstCombine__shift.ll	ashr_out_of_range
+InstCombine__shift.ll	ashr_out_of_range_1
+InstCombine__shift.ll	lshr_out_of_range
+InstCombine__shift.ll	lshr_out_of_range2
+InstCombine__udiv-isknownnegative.ll	udiv_const_neg
+InstCombine__udiv-isknownnegative.ll	udiv_var_neg
+InstCombine__udiv_select_to_select_shift.ll	PR34856
+InstCombine__vector-udiv.ll	test_v4i32_negconst
+InstCombine__vector-udiv.ll	test_v4i32_negconstsplat

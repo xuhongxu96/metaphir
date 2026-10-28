@@ -1,0 +1,3 @@
+InstCombine__shift.ll	shl1_cttz
+InstCombine__shift.ll	shl1_cttz_extra_use
+InstCombine__shift.ll	shl1_cttz_vec

@@ -1,0 +1,63 @@
+== metaphir-index pr216436: 70755 modules, 1 pattern(s) ==
+  pr216436.mpir: 48 functions, 3669 packs, 1.57s
+  saved 48 functions
+== metaphir-index pr215122: 70755 modules, 1 pattern(s) ==
+  pr215122.mpir: 40 functions, 14021 packs, 2.52s
+  saved 40 functions
+== metaphir-index pr215130: 70755 modules, 1 pattern(s) ==
+  pr215130.mpir: 3 functions, 494 packs, 1.07s
+  saved 3 functions
+== metaphir-index pr214541: 70755 modules, 1 pattern(s) ==
+  pr214541.mpir: 23 functions, 558 packs, 0.86s
+  saved 23 functions
+== metaphir-index pr214517: 70755 modules, 1 pattern(s) ==
+  pr214517.mpir: 27 functions, 1309 packs, 1.35s
+  saved 27 functions
+== metaphir-index pr214381: 70755 modules, 1 pattern(s) ==
+  pr214381.mpir: 16 functions, 796 packs, 1.15s
+  saved 16 functions
+== metaphir-index pr214376: 70755 modules, 1 pattern(s) ==
+  pr214376.mpir: 13 functions, 1227 packs, 1.48s
+  saved 13 functions
+== metaphir-index pr213709: 70755 modules, 1 pattern(s) ==
+  pr213709.mpir: 26 functions, 4009 packs, 1.94s
+  saved 26 functions
+== metaphir-index pr213313: 70755 modules, 1 pattern(s) ==
+  pr213313.mpir: 10 functions, 582 packs, 0.84s
+  saved 10 functions
+== metaphir-index pr212132: 70755 modules, 2 pattern(s) ==
+  pr212132_case1.mpir: 3 functions, 1033 packs, 1.60s
+  pr212132_case2.mpir: 2 functions, 2016 packs, 1.94s
+  saved 5 functions
+== metaphir-index pr210499: 70755 modules, 1 pattern(s) ==
+  pr210499.mpir: 18 functions, 1799 packs, 2.06s
+  saved 18 functions
+== metaphir-index pr209322: 70755 modules, 1 pattern(s) ==
+  pr209322.mpir: 19 functions, 68384 packs, 4.76s
+  saved 19 functions
+== metaphir-index pr207564: 70755 modules, 1 pattern(s) ==
+  pr207564.mpir: 58 functions, 5175 packs, 1.78s
+  saved 58 functions
+== metaphir-index pr207462: 70755 modules, 2 pattern(s) ==
+  pr207462.mpir: 33 functions, 3990 packs, 1.80s
+  pr207462_mul.mpir: 1 functions, 87 packs, 0.53s
+  saved 34 functions
+== metaphir-index pr205383: 70755 modules, 2 pattern(s) ==
+  pr205383_sub.mpir: 2 functions, 17 packs, 0.56s
+  pr205383_xor.mpir: 2 functions, 19 packs, 0.55s
+  saved 4 functions
+== metaphir-index pr204928: 70755 modules, 1 pattern(s) ==
+  pr204928.mpir: 1271 functions, 6202 packs, 1.81s
+  saved 1271 functions
+== metaphir-index pr204927: 70755 modules, 1 pattern(s) ==
+  pr204927.mpir: 2017 functions, 19226 packs, 3.37s
+  saved 2017 functions
+== metaphir-index pr216470: 70755 modules, 1 pattern(s) ==
+  pr216470.mpir: 345 functions, 13922 packs, 3.04s
+  saved 345 functions
+== metaphir-index pr216046: 70755 modules, 1 pattern(s) ==
+  pr216046.mpir: 9 functions, 2167 packs, 1.80s
+  saved 9 functions
+== metaphir-index pr204089: 70755 modules, 1 pattern(s) ==
+  pr204089.mpir: 14 functions, 555 packs, 1.06s
+  saved 14 functions

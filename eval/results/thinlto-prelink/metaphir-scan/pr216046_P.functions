@@ -1,0 +1,9 @@
+InstCombine__scmp.ll	scmp_zero_and1_operand
+InstCombine__scmp.ll	scmp_zero_ashr_operand
+InstCombine__scmp.ll	scmp_zero_i1
+InstCombine__scmp.ll	scmp_zero_of_ucmp
+InstCombine__scmp.ll	scmp_zero_range_i128
+InstCombine__scmp.ll	scmp_zero_range_same_width
+InstCombine__scmp.ll	scmp_zero_range_sext
+InstCombine__scmp.ll	scmp_zero_range_trunc
+InstCombine__scmp.ll	scmp_zero_range_vec

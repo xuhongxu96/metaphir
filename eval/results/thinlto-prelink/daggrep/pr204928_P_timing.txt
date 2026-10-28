@@ -1,0 +1,10 @@
+modules=70755
+tool=daggrep
+jobs=80
+repeat=3
+pattern_seconds=70.392
+seconds[pr204928_and]=23.369
+seconds[pr204928_or]=23.624
+seconds[pr204928_xor]=23.398
+patterns=3
+P_functions=5170
