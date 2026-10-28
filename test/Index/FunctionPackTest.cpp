@@ -293,7 +293,7 @@ TEST_F(FunctionPackTest, StubsAliasesAndIFuncs) {
   EXPECT_EQ(I->getResolverFunction()->getName(), "resolve");
 }
 
-TEST_F(FunctionPackTest, KeepsDebugInfo) {
+TEST_F(FunctionPackTest, StripsDebugInfo) {
   pack(R"(
     define i32 @f(i32 %x) !dbg !4 {
       %y = add i32 %x, 1, !dbg !6
@@ -311,9 +311,83 @@ TEST_F(FunctionPackTest, KeepsDebugInfo) {
   LLVMContext Into;
   std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
   ASSERT_NE(F, nullptr);
-  const llvm::Instruction &Add = F->getFunction().getEntryBlock().front();
-  ASSERT_TRUE(Add.getDebugLoc());
-  EXPECT_EQ(Add.getDebugLoc().getLine(), 2u);
+  // Debug info can refer to values outside the pack, and no pattern reads it.
+  const llvm::Function &Packed = F->getFunction();
+  EXPECT_EQ(Packed.getSubprogram(), nullptr);
+  EXPECT_FALSE(Packed.getEntryBlock().front().getDebugLoc());
+  EXPECT_EQ(Packed.getParent()->getNamedMetadata("llvm.dbg.cu"), nullptr);
+}
+
+TEST_F(FunctionPackTest, KeepsMetadataThatHoldsNoValues) {
+  pack(R"(
+    define ptr @f(ptr %p) {
+      %v = load ptr, ptr %p, align 8, !nonnull !0, !tbaa !1, !prof !4
+      ret ptr %v
+    }
+    !0 = !{}
+    !1 = !{!2, !2, i64 0}
+    !2 = !{!"p", !3, i64 0}
+    !3 = !{!"root"}
+    !4 = !{!"branch_weights", i32 1, i32 2}
+  )");
+  LLVMContext Into;
+  std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
+  ASSERT_NE(F, nullptr);
+  const llvm::Instruction &Load = F->getFunction().getEntryBlock().front();
+  EXPECT_NE(Load.getMetadata(LLVMContext::MD_nonnull), nullptr);
+  EXPECT_NE(Load.getMetadata(LLVMContext::MD_tbaa), nullptr);
+  EXPECT_NE(Load.getMetadata(LLVMContext::MD_prof), nullptr);
+}
+
+TEST_F(FunctionPackTest, KeepsMetadataThatListsGlobals) {
+  // The pack holds the globals the metadata lists as stubs.
+  pack(R"(
+    declare void @a()
+    declare void @b()
+    define void @f(ptr %p) {
+      call void %p(), !callees !0
+      ret void
+    }
+    !0 = !{ptr @a, ptr @b}
+  )");
+  LLVMContext Into;
+  std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
+  ASSERT_NE(F, nullptr);
+  const llvm::Instruction &Call = F->getFunction().getEntryBlock().front();
+  const MDNode *Callees = Call.getMetadata(LLVMContext::MD_callees);
+  ASSERT_NE(Callees, nullptr);
+  ASSERT_EQ(Callees->getNumOperands(), 2u);
+  const Module &Packed = *F->getFunction().getParent();
+  EXPECT_EQ(mdconst::extract<Function>(Callees->getOperand(0)),
+            Packed.getFunction("a"));
+  EXPECT_EQ(mdconst::extract<Function>(Callees->getOperand(1)),
+            Packed.getFunction("b"));
+}
+
+TEST_F(FunctionPackTest, StripsDebugInfoUnderAnyKind) {
+  pack(R"(
+    define void @f(ptr %p) !dbg !4 {
+      %v = load ptr, ptr %p, !nonnull !7
+      call void %v(), !call_target !4
+      ret void, !dbg !6
+    }
+    !llvm.dbg.cu = !{!0}
+    !llvm.module.flags = !{!3}
+    !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, emissionKind: FullDebug)
+    !1 = !DIFile(filename: "f.c", directory: "/")
+    !3 = !{i32 2, !"Debug Info Version", i32 3}
+    !4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, unit: !0, spFlags: DISPFlagDefinition)
+    !5 = !DISubroutineType(types: !{})
+    !6 = !DILocation(line: 2, scope: !4)
+    !7 = !{}
+  )");
+  LLVMContext Into;
+  std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
+  ASSERT_NE(F, nullptr);
+  const llvm::BasicBlock &Entry = F->getFunction().getEntryBlock();
+  EXPECT_NE(Entry.front().getMetadata(LLVMContext::MD_nonnull), nullptr);
+  EXPECT_EQ(std::next(Entry.begin())->getMetadata(LLVMContext::MD_call_target),
+            nullptr);
 }
 
 TEST_F(FunctionPackTest, PacksModulesThatDoNotVerify) {
