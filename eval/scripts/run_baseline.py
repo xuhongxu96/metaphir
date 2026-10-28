@@ -2,8 +2,7 @@
 """Run a tool's patterns over the corpus and save the functions they match.
 
   metaphir-index  eval/patterns, one `metaphir-match` run per pattern over the
-                  whole corpus, with the index (``--index``, default
-                  eval/corpus.mpidx)
+                  whole corpus, with the index (``--index``, required)
   metaphir-scan   the same, without the index
   daggrep         eval/baselines/daggrep/patterns/<pr>[_<alt>].ll, one run of
                   the adapted daggrep per pattern over the whole corpus (its
@@ -32,14 +31,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from run_eval import (
-    DEFAULT_INDEX,
-    DEFAULT_RESULTS,
     METAPHIR_MATCH,
     PR_PATTERNS,
     REPO,
     Func,
+    MatchStats,
     collect_corpus,
-    fold_id_matches,
     response_file_line,
     run_metaphir,
     save_functions,
@@ -61,7 +58,7 @@ def pattern_files(tool: str, pr: str) -> list[Path]:
         return [REPO / p for p in PR_PATTERNS[pr]]
     directory, suffix = PATTERN_DIRS[tool]
     files = sorted(
-        p for p in directory.glob(f"*{suffix}") if fold_id_matches(p.stem, pr)
+        p for p in directory.glob(f"*{suffix}") if p.stem == pr or p.stem.startswith(pr + "_")
     )
     if not files:
         sys.exit(f"no {tool} pattern for {pr} in {directory}")
@@ -94,10 +91,14 @@ def run_daggrep(pattern: Path, files: list[Path], jobs: int) -> tuple[set[Func],
     if proc.returncode < 0 or (proc.returncode != 0 and not errors):
         tail = " | ".join(proc.stderr.splitlines()[-3:])
         errors.append(f"daggrep {pattern.name}: rc={proc.returncode}: {tail}")
-    return parse_daggrep(proc.stdout), [f"daggrep {pattern.name}: {e}" for e in errors]
+    return (
+        parse_daggrep(proc.stdout),
+        [f"daggrep {pattern.name}: {e}" for e in errors],
+        MatchStats(),
+    )
 
 
-INDEX = DEFAULT_INDEX
+INDEX: Path = Path()
 MATCH_ARGS: list[str] = []
 RUNNERS: dict[str, Callable[[Path, list[Path], int], tuple[set[Func], list[str]]]] = {
     "daggrep": run_daggrep,
@@ -122,27 +123,41 @@ def collect(
     P: set[Func] = set()
     failures: list[str] = []
     seconds: dict[str, float] = {}
+    counts: dict[str, MatchStats] = {}
     for pattern in patterns:
         times = []
         for _ in range(repeat):
             t0 = time.perf_counter()
-            funcs, errors = RUNNERS[tool](pattern, files, jobs)
+            funcs, errors, stats = RUNNERS[tool](pattern, files, jobs)
             times.append(time.perf_counter() - t0)
         seconds[pattern.stem] = statistics.median(times)
+        counts[pattern.stem] = stats
         P |= funcs
         failures += errors
-        print(f"  {pattern.name}: {len(funcs)} functions, {seconds[pattern.stem]:.2f}s")
+        checked = "" if stats.checked is None else f", {stats.checked} packs"
+        print(f"  {pattern.name}: {len(funcs)} functions{checked}, {seconds[pattern.stem]:.2f}s")
 
     save_functions(outdir / f"{pr}_P.functions", P)
-    (outdir / f"{pr}_P_timing.txt").write_text(
+    timing = (
         f"modules={len(files)}\n"
         f"tool={tool}\n"
         f"jobs={jobs}\n"
         f"repeat={repeat}\n"
         f"pattern_seconds={sum(seconds.values()):.3f}\n"
         + "".join(f"seconds[{k}]={v:.3f}\n" for k, v in seconds.items())
-        + f"patterns={len(patterns)}\n"
-        f"P_functions={len(P)}\n"
+    )
+    for stem, stats in counts.items():
+        for field, value in (
+            ("checked", stats.checked),
+            ("total_functions", stats.functions),
+            ("files_read", stats.files),
+            ("total_files", stats.total_files),
+            ("posting_candidates", stats.posting_candidates),
+        ):
+            if value is not None:
+                timing += f"{field}[{stem}]={value}\n"
+    (outdir / f"{pr}_P_timing.txt").write_text(
+        timing + f"patterns={len(patterns)}\nP_functions={len(P)}\n"
     )
     failures_path = outdir / f"{pr}_P_failures.txt"
     if failures:
@@ -158,13 +173,14 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("tool", choices=sorted(RUNNERS))
     ap.add_argument("--pr", nargs="*", help="only run the given PRs (default: all)")
-    ap.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
+    ap.add_argument(
+        "--corpus", type=Path, required=True, help="the corpus directory"
+    )
     ap.add_argument(
         "--results",
         type=Path,
-        default=DEFAULT_RESULTS,
-        help="results directory of the corpus; predictions go to <results>/<tool> "
-        "(default: eval/results/main)",
+        required=True,
+        help="results directory of the corpus; predictions go to <results>/<tool>",
     )
     ap.add_argument(
         "--outdir",
@@ -178,19 +194,20 @@ def main() -> int:
     ap.add_argument(
         "--index",
         type=Path,
-        default=DEFAULT_INDEX,
-        help="the index metaphir-index uses (default: eval/corpus.mpidx)",
+        help="the index metaphir-index uses (required for metaphir-index)",
     )
     ap.add_argument(
         "--match-arg",
         action="append",
         default=[],
         help="pass this option on to metaphir-match (repeatable), e.g. "
-        "--match-arg=--no-prefilter",
+        "--match-arg=--no-constraint-prefilter",
     )
     args = ap.parse_args()
+    if args.index is None and args.tool == "metaphir-index":
+        sys.exit("--index is required for metaphir-index")
     global INDEX
-    INDEX = args.index
+    INDEX = args.index or Path()
     MATCH_ARGS.extend(args.match_arg)
     tool = TOOLS[args.tool]
     if not (tool.is_file() and os.access(tool, os.X_OK)):

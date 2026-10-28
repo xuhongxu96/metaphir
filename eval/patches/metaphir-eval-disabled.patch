@@ -1,9 +1,9 @@
 diff --git a/llvm/include/llvm/Analysis/MetaphIREvalAnchor.h b/llvm/include/llvm/Analysis/MetaphIREvalAnchor.h
 new file mode 100644
-index 000000000000..4548385e4ab9
+index 000000000000..e877ecb75401
 --- /dev/null
 +++ b/llvm/include/llvm/Analysis/MetaphIREvalAnchor.h
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,62 @@
 +//===- MetaphIREvalAnchor.h - Eval instrumentation -----------------------===//
 +//
 +// MetaphIR evaluation instrumentation.
@@ -11,13 +11,19 @@ index 000000000000..4548385e4ab9
 +// The evaluation corpus is built by an opt whose target folds are compiled
 +// out, so the frozen IR still contains the pre-fold shapes.  With
 +// METAPHIR_EVAL_ENABLED set in the environment the folds become active again
-+// and report each function they fire in as "ANCHOR <function> <foldID>" on
++// and report each function they fire in as "ANCHOR <function> <pr>" on
 +// stderr, once per fold, while InstCombine runs.
 +//
 +// Only firings rooted at instructions of the input function count.  Firings
 +// rooted at instructions created during combining, including those allocated
 +// at the address of an erased input instruction, are skipped: they are not in
 +// the input file and can never match an offline pattern.
++//
++// With METAPHIR_EVAL_ALL_FIRINGS set as well, every firing is reported at
++// function granularity instead: the root need not be an input instruction, and
++// firings from instsimplify passes outside InstCombine are included.  This
++// measures the functions a fold fires in during a whole pipeline, not the
++// sites a pattern can see in a frozen input.
 +//
 +//===----------------------------------------------------------------------===//
 +
@@ -37,6 +43,12 @@ index 000000000000..4548385e4ab9
 +/// mode, i.e. METAPHIR_EVAL_ENABLED is not set in the environment).
 +bool foldsDisabled();
 +
++/// True when the fold of \p PR may run: folds are not disabled and \p PR is
++/// not named in METAPHIR_EVAL_ABLATE (a comma-separated list, e.g. "pr204089").
++/// The evaluation ablates a PR's folds to check that a reported firing changed
++/// the IR.
++bool foldEnabled(StringRef PR);
++
 +/// Record the input instructions of \p F and activate anchor reporting for the
 +/// duration of its InstCombine pass.
 +void initAnchors(const Function &F);
@@ -47,7 +59,7 @@ index 000000000000..4548385e4ab9
 +
 +/// Report a fold firing anchored at \p Root, which must belong to the function
 +/// last passed to initAnchors and exist in its input file.
-+void reportAnchor(const Instruction *Root, StringRef FoldID);
++void reportAnchor(const Instruction *Root, StringRef PR);
 +
 +} // namespace metaphir_eval
 +
@@ -55,7 +67,7 @@ index 000000000000..4548385e4ab9
 +
 +#endif
 diff --git a/llvm/lib/Analysis/InstructionSimplify.cpp b/llvm/lib/Analysis/InstructionSimplify.cpp
-index 74a266660b23..cdfd38bd4c57 100644
+index 74a266660b23..241199226956 100644
 --- a/llvm/lib/Analysis/InstructionSimplify.cpp
 +++ b/llvm/lib/Analysis/InstructionSimplify.cpp
 @@ -34,11 +34,15 @@
@@ -74,10 +86,10 @@ index 74a266660b23..cdfd38bd4c57 100644
  #include "llvm/IR/InstrTypes.h"
  #include "llvm/IR/Instructions.h"
  #include "llvm/IR/IntrinsicsAArch64.h"
-@@ -52,6 +56,71 @@
+@@ -52,6 +56,112 @@
  using namespace llvm;
  using namespace llvm::PatternMatch;
-
+ 
 +//===----------------------------------------------------------------------===//
 +// MetaphIR evaluation instrumentation.
 +//
@@ -93,6 +105,25 @@ index 74a266660b23..cdfd38bd4c57 100644
 +  return Disabled;
 +}
 +
++bool foldEnabled(StringRef PR) {
++  if (foldsDisabled())
++    return false;
++  static const std::string Ablated = [] {
++    const char *Env = getenv("METAPHIR_EVAL_ABLATE");
++    return std::string(Env ? Env : "");
++  }();
++  SmallVector<StringRef, 4> Names;
++  StringRef(Ablated).split(Names, ',', -1, /*KeepEmpty=*/false);
++  return !is_contained(Names, PR);
++}
++
++/// True when every function-level firing is reported, regardless of whether
++/// the root instruction is in the input file or which pass is running.
++static bool allFirings() {
++  static const bool All = getenv("METAPHIR_EVAL_ALL_FIRINGS") != nullptr;
++  return All;
++}
++
 +namespace {
 +struct AnchorState {
 +  const Function *F = nullptr;
@@ -100,8 +131,11 @@ index 74a266660b23..cdfd38bd4c57 100644
 +  // erased, so an instruction created at the address of an erased one is not
 +  // taken for it.
 +  DenseMap<const Instruction *, WeakVH> Input;
-+  // The folds already reported for F.
++  // The folds already reported for F (input-rooted mode).
 +  StringSet<> Reported;
++  // The (function, fold) pairs already reported (all-firings mode), across
++  // every pass in the pipeline.
++  StringSet<> ReportedAll;
 +};
 +AnchorState &getAnchorState() {
 +  static AnchorState S;
@@ -116,6 +150,10 @@ index 74a266660b23..cdfd38bd4c57 100644
 +  S.F = &F;
 +  S.Input.clear();
 +  S.Reported.clear();
++  // All-firings mode reports at function granularity and does not need the
++  // input-instruction set.
++  if (allFirings())
++    return;
 +  for (const Instruction &I : instructions(F))
 +    S.Input.try_emplace(&I, const_cast<Instruction *>(&I));
 +}
@@ -129,73 +167,88 @@ index 74a266660b23..cdfd38bd4c57 100644
 +  S.Reported.clear();
 +}
 +
-+void reportAnchor(const Instruction *Root, StringRef FoldID) {
++void reportAnchor(const Instruction *Root, StringRef PR) {
++  if (!Root)
++    return;
 +  AnchorState &S = getAnchorState();
-+  if (!S.F || !Root || Root->getFunction() != S.F)
++  if (allFirings()) {
++    // Report the function where the firing happened, whatever pass is running
++    // (instsimplify does not call initAnchors) and whatever created the root.
++    const Function *F = Root->getFunction();
++    if (!F)
++      return;
++    std::string Key = F->getName().str();
++    Key += '\x01';
++    Key += PR;
++    if (S.ReportedAll.insert(Key).second)
++      errs() << "ANCHOR " << F->getName() << " " << PR << "\n";
++    return;
++  }
++  if (!S.F || Root->getFunction() != S.F)
 +    return;
 +  // Skip firings rooted at instructions InstCombine created: they are not in
 +  // the input file and can never match an offline pattern.
 +  auto It = S.Input.find(Root);
 +  if (It == S.Input.end() || It->second != Root)
 +    return;
-+  if (S.Reported.insert(FoldID).second)
-+    errs() << "ANCHOR " << S.F->getName() << " " << FoldID << "\n";
++  if (S.Reported.insert(PR).second)
++    errs() << "ANCHOR " << S.F->getName() << " " << PR << "\n";
 +}
 +} // namespace llvm::metaphir_eval
 +
  #define DEBUG_TYPE "instsimplify"
-
+ 
  enum { RecursionLimit = 3 };
-@@ -2135,14 +2204,17 @@ static Value *simplifyAndInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
+@@ -2135,14 +2245,17 @@ static Value *simplifyAndInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
    if (Value *V = simplifyAndOrOfCmps(Q, Op0, Op1, true))
      return V;
-
+ 
 -  // zext(X) & sext(X) --> zext(X)
 -  // sext(X) & zext(X) --> zext(X)
 -  {
 +  // [MetaphIR eval] PR 213313: zext(X) & sext(X) --> zext(X).
-+  if (!metaphir_eval::foldsDisabled()) {
++  if (metaphir_eval::foldEnabled("pr213313")) {
      Value *X = nullptr;
 -    if (match(Op0, m_ZExt(m_Value(X))) && match(Op1, m_SExt(m_Specific(X))))
 +    if (match(Op0, m_ZExt(m_Value(X))) && match(Op1, m_SExt(m_Specific(X)))) {
-+      metaphir_eval::reportAnchor(Q.CtxI, "pr213313_and");
++      metaphir_eval::reportAnchor(Q.CtxI, "pr213313");
        return Op0;
 -    if (match(Op1, m_ZExt(m_Value(X))) && match(Op0, m_SExt(m_Specific(X))))
 +    }
 +    if (match(Op1, m_ZExt(m_Value(X))) && match(Op0, m_SExt(m_Specific(X)))) {
-+      metaphir_eval::reportAnchor(Q.CtxI, "pr213313_and");
++      metaphir_eval::reportAnchor(Q.CtxI, "pr213313");
        return Op1;
 +    }
    }
-
+ 
    // Try some generic simplifications for associative operations.
-@@ -2398,14 +2470,17 @@ static Value *simplifyOrInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
+@@ -2398,14 +2511,17 @@ static Value *simplifyOrInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
      }
    }
-
+ 
 -  // zext(X) | sext(X) --> sext(X)
 -  // sext(X) | zext(X) --> sext(X)
 -  {
 +  // [MetaphIR eval] PR 213313: zext(X) | sext(X) --> sext(X).
-+  if (!metaphir_eval::foldsDisabled()) {
++  if (metaphir_eval::foldEnabled("pr213313")) {
      Value *X = nullptr;
 -    if (match(Op0, m_ZExt(m_Value(X))) && match(Op1, m_SExt(m_Specific(X))))
 +    if (match(Op0, m_ZExt(m_Value(X))) && match(Op1, m_SExt(m_Specific(X)))) {
-+      metaphir_eval::reportAnchor(Q.CtxI, "pr213313_or");
++      metaphir_eval::reportAnchor(Q.CtxI, "pr213313");
        return Op1;
 -    if (match(Op1, m_ZExt(m_Value(X))) && match(Op0, m_SExt(m_Specific(X))))
 +    }
 +    if (match(Op1, m_ZExt(m_Value(X))) && match(Op0, m_SExt(m_Specific(X)))) {
-+      metaphir_eval::reportAnchor(Q.CtxI, "pr213313_or");
++      metaphir_eval::reportAnchor(Q.CtxI, "pr213313");
        return Op0;
 +    }
    }
-
+ 
    // A funnel shift (rotate) can be decomposed into simpler shifts. See if we
-@@ -5706,14 +5781,18 @@ static Value *simplifyCastInst(unsigned CastOpc, Value *Op, Type *Ty,
+@@ -5706,14 +5822,18 @@ static Value *simplifyCastInst(unsigned CastOpc, Value *Op, Type *Ty,
        X->getType() == Ty && Ty == Q.DL.getIndexType(Ptr->getType()))
      return X;
-
+ 
 -  // Fold a value-preserving zext/sext of a trunc back to the original value.
 -  if (CastOpc == Instruction::ZExt || CastOpc == Instruction::SExt) {
 -    if (auto *Trunc = dyn_cast<TruncInst>(Op)) {
@@ -205,7 +258,7 @@ index 74a266660b23..cdfd38bd4c57 100644
 -      if (Src->getType() == Ty && NoWrap)
 -        return Src;
 +  // [MetaphIR eval] PR 204089: Fold a value-preserving zext/sext of a trunc back to the original value.
-+  if (!metaphir_eval::foldsDisabled()) {
++  if (metaphir_eval::foldEnabled("pr204089")) {
 +    if (CastOpc == Instruction::ZExt || CastOpc == Instruction::SExt) {
 +      if (auto *Trunc = dyn_cast<TruncInst>(Op)) {
 +        Value *Src = Trunc->getOperand(0);
@@ -218,9 +271,9 @@ index 74a266660b23..cdfd38bd4c57 100644
 +      }
      }
    }
-
+ 
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp b/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
-index fc6972d29d37..b2bbcf6c47e1 100644
+index fc6972d29d37..ee8adf2e13d9 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
 @@ -16,6 +16,7 @@
@@ -240,7 +293,7 @@ index fc6972d29d37..b2bbcf6c47e1 100644
    // The saturating add gives X + C or UMAX, so subtracting C leaves X or
    // UMAX - C. Note UMAX - C == ~C.
 -  {
-+  if (!metaphir_eval::foldsDisabled()) {
++  if (metaphir_eval::foldEnabled("pr215130")) {
      APInt SatC = -*C;
      if (match(Op0, m_OneUse(m_Intrinsic<Intrinsic::uadd_sat>(
 -                       m_Value(X), m_SpecificInt(SatC)))))
@@ -260,38 +313,39 @@ index fc6972d29d37..b2bbcf6c47e1 100644
 -  if (Value *V = FoldDivRem(RHS, LHS))
 -    return V;
 +  // [MetaphIR eval] PR 207462: commuted add of udiv/urem by 2.
-+  if (!metaphir_eval::foldsDisabled())
++  if (metaphir_eval::foldEnabled("pr207462"))
 +    if (Value *V = FoldDivRem(RHS, LHS)) {
 +      metaphir_eval::reportAnchor(&I, "pr207462");
 +      return V;
 +    }
-
+ 
    return nullptr;
  }
-@@ -1828,20 +1835,22 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+@@ -1828,20 +1835,24 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
    }
-
+ 
    // Align-up idiom:
 -  // X + ((-X) & (C - 1)) --> (X + C - 1) & -C
 -  // ((X - 1) | (C - 1)) + 1 -> (X + C - 1) & -C
 -  // For a power-of-two C. Note -C == ~(C - 1), so the mask is simply the
 -  // inverted low-bit mask.
--  {
 +  // [MetaphIR eval] PR 215122: X + ((-X) & (C - 1)) --> (X + C - 1) & -C, for a power-of-two C.
 +  // Note -C == ~(C - 1), so the mask is simply the inverted low-bit mask.
-+  if (!metaphir_eval::foldsDisabled()) {
+   {
      const APInt *LowMask;
-     if (match(&I,
+-    if (match(&I,
++    if (metaphir_eval::foldEnabled("pr215122") &&
++        match(&I,
                m_c_Add(m_OneUse(m_And(m_Neg(m_Value(A)), m_LowBitMask(LowMask))),
 -                      m_Deferred(A))) ||
--        match(&I, m_Add(m_OneUse(m_Or(m_Add(m_Value(A), m_AllOnes()),
 +                      m_Deferred(A)))) {
 +      metaphir_eval::reportAnchor(&I, "pr215122");
 +      Value *NewAdd = Builder.CreateAdd(A, ConstantInt::get(Ty, *LowMask));
 +      return BinaryOperator::CreateAnd(NewAdd, ConstantInt::get(Ty, ~*LowMask));
 +    }
 +    // [MetaphIR eval] PR 216436: ((X - 1) | (C - 1)) + 1 -> (X + C - 1) & -C, for a power-of-two C.
-+    if (match(&I, m_Add(m_OneUse(m_Or(m_Add(m_Value(A), m_AllOnes()),
++    if (metaphir_eval::foldEnabled("pr216436") &&
+         match(&I, m_Add(m_OneUse(m_Or(m_Add(m_Value(A), m_AllOnes()),
                                        m_LowBitMask(LowMask))),
 -                        m_One()))
 -
@@ -301,19 +355,19 @@ index fc6972d29d37..b2bbcf6c47e1 100644
        Value *NewAdd = Builder.CreateAdd(A, ConstantInt::get(Ty, *LowMask));
        return BinaryOperator::CreateAnd(NewAdd, ConstantInt::get(Ty, ~*LowMask));
      }
-@@ -1932,7 +1941,10 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
-
+@@ -1932,7 +1943,10 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+ 
      // Match: (X >> C) + zext((X & Mask) != 0)
      // or:    zext((X & Mask) != 0) + (X >> C)
 -    if (match(&I,
 +    // [MetaphIR eval] PR 216470: also handle the case where the add's result
 +    // type is wider than X (the shift/icmp operands are zext'ed to it).
-+    if (!metaphir_eval::foldsDisabled() &&
++    if (metaphir_eval::foldEnabled("pr216470") &&
 +        match(&I,
                m_c_Add(m_ZExt(m_SpecificICmp(
                            ICmpInst::ICMP_NE,
                            m_And(m_Value(X), m_LowBitMask(Mask)), m_ZeroInt())),
-@@ -1948,6 +1960,7 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
+@@ -1948,6 +1962,7 @@ Instruction *InstCombinerImpl::visitAdd(BinaryOperator &I) {
        if (NeedZext || willNotOverflowUnsignedAdd(X, MaskC, I)) {
          if (NeedZext)
            X = Builder.CreateZExt(X, Ty);
@@ -322,7 +376,7 @@ index fc6972d29d37..b2bbcf6c47e1 100644
          Value *Add = Builder.CreateNUWAdd(X, MaskC);
          return BinaryOperator::CreateLShr(
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp b/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp
-index fb4d5b711315..ae9c9e9ea3e4 100644
+index fb4d5b711315..4f029d8f560e 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineCalls.cpp
 @@ -22,6 +22,7 @@
@@ -336,26 +390,26 @@ index fb4d5b711315..ae9c9e9ea3e4 100644
 @@ -511,10 +512,14 @@ static Instruction *foldCttzCtlz(IntrinsicInst &II, InstCombinerImpl &IC) {
      if (match(Op0, m_c_And(m_Neg(m_Value(X)), m_Deferred(X))))
        return CallInst::Create(II.getCalledFunction(), {X, Op1});
-
+ 
 -    // cttz(mul(X, OddC)) -> cttz(X)
 -    if (match(Op0, m_Mul(m_Value(X),
 -                         m_CheckedInt([](const APInt &C) { return C[0]; }))))
 -      return CallInst::Create(II.getCalledFunction(), {X, Op1});
 +    // [MetaphIR eval] PR 214376: cttz(mul(X, OddC)) -> cttz(X).
-+    if (!metaphir_eval::foldsDisabled()) {
++    if (metaphir_eval::foldEnabled("pr214376")) {
 +      if (match(Op0, m_Mul(m_Value(X),
 +                           m_CheckedInt([](const APInt &C) { return C[0]; })))) {
 +        metaphir_eval::reportAnchor(&II, "pr214376");
 +        return CallInst::Create(II.getCalledFunction(), {X, Op1});
 +      }
 +    }
-
+ 
      // cttz(sext(x)) -> cttz(zext(x))
      if (match(Op0, m_OneUse(m_SExt(m_Value(X))))) {
 @@ -2537,13 +2542,18 @@ Instruction *InstCombinerImpl::visitCallInst(CallInst &CI) {
-
+ 
      Value *I0 = II->getArgOperand(0), *I1 = II->getArgOperand(1);
-
+ 
 -    // scmp(X, 0) -> sext_or_trunc(X) if X is known to be one of -1, 0, 1.
 -    if (match(I1, m_Zero())) {
 -      ConstantRange Range = computeConstantRange(I0, /*ForSigned=*/true,
@@ -365,7 +419,7 @@ index fb4d5b711315..ae9c9e9ea3e4 100644
 -            CI, Builder.CreateSExtOrTrunc(I0, II->getType()));
 +    // [MetaphIR eval] PR 216046: scmp(X, 0) -> sext_or_trunc(X) if X is known
 +    // to be one of -1, 0, 1.
-+    if (!metaphir_eval::foldsDisabled()) {
++    if (metaphir_eval::foldEnabled("pr216046")) {
 +      if (match(I1, m_Zero())) {
 +        ConstantRange Range = computeConstantRange(
 +            I0, /*ForSigned=*/true, SQ.getWithInstruction(II));
@@ -379,7 +433,7 @@ index fb4d5b711315..ae9c9e9ea3e4 100644
      Value *LHS, *RHS;
      if (match(I0, m_NSWSub(m_Value(LHS), m_Value(RHS))) && match(I1, m_Zero()))
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp b/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp
-index 76113f4a6bda..35acb95ae7b6 100644
+index 76113f4a6bda..172de1327836 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineCasts.cpp
 @@ -18,6 +18,7 @@
@@ -396,24 +450,24 @@ index 76113f4a6bda..35acb95ae7b6 100644
    Value *X;
 -  if (DestWidth == 1 &&
 +  // [MetaphIR eval] PR 210499: trunc(shr exact X, Y) to i1 --> icmp ne X, 0.
-+  if (!metaphir_eval::foldsDisabled() && DestWidth == 1 &&
++  if (metaphir_eval::foldEnabled("pr210499") && DestWidth == 1 &&
        (Trunc.hasNoUnsignedWrap() || Trunc.hasNoSignedWrap()) &&
 -      match(Src, m_Exact(m_Shr(m_Value(X), m_Value()))))
 +      match(Src, m_Exact(m_Shr(m_Value(X), m_Value())))) {
 +    metaphir_eval::reportAnchor(&Trunc, "pr210499");
      return new ICmpInst(ICmpInst::ICMP_NE, X, Constant::getNullValue(SrcTy));
 +  }
-
+ 
    // See if we can simplify any instructions used by the input whose sole
    // purpose is to compute bits we don't care about.
 @@ -1745,8 +1749,10 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
      return BinaryOperator::CreateXor(Builder.CreateAnd(X, ZC), ZC);
    }
-
+ 
 -  // zext(sub(0, trunc(X))) -> and(sub(0, X), mask)
 -  if (match(Src, m_Sub(m_Zero(), m_Trunc(m_SpecificType(DestTy, X))))) {
 +  // [MetaphIR eval] PR 207564: zext(sub(0, trunc(X))) -> and(sub(0, X), mask).
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr207564") &&
 +      match(Src, m_Sub(m_Zero(), m_Trunc(m_SpecificType(DestTy, X))))) {
 +    metaphir_eval::reportAnchor(&Zext, "pr207564");
      APInt Mask = APInt::getLowBitsSet(DestTy->getScalarSizeInBits(),
@@ -421,12 +475,12 @@ index 76113f4a6bda..35acb95ae7b6 100644
      Value *Neg = Builder.CreateSub(ConstantInt::get(DestTy, 0), X);
 @@ -1764,8 +1770,12 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
    }
-
+ 
    Value *Y;
 -  if (match(Src, m_OneUse(m_c_BitwiseLogic(
 +  // [MetaphIR eval] PR 204927: zext(and/or/xor(trunc nuw x), y) ->
 +  // and/or/xor(zext(y), x).
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr204927") &&
 +      match(Src, m_OneUse(m_c_BitwiseLogic(
                       m_NUWTrunc(m_SpecificType(DestTy, X)), m_Value(Y))))) {
 +    metaphir_eval::reportAnchor(&Zext, "pr204927");
@@ -435,12 +489,12 @@ index 76113f4a6bda..35acb95ae7b6 100644
                                    ZextY);
 @@ -2111,8 +2121,12 @@ Instruction *InstCombinerImpl::visitSExt(SExtInst &Sext) {
                                        {CI->getLHS(), CI->getRHS()}));
-
+ 
    Value *Y;
 -  if (match(Src, m_OneUse(m_c_BitwiseLogic(
 +  // [MetaphIR eval] PR 204928: sext(and/or/xor(trunc nsw x), y) ->
 +  // and/or/xor(sext(y), x).
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr204928") &&
 +      match(Src, m_OneUse(m_c_BitwiseLogic(
                       m_NSWTrunc(m_SpecificType(DestTy, X)), m_Value(Y))))) {
 +    metaphir_eval::reportAnchor(&Sext, "pr204928");
@@ -448,7 +502,7 @@ index 76113f4a6bda..35acb95ae7b6 100644
      return BinaryOperator::Create(cast<BinaryOperator>(Src)->getOpcode(), X,
                                    SextY);
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp b/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp
-index 003f8e2ba143..52c46b6fdec8 100644
+index 003f8e2ba143..9caa7524f73d 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineCompares.cpp
 @@ -17,6 +17,7 @@
@@ -462,7 +516,7 @@ index 003f8e2ba143..52c46b6fdec8 100644
 @@ -1991,6 +1992,7 @@ Instruction *InstCombinerImpl::foldICmpAndConstant(ICmpInst &Cmp,
    if (!Cmp.isEquality())
      return nullptr;
-
+ 
 +  // [MetaphIR eval] PR 213709:
    // (X & -X) == 0 --> X == 0
    // (X & -X) != 0 --> X != 0
@@ -472,7 +526,7 @@ index 003f8e2ba143..52c46b6fdec8 100644
    Value *MatchedX;
    // Match X & -X in either operand order.
 -  if (C.getBitWidth() > 1 && (C.isZero() || C.isOne()) &&
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr213709") &&
 +      C.getBitWidth() > 1 && (C.isZero() || C.isOne()) &&
        match(And, m_c_And(m_Neg(m_Value(MatchedX)), m_Deferred(MatchedX)))) {
      // Preserve the predicate: (X & -X) ==/!= 0 --> X ==/!= 0.
@@ -481,14 +535,14 @@ index 003f8e2ba143..52c46b6fdec8 100644
 +      metaphir_eval::reportAnchor(&Cmp, "pr213709");
        return new ICmpInst(Pred, MatchedX, Cmp.getOperand(1));
 +    }
-
+ 
      // (X & -X) == 1 iff the low bit of X is set.
 -    if (Pred == CmpInst::ICMP_EQ)
 +    if (Pred == CmpInst::ICMP_EQ) {
 +      metaphir_eval::reportAnchor(&Cmp, "pr213709");
        return new TruncInst(MatchedX, Cmp.getType());
 +    }
-
+ 
      // The remaining case needs a trunc and not. Require the original and
      // to become dead to avoid increasing the instruction count.
      if (And->hasOneUse()) {
@@ -499,7 +553,7 @@ index 003f8e2ba143..52c46b6fdec8 100644
 @@ -3051,16 +3059,22 @@ Instruction *InstCombinerImpl::foldICmpSubConstant(ICmpInst &Cmp,
    ICmpInst::Predicate Pred = Cmp.getPredicate();
    Type *Ty = Sub->getType();
-
+ 
 +  // [MetaphIR eval] PR 214381:
    // (X - (X urem D)) is D*(X/D), a multiple of D, so it is u> C exactly when
    // X u>= D (for C u< D), and u< C exactly when X u< D (for 0 u< C u<= D):
@@ -508,7 +562,7 @@ index 003f8e2ba143..52c46b6fdec8 100644
    const APInt *D;
 -  if (match(Y, m_URem(m_Specific(X), m_APInt(D))) && !D->isZero()) {
 -    if (Pred == ICmpInst::ICMP_UGT && C.ult(*D))
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr214381") &&
 +      match(Y, m_URem(m_Specific(X), m_APInt(D))) && !D->isZero()) {
 +    if (Pred == ICmpInst::ICMP_UGT && C.ult(*D)) {
 +      metaphir_eval::reportAnchor(&Cmp, "pr214381");
@@ -520,10 +574,10 @@ index 003f8e2ba143..52c46b6fdec8 100644
        return new ICmpInst(ICmpInst::ICMP_ULT, X, ConstantInt::get(Ty, *D));
 +    }
    }
-
+ 
    // (SubC - Y) == C) --> Y == (SubC - C)
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp b/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp
-index 102c451cc135..6ecc5de3aafa 100644
+index 102c451cc135..38ea5088f490 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp
 @@ -16,6 +16,7 @@
@@ -537,14 +591,14 @@ index 102c451cc135..6ecc5de3aafa 100644
 @@ -1831,12 +1832,15 @@ Instruction *InstCombinerImpl::visitUDiv(BinaryOperator &I) {
      }
    }
-
+ 
 +  // [MetaphIR eval] PR 214541:
    // (X udiv Y) udiv Z --> X udiv (Y * Z), if Y * Z does not overflow.
    // This is the variable-operand version of the (X / C1) / C2 fold in
    // commonIDivTransforms().
    Value *Y;
 -  if (match(Op0, m_OneUse(m_UDiv(m_Value(X), m_Value(Y)))) &&
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr214541") &&
 +      match(Op0, m_OneUse(m_UDiv(m_Value(X), m_Value(Y)))) &&
        willNotOverflowUnsignedMul(Y, Op1, I)) {
 +    metaphir_eval::reportAnchor(&I, "pr214541");
@@ -559,14 +613,14 @@ index 102c451cc135..6ecc5de3aafa 100644
 +  // known-negative non-constants via isKnownNegative().
    Type *Ty = I.getType();
 -  if (isKnownNegative(Op1, SQ.getWithInstruction(&I))) {
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr209322") &&
 +      isKnownNegative(Op1, SQ.getWithInstruction(&I))) {
 +    metaphir_eval::reportAnchor(&I, "pr209322");
      Value *Cmp = Builder.CreateICmpUGE(Op0, Op1);
      return CastInst::CreateZExtOrBitCast(Cmp, Ty);
    }
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp b/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
-index 56a27392c7ca..755a8fa5813d 100644
+index 56a27392c7ca..1d8aa7023d7c 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
 @@ -15,6 +15,7 @@
@@ -580,42 +634,42 @@ index 56a27392c7ca..755a8fa5813d 100644
 @@ -2533,8 +2534,14 @@ Instruction *InstCombinerImpl::foldSelectInstWithICmp(SelectInst &SI,
    if (Value *V = foldSelectICmpAndZeroShl(ICI, TrueVal, FalseVal, Builder))
      return replaceInstUsesWith(SI, V);
-
+ 
 -  if (Instruction *V = foldSelectCtlzToCttz(ICI, TrueVal, FalseVal, Builder))
 -    return V;
 +  // [MetaphIR eval] PR 205383: (bw-1) - ctlz(x & -x) -> cttz (sub and xor forms).
-+  if (!metaphir_eval::foldsDisabled()) {
++  if (metaphir_eval::foldEnabled("pr205383")) {
 +    if (Instruction *V =
 +            foldSelectCtlzToCttz(ICI, TrueVal, FalseVal, Builder)) {
 +      metaphir_eval::reportAnchor(&SI, "pr205383");
 +      return V;
 +    }
 +  }
-
+ 
    if (Instruction *V = foldSelectZeroOrOnes(ICI, TrueVal, FalseVal, Builder))
      return V;
 @@ -4797,8 +4804,13 @@ Instruction *InstCombinerImpl::visitSelectInst(SelectInst &SI) {
    if (Instruction *I = foldSelectNegNot(SI, Builder))
      return I;
-
+ 
 -  if (Instruction *I = foldSelectAndOrPowerOfTwo(SI, Builder, SQ))
 -    return I;
 +  // [MetaphIR eval] PR 212132: select((A&S)==0||(B&S)==0, 0, S) -> S & A & B.
-+  if (!metaphir_eval::foldsDisabled()) {
++  if (metaphir_eval::foldEnabled("pr212132")) {
 +    if (Instruction *I = foldSelectAndOrPowerOfTwo(SI, Builder, SQ)) {
 +      metaphir_eval::reportAnchor(&SI, "pr212132");
 +      return I;
 +    }
 +  }
-
+ 
    auto *SIFPOp = dyn_cast<FPMathOperator>(&SI);
-
+ 
 diff --git a/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp b/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp
-index 6375f2ee267c..772a4c497e15 100644
+index 6375f2ee267c..a4a5e15805b1 100644
 --- a/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp
 +++ b/llvm/lib/Transforms/InstCombine/InstCombineShifts.cpp
 @@ -12,6 +12,7 @@
-
+ 
  #include "InstCombineInternal.h"
  #include "llvm/Analysis/InstructionSimplify.h"
 +#include "llvm/Analysis/MetaphIREvalAnchor.h"
@@ -625,14 +679,14 @@ index 6375f2ee267c..772a4c497e15 100644
 @@ -1402,16 +1403,24 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
        return BinaryOperator::CreateLShr(
            ConstantInt::get(Ty, APInt::getSignMask(BitWidth)), X);
-
+ 
 +    // [MetaphIR eval] PR 214517:
      // Canonicalize "extract lowest set bit" using cttz to and-with-negate:
      // 1 << (cttz X) --> -X & X
 -    if (match(Op1, m_OneUse(m_Cttz(m_Value(X), m_Value())))) {
 -      Value *NegX = Builder.CreateNeg(X, "neg");
 -      return BinaryOperator::CreateAnd(NegX, X);
-+    if (!metaphir_eval::foldsDisabled()) {
++    if (metaphir_eval::foldEnabled("pr214517")) {
 +      if (match(Op1, m_OneUse(m_Cttz(m_Value(X), m_Value())))) {
 +        metaphir_eval::reportAnchor(&I, "pr214517");
 +        Value *NegX = Builder.CreateNeg(X, "neg");
@@ -640,13 +694,13 @@ index 6375f2ee267c..772a4c497e15 100644
 +      }
      }
    }
-
+ 
    // LHS << (cttz RHS) --> (RHS & -RHS) * LHS
 -  if (match(Op1, m_OneUse(m_Cttz(m_Value(X), m_Value())))) {
 +  // [MetaphIR eval] PR 214517: this generalizes the fold above, so it is
 +  // disabled with it; otherwise it would rewrite every 1 << (cttz X) while the
 +  // corpus is prepared.
-+  if (!metaphir_eval::foldsDisabled() &&
++  if (metaphir_eval::foldEnabled("pr214517") &&
 +      match(Op1, m_OneUse(m_Cttz(m_Value(X), m_Value())))) {
      Value *NegX = Builder.CreateNeg(X, "neg");
      Value *LowBit = Builder.CreateAnd(NegX, X);
@@ -674,8 +728,8 @@ index c9c7fc766004..82032d07ca03 100644
 @@ -6316,6 +6318,7 @@ static bool combineInstructionsOverFunction(
    else
      ++NumFourOrMoreIterations;
-
+ 
 +  metaphir_eval::finishAnchors();
    return MadeIRChange;
  }
-
+ 

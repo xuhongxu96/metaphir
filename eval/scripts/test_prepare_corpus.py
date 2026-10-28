@@ -10,81 +10,106 @@ from pathlib import Path
 from unittest import mock
 
 import prepare_corpus
-from prs import PR
 
 
-class CollectPRTestsTest(unittest.TestCase):
+class IsTestFileTest(unittest.TestCase):
+    def test_suite_and_legacy_names(self) -> None:
+        self.assertTrue(prepare_corpus.is_test_file(Path("InstCombine__add.ll")))
+        self.assertTrue(prepare_corpus.is_test_file(Path("InstSimplify__cast.ll")))
+        self.assertTrue(prepare_corpus.is_test_file(Path("pr204089__cast.ll")))
+        self.assertFalse(prepare_corpus.is_test_file(Path("other.ll")))
+        self.assertFalse(prepare_corpus.is_test_file(Path("InstCombine__add.bc")))
+        self.assertFalse(prepare_corpus.is_test_file(Path("preserve-profile.ll")))
+
+
+class ClearCorpusTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.corpus = Path(self.tmp.name) / "corpus"
+        self.corpus.mkdir()
+        for name in ("a.bc", "InstCombine__x.ll", "pr123__y.ll", "other.ll"):
+            (self.corpus / name).write_text(name)
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_tests_only_keeps_modules(self) -> None:
+        prepare_corpus.clear_corpus(self.corpus, tests_only=True)
+        self.assertEqual(
+            sorted(p.name for p in self.corpus.iterdir()),
+            ["a.bc", "other.ll"],
+        )
+
+    def test_full_run_clears_everything(self) -> None:
+        prepare_corpus.clear_corpus(self.corpus, tests_only=False)
+        self.assertEqual(list(self.corpus.iterdir()), [])
+
+
+class CollectTestSuiteTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         root = Path(self.tmp.name)
         self.tests = root / "Transforms"
-        (self.tests / "InstCombine").mkdir(parents=True)
-        (self.tests / "InstCombine" / "shared.ll").write_text("; shared\n")
-        (self.tests / "InstCombine" / "own.ll").write_text("; own\n")
+        for suite, names in {
+            "InstCombine": ("a.ll", "b.ll"),
+            "InstSimplify": ("a.ll", "bad.ll"),
+        }.items():
+            (self.tests / suite).mkdir(parents=True)
+            for name in names:
+                (self.tests / suite / name).write_text(f"; {suite}/{name}\n")
         self.corpus = root / "corpus"
         self.corpus.mkdir()
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def collect(self, prs: dict[str, PR]) -> int:
+    def test_copies_parseable_files_with_suite_prefix(self) -> None:
+        def parses(_opt: Path, path: Path) -> bool:
+            return path.name != "bad.ll"
+
         with (
             mock.patch.object(prepare_corpus, "LLVM_TEST_DIR", self.tests),
-            mock.patch.object(prepare_corpus, "PRS", prs),
+            mock.patch.object(prepare_corpus, "parses", parses),
             redirect_stdout(io.StringIO()),
         ):
-            return prepare_corpus.collect_pr_tests(self.corpus)
-
-    def test_shared_test_file_is_copied_once(self) -> None:
-        prs = {
-            "pr2": PR((), ("InstCombine/shared.ll", "InstCombine/own.ll")),
-            "pr1": PR((), ("InstCombine/shared.ll",)),
-        }
-        self.assertEqual(self.collect(prs), 2)
-        # The first PR listing a file names its only copy.
+            copied, skipped = prepare_corpus.collect_test_suite(
+                self.corpus, Path("opt"), 2
+            )
+        self.assertEqual((copied, skipped), (3, 1))
         self.assertEqual(
             sorted(p.name for p in self.corpus.iterdir()),
-            ["pr2__own.ll", "pr2__shared.ll"],
+            ["InstCombine__a.ll", "InstCombine__b.ll", "InstSimplify__a.ll"],
         )
-        self.assertEqual((self.corpus / "pr2__shared.ll").read_text(), "; shared\n")
-
-    def test_real_pr_table_has_no_duplicate_copies(self) -> None:
-        # Every upstream test named in prs.py is copied exactly once.
-        names = {rel for entry in prepare_corpus.PRS.values() for rel in entry.tests}
-        for rel in names:
-            path = self.tests / rel
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(f"; {rel}\n")
-        self.assertEqual(self.collect(prepare_corpus.PRS), len(names))
-        self.assertEqual(len(list(self.corpus.iterdir())), len(names))
 
 
-class PipelineWithoutTest(unittest.TestCase):
-    def test_every_occurrence_is_removed(self) -> None:
+class CopyOriginalTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        root = Path(self.tmp.name)
+        self.bench = root / "bench"
+        (self.bench / "proj" / "original").mkdir(parents=True)
+        (self.bench / "proj" / "original" / "a.bc").write_bytes(b"a")
+        (self.bench / "proj" / "original" / "b.bc").write_bytes(b"b")
+        self.prepared = root / "prepared"
+        self.prepared.mkdir()
+        (self.prepared / "proj__a.bc").write_bytes(b"a")
+        (self.prepared / "proj__b.bc").write_bytes(b"b")
+        self.corpus = root / "corpus"
+        self.corpus.mkdir()
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_modules_from_preserves_names(self) -> None:
+        ok, failures = prepare_corpus.copy_original(
+            self.bench, self.corpus, self.prepared, 1, Path("opt")
+        )
+        self.assertEqual((ok, failures), (2, []))
         self.assertEqual(
-            prepare_corpus.pipeline_without(
-                "a,instcombine<y>,function<x>(b,instcombine<z>,c),instcombine",
-                "instcombine",
-            ),
-            "a,function<x>(b,c)",
+            sorted(p.name for p in self.corpus.iterdir()),
+            ["proj__a.bc", "proj__b.bc"],
         )
-
-    def test_empty_adaptors_are_dropped(self) -> None:
-        self.assertEqual(
-            prepare_corpus.pipeline_without(
-                "a,cgscc(function<x>(instcombine<y>)),d", "instcombine"
-            ),
-            "a,d",
-        )
-
-    def test_similar_names_are_kept(self) -> None:
-        self.assertEqual(
-            prepare_corpus.pipeline_without(
-                "aggressive-instcombine,instcombine,function(instcombine-x)",
-                "instcombine",
-            ),
-            "aggressive-instcombine,function(instcombine-x)",
-        )
+        self.assertEqual((self.corpus / "proj__a.bc").read_bytes(), b"a")
 
 
 if __name__ == "__main__":

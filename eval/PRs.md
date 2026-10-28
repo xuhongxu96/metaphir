@@ -2,7 +2,9 @@
 
 All 20 PRs are **merged** InstCombine folds with a clear `src -> tgt` transform
 and an existing test under `llvm-project/llvm/test/Transforms/InstCombine/`
-(pr204089's is under `InstSimplify/`).
+(pr204089's is under `InstSimplify/`). The evaluation now copies the whole
+top-level InstCombine and InstSimplify test suites into every corpus; the
+tests named below are the ones that exercise each fold directly.
 
 | #   | PR     | Title (src -> tgt)                                                |
 | --- | ------ | ----------------------------------------------------------------- |

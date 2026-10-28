@@ -41,8 +41,16 @@ class CollectTest(unittest.TestCase):
             for name in ("pr1_a.ll", "pr1_b.ll"):
                 (pats / name).write_text("")
             found = {
-                "pr1_a": ({("m.bc", "f")}, []),
-                "pr1_b": ({("m.bc", "f"), ("m.bc", "g")}, []),
+                "pr1_a": (
+                    {("m.bc", "f")},
+                    [],
+                    run_baseline.MatchStats(10, 100, 2, 10),
+                ),
+                "pr1_b": (
+                    {("m.bc", "f"), ("m.bc", "g")},
+                    [],
+                    run_baseline.MatchStats(12, 100, 3, 10),
+                ),
             }
             fake = lambda pattern, files, jobs: found[pattern.stem]  # noqa: E731
             with (
@@ -56,13 +64,19 @@ class CollectTest(unittest.TestCase):
             )
             timing = (d / "pr1_P_timing.txt").read_text()
             self.assertIn("seconds[pr1_a]=", timing)
+            self.assertIn("checked[pr1_a]=10", timing)
+            self.assertIn("files_read[pr1_a]=2", timing)
             self.assertIn("P_functions=2", timing)
 
     def test_failures_are_recorded(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp)
             (d / "pr1.ll").write_text("")
-            fake = lambda pattern, files, jobs: (set(), ["boom"])  # noqa: E731
+            fake = lambda pattern, files, jobs: (  # noqa: E731
+                set(),
+                ["boom"],
+                run_baseline.MatchStats(),
+            )
             with (
                 mock.patch.dict(run_baseline.PATTERN_DIRS, {"daggrep": (d, ".ll")}),
                 mock.patch.dict(run_baseline.RUNNERS, {"daggrep": fake}),

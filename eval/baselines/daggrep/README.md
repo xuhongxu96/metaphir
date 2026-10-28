@@ -17,13 +17,15 @@ cmake --build eval/baselines/daggrep/build
 ## Running
 
 ```sh
-uv run eval/scripts/run_baseline.py daggrep -j 80 --repeat 3
-uv run eval/scripts/run_eval.py metrics --tool daggrep
+uv run eval/scripts/run_baseline.py daggrep --corpus eval/corpus-o2-final \
+  --results eval/results/o2-final -j 80 --repeat 3
+uv run eval/scripts/run_eval.py metrics --corpus eval/corpus-o2-final \
+  --results eval/results/o2-final --tool daggrep
 ```
 
 `run_baseline.py`:
 
-- writes `eval/results/main/<tool>/<pr>_P.functions`, in the format of
+- writes `eval/results/<corpus>/<tool>/<pr>_P.functions`, in the format of
   `run_eval.py`;
 - takes the union over a PR's pattern files (`<pr>.ll`, or one `<pr>_<alt>.ll`
   per alternative);

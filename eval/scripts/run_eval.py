@@ -6,9 +6,17 @@ functions it fires in, a tool's predictions (P) the set of functions its
 pattern(s) match. The steps are independent and cacheable, so tweaking
 patterns does not force re-running the (slower) ground-truth collection:
 
-  gt        Run LLVM's instrumented InstCombine over the corpus and save, for
-            every PR (or those given with ``--pr``), the functions its fold
-            fires in to ``gt/<pr>_G.functions``.
+  gt        Run LLVM's instrumented folds over the corpus and save, for
+            every PR (or those given with ``--pr``), the functions they fire
+            in to ``<gt-dir>/<pr>_G.functions``. ``--passes`` chooses the
+            pipeline (one ``instcombine`` by default). ``--firings input``
+            (default) reports only firings rooted at input instructions;
+            ``--firings all`` reports every function-level firing, including
+            firings from instsimplify passes and pipeline-created code.
+            ``--committed ablation`` (default) keeps a firing only if running
+            the pipeline without that PR's folds changes the function's IR,
+            which drops speculative simplifications that rewrote nothing;
+            ``--committed anchor`` keeps every reported anchor.
 
   index     Index the corpus with ``metaphir-index``.
 
@@ -18,12 +26,12 @@ patterns does not force re-running the (slower) ground-truth collection:
             ground-truth functions.
 
   metrics   Score a tool's saved predictions, ``<tool>/<pr>_P.functions``
-            from ``run_baseline.py``, against the ground truth.
+            from ``run_baseline.py``, against the ground truth in
+            ``--gt-dir`` of ``--results`` or of another results directory
+            (``--gt``).
 
-Ground truth comes from running an instrumented InstCombine with
-``METAPHIR_EVAL_ENABLED=1``, which reports ``ANCHOR <function> <foldID>`` once
-for each fold that fires in a function, rooted at an instruction of the input
-file.
+Ground truth comes from running an instrumented ``opt`` with
+``METAPHIR_EVAL_ENABLED=1``, which reports ``ANCHOR <function> <pr>``.
 
 The tools default to ``llvm-project/build/bin/opt``,
 ``build/tools/metaphir-match`` and ``build/tools/metaphir-index``; set
@@ -41,6 +49,7 @@ import sys
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
 
 from prs import PRS
@@ -55,19 +64,49 @@ METAPHIR_MATCH = Path(
 METAPHIR_INDEX = Path(
     os.environ.get("METAPHIR_INDEX", REPO / "build" / "tools" / "metaphir-index")
 )
-DEFAULT_INDEX = REPO / "eval" / "corpus.mpidx"
-# All results of one corpus live under one directory, one subdirectory per
-# kind: gt/ for the ground truth, <tool>/ for each tool's predictions.
-DEFAULT_RESULTS = REPO / "eval" / "results" / "main"
 GT_DIR = "gt"
+# The pass pipeline for a direct GT run.  `no-verify-fixpoint` is required: the
+# textual instcombine parser enables it, and an abort loses later functions.
+GT_PASSES = "function(instcombine<no-verify-fixpoint>)"
 TOOL_CHOICES = ["metaphir-index", "metaphir-scan", "daggrep"]
 
 PR_PATTERNS: dict[str, tuple[str, ...]] = {pr: e.patterns for pr, e in PRS.items()}
 
 ANCHOR_RE = re.compile(r"^ANCHOR (\S+) (\S+)$")
+SUMMARY_FILES_RE = re.compile(
+    r"^matched (\d+) of (\d+) functions \(in (\d+) of (\d+) files\)$", re.M
+)
+SUMMARY_POSTING_RE = re.compile(
+    r"^matched (\d+) of (\d+) functions \((\d+) on the posting lists\)$", re.M
+)
+
+
+def match_stats(stderr: str) -> MatchStats:
+    """The candidate counts in ``metaphir-match --summary``'s stderr."""
+    if m := SUMMARY_FILES_RE.search(stderr):
+        return MatchStats(*(int(x) for x in m.groups()))
+    if m := SUMMARY_POSTING_RE.search(stderr):
+        checked, functions, posting = (int(x) for x in m.groups())
+        return MatchStats(checked, functions, posting_candidates=posting)
+    return MatchStats()
 
 # A function of the corpus: (module file name, function name).
 Func = tuple[str, str]
+
+
+@dataclass(frozen=True)
+class MatchStats:
+    """What ``metaphir-match --summary`` reports for one pattern run.
+
+    ``checked`` is the number of functions whose features may match: the packs
+    a published query would fetch. ``files`` is the number of modules read.
+    """
+
+    checked: int | None = None
+    functions: int | None = None
+    files: int | None = None
+    total_files: int | None = None
+    posting_candidates: int | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -83,26 +122,21 @@ def collect_corpus(corpus: Path) -> list[Path]:
 # --------------------------------------------------------------------------- #
 # Tool runners
 # --------------------------------------------------------------------------- #
-def fold_id_matches(fold_id: str, pr: str) -> bool:
-    """A foldID belongs to ``pr`` when it is exactly the PR name or extends it
-    with a ``_`` suffix (e.g. ``pr213313_and`` matches ``pr213313``)."""
-    return fold_id == pr or fold_id.startswith(pr + "_")
-
-
 def run_llvm(
-    bc: Path, prs: list[str], env: dict[str, str]
+    bc: Path, prs: list[str], env: dict[str, str], passes: str = GT_PASSES
 ) -> tuple[dict[str, set[Func]], str | None]:
     """The functions of ``bc`` each fold of ``prs`` fires in.
 
-    Runs a single instcombine pass with ``METAPHIR_EVAL_ENABLED=1``. Fixpoint
-    verification is disabled: when it fails, opt aborts mid-module and every
-    later function would silently be lost. Returns the functions and, if opt
-    still exits non-zero, the tail of its stderr.
+    Runs ``passes`` with ``METAPHIR_EVAL_ENABLED=1``, so the instrumented folds
+    report anchors. Fixpoint verification is disabled by default: when it
+    fails, opt aborts mid-module and every later function would silently be
+    lost. Returns the functions and, if opt still exits non-zero, the tail of
+    its stderr.
     """
     proc = subprocess.run(
         [
             str(OPT),
-            "-passes=function(instcombine<no-verify-fixpoint>)",
+            f"-passes={passes}",
             str(bc),
             "-o",
             "/dev/null",
@@ -117,13 +151,88 @@ def run_llvm(
         m = ANCHOR_RE.match(line)
         if m:
             for pr in prs:
-                if fold_id_matches(m.group(2), pr):
+                if m.group(2) == pr:
                     by_pr[pr].add((bc.name, m.group(1)))
     error = None
     if proc.returncode != 0:
         tail = [ln for ln in proc.stderr.splitlines() if not ANCHOR_RE.match(ln)][-3:]
         error = f"rc={proc.returncode}: " + " | ".join(tail)
     return by_pr, error
+
+
+FUNCTION_RE = re.compile(
+    r'^define [^\n]*?@("(?:[^"\\]|\\.)*"|[-\w$.]+)\(.*?^\}', re.MULTILINE | re.DOTALL
+)
+
+
+def function_texts(ir: str) -> dict[str, str]:
+    """The text of each function definition of ``ir``, by name.
+
+    Attribute-group (``#3``) and metadata (``!12``) numbers are numbered per
+    module, so a change in one function can renumber another's; they are
+    blanked so only real differences remain.
+    """
+    texts = {}
+    for m in FUNCTION_RE.finditer(ir):
+        name = m.group(1)
+        if name.startswith('"'):
+            name = re.sub(
+                r"\\([0-9A-Fa-f]{2})", lambda h: chr(int(h.group(1), 16)), name[1:-1]
+            )
+        texts[name] = re.sub(r"([#!])\d+", r"\1N", m.group(0))
+    return texts
+
+
+def optimized_ir(
+    bc: Path, env: dict[str, str], passes: str, ablate: str | None = None
+) -> dict[str, str]:
+    """The functions of ``bc`` after ``passes``, with the folds of ``ablate``
+    (a PR) turned off."""
+    env = dict(env)
+    env.pop("METAPHIR_EVAL_ABLATE", None)
+    if ablate:
+        env["METAPHIR_EVAL_ABLATE"] = ablate
+    proc = subprocess.run(
+        [str(OPT), f"-passes={passes}", "-S", str(bc), "-o", "-"],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+    return function_texts(proc.stdout)
+
+
+def committed_only(
+    bc: Path,
+    by_pr: dict[str, set[Func]],
+    env: dict[str, str],
+    passes: str,
+) -> tuple[dict[str, set[Func]], dict[str, int]]:
+    """Keep the firings that changed the IR.
+
+    A fold may simplify speculatively and have its result discarded (for
+    example ``foldOpIntoPhi`` giving up on a phi), or its result may be
+    thrown away by an enclosing transform, so a reported anchor does not mean
+    the fold rewrote anything. Running the pipeline again without a PR's folds
+    shows whether the function's IR depends on them: a firing in a function
+    whose IR is identical either way is dropped. Needs no knowledge of where
+    the folds are called from.
+    """
+    if not any(by_pr.values()):
+        return by_pr, {}
+    base = optimized_ir(bc, env, passes)
+    kept: dict[str, set[Func]] = {}
+    dropped: dict[str, int] = {}
+    for pr, funcs in by_pr.items():
+        if not funcs:
+            kept[pr] = funcs
+            continue
+        ablated = optimized_ir(bc, env, passes, ablate=pr)
+        kept[pr] = {
+            (m, fn) for m, fn in funcs if base.get(fn) != ablated.get(fn)
+        }
+        dropped[pr] = len(funcs) - len(kept[pr])
+    return kept, dropped
 
 
 def response_file_line(path: Path) -> str:
@@ -137,17 +246,18 @@ def run_metaphir(
     jobs: int,
     index: Path | None = None,
     extra_args: list[str] | None = None,
-) -> tuple[set[Func], list[str]]:
+) -> tuple[set[Func], list[str], MatchStats]:
     """Match ``pattern`` against all ``files`` in one ``metaphir-match`` run,
     using ``index`` when given.
 
-    Returns the functions matched and the errors: those reported for single
-    modules, whose functions are then missing, or the failure of the run.
+    Returns the functions matched, the errors, and the summary counts: the
+    functions whose features may match (the packs a published query fetches)
+    and the modules read.
     """
     with tempfile.NamedTemporaryFile("w", suffix=".rsp") as response:
         response.writelines(response_file_line(f) for f in files)
         response.flush()
-        cmd = [str(METAPHIR_MATCH), "--matches-only", "-j", str(jobs)]
+        cmd = [str(METAPHIR_MATCH), "--matches-only", "--summary", "-j", str(jobs)]
         cmd += extra_args or []
         if index:
             cmd += ["--index", str(index)]
@@ -169,7 +279,9 @@ def run_metaphir(
     for line in proc.stdout.splitlines():
         path, func, _ = line.split("\t", 2)
         funcs.add((Path(path).name, func.removeprefix("@")))
-    return funcs, [f"metaphir-match {pattern.name}: {e}" for e in errors]
+    return funcs, [f"metaphir-match {pattern.name}: {e}" for e in errors], match_stats(
+        proc.stderr
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -230,17 +342,28 @@ def require_jobs(args: argparse.Namespace) -> None:
 def cmd_gt(args: argparse.Namespace) -> int:
     require_executable(OPT, "run scripts/prepare_llvm.sh or set METAPHIR_OPT")
     require_jobs(args)
-    outdir = Path(args.results) / GT_DIR
+    require_results(args)
+    outdir = Path(args.results) / args.gt_dir
     outdir.mkdir(parents=True, exist_ok=True)
     files = collect_corpus(args.corpus)
     prs = selected_prs(args.pr)
-    print(f"== gt: {len(files)} modules, {len(prs)} PR(s) ==")
+    print(f"== gt: {len(files)} modules, {len(prs)} PR(s), passes={args.passes} ==")
     env = dict(os.environ)
     env["METAPHIR_EVAL_ENABLED"] = "1"
+    if args.firings == "all":
+        env["METAPHIR_EVAL_ALL_FIRINGS"] = "1"
+    else:
+        env.pop("METAPHIR_EVAL_ALL_FIRINGS", None)
+
+    dropped_total: dict[str, int] = {pr: 0 for pr in prs}
 
     def worker(bc: Path) -> tuple[dict[str, set[Func]], str | None, float]:
         t0 = time.perf_counter()
-        res, error = run_llvm(bc, prs, env)
+        res, error = run_llvm(bc, prs, env, args.passes)
+        if args.committed == "ablation" and not error:
+            res, dropped = committed_only(bc, res, env, args.passes)
+            for pr, n in dropped.items():
+                dropped_total[pr] += n
         return res, error, time.perf_counter() - t0
 
     G: dict[str, set[Func]] = {pr: set() for pr in prs}
@@ -268,7 +391,12 @@ def cmd_gt(args: argparse.Namespace) -> int:
                 "from this LLVM revision"
             )
         save_functions(outdir / f"{pr}_G.functions", G[pr])
-        print(f"  {pr}: {len(G[pr])} functions")
+        note = (
+            f" (+{dropped_total[pr]} anchors dropped: IR unchanged without the fold)"
+            if dropped_total[pr]
+            else ""
+        )
+        print(f"  {pr}: {len(G[pr])} functions{note}")
     (outdir / "timing.txt").write_text(
         f"modules={len(files)}\nprs={len(prs)}\ngt_seconds={total_t:.3f}\n"
     )
@@ -307,9 +435,11 @@ def cmd_check_index(args: argparse.Namespace) -> int:
     require_executable(METAPHIR_MATCH, "build MetaphIR or set METAPHIR_MATCH")
     require_index(args.index)
     require_jobs(args)
+    if args.gt is None:
+        require_results(args)
     files = collect_corpus(args.corpus)
     # Modules with ground-truth functions are always checked.
-    g_dir = Path(args.gt or args.results) / GT_DIR
+    g_dir = Path(args.gt or args.results) / args.gt_dir
     rng = random.Random(args.seed)
     differences = 0
     for pr in selected_prs(args.pr):
@@ -321,8 +451,10 @@ def cmd_check_index(args: argparse.Namespace) -> int:
         checked = sorted(sample)
         print(f"== check-index {pr}: {len(checked)} modules ==")
         for pattern in (REPO / p for p in PR_PATTERNS[pr]):
-            expected, errors = run_metaphir(pattern, checked, args.jobs)
-            actual, index_errors = run_metaphir(pattern, checked, args.jobs, args.index)
+            expected, errors, _ = run_metaphir(pattern, checked, args.jobs)
+            actual, index_errors, _ = run_metaphir(
+                pattern, checked, args.jobs, args.index
+            )
             errors += index_errors
             for error in errors:
                 print(f"  {error}")
@@ -336,7 +468,8 @@ def cmd_check_index(args: argparse.Namespace) -> int:
 
 
 def cmd_metrics(args: argparse.Namespace) -> int:
-    g_dir = Path(args.gt or args.results) / GT_DIR
+    require_results(args)
+    g_dir = Path(args.gt or args.results) / args.gt_dir
     p_dir = Path(args.results) / args.tool
     for pr in selected_prs(args.pr):
         g_path = g_dir / f"{pr}_G.functions"
@@ -373,13 +506,18 @@ def add_common_args(p: argparse.ArgumentParser, prs: bool = True) -> None:
             nargs="*",
             help="only the given PRs (default: all); e.g. --pr pr214541 pr204089",
         )
-    p.add_argument("--corpus", type=Path, default=REPO / "eval" / "corpus")
+    p.add_argument(
+        "--corpus", type=Path, required=True, help="the corpus directory"
+    )
     p.add_argument(
         "--results",
         type=Path,
-        default=DEFAULT_RESULTS,
-        help="results directory of the corpus: gt/ and one directory per tool "
-        "(default: eval/results/main)",
+        help="results directory of the corpus: gt/ and one directory per tool",
+    )
+    p.add_argument(
+        "--gt-dir",
+        default=GT_DIR,
+        help=f"ground-truth subdirectory of --results/--gt (default: {GT_DIR})",
     )
     p.add_argument(
         "-j",
@@ -390,23 +528,53 @@ def add_common_args(p: argparse.ArgumentParser, prs: bool = True) -> None:
     )
 
 
+def require_results(args: argparse.Namespace) -> None:
+    if args.results is None:
+        sys.exit("--results is required for this stage")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="stage", required=True)
 
     g = sub.add_parser("gt", help="collect the ground truth")
+    g.add_argument(
+        "--passes",
+        default=GT_PASSES,
+        help=f"pass pipeline whose fold firings are the ground truth "
+        f"(default: {GT_PASSES})",
+    )
+    g.add_argument(
+        "--firings",
+        choices=("input", "all"),
+        default="input",
+        help="'input': only firings rooted at input instructions (direct GT); "
+        "'all': every function-level firing in the pipeline (real scenario)",
+    )
+    g.add_argument(
+        "--committed",
+        choices=("ablation", "anchor"),
+        default="ablation",
+        help="'ablation': keep a firing only if the function's IR changes "
+        "when that PR's folds are turned off; 'anchor': keep every reported "
+        "anchor, including speculative ones",
+    )
     add_common_args(g)
     g.set_defaults(func=cmd_gt)
 
     x = sub.add_parser("index", help="index the corpus")
-    x.add_argument("--index", type=Path, default=DEFAULT_INDEX, help="index to write")
+    x.add_argument(
+        "--index", type=Path, required=True, help="index to write"
+    )
     add_common_args(x, prs=False)
     x.set_defaults(func=cmd_index)
 
     c = sub.add_parser(
         "check-index", help="check matching with the index against matching without"
     )
-    c.add_argument("--index", type=Path, default=DEFAULT_INDEX, help="index to use")
+    c.add_argument(
+        "--index", type=Path, required=True, help="index to use"
+    )
     c.add_argument(
         "--sample",
         type=int,
