@@ -36,9 +36,10 @@ Each corpus is scored twice:
 `original` collects both. `thinlto-prelink` and `o2-final` collect their own
 direct `gt/` and are also scored against `original/gt-pipeline`. Reports:
 `REPORT.md`/`summary.json` are direct; `REPORT-pipeline.md`/
-`summary-pipeline.json` are real scenario. Both also split the totals by
-source (`totals_by_source` in the summaries): llvm-opt-benchmark modules vs the
-upstream test files (`InstCombine__*.ll`, `InstSimplify__*.ll`).
+`summary-pipeline.json` are real scenario. Both score the llvm-opt-benchmark
+modules only; the upstream test files (`InstCombine__*.ll`,
+`InstSimplify__*.ll`) are scored separately in `REPORT-tests.md`, against the
+direct ground truth only (a test file is not a real-scenario input).
 
 ## Preparing a corpus and running every step
 
@@ -76,8 +77,14 @@ per kind:
 | `metrics/<tool>.txt` | precision, recall and F1 per PR (direct) | `run_eval.py metrics --tool <tool>` |
 | `metrics/<tool>-pipeline.txt` | the same against `original/gt-pipeline` | `run_eval.py metrics --tool <tool> --gt ... --gt-dir gt-pipeline` |
 | `logs/` | every step's output, including the index build, `check-index` and `metaphir-index stats` | |
-| `REPORT.md`, `summary.json` | the direct summary | `report.py` |
+| `REPORT.md`, `summary.json` | the direct summary on the llvm-opt-benchmark modules | `report.py` |
 | `REPORT-pipeline.md`, `summary-pipeline.json` | the real-scenario summary | `report.py --gt ... --gt-dir gt-pipeline --suffix -pipeline` |
+| `REPORT-tests.md`, `summary-tests.json` | the direct summary on the upstream test files only; no index or timing sections (those are one whole-corpus run) | `report.py --source tests` |
+
+Reports cite the MetaphIR commit they were generated at, marked "(with
+uncommitted changes)" when the code differs from `HEAD`. `report.py --commit
+<rev>` cites that revision instead, so a rewritten history or a dirty tree
+need not change the reports.
 
 Each `<pr>_P_timing.txt` records the wall-clock time of each pattern file over
 the whole corpus (the median of `--repeat` runs; `run_all.sh` uses 3), and the
