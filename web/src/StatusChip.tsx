@@ -3,9 +3,10 @@
 // is shown while a query runs, and when it pauses or fails; closed, it
 // stays so until the next.
 
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { count, type Rejection } from "./engine.ts";
 import type { QueryControl } from "./pipeline.ts";
+import { useDismiss } from "./dismiss.ts";
 import { describeRejection, INDEX_HINT, type Detail, type Status } from "./status.ts";
 
 export function StatusChip({
@@ -157,26 +158,3 @@ function Actions({ control, paused }: { control: QueryControl; paused: boolean }
 }
 
 /** Calls onDismiss, while open, on a click outside root or on Escape. */
-function useDismiss(
-  root: RefObject<HTMLElement | null>,
-  open: boolean,
-  onDismiss: () => void,
-) {
-  const dismiss = useRef(onDismiss);
-  dismiss.current = onDismiss;
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (event: MouseEvent) => {
-      if (!root.current?.contains(event.target as Node)) dismiss.current();
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dismiss.current();
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [root, open]);
-}

@@ -38,11 +38,14 @@ export function pullRequest(name: string): number | undefined {
 export const pullRequestUrl = (number: number) =>
   `https://github.com/llvm/llvm-project/pull/${number}`;
 
+/** What the example named name folds. */
+export const exampleTitle = (name: string) => TITLES[name] ?? name;
+
 /** What the example named name is called in the page: what it folds, and
  * its pull request. */
 export function exampleLabel(name: string): string {
   const pr = pullRequest(name);
-  const title = TITLES[name] ?? name;
+  const title = exampleTitle(name);
   return pr === undefined ? title : `${title} (#${pr})`;
 }
 

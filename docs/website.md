@@ -219,9 +219,19 @@ also run the deploy workflow manually from the Actions tab on `main`.
 ### Developing
 
 ```sh
-cd web && METAPHIR_DATA=/path/to/published npm run dev
+cd web && METAPHIR_DATA=/path/to/published npm run dev   # a local corpus
+cd web && npm run dev                                     # the online corpora
 ```
+
+Without `METAPHIR_DATA`, the page reads the corpora in `web/public/config.json`,
+which are online. `METAPHIR_ONLINE=1` does so even with `METAPHIR_DATA` set, as
+when it is exported in the shell. It also fetches the WebAssembly modules from
+the deployed site when none are built in `web/public/wasm/`, so the page runs
+without `scripts/build_wasm.sh`; modules built there are served as they are.
+The deployed modules can be older than the page's code.
 
 | | |
 |---|---|
 | `METAPHIR_DATA` | a directory from `metaphir-index publish`; the development server serves it at `/data` and emits a one-corpus config naming it (`METAPHIR_CORPUS` sets its id, default `local`) |
+| `METAPHIR_ONLINE` | `1` keeps the online corpora of `config.json`, ignoring `METAPHIR_DATA`; empty, `0` and `false` leave it off |
+| `METAPHIR_WASM_URL` | where `METAPHIR_ONLINE=1` fetches the WebAssembly modules from, default `https://xuhongxu.com/metaphir/wasm` |

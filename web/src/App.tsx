@@ -2,6 +2,7 @@ import Editor, { type OnMount } from "@monaco-editor/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { useColorScheme, type SchemePreference } from "./colorScheme.ts";
+import { Menu } from "./Menu.tsx";
 import { findCorpus, loadConfig, type SiteConfig } from "./corpora.ts";
 import {
   EDITOR_OPTIONS,
@@ -31,7 +32,7 @@ import { linkLines, patternLink, type Link, type NavLink } from "./navigation.ts
 import { monaco, themeName } from "./monaco.ts";
 import { QueryControl } from "./pipeline.ts";
 import { ProgressBar } from "./ProgressBar.tsx";
-import { exampleLabel, pullRequest, pullRequestUrl } from "./examples.ts";
+import { exampleLabel, exampleTitle, pullRequest, pullRequestUrl } from "./examples.ts";
 import { patternHash, readPatternHash } from "./share/patternLink.ts";
 import {
   corpusDetails,
@@ -59,6 +60,32 @@ const EXAMPLES: Record<string, string> = Object.fromEntries(
     .map(([path, text]) => [path.slice(path.lastIndexOf("/") + 1, -".mpir".length), text])
     .sort(([a], [b]) => (a < b ? -1 : 1)),
 );
+// Each example names what it folds, and links to the pull request that added
+// the fold.
+const EXAMPLE_ITEMS = Object.keys(EXAMPLES).map((name) => {
+  const pr = pullRequest(name);
+  return {
+    id: name,
+    label: exampleTitle(name),
+    link:
+      pr === undefined
+        ? undefined
+        : {
+            href: pullRequestUrl(pr),
+            text: `#${pr}`,
+            title: "The LLVM pull request that added the fold",
+          },
+  };
+});
+const SCHEME_ICON: Record<SchemePreference, string> = {
+  system: "◐",
+  light: "☀",
+  dark: "☾",
+};
+const SCHEME_ITEMS = (["system", "light", "dark"] as const).map((id) => ({
+  id,
+  label: `${SCHEME_ICON[id]}  ${id[0].toUpperCase()}${id.slice(1)}`,
+}));
 // The standard library the patterns use, shown beside the pattern.
 const STDLIB = Object.values(
   import.meta.glob("../../metaphir/StdLib/stdlib.mpir", {
@@ -89,6 +116,9 @@ export function App() {
   const [corpusId, setCorpusId] = useState<string>();
   const [corpus, setCorpus] = useState<PublishedCorpus>();
   const [source, setSource] = useState<Source>("published");
+  const corpusItems = (siteConfig?.corpora ?? []).map((c) => ({ id: c.id, label: c.label }));
+  const activeCorpus =
+    siteConfig && findCorpus(siteConfig, corpusId ?? siteConfig.default);
   // The guide opens with the page, until asked not to.
   const [helpOpen, setHelpOpen] = useState(() => !guideDismissed());
   // The IR written in the page, kept in this browser, and as last matched.
@@ -111,7 +141,7 @@ export function App() {
   }, []);
   // The example the pattern is, until it is edited.
   const example = Object.keys(EXAMPLES).find((name) => EXAMPLES[name] === pattern);
-  const pr = example === undefined ? undefined : pullRequest(example);
+  const examplePr = example === undefined ? undefined : pullRequest(example);
   // Each source keeps its own results.
   const results = {
     published: useResults({ text: "Loading the corpus…", running: true }),
@@ -449,45 +479,39 @@ export function App() {
     <div className="app">
       <header className="toolbar">
         <h1>MetaphIR</h1>
-        <label className="picker">
-          example
-          <select
-            id="example"
-            value={example ?? ""}
-            title={example && exampleLabel(example)}
-            onChange={(event) => {
-              const text = EXAMPLES[event.target.value];
-              if (text !== undefined) setPattern(text);
+        <Menu
+          id="example"
+          title={example ? exampleLabel(example) : "An example pattern"}
+          items={EXAMPLE_ITEMS}
+          selected={example}
+          wide
+          onSelect={(name) => {
+            const text = EXAMPLES[name];
+            if (text !== undefined) setPattern(text);
+          }}
+        >
+          Examples
+          {examplePr !== undefined && <span className="menu-pr">#{examplePr}</span>}
+        </Menu>
+        <div className="segmented" role="group" aria-label="What to match">
+          <Menu
+            id="source-corpus"
+            title="Match the published corpus"
+            items={corpusItems}
+            selected={activeCorpus?.id}
+            pressed={source === "published"}
+            onPress={() => {
+              if (source === "published") return;
+              setSource("published");
+              return false;
+            }}
+            onSelect={(id) => {
+              setCorpusId(id);
+              setSource("published");
             }}
           >
-            <option value="">choose…</option>
-            {Object.keys(EXAMPLES).map((name) => (
-              <option key={name} value={name}>
-                {exampleLabel(name)}
-              </option>
-            ))}
-          </select>
-        </label>
-        {pr !== undefined && (
-          <a
-            className="pr-link"
-            href={pullRequestUrl(pr)}
-            target="_blank"
-            rel="noreferrer"
-            title="The LLVM pull request that added the fold"
-          >
-            #{pr}
-          </a>
-        )}
-        <div className="segmented" role="group" aria-label="What to match">
-          <button
-            id="source-corpus"
-            aria-pressed={source === "published"}
-            onClick={() => setSource("published")}
-            title="Match the published corpus"
-          >
-            Corpus
-          </button>
+            {corpusItems.length > 1 && activeCorpus ? `Corpus: ${activeCorpus.label}` : "Corpus"}
+          </Menu>
           <button
             id="source-ir"
             aria-pressed={source === "ir"}
@@ -497,22 +521,6 @@ export function App() {
             Your IR
           </button>
         </div>
-        {source === "published" && siteConfig && siteConfig.corpora.length > 1 && (
-          <label className="picker">
-            corpus
-            <select
-              id="corpus-picker"
-              value={corpusId ?? siteConfig.default}
-              onChange={(event) => setCorpusId(event.target.value)}
-            >
-              {siteConfig.corpora.map((corpus) => (
-                <option key={corpus.id} value={corpus.id} title={corpus.description}>
-                  {corpus.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
         <button id="run" className="primary" disabled={!canRun} onClick={() => void run()}>
           Match
         </button>
@@ -528,17 +536,17 @@ export function App() {
           control={yourIR ? undefined : control}
           onRejection={showRejection}
         />
-        <label className="picker">
-          theme
-          <select
-            value={preference}
-            onChange={(e) => setPreference(e.target.value as SchemePreference)}
-          >
-            <option value="system">system</option>
-            <option value="light">light</option>
-            <option value="dark">dark</option>
-          </select>
-        </label>
+        <Menu
+          id="theme-button"
+          className="icon-button"
+          title={`Theme: ${preference}`}
+          label={`Theme: ${preference}`}
+          items={SCHEME_ITEMS}
+          selected={preference}
+          onSelect={(id) => setPreference(id as SchemePreference)}
+        >
+          {SCHEME_ICON[preference]}
+        </Menu>
         <button id="help-button" onClick={() => setHelpOpen(true)} title="The syntax, by example">
           Help
         </button>

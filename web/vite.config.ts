@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { createReadStream, readdirSync, readFileSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, normalize, resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Connect, type Plugin } from "vite";
@@ -7,10 +7,12 @@ import { defineConfig, type Connect, type Plugin } from "vite";
 /**
  * With METAPHIR_DATA set to a directory published by metaphir-index publish,
  * the development server serves it at /data, byte ranges included, and the
- * site reads it instead of the configured corpus.
+ * site reads it instead of the configured corpora. METAPHIR_ONLINE=1 keeps
+ * the configured, online corpora whatever METAPHIR_DATA says.
  */
 function localData(): Plugin {
-  const dir = process.env.METAPHIR_DATA;
+  const online = !["", "0", "false"].includes(process.env.METAPHIR_ONLINE ?? "");
+  const dir = online ? undefined : process.env.METAPHIR_DATA;
   const serve = (server: { middlewares: Connect.Server }) => {
     if (!dir) return;
     const root = resolve(dir);
@@ -72,6 +74,32 @@ function localData(): Plugin {
 }
 
 /**
+ * With METAPHIR_ONLINE=1 and no WebAssembly modules built in public/wasm, the
+ * development server fetches them from the deployed site (METAPHIR_WASM_URL,
+ * by default https://xuhongxu.com/metaphir/wasm), so that the page runs
+ * without scripts/build_wasm.sh. Modules built here are served as they are.
+ */
+function onlineWasm(): Plugin {
+  const online = !["", "0", "false"].includes(process.env.METAPHIR_ONLINE ?? "");
+  const built = existsSync(resolve(import.meta.dirname, "public/wasm/metaphir.js"));
+  return {
+    name: "metaphir-online-wasm",
+    config() {
+      if (!online || built) return;
+      const site = new URL(process.env.METAPHIR_WASM_URL ?? "https://xuhongxu.com/metaphir/wasm");
+      const prefix = site.pathname.replace(/\/$/, "");
+      return {
+        server: {
+          proxy: {
+            "/wasm": { target: site.origin, changeOrigin: true, rewrite: (path) => prefix + path.slice("/wasm".length) },
+          },
+        },
+      };
+    },
+  };
+}
+
+/**
  * A hash of the WebAssembly modules, which the page adds to their URLs:
  * modules from an earlier build are then never taken from a cache.
  */
@@ -90,7 +118,7 @@ export default defineConfig({
   define: { __WASM_VERSION__: JSON.stringify(wasmVersion()) },
   // Served from a subpath of GitHub Pages.
   base: "./",
-  plugins: [react(), localData()],
+  plugins: [react(), localData(), onlineWasm()],
   resolve: {
     alias: {
       // Monaco's package exports only its scripts; its icon font's style is
