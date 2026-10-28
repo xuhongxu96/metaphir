@@ -1,7 +1,7 @@
 {
   "title": "MetaphIR evaluation",
   "provenance": {
-    "metaphir_commit": "0a772f14f410598bdd4def2d6e9b33fc741499db",
+    "metaphir_commit": "ee226f8d3321c35aded3b54abb6abcb7afabcc9a",
     "llvm_commit": "79b321b1238ceaf8261a5b177185a3ec5111918a",
     "machine": {
       "cpu": "Neoverse-N1 (aarch64)",
@@ -523,6 +523,100 @@
         "recall": 0.798590130916415,
         "f1": 0.015458391001773914,
         "exact_prs": 1
+      }
+    }
+  },
+  "totals_by_source": {
+    "metaphir-index": {
+      "benchmark": {
+        "G": 3336,
+        "P": 72397,
+        "TP": 2732,
+        "FP": 69665,
+        "FN": 604,
+        "precision": 0.03773637029158667,
+        "recall": 0.8189448441247003,
+        "f1": 0.07214820487766231,
+        "exact_prs": 9
+      },
+      "benchmark_without_pr204089": {
+        "G": 1853,
+        "P": 4774,
+        "TP": 1456,
+        "FP": 3318,
+        "FN": 397,
+        "precision": 0.30498533724340177,
+        "recall": 0.7857528332433891,
+        "f1": 0.43941451637241585,
+        "exact_prs": 9
+      },
+      "test_suite": {
+        "G": 135,
+        "P": 141,
+        "TP": 132,
+        "FP": 9,
+        "FN": 3,
+        "precision": 0.9361702127659575,
+        "recall": 0.9777777777777777,
+        "f1": 0.9565217391304348,
+        "exact_prs": 14
+      },
+      "test_suite_without_pr204089": {
+        "G": 133,
+        "P": 138,
+        "TP": 130,
+        "FP": 8,
+        "FN": 3,
+        "precision": 0.9420289855072463,
+        "recall": 0.9774436090225563,
+        "f1": 0.959409594095941,
+        "exact_prs": 14
+      }
+    },
+    "daggrep": {
+      "benchmark": {
+        "G": 3336,
+        "P": 343206,
+        "TP": 2733,
+        "FP": 340473,
+        "FN": 603,
+        "precision": 0.007963147497421373,
+        "recall": 0.8192446043165468,
+        "f1": 0.015772979898540436,
+        "exact_prs": 7
+      },
+      "benchmark_without_pr204089": {
+        "G": 1853,
+        "P": 202409,
+        "TP": 1456,
+        "FP": 200953,
+        "FN": 397,
+        "precision": 0.0071933560266588936,
+        "recall": 0.7857528332433891,
+        "f1": 0.014256200370112894,
+        "exact_prs": 7
+      },
+      "test_suite": {
+        "G": 135,
+        "P": 807,
+        "TP": 132,
+        "FP": 675,
+        "FN": 3,
+        "precision": 0.16356877323420074,
+        "recall": 0.9777777777777777,
+        "f1": 0.2802547770700637,
+        "exact_prs": 2
+      },
+      "test_suite_without_pr204089": {
+        "G": 133,
+        "P": 801,
+        "TP": 130,
+        "FP": 671,
+        "FN": 3,
+        "precision": 0.16229712858926343,
+        "recall": 0.9774436090225563,
+        "f1": 0.278372591006424,
+        "exact_prs": 2
       }
     }
   },

@@ -4,7 +4,7 @@
 
 |  |  |
 |---|---|
-| MetaphIR | `0a772f14f410598bdd4def2d6e9b33fc741499db` |
+| MetaphIR | `ee226f8d3321c35aded3b54abb6abcb7afabcc9a` |
 | LLVM | `79b321b1238ceaf8261a5b177185a3ec5111918a` + `eval/patches/` |
 | Corpus | `eval/corpus-thinlto-prelink`: 68843 modules + 1912 test files, 12.53 GB |
 | Functions | 4832829 |
@@ -64,6 +64,21 @@ Functions where each fold fires (G) and where each tool's patterns match (P).
 | MetaphIR | without pr204089 | 3984 | 3986 | 3977 | 9 | 7 | 99.77% | 99.82% | 99.80% | 12 |
 | daggrep | all | 5120 | 90410 | 3981 | 86429 | 1139 | 4.40% | 77.75% | 8.33% | 1 |
 | daggrep | without pr204089 | 3984 | 90392 | 3977 | 86415 | 7 | 4.40% | 99.82% | 8.43% | 1 |
+
+### Benchmark vs test suite
+
+The same totals split by where the function comes from: llvm-opt-benchmark modules, or the upstream InstCombine/InstSimplify test files. Functions of a PR are scored within each source.
+
+| Tool | Source | \|G\| | \|P\| | TP | FP | FN | Precision | Recall | F1 | PRs with F1 100% |
+|---|---|---|---|---|---|---|---|---|---|---|
+| MetaphIR | benchmark | 4985 | 3859 | 3849 | 10 | 1136 | 99.74% | 77.21% | 87.04% | 17 |
+| MetaphIR | benchmark without pr204089 | 3851 | 3848 | 3847 | 1 | 4 | 99.97% | 99.90% | 99.94% | 17 |
+| MetaphIR | test suite | 135 | 141 | 132 | 9 | 3 | 93.62% | 97.78% | 95.65% | 14 |
+| MetaphIR | test suite without pr204089 | 133 | 138 | 130 | 8 | 3 | 94.20% | 97.74% | 95.94% | 14 |
+| daggrep | benchmark | 4985 | 89603 | 3849 | 85754 | 1136 | 4.30% | 77.21% | 8.14% | 4 |
+| daggrep | benchmark without pr204089 | 3851 | 89591 | 3847 | 85744 | 4 | 4.29% | 99.90% | 8.23% | 4 |
+| daggrep | test suite | 135 | 807 | 132 | 675 | 3 | 16.36% | 97.78% | 28.03% | 2 |
+| daggrep | test suite without pr204089 | 133 | 801 | 130 | 671 | 3 | 16.23% | 97.74% | 27.84% | 2 |
 
 ## RQ3: Index
 
