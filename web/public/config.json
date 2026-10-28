@@ -5,17 +5,17 @@
       "id": "o2-final",
       "label": "O2 final",
       "description": "End of the standard O2 pipeline, with the evaluated folds disabled",
-      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/o2-final/2aab4f53750f8ede"
+      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/o2-final/fc34dd7b5a6a6777"
     },
     {
       "id": "thinlto-prelink",
-      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/thinlto-prelink/a302040f089c800b",
+      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/thinlto-prelink/3c5f1ad98cfc9444",
       "label": "ThinLTO pre-link",
       "description": "After O2's simplification stage, as ThinLTO's pre-link step writes it"
     },
     {
       "id": "original",
-      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/original/1ce798503dfdd686",
+      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/original/e1faf97a53a96d43",
       "label": "Original IR",
       "description": "Raw llvm-opt-benchmark modules, before optimization"
     }
