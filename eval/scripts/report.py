@@ -26,6 +26,7 @@ import subprocess
 from pathlib import Path
 
 from pattern_stats import stats as pattern_stats
+from prepare_corpus import is_test_file
 from run_eval import GT_DIR, PR_PATTERNS, REPO, Func, load_functions, scores
 
 TOOLS = ["metaphir-index", "daggrep"]
@@ -219,6 +220,37 @@ def build(
         t: {"all": total(t), f"without_{OUTLIER}": total(t, (OUTLIER,))} for t in tools
     }
 
+    # The same totals per source: llvm-opt-benchmark modules vs the upstream
+    # test-suite files (``InstCombine__*.ll`` etc.).
+    def in_tests(f: Func) -> bool:
+        return is_test_file(Path(f[0]))
+
+    def by_source(t: str, tests: bool, skip: tuple[str, ...] = ()) -> dict:
+        keep = [pr for pr in prs if pr not in skip]
+        g = tp = p = exact = 0
+        for pr in keep:
+            gs = {f for f in G[pr] if in_tests(f) == tests}
+            ps = {f for f in P[t][pr] if in_tests(f) == tests}
+            s = scores(gs, ps)
+            g, p, tp = g + s["G"], p + s["P"], tp + s["TP"]
+            exact += s["FP"] == 0 and s["FN"] == 0
+        return {
+            "G": g, "P": p, "TP": tp, "FP": p - tp, "FN": g - tp,
+            "precision": tp / p if p else 1.0,
+            "recall": tp / g if g else 1.0,
+            "f1": 2 * tp / (g + p) if g + p else 1.0,
+            "exact_prs": exact,
+        }
+
+    sources = {
+        t: {
+            f"{name}{'' if not skip else '_without_' + OUTLIER}": by_source(t, tests, skip)
+            for name, tests in (("benchmark", False), ("test_suite", True))
+            for skip in ((), (OUTLIER,))
+        }
+        for t in tools
+    }
+
     # Timing: per PR, the sum over its pattern files (median of repeats each).
     timing: dict[str, dict[str, float | None]] = {}
     for tool in TIMED:
@@ -308,6 +340,7 @@ def build(
         "ground_truth_cpu_seconds": float(gt_timing.get("gt_seconds", "nan")),
         "per_pr": per_pr,
         "totals": totals,
+        "totals_by_source": sources,
         "timing_seconds": timing,
         "candidate_counts": candidate_counts,
         "candidate_counts_by_tool": candidate_counts_by_tool,
@@ -390,6 +423,21 @@ def build(
                 pct(s["recall"]), pct(s["f1"]), f"{s['exact_prs']}",
             ])
     md += [table(["Tool", "PRs", "\\|G\\|", "\\|P\\|", "TP", "FP", "FN",
+                  "Precision", "Recall", "F1", "PRs with F1 100%"], rows), ""]
+
+    md += ["### Benchmark vs test suite", "",
+           "The same totals split by where the function comes from: "
+           "llvm-opt-benchmark modules, or the upstream InstCombine/InstSimplify "
+           "test files. Functions of a PR are scored within each source.", ""]
+    rows = []
+    for t in tools:
+        for scope, s in sources[t].items():
+            rows.append([
+                TOOL_NAMES[t], scope.replace("_", " "), str(s["G"]), str(s["P"]),
+                str(s["TP"]), str(s["FP"]), str(s["FN"]), pct(s["precision"]),
+                pct(s["recall"]), pct(s["f1"]), f"{s['exact_prs']}",
+            ])
+    md += [table(["Tool", "Source", "\\|G\\|", "\\|P\\|", "TP", "FP", "FN",
                   "Precision", "Recall", "F1", "PRs with F1 100%"], rows), ""]
 
     md += ["## RQ3: Index", ""]

@@ -36,7 +36,9 @@ Each corpus is scored twice:
 `original` collects both. `thinlto-prelink` and `o2-final` collect their own
 direct `gt/` and are also scored against `original/gt-pipeline`. Reports:
 `REPORT.md`/`summary.json` are direct; `REPORT-pipeline.md`/
-`summary-pipeline.json` are real scenario.
+`summary-pipeline.json` are real scenario. Both also split the totals by
+source (`totals_by_source` in the summaries): llvm-opt-benchmark modules vs the
+upstream test files (`InstCombine__*.ll`, `InstSimplify__*.ll`).
 
 ## Preparing a corpus and running every step
 
