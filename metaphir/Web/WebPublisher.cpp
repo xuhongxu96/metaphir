@@ -281,8 +281,7 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
     size_t End = std::min(All.size(), Start + Batch);
     std::vector<std::optional<Expected<EncodedModule>>> Encoded(End - Start);
     parallelFor(Start, End, [&](size_t I) {
-      Encoded[I - Start].emplace(
-          encodeModule(Index, Index.getEntry(All[I])));
+      Encoded[I - Start].emplace(encodeModule(Index, Index.getEntry(All[I])));
     });
 
     std::vector<CompressionModule> Modules(End - Start);
@@ -308,11 +307,11 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
       const CompressionTask &Task = Tasks[I];
       const EncodedModule &Module = **Encoded[Task.Module];
       size_t NumFeatures = Module.Features.size();
-      StringRef Input = Task.Feature
-                            ? StringRef(Module.Features[Task.Item])
-                            : StringRef(Modules[Task.Module]
-                                            .Grouped.Frames[Task.Item -
-                                                           NumFeatures]);
+      StringRef Input =
+          Task.Feature
+              ? StringRef(Module.Features[Task.Item])
+              : StringRef(Modules[Task.Module]
+                              .Grouped.Frames[Task.Item - NumFeatures]);
       Modules[Task.Module].Results[Task.Item].emplace(
           Task.Feature ? FeatureCompressor.compress(Input)
                        : PackCompressor.compress(Input));
@@ -348,15 +347,14 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
         auto [Frame, Slot] = Work.Grouped.Of[Feature];
         uint64_t Size = (*Work.Results[NumFeatures + Frame])->size();
         if (!PackLocation::fits(FrameOffsets[Frame], Size, Slot))
-          return createStringError(
-              Indexed.Path + ": the packs are too large to publish");
+          return createStringError(Indexed.Path +
+                                   ": the packs are too large to publish");
         WriteEntry(PackLocation::encode(FrameOffsets[Frame], Size, Slot));
         *FeaturesOS << *Features;
         FeaturesSize += Features->size();
       }
     }
-    Report("published " + Twine(End) + " of " + Twine(All.size()) +
-           " modules");
+    Report("published " + Twine(End) + " of " + Twine(All.size()) + " modules");
   }
   if (!PackLocation::fits(PacksSize, 0, 0))
     return createStringError("the packs are too large to publish");
