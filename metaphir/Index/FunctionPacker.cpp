@@ -1,13 +1,17 @@
 #include "metaphir/Index/FunctionPacker.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalIFunc.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/raw_ostream.h"
@@ -19,6 +23,105 @@ namespace llvm {
 namespace metaphir {
 
 namespace {
+
+/// Whether MD is debug info, or holds some. stripDebugInfo leaves the debug
+/// info that sits under kinds it does not know, such as the subprogram of a
+/// call target, and the bitcode writer has no number for the nodes it refers
+/// to. Deciding by what an attachment holds covers the kinds LLVM adds.
+bool holdsDebugInfo(const Metadata *MD,
+                    SmallPtrSetImpl<const Metadata *> &Seen) {
+  if (!Seen.insert(MD).second)
+    return false;
+  if (isa<DIArgList>(MD))
+    return true;
+  const auto *Node = dyn_cast<MDNode>(MD);
+  if (!Node)
+    return false;
+  if (isa<DINode>(Node) || isa<DILocation>(Node) || isa<DIExpression>(Node) ||
+      isa<DIAssignID>(Node) || isa<DIGlobalVariableExpression>(Node))
+    return true;
+  return any_of(Node->operands(), [&](const MDOperand &Operand) {
+    return Operand && holdsDebugInfo(Operand.get(), Seen);
+  });
+}
+
+bool holdsDebugInfo(const MDNode *Node) {
+  SmallPtrSet<const Metadata *, 16> Seen;
+  return holdsDebugInfo(Node, Seen);
+}
+
+/// Drops the attachments of F and of its instructions for which Drop is true.
+template <typename Predicate>
+void dropAttachments(Function &F, Predicate Drop) {
+  SmallVector<std::pair<unsigned, MDNode *>, 8> Attachments;
+  F.getAllMetadata(Attachments);
+  for (auto [Kind, Node] : Attachments)
+    if (Drop(Node))
+      F.setMetadata(Kind, nullptr);
+  for (BasicBlock &BB : F)
+    for (Instruction &I : BB) {
+      Attachments.clear();
+      I.getAllMetadataOtherThanDebugLoc(Attachments);
+      for (auto [Kind, Node] : Attachments)
+        if (Drop(Node))
+          I.setMetadata(Kind, nullptr);
+    }
+}
+
+/// Whether C is, or is built from, a value that the pack does not hold: a
+/// global of another module, or a block address in another function.
+bool constantLeavesPack(const Constant *C, const Function &F,
+                        SmallPtrSetImpl<const Constant *> &Seen) {
+  if (const auto *GV = dyn_cast<GlobalValue>(C))
+    return GV->getParent() != F.getParent();
+  if (const auto *BA = dyn_cast<BlockAddress>(C))
+    return BA->getFunction() != &F;
+  if (!Seen.insert(C).second)
+    return false;
+  return any_of(C->operands(), [&](const Use &U) {
+    const auto *Operand = dyn_cast<Constant>(U.get());
+    return Operand && constantLeavesPack(Operand, F, Seen);
+  });
+}
+
+/// Whether MD reaches a value the pack does not hold, or a value local to
+/// another function.
+bool leavesPack(const Metadata *MD, const Function &F,
+                SmallPtrSetImpl<const Metadata *> &Seen,
+                SmallPtrSetImpl<const Constant *> &SeenConstants) {
+  if (!Seen.insert(MD).second)
+    return false;
+  if (const auto *ConstantMD = dyn_cast<ConstantAsMetadata>(MD))
+    return constantLeavesPack(ConstantMD->getValue(), F, SeenConstants);
+  if (const auto *Local = dyn_cast<LocalAsMetadata>(MD)) {
+    const Value *V = Local->getValue();
+    const Function *Owner = nullptr;
+    if (const auto *Arg = dyn_cast<Argument>(V))
+      Owner = Arg->getParent();
+    else if (const auto *I = dyn_cast<Instruction>(V))
+      Owner = I->getFunction();
+    return Owner != &F;
+  }
+  if (const auto *Node = dyn_cast<MDNode>(MD))
+    return any_of(Node->operands(), [&](const MDOperand &Operand) {
+      return Operand && leavesPack(Operand.get(), F, Seen, SeenConstants);
+    });
+  // Strings are fine; an argument list is debug info, dropped before this.
+  return !isa<MDString>(MD);
+}
+
+/// Drops the metadata that would crash the bitcode writer: first the debug
+/// info, then whatever else still refers outside the pack. The rest stays, as
+/// the value facts value tracking reads do; what names globals refers to the
+/// stubs of the pack.
+void dropMetadataThatWouldCrashTheWriter(Function &F) {
+  dropAttachments(F, [](const MDNode *Node) { return holdsDebugInfo(Node); });
+  dropAttachments(F, [&](const MDNode *Node) {
+    SmallPtrSet<const Metadata *, 16> Seen;
+    SmallPtrSet<const Constant *, 16> SeenConstants;
+    return leavesPack(Node, F, Seen, SeenConstants);
+  });
+}
 
 /// Where the global values of a module are, as the slot tracker numbers
 /// them: the unnamed ones get consecutive numbers in this order.
@@ -104,14 +207,13 @@ public:
                       Returns,
                       /*NameSuffix=*/"", /*CodeInfo=*/nullptr,
                       /*TypeMapper=*/nullptr, this);
-    // Debug info and other metadata can refer to values outside the pack and
-    // crash the bitcode writer; neither is part of a pattern.
+    // Debug info refers outside the pack and crashes the bitcode writer, and
+    // is no part of a pattern. Strip all of it, and what else would crash the
+    // writer, before the rest is packed.
     stripDebugInfo(*Clone);
     if (NamedMDNode *Units = Packed->getNamedMetadata("llvm.dbg.cu"))
       Packed->eraseNamedMetadata(Units);
-    for (BasicBlock &BB : *Clone)
-      for (Instruction &I : BB)
-        I.dropUnknownNonDebugMetadata();
+    dropMetadataThatWouldCrashTheWriter(*Clone);
     completeIndirections();
     addPlaceholders();
     sortGlobals();
