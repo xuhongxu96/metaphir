@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Summarize one run of eval/scripts/run_all.sh as REPORT.md and summary.json.
 
+The reports score the llvm-opt-benchmark modules; ``--source tests`` scores the
+upstream test files instead (``REPORT-tests.md``, direct ground truth only).
+
     report.py <outdir> [--corpus <dir>] [--gt <results>] [--gt-dir <name>]
-              [--suffix <sfx>] [--title <text>] [--note <text>]...
+              [--suffix <sfx>] [--source {bench,tests}] [--commit <rev>]
+              [--title <text>] [--note <text>]...
 
 Reads, from <outdir>:
 - the ground truth (``<gt-dir>/<pr>_G.functions``) in <outdir>, or ``--gt``'s;
@@ -41,6 +45,7 @@ TIMED = {
 # pr204089's fold is queried speculatively; the evaluation reports the totals
 # with and without it.
 OUTLIER = "pr204089"
+SOURCE_NAMES = {"bench": "llvm-opt-benchmark", "tests": "test suite"}
 
 
 # --------------------------------------------------------------------------- #
@@ -133,29 +138,31 @@ def machine() -> dict[str, str]:
     }
 
 
-def provenance(corpus: Path | None) -> dict[str, object]:
+def provenance(
+    corpus: Path | None, source: str = "bench", commit: str | None = None
+) -> dict[str, object]:
     llvm_pin = re.search(
         r'^LLVM_COMMIT="(\w+)"', (REPO / "scripts" / "prepare_llvm.sh").read_text(), re.M
     )
     out: dict[str, object] = {
-        "metaphir_commit": git("rev-parse", "HEAD")
+        # A given --commit is cited as is; otherwise HEAD, marked when the code
+        # differs. Results are this script's output, so they do not make it dirty.
+        "metaphir_commit": git("rev-parse", commit or "HEAD")
         + (
             " (with uncommitted changes)"
-            # results are this script's output, so they do not make the code dirty
-            if git("status", "--porcelain", "--", ".", ":!eval/results")
+            if not commit and git("status", "--porcelain", "--", ".", ":!eval/results")
             else ""
         ),
         "llvm_commit": llvm_pin.group(1) if llvm_pin else "?",
         "machine": machine(),
     }
     if corpus and corpus.is_dir():
-        files = [p for p in corpus.iterdir() if p.suffix in (".bc", ".ll")]
-        out["corpus"] = {
-            "path": rel(corpus),
-            "modules": sum(p.suffix == ".bc" for p in files),
-            "test_files": sum(p.suffix == ".ll" for p in files),
-            "bytes": sum(p.stat().st_size for p in files),
-        }
+        files = [
+            p for p in corpus.iterdir()
+            if p.suffix in (".bc", ".ll") and is_test_file(p) == (source == "tests")
+        ]
+        out["corpus"] = {"path": rel(corpus), "files": len(files),
+                         "bytes": sum(p.stat().st_size for p in files)}
     return out
 
 
@@ -189,14 +196,33 @@ def build(
     notes: list[str],
     gt: Path | None = None,
     gt_dir: str = GT_DIR,
+    source: str = "bench",
+    suffix: str = "",
+    commit: str | None = None,
 ) -> tuple[str, dict]:
     prs = sorted(PR_PATTERNS)
+    # The real scenario is the e2e O2 run over the benchmark modules; the
+    # upstream test files are not a scenario, so they are never split out of it.
+    pipeline = gt_dir != GT_DIR
+    if pipeline and source == "tests":
+        raise SystemExit("--source tests needs the direct ground truth, not the pipeline's")
     gt_results = gt or outdir
     gt_path = gt_results / gt_dir
     same_corpus = gt_results.resolve() == outdir.resolve() and gt_dir == GT_DIR
     G = {pr: load_functions(gt_path / f"{pr}_G.functions") for pr in prs}
     P = {t: {pr: predictions(outdir, t, pr) for pr in prs} for t in TOOLS}
     tools = [t for t in TOOLS if all(v is not None for v in P[t].values())]
+
+    # A report scores one dataset: the llvm-opt-benchmark modules, or the
+    # upstream test files.
+    want = source == "tests"
+    G = {pr: {f for f in fs if is_test_file(Path(f[0])) == want} for pr, fs in G.items()}
+    P = {
+        t: {pr: None if fs is None else {f for f in fs if is_test_file(Path(f[0])) == want}
+            for pr, fs in by_pr.items()}
+        for t, by_pr in P.items()
+    }
+    title = f"{title} ({SOURCE_NAMES[source]})"
 
     per_pr = {pr: {t: scores(G[pr], P[t][pr]) for t in tools} for pr in prs}
 
@@ -218,37 +244,6 @@ def build(
 
     totals = {
         t: {"all": total(t), f"without_{OUTLIER}": total(t, (OUTLIER,))} for t in tools
-    }
-
-    # The same totals per source: llvm-opt-benchmark modules vs the upstream
-    # test-suite files (``InstCombine__*.ll`` etc.).
-    def in_tests(f: Func) -> bool:
-        return is_test_file(Path(f[0]))
-
-    def by_source(t: str, tests: bool, skip: tuple[str, ...] = ()) -> dict:
-        keep = [pr for pr in prs if pr not in skip]
-        g = tp = p = exact = 0
-        for pr in keep:
-            gs = {f for f in G[pr] if in_tests(f) == tests}
-            ps = {f for f in P[t][pr] if in_tests(f) == tests}
-            s = scores(gs, ps)
-            g, p, tp = g + s["G"], p + s["P"], tp + s["TP"]
-            exact += s["FP"] == 0 and s["FN"] == 0
-        return {
-            "G": g, "P": p, "TP": tp, "FP": p - tp, "FN": g - tp,
-            "precision": tp / p if p else 1.0,
-            "recall": tp / g if g else 1.0,
-            "f1": 2 * tp / (g + p) if g + p else 1.0,
-            "exact_prs": exact,
-        }
-
-    sources = {
-        t: {
-            f"{name}{'' if not skip else '_without_' + OUTLIER}": by_source(t, tests, skip)
-            for name, tests in (("benchmark", False), ("test_suite", True))
-            for skip in ((), (OUTLIER,))
-        }
-        for t in tools
     }
 
     # Timing: per PR, the sum over its pattern files (median of repeats each).
@@ -334,13 +329,12 @@ def build(
     gt_timing = read_timing(gt_path / "timing.txt")
     summary = {
         "title": title,
-        "provenance": provenance(corpus),
+        "provenance": provenance(corpus, source, commit),
         "rq1": {k: v for k, v in pattern_stats(sorted((REPO / "eval" / "patterns").glob("*.mpir"))).items() if k != "per_pattern"},
         "ground_truth": str(gt_path),
         "ground_truth_cpu_seconds": float(gt_timing.get("gt_seconds", "nan")),
         "per_pr": per_pr,
         "totals": totals,
-        "totals_by_source": sources,
         "timing_seconds": timing,
         "candidate_counts": candidate_counts,
         "candidate_counts_by_tool": candidate_counts_by_tool,
@@ -370,9 +364,11 @@ def build(
     if "corpus" in prov:
         c = prov["corpus"]
         rows += [
-            ["Corpus", f"`{c['path']}`: {c['modules']} modules + {c['test_files']} test files, {c['bytes'] / 1e9:.2f} GB"],
+            ["Corpus", f"`{c['path']}`: {c['files']} "
+             + ("test files" if source == "tests" else "modules")
+             + f", {c['bytes'] / 1e9:.2f} GB"],
         ]
-    if stats:
+    if stats and source == "bench":
         any_stats = next(iter(stats.values()))
         if "functions" in any_stats:
             rows.append(["Functions", str(any_stats["functions"][1])])
@@ -380,7 +376,8 @@ def build(
     rows += [
         ["Machine", f"{m['cpu']}, {m['cores']} cores, {m['memory']}, {m['os']}"],
         ["Ground truth", (f"`{rel(gt_path)}`, " if not same_corpus else "")
-         + f"{summary['ground_truth_cpu_seconds']:.0f} CPU-seconds (summed per module)"],
+         + f"{summary['ground_truth_cpu_seconds']:.0f} CPU-seconds (summed per module"
+         + ", benchmark and test files together)"],
         ["Tool failures", ", ".join(f"{TOOL_NAMES[t]} {n}" for t, n in summary["tool_failures"].items())],
     ]
     md += [table(["", ""], rows), ""]
@@ -425,20 +422,14 @@ def build(
     md += [table(["Tool", "PRs", "\\|G\\|", "\\|P\\|", "TP", "FP", "FN",
                   "Precision", "Recall", "F1", "PRs with F1 100%"], rows), ""]
 
-    md += ["### Benchmark vs test suite", "",
-           "The same totals split by where the function comes from: "
-           "llvm-opt-benchmark modules, or the upstream InstCombine/InstSimplify "
-           "test files. Functions of a PR are scored within each source.", ""]
-    rows = []
-    for t in tools:
-        for scope, s in sources[t].items():
-            rows.append([
-                TOOL_NAMES[t], scope.replace("_", " "), str(s["G"]), str(s["P"]),
-                str(s["TP"]), str(s["FP"]), str(s["FN"]), pct(s["precision"]),
-                pct(s["recall"]), pct(s["f1"]), f"{s['exact_prs']}",
-            ])
-    md += [table(["Tool", "Source", "\\|G\\|", "\\|P\\|", "TP", "FP", "FN",
-                  "Precision", "Recall", "F1", "PRs with F1 100%"], rows), ""]
+    if source == "tests":
+        for key in ("timing_seconds", "candidate_counts", "candidate_counts_by_tool", "index",
+                    ):
+            summary.pop(key, None)
+        md += [f"This report scores only the {SOURCE_NAMES[source]} functions. The "
+               "index and query-time measurements (RQ3) are one run over the whole "
+               f"corpus and cannot be split by source; see `REPORT{suffix}.md`.", ""]
+        return "\n".join(md) + "\n", summary
 
     md += ["## RQ3: Index", ""]
     ix = summary["index"]
@@ -588,12 +579,26 @@ def main() -> None:
         default="",
         help="suffix for REPORT<sfx>.md and summary<sfx>.json, e.g. -pipeline",
     )
+    ap.add_argument(
+        "--source",
+        choices=["bench", "tests"],
+        default="bench",
+        help="score the llvm-opt-benchmark modules (bench) or the upstream test "
+        "files (tests, direct ground truth only; written as REPORT<sfx>-tests.md)",
+    )
+    ap.add_argument(
+        "--commit",
+        help="cite this revision as the MetaphIR commit instead of HEAD "
+        "(and do not mark uncommitted changes)",
+    )
     args = ap.parse_args()
     md, summary = build(
-        args.outdir, args.corpus, args.title, args.note, args.gt, args.gt_dir
+        args.outdir, args.corpus, args.title, args.note, args.gt, args.gt_dir,
+        args.source, args.suffix, args.commit,
     )
-    report = args.outdir / f"REPORT{args.suffix}.md"
-    summary_path = args.outdir / f"summary{args.suffix}.json"
+    sfx = args.suffix + ("-tests" if args.source == "tests" else "")
+    report = args.outdir / f"REPORT{sfx}.md"
+    summary_path = args.outdir / f"summary{sfx}.json"
     report.write_text(md)
     summary_path.write_text(json.dumps(summary, indent=2) + "\n")
     print(f"wrote {report} and {summary_path.name}")

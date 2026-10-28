@@ -123,4 +123,8 @@ uv run eval/scripts/report.py "$RESULTS" --corpus "$CORPUS" \
     --gt "$GT_RESULTS" --gt-dir "$GT_DIR" --suffix=-pipeline \
     >"$LOGS/report-pipeline.log" 2>&1
 
+step "report (test suite)"
+uv run eval/scripts/report.py "$RESULTS" --corpus "$CORPUS" --gt-dir gt \
+    --source tests >"$LOGS/report-tests.log" 2>&1
+
 step "done"
