@@ -106,7 +106,7 @@ web/scripts/publish.py published --corpus o2-final --label "O2 final"
 ```
 
 Publish each corpus the same way (`--corpus original`, `--corpus
-thinlto-prelink`); each keeps its own builds and config entry.
+thinlto-prelink`, `--corpus before-ic1`); each keeps its own builds and config entry.
 
 `metaphir-index publish` writes (see `metaphir/Web/WebIndex.h`):
 

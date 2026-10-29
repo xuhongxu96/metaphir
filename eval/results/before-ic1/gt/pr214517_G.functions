@@ -1,0 +1,4 @@
+InstCombine__shift.ll	shl1_cttz
+InstCombine__shift.ll	shl1_cttz_vec
+InstCombine__shift.ll	shl1_cttz_vec_poison
+openmpi__bitmap.bc	hwloc_bitmap_singlify

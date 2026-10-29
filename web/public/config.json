@@ -2,10 +2,10 @@
   "default": "thinlto-prelink",
   "corpora": [
     {
-      "id": "o2-final",
-      "label": "O2 final",
-      "description": "End of the standard O2 pipeline, with the evaluated folds disabled",
-      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/o2-final/fc34dd7b5a6a6777"
+      "id": "original",
+      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/original/e1faf97a53a96d43",
+      "label": "Original IR",
+      "description": "Raw llvm-opt-benchmark modules, before optimization"
     },
     {
       "id": "thinlto-prelink",
@@ -14,10 +14,16 @@
       "description": "After O2's simplification stage, as ThinLTO's pre-link step writes it"
     },
     {
-      "id": "original",
-      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/original/e1faf97a53a96d43",
-      "label": "Original IR",
-      "description": "Raw llvm-opt-benchmark modules, before optimization"
+      "id": "before-ic1",
+      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/before-ic1/4268370d0dddfb9e",
+      "label": "Before InstCombine 1",
+      "description": "Just before O2's first InstCombine, with the evaluated folds disabled"
+    },
+    {
+      "id": "o2-final",
+      "label": "O2 final",
+      "description": "End of the standard O2 pipeline, with the evaluated folds disabled",
+      "data": "https://huggingface.co/buckets/xuhongxu96/llvm-opt-benchmark-index/resolve/builds/o2-final/fc34dd7b5a6a6777"
     }
   ]
 }

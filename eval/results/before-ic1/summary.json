@@ -1,0 +1,2473 @@
+{
+  "title": "MetaphIR evaluation (llvm-opt-benchmark)",
+  "provenance": {
+    "metaphir_commit": "f1c6f0d5d63a4bce1596d16b1bca03b6b514e971 (with uncommitted changes)",
+    "llvm_commit": "79b321b1238ceaf8261a5b177185a3ec5111918a",
+    "machine": {
+      "cpu": "Neoverse-N1 (aarch64)",
+      "cores": "80",
+      "memory": "502 GiB",
+      "os": "Ubuntu 22.04.5 LTS, Linux 5.15.0-174-generic"
+    },
+    "corpus": {
+      "path": "eval/corpus-before-ic1",
+      "files": 68843,
+      "bytes": 14361098544
+    }
+  },
+  "rq1": {
+    "patterns": 23,
+    "instructions": 75,
+    "constraints": 20,
+    "max_instructions": 6,
+    "patterns_using": {
+      "constant_class": 10,
+      "commutative": 12,
+      "one_use": 13,
+      "stdlib_composite": 9,
+      "value_tracking": 8,
+      "intrinsic": 6,
+      "own_composite": 1,
+      "or_self": 1
+    }
+  },
+  "ground_truth": "/data/h445xu/repo/metaphir/eval/results/before-ic1/gt",
+  "ground_truth_cpu_seconds": 358994.342,
+  "per_pr": {
+    "pr204089": {
+      "metaphir-index": {
+        "G": 12456,
+        "P": 163682,
+        "TP": 11975,
+        "FP": 151707,
+        "FN": 481,
+        "precision": 0.07316015200205277,
+        "recall": 0.9613840719332049,
+        "f1": 0.13597293031600222
+      },
+      "daggrep": {
+        "G": 12456,
+        "P": 232519,
+        "TP": 12057,
+        "FP": 220462,
+        "FN": 399,
+        "precision": 0.051853826999083946,
+        "recall": 0.9679672447013488,
+        "f1": 0.09843453413613634
+      }
+    },
+    "pr204927": {
+      "metaphir-index": {
+        "G": 1061,
+        "P": 5646,
+        "TP": 853,
+        "FP": 4793,
+        "FN": 208,
+        "precision": 0.15108041091037902,
+        "recall": 0.8039585296889726,
+        "f1": 0.25436111525272104
+      },
+      "daggrep": {
+        "G": 1061,
+        "P": 9330,
+        "TP": 854,
+        "FP": 8476,
+        "FN": 207,
+        "precision": 0.09153269024651661,
+        "recall": 0.8049010367577757,
+        "f1": 0.16437301510922914
+      }
+    },
+    "pr204928": {
+      "metaphir-index": {
+        "G": 2,
+        "P": 1,
+        "TP": 0,
+        "FP": 1,
+        "FN": 2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "daggrep": {
+        "G": 2,
+        "P": 4,
+        "TP": 0,
+        "FP": 4,
+        "FN": 2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "pr205383": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "pr207462": {
+      "metaphir-index": {
+        "G": 4,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 4,
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "daggrep": {
+        "G": 4,
+        "P": 40,
+        "TP": 0,
+        "FP": 40,
+        "FN": 4,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "pr207564": {
+      "metaphir-index": {
+        "G": 12,
+        "P": 30,
+        "TP": 7,
+        "FP": 23,
+        "FN": 5,
+        "precision": 0.23333333333333334,
+        "recall": 0.5833333333333334,
+        "f1": 0.3333333333333333
+      },
+      "daggrep": {
+        "G": 12,
+        "P": 30,
+        "TP": 7,
+        "FP": 23,
+        "FN": 5,
+        "precision": 0.23333333333333334,
+        "recall": 0.5833333333333334,
+        "f1": 0.3333333333333333
+      }
+    },
+    "pr209322": {
+      "metaphir-index": {
+        "G": 171,
+        "P": 181,
+        "TP": 171,
+        "FP": 10,
+        "FN": 0,
+        "precision": 0.9447513812154696,
+        "recall": 1.0,
+        "f1": 0.9715909090909091
+      },
+      "daggrep": {
+        "G": 171,
+        "P": 175684,
+        "TP": 171,
+        "FP": 175513,
+        "FN": 0,
+        "precision": 0.0009733384941144328,
+        "recall": 1.0,
+        "f1": 0.0019447840550453498
+      }
+    },
+    "pr210499": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "pr212132": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "pr213313": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "pr213709": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 4,
+        "TP": 4,
+        "FP": 0,
+        "FN": 1,
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.8888888888888888
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 4,
+        "TP": 4,
+        "FP": 0,
+        "FN": 1,
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.8888888888888888
+      }
+    },
+    "pr214376": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "pr214381": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 1,
+        "TP": 0,
+        "FP": 1,
+        "FN": 0,
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 13,
+        "TP": 0,
+        "FP": 13,
+        "FN": 0,
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0
+      }
+    },
+    "pr214517": {
+      "metaphir-index": {
+        "G": 1,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 1,
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "daggrep": {
+        "G": 1,
+        "P": 31,
+        "TP": 0,
+        "FP": 31,
+        "FN": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "pr214541": {
+      "metaphir-index": {
+        "G": 22,
+        "P": 328,
+        "TP": 21,
+        "FP": 307,
+        "FN": 1,
+        "precision": 0.06402439024390244,
+        "recall": 0.9545454545454546,
+        "f1": 0.12
+      },
+      "daggrep": {
+        "G": 22,
+        "P": 1023,
+        "TP": 22,
+        "FP": 1001,
+        "FN": 0,
+        "precision": 0.021505376344086023,
+        "recall": 1.0,
+        "f1": 0.042105263157894736
+      }
+    },
+    "pr215122": {
+      "metaphir-index": {
+        "G": 22,
+        "P": 1,
+        "TP": 1,
+        "FP": 0,
+        "FN": 21,
+        "precision": 1.0,
+        "recall": 0.045454545454545456,
+        "f1": 0.08695652173913043
+      },
+      "daggrep": {
+        "G": 22,
+        "P": 7,
+        "TP": 1,
+        "FP": 6,
+        "FN": 21,
+        "precision": 0.14285714285714285,
+        "recall": 0.045454545454545456,
+        "f1": 0.06896551724137931
+      }
+    },
+    "pr215130": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 1,
+        "TP": 0,
+        "FP": 1,
+        "FN": 0,
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0
+      }
+    },
+    "pr216046": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 1641,
+        "TP": 0,
+        "FP": 1641,
+        "FN": 0,
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0
+      }
+    },
+    "pr216436": {
+      "metaphir-index": {
+        "G": 52,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 52,
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "daggrep": {
+        "G": 52,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 52,
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "pr216470": {
+      "metaphir-index": {
+        "G": 81,
+        "P": 4,
+        "TP": 4,
+        "FP": 0,
+        "FN": 77,
+        "precision": 1.0,
+        "recall": 0.04938271604938271,
+        "f1": 0.09411764705882353
+      },
+      "daggrep": {
+        "G": 81,
+        "P": 11,
+        "TP": 7,
+        "FP": 4,
+        "FN": 74,
+        "precision": 0.6363636363636364,
+        "recall": 0.08641975308641975,
+        "f1": 0.15217391304347827
+      }
+    }
+  },
+  "totals": {
+    "metaphir-index": {
+      "all": {
+        "G": 13889,
+        "P": 169878,
+        "TP": 13036,
+        "FP": 156842,
+        "FN": 853,
+        "precision": 0.07673742332732902,
+        "recall": 0.9385844913240694,
+        "f1": 0.14187530949517596,
+        "exact_prs": 7
+      },
+      "without_pr204089": {
+        "G": 1433,
+        "P": 6196,
+        "TP": 1061,
+        "FP": 5135,
+        "FN": 372,
+        "precision": 0.17123950936087798,
+        "recall": 0.7404047452896022,
+        "f1": 0.2781491676497575,
+        "exact_prs": 7
+      }
+    },
+    "daggrep": {
+      "all": {
+        "G": 13889,
+        "P": 420338,
+        "TP": 13123,
+        "FP": 407215,
+        "FN": 766,
+        "precision": 0.031220113337361837,
+        "recall": 0.9448484412124702,
+        "f1": 0.06044304016102177,
+        "exact_prs": 5
+      },
+      "without_pr204089": {
+        "G": 1433,
+        "P": 187819,
+        "TP": 1066,
+        "FP": 186753,
+        "FN": 367,
+        "precision": 0.00567567711466891,
+        "recall": 0.743893928820656,
+        "f1": 0.011265402743432037,
+        "exact_prs": 5
+      }
+    }
+  },
+  "timing_seconds": {
+    "metaphir-index": {
+      "pr204089": 11.883,
+      "pr204927": 4.263,
+      "pr204928": 0.427,
+      "pr205383": 0.8440000000000001,
+      "pr207462": 1.4180000000000001,
+      "pr207564": 1.321,
+      "pr209322": 2.492,
+      "pr210499": 1.937,
+      "pr212132": 0.789,
+      "pr213313": 0.566,
+      "pr213709": 1.777,
+      "pr214376": 0.453,
+      "pr214381": 1.893,
+      "pr214517": 0.408,
+      "pr214541": 1.966,
+      "pr215122": 2.326,
+      "pr215130": 0.422,
+      "pr216046": 1.971,
+      "pr216436": 0.435,
+      "pr216470": 0.801
+    },
+    "metaphir-scan": {
+      "pr204089": 25.895,
+      "pr204927": 23.721,
+      "pr204928": 23.917,
+      "pr205383": 47.96,
+      "pr207462": 48.177,
+      "pr207564": 23.635,
+      "pr209322": 23.688,
+      "pr210499": 23.783,
+      "pr212132": 47.48,
+      "pr213313": 23.968,
+      "pr213709": 24.4,
+      "pr214376": 23.712,
+      "pr214381": 24.469,
+      "pr214517": 23.831,
+      "pr214541": 23.64,
+      "pr215122": 23.909,
+      "pr215130": 23.909,
+      "pr216046": 23.969,
+      "pr216436": 23.93,
+      "pr216470": 23.934
+    },
+    "daggrep": {
+      "pr204089": 46.948,
+      "pr204927": 63.888000000000005,
+      "pr204928": 63.337999999999994,
+      "pr205383": 83.905,
+      "pr207462": 42.764,
+      "pr207564": 20.658,
+      "pr209322": 23.333,
+      "pr210499": 85.26,
+      "pr212132": 42.857,
+      "pr213313": 42.55,
+      "pr213709": 42.397000000000006,
+      "pr214376": 21.619,
+      "pr214381": 21.122,
+      "pr214517": 21.26,
+      "pr214541": 22.063,
+      "pr215122": 21.402,
+      "pr215130": 20.864,
+      "pr216046": 21.227,
+      "pr216436": 20.77,
+      "pr216470": 42.006
+    },
+    "ablation-no-value-facts": {
+      "pr204089": 12.061,
+      "pr204927": 4.24,
+      "pr204928": 0.436,
+      "pr205383": 0.829,
+      "pr207462": 1.4729999999999999,
+      "pr207564": 1.344,
+      "pr209322": 9.377,
+      "pr210499": 1.801,
+      "pr212132": 0.7949999999999999,
+      "pr213313": 0.562,
+      "pr213709": 1.813,
+      "pr214376": 0.445,
+      "pr214381": 1.849,
+      "pr214517": 0.422,
+      "pr214541": 2.022,
+      "pr215122": 2.296,
+      "pr215130": 0.445,
+      "pr216046": 2.314,
+      "pr216436": 0.426,
+      "pr216470": 0.806
+    },
+    "ablation-no-constraint-prefilter": {
+      "pr204089": 11.939,
+      "pr204927": 4.26,
+      "pr204928": 0.414,
+      "pr205383": 0.8400000000000001,
+      "pr207462": 1.5710000000000002,
+      "pr207564": 1.987,
+      "pr209322": 9.435,
+      "pr210499": 1.91,
+      "pr212132": 0.781,
+      "pr213313": 0.558,
+      "pr213709": 4.271,
+      "pr214376": 0.486,
+      "pr214381": 2.065,
+      "pr214517": 0.434,
+      "pr214541": 2.251,
+      "pr215122": 3.79,
+      "pr215130": 0.512,
+      "pr216046": 2.33,
+      "pr216436": 0.564,
+      "pr216470": 0.802
+    }
+  },
+  "candidate_counts": {
+    "pr204089": {
+      "packs": 253162,
+      "files": 29141,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr204927": {
+      "packs": 7292,
+      "files": 3319,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr204928": {
+      "packs": 23,
+      "files": 17,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr205383": {
+      "packs": 8,
+      "files": 5,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr207462": {
+      "packs": 321,
+      "files": 186,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr207564": {
+      "packs": 812,
+      "files": 717,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr209322": {
+      "packs": 200,
+      "files": 44,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr210499": {
+      "packs": 9,
+      "files": 1,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr212132": {
+      "packs": 6,
+      "files": 3,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr213313": {
+      "packs": 157,
+      "files": 86,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr213709": {
+      "packs": 477,
+      "files": 309,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr214376": {
+      "packs": 68,
+      "files": 31,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr214381": {
+      "packs": 434,
+      "files": 264,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr214517": {
+      "packs": 11,
+      "files": 9,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr214541": {
+      "packs": 982,
+      "files": 496,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr215122": {
+      "packs": 4686,
+      "files": 928,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr215130": {
+      "packs": 14,
+      "files": 10,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr216046": {
+      "packs": 759,
+      "files": 338,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr216436": {
+      "packs": 4,
+      "files": 1,
+      "total_functions": 28426878,
+      "total_files": 70755
+    },
+    "pr216470": {
+      "packs": 622,
+      "files": 323,
+      "total_functions": 28426878,
+      "total_files": 70755
+    }
+  },
+  "candidate_counts_by_tool": {
+    "metaphir-index": {
+      "pr204089": {
+        "packs": 253162,
+        "files": 29141,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204927": {
+        "packs": 7292,
+        "files": 3319,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204928": {
+        "packs": 23,
+        "files": 17,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr205383": {
+        "packs": 8,
+        "files": 5,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207462": {
+        "packs": 321,
+        "files": 186,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207564": {
+        "packs": 812,
+        "files": 717,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr209322": {
+        "packs": 200,
+        "files": 44,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr210499": {
+        "packs": 9,
+        "files": 1,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr212132": {
+        "packs": 6,
+        "files": 3,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213313": {
+        "packs": 157,
+        "files": 86,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213709": {
+        "packs": 477,
+        "files": 309,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214376": {
+        "packs": 68,
+        "files": 31,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214381": {
+        "packs": 434,
+        "files": 264,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214517": {
+        "packs": 11,
+        "files": 9,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214541": {
+        "packs": 982,
+        "files": 496,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215122": {
+        "packs": 4686,
+        "files": 928,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215130": {
+        "packs": 14,
+        "files": 10,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216046": {
+        "packs": 759,
+        "files": 338,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216436": {
+        "packs": 4,
+        "files": 1,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216470": {
+        "packs": 622,
+        "files": 323,
+        "total_functions": 28426878,
+        "total_files": 70755
+      }
+    },
+    "ablation-no-value-facts": {
+      "pr204089": {
+        "packs": 253162,
+        "files": 29141,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204927": {
+        "packs": 7292,
+        "files": 3319,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204928": {
+        "packs": 23,
+        "files": 17,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr205383": {
+        "packs": 8,
+        "files": 5,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207462": {
+        "packs": 321,
+        "files": 186,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207564": {
+        "packs": 812,
+        "files": 717,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr209322": {
+        "packs": 176291,
+        "files": 26998,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr210499": {
+        "packs": 9,
+        "files": 1,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr212132": {
+        "packs": 7,
+        "files": 3,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213313": {
+        "packs": 157,
+        "files": 86,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213709": {
+        "packs": 477,
+        "files": 309,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214376": {
+        "packs": 68,
+        "files": 31,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214381": {
+        "packs": 434,
+        "files": 264,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214517": {
+        "packs": 11,
+        "files": 9,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214541": {
+        "packs": 982,
+        "files": 496,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215122": {
+        "packs": 4686,
+        "files": 928,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215130": {
+        "packs": 14,
+        "files": 10,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216046": {
+        "packs": 2231,
+        "files": 837,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216436": {
+        "packs": 4,
+        "files": 1,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216470": {
+        "packs": 622,
+        "files": 323,
+        "total_functions": 28426878,
+        "total_files": 70755
+      }
+    },
+    "ablation-no-constraint-prefilter": {
+      "pr204089": {
+        "packs": 253162,
+        "files": 29141,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204927": {
+        "packs": 8631,
+        "files": 3873,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204928": {
+        "packs": 25,
+        "files": 18,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr205383": {
+        "packs": 21,
+        "files": 5,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207462": {
+        "packs": 351,
+        "files": 199,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207564": {
+        "packs": 2478,
+        "files": 1615,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr209322": {
+        "packs": 176291,
+        "files": 26998,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr210499": {
+        "packs": 9,
+        "files": 1,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr212132": {
+        "packs": 8,
+        "files": 3,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213313": {
+        "packs": 157,
+        "files": 86,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213709": {
+        "packs": 9229,
+        "files": 1954,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214376": {
+        "packs": 78,
+        "files": 37,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214381": {
+        "packs": 698,
+        "files": 415,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214517": {
+        "packs": 40,
+        "files": 16,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214541": {
+        "packs": 1309,
+        "files": 699,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215122": {
+        "packs": 9375,
+        "files": 1993,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215130": {
+        "packs": 60,
+        "files": 44,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216046": {
+        "packs": 2231,
+        "files": 837,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216436": {
+        "packs": 127,
+        "files": 75,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216470": {
+        "packs": 776,
+        "files": 415,
+        "total_functions": 28426878,
+        "total_files": 70755
+      }
+    },
+    "metaphir-scan": {
+      "pr204089": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204927": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr204928": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr205383": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207462": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr207564": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr209322": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr210499": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr212132": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213313": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr213709": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214376": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214381": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214517": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr214541": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215122": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr215130": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216046": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216436": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      },
+      "pr216470": {
+        "packs": 28426878,
+        "files": 70755,
+        "total_functions": 28426878,
+        "total_files": 70755
+      }
+    }
+  },
+  "index": {
+    "build_seconds": 237.53,
+    "no_value_facts_build_seconds": 207.56,
+    "check_index_differences": 0,
+    "median_functions_checked": 5.522942055050857e-06,
+    "median_files_read": 0.0006218641792099498,
+    "per_pattern": {
+      "pr204089": {
+        "modules": [
+          30333,
+          70755
+        ],
+        "bytes": [
+          12406994173,
+          14381644474
+        ],
+        "functions": [
+          253162,
+          28426878
+        ]
+      },
+      "pr204927": {
+        "modules": [
+          7931,
+          70755
+        ],
+        "bytes": [
+          7027664709,
+          14381644474
+        ],
+        "functions": [
+          7292,
+          28426878
+        ]
+      },
+      "pr204928": {
+        "modules": [
+          106,
+          70755
+        ],
+        "bytes": [
+          108939570,
+          14381644474
+        ],
+        "functions": [
+          23,
+          28426878
+        ]
+      },
+      "pr205383_sub": {
+        "modules": [
+          1194,
+          70755
+        ],
+        "bytes": [
+          2312122018,
+          14381644474
+        ],
+        "functions": [
+          6,
+          28426878
+        ]
+      },
+      "pr205383_xor": {
+        "modules": [
+          753,
+          70755
+        ],
+        "bytes": [
+          2258153134,
+          14381644474
+        ],
+        "functions": [
+          2,
+          28426878
+        ]
+      },
+      "pr207462": {
+        "modules": [
+          1623,
+          70755
+        ],
+        "bytes": [
+          2319345488,
+          14381644474
+        ],
+        "functions": [
+          314,
+          28426878
+        ]
+      },
+      "pr207462_mul": {
+        "modules": [
+          63,
+          70755
+        ],
+        "bytes": [
+          107694123,
+          14381644474
+        ],
+        "functions": [
+          7,
+          28426878
+        ]
+      },
+      "pr207564": {
+        "modules": [
+          2911,
+          70755
+        ],
+        "bytes": [
+          3226423420,
+          14381644474
+        ],
+        "functions": [
+          812,
+          28426878
+        ]
+      },
+      "pr209322": {
+        "modules": [
+          45,
+          70755
+        ],
+        "bytes": [
+          42903844,
+          14381644474
+        ],
+        "functions": [
+          200,
+          28426878
+        ]
+      },
+      "pr210499": {
+        "modules": [
+          3,
+          70755
+        ],
+        "bytes": [
+          195939,
+          14381644474
+        ],
+        "functions": [
+          9,
+          28426878
+        ]
+      },
+      "pr212132_case1": {
+        "modules": [
+          30,
+          70755
+        ],
+        "bytes": [
+          110016292,
+          14381644474
+        ],
+        "functions": [
+          4,
+          28426878
+        ]
+      },
+      "pr212132_case2": {
+        "modules": [
+          21,
+          70755
+        ],
+        "bytes": [
+          74907292,
+          14381644474
+        ],
+        "functions": [
+          2,
+          28426878
+        ]
+      },
+      "pr213313": {
+        "modules": [
+          1150,
+          70755
+        ],
+        "bytes": [
+          1019408557,
+          14381644474
+        ],
+        "functions": [
+          157,
+          28426878
+        ]
+      },
+      "pr213709": {
+        "modules": [
+          6624,
+          70755
+        ],
+        "bytes": [
+          6558084958,
+          14381644474
+        ],
+        "functions": [
+          477,
+          28426878
+        ]
+      },
+      "pr214376": {
+        "modules": [
+          4920,
+          70755
+        ],
+        "bytes": [
+          5232970716,
+          14381644474
+        ],
+        "functions": [
+          68,
+          28426878
+        ]
+      },
+      "pr214381": {
+        "modules": [
+          1078,
+          70755
+        ],
+        "bytes": [
+          1939600326,
+          14381644474
+        ],
+        "functions": [
+          434,
+          28426878
+        ]
+      },
+      "pr214517": {
+        "modules": [
+          1382,
+          70755
+        ],
+        "bytes": [
+          2123211614,
+          14381644474
+        ],
+        "functions": [
+          11,
+          28426878
+        ]
+      },
+      "pr214541": {
+        "modules": [
+          643,
+          70755
+        ],
+        "bytes": [
+          811990633,
+          14381644474
+        ],
+        "functions": [
+          982,
+          28426878
+        ]
+      },
+      "pr215122": {
+        "modules": [
+          3563,
+          70755
+        ],
+        "bytes": [
+          4124612257,
+          14381644474
+        ],
+        "functions": [
+          4686,
+          28426878
+        ]
+      },
+      "pr215130": {
+        "modules": [
+          571,
+          70755
+        ],
+        "bytes": [
+          1400652181,
+          14381644474
+        ],
+        "functions": [
+          14,
+          28426878
+        ]
+      },
+      "pr216046": {
+        "modules": [
+          1076,
+          70755
+        ],
+        "bytes": [
+          1573574704,
+          14381644474
+        ],
+        "functions": [
+          759,
+          28426878
+        ]
+      },
+      "pr216436": {
+        "modules": [
+          514,
+          70755
+        ],
+        "bytes": [
+          364086464,
+          14381644474
+        ],
+        "functions": [
+          4,
+          28426878
+        ]
+      },
+      "pr216470": {
+        "modules": [
+          8026,
+          70755
+        ],
+        "bytes": [
+          6942204935,
+          14381644474
+        ],
+        "functions": [
+          622,
+          28426878
+        ]
+      }
+    },
+    "per_pattern_no_value_facts": {
+      "pr204089": {
+        "modules": [
+          30333,
+          70755
+        ],
+        "bytes": [
+          12406994173,
+          14381644474
+        ],
+        "functions": [
+          253162,
+          28426878
+        ]
+      },
+      "pr204927": {
+        "modules": [
+          7931,
+          70755
+        ],
+        "bytes": [
+          7027664709,
+          14381644474
+        ],
+        "functions": [
+          7292,
+          28426878
+        ]
+      },
+      "pr204928": {
+        "modules": [
+          106,
+          70755
+        ],
+        "bytes": [
+          108939570,
+          14381644474
+        ],
+        "functions": [
+          23,
+          28426878
+        ]
+      },
+      "pr205383_sub": {
+        "modules": [
+          1194,
+          70755
+        ],
+        "bytes": [
+          2312122018,
+          14381644474
+        ],
+        "functions": [
+          6,
+          28426878
+        ]
+      },
+      "pr205383_xor": {
+        "modules": [
+          753,
+          70755
+        ],
+        "bytes": [
+          2258153134,
+          14381644474
+        ],
+        "functions": [
+          2,
+          28426878
+        ]
+      },
+      "pr207462": {
+        "modules": [
+          1623,
+          70755
+        ],
+        "bytes": [
+          2319345488,
+          14381644474
+        ],
+        "functions": [
+          314,
+          28426878
+        ]
+      },
+      "pr207462_mul": {
+        "modules": [
+          63,
+          70755
+        ],
+        "bytes": [
+          107694123,
+          14381644474
+        ],
+        "functions": [
+          7,
+          28426878
+        ]
+      },
+      "pr207564": {
+        "modules": [
+          2911,
+          70755
+        ],
+        "bytes": [
+          3226423420,
+          14381644474
+        ],
+        "functions": [
+          812,
+          28426878
+        ]
+      },
+      "pr209322": {
+        "modules": [
+          26998,
+          70755
+        ],
+        "bytes": [
+          11628498802,
+          14381644474
+        ],
+        "functions": [
+          176291,
+          28426878
+        ]
+      },
+      "pr210499": {
+        "modules": [
+          3,
+          70755
+        ],
+        "bytes": [
+          195939,
+          14381644474
+        ],
+        "functions": [
+          9,
+          28426878
+        ]
+      },
+      "pr212132_case1": {
+        "modules": [
+          30,
+          70755
+        ],
+        "bytes": [
+          110016292,
+          14381644474
+        ],
+        "functions": [
+          5,
+          28426878
+        ]
+      },
+      "pr212132_case2": {
+        "modules": [
+          21,
+          70755
+        ],
+        "bytes": [
+          74907292,
+          14381644474
+        ],
+        "functions": [
+          2,
+          28426878
+        ]
+      },
+      "pr213313": {
+        "modules": [
+          1150,
+          70755
+        ],
+        "bytes": [
+          1019408557,
+          14381644474
+        ],
+        "functions": [
+          157,
+          28426878
+        ]
+      },
+      "pr213709": {
+        "modules": [
+          6624,
+          70755
+        ],
+        "bytes": [
+          6558084958,
+          14381644474
+        ],
+        "functions": [
+          477,
+          28426878
+        ]
+      },
+      "pr214376": {
+        "modules": [
+          4920,
+          70755
+        ],
+        "bytes": [
+          5232970716,
+          14381644474
+        ],
+        "functions": [
+          68,
+          28426878
+        ]
+      },
+      "pr214381": {
+        "modules": [
+          1078,
+          70755
+        ],
+        "bytes": [
+          1939600326,
+          14381644474
+        ],
+        "functions": [
+          434,
+          28426878
+        ]
+      },
+      "pr214517": {
+        "modules": [
+          1382,
+          70755
+        ],
+        "bytes": [
+          2123211614,
+          14381644474
+        ],
+        "functions": [
+          11,
+          28426878
+        ]
+      },
+      "pr214541": {
+        "modules": [
+          643,
+          70755
+        ],
+        "bytes": [
+          811990633,
+          14381644474
+        ],
+        "functions": [
+          982,
+          28426878
+        ]
+      },
+      "pr215122": {
+        "modules": [
+          3563,
+          70755
+        ],
+        "bytes": [
+          4124612257,
+          14381644474
+        ],
+        "functions": [
+          4686,
+          28426878
+        ]
+      },
+      "pr215130": {
+        "modules": [
+          571,
+          70755
+        ],
+        "bytes": [
+          1400652181,
+          14381644474
+        ],
+        "functions": [
+          14,
+          28426878
+        ]
+      },
+      "pr216046": {
+        "modules": [
+          1083,
+          70755
+        ],
+        "bytes": [
+          1574432016,
+          14381644474
+        ],
+        "functions": [
+          2231,
+          28426878
+        ]
+      },
+      "pr216436": {
+        "modules": [
+          514,
+          70755
+        ],
+        "bytes": [
+          364086464,
+          14381644474
+        ],
+        "functions": [
+          4,
+          28426878
+        ]
+      },
+      "pr216470": {
+        "modules": [
+          8026,
+          70755
+        ],
+        "bytes": [
+          6942204935,
+          14381644474
+        ],
+        "functions": [
+          622,
+          28426878
+        ]
+      }
+    },
+    "per_pattern_candidates": {
+      "pr204089": {
+        "checked": 253162,
+        "total_functions": 28426878,
+        "files_read": 29141,
+        "total_files": 70755
+      },
+      "pr204927": {
+        "checked": 7292,
+        "total_functions": 28426878,
+        "files_read": 3319,
+        "total_files": 70755
+      },
+      "pr204928": {
+        "checked": 23,
+        "total_functions": 28426878,
+        "files_read": 17,
+        "total_files": 70755
+      },
+      "pr205383_sub": {
+        "checked": 6,
+        "total_functions": 28426878,
+        "files_read": 4,
+        "total_files": 70755
+      },
+      "pr205383_xor": {
+        "checked": 2,
+        "total_functions": 28426878,
+        "files_read": 1,
+        "total_files": 70755
+      },
+      "pr207462": {
+        "checked": 314,
+        "total_functions": 28426878,
+        "files_read": 181,
+        "total_files": 70755
+      },
+      "pr207462_mul": {
+        "checked": 7,
+        "total_functions": 28426878,
+        "files_read": 5,
+        "total_files": 70755
+      },
+      "pr207564": {
+        "checked": 812,
+        "total_functions": 28426878,
+        "files_read": 717,
+        "total_files": 70755
+      },
+      "pr209322": {
+        "checked": 200,
+        "total_functions": 28426878,
+        "files_read": 44,
+        "total_files": 70755
+      },
+      "pr210499": {
+        "checked": 9,
+        "total_functions": 28426878,
+        "files_read": 1,
+        "total_files": 70755
+      },
+      "pr212132_case1": {
+        "checked": 4,
+        "total_functions": 28426878,
+        "files_read": 2,
+        "total_files": 70755
+      },
+      "pr212132_case2": {
+        "checked": 2,
+        "total_functions": 28426878,
+        "files_read": 1,
+        "total_files": 70755
+      },
+      "pr213313": {
+        "checked": 157,
+        "total_functions": 28426878,
+        "files_read": 86,
+        "total_files": 70755
+      },
+      "pr213709": {
+        "checked": 477,
+        "total_functions": 28426878,
+        "files_read": 309,
+        "total_files": 70755
+      },
+      "pr214376": {
+        "checked": 68,
+        "total_functions": 28426878,
+        "files_read": 31,
+        "total_files": 70755
+      },
+      "pr214381": {
+        "checked": 434,
+        "total_functions": 28426878,
+        "files_read": 264,
+        "total_files": 70755
+      },
+      "pr214517": {
+        "checked": 11,
+        "total_functions": 28426878,
+        "files_read": 9,
+        "total_files": 70755
+      },
+      "pr214541": {
+        "checked": 982,
+        "total_functions": 28426878,
+        "files_read": 496,
+        "total_files": 70755
+      },
+      "pr215122": {
+        "checked": 4686,
+        "total_functions": 28426878,
+        "files_read": 928,
+        "total_files": 70755
+      },
+      "pr215130": {
+        "checked": 14,
+        "total_functions": 28426878,
+        "files_read": 10,
+        "total_files": 70755
+      },
+      "pr216046": {
+        "checked": 759,
+        "total_functions": 28426878,
+        "files_read": 338,
+        "total_files": 70755
+      },
+      "pr216436": {
+        "checked": 4,
+        "total_functions": 28426878,
+        "files_read": 1,
+        "total_files": 70755
+      },
+      "pr216470": {
+        "checked": 622,
+        "total_functions": 28426878,
+        "files_read": 323,
+        "total_files": 70755
+      }
+    },
+    "per_pattern_candidates_by_tool": {
+      "metaphir-index": {
+        "pr204089": {
+          "checked": 253162,
+          "total_functions": 28426878,
+          "files_read": 29141,
+          "total_files": 70755
+        },
+        "pr204927": {
+          "checked": 7292,
+          "total_functions": 28426878,
+          "files_read": 3319,
+          "total_files": 70755
+        },
+        "pr204928": {
+          "checked": 23,
+          "total_functions": 28426878,
+          "files_read": 17,
+          "total_files": 70755
+        },
+        "pr205383_sub": {
+          "checked": 6,
+          "total_functions": 28426878,
+          "files_read": 4,
+          "total_files": 70755
+        },
+        "pr205383_xor": {
+          "checked": 2,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr207462": {
+          "checked": 314,
+          "total_functions": 28426878,
+          "files_read": 181,
+          "total_files": 70755
+        },
+        "pr207462_mul": {
+          "checked": 7,
+          "total_functions": 28426878,
+          "files_read": 5,
+          "total_files": 70755
+        },
+        "pr207564": {
+          "checked": 812,
+          "total_functions": 28426878,
+          "files_read": 717,
+          "total_files": 70755
+        },
+        "pr209322": {
+          "checked": 200,
+          "total_functions": 28426878,
+          "files_read": 44,
+          "total_files": 70755
+        },
+        "pr210499": {
+          "checked": 9,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr212132_case1": {
+          "checked": 4,
+          "total_functions": 28426878,
+          "files_read": 2,
+          "total_files": 70755
+        },
+        "pr212132_case2": {
+          "checked": 2,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr213313": {
+          "checked": 157,
+          "total_functions": 28426878,
+          "files_read": 86,
+          "total_files": 70755
+        },
+        "pr213709": {
+          "checked": 477,
+          "total_functions": 28426878,
+          "files_read": 309,
+          "total_files": 70755
+        },
+        "pr214376": {
+          "checked": 68,
+          "total_functions": 28426878,
+          "files_read": 31,
+          "total_files": 70755
+        },
+        "pr214381": {
+          "checked": 434,
+          "total_functions": 28426878,
+          "files_read": 264,
+          "total_files": 70755
+        },
+        "pr214517": {
+          "checked": 11,
+          "total_functions": 28426878,
+          "files_read": 9,
+          "total_files": 70755
+        },
+        "pr214541": {
+          "checked": 982,
+          "total_functions": 28426878,
+          "files_read": 496,
+          "total_files": 70755
+        },
+        "pr215122": {
+          "checked": 4686,
+          "total_functions": 28426878,
+          "files_read": 928,
+          "total_files": 70755
+        },
+        "pr215130": {
+          "checked": 14,
+          "total_functions": 28426878,
+          "files_read": 10,
+          "total_files": 70755
+        },
+        "pr216046": {
+          "checked": 759,
+          "total_functions": 28426878,
+          "files_read": 338,
+          "total_files": 70755
+        },
+        "pr216436": {
+          "checked": 4,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr216470": {
+          "checked": 622,
+          "total_functions": 28426878,
+          "files_read": 323,
+          "total_files": 70755
+        }
+      },
+      "ablation-no-value-facts": {
+        "pr204089": {
+          "checked": 253162,
+          "total_functions": 28426878,
+          "files_read": 29141,
+          "total_files": 70755
+        },
+        "pr204927": {
+          "checked": 7292,
+          "total_functions": 28426878,
+          "files_read": 3319,
+          "total_files": 70755
+        },
+        "pr204928": {
+          "checked": 23,
+          "total_functions": 28426878,
+          "files_read": 17,
+          "total_files": 70755
+        },
+        "pr205383_sub": {
+          "checked": 6,
+          "total_functions": 28426878,
+          "files_read": 4,
+          "total_files": 70755
+        },
+        "pr205383_xor": {
+          "checked": 2,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr207462": {
+          "checked": 314,
+          "total_functions": 28426878,
+          "files_read": 181,
+          "total_files": 70755
+        },
+        "pr207462_mul": {
+          "checked": 7,
+          "total_functions": 28426878,
+          "files_read": 5,
+          "total_files": 70755
+        },
+        "pr207564": {
+          "checked": 812,
+          "total_functions": 28426878,
+          "files_read": 717,
+          "total_files": 70755
+        },
+        "pr209322": {
+          "checked": 176291,
+          "total_functions": 28426878,
+          "files_read": 26998,
+          "total_files": 70755
+        },
+        "pr210499": {
+          "checked": 9,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr212132_case1": {
+          "checked": 5,
+          "total_functions": 28426878,
+          "files_read": 2,
+          "total_files": 70755
+        },
+        "pr212132_case2": {
+          "checked": 2,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr213313": {
+          "checked": 157,
+          "total_functions": 28426878,
+          "files_read": 86,
+          "total_files": 70755
+        },
+        "pr213709": {
+          "checked": 477,
+          "total_functions": 28426878,
+          "files_read": 309,
+          "total_files": 70755
+        },
+        "pr214376": {
+          "checked": 68,
+          "total_functions": 28426878,
+          "files_read": 31,
+          "total_files": 70755
+        },
+        "pr214381": {
+          "checked": 434,
+          "total_functions": 28426878,
+          "files_read": 264,
+          "total_files": 70755
+        },
+        "pr214517": {
+          "checked": 11,
+          "total_functions": 28426878,
+          "files_read": 9,
+          "total_files": 70755
+        },
+        "pr214541": {
+          "checked": 982,
+          "total_functions": 28426878,
+          "files_read": 496,
+          "total_files": 70755
+        },
+        "pr215122": {
+          "checked": 4686,
+          "total_functions": 28426878,
+          "files_read": 928,
+          "total_files": 70755
+        },
+        "pr215130": {
+          "checked": 14,
+          "total_functions": 28426878,
+          "files_read": 10,
+          "total_files": 70755
+        },
+        "pr216046": {
+          "checked": 2231,
+          "total_functions": 28426878,
+          "files_read": 837,
+          "total_files": 70755
+        },
+        "pr216436": {
+          "checked": 4,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr216470": {
+          "checked": 622,
+          "total_functions": 28426878,
+          "files_read": 323,
+          "total_files": 70755
+        }
+      },
+      "ablation-no-constraint-prefilter": {
+        "pr204089": {
+          "checked": 253162,
+          "total_functions": 28426878,
+          "files_read": 29141,
+          "total_files": 70755
+        },
+        "pr204927": {
+          "checked": 8631,
+          "total_functions": 28426878,
+          "files_read": 3873,
+          "total_files": 70755
+        },
+        "pr204928": {
+          "checked": 25,
+          "total_functions": 28426878,
+          "files_read": 18,
+          "total_files": 70755
+        },
+        "pr205383_sub": {
+          "checked": 8,
+          "total_functions": 28426878,
+          "files_read": 4,
+          "total_files": 70755
+        },
+        "pr205383_xor": {
+          "checked": 13,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr207462": {
+          "checked": 340,
+          "total_functions": 28426878,
+          "files_read": 192,
+          "total_files": 70755
+        },
+        "pr207462_mul": {
+          "checked": 11,
+          "total_functions": 28426878,
+          "files_read": 7,
+          "total_files": 70755
+        },
+        "pr207564": {
+          "checked": 2478,
+          "total_functions": 28426878,
+          "files_read": 1615,
+          "total_files": 70755
+        },
+        "pr209322": {
+          "checked": 176291,
+          "total_functions": 28426878,
+          "files_read": 26998,
+          "total_files": 70755
+        },
+        "pr210499": {
+          "checked": 9,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr212132_case1": {
+          "checked": 6,
+          "total_functions": 28426878,
+          "files_read": 2,
+          "total_files": 70755
+        },
+        "pr212132_case2": {
+          "checked": 2,
+          "total_functions": 28426878,
+          "files_read": 1,
+          "total_files": 70755
+        },
+        "pr213313": {
+          "checked": 157,
+          "total_functions": 28426878,
+          "files_read": 86,
+          "total_files": 70755
+        },
+        "pr213709": {
+          "checked": 9229,
+          "total_functions": 28426878,
+          "files_read": 1954,
+          "total_files": 70755
+        },
+        "pr214376": {
+          "checked": 78,
+          "total_functions": 28426878,
+          "files_read": 37,
+          "total_files": 70755
+        },
+        "pr214381": {
+          "checked": 698,
+          "total_functions": 28426878,
+          "files_read": 415,
+          "total_files": 70755
+        },
+        "pr214517": {
+          "checked": 40,
+          "total_functions": 28426878,
+          "files_read": 16,
+          "total_files": 70755
+        },
+        "pr214541": {
+          "checked": 1309,
+          "total_functions": 28426878,
+          "files_read": 699,
+          "total_files": 70755
+        },
+        "pr215122": {
+          "checked": 9375,
+          "total_functions": 28426878,
+          "files_read": 1993,
+          "total_files": 70755
+        },
+        "pr215130": {
+          "checked": 60,
+          "total_functions": 28426878,
+          "files_read": 44,
+          "total_files": 70755
+        },
+        "pr216046": {
+          "checked": 2231,
+          "total_functions": 28426878,
+          "files_read": 837,
+          "total_files": 70755
+        },
+        "pr216436": {
+          "checked": 127,
+          "total_functions": 28426878,
+          "files_read": 75,
+          "total_files": 70755
+        },
+        "pr216470": {
+          "checked": 776,
+          "total_functions": 28426878,
+          "files_read": 415,
+          "total_files": 70755
+        }
+      }
+    }
+  },
+  "tool_failures": {
+    "metaphir-index": 0,
+    "daggrep": 0
+  }
+}

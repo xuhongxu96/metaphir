@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """The evaluation corpora, their paths, and their ground-truth references.
 
-Three cut points:
+Four cut points:
 
   original         raw original/*.bc, no opt
   thinlto-prelink  opt -passes='thinlto-pre-link<O2>', evaluated folds disabled
+  before-ic1       default<O2> up to its first InstCombine, folds disabled
   o2-final         opt -passes='default<O2>', evaluated folds disabled
 
 Each corpus is scored twice: direct (its own ``gt/``) and real scenario (the
@@ -59,6 +60,7 @@ CORPORA: dict[str, Corpus] = {
     "thinlto-prelink": _corpus(
         "thinlto-prelink", "thinlto-prelink", "thinlto-pre-link<O2>"
     ),
+    "before-ic1": _corpus("before-ic1", "before-ic1", "before-instcombine:1"),
     "o2-final": _corpus("o2-final", "o2-final", "default<O2>"),
 }
 

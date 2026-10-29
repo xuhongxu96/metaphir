@@ -6,11 +6,12 @@ functions where the instrumented InstCombine fold fires (G). It runs over
 InstSimplify test suites, and includes the daggrep baseline (see
 [`eval/baselines/daggrep/`](../eval/baselines/daggrep/README.md)).
 
-There are three corpora, each a different cut point:
+There are four corpora, each a different cut point:
 
 | Corpus | Results | Made with | |
 |---|---|---|---|
 | `eval/corpus-original` | `eval/results/original` | raw `original/*.bc`, no `opt` | untouched, O0-ish IR |
+| `eval/corpus-before-ic1` | `eval/results/before-ic1` | `prepare_corpus.py --kind before-ic1` | every module just before O2's first InstCombine (after SROA and `mem2reg`), with the evaluated folds disabled |
 | `eval/corpus-thinlto-prelink` | `eval/results/thinlto-prelink` | `prepare_corpus.py --kind thinlto-prelink` | every module through O2's simplification stage, as ThinLTO's pre-link step writes it, with the evaluated folds disabled |
 | `eval/corpus-o2-final` | `eval/results/o2-final` | `prepare_corpus.py --kind o2-final` | every module at the end of the standard O2 pipeline, with the evaluated folds disabled |
 
@@ -33,7 +34,7 @@ Each corpus is scored twice:
   original IR, reporting every function where a fold fires (including
   `instsimplify` passes and pipeline-created instructions).
 
-`original` collects both. `thinlto-prelink` and `o2-final` collect their own
+`original` collects both. `before-ic1`, `thinlto-prelink` and `o2-final` collect their own
 direct `gt/` and are also scored against `original/gt-pipeline`. Reports:
 `REPORT.md`/`summary.json` are direct; `REPORT-pipeline.md`/
 `summary-pipeline.json` are real scenario. Both score the llvm-opt-benchmark
@@ -44,10 +45,12 @@ direct ground truth only (a test file is not a real-scenario input).
 ## Preparing a corpus and running every step
 
 ```sh
-# o2-final and thinlto-prelink preprocess the benchmark modules
+# o2-final, thinlto-prelink and before-ic1 preprocess the benchmark modules
 uv run eval/scripts/prepare_corpus.py --kind o2-final \
   --bench-root <llvm-opt-benchmark> --jobs 80
 uv run eval/scripts/prepare_corpus.py --kind thinlto-prelink \
+  --bench-root <llvm-opt-benchmark> --jobs 80
+uv run eval/scripts/prepare_corpus.py --kind before-ic1 \
   --bench-root <llvm-opt-benchmark> --jobs 80
 
 # original copies the raw modules (by default, the exact set of o2-final)
@@ -57,6 +60,7 @@ uv run eval/scripts/prepare_corpus.py --kind original \
 eval/scripts/run_all.sh original 80       # its gt-pipeline is the real-scenario reference
 eval/scripts/run_all.sh o2-final 80
 eval/scripts/run_all.sh thinlto-prelink 80
+eval/scripts/run_all.sh before-ic1 80
 ```
 
 The two `velox` modules with invalid debug info still fail `opt`; pass

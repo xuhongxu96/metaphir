@@ -1,0 +1,532 @@
+{
+  "title": "MetaphIR evaluation (test suite)",
+  "provenance": {
+    "metaphir_commit": "f1c6f0d5d63a4bce1596d16b1bca03b6b514e971 (with uncommitted changes)",
+    "llvm_commit": "79b321b1238ceaf8261a5b177185a3ec5111918a",
+    "machine": {
+      "cpu": "Neoverse-N1 (aarch64)",
+      "cores": "80",
+      "memory": "502 GiB",
+      "os": "Ubuntu 22.04.5 LTS, Linux 5.15.0-174-generic"
+    },
+    "corpus": {
+      "path": "eval/corpus-before-ic1",
+      "files": 1912,
+      "bytes": 20545930
+    }
+  },
+  "rq1": {
+    "patterns": 23,
+    "instructions": 75,
+    "constraints": 20,
+    "max_instructions": 6,
+    "patterns_using": {
+      "constant_class": 10,
+      "commutative": 12,
+      "one_use": 13,
+      "stdlib_composite": 9,
+      "value_tracking": 8,
+      "intrinsic": 6,
+      "own_composite": 1,
+      "or_self": 1
+    }
+  },
+  "ground_truth": "/data/h445xu/repo/metaphir/eval/results/before-ic1/gt",
+  "ground_truth_cpu_seconds": 358994.342,
+  "per_pr": {
+    "pr204089": {
+      "metaphir-index": {
+        "G": 2,
+        "P": 3,
+        "TP": 2,
+        "FP": 1,
+        "FN": 0,
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8
+      },
+      "daggrep": {
+        "G": 2,
+        "P": 6,
+        "TP": 2,
+        "FP": 4,
+        "FN": 0,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "f1": 0.5
+      }
+    },
+    "pr204927": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 5,
+        "TP": 5,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 7,
+        "TP": 5,
+        "FP": 2,
+        "FN": 0,
+        "precision": 0.7142857142857143,
+        "recall": 1.0,
+        "f1": 0.8333333333333334
+      }
+    },
+    "pr204928": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 5,
+        "TP": 5,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 7,
+        "TP": 5,
+        "FP": 2,
+        "FN": 0,
+        "precision": 0.7142857142857143,
+        "recall": 1.0,
+        "f1": 0.8333333333333334
+      }
+    },
+    "pr205383": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 4,
+        "TP": 4,
+        "FP": 0,
+        "FN": 1,
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.8888888888888888
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 16,
+        "TP": 5,
+        "FP": 11,
+        "FN": 0,
+        "precision": 0.3125,
+        "recall": 1.0,
+        "f1": 0.47619047619047616
+      }
+    },
+    "pr207462": {
+      "metaphir-index": {
+        "G": 3,
+        "P": 3,
+        "TP": 3,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 3,
+        "P": 6,
+        "TP": 3,
+        "FP": 3,
+        "FN": 0,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666
+      }
+    },
+    "pr207564": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 6,
+        "TP": 5,
+        "FP": 1,
+        "FN": 0,
+        "precision": 0.8333333333333334,
+        "recall": 1.0,
+        "f1": 0.9090909090909091
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 7,
+        "TP": 5,
+        "FP": 2,
+        "FN": 0,
+        "precision": 0.7142857142857143,
+        "recall": 1.0,
+        "f1": 0.8333333333333334
+      }
+    },
+    "pr209322": {
+      "metaphir-index": {
+        "G": 15,
+        "P": 19,
+        "TP": 14,
+        "FP": 5,
+        "FN": 1,
+        "precision": 0.7368421052631579,
+        "recall": 0.9333333333333333,
+        "f1": 0.8235294117647058
+      },
+      "daggrep": {
+        "G": 15,
+        "P": 607,
+        "TP": 15,
+        "FP": 592,
+        "FN": 0,
+        "precision": 0.02471169686985173,
+        "recall": 1.0,
+        "f1": 0.04823151125401929
+      }
+    },
+    "pr210499": {
+      "metaphir-index": {
+        "G": 8,
+        "P": 8,
+        "TP": 8,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 8,
+        "P": 10,
+        "TP": 8,
+        "FP": 2,
+        "FN": 0,
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888
+      }
+    },
+    "pr212132": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 5,
+        "TP": 5,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 5,
+        "TP": 3,
+        "FP": 2,
+        "FN": 2,
+        "precision": 0.6,
+        "recall": 0.6,
+        "f1": 0.6
+      }
+    },
+    "pr213313": {
+      "metaphir-index": {
+        "G": 10,
+        "P": 10,
+        "TP": 10,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 10,
+        "P": 10,
+        "TP": 10,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "pr213709": {
+      "metaphir-index": {
+        "G": 17,
+        "P": 17,
+        "TP": 17,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 17,
+        "P": 27,
+        "TP": 17,
+        "FP": 10,
+        "FN": 0,
+        "precision": 0.6296296296296297,
+        "recall": 1.0,
+        "f1": 0.7727272727272727
+      }
+    },
+    "pr214376": {
+      "metaphir-index": {
+        "G": 14,
+        "P": 13,
+        "TP": 13,
+        "FP": 0,
+        "FN": 1,
+        "precision": 1.0,
+        "recall": 0.9285714285714286,
+        "f1": 0.9629629629629629
+      },
+      "daggrep": {
+        "G": 14,
+        "P": 18,
+        "TP": 14,
+        "FP": 4,
+        "FN": 0,
+        "precision": 0.7777777777777778,
+        "recall": 1.0,
+        "f1": 0.875
+      }
+    },
+    "pr214381": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 7,
+        "TP": 5,
+        "FP": 2,
+        "FN": 0,
+        "precision": 0.7142857142857143,
+        "recall": 1.0,
+        "f1": 0.8333333333333334
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 12,
+        "TP": 5,
+        "FP": 7,
+        "FN": 0,
+        "precision": 0.4166666666666667,
+        "recall": 1.0,
+        "f1": 0.5882352941176471
+      }
+    },
+    "pr214517": {
+      "metaphir-index": {
+        "G": 3,
+        "P": 3,
+        "TP": 3,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 3,
+        "P": 3,
+        "TP": 2,
+        "FP": 1,
+        "FN": 1,
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "f1": 0.6666666666666666
+      }
+    },
+    "pr214541": {
+      "metaphir-index": {
+        "G": 5,
+        "P": 5,
+        "TP": 5,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 5,
+        "P": 15,
+        "TP": 5,
+        "FP": 10,
+        "FN": 0,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "f1": 0.5
+      }
+    },
+    "pr215122": {
+      "metaphir-index": {
+        "G": 8,
+        "P": 8,
+        "TP": 8,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 8,
+        "P": 11,
+        "TP": 8,
+        "FP": 3,
+        "FN": 0,
+        "precision": 0.7272727272727273,
+        "recall": 1.0,
+        "f1": 0.8421052631578947
+      }
+    },
+    "pr215130": {
+      "metaphir-index": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 0,
+        "P": 0,
+        "TP": 0,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "pr216046": {
+      "metaphir-index": {
+        "G": 9,
+        "P": 9,
+        "TP": 9,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 9,
+        "P": 15,
+        "TP": 9,
+        "FP": 6,
+        "FN": 0,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75
+      }
+    },
+    "pr216436": {
+      "metaphir-index": {
+        "G": 4,
+        "P": 4,
+        "TP": 4,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 4,
+        "P": 6,
+        "TP": 4,
+        "FP": 2,
+        "FN": 0,
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8
+      }
+    },
+    "pr216470": {
+      "metaphir-index": {
+        "G": 7,
+        "P": 7,
+        "TP": 7,
+        "FP": 0,
+        "FN": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "daggrep": {
+        "G": 7,
+        "P": 19,
+        "TP": 7,
+        "FP": 12,
+        "FN": 0,
+        "precision": 0.3684210526315789,
+        "recall": 1.0,
+        "f1": 0.5384615384615384
+      }
+    }
+  },
+  "totals": {
+    "metaphir-index": {
+      "all": {
+        "G": 135,
+        "P": 141,
+        "TP": 132,
+        "FP": 9,
+        "FN": 3,
+        "precision": 0.9361702127659575,
+        "recall": 0.9777777777777777,
+        "f1": 0.9565217391304348,
+        "exact_prs": 14
+      },
+      "without_pr204089": {
+        "G": 133,
+        "P": 138,
+        "TP": 130,
+        "FP": 8,
+        "FN": 3,
+        "precision": 0.9420289855072463,
+        "recall": 0.9774436090225563,
+        "f1": 0.959409594095941,
+        "exact_prs": 14
+      }
+    },
+    "daggrep": {
+      "all": {
+        "G": 135,
+        "P": 807,
+        "TP": 132,
+        "FP": 675,
+        "FN": 3,
+        "precision": 0.16356877323420074,
+        "recall": 0.9777777777777777,
+        "f1": 0.2802547770700637,
+        "exact_prs": 2
+      },
+      "without_pr204089": {
+        "G": 133,
+        "P": 801,
+        "TP": 130,
+        "FP": 671,
+        "FN": 3,
+        "precision": 0.16229712858926343,
+        "recall": 0.9774436090225563,
+        "f1": 0.278372591006424,
+        "exact_prs": 2
+      }
+    }
+  },
+  "tool_failures": {
+    "metaphir-index": 0,
+    "daggrep": 0
+  }
+}

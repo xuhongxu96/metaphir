@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Prepare a MetaphIR evaluation corpus.
 
-Three kinds, each written to a gitignored ``eval/corpus-<kind>``:
+Four kinds, each written to a gitignored ``eval/corpus-<kind>``:
 
   original         every ``original/*.bc`` copied verbatim (no ``opt``)
   thinlto-prelink  ``opt -passes='thinlto-pre-link<O2>'``, folds disabled
+  before-ic1       ``default<O2>`` up to the first InstCombine, folds disabled
   o2-final         ``opt -passes='default<O2>'``, folds disabled
+
+``before-ic1`` is cut from ``opt -print-pipeline-passes``, so it follows the LLVM
+that is built. The first InstCombine is a module-level step, so the cut is exact.
+Later runs are inside the inliner's per-function walk, where O2 optimizes each
+callee before inlining it, so a pipeline cut cannot give their exact input.
 
 Every corpus also gets the top-level InstCombine and InstSimplify tests, copied
 as ``InstCombine__<file>.ll`` / ``InstSimplify__<file>.ll``. Tests that do not
@@ -46,11 +52,39 @@ KNOWN_FAILURES = {
     "velox/original/EventBase.bc",
     "velox/original/ThreadPoolExecutor.bc",
 }
+# A pipeline, or ``before-instcombine:<N>`` for ``default<O2>`` up to its Nth
+# InstCombine (see ``pipeline_before_instcombine``).
 KINDS = {
     "original": None,
     "thinlto-prelink": "thinlto-pre-link<O2>",
+    "before-ic1": "before-instcombine:1",
     "o2-final": "default<O2>",
 }
+BEFORE_INSTCOMBINE = "before-instcombine:"
+INSTCOMBINE_RE = re.compile(r"(?<=[,(])instcombine<")
+
+
+def pipeline_before_instcombine(opt: Path, n: int) -> str:
+    """``default<O2>`` up to, not including, its Nth InstCombine run."""
+    proc = subprocess.run(
+        [str(opt), "-passes=default<O2>", "-print-pipeline-passes", "-disable-output"],
+        input="",
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    text = (proc.stdout + proc.stderr).strip()
+    starts = [m.start() for m in INSTCOMBINE_RE.finditer(text)]
+    if n > len(starts):
+        sys.exit(f"default<O2> has {len(starts)} InstCombine runs, not {n}")
+    prefix = text[: starts[n - 1]].rstrip(",")
+    return prefix + ")" * (prefix.count("(") - prefix.count(")"))
+
+
+def resolve_passes(spec: str, opt: Path) -> str:
+    if spec.startswith(BEFORE_INSTCOMBINE):
+        return pipeline_before_instcombine(opt, int(spec[len(BEFORE_INSTCOMBINE) :]))
+    return spec
 
 
 def module_entries(bench_root: Path) -> list[tuple[str, Path]]:
@@ -264,6 +298,8 @@ def main() -> int:
         ap.error("--passes is not allowed with --kind original")
     corpus = args.corpus or REPO / "eval" / f"corpus-{args.kind}"
     passes = args.passes or KINDS[args.kind]
+    if passes is not None:
+        passes = resolve_passes(passes, args.opt)
 
     if not args.tests_only:
         if args.bench_root is None:

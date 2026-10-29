@@ -1,0 +1,11 @@
+InstCombine__set.ll	neg_sext_or_trunc_nsw_multi_use
+InstCombine__set.ll	neg_sext_or_trunc_nsw_type
+InstCombine__set.ll	sext_and_trunc_nsw
+InstCombine__set.ll	sext_or_trunc_nsw
+InstCombine__set.ll	sext_or_trunc_nsw_multi_use
+InstCombine__set.ll	sext_or_trunc_nsw_vec
+InstCombine__set.ll	sext_xor_trunc_nsw
+abc__fraigCanon.bc	Fraig_NodeAndCanon
+abc__utilAigSim.bc	SimulateCompareAigAig
+abc__utilAigSim.bc	SimulateCompareAigBin
+lightgbm__dataset.bc	_ZNK8LightGBM7Dataset15FixHistogramIntIiiLi16ELi16EEEvilPd

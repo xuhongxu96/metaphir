@@ -255,12 +255,16 @@ export const CORPORA_INTRO =
 
 export const CORPORA_NOTES = [
   "Each version has the same 68,843 benchmark modules and 1,912 InstCombine and InstSimplify test files.",
-  "In ThinLTO pre-link and O2 final, the folds from the examples are turned off, so the code they would have changed is still there to match.",
+  "In every version but Original IR, the folds from the examples are turned off, so the code they would have changed is still there to match.",
 ];
 
 /** What each corpus gives, by its id in config.json. */
 export const CORPORA: Record<string, { title: string; gives: string }> = {
   original: { title: "Original IR", gives: "The code before LLVM changes anything." },
+  "before-ic1": {
+    title: "Before InstCombine 1",
+    gives: "Just before the first InstCombine, after SROA has turned stack slots into values.",
+  },
   "thinlto-prelink": {
     title: "ThinLTO pre-link",
     gives: "Cleaned up and inlined, but before the late loop and vector passes.",
@@ -281,8 +285,13 @@ export const PIPELINE: PipelineStep[] = [
     stage: "Early cleanup",
     passes: [
       "forceattrs", "inferattrs", "lower-expect", "simplifycfg", "sroa", "early-cse",
-      "ipsccp", "globalopt", "mem2reg", "instcombine", "always-inline",
+      "ipsccp", "globalopt", "mem2reg",
     ],
+  },
+  { cut: "before-ic1" },
+  {
+    stage: "Early cleanup, continued",
+    passes: ["instcombine", "simplifycfg", "always-inline"],
   },
   {
     stage: "Inlining and cleanup of each function",

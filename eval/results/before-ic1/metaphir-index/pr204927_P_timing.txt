@@ -1,0 +1,12 @@
+modules=70755
+tool=metaphir-index
+jobs=80
+repeat=3
+pattern_seconds=4.263
+seconds[pr204927]=4.263
+checked[pr204927]=7292
+total_functions[pr204927]=28426878
+files_read[pr204927]=3319
+total_files[pr204927]=70755
+patterns=1
+P_functions=5651

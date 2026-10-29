@@ -3,7 +3,7 @@
 #
 # Usage: eval/scripts/run_all.sh <corpus-name> [jobs]
 #
-# Corpus names: original | thinlto-prelink | o2-final (see corpora.py).
+# Corpus names: original | thinlto-prelink | before-ic1 | o2-final (see corpora.py).
 #
 # Every corpus is scored twice:
 #   metrics/<tool>.txt            direct: its own gt/ (one instcombine)

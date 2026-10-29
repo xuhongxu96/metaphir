@@ -1,0 +1,6 @@
+InstCombine__add-mask-neg.ll	align_up_via_or
+InstCombine__add-mask-neg.ll	align_up_via_or_multiuse_or
+InstCombine__add-mask-neg.ll	align_up_via_or_multiuse_sub
+InstCombine__add-mask-neg.ll	align_up_via_or_not_lowbitmask
+InstCombine__add-mask-neg.ll	align_up_via_or_nsw_nuw
+InstCombine__add-mask-neg.ll	align_up_via_or_vec

@@ -1,0 +1,10 @@
+InstCombine__fold-and-zext-sext.ll	fold_zext_sext
+InstCombine__fold-and-zext-sext.ll	fold_zext_sext_commuted
+InstCombine__fold-and-zext-sext.ll	fold_zext_sext_vec
+InstCombine__fold-and-zext-sext.ll	multi_use_fold_zext_sext_1
+InstCombine__fold-and-zext-sext.ll	multi_use_fold_zext_sext_2
+InstCombine__fold-or-zext-sext.ll	fold_zext_sext
+InstCombine__fold-or-zext-sext.ll	fold_zext_sext_commuted
+InstCombine__fold-or-zext-sext.ll	fold_zext_sext_vec
+InstCombine__fold-or-zext-sext.ll	multi_use_fold_zext_sext_1
+InstCombine__fold-or-zext-sext.ll	multi_use_fold_zext_sext_2
