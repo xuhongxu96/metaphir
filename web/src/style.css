@@ -642,5 +642,44 @@ td {
 }
 .menu-item:focus-visible { outline: none; }
 .menu-item[aria-selected="true"] { font-weight: 600; }
+.menu-action { margin-top: 0.25rem; border-top: 1px solid var(--border); border-radius: 0 0 4px 4px; }
 .menu-link { flex: none; padding-right: 0.6rem; font-size: 0.8rem; }
 .icon-button { padding: 0.3rem 0.5rem; line-height: 1; }
+
+/* The dialog that keeps the user's own corpora. */
+.corpora-dialog { width: min(38rem, 100%); max-height: calc(100vh - 2rem); display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.corpora-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--border); }
+.corpora-head h2 { margin: 0; }
+.corpora-head p { margin: 0.15rem 0 0; font-size: 0.85rem; color: var(--muted); }
+.corpora-x { flex: none; padding: 0.3rem; line-height: 0; border-color: transparent; background: none; color: var(--muted); }
+.corpora-x:hover { color: var(--fg); }
+.corpora-body { display: grid; gap: 0.75rem; padding: 1rem 1.25rem 1.25rem; overflow-y: auto; min-height: 0; }
+.corpora-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.corpora-list li { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; }
+.corpora-list li[data-active="true"] { border-color: color-mix(in srgb, var(--fg) 35%, var(--border)); background: var(--accent-bg); }
+.corpus-text { flex: 1 1 auto; min-width: 0; display: grid; gap: 0.1rem; }
+.corpus-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.corpus-url { color: var(--muted); font: 12px/1.4 var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.corpus-actions { flex: none; display: flex; align-items: center; gap: 0.25rem; }
+.corpus-actions button { padding: 0.2rem 0.55rem; font-size: 0.85rem; }
+.corpus-actions button.quiet { border-color: transparent; background: none; color: var(--muted); }
+.corpus-actions button.quiet:hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 9%, var(--bg)); }
+.corpus-actions button.danger { color: var(--error); }
+.corpus-badge { padding: 0.15rem 0.55rem; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.corpora-empty { margin: 0; padding: 1.25rem; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: 8px; }
+.corpora-add { padding: 0.55rem; border-style: dashed; background: none; color: var(--muted); }
+.corpora-add:hover { color: var(--fg); }
+.corpora-form { display: grid; gap: 0.75rem; padding: 0.9rem; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--fg) 3%, var(--bg)); }
+.corpora-form h3 { margin: 0; font-size: 0.9rem; }
+.corpora-form label { display: grid; gap: 0.25rem; }
+.corpora-form label > span { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.corpora-form small { font-size: 0.8rem; color: var(--muted); }
+.corpora-form input { padding: 0.4rem 0.55rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+.corpora-form input:focus-visible { outline: 2px solid var(--accent, #0969da); outline-offset: -1px; }
+.corpora-form .form-error { margin: 0; color: var(--error); font-size: 0.85rem; }
+.corpora-form .form-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.corpora-dialog code { overflow-wrap: anywhere; }
+@media (max-width: 30rem) {
+  .corpora-list li { flex-wrap: wrap; }
+  .corpus-actions { width: 100%; justify-content: flex-end; }
+}

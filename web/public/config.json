@@ -1,5 +1,5 @@
 {
-  "default": "thinlto-prelink",
+  "default": "o2-final",
   "corpora": [
     {
       "id": "original",

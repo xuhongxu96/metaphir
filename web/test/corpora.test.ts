@@ -65,3 +65,16 @@ test("findCorpus falls back to the first", () => {
   assert.equal(findCorpus(config, "missing").id, "a");
   assert.equal(findCorpus(config, null).id, "a");
 });
+
+test("an unknown id uses the default corpus", () => {
+  const config = parseConfig({
+    default: "b",
+    corpora: [
+      { id: "a", data: "https://a" },
+      { id: "b", data: "https://b" },
+    ],
+  });
+  assert.equal(findCorpus(config, "zzz").id, "b");
+  assert.equal(findCorpus(config, null).id, "b");
+  assert.equal(findCorpus(config, "a").id, "a");
+});

@@ -70,5 +70,9 @@ export function findCorpus(
   config: SiteConfig,
   id: string | null,
 ): CorpusConfig {
-  return config.corpora.find((c) => c.id === id) ?? config.corpora[0];
+  return (
+    config.corpora.find((c) => c.id === id) ??
+    config.corpora.find((c) => c.id === config.default) ??
+    config.corpora[0]
+  );
 }

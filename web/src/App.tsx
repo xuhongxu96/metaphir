@@ -3,6 +3,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { useColorScheme, type SchemePreference } from "./colorScheme.ts";
 import { Menu } from "./Menu.tsx";
+import { CustomCorporaDialog } from "./CustomCorporaDialog.tsx";
+import {
+  addCorpus,
+  loadCustom,
+  newCustomId,
+  removeCorpus,
+  saveCustom,
+  updateCorpus,
+  withCustom,
+  type CustomCorpus,
+} from "./customCorpora.ts";
 import { findCorpus, loadConfig, type SiteConfig } from "./corpora.ts";
 import {
   EDITOR_OPTIONS,
@@ -112,7 +123,18 @@ const STDLIB_DEFINITIONS = definitionsIn(STDLIB);
 export function App() {
   const { preference, setPreference, dark } = useColorScheme();
   const theme = themeName(dark);
-  const [siteConfig, setSiteConfig] = useState<SiteConfig>();
+  const [baseConfig, setBaseConfig] = useState<SiteConfig>();
+  // The corpora the user added, kept in this browser.
+  const [custom, setCustom] = useState<CustomCorpus[]>(loadCustom);
+  const [corporaOpen, setCorporaOpen] = useState(false);
+  const siteConfig = useMemo(
+    () => baseConfig && withCustom(baseConfig, custom),
+    [baseConfig, custom],
+  );
+  const changeCustom = (next: CustomCorpus[]) => {
+    setCustom(next);
+    saveCustom(next);
+  };
   const [corpusId, setCorpusId] = useState<string>();
   const [corpus, setCorpus] = useState<PublishedCorpus>();
   const [source, setSource] = useState<Source>("published");
@@ -273,8 +295,8 @@ export function App() {
     loadConfig().then(
       (config) => {
         const requested = new URLSearchParams(location.search).get("corpus");
-        setSiteConfig(config);
-        setCorpusId(findCorpus(config, requested).id);
+        setBaseConfig(config);
+        setCorpusId(findCorpus(withCustom(config, custom), requested).id);
       },
       (error: Error) =>
         results.published.setStatus({ text: error.message, error: true }),
@@ -297,9 +319,16 @@ export function App() {
   }, [siteConfig, corpusId]);
 
   // Open the selected corpus; cancel and dispose the previous one on switch.
+  const selectedKey = (() => {
+    const c = siteConfig && corpusId ? findCorpus(siteConfig, corpusId) : undefined;
+    return c ? `${c.id}\n${c.data}` : "";
+  })();
+  const siteConfigRef = useRef(siteConfig);
+  siteConfigRef.current = siteConfig;
   useEffect(() => {
-    if (!siteConfig || !corpusId) return;
-    const selected = findCorpus(siteConfig, corpusId);
+    const config = siteConfigRef.current;
+    if (!config || !corpusId) return;
+    const selected = findCorpus(config, corpusId);
     if (selected.id !== corpusId) {
       setCorpusId(selected.id);
       return;
@@ -349,7 +378,7 @@ export function App() {
       opened?.dispose();
       setCorpus((current) => (current === opened ? undefined : current));
     };
-  }, [siteConfig, corpusId]);
+  }, [selectedKey, corpusId]);
 
   const irDiagnostics = useMemo(
     () => (irLinked ? diagnostics.filter((d) => d.file && inFile(d, IR_FILE)) : []),
@@ -499,6 +528,7 @@ export function App() {
             title="Match the published corpus"
             items={corpusItems}
             selected={activeCorpus?.id}
+            action={{ label: "Custom…", onSelect: () => setCorporaOpen(true) }}
             pressed={source === "published"}
             onPress={() => {
               if (source === "published") return;
@@ -569,6 +599,29 @@ export function App() {
         </a>
         <ProgressBar status={status} />
       </header>
+      {corporaOpen && (
+        <CustomCorporaDialog
+          corpora={custom}
+          activeId={activeCorpus?.id}
+          onAdd={(fields) => {
+            const id = newCustomId(
+              custom,
+              new Set(baseConfig?.corpora.map((c) => c.id)),
+            );
+            changeCustom(addCorpus(custom, { id, ...fields }));
+            setCorpusId(id);
+            setSource("published");
+          }}
+          onUpdate={(id, fields) => changeCustom(updateCorpus(custom, id, fields))}
+          onDelete={(id) => changeCustom(removeCorpus(custom, id))}
+          onUse={(id) => {
+            setCorpusId(id);
+            setSource("published");
+            setCorporaOpen(false);
+          }}
+          onClose={() => setCorporaOpen(false)}
+        />
+      )}
       {helpOpen && (
         <GuideDialog
           onTry={(text) => {

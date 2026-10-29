@@ -21,6 +21,7 @@ export function Menu({
   pressed,
   wide,
   onPress,
+  action,
   onSelect,
   children,
 }: {
@@ -38,6 +39,8 @@ export function Menu({
   wide?: boolean;
   /** Called on each press; returns false to keep the list closed. */
   onPress?: () => boolean | void;
+  /** A button after the items that does something instead of choosing. */
+  action?: { label: string; onSelect: () => void };
   onSelect: (id: string) => void;
   children: ReactNode;
 }) {
@@ -47,7 +50,7 @@ export function Menu({
   // The list hangs from the button's right edge when it would run past the
   // window's.
   const [flip, setFlip] = useState(false);
-  const choosable = items.length > 1;
+  const choosable = items.length > 1 || action !== undefined;
   useDismiss(root, open, () => setOpen(false));
   useLayoutEffect(() => {
     if (!open) return setFlip(false);
@@ -135,6 +138,19 @@ export function Menu({
               )}
             </div>
           ))}
+          {action && (
+            <div role="none" className="menu-row menu-action">
+              <button
+                className="menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  action.onSelect();
+                }}
+              >
+                {action.label}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
