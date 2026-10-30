@@ -8,9 +8,10 @@ let session: Session | undefined;
 type Call = { id: number; method: string; args: unknown[] };
 
 const methods: Record<string, (...args: any[]) => unknown> = {
-  async init(moduleUrl: string, header: Uint8Array) {
+  async init(moduleUrl: string, header: Uint8Array, mode = 0) {
     const module = await loadModule(moduleUrl);
     session = new module.Session(header);
+    session.setMode(mode);
     const error = session.error();
     if (error) throw new Error(error);
     return { functions: session.numFunctions(), modules: session.numModules() };

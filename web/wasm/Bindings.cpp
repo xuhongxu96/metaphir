@@ -69,6 +69,10 @@ public:
         Cache.add(WebFile(F), uint64_t(Offset), Bytes);
   }
 
+  /// How later queries narrow the functions to match (see WebQueryMode):
+  /// 0 full, 1 without constraints, 2 without the index.
+  void setMode(unsigned NewMode) { Mode = WebQueryMode(NewMode); }
+
   /// Compiles Pattern, named Name in diagnostics, for the stages and match.
   val compile(const std::string &Pattern, const std::string &Name) {
     if (!Index)
@@ -82,6 +86,7 @@ public:
     if (!Compiled)
       return errorValue(Compiled.takeError());
     Query = std::move(*Compiled);
+    Query->setMode(Mode);
     val Result = rangesValue(Query->getKeyRanges());
     val Warnings = val::array();
     for (const PatternNote &Warning : Query->getWarnings())
@@ -197,6 +202,7 @@ private:
   std::unique_ptr<WebIndex> Index;
   std::unique_ptr<WebQuery> Query;
   ByteCache Cache;
+  WebQueryMode Mode = WebQueryMode::Full;
 };
 
 } // namespace
@@ -207,6 +213,7 @@ EMSCRIPTEN_BINDINGS(metaphir) {
       .function("error", &Session::error)
       .function("numFunctions", &Session::numFunctions)
       .function("numModules", &Session::numModules)
+      .function("setMode", &Session::setMode)
       .function("add", &Session::add)
       .function("compile", &Session::compile)
       .function("findLists", &Session::findLists)

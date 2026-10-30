@@ -107,6 +107,13 @@ export function describe(progress: Progress): Status {
       ...matchDetails(checking ? 4 : 3, progress.structural, progress.matched, progress.matches),
     );
   }
+  if (progress.skipped > 0)
+    details.push({
+      label: "could not be read",
+      value: progress.skipped.toLocaleString(),
+      hint: "Functions the corpus holds that LLVM could not read; they are left out of the matching.",
+      level: 3,
+    });
   details.push(
     { label: "read", value: `${(progress.bytes / 1e6).toFixed(1)} MB` },
     { label: "time", value: `${progress.seconds.toFixed(1)} s` },

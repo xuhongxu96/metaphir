@@ -18,6 +18,18 @@ namespace metaphir {
 
 class FeatureQuery;
 
+/// How a query narrows the functions to match; all but Full are for
+/// measuring what each part of the index saves.
+enum class WebQueryMode : uint8_t {
+  /// The posting lists, then the features, evaluating the constraints on them.
+  Full,
+  /// As Full, but a function's features need only have the instructions the
+  /// pattern matches (as metaphir-match --no-constraint-prefilter).
+  NoConstraints,
+  /// Without the index: every function is matched, so every pack is read.
+  NoIndex,
+};
+
 /// A function's IR as LLVM prints it, and the line of each of its
 /// instructions (counted from 1), in order.
 struct PrintedFunction {
@@ -71,6 +83,8 @@ public:
 
   ~WebQuery();
 
+  void setMode(WebQueryMode NewMode) { Mode = NewMode; }
+
   std::vector<ByteRange> getKeyRanges() const;
   Expected<std::vector<ByteRange>> findLists(const ByteCache &Cache);
   Expected<std::vector<ByteRange>> findCandidates(const ByteCache &Cache);
@@ -115,6 +129,7 @@ private:
   locate(size_t Position, const ByteCache &Cache) const;
 
   const WebIndex &Index;
+  WebQueryMode Mode = WebQueryMode::Full;
   std::unique_ptr<Compiled> Pattern;
   std::vector<SmallVector<PostingKey, 3>> Chosen;
   /// The lists of the chosen keys: where they are and their lengths.

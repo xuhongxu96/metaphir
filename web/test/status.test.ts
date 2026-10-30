@@ -13,6 +13,7 @@ const progress = (matches: number): Progress => ({
   candidates: 30,
   matchable: 20,
   checked: 10,
+  skipped: 0,
   structural: 5,
   matches,
   matched: 3,

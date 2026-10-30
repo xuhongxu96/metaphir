@@ -82,6 +82,7 @@ export class SessionPool {
     size: number,
     moduleUrl: string,
     header: Uint8Array,
+    mode = 0,
   ): Promise<{ pool: SessionPool; functions: number; modules: number }> {
     const sessions = Array.from(
       { length: size },
@@ -98,6 +99,7 @@ export class SessionPool {
           "init",
           moduleUrl,
           header,
+          mode,
         ),
       ),
     );

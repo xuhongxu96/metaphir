@@ -12,6 +12,7 @@
 #include "metaphir/Matching/Target.h"
 #include "metaphir/Parser/MIRParser.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/IR/AssemblyAnnotationWriter.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
@@ -23,6 +24,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+#include <numeric>
 
 namespace llvm {
 namespace metaphir {
@@ -78,6 +80,8 @@ WebQuery::compile(const WebIndex &Index, StringRef Source, StringRef Name) {
 
 std::vector<ByteRange> WebQuery::getKeyRanges() const {
   std::vector<ByteRange> Ranges;
+  if (Mode == WebQueryMode::NoIndex)
+    return Ranges;
   for (unsigned Variant = 0; Variant != Pattern->Query.size(); ++Variant)
     for (const PostingKey &Key :
          getPostingKeys(Pattern->Query.getRequirement(Variant)))
@@ -87,6 +91,8 @@ std::vector<ByteRange> WebQuery::getKeyRanges() const {
 }
 
 Expected<std::vector<ByteRange>> WebQuery::findLists(const ByteCache &Cache) {
+  if (Mode == WebQueryMode::NoIndex)
+    return std::vector<ByteRange>();
   std::map<PostingKey, std::optional<WebPosting>> Postings;
   for (unsigned Variant = 0; Variant != Pattern->Query.size(); ++Variant)
     for (const PostingKey &Key :
@@ -121,6 +127,14 @@ Expected<std::vector<ByteRange>> WebQuery::findLists(const ByteCache &Cache) {
 
 Expected<std::vector<ByteRange>>
 WebQuery::findCandidates(const ByteCache &Cache) {
+  if (Mode == WebQueryMode::NoIndex) {
+    // Every function, so the entries of all of them.
+    Candidates.resize(Index.getNumFunctions());
+    std::iota(Candidates.begin(), Candidates.end(), 0);
+    return std::vector<ByteRange>{ByteRange{
+        WebFile::Index, 0,
+        (uint64_t(Candidates.size()) + 1) * WebIndexEntrySize}};
+  }
   std::map<PostingKey, std::vector<uint32_t>> Numbers;
   for (const ChosenList &List : Lists) {
     if (Numbers.count(List.Key))
@@ -167,6 +181,8 @@ WebQuery::locate(size_t Position, const ByteCache &Cache) const {
 Expected<std::vector<ByteRange>>
 WebQuery::findFeatures(const ByteCache &Cache) {
   std::vector<ByteRange> Ranges;
+  if (Mode == WebQueryMode::NoIndex)
+    return Ranges;
   for (size_t Position = 0; Position != Candidates.size(); ++Position) {
     Expected<std::pair<ByteRange, PackLocation>> Location =
         locate(Position, Cache);
@@ -186,6 +202,11 @@ WebQuery::filterCandidates(const ByteCache &Cache) {
         locate(Position, Cache);
     if (!Location)
       return Location.takeError();
+    if (Mode == WebQueryMode::NoIndex) {
+      Matchable.push_back(Candidates[Position]);
+      Packs.push_back(Location->second);
+      continue;
+    }
     Expected<StringRef> Frame = Cache.read(Location->first);
     if (!Frame)
       return Frame.takeError();
@@ -196,7 +217,13 @@ WebQuery::filterCandidates(const ByteCache &Cache) {
     Expected<FunctionFeatures> Features = readFunctionFeatures(*Bytes);
     if (!Features)
       return Features.takeError();
-    if (!Pattern->Query.mayMatch(*Features))
+    if (Mode == WebQueryMode::NoConstraints
+            ? !any_of(seq<unsigned>(0, Pattern->Query.size()),
+                      [&](unsigned Variant) {
+                        return Pattern->Query.mayMatchStructure(Variant,
+                                                                *Features);
+                      })
+            : !Pattern->Query.mayMatch(*Features))
       continue;
     Matchable.push_back(Candidates[Position]);
     Packs.push_back(Location->second);

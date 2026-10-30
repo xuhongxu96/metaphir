@@ -146,6 +146,8 @@ export interface Progress {
   matchable?: number;
   /** The functions checked so far. */
   checked: number;
+  /** Those of them that could not be read or matched, and were left out. */
+  skipped: number;
   /** The functions checked with a structural match, satisfying the
    * constraints or not. */
   structural: number;
@@ -156,6 +158,16 @@ export interface Progress {
   requests: number;
   bytes: number;
   seconds: number;
+}
+
+/**
+ * For measuring what each part of the index saves: ?mode=no-constraints
+ * filters features without evaluating constraints, ?mode=no-index reads and
+ * matches every function. Not offered in the page.
+ */
+function queryMode(): number {
+  const mode = new URLSearchParams(location.search).get("mode");
+  return mode === "no-constraints" ? 1 : mode === "no-index" ? 2 : 0;
 }
 
 export class PublishedCorpus {
@@ -203,6 +215,7 @@ export class PublishedCorpus {
       workers,
       wasmUrl("metaphir.js"),
       header,
+      queryMode(),
     );
     if (signal?.aborted) {
       pool.dispose();
@@ -246,6 +259,7 @@ export class PublishedCorpus {
       modules: this.modules,
       functions: this.functions,
       checked: 0,
+      skipped: 0,
       structural: 0,
       matches: 0,
       matched: 0,
@@ -307,6 +321,11 @@ export class PublishedCorpus {
       },
       onCompiled: (warnings: Note[]) => {
         progress.warnings = warnings;
+      },
+      onSkipped: () => {
+        progress.checked++;
+        progress.skipped++;
+        report(progress.stage, false);
       },
       onMatched: (
         fn: number,

@@ -111,3 +111,21 @@ test("reads a frame once, and matches each function whose pack it holds", async 
   assert.deepEqual(corpus.slots, [0, 1, 2, 0, 1, 2, 0]);
   assert.deepEqual(corpus.read, [0, 1, 2]);
 });
+
+test("a function that cannot be matched is skipped and the query goes on", async () => {
+  const corpus = new FakeCorpus(4);
+  const good = corpus.matcher();
+  const matcher = {
+    ...good,
+    match: async (fn: number, frame: Uint8Array, slot: number) =>
+      fn === 1 ? { error: "function 1: preferred alignment" } : good.match(fn, frame, slot),
+  };
+  const skipped: number[] = [];
+  const matched: number[] = [];
+  await runQuery("p", "p.mpir", corpus.coordinator, [matcher], corpus.fetcher, {
+    onSkipped: (fn: number) => skipped.push(fn),
+    onMatched: (fn: number) => matched.push(fn),
+  });
+  assert.deepEqual(skipped, [1]);
+  assert.deepEqual(matched.sort(), [0, 2, 3]);
+});

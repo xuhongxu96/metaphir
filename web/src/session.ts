@@ -7,6 +7,7 @@ export interface Session {
   error(): string;
   numFunctions(): number;
   numModules(): number;
+  setMode(mode: number): void;
   add(file: string, offset: number, bytes: Uint8Array): void;
   compile(pattern: string, name: string): StageResult;
   findLists(): StageResult;

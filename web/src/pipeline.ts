@@ -130,6 +130,9 @@ export interface QueryEvents {
   onCandidates?(candidates: number, matchable: Matchable[]): void;
   /** The pattern compiled, with these warnings. */
   onCompiled?(warnings: Note[]): void;
+  /** A function could not be read or matched, such as one whose IR the
+   * corpus holds but LLVM rejects; the query goes on without it. */
+  onSkipped?(fn: number, message: string): void;
   /** Function was matched; lines are its matches, possibly none, and
    * rejected the constraints that rejected its structural matches, in the
    * function named where; structural tells whether it has any. */
@@ -214,9 +217,8 @@ export async function runQuery(
       }
       const result = await matcher.match(next.fn, next.frame, next.slot);
       if ("error" in result) {
-        failure ??= new Error(result.error);
-        wakeAll();
-        return;
+        events.onSkipped?.(next.fn, result.error);
+        continue;
       }
       const where =
         result.module !== undefined && result.function !== undefined
