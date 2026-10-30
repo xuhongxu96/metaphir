@@ -131,9 +131,9 @@ WebQuery::findCandidates(const ByteCache &Cache) {
     // Every function, so the entries of all of them.
     Candidates.resize(Index.getNumFunctions());
     std::iota(Candidates.begin(), Candidates.end(), 0);
-    return std::vector<ByteRange>{ByteRange{
-        WebFile::Index, 0,
-        (uint64_t(Candidates.size()) + 1) * WebIndexEntrySize}};
+    return std::vector<ByteRange>{
+        ByteRange{WebFile::Index, 0,
+                  (uint64_t(Candidates.size()) + 1) * WebIndexEntrySize}};
   }
   std::map<PostingKey, std::vector<uint32_t>> Numbers;
   for (const ChosenList &List : Lists) {
