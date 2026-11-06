@@ -6,7 +6,7 @@
 # Corpus names: original | thinlto-prelink | before-ic1 | o2-final (see corpora.py).
 #
 # Every corpus is scored twice:
-#   metrics/<tool>.txt            direct: its own gt/ (one instcombine)
+#   metrics/<tool>.txt            direct: its own gt/ (each fold alone)
 #   metrics/<tool>-pipeline.txt   real scenario: original/gt-pipeline (the e2e
 #                                 default<O2> run on the raw original IR)
 # and gets REPORT.md/summary.json plus REPORT-pipeline.md/summary-pipeline.json.
@@ -31,18 +31,19 @@ run_eval() { uv run eval/scripts/run_eval.py "$@"; }
 run_baseline() { uv run eval/scripts/run_baseline.py "$@"; }
 step() { echo "[$(date '+%F %T')] $*"; }
 
+step "gt (direct: each fold alone)"
+cmake -S eval/fold-plugin -B eval/fold-plugin/build \
+    -DLLVM_DIR="$REPO/llvm-project/build/lib/cmake/llvm" >"$LOGS/gt.log" 2>&1
+cmake --build eval/fold-plugin/build >>"$LOGS/gt.log" 2>&1
+uv run eval/scripts/check_fold_plugin.py >>"$LOGS/gt.log" 2>&1
+uv run eval/scripts/run_folds.py --corpus "$CORPUS" --results "$RESULTS" -j "$JOBS" \
+    >>"$LOGS/gt.log" 2>&1
+
 if [[ "$KIND" == "original" ]]; then
-    step "gt (direct: one instcombine)"
-    run_eval gt --corpus "$CORPUS" --results "$RESULTS" --gt-dir gt -j "$JOBS" \
-        >"$LOGS/gt.log" 2>&1
     step "gt-pipeline (real scenario: default<O2>, all firings)"
     run_eval gt --corpus "$CORPUS" --results "$RESULTS" --gt-dir gt-pipeline \
         --passes 'default<O2>' --firings all -j "$JOBS" \
         >"$LOGS/gt-pipeline.log" 2>&1
-else
-    step "gt (direct: one instcombine)"
-    run_eval gt --corpus "$CORPUS" --results "$RESULTS" --gt-dir gt -j "$JOBS" \
-        >"$LOGS/gt.log" 2>&1
 fi
 
 if [[ -f "$INDEX" ]]; then

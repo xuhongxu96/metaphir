@@ -1,3 +1,0 @@
-modules=70755
-prs=20
-gt_seconds=447862.106

@@ -15,7 +15,7 @@ There are four corpora, each a different cut point:
 | `eval/corpus-thinlto-prelink` | `eval/results/thinlto-prelink` | `prepare_corpus.py --kind thinlto-prelink` | every module through O2's simplification stage, as ThinLTO's pre-link step writes it, with the evaluated folds disabled |
 | `eval/corpus-o2-final` | `eval/results/o2-final` | `prepare_corpus.py --kind o2-final` | every module at the end of the standard O2 pipeline, with the evaluated folds disabled |
 
-Only `o2-final` has its results committed, and `original` its ground truths, which
+Only `o2-final` has its results committed, and `original` its `gt-pipeline/`, which
 the real-scenario scores need. `run_all.sh` regenerates the others.
 
 Every corpus contains the same benchmark modules (68,843; the two `velox`
@@ -30,9 +30,8 @@ parse standalone are skipped and logged (currently one:
 
 Each corpus is scored twice:
 
-- **Direct** (`gt/`): one `instcombine` pass on the corpus IR, reporting
-  firings rooted at instructions of that input. This is what a pattern matched
-  on the corpus can see.
+- **Direct** (`gt/`): each fold alone, on the corpus IR. This is what a pattern
+  matched on the corpus can see, and it does not depend on any other fold.
 - **Real scenario** (`gt-pipeline/`): the e2e `default<O2>` run on the raw
   original IR, reporting every function where a fold fires (including
   `instsimplify` passes and pipeline-created instructions).
@@ -47,19 +46,18 @@ direct ground truth only (a test file is not a real-scenario input).
 
 ### Each fold alone
 
-Both ground truths depend on the rest of InstCombine: other folds can rewrite an
+A run of `instcombine` would depend on the rest of it: other folds can rewrite an
 instruction before a fold sees it, or create the shape it fires on, so updating
-`opt` can change a fold's ground truth even if the fold did not change. A third
-one has no other fold in it. `eval/fold-plugin` holds the folds as a pass plugin:
-each is tried on every input instruction and its rewrite undone, so each sees the
-file as it is.
+`opt` could change a fold's ground truth even if the fold did not change.
+`eval/fold-plugin` holds the folds as a pass plugin instead: each is tried on every
+input instruction and its rewrite undone, so each sees the file as it is.
 
 ```bash
 cmake -S eval/fold-plugin -B eval/fold-plugin/build \
       -DLLVM_DIR=$PWD/llvm-project/build/lib/cmake/llvm
 cmake --build eval/fold-plugin/build
 eval/scripts/check_fold_plugin.py   # the copied code is still InstCombine's
-eval/scripts/run_isolated.py        # eval/results/o2-final-isolated
+eval/scripts/run_folds.py           # eval/results/o2-final/gt
 ```
 
 The folds are copied almost verbatim: `check_fold_plugin.py` requires each line
@@ -72,9 +70,6 @@ Because a fold then runs without canonicalization, it can miss non-canonical IR
 the full pass would fold (for example `and i32 15, %x`, which `m_And` reaches only
 with the constant on the right). The plugin's pass is optional, like InstCombine,
 so it skips `optnone` functions, while a pattern matches them.
-
-`REPORT-isolated.md` scores the predictions already saved in `--results` against
-this ground truth and against InstCombine's, and compares the two.
 
 ### WebAssembly
 
@@ -122,7 +117,7 @@ per kind:
 
 | Path | Contents | Written by |
 |---|---|---|
-| `gt/` | `<pr>_G.functions`: the functions each fold fires in (direct) | `run_eval.py gt` |
+| `gt/` | `<pr>_G.functions`: the functions each fold fires in, alone (direct); `firings.tsv`: its firings | `run_folds.py` |
 | `gt-pipeline/` | the same for the e2e O2 run on original | `run_eval.py gt --passes 'default<O2>' --firings all` |
 | `metaphir-index/` | `<pr>_P.functions`: the functions MetaphIR's patterns match, using the index | `run_baseline.py metaphir-index` |
 | `metaphir-scan/` | the same, without the index | `run_baseline.py metaphir-scan` |
@@ -168,8 +163,8 @@ of 3 runs.
 
 ```sh
 # direct GT
-uv run eval/scripts/run_eval.py gt --corpus eval/corpus-o2-final \
-  --results eval/results/o2-final --gt-dir gt -j 80
+uv run eval/scripts/run_folds.py --corpus eval/corpus-o2-final \
+  --results eval/results/o2-final -j 80
 # real-scenario GT (original only)
 uv run eval/scripts/run_eval.py gt --corpus eval/corpus-original \
   --results eval/results/original --gt-dir gt-pipeline \
@@ -201,9 +196,9 @@ on every module with ground-truth functions.
 | `--results <dir>` | all but `index` | the corpus's results directory (required) |
 | `--gt-dir <name>` | `gt`, `check-index`, `metrics` | ground-truth subdirectory (default: `gt`) |
 | `--gt <dir>` | `check-index`, `metrics` | another results directory to score against (e.g. `eval/results/original` with `--gt-dir gt-pipeline`) |
-| `--passes <pipeline>` | `gt` | the pipeline whose firings are G (default: `function(instcombine<no-verify-fixpoint>)`) |
+| `--passes <pipeline>` | `gt` | the pipeline whose firings are G |
 | `--committed {ablation,anchor}` | `gt` | `ablation` (default) keeps a firing only if the function's IR changes when that PR's folds are off; `anchor` keeps every reported anchor |
-| `--firings {input,all}` | `gt` | `input` roots anchors at input instructions (direct); `all` reports every function-level firing (real scenario) |
+| `--firings {input,all}` | `gt` | `input` roots anchors at input instructions; `all` reports every function-level firing (real scenario) |
 | `--index <file>` | `index`, `check-index` | the index to write or use (required) |
 | `--tool <tool>` | `metrics` | whose predictions to score (default: `metaphir-index`) |
 | `--sample <n>` | `check-index` | random modules to check besides those with ground-truth functions (default: 200) |
@@ -219,15 +214,14 @@ on every module with ground-truth functions.
 | `METAPHIR_EVAL_ABLATE` | unset | set by `gt --committed ablation`; a comma-separated list of PRs whose folds are turned off |
 | `METAPHIR_EVAL_ALL_FIRINGS` | unset | set by `gt --firings all`; report every function where a fold fires in the pipeline, not only firings rooted at instructions present when InstCombine started |
 
-### Direct firings vs every firing
+### Every firing
 
-A fold firing has a *root* instruction. `gt --firings input` (the default)
-reports `ANCHOR <function> <fold>` only when the root is an instruction of the
-function at the start of the InstCombine invocation and was not erased. On a
-corpus with a single `instcombine` (the direct GT), that is exactly the input
-a pattern sees. `gt --firings all` reports the function instead, whichever pass
-emits the firing and whether or not the root existed when that pass started.
-Use it for the real-scenario GT: the e2e `default<O2>` run on original IR.
+`run_eval.py gt` runs a pipeline with the instrumented folds. It is how the
+real-scenario GT is collected, and `gt --firings all` reports the function a fold
+fires in, whichever pass emits the firing and whether or not the root existed when
+that pass started. `gt --firings input`, the default, reports it only when the root
+is an instruction of the function at the start of the InstCombine invocation and
+was not erased.
 
 Three examples of what only the all-firings mode sees:
 
@@ -236,7 +230,7 @@ Three examples of what only the all-firings mode sees:
    mode reports nothing. On `InstSimplify/cast.ll`:
 
    ```sh
-   # direct (input): no ANCHOR lines
+   # input: no ANCHOR lines
    METAPHIR_EVAL_ENABLED=1 opt -passes='function(instsimplify)' \
      llvm-project/llvm/test/Transforms/InstSimplify/cast.ll -disable-output
 
@@ -263,16 +257,9 @@ Three examples of what only the all-firings mode sees:
    then an unmatched function (FN) when scoring a pattern matched on the
    corpus — a real-scenario gap, not a pattern miss.
 
-The two modes answer different questions: input mode asks "which input sites
-would the fold fire on?", all-firings asks "which functions does the fold fire
-in during the real pipeline?". The evaluation uses input for every direct
-`gt/` and all-firings for `original`'s `gt-pipeline/`:
+The real-scenario GT uses all firings:
 
 ```sh
-# direct
-uv run eval/scripts/run_eval.py gt --corpus eval/corpus-o2-final \
-  --results eval/results/o2-final --gt-dir gt --firings input -j 80
-# real scenario
 uv run eval/scripts/run_eval.py gt --corpus eval/corpus-original \
   --results eval/results/original --gt-dir gt-pipeline \
   --passes 'default<O2>' --firings all -j 80
@@ -301,9 +288,6 @@ Two effects to keep in mind:
   to the same result, is dropped. G then means "the fold changed the output".
 - `gt_seconds` in `gt/timing.txt` includes the ablation runs, so it is several
   times the cost of the anchor run alone.
-
-On `o2-final`, `pr204089` has 1,830 anchored functions and 1,096 that change the
-IR; `pr213313` has 13 and 10.
 
 ## Comparing the corpora
 
