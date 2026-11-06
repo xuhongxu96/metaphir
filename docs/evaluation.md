@@ -15,6 +15,9 @@ There are four corpora, each a different cut point:
 | `eval/corpus-thinlto-prelink` | `eval/results/thinlto-prelink` | `prepare_corpus.py --kind thinlto-prelink` | every module through O2's simplification stage, as ThinLTO's pre-link step writes it, with the evaluated folds disabled |
 | `eval/corpus-o2-final` | `eval/results/o2-final` | `prepare_corpus.py --kind o2-final` | every module at the end of the standard O2 pipeline, with the evaluated folds disabled |
 
+Only `o2-final` has its results committed, and `original` its ground truths, which
+the real-scenario scores need. `run_all.sh` regenerates the others.
+
 Every corpus contains the same benchmark modules (68,843; the two `velox`
 modules with invalid debug info are omitted) and the **entire top-level
 InstCombine and InstSimplify test suites**: 1,718 + 194 `.ll` files, copied
@@ -41,6 +44,53 @@ direct `gt/` and are also scored against `original/gt-pipeline`. Reports:
 modules only; the upstream test files (`InstCombine__*.ll`,
 `InstSimplify__*.ll`) are scored separately in `REPORT-tests.md`, against the
 direct ground truth only (a test file is not a real-scenario input).
+
+### Each fold alone
+
+Both ground truths depend on the rest of InstCombine: other folds can rewrite an
+instruction before a fold sees it, or create the shape it fires on, so updating
+`opt` can change a fold's ground truth even if the fold did not change. A third
+one has no other fold in it. `eval/fold-plugin` holds the folds as a pass plugin:
+each is tried on every input instruction and its rewrite undone, so each sees the
+file as it is.
+
+```bash
+cmake -S eval/fold-plugin -B eval/fold-plugin/build \
+      -DLLVM_DIR=$PWD/llvm-project/build/lib/cmake/llvm
+cmake --build eval/fold-plugin/build
+eval/scripts/check_fold_plugin.py   # the copied code is still InstCombine's
+eval/scripts/run_isolated.py        # eval/results/o2-final-isolated
+```
+
+The folds are copied almost verbatim: `check_fold_plugin.py` requires each line
+of a copied block to be in the patched source, in order, except those marked
+`// differs`, which replace the visitor around a fold. Conditions on the path to
+a fold are kept, and folds before it are left out. The result still depends on
+the fold's own code and on analyses such as known bits.
+
+Because a fold then runs without canonicalization, it can miss non-canonical IR
+the full pass would fold (for example `and i32 15, %x`, which `m_And` reaches only
+with the constant on the right). The plugin's pass is optional, like InstCombine,
+so it skips `optnone` functions, while a pattern matches them.
+
+`REPORT-isolated.md` scores the predictions already saved in `--results` against
+this ground truth and against InstCombine's, and compares the two.
+
+### WebAssembly
+
+`REPORT.md` has a section on the runs of `eval/scripts/web_ablate.mjs` saved in
+`<results>/web`, when there are any. Each runs every pattern in the production
+site with a cold browser context and a throttled download, in one query mode;
+save them as `full_<n>.jsonl` and `nc_<n>.jsonl`:
+
+```bash
+node eval/scripts/web_ablate.mjs eval/publish/o2-final o2-final full \
+     eval/results/o2-final/web/full_1.jsonl --mbps 10 --limit 900
+node eval/scripts/web_ablate.mjs eval/publish/o2-final o2-final no-constraints \
+     eval/results/o2-final/web/nc_1.jsonl --mbps 10 --limit 900
+```
+
+`METAPHIR_CHROMIUM` chooses the browser if Playwright's own is not installed.
 
 ## Preparing a corpus and running every step
 
@@ -264,4 +314,5 @@ uv run eval/scripts/compare_corpora.py --update-config web/public/config.json
 
 `compare_corpora.py` prints direct and real-scenario F1 for the three corpora
 and names the best real-scenario corpus. `--update-config` sets the website's
-default to it.
+default to it. It needs the results of those corpora, so run `run_all.sh` on them
+first.
