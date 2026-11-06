@@ -18,6 +18,11 @@ There are four corpora, each a different cut point:
 Only `o2-final` has its results committed, and `original` its `gt-pipeline/`, which
 the real-scenario scores need. `run_all.sh` regenerates the others.
 
+`prepare_corpus.py` removes the bodies of `optnone` functions from every corpus,
+since no pass optimizes them, so they are in no ground truth and a pattern should
+not match them. It needs the plugin of "Each fold alone" built, and
+`--drop-optnone-only` applies this to a corpus already prepared.
+
 Every corpus contains the same benchmark modules (68,843; the two `velox`
 modules with invalid debug info are omitted) and the **entire top-level
 InstCombine and InstSimplify test suites**: 1,718 + 194 `.ll` files, copied
@@ -49,8 +54,9 @@ direct ground truth only (a test file is not a real-scenario input).
 A run of `instcombine` would depend on the rest of it: other folds can rewrite an
 instruction before a fold sees it, or create the shape it fires on, so updating
 `opt` could change a fold's ground truth even if the fold did not change.
-`eval/fold-plugin` holds the folds as a pass plugin instead: each is tried on every
-input instruction and its rewrite undone, so each sees the file as it is.
+`eval/fold-plugin` holds the folds as a pass plugin instead: with one PR enabled at a
+time, its fold is tried on every input instruction. It stops where it would rewrite,
+so each sees the file as it is.
 
 ```bash
 cmake -S eval/fold-plugin -B eval/fold-plugin/build \
@@ -63,13 +69,12 @@ eval/scripts/run_folds.py           # eval/results/o2-final/gt
 The folds are copied almost verbatim: `check_fold_plugin.py` requires each line
 of a copied block to be in the patched source, in order, except those marked
 `// differs`, which replace the visitor around a fold. Conditions on the path to
-a fold are kept, and folds before it are left out. The result still depends on
+a fold are kept, and every other fold is left out. The result still depends on
 the fold's own code and on analyses such as known bits.
 
 Because a fold then runs without canonicalization, it can miss non-canonical IR
 the full pass would fold (for example `and i32 15, %x`, which `m_And` reaches only
-with the constant on the right). The plugin's pass is optional, like InstCombine,
-so it skips `optnone` functions, while a pattern matches them.
+with the constant on the right).
 
 ### WebAssembly
 

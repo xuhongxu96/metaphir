@@ -5,16 +5,17 @@
 //
 //   opt -load-pass-plugin=MetaphIRFolds.so -passes=metaphir-folds -disable-output
 //
-// Every fold is tried on every instruction of the input. After each try its
-// rewrite is undone, so each one sees the input as it is in the file. A fold's
-// firings are reported as "ANCHOR <function> <pr>", once per function, and
-// counted as "FIRINGS <function> <pr> <n>", on stderr.
+// The PRs are enabled one by one, so the input is parsed once: with each alone,
+// its fold is tried on every instruction of the input. A fold's firings are
+// reported as "ANCHOR <function> <pr>", once per function, and counted as
+// "FIRINGS <function> <pr> <n>", on stderr.
 //
 // The code between BEGIN and END is copied from the patched InstCombine source
 // named after BEGIN. eval/scripts/check_fold_plugin.py checks that each of its
 // lines is in that file, in the same order, except those marked "differs":
 // those replace the visitor around a fold. Conditions on the path to a fold are
-// kept; folds that come before it in the visitor are left out.
+// kept; every other fold is left out, and so is what a fold rewrites after it
+// fires, so the input stays as it is in the file.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,13 +23,10 @@
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/DomConditionCache.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/PatternMatch.h"
@@ -41,10 +39,19 @@ using namespace llvm::PatternMatch;
 
 namespace {
 
-/// The names the copied folds use. Every fold here is enabled; reportAnchor
-/// counts a firing.
+/// The PRs the plugin holds, enabled one by one.
+const StringRef PRs[] = {
+    "pr204089", "pr204927", "pr204928", "pr205383", "pr207462",
+    "pr207564", "pr209322", "pr210499", "pr212132", "pr213313",
+    "pr213709", "pr214376", "pr214381", "pr214517", "pr214541",
+    "pr215122", "pr215130", "pr216046", "pr216436", "pr216470",
+};
+
+/// The names the copied folds use. Only the fold of the current PR is enabled;
+/// reportAnchor counts a firing.
 namespace metaphir_eval {
-bool foldEnabled(StringRef) { return true; }
+StringRef Enabled;
+bool foldEnabled(StringRef PR) { return PR == Enabled; }
 StringMap<unsigned> *Firings;
 void reportAnchor(const Instruction *, StringRef PR) { ++(*Firings)[PR]; }
 } // namespace metaphir_eval
@@ -102,12 +109,9 @@ static bool MatchDiv(Value *E, Value *&Op, APInt &C, bool IsSigned) {
 }
 // END
 
-using BuilderTy = IRBuilder<TargetFolder, IRBuilderCallbackInserter>;
-
 // BEGIN pr205383 llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
 static Instruction *foldSelectCtlzToCttz(ICmpInst *ICI, Value *TrueVal,
-                                         Value *FalseVal,
-                                         BuilderTy &Builder) { // differs
+                                         Value *FalseVal) { // differs
   unsigned BitWidth = TrueVal->getType()->getScalarSizeInBits();
   if (!ICI->isEquality() || !match(ICI->getOperand(1), m_Zero()))
     return nullptr;
@@ -136,17 +140,12 @@ static Instruction *foldSelectCtlzToCttz(ICmpInst *ICI, Value *TrueVal,
   if (!match(II->getOperand(0), m_c_And(m_Specific(X), m_Neg(m_Specific(X)))))
     return nullptr;
 
-  // The original select returns the constant bitwidth when x == 0, so the
-  // result is defined there; the cttz must use is_zero_poison = false.
-  Function *F = Intrinsic::getOrInsertDeclaration(
-      II->getModule(), Intrinsic::cttz, II->getType());
-  return CallInst::Create(F, {X, Builder.getFalse()});
+  return II; // differs
 }
 // END
 
 // BEGIN pr212132 llvm/lib/Transforms/InstCombine/InstCombineSelect.cpp
 static Instruction *foldSelectAndOrPowerOfTwo(SelectInst &SI,
-                                              BuilderTy &Builder, // differs
                                               const SimplifyQuery &SQ) {
   Value *Cond = SI.getCondition();
 
@@ -178,8 +177,7 @@ static Instruction *foldSelectAndOrPowerOfTwo(SelectInst &SI,
 
   if ((Case1 || Case2) && isKnownToBeAPowerOfTwo(Shift, /*OrZero=*/true,
                                                  SQ.getWithInstruction(&SI))) {
-    Value *And1 = Builder.CreateAnd(Shift, A);
-    return BinaryOperator::CreateAnd(And1, B);
+    return &SI; // differs
   }
 
   return nullptr;
@@ -188,24 +186,9 @@ static Instruction *foldSelectAndOrPowerOfTwo(SelectInst &SI,
 
 /// What the folds use of InstCombinerImpl, with the same names.
 struct Folds {
-  const DataLayout &DL;
   AssumptionCache &AC;
   DominatorTree &DT;
   SimplifyQuery SQ;
-  BuilderTy Builder;
-
-  Folds(Function &F, const DataLayout &DL, AssumptionCache &AC,
-        DominatorTree &DT, TargetLibraryInfo &TLI, DomConditionCache &DC,
-        SmallVectorImpl<Instruction *> &Created)
-      : DL(DL), AC(AC), DT(DT),
-        SQ(DL, &TLI, &DT, &AC, nullptr, /*UseInstrInfo*/ true,
-           /*CanUseUndef*/ true, &DC),
-        Builder(F.getContext(), TargetFolder(DL),
-                IRBuilderCallbackInserter(
-                    [&Created](Instruction *I) { Created.push_back(I); })) {}
-
-  /// The replacement is not made: the rewrite is undone after the fold.
-  Instruction *replaceInstUsesWith(Instruction &I, Value *) { return &I; }
 
   bool willNotOverflowUnsignedAdd(const WithCache<const Value *> &LHS,
                                   const WithCache<const Value *> &RHS,
@@ -293,21 +276,9 @@ struct Folds {
   if (metaphir_eval::foldEnabled("pr207564") &&
       match(Src, m_Sub(m_Zero(), m_Trunc(m_SpecificType(DestTy, X))))) {
     metaphir_eval::reportAnchor(&Zext, "pr207564");
-    APInt Mask = APInt::getLowBitsSet(DestTy->getScalarSizeInBits(),
-                                      SrcTy->getScalarSizeInBits());
-    Value *Neg = Builder.CreateSub(ConstantInt::get(DestTy, 0), X);
-    return BinaryOperator::CreateAnd(Neg, ConstantInt::get(DestTy, Mask));
-  }
-  return nullptr; // differs
-  } // differs
-
-  Instruction *visitZExt2(ZExtInst &Zext) { // differs
-  if (Zext.hasOneUse() && isa<TruncInst>(Zext.user_back()) && // differs
-      !isa<Constant>(Zext.getOperand(0))) // differs
     return nullptr; // differs
-  Value *Src = Zext.getOperand(0); // differs
-  Type *DestTy = Zext.getType(); // differs
-  Value *X; // differs
+  }
+
   Value *Y;
   // [MetaphIR eval] PR 204927: zext(and/or/xor(trunc nuw x), y) ->
   // and/or/xor(zext(y), x).
@@ -315,9 +286,7 @@ struct Folds {
       match(Src, m_OneUse(m_c_BitwiseLogic(
                      m_NUWTrunc(m_SpecificType(DestTy, X)), m_Value(Y))))) {
     metaphir_eval::reportAnchor(&Zext, "pr204927");
-    Value *ZextY = Builder.CreateZExt(Y, DestTy);
-    return BinaryOperator::Create(cast<BinaryOperator>(Src)->getOpcode(), X,
-                                  ZextY);
+    return nullptr; // differs
   }
   return nullptr; // differs
   } // differs
@@ -340,9 +309,7 @@ struct Folds {
       match(Src, m_OneUse(m_c_BitwiseLogic(
                      m_NSWTrunc(m_SpecificType(DestTy, X)), m_Value(Y))))) {
     metaphir_eval::reportAnchor(&Sext, "pr204928");
-    Value *SextY = Builder.CreateSExt(Y, DestTy);
-    return BinaryOperator::Create(cast<BinaryOperator>(Src)->getOpcode(), X,
-                                  SextY);
+    return nullptr; // differs
   }
 
   return nullptr;
@@ -360,7 +327,7 @@ struct Folds {
       (Trunc.hasNoUnsignedWrap() || Trunc.hasNoSignedWrap()) &&
       match(Src, m_Exact(m_Shr(m_Value(X), m_Value())))) {
     metaphir_eval::reportAnchor(&Trunc, "pr210499");
-    return new ICmpInst(ICmpInst::ICMP_NE, X, Constant::getNullValue(SrcTy));
+    return nullptr; // differs
   }
   return nullptr; // differs
   } // differs
@@ -373,7 +340,7 @@ struct Folds {
   // [MetaphIR eval] PR 205383: (bw-1) - ctlz(x & -x) -> cttz (sub and xor forms).
   if (metaphir_eval::foldEnabled("pr205383")) {
     if (Instruction *V =
-            foldSelectCtlzToCttz(ICI, TrueVal, FalseVal, Builder)) {
+            foldSelectCtlzToCttz(ICI, TrueVal, FalseVal)) { // differs
       metaphir_eval::reportAnchor(&SI, "pr205383");
       return V;
     }
@@ -386,7 +353,7 @@ struct Folds {
   Instruction *visitSelectInst(SelectInst &SI) { // differs
   // [MetaphIR eval] PR 212132: select((A&S)==0||(B&S)==0, 0, S) -> S & A & B.
   if (metaphir_eval::foldEnabled("pr212132")) {
-    if (Instruction *I = foldSelectAndOrPowerOfTwo(SI, Builder, SQ)) {
+    if (Instruction *I = foldSelectAndOrPowerOfTwo(SI, SQ)) { // differs
       metaphir_eval::reportAnchor(&SI, "pr212132");
       return I;
     }
@@ -396,7 +363,7 @@ struct Folds {
   // END
 
   // BEGIN pr214541,pr209322 llvm/lib/Transforms/InstCombine/InstCombineMulDivRem.cpp
-  Instruction *visitUDiv1(BinaryOperator &I) { // differs
+  Instruction *visitUDiv(BinaryOperator &I) { // differs
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   Value *X;
   // [MetaphIR eval] PR 214541:
@@ -408,29 +375,18 @@ struct Folds {
       match(Op0, m_OneUse(m_UDiv(m_Value(X), m_Value(Y)))) &&
       willNotOverflowUnsignedMul(Y, Op1, I)) {
     metaphir_eval::reportAnchor(&I, "pr214541");
-    Value *YZ = Builder.CreateNUWMul(Y, Op1);
-    auto *NewDiv = BinaryOperator::CreateUDiv(X, YZ);
-    // The result is exact only if both of the original divides are exact.
-    if (I.isExact() && cast<PossiblyExactOperator>(Op0)->isExact())
-      NewDiv->setIsExact();
-    return NewDiv;
+    return nullptr; // differs
   }
-  return nullptr; // differs
-  } // differs
 
-  Instruction *visitUDiv2(BinaryOperator &I) { // differs
-  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1); // differs
   // Op0 / C where C is large (negative) --> zext (Op0 >= C)
   // This also handles non-constant values where the sign bit is known to be
   // set.
   // [MetaphIR eval] PR 209322: generalize the udiv-by-negative-constant fold to
   // known-negative non-constants via isKnownNegative().
-  Type *Ty = I.getType();
   if (metaphir_eval::foldEnabled("pr209322") &&
       isKnownNegative(Op1, SQ.getWithInstruction(&I))) {
     metaphir_eval::reportAnchor(&I, "pr209322");
-    Value *Cmp = Builder.CreateICmpUGE(Op0, Op1);
-    return CastInst::CreateZExtOrBitCast(Cmp, Ty);
+    return nullptr; // differs
   }
   return nullptr; // differs
   } // differs
@@ -456,21 +412,20 @@ struct Folds {
     // Preserve the predicate: (X & -X) ==/!= 0 --> X ==/!= 0.
     if (C.isZero()) {
       metaphir_eval::reportAnchor(&Cmp, "pr213709");
-      return new ICmpInst(Pred, MatchedX, Cmp.getOperand(1));
+      return nullptr; // differs
     }
 
     // (X & -X) == 1 iff the low bit of X is set.
     if (Pred == CmpInst::ICMP_EQ) {
       metaphir_eval::reportAnchor(&Cmp, "pr213709");
-      return new TruncInst(MatchedX, Cmp.getType());
+      return nullptr; // differs
     }
 
     // The remaining case needs a trunc and not. Require the original and
     // to become dead to avoid increasing the instruction count.
     if (And->hasOneUse()) {
       metaphir_eval::reportAnchor(&Cmp, "pr213709");
-      Value *Trunc = Builder.CreateTrunc(MatchedX, Cmp.getType());
-      return BinaryOperator::CreateNot(Trunc);
+      return nullptr; // differs
     }
   }
   return nullptr; // differs
@@ -481,7 +436,6 @@ struct Folds {
   Instruction *foldICmpSubConstant(ICmpInst &Cmp, BinaryOperator *Sub, const APInt &C) { // differs
   Value *X = Sub->getOperand(0), *Y = Sub->getOperand(1);
   ICmpInst::Predicate Pred = Cmp.getPredicate();
-  Type *Ty = Sub->getType();
 
   // [MetaphIR eval] PR 214381:
   // (X - (X urem D)) is D*(X/D), a multiple of D, so it is u> C exactly when
@@ -493,11 +447,11 @@ struct Folds {
       match(Y, m_URem(m_Specific(X), m_APInt(D))) && !D->isZero()) {
     if (Pred == ICmpInst::ICMP_UGT && C.ult(*D)) {
       metaphir_eval::reportAnchor(&Cmp, "pr214381");
-      return new ICmpInst(ICmpInst::ICMP_UGT, X, ConstantInt::get(Ty, *D - 1));
+      return nullptr; // differs
     }
     if (Pred == ICmpInst::ICMP_ULT && !C.isZero() && C.ule(*D)) {
       metaphir_eval::reportAnchor(&Cmp, "pr214381");
-      return new ICmpInst(ICmpInst::ICMP_ULT, X, ConstantInt::get(Ty, *D));
+      return nullptr; // differs
     }
   }
   return nullptr; // differs
@@ -508,7 +462,6 @@ struct Folds {
   Instruction *foldCttzCtlz(IntrinsicInst &II) { // differs
   bool IsTZ = II.getIntrinsicID() == Intrinsic::cttz;
   Value *Op0 = II.getArgOperand(0);
-  Value *Op1 = II.getArgOperand(1);
   Value *X;
   if (IsTZ) {
     // [MetaphIR eval] PR 214376: cttz(mul(X, OddC)) -> cttz(X).
@@ -516,7 +469,7 @@ struct Folds {
       if (match(Op0, m_Mul(m_Value(X),
                            m_CheckedInt([](const APInt &C) { return C[0]; })))) {
         metaphir_eval::reportAnchor(&II, "pr214376");
-        return CallInst::Create(II.getCalledFunction(), {X, Op1});
+        return nullptr; // differs
       }
     }
   } // differs
@@ -536,8 +489,7 @@ struct Folds {
             I0, /*ForSigned=*/true, SQ.getWithInstruction(II));
         if (Range.getSignedMin().sge(-1) && Range.getSignedMax().sle(1)) {
           metaphir_eval::reportAnchor(&CI, "pr216046");
-          return replaceInstUsesWith(
-              CI, Builder.CreateSExtOrTrunc(I0, II->getType()));
+          return nullptr; // differs
         }
       }
     }
@@ -556,8 +508,7 @@ struct Folds {
     if (metaphir_eval::foldEnabled("pr214517")) {
       if (match(Op1, m_OneUse(m_Cttz(m_Value(X), m_Value())))) {
         metaphir_eval::reportAnchor(&I, "pr214517");
-        Value *NegX = Builder.CreateNeg(X, "neg");
-        return BinaryOperator::CreateAnd(NegX, X);
+        return nullptr; // differs
       }
     }
   }
@@ -568,7 +519,6 @@ struct Folds {
   // BEGIN pr215130 llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
   Instruction *foldAddWithConstant(BinaryOperator &Add) { // differs
   Value *Op0 = Add.getOperand(0), *Op1 = Add.getOperand(1);
-  Type *Ty = Add.getType();
   Constant *Op1C;
   if (!match(Op1, m_ImmConstant(Op1C)))
     return nullptr;
@@ -585,9 +535,7 @@ struct Folds {
     if (match(Op0, m_OneUse(m_Intrinsic<Intrinsic::uadd_sat>(
                        m_Value(X), m_SpecificInt(SatC))))) {
       metaphir_eval::reportAnchor(&Add, "pr215130");
-      return replaceInstUsesWith(
-          Add, Builder.CreateBinaryIntrinsic(Intrinsic::umin, X,
-                                             ConstantInt::get(Ty, ~SatC)));
+      return nullptr; // differs
     }
   }
   return nullptr; // differs
@@ -620,11 +568,7 @@ struct Folds {
         return nullptr;
       if (!isGuaranteedNotToBeUndef(X, &AC, &I, &DT))
         return nullptr;
-      Value *MulXC2 = Builder.CreateMul(X, ConstantInt::get(X->getType(), C2));
-      if (NewC.isZero())
-        return MulXC2;
-      return Builder.CreateAdd(
-          Builder.CreateMul(Div, ConstantInt::get(X->getType(), NewC)), MulXC2);
+      return X; // differs
     }
     return nullptr;
   };
@@ -640,7 +584,7 @@ struct Folds {
   // END
 
   // BEGIN pr215122,pr216436,pr216470 llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
-  Instruction *visitAdd1(BinaryOperator &I) { // differs
+  Instruction *visitAdd(BinaryOperator &I) { // differs
   Type *Ty = I.getType(); // differs
   Value *A; // differs
   // Align-up idiom:
@@ -653,31 +597,18 @@ struct Folds {
               m_c_Add(m_OneUse(m_And(m_Neg(m_Value(A)), m_LowBitMask(LowMask))),
                       m_Deferred(A)))) {
       metaphir_eval::reportAnchor(&I, "pr215122");
-      Value *NewAdd = Builder.CreateAdd(A, ConstantInt::get(Ty, *LowMask));
-      return BinaryOperator::CreateAnd(NewAdd, ConstantInt::get(Ty, ~*LowMask));
+      return nullptr; // differs
     }
-    return nullptr; // differs
-  } // differs
-  } // differs
-
-  Instruction *visitAdd2(BinaryOperator &I) { // differs
-    Type *Ty = I.getType(); // differs
-    Value *A; // differs
-    const APInt *LowMask; // differs
     // [MetaphIR eval] PR 216436: ((X - 1) | (C - 1)) + 1 -> (X + C - 1) & -C, for a power-of-two C.
     if (metaphir_eval::foldEnabled("pr216436") &&
         match(&I, m_Add(m_OneUse(m_Or(m_Add(m_Value(A), m_AllOnes()),
                                       m_LowBitMask(LowMask))),
                         m_One()))) {
       metaphir_eval::reportAnchor(&I, "pr216436");
-      Value *NewAdd = Builder.CreateAdd(A, ConstantInt::get(Ty, *LowMask));
-      return BinaryOperator::CreateAnd(NewAdd, ConstantInt::get(Ty, ~*LowMask));
+      return nullptr; // differs
     }
-    return nullptr; // differs
-  } // differs
+  }
 
-  Instruction *visitAdd3(BinaryOperator &I) { // differs
-    Type *Ty = I.getType(); // differs
   // Ceiling division by power-of-2:
   // (X >> log2(N)) + zext(X & (N-1) != 0) --> (X + (N-1)) >> log2(N)
   // This is valid when adding (N-1) to X doesn't overflow.
@@ -703,13 +634,8 @@ struct Folds {
       bool NeedZext = Ibits > Xbits;
       Constant *MaskC = ConstantInt::get(Ty, Mask->zext(Ibits));
       if (NeedZext || willNotOverflowUnsignedAdd(X, MaskC, I)) {
-        if (NeedZext)
-          X = Builder.CreateZExt(X, Ty);
         metaphir_eval::reportAnchor(&I, "pr216470");
-        // (X + Mask) >> ShiftAmt
-        Value *Add = Builder.CreateNUWAdd(X, MaskC);
-        return BinaryOperator::CreateLShr(
-            Add, ConstantInt::get(Ty, ShiftAmt->zext(Ibits)));
+        return nullptr; // differs
       }
     } // differs
     return nullptr; // differs
@@ -718,7 +644,7 @@ struct Folds {
   // END
 };
 
-/// Runs the folds on the input instructions, leaving the function as it was.
+/// Tries the fold of each PR, alone, on the input instructions.
 struct MetaphIRFoldsPass : OptionalPassInfoMixin<MetaphIRFoldsPass> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
     auto &AC = FAM.getResult<AssumptionAnalysis>(F);
@@ -732,84 +658,71 @@ struct MetaphIRFoldsPass : OptionalPassInfoMixin<MetaphIRFoldsPass> {
         if (auto *BI = dyn_cast<CondBrInst>(BB.getTerminator()))
           DC.registerBranch(BI);
 
-    SmallVector<Instruction *> Created;
-    Folds Fold(F, F.getDataLayout(), AC, DT, TLI, DC, Created);
+    Folds Fold{AC, DT,
+               SimplifyQuery(F.getDataLayout(), &TLI, &DT, &AC, nullptr,
+                             /*UseInstrInfo*/ true, /*CanUseUndef*/ true, &DC)};
     StringMap<unsigned> Firings;
     metaphir_eval::Firings = &Firings;
 
-    // Undoes a fold's rewrite: what it built and what it returned, if not yet
-    // in the function.
-    auto Undo = [&](Value *Result) {
-      auto *R = dyn_cast_or_null<Instruction>(Result);
-      if (R && !R->getParent())
-        R->deleteValue();
-      for (Instruction *I : reverse(Created))
-        I->eraseFromParent();
-      Created.clear();
-    };
-
-    SmallVector<Instruction *> Input;
-    for (BasicBlock &BB : F)
-      if (DT.isReachableFromEntry(&BB))
-        for (Instruction &I : BB)
-          Input.push_back(&I);
-
-    for (Instruction *I : Input) {
-      Fold.Builder.SetInsertPoint(I);
-      if (auto *Zext = dyn_cast<ZExtInst>(I)) {
-        Undo(Fold.pr204089(Instruction::ZExt, Zext->getOperand(0), Zext->getType()));
-        Undo(Fold.visitZExt(*Zext));
-        Undo(Fold.visitZExt2(*Zext));
-      } else if (auto *Sext = dyn_cast<SExtInst>(I)) {
-        Undo(Fold.pr204089(Instruction::SExt, Sext->getOperand(0), Sext->getType()));
-        Undo(Fold.visitSExt(*Sext));
-      } else if (auto *Trunc = dyn_cast<TruncInst>(I)) {
-        Undo(Fold.visitTrunc(*Trunc));
-      } else if (auto *SI = dyn_cast<SelectInst>(I)) {
+    auto Visit = [&](Instruction &I) {
+      if (auto *Zext = dyn_cast<ZExtInst>(&I)) {
+        Fold.pr204089(Instruction::ZExt, Zext->getOperand(0), Zext->getType());
+        Fold.visitZExt(*Zext);
+      } else if (auto *Sext = dyn_cast<SExtInst>(&I)) {
+        Fold.pr204089(Instruction::SExt, Sext->getOperand(0), Sext->getType());
+        Fold.visitSExt(*Sext);
+      } else if (auto *Trunc = dyn_cast<TruncInst>(&I)) {
+        Fold.visitTrunc(*Trunc);
+      } else if (auto *SI = dyn_cast<SelectInst>(&I)) {
         if (auto *ICI = dyn_cast<ICmpInst>(SI->getCondition()))
-          Undo(Fold.foldSelectInstWithICmp(*SI, ICI));
-        Undo(Fold.visitSelectInst(*SI));
-      } else if (auto *Cmp = dyn_cast<ICmpInst>(I)) {
+          Fold.foldSelectInstWithICmp(*SI, ICI);
+        Fold.visitSelectInst(*SI);
+      } else if (auto *Cmp = dyn_cast<ICmpInst>(&I)) {
         const APInt *C;
         if (match(Cmp->getOperand(1), m_APInt(C)))
           if (auto *BO = dyn_cast<BinaryOperator>(Cmp->getOperand(0))) {
             if (BO->getOpcode() == Instruction::And)
-              Undo(Fold.foldICmpAndConstant(*Cmp, BO, *C));
+              Fold.foldICmpAndConstant(*Cmp, BO, *C);
             if (BO->getOpcode() == Instruction::Sub)
-              Undo(Fold.foldICmpSubConstant(*Cmp, BO, *C));
+              Fold.foldICmpSubConstant(*Cmp, BO, *C);
           }
-      } else if (auto *II = dyn_cast<IntrinsicInst>(I)) {
+      } else if (auto *II = dyn_cast<IntrinsicInst>(&I)) {
         if (II->getIntrinsicID() == Intrinsic::cttz)
-          Undo(Fold.foldCttzCtlz(*II));
+          Fold.foldCttzCtlz(*II);
         if (II->getIntrinsicID() == Intrinsic::scmp)
-          Undo(Fold.visitSCmp(*II, II));
-      } else if (auto *BO = dyn_cast<BinaryOperator>(I)) {
+          Fold.visitSCmp(*II, II);
+      } else if (auto *BO = dyn_cast<BinaryOperator>(&I)) {
         const SimplifyQuery Q = Fold.SQ.getWithInstruction(BO);
         switch (BO->getOpcode()) {
         case Instruction::Add:
-          Undo(Fold.foldAddWithConstant(*BO));
-          Undo(Fold.SimplifyAddWithRemainder(*BO));
-          Undo(Fold.visitAdd1(*BO));
-          Undo(Fold.visitAdd2(*BO));
-          Undo(Fold.visitAdd3(*BO));
+          Fold.foldAddWithConstant(*BO);
+          Fold.SimplifyAddWithRemainder(*BO);
+          Fold.visitAdd(*BO);
           break;
         case Instruction::And:
-          Undo(Fold.pr213313And(BO->getOperand(0), BO->getOperand(1), Q));
+          Fold.pr213313And(BO->getOperand(0), BO->getOperand(1), Q);
           break;
         case Instruction::Or:
-          Undo(Fold.pr213313Or(BO->getOperand(0), BO->getOperand(1), Q));
+          Fold.pr213313Or(BO->getOperand(0), BO->getOperand(1), Q);
           break;
         case Instruction::UDiv:
-          Undo(Fold.visitUDiv1(*BO));
-          Undo(Fold.visitUDiv2(*BO));
+          Fold.visitUDiv(*BO);
           break;
         case Instruction::Shl:
-          Undo(Fold.visitShl(*BO));
+          Fold.visitShl(*BO);
           break;
         default:
           break;
         }
       }
+    };
+
+    for (StringRef PR : PRs) {
+      metaphir_eval::Enabled = PR;
+      for (BasicBlock &BB : F)
+        if (DT.isReachableFromEntry(&BB))
+          for (Instruction &I : BB)
+            Visit(I);
     }
 
     for (auto &E : Firings) {
@@ -821,6 +734,26 @@ struct MetaphIRFoldsPass : OptionalPassInfoMixin<MetaphIRFoldsPass> {
   }
 };
 
+/// Removes the bodies of the optnone functions, which no pass optimizes, so a
+/// corpus has none for a pattern to match; callers keep their declarations.
+/// eval/scripts/prepare_corpus.py runs it on every module.
+struct MetaphIRDropOptNonePass : RequiredPassInfoMixin<MetaphIRDropOptNonePass> {
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
+    unsigned Dropped = 0;
+    for (Function &F : M) {
+      if (F.isDeclaration() || !F.hasOptNone())
+        continue;
+      F.deleteBody();
+      F.setComdat(nullptr);
+      ++Dropped;
+    }
+    if (!Dropped)
+      return PreservedAnalyses::all();
+    errs() << "DROPPED " << Dropped << "\n";
+    return PreservedAnalyses::none();
+  }
+};
+
 } // namespace
 
 extern "C" LLVM_ATTRIBUTE_WEAK PassPluginLibraryInfo llvmGetPassPluginInfo() {
@@ -829,11 +762,16 @@ extern "C" LLVM_ATTRIBUTE_WEAK PassPluginLibraryInfo llvmGetPassPluginInfo() {
             PB.registerPipelineParsingCallback(
                 [](StringRef Name, ModulePassManager &MPM,
                    ArrayRef<PassBuilder::PipelineElement>) {
-                  if (Name != "metaphir-folds")
-                    return false;
-                  MPM.addPass(
-                      createModuleToFunctionPassAdaptor(MetaphIRFoldsPass()));
-                  return true;
+                  if (Name == "metaphir-folds") {
+                    MPM.addPass(
+                        createModuleToFunctionPassAdaptor(MetaphIRFoldsPass()));
+                    return true;
+                  }
+                  if (Name == "metaphir-drop-optnone") {
+                    MPM.addPass(MetaphIRDropOptNonePass());
+                    return true;
+                  }
+                  return false;
                 });
           }};
 }
