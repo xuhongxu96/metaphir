@@ -4,8 +4,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=21.761
-    seconds[pr216436]=21.761
+    pattern_seconds=21.145
+    seconds[pr216436]=21.145
     patterns=1
     P_functions=58
   |G|=46 |P|=58 TP=38 FP=20 FN=8
@@ -16,8 +16,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=21.867
-    seconds[pr215122]=21.867
+    pattern_seconds=21.889
+    seconds[pr215122]=21.889
     patterns=1
     P_functions=179
   |G|=31 |P|=179 TP=26 FP=153 FN=5
@@ -28,8 +28,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=21.262
-    seconds[pr215130]=21.262
+    pattern_seconds=22.392
+    seconds[pr215130]=22.392
     patterns=1
     P_functions=14
   |G|=5 |P|=14 TP=3 FP=11 FN=2
@@ -40,8 +40,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=22.273
-    seconds[pr214541]=22.273
+    pattern_seconds=20.677
+    seconds[pr214541]=20.677
     patterns=1
     P_functions=299
   |G|=28 |P|=299 TP=17 FP=282 FN=11
@@ -52,8 +52,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=21.457
-    seconds[pr214517]=21.457
+    pattern_seconds=21.354
+    seconds[pr214517]=21.354
     patterns=1
     P_functions=478
   |G|=16 |P|=478 TP=15 FP=463 FN=1
@@ -64,8 +64,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=21.635
-    seconds[pr214381]=21.635
+    pattern_seconds=21.517
+    seconds[pr214381]=21.517
     patterns=1
     P_functions=26
   |G|=15 |P|=26 TP=14 FP=12 FN=1
@@ -76,8 +76,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=21.730
-    seconds[pr214376]=21.730
+    pattern_seconds=21.147
+    seconds[pr214376]=21.147
     patterns=1
     P_functions=18
   |G|=14 |P|=18 TP=14 FP=4 FN=0
@@ -88,9 +88,9 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=43.358
-    seconds[pr213709_c0]=21.941
-    seconds[pr213709_c1]=21.417
+    pattern_seconds=43.523
+    seconds[pr213709_c0]=21.743
+    seconds[pr213709_c1]=21.780
     patterns=2
     P_functions=36
   |G|=28 |P|=36 TP=23 FP=13 FN=5
@@ -101,9 +101,9 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=43.782
-    seconds[pr213313_and]=21.913
-    seconds[pr213313_or]=21.869
+    pattern_seconds=43.109
+    seconds[pr213313_and]=21.560
+    seconds[pr213313_or]=21.549
     patterns=2
     P_functions=10
   |G|=10 |P|=10 TP=10 FP=0 FN=0
@@ -114,9 +114,9 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=44.113
-    seconds[pr212132_case1]=21.795
-    seconds[pr212132_case2]=22.318
+    pattern_seconds=44.123
+    seconds[pr212132_case1]=21.595
+    seconds[pr212132_case2]=22.528
     patterns=2
     P_functions=5
   |G|=5 |P|=5 TP=3 FP=2 FN=2
@@ -127,11 +127,11 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=87.845
-    seconds[pr210499_ashr_nsw]=21.966
-    seconds[pr210499_ashr_nuw]=22.007
-    seconds[pr210499_lshr_nsw]=22.211
-    seconds[pr210499_lshr_nuw]=21.660
+    pattern_seconds=86.714
+    seconds[pr210499_ashr_nsw]=21.803
+    seconds[pr210499_ashr_nuw]=21.703
+    seconds[pr210499_lshr_nsw]=21.628
+    seconds[pr210499_lshr_nuw]=21.580
     patterns=4
     P_functions=5534
   |G|=21 |P|=5534 TP=15 FP=5519 FN=6
@@ -142,11 +142,11 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=22.247
-    seconds[pr209322]=22.247
+    pattern_seconds=21.439
+    seconds[pr209322]=21.439
     patterns=1
-    P_functions=68811
-  |G|=40 |P|=68811 TP=14 FP=68797 FN=26
+    P_functions=68782
+  |G|=40 |P|=68782 TP=14 FP=68768 FN=26
   recall=0.3500 precision=0.0002 F1=0.0004
 == pr207564 ==
   timing:
@@ -154,8 +154,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=22.443
-    seconds[pr207564]=22.443
+    pattern_seconds=21.717
+    seconds[pr207564]=21.717
     patterns=1
     P_functions=61
   |G|=42 |P|=61 TP=33 FP=28 FN=9
@@ -166,9 +166,9 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=43.740
-    seconds[pr207462]=22.056
-    seconds[pr207462_mul]=21.684
+    pattern_seconds=42.538
+    seconds[pr207462]=21.714
+    seconds[pr207462_mul]=20.824
     patterns=2
     P_functions=218
   |G|=31 |P|=218 TP=31 FP=187 FN=0
@@ -179,11 +179,11 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=86.633
-    seconds[pr205383_sub_eq]=21.577
-    seconds[pr205383_sub_ne]=21.558
-    seconds[pr205383_xor_eq]=21.700
-    seconds[pr205383_xor_ne]=21.797
+    pattern_seconds=86.593
+    seconds[pr205383_sub_eq]=21.500
+    seconds[pr205383_sub_ne]=21.893
+    seconds[pr205383_xor_eq]=21.866
+    seconds[pr205383_xor_ne]=21.333
     patterns=4
     P_functions=16
   |G|=5 |P|=16 TP=5 FP=11 FN=0
@@ -194,10 +194,10 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=65.991
-    seconds[pr204928_and]=22.203
-    seconds[pr204928_or]=21.521
-    seconds[pr204928_xor]=22.267
+    pattern_seconds=65.108
+    seconds[pr204928_and]=22.099
+    seconds[pr204928_or]=21.436
+    seconds[pr204928_xor]=21.573
     patterns=3
     P_functions=5170
   |G|=143 |P|=5170 TP=142 FP=5028 FN=1
@@ -208,10 +208,10 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=64.603
-    seconds[pr204927_and]=21.739
-    seconds[pr204927_or]=21.663
-    seconds[pr204927_xor]=21.201
+    pattern_seconds=64.519
+    seconds[pr204927_and]=21.332
+    seconds[pr204927_or]=21.492
+    seconds[pr204927_xor]=21.695
     patterns=3
     P_functions=4350
   |G|=759 |P|=4350 TP=523 FP=3827 FN=236
@@ -222,9 +222,9 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=43.640
-    seconds[pr216470_self]=22.144
-    seconds[pr216470_zext]=21.496
+    pattern_seconds=43.863
+    seconds[pr216470_self]=22.388
+    seconds[pr216470_zext]=21.475
     patterns=2
     P_functions=3836
   |G|=158 |P|=3836 TP=145 FP=3691 FN=13
@@ -235,8 +235,8 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=21.492
-    seconds[pr216046]=21.492
+    pattern_seconds=21.213
+    seconds[pr216046]=21.213
     patterns=1
     P_functions=1695
   |G|=2 |P|=1695 TP=2 FP=1693 FN=0
@@ -247,10 +247,10 @@
     tool=daggrep
     jobs=80
     repeat=3
-    pattern_seconds=43.513
-    seconds[pr204089_sext]=22.309
-    seconds[pr204089_zext]=21.203
+    pattern_seconds=43.074
+    seconds[pr204089_sext]=21.780
+    seconds[pr204089_zext]=21.294
     patterns=2
-    P_functions=16
-  |G|=15490 |P|=16 TP=3 FP=13 FN=15487
-  recall=0.0002 precision=0.1875 F1=0.0004
+    P_functions=6
+  |G|=15533 |P|=6 TP=3 FP=3 FN=15530
+  recall=0.0002 precision=0.5000 F1=0.0004

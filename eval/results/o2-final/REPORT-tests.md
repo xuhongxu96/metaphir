@@ -4,11 +4,11 @@
 
 |  |  |
 |---|---|
-| MetaphIR | `de162aa9294ce92e7089772b0ca661f473a31321` |
+| MetaphIR | `60392545555eba789f0806e6cd43bfff74e202cd` |
 | LLVM | `79b321b1238ceaf8261a5b177185a3ec5111918a` + `eval/patches/` |
 | Corpus | `eval/corpus-o2-final`: 1912 test files, 0.02 GB |
 | Machine | Neoverse-N1 (aarch64), 80 cores, 502 GiB, Ubuntu 22.04.5 LTS, Linux 5.15.0-174-generic |
-| Ground truth | 3032 CPU-seconds (summed per module, benchmark and test files together) |
+| Ground truth | 3037 CPU-seconds (summed per module, benchmark and test files together) |
 | Tool failures | MetaphIR 0, daggrep 0 |
 
 ## RQ1: Expressiveness
