@@ -3,7 +3,8 @@
 // A pass plugin holding the InstCombine folds of the evaluated PRs, so that a
 // fold's ground truth does not depend on any other fold:
 //
-//   opt -load-pass-plugin=MetaphIRFolds.so -passes=metaphir-folds -disable-output
+//   opt -load-pass-plugin=MetaphIRFolds.so -passes=metaphir-folds
+//   -disable-output
 //
 // The PRs are enabled one by one, so the input is parsed once: with each alone,
 // its fold is tried on every instruction of the input. A fold's firings are
@@ -56,6 +57,7 @@ StringMap<unsigned> *Firings;
 void reportAnchor(const Instruction *, StringRef PR) { ++(*Firings)[PR]; }
 } // namespace metaphir_eval
 
+// clang-format off
 // BEGIN pr207462 llvm/lib/Transforms/InstCombine/InstCombineAddSub.cpp
 static bool MatchMul(Value *E, Value *&Op, APInt &C) {
   const APInt *AI;
@@ -193,8 +195,8 @@ struct Folds {
   bool willNotOverflowUnsignedAdd(const WithCache<const Value *> &LHS,
                                   const WithCache<const Value *> &RHS,
                                   const Instruction &CtxI) const {
-    return llvm::computeOverflowForUnsignedAdd(
-               LHS, RHS, SQ.getWithInstruction(&CtxI)) ==
+    return llvm::computeOverflowForUnsignedAdd(LHS, RHS,
+                                               SQ.getWithInstruction(&CtxI)) ==
            OverflowResult::NeverOverflows;
   }
   bool willNotOverflowUnsignedMul(const Value *LHS, const Value *RHS,
@@ -642,6 +644,7 @@ struct Folds {
   } // differs
   } // differs
   // END
+  // clang-format on
 };
 
 /// Tries the fold of each PR, alone, on the input instructions.
@@ -737,7 +740,8 @@ struct MetaphIRFoldsPass : OptionalPassInfoMixin<MetaphIRFoldsPass> {
 /// Removes the bodies of the optnone functions, which no pass optimizes, so a
 /// corpus has none for a pattern to match; callers keep their declarations.
 /// eval/scripts/prepare_corpus.py runs it on every module.
-struct MetaphIRDropOptNonePass : RequiredPassInfoMixin<MetaphIRDropOptNonePass> {
+struct MetaphIRDropOptNonePass
+    : RequiredPassInfoMixin<MetaphIRDropOptNonePass> {
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
     unsigned Dropped = 0;
     for (Function &F : M) {

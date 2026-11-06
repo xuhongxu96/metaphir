@@ -80,6 +80,8 @@ jobs:
       # The source holds googletest and lit; the build goes in it after.
       - name: Fetch the LLVM source
         run: scripts/prepare_llvm.sh --source-only
+      - name: Check the fold plugin
+        run: eval/scripts/check_fold_plugin.py
       - name: Restore LLVM
         uses: actions/cache/restore@v4
         with:
