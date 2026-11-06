@@ -13,3 +13,7 @@ __pycache__/
 /web/dist/
 /eval/archive/
 /eval/publish/
+eval/cache/
+
+.env
+/eval/fold-plugin/build/

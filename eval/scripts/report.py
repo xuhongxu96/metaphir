@@ -554,7 +554,71 @@ def build(
         table(["PR", "Packs checked", "Files read", *(TIMED[t] for t in cols)], rows), "",
     ]
 
+    if source == "bench" and not pipeline:
+        web_md, web = web_results(outdir)
+        md += web_md
+        if web:
+            summary["web"] = web
+
     return "\n".join(md) + "\n", summary
+
+
+def web_results(outdir: Path) -> tuple[list[str], dict]:
+    """The section on the runs of eval/scripts/web_ablate.mjs saved in
+    ``<outdir>/web``, ``full_<n>.jsonl`` and ``nc_<n>.jsonl``, and its summary.
+    A pattern's time and bytes read are the median of its runs."""
+    modes = {"full": "Full", "nc": "No constraints"}
+    medians: dict[str, dict[str, tuple[float, float]]] = {}
+    unfinished: dict[str, int] = {}
+    for mode in modes:
+        runs: dict[str, list[dict]] = {}
+        unfinished[mode] = 0
+        for path in sorted((outdir / "web").glob(f"{mode}_*.jsonl")):
+            for line in path.read_text().splitlines():
+                row = json.loads(line)
+                if row.get("status", "").startswith("done"):
+                    runs.setdefault(row["pattern"], []).append(row)
+                else:
+                    unfinished[mode] += 1
+        if runs:
+            medians[mode] = {
+                p: (statistics.median(r["wall_s"] for r in rs),
+                    statistics.median(r["query_bytes"] for r in rs) / 1e6)
+                for p, rs in runs.items()
+            }
+    if not medians:
+        return [], {}
+    patterns = sorted({p for by_pattern in medians.values() for p in by_pattern})
+
+    def cells(mode: str, pattern: str) -> list[str]:
+        m = medians.get(mode, {}).get(pattern)
+        return [f"{m[0]:.1f} s", f"{m[1]:.0f} MB"] if m else ["—", "—"]
+
+    rows = [[p, *(c for mode in modes for c in cells(mode, p))] for p in patterns]
+    summary: dict[str, dict] = {}
+    for label, fn in (("median", statistics.median), ("mean", statistics.mean), ("max", max)):
+        row = [f"**{label}**"]
+        for mode in modes:
+            values = list(medians.get(mode, {}).values())
+            stats = (fn(v[0] for v in values), fn(v[1] for v in values)) if values else None
+            row += [f"{stats[0]:.1f} s", f"{stats[1]:.0f} MB"] if stats else ["—", "—"]
+            if stats:
+                summary.setdefault(mode, {})[label] = {"seconds": stats[0], "megabytes": stats[1]}
+        rows.append(row)
+    for mode, count in unfinished.items():
+        if mode in summary:
+            summary[mode]["unfinished_runs"] = count
+    md = [
+        "## WebAssembly", "",
+        "The production site in headless Chromium, one cold browser context per "
+        "pattern, download throttled to 10 MB/s (`eval/scripts/web_ablate.mjs`). "
+        "Each cell is the median of the pattern's runs; bytes are those read for "
+        "the query, without the corpus header. Runs that did not finish: "
+        + ", ".join(f"{modes[m]} {n}" for m, n in unfinished.items()) + ".", "",
+        table(["Pattern", *(f"{modes[m]} {x}" for m in modes for x in ("time", "read"))], rows),
+        "",
+    ]
+    return md, summary
 
 
 def main() -> None:
