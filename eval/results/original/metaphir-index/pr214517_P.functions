@@ -1,3 +1,0 @@
-InstCombine__shift.ll	shl1_cttz
-InstCombine__shift.ll	shl1_cttz_vec
-InstCombine__shift.ll	shl1_cttz_vec_poison

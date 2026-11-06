@@ -1,3 +1,0 @@
-InstCombine__add4.ll	fold_add_udiv_urem_by_two_no_mul_commuted
-InstCombine__add4.ll	fold_add_udiv_urem_by_two_no_mul_commuted_vec
-InstCombine__add4.ll	fold_add_udiv_urem_commuted
