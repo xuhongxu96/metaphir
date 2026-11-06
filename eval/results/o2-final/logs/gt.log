@@ -1,22 +1,21 @@
-== gt: 70755 modules, 20 PR(s), passes=function(instcombine<no-verify-fixpoint>) ==
-  pr216436: 48 functions
-  pr215122: 40 functions
-  pr215130: 3 functions
-  pr214541: 23 functions
-  pr214517: 27 functions
-  pr214381: 14 functions
-  pr214376: 14 functions
-  pr213709: 30 functions
-  pr213313: 10 functions (+3 anchors dropped: IR unchanged without the fold)
-  pr212132: 5 functions
-  pr210499: 18 functions
-  pr209322: 15 functions (+3 anchors dropped: IR unchanged without the fold)
-  pr207564: 57 functions
-  pr207462: 34 functions
-  pr205383: 5 functions
-  pr204928: 1271 functions
-  pr204927: 1978 functions
-  pr216470: 340 functions
-  pr216046: 66 functions
-  pr204089: 1096 functions (+14 anchors dropped: IR unchanged without the fold)
-  71844.51 CPU-seconds, summed over the modules
+  pr204089: 3 functions, 3 firings
+  pr204927: 1978 functions, 8983 firings
+  pr204928: 1271 functions, 4958 firings
+  pr205383: 4 functions, 4 firings
+  pr207462: 34 functions, 50 firings
+  pr207564: 58 functions, 448 firings
+  pr209322: 19 functions, 21 firings
+  pr210499: 18 functions, 22 firings
+  pr212132: 5 functions, 5 firings
+  pr213313: 10 functions, 10 firings
+  pr213709: 26 functions, 31 firings
+  pr214376: 14 functions, 14 firings
+  pr214381: 16 functions, 17 firings
+  pr214517: 27 functions, 30 firings
+  pr214541: 23 functions, 38 firings
+  pr215122: 39 functions, 47 firings
+  pr215130: 3 functions, 3 firings
+  pr216046: 66 functions, 110 firings
+  pr216436: 48 functions, 56 firings
+  pr216470: 340 functions, 383 firings
+  3031.62 CPU-seconds, summed over the modules; 0 modules failed

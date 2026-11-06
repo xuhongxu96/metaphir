@@ -1,3 +1,4 @@
+InstCombine__pr96012.ll	pr96012
 InstCombine__rotate.ll	fold_rot_fshl_i32
 InstCombine__rotate.ll	fold_rot_fshr_v8i64
 InstCombine__zext-sub-trunc.ll	test_scalar_mask

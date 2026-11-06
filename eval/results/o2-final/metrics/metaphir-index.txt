@@ -4,8 +4,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.038
-    seconds[pr216436]=1.038
+    pattern_seconds=0.925
+    seconds[pr216436]=0.925
     checked[pr216436]=663
     total_functions[pr216436]=4776770
     files_read[pr216436]=361
@@ -20,15 +20,15 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=2.063
-    seconds[pr215122]=2.063
-    checked[pr215122]=6932
+    pattern_seconds=2.047
+    seconds[pr215122]=2.047
+    checked[pr215122]=6931
     total_functions[pr215122]=4776770
     files_read[pr215122]=2083
     total_files[pr215122]=70755
     patterns=1
-    P_functions=40
-  |G|=40 |P|=40 TP=40 FP=0 FN=0
+    P_functions=39
+  |G|=39 |P|=39 TP=39 FP=0 FN=0
   recall=1.0000 precision=1.0000 F1=1.0000
 == pr215130 ==
   timing:
@@ -36,8 +36,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=0.941
-    seconds[pr215130]=0.941
+    pattern_seconds=0.829
+    seconds[pr215130]=0.829
     checked[pr215130]=349
     total_functions[pr215130]=4776770
     files_read[pr215130]=158
@@ -52,8 +52,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=0.762
-    seconds[pr214541]=0.762
+    pattern_seconds=0.676
+    seconds[pr214541]=0.676
     checked[pr214541]=396
     total_functions[pr214541]=4776770
     files_read[pr214541]=223
@@ -68,8 +68,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=0.933
-    seconds[pr214517]=0.933
+    pattern_seconds=0.930
+    seconds[pr214517]=0.930
     checked[pr214517]=819
     total_functions[pr214517]=4776770
     files_read[pr214517]=312
@@ -84,24 +84,24 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=0.772
-    seconds[pr214381]=0.772
+    pattern_seconds=0.705
+    seconds[pr214381]=0.705
     checked[pr214381]=253
     total_functions[pr214381]=4776770
     files_read[pr214381]=164
     total_files[pr214381]=70755
     patterns=1
     P_functions=16
-  |G|=14 |P|=16 TP=14 FP=2 FN=0
-  recall=1.0000 precision=0.8750 F1=0.9333
+  |G|=16 |P|=16 TP=16 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
 == pr214376 ==
   timing:
     modules=70755
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.192
-    seconds[pr214376]=1.192
+    pattern_seconds=1.150
+    seconds[pr214376]=1.150
     checked[pr214376]=1086
     total_functions[pr214376]=4776770
     files_read[pr214376]=341
@@ -116,24 +116,24 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.898
-    seconds[pr213709]=1.898
+    pattern_seconds=1.806
+    seconds[pr213709]=1.806
     checked[pr213709]=6312
     total_functions[pr213709]=4776770
     files_read[pr213709]=2211
     total_files[pr213709]=70755
     patterns=1
     P_functions=26
-  |G|=30 |P|=26 TP=26 FP=0 FN=4
-  recall=0.8667 precision=1.0000 F1=0.9286
+  |G|=26 |P|=26 TP=26 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
 == pr213313 ==
   timing:
     modules=70755
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=0.930
-    seconds[pr213313]=0.930
+    pattern_seconds=0.833
+    seconds[pr213313]=0.833
     checked[pr213313]=747
     total_functions[pr213313]=4776770
     files_read[pr213313]=247
@@ -148,9 +148,9 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=3.366
-    seconds[pr212132_case1]=1.453
-    seconds[pr212132_case2]=1.912
+    pattern_seconds=3.224
+    seconds[pr212132_case1]=1.396
+    seconds[pr212132_case2]=1.828
     checked[pr212132_case1]=893
     total_functions[pr212132_case1]=4776770
     files_read[pr212132_case1]=721
@@ -169,8 +169,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=2.144
-    seconds[pr210499]=2.144
+    pattern_seconds=2.031
+    seconds[pr210499]=2.031
     checked[pr210499]=2959
     total_functions[pr210499]=4776770
     files_read[pr210499]=1631
@@ -185,41 +185,41 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=0.996
-    seconds[pr209322]=0.996
+    pattern_seconds=0.830
+    seconds[pr209322]=0.830
     checked[pr209322]=19
     total_functions[pr209322]=4776770
     files_read[pr209322]=8
     total_files[pr209322]=70755
     patterns=1
     P_functions=19
-  |G|=15 |P|=19 TP=14 FP=5 FN=1
-  recall=0.9333 precision=0.7368 F1=0.8235
+  |G|=19 |P|=19 TP=19 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
 == pr207564 ==
   timing:
     modules=70755
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.422
-    seconds[pr207564]=1.422
+    pattern_seconds=1.337
+    seconds[pr207564]=1.337
     checked[pr207564]=2494
     total_functions[pr207564]=4776770
     files_read[pr207564]=1479
     total_files[pr207564]=70755
     patterns=1
     P_functions=58
-  |G|=57 |P|=58 TP=57 FP=1 FN=0
-  recall=1.0000 precision=0.9828 F1=0.9913
+  |G|=58 |P|=58 TP=58 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
 == pr207462 ==
   timing:
     modules=70755
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=2.442
-    seconds[pr207462]=1.924
-    seconds[pr207462_mul]=0.518
+    pattern_seconds=2.251
+    seconds[pr207462]=1.836
+    seconds[pr207462_mul]=0.415
     checked[pr207462]=4885
     total_functions[pr207462]=4776770
     files_read[pr207462]=1551
@@ -238,9 +238,9 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.127
-    seconds[pr205383_sub]=0.575
-    seconds[pr205383_xor]=0.552
+    pattern_seconds=0.954
+    seconds[pr205383_sub]=0.520
+    seconds[pr205383_xor]=0.433
     checked[pr205383_sub]=21
     total_functions[pr205383_sub]=4776770
     files_read[pr205383_sub]=20
@@ -251,16 +251,16 @@
     total_files[pr205383_xor]=70755
     patterns=2
     P_functions=4
-  |G|=5 |P|=4 TP=4 FP=0 FN=1
-  recall=0.8000 precision=1.0000 F1=0.8889
+  |G|=4 |P|=4 TP=4 FP=0 FN=0
+  recall=1.0000 precision=1.0000 F1=1.0000
 == pr204928 ==
   timing:
     modules=70755
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.535
-    seconds[pr204928]=1.535
+    pattern_seconds=1.490
+    seconds[pr204928]=1.490
     checked[pr204928]=3987
     total_functions[pr204928]=4776770
     files_read[pr204928]=703
@@ -275,8 +275,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=3.202
-    seconds[pr204927]=3.202
+    pattern_seconds=3.197
+    seconds[pr204927]=3.197
     checked[pr204927]=17998
     total_functions[pr204927]=4776770
     files_read[pr204927]=5097
@@ -291,8 +291,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=2.872
-    seconds[pr216470]=2.872
+    pattern_seconds=2.725
+    seconds[pr216470]=2.725
     checked[pr216470]=14000
     total_functions[pr216470]=4776770
     files_read[pr216470]=3778
@@ -307,8 +307,8 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.442
-    seconds[pr216046]=1.442
+    pattern_seconds=1.326
+    seconds[pr216046]=1.326
     checked[pr216046]=1532
     total_functions[pr216046]=4776770
     files_read[pr216046]=409
@@ -323,13 +323,13 @@
     tool=metaphir-index
     jobs=80
     repeat=3
-    pattern_seconds=1.005
-    seconds[pr204089]=1.005
+    pattern_seconds=0.879
+    seconds[pr204089]=0.879
     checked[pr204089]=539
     total_functions[pr204089]=4776770
     files_read[pr204089]=240
     total_files[pr204089]=70755
     patterns=1
     P_functions=12
-  |G|=1096 |P|=12 TP=2 FP=10 FN=1094
-  recall=0.0018 precision=0.1667 F1=0.0036
+  |G|=3 |P|=12 TP=3 FP=9 FN=0
+  recall=1.0000 precision=0.2500 F1=0.4000
