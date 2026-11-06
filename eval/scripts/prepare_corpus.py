@@ -3,7 +3,7 @@
 
 Four kinds, each written to a gitignored ``eval/corpus-<kind>``:
 
-  original         every ``original/*.bc`` copied verbatim (no ``opt``)
+  original         every ``original/*.bc`` copied (no pipeline)
   thinlto-prelink  ``opt -passes='thinlto-pre-link<O2>'``, folds disabled
   before-ic1       ``default<O2>`` up to the first InstCombine, folds disabled
   o2-final         ``opt -passes='default<O2>'``, folds disabled
@@ -16,6 +16,11 @@ callee before inlining it, so a pipeline cut cannot give their exact input.
 Every corpus also gets the top-level InstCombine and InstSimplify tests, copied
 as ``InstCombine__<file>.ll`` / ``InstSimplify__<file>.ll``. Tests that do not
 parse standalone (e.g. intentionally invalid IR) are skipped and logged.
+
+Every module of every kind loses the bodies of its ``optnone`` functions, which
+no pass optimizes (the ``metaphir-drop-optnone`` pass of ``eval/fold-plugin``,
+which must be built). A module without any is copied byte for byte.
+``--drop-optnone-only`` does this to the modules already in a corpus.
 
 A fresh clone rebuilds a corpus with
 
@@ -61,6 +66,9 @@ KINDS = {
     "o2-final": "default<O2>",
 }
 BEFORE_INSTCOMBINE = "before-instcombine:"
+PLUGIN = REPO / "eval" / "fold-plugin" / "build" / "MetaphIRFolds.so"
+DROP_OPTNONE = "metaphir-drop-optnone"
+DROPPED_RE = re.compile(r"^DROPPED (\d+)$", re.M)
 INSTCOMBINE_RE = re.compile(r"(?<=[,(])instcombine<")
 
 
@@ -124,6 +132,38 @@ def parses(opt: Path, path: Path) -> bool:
     return True
 
 
+def copy_module(opt: Path, source: Path, dest: Path) -> int:
+    """Copy a module without the bodies of its optnone functions; how many it had."""
+    with tempfile.TemporaryDirectory(prefix="metaphir-prep-") as tmp:
+        out = Path(tmp) / dest.name
+        text = ["-S"] if source.suffix == ".ll" else []
+        proc = subprocess.run(
+            [str(opt), f"-load-pass-plugin={PLUGIN}", f"-passes={DROP_OPTNONE}",
+             str(source), "-o", str(out), *text],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"{source}: {proc.stderr.strip()}")
+        match = DROPPED_RE.search(proc.stderr)
+        if match:
+            shutil.move(str(out), dest)
+            return int(match[1])
+    if source != dest:
+        shutil.copy2(source, dest)
+    return 0
+
+
+def drop_optnone(corpus: Path, opt: Path, jobs: int) -> tuple[int, int]:
+    """Drop the optnone functions of a prepared corpus: the functions and the
+    modules they were in."""
+    modules = sorted(p for p in corpus.iterdir() if p.suffix in (".bc", ".ll"))
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        dropped = list(pool.map(lambda m: copy_module(opt, m, m), modules))
+    return sum(dropped), sum(1 for n in dropped if n)
+
+
 def collect_test_suite(corpus: Path, opt: Path, jobs: int) -> tuple[int, int]:
     """Copy the parseable top-level InstCombine and InstSimplify tests."""
     entries: list[tuple[str, Path]] = []
@@ -133,19 +173,16 @@ def collect_test_suite(corpus: Path, opt: Path, jobs: int) -> tuple[int, int]:
             entries.append((f"{suite}__{source.name}", source))
     print(f"== test suite: {len(entries)} files from {LLVM_TEST_DIR} ==")
 
-    def one(item: tuple[str, Path]) -> tuple[str, Path, bool]:
+    def one(item: tuple[str, Path]) -> bool:
         name, source = item
-        return name, source, parses(opt, source)
+        if not parses(opt, source):
+            return False
+        copy_module(opt, source, corpus / name)
+        return True
 
-    ok = skipped = 0
     with ThreadPoolExecutor(max_workers=jobs) as pool:
-        for name, source, valid in pool.map(one, entries):
-            if not valid:
-                skipped += 1
-                continue
-            shutil.copy2(source, corpus / name)
-            ok += 1
-    return ok, skipped
+        copied = list(pool.map(one, entries))
+    return sum(copied), len(copied) - sum(copied)
 
 
 def copy_original(
@@ -156,36 +193,33 @@ def copy_original(
         sources = sorted(modules_from.glob("*.bc"))
         if not sources:
             sys.exit(f"no .bc modules in {modules_from}")
-        ok = 0
-        failures: list[str] = []
-        for source in sources:
+
+        def from_prepared(source: Path) -> str | None:
             proj, _, rest = source.name.partition("__")
             stem = Path(rest).stem
             src = bench_root / proj / "original" / f"{stem}.bc"
             if not src.is_file():
-                failures.append(str(src))
-                continue
-            shutil.copy2(src, corpus / source.name)
-            ok += 1
-        return ok, failures
+                return str(src)
+            copy_module(opt, src, corpus / source.name)
+            return None
+
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            failures = [f for f in pool.map(from_prepared, sources) if f]
+        return len(sources) - len(failures), failures
 
     entries = module_entries(bench_root)
     print(f"== copy {len(entries)} raw modules from {bench_root} ==")
 
-    def one(item: tuple[str, Path]) -> tuple[str, Path, bool]:
+    def one(item: tuple[str, Path]) -> str | None:
         name, source = item
-        return name, source, parses(opt, source)
+        if not parses(opt, source):
+            return str(source)
+        copy_module(opt, source, corpus / name)
+        return None
 
-    ok = 0
-    failures: list[str] = []
     with ThreadPoolExecutor(max_workers=jobs) as pool:
-        for name, source, valid in pool.map(one, entries):
-            if not valid:
-                failures.append(str(source))
-                continue
-            shutil.copy2(source, corpus / name)
-            ok += 1
-    return ok, failures
+        failures = [f for f in pool.map(one, entries) if f]
+    return len(entries) - len(failures), failures
 
 
 def preprocess_benchmark(
@@ -202,7 +236,8 @@ def preprocess_benchmark(
         env.pop("METAPHIR_EVAL_ENABLED", None)  # keep the folds disabled
         env.pop("METAPHIR_EVAL_ALL_FIRINGS", None)
         proc = subprocess.run(
-            [str(opt), f"-passes={passes}", str(src), "-o", str(tmp_bc)],
+            [str(opt), f"-load-pass-plugin={PLUGIN}",
+             f"-passes={passes},{DROP_OPTNONE}", str(src), "-o", str(tmp_bc)],
             capture_output=True,
             text=True,
             check=False,
@@ -288,15 +323,26 @@ def main() -> int:
         action="store_true",
         help="only refresh the test copies; keep the benchmark modules",
     )
+    ap.add_argument(
+        "--drop-optnone-only",
+        action="store_true",
+        help="only drop the optnone functions of the modules already in the corpus",
+    )
     args = ap.parse_args()
 
     if args.jobs < 1:
         ap.error("--jobs must be at least 1")
     if not args.opt.is_file():
         sys.exit(f"opt not found: {args.opt} (is the Release LLVM built?)")
+    if not PLUGIN.is_file():
+        sys.exit(f"plugin not found: {PLUGIN} (see docs/evaluation.md)")
     if args.kind == "original" and args.passes:
         ap.error("--passes is not allowed with --kind original")
     corpus = args.corpus or REPO / "eval" / f"corpus-{args.kind}"
+    if args.drop_optnone_only:
+        functions, modules = drop_optnone(corpus, args.opt, args.jobs)
+        print(f"  dropped {functions} optnone function(s) from {modules} module(s)")
+        return 0
     passes = args.passes or KINDS[args.kind]
     if passes is not None:
         passes = resolve_passes(passes, args.opt)

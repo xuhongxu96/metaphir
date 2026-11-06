@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -45,6 +46,50 @@ class ClearCorpusTest(unittest.TestCase):
         self.assertEqual(list(self.corpus.iterdir()), [])
 
 
+def plain_copy(_opt: Path, source: Path, dest: Path) -> int:
+    shutil.copy2(source, dest)
+    return 0
+
+
+class CopyModuleTest(unittest.TestCase):
+    """``opt`` is a script that writes its output and reports what it dropped."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.source = self.root / "m.ll"
+        self.source.write_text("original\n")
+        self.dest = self.root / "out.ll"
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def opt(self, script: str) -> Path:
+        opt = self.root / "opt"
+        opt.write_text("#!/bin/bash\nwhile [[ $1 != -o ]]; do shift; done\n" + script)
+        opt.chmod(0o755)
+        return opt
+
+    def test_module_without_optnone_is_copied_byte_for_byte(self) -> None:
+        opt = self.opt('echo rewritten > "$2"\n')
+        self.assertEqual(prepare_corpus.copy_module(opt, self.source, self.dest), 0)
+        self.assertEqual(self.dest.read_text(), "original\n")
+
+    def test_module_with_optnone_is_rewritten(self) -> None:
+        opt = self.opt('echo rewritten > "$2"\necho "DROPPED 3" >&2\n')
+        self.assertEqual(prepare_corpus.copy_module(opt, self.source, self.dest), 3)
+        self.assertEqual(self.dest.read_text(), "rewritten\n")
+
+    def test_in_place(self) -> None:
+        opt = self.opt('echo rewritten > "$2"\necho "DROPPED 1" >&2\n')
+        self.assertEqual(prepare_corpus.copy_module(opt, self.source, self.source), 1)
+        self.assertEqual(self.source.read_text(), "rewritten\n")
+
+    def test_failure_raises(self) -> None:
+        with self.assertRaises(RuntimeError):
+            prepare_corpus.copy_module(self.opt("exit 1\n"), self.source, self.dest)
+
+
 class CollectTestSuiteTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -70,6 +115,7 @@ class CollectTestSuiteTest(unittest.TestCase):
         with (
             mock.patch.object(prepare_corpus, "LLVM_TEST_DIR", self.tests),
             mock.patch.object(prepare_corpus, "parses", parses),
+            mock.patch.object(prepare_corpus, "copy_module", plain_copy),
             redirect_stdout(io.StringIO()),
         ):
             copied, skipped = prepare_corpus.collect_test_suite(
@@ -101,9 +147,10 @@ class CopyOriginalTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_modules_from_preserves_names(self) -> None:
-        ok, failures = prepare_corpus.copy_original(
-            self.bench, self.corpus, self.prepared, 1, Path("opt")
-        )
+        with mock.patch.object(prepare_corpus, "copy_module", plain_copy):
+            ok, failures = prepare_corpus.copy_original(
+                self.bench, self.corpus, self.prepared, 1, Path("opt")
+            )
         self.assertEqual((ok, failures), (2, []))
         self.assertEqual(
             sorted(p.name for p in self.corpus.iterdir()),
