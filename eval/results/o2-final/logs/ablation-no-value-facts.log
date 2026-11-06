@@ -2,62 +2,62 @@
   pr216436.mpir: 48 functions, 663 packs, 0.95s
   saved 48 functions
 == metaphir-index pr215122: 70755 modules, 1 pattern(s) ==
-  pr215122.mpir: 39 functions, 6931 packs, 2.01s
+  pr215122.mpir: 39 functions, 6931 packs, 1.95s
   saved 39 functions
 == metaphir-index pr215130: 70755 modules, 1 pattern(s) ==
-  pr215130.mpir: 3 functions, 349 packs, 0.91s
+  pr215130.mpir: 3 functions, 349 packs, 0.88s
   saved 3 functions
 == metaphir-index pr214541: 70755 modules, 1 pattern(s) ==
-  pr214541.mpir: 23 functions, 396 packs, 0.67s
+  pr214541.mpir: 23 functions, 396 packs, 0.60s
   saved 23 functions
 == metaphir-index pr214517: 70755 modules, 1 pattern(s) ==
-  pr214517.mpir: 27 functions, 819 packs, 0.88s
+  pr214517.mpir: 27 functions, 819 packs, 0.91s
   saved 27 functions
 == metaphir-index pr214381: 70755 modules, 1 pattern(s) ==
-  pr214381.mpir: 16 functions, 253 packs, 0.74s
+  pr214381.mpir: 16 functions, 253 packs, 0.66s
   saved 16 functions
 == metaphir-index pr214376: 70755 modules, 1 pattern(s) ==
   pr214376.mpir: 13 functions, 1086 packs, 1.16s
   saved 13 functions
 == metaphir-index pr213709: 70755 modules, 1 pattern(s) ==
-  pr213709.mpir: 26 functions, 6312 packs, 1.79s
+  pr213709.mpir: 26 functions, 6312 packs, 1.81s
   saved 26 functions
 == metaphir-index pr213313: 70755 modules, 1 pattern(s) ==
-  pr213313.mpir: 10 functions, 747 packs, 0.80s
+  pr213313.mpir: 10 functions, 747 packs, 0.81s
   saved 10 functions
 == metaphir-index pr212132: 70755 modules, 2 pattern(s) ==
-  pr212132_case1.mpir: 3 functions, 1118 packs, 1.49s
-  pr212132_case2.mpir: 2 functions, 2162 packs, 1.82s
+  pr212132_case1.mpir: 3 functions, 1118 packs, 1.40s
+  pr212132_case2.mpir: 2 functions, 2162 packs, 1.86s
   saved 5 functions
 == metaphir-index pr210499: 70755 modules, 1 pattern(s) ==
-  pr210499.mpir: 18 functions, 2959 packs, 1.92s
+  pr210499.mpir: 18 functions, 2959 packs, 1.98s
   saved 18 functions
 == metaphir-index pr209322: 70755 modules, 1 pattern(s) ==
-  pr209322.mpir: 19 functions, 68811 packs, 4.24s
+  pr209322.mpir: 19 functions, 68782 packs, 4.37s
   saved 19 functions
 == metaphir-index pr207564: 70755 modules, 1 pattern(s) ==
   pr207564.mpir: 58 functions, 2494 packs, 1.39s
   saved 58 functions
 == metaphir-index pr207462: 70755 modules, 2 pattern(s) ==
-  pr207462.mpir: 33 functions, 4885 packs, 1.86s
+  pr207462.mpir: 33 functions, 4885 packs, 1.81s
   pr207462_mul.mpir: 1 functions, 31 packs, 0.40s
   saved 34 functions
 == metaphir-index pr205383: 70755 modules, 2 pattern(s) ==
-  pr205383_sub.mpir: 2 functions, 21 packs, 0.53s
+  pr205383_sub.mpir: 2 functions, 21 packs, 0.46s
   pr205383_xor.mpir: 2 functions, 7 packs, 0.44s
   saved 4 functions
 == metaphir-index pr204928: 70755 modules, 1 pattern(s) ==
-  pr204928.mpir: 1271 functions, 3987 packs, 1.48s
+  pr204928.mpir: 1271 functions, 3987 packs, 1.45s
   saved 1271 functions
 == metaphir-index pr204927: 70755 modules, 1 pattern(s) ==
-  pr204927.mpir: 1978 functions, 17998 packs, 3.17s
+  pr204927.mpir: 1978 functions, 17996 packs, 3.11s
   saved 1978 functions
 == metaphir-index pr216470: 70755 modules, 1 pattern(s) ==
-  pr216470.mpir: 340 functions, 14000 packs, 2.70s
+  pr216470.mpir: 340 functions, 14000 packs, 2.77s
   saved 340 functions
 == metaphir-index pr216046: 70755 modules, 1 pattern(s) ==
-  pr216046.mpir: 66 functions, 2167 packs, 1.60s
+  pr216046.mpir: 66 functions, 2167 packs, 1.54s
   saved 66 functions
 == metaphir-index pr204089: 70755 modules, 1 pattern(s) ==
-  pr204089.mpir: 12 functions, 539 packs, 0.92s
-  saved 12 functions
+  pr204089.mpir: 3 functions, 521 packs, 0.90s
+  saved 3 functions

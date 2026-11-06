@@ -1,3 +1,8 @@
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /data/h445xu/repo/metaphir/eval/fold-plugin/build
+[100%] Built target MetaphIRFolds
+19 blocks, 0 differ
   pr204089: 3 functions, 3 firings
   pr204927: 1978 functions, 8983 firings
   pr204928: 1271 functions, 4958 firings
@@ -18,4 +23,4 @@
   pr216046: 66 functions, 110 firings
   pr216436: 48 functions, 56 firings
   pr216470: 340 functions, 383 firings
-  3031.62 CPU-seconds, summed over the modules; 0 modules failed
+  3037.17 CPU-seconds, summed over the modules; 0 modules failed

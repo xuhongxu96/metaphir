@@ -1,7 +1,7 @@
 {
   "title": "MetaphIR evaluation (test suite)",
   "provenance": {
-    "metaphir_commit": "de162aa9294ce92e7089772b0ca661f473a31321",
+    "metaphir_commit": "60392545555eba789f0806e6cd43bfff74e202cd",
     "llvm_commit": "79b321b1238ceaf8261a5b177185a3ec5111918a",
     "machine": {
       "cpu": "Neoverse-N1 (aarch64)",
@@ -32,7 +32,7 @@
     }
   },
   "ground_truth": "eval/results/o2-final/gt",
-  "ground_truth_cpu_seconds": 3031.619,
+  "ground_truth_cpu_seconds": 3037.167,
   "per_pr": {
     "pr204089": {
       "metaphir-index": {

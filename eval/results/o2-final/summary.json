@@ -1,7 +1,7 @@
 {
   "title": "MetaphIR evaluation (llvm-opt-benchmark)",
   "provenance": {
-    "metaphir_commit": "de162aa9294ce92e7089772b0ca661f473a31321",
+    "metaphir_commit": "60392545555eba789f0806e6cd43bfff74e202cd",
     "llvm_commit": "79b321b1238ceaf8261a5b177185a3ec5111918a",
     "machine": {
       "cpu": "Neoverse-N1 (aarch64)",
@@ -12,7 +12,7 @@
     "corpus": {
       "path": "eval/corpus-o2-final",
       "files": 68843,
-      "bytes": 11904781504
+      "bytes": 11903603748
     }
   },
   "rq1": {
@@ -32,28 +32,28 @@
     }
   },
   "ground_truth": "eval/results/o2-final/gt",
-  "ground_truth_cpu_seconds": 3031.619,
+  "ground_truth_cpu_seconds": 3037.167,
   "per_pr": {
     "pr204089": {
       "metaphir-index": {
         "G": 0,
-        "P": 9,
+        "P": 0,
         "TP": 0,
-        "FP": 9,
+        "FP": 0,
         "FN": 0,
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0
+        "f1": 1.0
       },
       "daggrep": {
         "G": 0,
-        "P": 10,
+        "P": 0,
         "TP": 0,
-        "FP": 10,
+        "FP": 0,
         "FN": 0,
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0
+        "f1": 1.0
       }
     },
     "pr204927": {
@@ -179,9 +179,9 @@
       },
       "daggrep": {
         "G": 0,
-        "P": 68204,
+        "P": 68175,
         "TP": 0,
-        "FP": 68204,
+        "FP": 68175,
         "FN": 0,
         "precision": 0.0,
         "recall": 1.0,
@@ -479,14 +479,14 @@
     "metaphir-index": {
       "all": {
         "G": 3861,
-        "P": 3870,
+        "P": 3861,
         "TP": 3861,
-        "FP": 9,
+        "FP": 0,
         "FN": 0,
-        "precision": 0.9976744186046511,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.9988358556461001,
-        "exact_prs": 19
+        "f1": 1.0,
+        "exact_prs": 20
       },
       "without_pr204089": {
         "G": 3861,
@@ -503,785 +503,785 @@
     "daggrep": {
       "all": {
         "G": 3861,
-        "P": 90023,
+        "P": 89984,
         "TP": 3861,
-        "FP": 86162,
+        "FP": 86123,
         "FN": 0,
-        "precision": 0.04288903946769159,
+        "precision": 0.0429076280227596,
         "recall": 1.0,
-        "f1": 0.08225043670913042,
-        "exact_prs": 5
+        "f1": 0.08228461825350311,
+        "exact_prs": 6
       },
       "without_pr204089": {
         "G": 3861,
-        "P": 90013,
+        "P": 89984,
         "TP": 3861,
-        "FP": 86152,
+        "FP": 86123,
         "FN": 0,
-        "precision": 0.04289380422827814,
+        "precision": 0.0429076280227596,
         "recall": 1.0,
-        "f1": 0.08225919850011718,
+        "f1": 0.08228461825350311,
         "exact_prs": 5
       }
     }
   },
   "timing_seconds": {
     "metaphir-index": {
-      "pr204089": 0.879,
-      "pr204927": 3.197,
-      "pr204928": 1.49,
-      "pr205383": 0.9530000000000001,
-      "pr207462": 2.251,
-      "pr207564": 1.337,
-      "pr209322": 0.83,
-      "pr210499": 2.031,
-      "pr212132": 3.224,
-      "pr213313": 0.833,
-      "pr213709": 1.806,
-      "pr214376": 1.15,
-      "pr214381": 0.705,
+      "pr204089": 0.907,
+      "pr204927": 3.257,
+      "pr204928": 1.456,
+      "pr205383": 0.899,
+      "pr207462": 2.255,
+      "pr207564": 1.37,
+      "pr209322": 0.863,
+      "pr210499": 2.037,
+      "pr212132": 3.229,
+      "pr213313": 0.849,
+      "pr213709": 1.809,
+      "pr214376": 1.173,
+      "pr214381": 0.688,
       "pr214517": 0.93,
-      "pr214541": 0.676,
-      "pr215122": 2.047,
-      "pr215130": 0.829,
-      "pr216046": 1.326,
-      "pr216436": 0.925,
-      "pr216470": 2.725
+      "pr214541": 0.629,
+      "pr215122": 2.04,
+      "pr215130": 0.9,
+      "pr216046": 1.373,
+      "pr216436": 1.041,
+      "pr216470": 2.828
     },
     "metaphir-scan": {
-      "pr204089": 26.443,
-      "pr204927": 26.463,
-      "pr204928": 26.343,
-      "pr205383": 52.662000000000006,
-      "pr207462": 51.263999999999996,
-      "pr207564": 25.526,
-      "pr209322": 26.109,
-      "pr210499": 26.214,
-      "pr212132": 51.846000000000004,
-      "pr213313": 26.093,
-      "pr213709": 25.933,
-      "pr214376": 26.22,
-      "pr214381": 26.226,
-      "pr214517": 25.96,
-      "pr214541": 26.602,
-      "pr215122": 26.394,
-      "pr215130": 25.968,
-      "pr216046": 25.952,
-      "pr216436": 25.884,
-      "pr216470": 26.347
+      "pr204089": 26.204,
+      "pr204927": 25.999,
+      "pr204928": 26.041,
+      "pr205383": 51.457,
+      "pr207462": 51.296,
+      "pr207564": 26.293,
+      "pr209322": 25.924,
+      "pr210499": 26.789,
+      "pr212132": 51.666,
+      "pr213313": 26.095,
+      "pr213709": 26.022,
+      "pr214376": 25.948,
+      "pr214381": 25.316,
+      "pr214517": 26.707,
+      "pr214541": 26.315,
+      "pr215122": 26.045,
+      "pr215130": 26.611,
+      "pr216046": 26.461,
+      "pr216436": 25.696,
+      "pr216470": 26.289
     },
     "daggrep": {
-      "pr204089": 43.512,
-      "pr204927": 64.60300000000001,
-      "pr204928": 65.991,
-      "pr205383": 86.632,
-      "pr207462": 43.74,
-      "pr207564": 22.443,
-      "pr209322": 22.247,
-      "pr210499": 87.844,
-      "pr212132": 44.113,
-      "pr213313": 43.782,
-      "pr213709": 43.358000000000004,
-      "pr214376": 21.73,
-      "pr214381": 21.635,
-      "pr214517": 21.457,
-      "pr214541": 22.273,
-      "pr215122": 21.867,
-      "pr215130": 21.262,
-      "pr216046": 21.492,
-      "pr216436": 21.761,
-      "pr216470": 43.64
+      "pr204089": 43.074,
+      "pr204927": 64.519,
+      "pr204928": 65.108,
+      "pr205383": 86.592,
+      "pr207462": 42.538,
+      "pr207564": 21.717,
+      "pr209322": 21.439,
+      "pr210499": 86.714,
+      "pr212132": 44.123,
+      "pr213313": 43.108999999999995,
+      "pr213709": 43.522999999999996,
+      "pr214376": 21.147,
+      "pr214381": 21.517,
+      "pr214517": 21.354,
+      "pr214541": 20.677,
+      "pr215122": 21.889,
+      "pr215130": 22.392,
+      "pr216046": 21.213,
+      "pr216436": 21.145,
+      "pr216470": 43.863
     },
     "ablation-no-value-facts": {
-      "pr204089": 0.92,
-      "pr204927": 3.169,
-      "pr204928": 1.483,
-      "pr205383": 0.962,
-      "pr207462": 2.266,
-      "pr207564": 1.395,
-      "pr209322": 4.243,
-      "pr210499": 1.919,
-      "pr212132": 3.307,
-      "pr213313": 0.797,
-      "pr213709": 1.785,
-      "pr214376": 1.156,
-      "pr214381": 0.743,
-      "pr214517": 0.884,
-      "pr214541": 0.665,
-      "pr215122": 2.009,
-      "pr215130": 0.914,
-      "pr216046": 1.596,
-      "pr216436": 0.952,
-      "pr216470": 2.703
+      "pr204089": 0.905,
+      "pr204927": 3.107,
+      "pr204928": 1.451,
+      "pr205383": 0.901,
+      "pr207462": 2.218,
+      "pr207564": 1.388,
+      "pr209322": 4.371,
+      "pr210499": 1.976,
+      "pr212132": 3.2640000000000002,
+      "pr213313": 0.815,
+      "pr213709": 1.812,
+      "pr214376": 1.159,
+      "pr214381": 0.662,
+      "pr214517": 0.907,
+      "pr214541": 0.601,
+      "pr215122": 1.946,
+      "pr215130": 0.881,
+      "pr216046": 1.542,
+      "pr216436": 0.946,
+      "pr216470": 2.766
     },
     "ablation-no-constraint-prefilter": {
-      "pr204089": 0.913,
-      "pr204927": 3.121,
-      "pr204928": 1.696,
-      "pr205383": 0.956,
-      "pr207462": 2.367,
-      "pr207564": 1.654,
-      "pr209322": 4.364,
-      "pr210499": 2.023,
-      "pr212132": 3.385,
-      "pr213313": 0.812,
-      "pr213709": 2.443,
-      "pr214376": 1.266,
-      "pr214381": 1.005,
-      "pr214517": 1.223,
-      "pr214541": 0.776,
-      "pr215122": 2.922,
-      "pr215130": 0.94,
-      "pr216046": 1.588,
-      "pr216436": 1.315,
-      "pr216470": 2.984
+      "pr204089": 0.885,
+      "pr204927": 3.201,
+      "pr204928": 1.709,
+      "pr205383": 0.9510000000000001,
+      "pr207462": 2.412,
+      "pr207564": 1.639,
+      "pr209322": 4.405,
+      "pr210499": 1.979,
+      "pr212132": 3.399,
+      "pr213313": 0.839,
+      "pr213709": 2.455,
+      "pr214376": 1.221,
+      "pr214381": 0.985,
+      "pr214517": 1.184,
+      "pr214541": 0.713,
+      "pr215122": 2.877,
+      "pr215130": 0.93,
+      "pr216046": 1.658,
+      "pr216436": 1.367,
+      "pr216470": 3.082
     }
   },
   "candidate_counts": {
     "pr204089": {
-      "packs": 539,
-      "files": 240,
-      "total_functions": 4776770,
+      "packs": 521,
+      "files": 232,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr204927": {
-      "packs": 17998,
-      "files": 5097,
-      "total_functions": 4776770,
+      "packs": 17996,
+      "files": 5095,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr204928": {
       "packs": 3987,
       "files": 703,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr205383": {
       "packs": 28,
       "files": 26,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr207462": {
       "packs": 4916,
       "files": 1556,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr207564": {
       "packs": 2494,
       "files": 1479,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr209322": {
       "packs": 19,
       "files": 8,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr210499": {
       "packs": 2959,
       "files": 1631,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr212132": {
       "packs": 2828,
       "files": 1887,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr213313": {
       "packs": 747,
       "files": 247,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr213709": {
       "packs": 6312,
       "files": 2211,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr214376": {
       "packs": 1086,
       "files": 341,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr214381": {
       "packs": 253,
       "files": 164,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr214517": {
       "packs": 819,
       "files": 312,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr214541": {
       "packs": 396,
       "files": 223,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr215122": {
       "packs": 6931,
       "files": 2083,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr215130": {
       "packs": 349,
       "files": 158,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr216046": {
       "packs": 1532,
       "files": 409,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr216436": {
       "packs": 663,
       "files": 361,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     },
     "pr216470": {
       "packs": 14000,
       "files": 3778,
-      "total_functions": 4776770,
+      "total_functions": 4771730,
       "total_files": 70755
     }
   },
   "candidate_counts_by_tool": {
     "metaphir-index": {
       "pr204089": {
-        "packs": 539,
-        "files": 240,
-        "total_functions": 4776770,
+        "packs": 521,
+        "files": 232,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204927": {
-        "packs": 17998,
-        "files": 5097,
-        "total_functions": 4776770,
+        "packs": 17996,
+        "files": 5095,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204928": {
         "packs": 3987,
         "files": 703,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr205383": {
         "packs": 28,
         "files": 26,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207462": {
         "packs": 4916,
         "files": 1556,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207564": {
         "packs": 2494,
         "files": 1479,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr209322": {
         "packs": 19,
         "files": 8,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr210499": {
         "packs": 2959,
         "files": 1631,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr212132": {
         "packs": 2828,
         "files": 1887,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213313": {
         "packs": 747,
         "files": 247,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213709": {
         "packs": 6312,
         "files": 2211,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214376": {
         "packs": 1086,
         "files": 341,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214381": {
         "packs": 253,
         "files": 164,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214517": {
         "packs": 819,
         "files": 312,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214541": {
         "packs": 396,
         "files": 223,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215122": {
         "packs": 6931,
         "files": 2083,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215130": {
         "packs": 349,
         "files": 158,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216046": {
         "packs": 1532,
         "files": 409,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216436": {
         "packs": 663,
         "files": 361,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216470": {
         "packs": 14000,
         "files": 3778,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       }
     },
     "ablation-no-value-facts": {
       "pr204089": {
-        "packs": 539,
-        "files": 240,
-        "total_functions": 4776770,
+        "packs": 521,
+        "files": 232,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204927": {
-        "packs": 17998,
-        "files": 5097,
-        "total_functions": 4776770,
+        "packs": 17996,
+        "files": 5095,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204928": {
         "packs": 3987,
         "files": 703,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr205383": {
         "packs": 28,
         "files": 26,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207462": {
         "packs": 4916,
         "files": 1556,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207564": {
         "packs": 2494,
         "files": 1479,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr209322": {
-        "packs": 68811,
-        "files": 12111,
-        "total_functions": 4776770,
+        "packs": 68782,
+        "files": 12101,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr210499": {
         "packs": 2959,
         "files": 1631,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr212132": {
         "packs": 3280,
         "files": 2051,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213313": {
         "packs": 747,
         "files": 247,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213709": {
         "packs": 6312,
         "files": 2211,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214376": {
         "packs": 1086,
         "files": 341,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214381": {
         "packs": 253,
         "files": 164,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214517": {
         "packs": 819,
         "files": 312,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214541": {
         "packs": 396,
         "files": 223,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215122": {
         "packs": 6931,
         "files": 2083,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215130": {
         "packs": 349,
         "files": 158,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216046": {
         "packs": 2167,
         "files": 607,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216436": {
         "packs": 663,
         "files": 361,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216470": {
         "packs": 14000,
         "files": 3778,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       }
     },
     "ablation-no-constraint-prefilter": {
       "pr204089": {
-        "packs": 539,
-        "files": 240,
-        "total_functions": 4776770,
+        "packs": 521,
+        "files": 232,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204927": {
-        "packs": 19169,
-        "files": 5346,
-        "total_functions": 4776770,
+        "packs": 19167,
+        "files": 5344,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204928": {
         "packs": 6209,
         "files": 721,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr205383": {
         "packs": 52,
         "files": 31,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207462": {
         "packs": 5524,
         "files": 1844,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207564": {
         "packs": 5398,
         "files": 2529,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr209322": {
-        "packs": 68811,
-        "files": 12111,
-        "total_functions": 4776770,
+        "packs": 68782,
+        "files": 12101,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr210499": {
         "packs": 2959,
         "files": 1631,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr212132": {
         "packs": 3298,
         "files": 2063,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213313": {
         "packs": 747,
         "files": 247,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213709": {
         "packs": 13146,
         "files": 4142,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214376": {
         "packs": 1213,
         "files": 409,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214381": {
         "packs": 899,
         "files": 454,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214517": {
         "packs": 1262,
         "files": 519,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214541": {
         "packs": 590,
         "files": 319,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215122": {
         "packs": 21137,
         "files": 5041,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215130": {
         "packs": 506,
         "files": 203,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216046": {
         "packs": 2167,
         "files": 607,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216436": {
         "packs": 3688,
         "files": 1195,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216470": {
         "packs": 15260,
         "files": 3983,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       }
     },
     "metaphir-scan": {
       "pr204089": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204927": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr204928": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr205383": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207462": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr207564": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr209322": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr210499": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr212132": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213313": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr213709": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214376": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214381": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214517": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr214541": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215122": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr215130": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216046": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216436": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       },
       "pr216470": {
-        "packs": 4776770,
+        "packs": 4771730,
         "files": 70755,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "total_files": 70755
       }
     }
   },
   "index": {
-    "build_seconds": 131.38,
-    "no_value_facts_build_seconds": 103.62,
+    "build_seconds": 142.44,
+    "no_value_facts_build_seconds": 113.0,
     "check_index_differences": 0,
-    "median_functions_checked": 0.00018694640939379538,
+    "median_functions_checked": 0.00018714386606115603,
     "median_files_read": 0.005102112924881634,
     "per_pattern": {
       "pr204089": {
         "modules": [
-          404,
+          395,
           70755
         ],
         "bytes": [
-          454994981,
-          11925327434
+          454502949,
+          11924149678
         ],
         "functions": [
-          539,
-          4776770
+          521,
+          4771730
         ]
       },
       "pr204927": {
         "modules": [
-          9506,
+          9504,
           70755
         ],
         "bytes": [
-          6208186041,
-          11925327434
+          6208140733,
+          11924149678
         ],
         "functions": [
-          17998,
-          4776770
+          17996,
+          4771730
         ]
       },
       "pr204928": {
@@ -1290,12 +1290,12 @@
           70755
         ],
         "bytes": [
-          1381434450,
-          11925327434
+          1381434262,
+          11924149678
         ],
         "functions": [
           3987,
-          4776770
+          4771730
         ]
       },
       "pr205383_sub": {
@@ -1304,12 +1304,12 @@
           70755
         ],
         "bytes": [
-          1863493802,
-          11925327434
+          1863493614,
+          11924149678
         ],
         "functions": [
           21,
-          4776770
+          4771730
         ]
       },
       "pr205383_xor": {
@@ -1318,12 +1318,12 @@
           70755
         ],
         "bytes": [
-          1709830898,
-          11925327434
+          1709830710,
+          11924149678
         ],
         "functions": [
           7,
-          4776770
+          4771730
         ]
       },
       "pr207462": {
@@ -1332,12 +1332,12 @@
           70755
         ],
         "bytes": [
-          4903332980,
-          11925327434
+          4903332792,
+          11924149678
         ],
         "functions": [
           4885,
-          4776770
+          4771730
         ]
       },
       "pr207462_mul": {
@@ -1347,25 +1347,25 @@
         ],
         "bytes": [
           164143655,
-          11925327434
+          11924149678
         ],
         "functions": [
           31,
-          4776770
+          4771730
         ]
       },
       "pr207564": {
         "modules": [
-          2733,
+          2732,
           70755
         ],
         "bytes": [
-          2048955696,
-          11925327434
+          2048717468,
+          11924149678
         ],
         "functions": [
           2494,
-          4776770
+          4771730
         ]
       },
       "pr209322": {
@@ -1375,11 +1375,11 @@
         ],
         "bytes": [
           6252520,
-          11925327434
+          11924149678
         ],
         "functions": [
           19,
-          4776770
+          4771730
         ]
       },
       "pr210499": {
@@ -1388,12 +1388,12 @@
           70755
         ],
         "bytes": [
-          4895736579,
-          11925327434
+          4895736391,
+          11924149678
         ],
         "functions": [
           2959,
-          4776770
+          4771730
         ]
       },
       "pr212132_case1": {
@@ -1402,12 +1402,12 @@
           70755
         ],
         "bytes": [
-          3119873656,
-          11925327434
+          3119873468,
+          11924149678
         ],
         "functions": [
           893,
-          4776770
+          4771730
         ]
       },
       "pr212132_case2": {
@@ -1416,12 +1416,12 @@
           70755
         ],
         "bytes": [
-          3471551192,
-          11925327434
+          3471551004,
+          11924149678
         ],
         "functions": [
           1935,
-          4776770
+          4771730
         ]
       },
       "pr213313": {
@@ -1430,12 +1430,12 @@
           70755
         ],
         "bytes": [
-          898003069,
-          11925327434
+          898002881,
+          11924149678
         ],
         "functions": [
           747,
-          4776770
+          4771730
         ]
       },
       "pr213709": {
@@ -1444,12 +1444,12 @@
           70755
         ],
         "bytes": [
-          4224206070,
-          11925327434
+          4224205882,
+          11924149678
         ],
         "functions": [
           6312,
-          4776770
+          4771730
         ]
       },
       "pr214376": {
@@ -1459,11 +1459,11 @@
         ],
         "bytes": [
           3259348104,
-          11925327434
+          11924149678
         ],
         "functions": [
           1086,
-          4776770
+          4771730
         ]
       },
       "pr214381": {
@@ -1473,11 +1473,11 @@
         ],
         "bytes": [
           880902986,
-          11925327434
+          11924149678
         ],
         "functions": [
           253,
-          4776770
+          4771730
         ]
       },
       "pr214517": {
@@ -1487,11 +1487,11 @@
         ],
         "bytes": [
           2136970282,
-          11925327434
+          11924149678
         ],
         "functions": [
           819,
-          4776770
+          4771730
         ]
       },
       "pr214541": {
@@ -1501,25 +1501,25 @@
         ],
         "bytes": [
           180733345,
-          11925327434
+          11924149678
         ],
         "functions": [
           396,
-          4776770
+          4771730
         ]
       },
       "pr215122": {
         "modules": [
-          6413,
+          6412,
           70755
         ],
         "bytes": [
-          4855040097,
-          11925327434
+          4854801869,
+          11924149678
         ],
         "functions": [
           6931,
-          4776770
+          4771730
         ]
       },
       "pr215130": {
@@ -1529,11 +1529,11 @@
         ],
         "bytes": [
           1996642417,
-          11925327434
+          11924149678
         ],
         "functions": [
           349,
-          4776770
+          4771730
         ]
       },
       "pr216046": {
@@ -1543,11 +1543,11 @@
         ],
         "bytes": [
           1275237872,
-          11925327434
+          11924149678
         ],
         "functions": [
           1532,
-          4776770
+          4771730
         ]
       },
       "pr216436": {
@@ -1556,12 +1556,12 @@
           70755
         ],
         "bytes": [
-          1620399812,
-          11925327434
+          1620399624,
+          11924149678
         ],
         "functions": [
           663,
-          4776770
+          4771730
         ]
       },
       "pr216470": {
@@ -1570,42 +1570,42 @@
           70755
         ],
         "bytes": [
-          6336816615,
-          11925327434
+          6336816427,
+          11924149678
         ],
         "functions": [
           14000,
-          4776770
+          4771730
         ]
       }
     },
     "per_pattern_no_value_facts": {
       "pr204089": {
         "modules": [
-          404,
+          395,
           70755
         ],
         "bytes": [
-          454994981,
-          11925327434
+          454502949,
+          11924149678
         ],
         "functions": [
-          539,
-          4776770
+          521,
+          4771730
         ]
       },
       "pr204927": {
         "modules": [
-          9506,
+          9504,
           70755
         ],
         "bytes": [
-          6208186041,
-          11925327434
+          6208140733,
+          11924149678
         ],
         "functions": [
-          17998,
-          4776770
+          17996,
+          4771730
         ]
       },
       "pr204928": {
@@ -1614,12 +1614,12 @@
           70755
         ],
         "bytes": [
-          1381434450,
-          11925327434
+          1381434262,
+          11924149678
         ],
         "functions": [
           3987,
-          4776770
+          4771730
         ]
       },
       "pr205383_sub": {
@@ -1628,12 +1628,12 @@
           70755
         ],
         "bytes": [
-          1863493802,
-          11925327434
+          1863493614,
+          11924149678
         ],
         "functions": [
           21,
-          4776770
+          4771730
         ]
       },
       "pr205383_xor": {
@@ -1642,12 +1642,12 @@
           70755
         ],
         "bytes": [
-          1709830898,
-          11925327434
+          1709830710,
+          11924149678
         ],
         "functions": [
           7,
-          4776770
+          4771730
         ]
       },
       "pr207462": {
@@ -1656,12 +1656,12 @@
           70755
         ],
         "bytes": [
-          4903332980,
-          11925327434
+          4903332792,
+          11924149678
         ],
         "functions": [
           4885,
-          4776770
+          4771730
         ]
       },
       "pr207462_mul": {
@@ -1671,39 +1671,39 @@
         ],
         "bytes": [
           164143655,
-          11925327434
+          11924149678
         ],
         "functions": [
           31,
-          4776770
+          4771730
         ]
       },
       "pr207564": {
         "modules": [
-          2733,
+          2732,
           70755
         ],
         "bytes": [
-          2048955696,
-          11925327434
+          2048717468,
+          11924149678
         ],
         "functions": [
           2494,
-          4776770
+          4771730
         ]
       },
       "pr209322": {
         "modules": [
-          12111,
+          12101,
           70755
         ],
         "bytes": [
-          6761721030,
-          11925327434
+          6760087774,
+          11924149678
         ],
         "functions": [
-          68811,
-          4776770
+          68782,
+          4771730
         ]
       },
       "pr210499": {
@@ -1712,12 +1712,12 @@
           70755
         ],
         "bytes": [
-          4895736579,
-          11925327434
+          4895736391,
+          11924149678
         ],
         "functions": [
           2959,
-          4776770
+          4771730
         ]
       },
       "pr212132_case1": {
@@ -1726,12 +1726,12 @@
           70755
         ],
         "bytes": [
-          3127771784,
-          11925327434
+          3127771596,
+          11924149678
         ],
         "functions": [
           1118,
-          4776770
+          4771730
         ]
       },
       "pr212132_case2": {
@@ -1740,12 +1740,12 @@
           70755
         ],
         "bytes": [
-          3488308792,
-          11925327434
+          3488308604,
+          11924149678
         ],
         "functions": [
           2162,
-          4776770
+          4771730
         ]
       },
       "pr213313": {
@@ -1754,12 +1754,12 @@
           70755
         ],
         "bytes": [
-          898003069,
-          11925327434
+          898002881,
+          11924149678
         ],
         "functions": [
           747,
-          4776770
+          4771730
         ]
       },
       "pr213709": {
@@ -1768,12 +1768,12 @@
           70755
         ],
         "bytes": [
-          4224206070,
-          11925327434
+          4224205882,
+          11924149678
         ],
         "functions": [
           6312,
-          4776770
+          4771730
         ]
       },
       "pr214376": {
@@ -1783,11 +1783,11 @@
         ],
         "bytes": [
           3259348104,
-          11925327434
+          11924149678
         ],
         "functions": [
           1086,
-          4776770
+          4771730
         ]
       },
       "pr214381": {
@@ -1797,11 +1797,11 @@
         ],
         "bytes": [
           880902986,
-          11925327434
+          11924149678
         ],
         "functions": [
           253,
-          4776770
+          4771730
         ]
       },
       "pr214517": {
@@ -1811,11 +1811,11 @@
         ],
         "bytes": [
           2136970282,
-          11925327434
+          11924149678
         ],
         "functions": [
           819,
-          4776770
+          4771730
         ]
       },
       "pr214541": {
@@ -1825,25 +1825,25 @@
         ],
         "bytes": [
           180733345,
-          11925327434
+          11924149678
         ],
         "functions": [
           396,
-          4776770
+          4771730
         ]
       },
       "pr215122": {
         "modules": [
-          6413,
+          6412,
           70755
         ],
         "bytes": [
-          4855040097,
-          11925327434
+          4854801869,
+          11924149678
         ],
         "functions": [
           6931,
-          4776770
+          4771730
         ]
       },
       "pr215130": {
@@ -1853,11 +1853,11 @@
         ],
         "bytes": [
           1996642417,
-          11925327434
+          11924149678
         ],
         "functions": [
           349,
-          4776770
+          4771730
         ]
       },
       "pr216046": {
@@ -1867,11 +1867,11 @@
         ],
         "bytes": [
           1283363004,
-          11925327434
+          11924149678
         ],
         "functions": [
           2167,
-          4776770
+          4771730
         ]
       },
       "pr216436": {
@@ -1880,12 +1880,12 @@
           70755
         ],
         "bytes": [
-          1620399812,
-          11925327434
+          1620399624,
+          11924149678
         ],
         "functions": [
           663,
-          4776770
+          4771730
         ]
       },
       "pr216470": {
@@ -1894,151 +1894,151 @@
           70755
         ],
         "bytes": [
-          6336816615,
-          11925327434
+          6336816427,
+          11924149678
         ],
         "functions": [
           14000,
-          4776770
+          4771730
         ]
       }
     },
     "per_pattern_candidates": {
       "pr204089": {
-        "checked": 539,
-        "total_functions": 4776770,
-        "files_read": 240,
+        "checked": 521,
+        "total_functions": 4771730,
+        "files_read": 232,
         "total_files": 70755
       },
       "pr204927": {
-        "checked": 17998,
-        "total_functions": 4776770,
-        "files_read": 5097,
+        "checked": 17996,
+        "total_functions": 4771730,
+        "files_read": 5095,
         "total_files": 70755
       },
       "pr204928": {
         "checked": 3987,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 703,
         "total_files": 70755
       },
       "pr205383_sub": {
         "checked": 21,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 20,
         "total_files": 70755
       },
       "pr205383_xor": {
         "checked": 7,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 6,
         "total_files": 70755
       },
       "pr207462": {
         "checked": 4885,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 1551,
         "total_files": 70755
       },
       "pr207462_mul": {
         "checked": 31,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 5,
         "total_files": 70755
       },
       "pr207564": {
         "checked": 2494,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 1479,
         "total_files": 70755
       },
       "pr209322": {
         "checked": 19,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 8,
         "total_files": 70755
       },
       "pr210499": {
         "checked": 2959,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 1631,
         "total_files": 70755
       },
       "pr212132_case1": {
         "checked": 893,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 721,
         "total_files": 70755
       },
       "pr212132_case2": {
         "checked": 1935,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 1166,
         "total_files": 70755
       },
       "pr213313": {
         "checked": 747,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 247,
         "total_files": 70755
       },
       "pr213709": {
         "checked": 6312,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 2211,
         "total_files": 70755
       },
       "pr214376": {
         "checked": 1086,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 341,
         "total_files": 70755
       },
       "pr214381": {
         "checked": 253,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 164,
         "total_files": 70755
       },
       "pr214517": {
         "checked": 819,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 312,
         "total_files": 70755
       },
       "pr214541": {
         "checked": 396,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 223,
         "total_files": 70755
       },
       "pr215122": {
         "checked": 6931,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 2083,
         "total_files": 70755
       },
       "pr215130": {
         "checked": 349,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 158,
         "total_files": 70755
       },
       "pr216046": {
         "checked": 1532,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 409,
         "total_files": 70755
       },
       "pr216436": {
         "checked": 663,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 361,
         "total_files": 70755
       },
       "pr216470": {
         "checked": 14000,
-        "total_functions": 4776770,
+        "total_functions": 4771730,
         "files_read": 3778,
         "total_files": 70755
       }
@@ -2046,420 +2046,420 @@
     "per_pattern_candidates_by_tool": {
       "metaphir-index": {
         "pr204089": {
-          "checked": 539,
-          "total_functions": 4776770,
-          "files_read": 240,
+          "checked": 521,
+          "total_functions": 4771730,
+          "files_read": 232,
           "total_files": 70755
         },
         "pr204927": {
-          "checked": 17998,
-          "total_functions": 4776770,
-          "files_read": 5097,
+          "checked": 17996,
+          "total_functions": 4771730,
+          "files_read": 5095,
           "total_files": 70755
         },
         "pr204928": {
           "checked": 3987,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 703,
           "total_files": 70755
         },
         "pr205383_sub": {
           "checked": 21,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 20,
           "total_files": 70755
         },
         "pr205383_xor": {
           "checked": 7,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 6,
           "total_files": 70755
         },
         "pr207462": {
           "checked": 4885,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1551,
           "total_files": 70755
         },
         "pr207462_mul": {
           "checked": 31,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 5,
           "total_files": 70755
         },
         "pr207564": {
           "checked": 2494,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1479,
           "total_files": 70755
         },
         "pr209322": {
           "checked": 19,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 8,
           "total_files": 70755
         },
         "pr210499": {
           "checked": 2959,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1631,
           "total_files": 70755
         },
         "pr212132_case1": {
           "checked": 893,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 721,
           "total_files": 70755
         },
         "pr212132_case2": {
           "checked": 1935,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1166,
           "total_files": 70755
         },
         "pr213313": {
           "checked": 747,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 247,
           "total_files": 70755
         },
         "pr213709": {
           "checked": 6312,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 2211,
           "total_files": 70755
         },
         "pr214376": {
           "checked": 1086,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 341,
           "total_files": 70755
         },
         "pr214381": {
           "checked": 253,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 164,
           "total_files": 70755
         },
         "pr214517": {
           "checked": 819,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 312,
           "total_files": 70755
         },
         "pr214541": {
           "checked": 396,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 223,
           "total_files": 70755
         },
         "pr215122": {
           "checked": 6931,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 2083,
           "total_files": 70755
         },
         "pr215130": {
           "checked": 349,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 158,
           "total_files": 70755
         },
         "pr216046": {
           "checked": 1532,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 409,
           "total_files": 70755
         },
         "pr216436": {
           "checked": 663,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 361,
           "total_files": 70755
         },
         "pr216470": {
           "checked": 14000,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 3778,
           "total_files": 70755
         }
       },
       "ablation-no-value-facts": {
         "pr204089": {
-          "checked": 539,
-          "total_functions": 4776770,
-          "files_read": 240,
+          "checked": 521,
+          "total_functions": 4771730,
+          "files_read": 232,
           "total_files": 70755
         },
         "pr204927": {
-          "checked": 17998,
-          "total_functions": 4776770,
-          "files_read": 5097,
+          "checked": 17996,
+          "total_functions": 4771730,
+          "files_read": 5095,
           "total_files": 70755
         },
         "pr204928": {
           "checked": 3987,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 703,
           "total_files": 70755
         },
         "pr205383_sub": {
           "checked": 21,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 20,
           "total_files": 70755
         },
         "pr205383_xor": {
           "checked": 7,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 6,
           "total_files": 70755
         },
         "pr207462": {
           "checked": 4885,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1551,
           "total_files": 70755
         },
         "pr207462_mul": {
           "checked": 31,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 5,
           "total_files": 70755
         },
         "pr207564": {
           "checked": 2494,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1479,
           "total_files": 70755
         },
         "pr209322": {
-          "checked": 68811,
-          "total_functions": 4776770,
-          "files_read": 12111,
+          "checked": 68782,
+          "total_functions": 4771730,
+          "files_read": 12101,
           "total_files": 70755
         },
         "pr210499": {
           "checked": 2959,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1631,
           "total_files": 70755
         },
         "pr212132_case1": {
           "checked": 1118,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 759,
           "total_files": 70755
         },
         "pr212132_case2": {
           "checked": 2162,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1292,
           "total_files": 70755
         },
         "pr213313": {
           "checked": 747,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 247,
           "total_files": 70755
         },
         "pr213709": {
           "checked": 6312,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 2211,
           "total_files": 70755
         },
         "pr214376": {
           "checked": 1086,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 341,
           "total_files": 70755
         },
         "pr214381": {
           "checked": 253,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 164,
           "total_files": 70755
         },
         "pr214517": {
           "checked": 819,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 312,
           "total_files": 70755
         },
         "pr214541": {
           "checked": 396,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 223,
           "total_files": 70755
         },
         "pr215122": {
           "checked": 6931,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 2083,
           "total_files": 70755
         },
         "pr215130": {
           "checked": 349,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 158,
           "total_files": 70755
         },
         "pr216046": {
           "checked": 2167,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 607,
           "total_files": 70755
         },
         "pr216436": {
           "checked": 663,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 361,
           "total_files": 70755
         },
         "pr216470": {
           "checked": 14000,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 3778,
           "total_files": 70755
         }
       },
       "ablation-no-constraint-prefilter": {
         "pr204089": {
-          "checked": 539,
-          "total_functions": 4776770,
-          "files_read": 240,
+          "checked": 521,
+          "total_functions": 4771730,
+          "files_read": 232,
           "total_files": 70755
         },
         "pr204927": {
-          "checked": 19169,
-          "total_functions": 4776770,
-          "files_read": 5346,
+          "checked": 19167,
+          "total_functions": 4771730,
+          "files_read": 5344,
           "total_files": 70755
         },
         "pr204928": {
           "checked": 6209,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 721,
           "total_files": 70755
         },
         "pr205383_sub": {
           "checked": 29,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 22,
           "total_files": 70755
         },
         "pr205383_xor": {
           "checked": 23,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 9,
           "total_files": 70755
         },
         "pr207462": {
           "checked": 5433,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1818,
           "total_files": 70755
         },
         "pr207462_mul": {
           "checked": 91,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 26,
           "total_files": 70755
         },
         "pr207564": {
           "checked": 5398,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 2529,
           "total_files": 70755
         },
         "pr209322": {
-          "checked": 68811,
-          "total_functions": 4776770,
-          "files_read": 12111,
+          "checked": 68782,
+          "total_functions": 4771730,
+          "files_read": 12101,
           "total_files": 70755
         },
         "pr210499": {
           "checked": 2959,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1631,
           "total_files": 70755
         },
         "pr212132_case1": {
           "checked": 1128,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 766,
           "total_files": 70755
         },
         "pr212132_case2": {
           "checked": 2170,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1297,
           "total_files": 70755
         },
         "pr213313": {
           "checked": 747,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 247,
           "total_files": 70755
         },
         "pr213709": {
           "checked": 13146,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 4142,
           "total_files": 70755
         },
         "pr214376": {
           "checked": 1213,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 409,
           "total_files": 70755
         },
         "pr214381": {
           "checked": 899,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 454,
           "total_files": 70755
         },
         "pr214517": {
           "checked": 1262,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 519,
           "total_files": 70755
         },
         "pr214541": {
           "checked": 590,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 319,
           "total_files": 70755
         },
         "pr215122": {
           "checked": 21137,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 5041,
           "total_files": 70755
         },
         "pr215130": {
           "checked": 506,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 203,
           "total_files": 70755
         },
         "pr216046": {
           "checked": 2167,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 607,
           "total_files": 70755
         },
         "pr216436": {
           "checked": 3688,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 1195,
           "total_files": 70755
         },
         "pr216470": {
           "checked": 15260,
-          "total_functions": 4776770,
+          "total_functions": 4771730,
           "files_read": 3983,
           "total_files": 70755
         }
@@ -2473,31 +2473,31 @@
   "web": {
     "full": {
       "median": {
-        "seconds": 28.781,
-        "megabytes": 272.628021
+        "seconds": 28.39,
+        "megabytes": 268.908092
       },
       "mean": {
-        "seconds": 54.91869565217391,
-        "megabytes": 472.4045876956522
+        "seconds": 54.80317391304348,
+        "megabytes": 470.2267813478261
       },
       "max": {
-        "seconds": 282.604,
-        "megabytes": 1829.682726
+        "seconds": 283.509,
+        "megabytes": 1825.196881
       },
       "unfinished_runs": 0
     },
     "nc": {
       "median": {
-        "seconds": 38.788,
-        "megabytes": 366.874045
+        "seconds": 38.606,
+        "megabytes": 365.951716
       },
       "mean": {
-        "seconds": 83.20060869565218,
-        "megabytes": 720.524354173913
+        "seconds": 82.84773913043479,
+        "megabytes": 715.448027826087
       },
       "max": {
-        "seconds": 388.829,
-        "megabytes": 3628.199036
+        "seconds": 382.61,
+        "megabytes": 3563.8472
       },
       "unfinished_runs": 0
     }
