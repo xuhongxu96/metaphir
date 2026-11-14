@@ -2,7 +2,9 @@ add_executable(metaphir-lex metaphir-lex.cpp)
 target_link_libraries(metaphir-lex PRIVATE metaphir-parser)
 
 add_executable(metaphir-parse metaphir-parse.cpp)
-target_link_libraries(metaphir-parse PRIVATE metaphir-parser)
+target_link_libraries(metaphir-parse PRIVATE metaphir-parser
+                                             metaphir-pattern-parser
+                                             metaphir-surface-printer)
 
 add_executable(metaphir-match metaphir-match.cpp)
 target_link_libraries(metaphir-match
@@ -29,7 +31,7 @@ target_link_libraries(metaphir-index
 add_executable(metaphir-opt metaphir-opt.cpp)
 target_link_libraries(metaphir-opt
   PRIVATE
-    metaphir-dialect-pattern
+    metaphir-dialect-expr
     MLIROptLib
     MLIRTransforms
 )

@@ -13,42 +13,12 @@
 #ifndef METAPHIR_DIALECT_PATTERN_PATTERNOPS_TD
 #define METAPHIR_DIALECT_PATTERN_PATTERNOPS_TD
 
-include "mlir/IR/AttrTypeBase.td"
-include "mlir/IR/OpBase.td"
 include "mlir/IR/RegionKindInterface.td"
 include "mlir/IR/SymbolInterfaces.td"
 include "mlir/IR/OpAsmInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
-def Pattern_Dialect : Dialect {
-  let name = "mpir";
-  let summary = "MetaphIR patterns";
-  let cppNamespace = "::llvm::metaphir::mpir";
-  let useDefaultTypePrinterParser = 1;
-  let useDefaultAttributePrinterParser = 1;
-}
-
-//===----------------------------------------------------------------------===//
-// Types and attributes
-//===----------------------------------------------------------------------===//
-
-def Mpir_SortType : TypeDef<Pattern_Dialect, "Sort"> {
-  let mnemonic = "sort";
-  let summary = "The sort of a pattern value (see Sorts.def)";
-  let parameters = (ins "::llvm::metaphir::Sort":$sort);
-  let hasCustomAssemblyFormat = 1;
-}
-
-def Mpir_Term : Type<CPred<"::llvm::isa<::llvm::metaphir::mpir::SortType>($_self)">,
-                     "pattern value", "::llvm::metaphir::mpir::SortType">;
-
-def Mpir_OpcodeAttr : AttrDef<Pattern_Dialect, "Opcode"> {
-  let mnemonic = "opcode";
-  let summary = "A built-in instruction matcher (see InstructionMatchers.def)";
-  let parameters =
-      (ins "::llvm::metaphir::Instruction::InstructionID":$value);
-  let hasCustomAssemblyFormat = 1;
-}
+include "metaphir/Dialect/Pattern/PatternBase.td"
 
 class Mpir_Op<string mnemonic, list<Trait> traits = []>
     : Op<Pattern_Dialect, mnemonic, traits>;
@@ -61,17 +31,18 @@ def Mpir_PatternOp : Mpir_Op<"pattern", [IsolatedFromAbove]
                              # GraphRegionNoTerminator.traits> {
   let summary = "A pattern: instruction matchers and the constraints on them";
   let regions = (region SizedRegion<1>:$body);
-  let assemblyFormat = "attr-dict-with-keyword $body";
+  let assemblyFormat = "prop-dict attr-dict-with-keyword $body";
 }
 
 def Mpir_MatcherOp : Mpir_Op<"matcher", [Symbol, SymbolName, SymbolVisibility, IsolatedFromAbove]
                              # GraphRegionNoTerminator.traits> {
   let summary = "A 'match' definition: a matcher that matches any branch";
   let description = [{
-    The region holds the type patterns that parameters written as concrete
-    types fix, and one mpir.branch per branch. `param_names` and
+    The region holds the type patterns of the parameters, an mpir.signature
+    listing them, and one mpir.branch per branch. `param_names` and
     `param_is_type` describe the parameters in the order of the archetype
-    (see OperandSyntax); a fixed-type parameter has an empty name.
+    (see OperandSyntax); a parameter written as a concrete type has an empty
+    name.
   }];
   let arguments = (ins SymbolNameAttr:$sym_name,
                        OptionalAttr<StrAttr>:$sym_visibility,
@@ -82,6 +53,13 @@ def Mpir_MatcherOp : Mpir_Op<"matcher", [Symbol, SymbolName, SymbolVisibility, I
                        StrArrayAttr:$param_names,
                        DenseBoolArrayAttr:$param_is_type);
   let regions = (region SizedRegion<1>:$body);
+  let assemblyFormat = "$sym_name prop-dict attr-dict-with-keyword $body";
+}
+
+def Mpir_SignatureOp : Mpir_Op<"signature", [HasParent<"MatcherOp">]> {
+  let summary = "The type patterns of a matcher's type parameters, in order";
+  let arguments = (ins Variadic<Mpir_Term>:$types);
+  let assemblyFormat = "($types^ `:` type($types))? attr-dict";
 }
 
 def Mpir_BranchOp : Mpir_Op<"branch", [HasParent<"MatcherOp">, SingleBlock,
@@ -90,17 +68,16 @@ def Mpir_BranchOp : Mpir_Op<"branch", [HasParent<"MatcherOp">, SingleBlock,
   let summary = "A branch of a matcher";
   let description = [{
     The block has an argument for each distinct parameter name;
-    `param_args[i]` is the argument of parameter i, or -1 for a parameter that
-    fixes a type, whose type pattern is `fixed_types[k]` for the k-th such
-    parameter. `fixed_flags` are the semantic flags the branch fixes, to
-    `fixed_flag_values`. The body yields the instruction the matcher stands
-    for.
+    `param_args[i]` is the argument of parameter i, or -1 for a parameter
+    written as a concrete type. `fixed_flags` are the semantic flags the
+    branch fixes, to `fixed_flag_values`. The body yields the instruction the
+    matcher stands for.
   }];
-  let arguments = (ins Variadic<Mpir_Term>:$fixed_types,
-                       DenseI32ArrayAttr:$param_args,
+  let arguments = (ins DenseI32ArrayAttr:$param_args,
                        DenseI32ArrayAttr:$fixed_flags,
                        DenseBoolArrayAttr:$fixed_flag_values);
   let regions = (region SizedRegion<1>:$body);
+  let assemblyFormat = "prop-dict attr-dict-with-keyword $body";
 }
 
 def Mpir_ConstraintDefOp : Mpir_Op<"constraint_def", [Symbol, SymbolName, SymbolVisibility, IsolatedFromAbove,
@@ -109,6 +86,7 @@ def Mpir_ConstraintDefOp : Mpir_Op<"constraint_def", [Symbol, SymbolName, Symbol
   let arguments = (ins SymbolNameAttr:$sym_name,
                        OptionalAttr<StrAttr>:$sym_visibility, StrArrayAttr:$param_names);
   let regions = (region SizedRegion<1>:$body);
+  let assemblyFormat = "$sym_name prop-dict attr-dict-with-keyword $body";
 }
 
 def Mpir_MetaFlagDefOp : Mpir_Op<"metaflag_def", [Symbol, SymbolName, SymbolVisibility, IsolatedFromAbove,
@@ -118,6 +96,7 @@ def Mpir_MetaFlagDefOp : Mpir_Op<"metaflag_def", [Symbol, SymbolName, SymbolVisi
                        OptionalAttr<StrAttr>:$sym_visibility, StrArrayAttr:$param_names,
                        I32Attr:$placement);
   let regions = (region SizedRegion<1>:$body);
+  let assemblyFormat = "$sym_name prop-dict attr-dict-with-keyword $body";
 }
 
 def Mpir_YieldOp : Mpir_Op<"yield", []> {
@@ -133,9 +112,9 @@ def Mpir_YieldOp : Mpir_Op<"yield", []> {
 def Mpir_VarOp : Mpir_Op<"var", [Pure,
     DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>]> {
   let summary = "A meta variable, '?name'";
-  let arguments = (ins StrAttr:$name);
+  let arguments = (ins StrAttr:$var_name);
   let results = (outs Mpir_Term:$result);
-  let assemblyFormat = "$name attr-dict `:` type($result)";
+  let assemblyFormat = "$var_name attr-dict `:` type($result)";
 }
 
 def Mpir_IntOp : Mpir_Op<"int", [Pure]> {
@@ -231,7 +210,7 @@ def Mpir_FuncTypeOp : Mpir_Op<"type.func", [Pure]> {
 // both are written, and stored, the same way.
 class Mpir_MatcherUseBase {
   dag commonArguments = (ins
-      OptionalAttr<StrAttr>:$name,
+      OptionalAttr<StrAttr>:$result_name,
       // The semantic flags written, and for each how (see FlagMode); a
       // captured flag takes the next of flag_captures.
       DenseI32ArrayAttr:$flags,
@@ -239,16 +218,16 @@ class Mpir_MatcherUseBase {
       // The matcher operands, by kind (see OperandKind); each takes the next
       // one or two of operand_values.
       DenseI32ArrayAttr:$operand_kinds,
-      // ':c': the two commutable operands may match in either order.
-      UnitAttr:$commutative,
-      // ':o(N)': the N-th value operand may match in place of the instruction.
-      OptionalAttr<I64Attr>:$or_self,
+      // Surface form: the metaflags written on the instruction, and on each
+      // operand (an array per operand), as written.
+      OptionalAttr<ArrayAttr>:$metaflags,
+      OptionalAttr<ArrayAttr>:$operand_metaflags,
       // Lowered form only: the predicate is matched against the swapped one.
       UnitAttr:$swapped_predicate,
       // The treatIntAsVec setting, if one was written before the instruction.
       OptionalAttr<BoolAttr>:$treat_int_as_vec,
       Optional<Mpir_Term>:$capture,
-      Optional<Mpir_Term>:$block,
+      Optional<Mpir_Term>:$parent_block,
       Variadic<Mpir_Term>:$flag_captures,
       Variadic<Mpir_Term>:$operand_values);
 }
@@ -260,6 +239,12 @@ def Mpir_InstOp : Mpir_Op<"inst", [AttrSizedOperandSegments,
   let arguments = !con((ins Mpir_OpcodeAttr:$opcode), commonArguments);
   let results = (outs Mpir_Term:$result);
   let hasVerifier = 1;
+  let extraClassDeclaration = [{
+    /// Whether ':c' is written on the instruction.
+    bool isCommutative();
+    /// The operand index ':o' names, if ':o' is written.
+    std::optional<unsigned> getOrSelfIndex();
+  }];
 }
 
 def Mpir_UseOp : Mpir_Op<"use", [AttrSizedOperandSegments,
@@ -270,6 +255,10 @@ def Mpir_UseOp : Mpir_Op<"use", [AttrSizedOperandSegments,
   let arguments = !con((ins FlatSymbolRefAttr:$matcher), commonArguments);
   let results = (outs Mpir_Term:$result);
   let hasVerifier = 1;
+  let extraClassDeclaration = [{
+    bool isCommutative();
+    std::optional<unsigned> getOrSelfIndex();
+  }];
 }
 
 def Mpir_AltOp : Mpir_Op<"alt", [NoTerminator,
@@ -282,31 +271,12 @@ def Mpir_AltOp : Mpir_Op<"alt", [NoTerminator,
   }];
   let results = (outs Mpir_Term:$result);
   let regions = (region VariadicRegion<SizedRegion<1>>:$alternatives);
+  let assemblyFormat = "$alternatives attr-dict `:` type($result)";
 }
 
 //===----------------------------------------------------------------------===//
-// Metaflags and constraints
+// Constraints (expressions are in the mpir_expr dialect)
 //===----------------------------------------------------------------------===//
-
-def Mpir_FlagOp : Mpir_Op<"flag", [Pure,
-    DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
-  let summary = "A defined metaflag applied to a subject: whether it holds";
-  let arguments = (ins FlatSymbolRefAttr:$flag, Mpir_Term:$subject,
-                       DenseI64ArrayAttr:$args);
-  let results = (outs Mpir_Term:$result);
-}
-
-def Mpir_AttachOp : Mpir_Op<"attach", []> {
-  let summary = "Requires a metaflag expression written on an instruction";
-  let description = [{
-    `condition` is what the metaflags written at one place say: mpir.flag
-    operations, combined by ':or' and ':not'. `operand` is the matcher operand
-    they were written on, or -1 for the instruction itself. Value tracking in
-    the flags' bodies is anchored at `instruction`.
-  }];
-  let arguments = (ins Mpir_Term:$condition, Mpir_Term:$instruction,
-                       I32Attr:$operand);
-}
 
 def Mpir_RequireOp : Mpir_Op<"require", []> {
   let summary = "A constraint a match must satisfy";

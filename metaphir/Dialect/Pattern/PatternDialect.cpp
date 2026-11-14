@@ -200,6 +200,9 @@ template <typename OpT> static LogicalResult verifyMatcherUse(OpT Op) {
   }
   if (Captured != Op.getFlagCaptures().size())
     return Op.emitOpError("needs one capture per captured flag");
+  if (std::optional<ArrayAttr> PerOperand = Op.getOperandMetaflags())
+    if (PerOperand->size() != Op.getOperandKinds().size())
+      return Op.emitOpError("needs one metaflag list per operand");
   return success();
 }
 
@@ -213,7 +216,7 @@ LogicalResult InstOp::verify() {
           Instruction::mask(InstructionFlag::FlagID(Flag))))
       return emitOpError("flag ") << Flag << " is not valid for '"
                                   << Instruction::getOpcodeName(ID) << "'";
-  if (getCommutative() && !Instruction::isCommutative(ID))
+  if (isCommutative() && !Instruction::isCommutative(ID))
     return emitOpError("'")
            << Instruction::getOpcodeName(ID) << "' is not commutative";
   return success();
@@ -227,10 +230,36 @@ LogicalResult UseOp::verifySymbolUses(SymbolTableCollection &Symbols) {
   return success();
 }
 
-LogicalResult FlagOp::verifySymbolUses(SymbolTableCollection &Symbols) {
-  if (!Symbols.lookupNearestSymbolFrom<MetaFlagDefOp>(*this, getFlagAttr()))
-    return emitOpError("uses unknown metaflag '") << getFlag() << "'";
-  return success();
+/// ':c' among Flags.
+static bool hasCommutativeFlag(std::optional<ArrayAttr> Flags) {
+  if (Flags)
+    for (Attribute A : *Flags)
+      if (cast<MetaFlagAttr>(A).getName() == "c")
+        return true;
+  return false;
+}
+
+/// The index ':o' among Flags names: its argument, or 0.
+static std::optional<unsigned> orSelfIndex(std::optional<ArrayAttr> Flags) {
+  if (Flags)
+    for (Attribute A : *Flags) {
+      auto Flag = cast<MetaFlagAttr>(A);
+      if (Flag.getName() != "o")
+        continue;
+      if (Flag.getArgs().empty())
+        return 0u;
+      return unsigned(cast<IntegerAttr>(Flag.getArgs()[0]).getInt());
+    }
+  return std::nullopt;
+}
+
+bool InstOp::isCommutative() { return hasCommutativeFlag(getMetaflags()); }
+std::optional<unsigned> InstOp::getOrSelfIndex() {
+  return orSelfIndex(getMetaflags());
+}
+bool UseOp::isCommutative() { return hasCommutativeFlag(getMetaflags()); }
+std::optional<unsigned> UseOp::getOrSelfIndex() {
+  return orSelfIndex(getMetaflags());
 }
 
 //===----------------------------------------------------------------------===//
@@ -246,16 +275,16 @@ static std::string asmName(StringRef Prefix, StringRef Name) {
 }
 
 void VarOp::getAsmResultNames(OpAsmSetValueNameFn SetName) {
-  SetName(getResult(), asmName("", getName()));
+  SetName(getResult(), asmName("", getVarName()));
 }
 
 void InstOp::getAsmResultNames(OpAsmSetValueNameFn SetName) {
-  if (std::optional<StringRef> Name = getName())
+  if (std::optional<StringRef> Name = getResultName())
     SetName(getResult(), asmName("i_", *Name));
 }
 
 void UseOp::getAsmResultNames(OpAsmSetValueNameFn SetName) {
-  if (std::optional<StringRef> Name = getName())
+  if (std::optional<StringRef> Name = getResultName())
     SetName(getResult(), asmName("u_", *Name));
 }
 

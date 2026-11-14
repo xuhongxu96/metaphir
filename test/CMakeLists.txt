@@ -50,6 +50,16 @@ if(Python3_FOUND)
       ${METAPHIR_LLVM_UTILS_DIR}/split-file --llvm-as
       ${METAPHIR_LLVM_UTILS_DIR}/llvm-as ${CMAKE_CURRENT_SOURCE_DIR}/Matching)
 
+  # The mpir dialect's parser must parse as MIRParser does.
+  add_test(
+    NAME MetaphIR.parse-differential
+    COMMAND
+      ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse_differential.py
+      --parse $<TARGET_FILE:metaphir-parse> --split-file
+      ${METAPHIR_LLVM_UTILS_DIR}/split-file ${CMAKE_CURRENT_SOURCE_DIR}/Parser
+      ${CMAKE_CURRENT_SOURCE_DIR}/Matching ${PROJECT_SOURCE_DIR}/eval/patterns
+      ${PROJECT_SOURCE_DIR}/metaphir/StdLib)
+
   add_test(
     NAME MetaphIR.eval-scripts
     COMMAND ${Python3_EXECUTABLE} -m unittest discover -s

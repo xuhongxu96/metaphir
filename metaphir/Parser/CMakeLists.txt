@@ -39,3 +39,11 @@ target_link_libraries(metaphir-parser
     LLVMSupport
     metaphir-ir
 )
+
+# The parser that emits the mpir dialect.
+add_library(metaphir-pattern-parser PatternParser.cpp PatternParser.h
+                                    "${METAPHIR_STDLIB_OUTPUT}")
+target_include_directories(metaphir-pattern-parser
+                           PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(metaphir-pattern-parser PUBLIC metaphir-parser
+                                                     metaphir-dialect-expr)

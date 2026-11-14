@@ -1,0 +1,40 @@
+//===- SourceLocation.h - Pattern source ranges as MLIR locations -*- C++
+//-*-===//
+//
+// A pattern's operations are located at the source text they were parsed
+// from. The location keeps the range itself, so diagnostics can be printed
+// by the SourceMgr that holds the text, as the parser prints its own; it
+// falls back to a file:line:col range wherever MLIR prints locations.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef METAPHIR_DIALECT_PATTERN_SOURCELOCATION_H
+#define METAPHIR_DIALECT_PATTERN_SOURCELOCATION_H
+
+#include "mlir/IR/Location.h"
+#include "llvm/Support/SMLoc.h"
+
+namespace llvm {
+class SourceMgr;
+namespace metaphir {
+
+/// The location of Range, in a buffer of SM.
+mlir::Location getLocation(mlir::MLIRContext *Context, const SourceMgr &SM,
+                           SMRange Range);
+inline mlir::Location getLocation(mlir::MLIRContext *Context,
+                                  const SourceMgr &SM, SMLoc Loc) {
+  return getLocation(Context, SM, SMRange(Loc, Loc));
+}
+
+/// The source range a location made by getLocation stands for: for a call
+/// site (an inlined matcher body), that of the callee. Invalid if it has none.
+SMRange getSourceRange(mlir::Location Loc);
+
+/// For a location of an operation inlined from a matcher's body, the range of
+/// the use it was inlined at, outermost first; otherwise Loc's own range.
+SMRange getOutermostSourceRange(mlir::Location Loc);
+
+} // namespace metaphir
+} // namespace llvm
+
+#endif // METAPHIR_DIALECT_PATTERN_SOURCELOCATION_H

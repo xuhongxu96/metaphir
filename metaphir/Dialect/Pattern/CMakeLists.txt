@@ -10,7 +10,13 @@ mlir_tablegen(PatternOpsAttrDefs.h.inc -gen-attrdef-decls -attrdefs-dialect=mpir
 mlir_tablegen(PatternOpsAttrDefs.cpp.inc -gen-attrdef-defs -attrdefs-dialect=mpir)
 add_public_tablegen_target(MetaphIRPatternOpsIncGen)
 
-add_library(metaphir-dialect-pattern PatternDialect.cpp PatternDialect.h)
+add_library(metaphir-dialect-pattern PatternDialect.cpp PatternDialect.h
+                                     SourceLocation.cpp SourceLocation.h)
+
+# Printing the surface form needs the expression dialect too.
+add_library(metaphir-surface-printer SurfacePrinter.cpp SurfacePrinter.h)
+add_dependencies(metaphir-surface-printer MetaphIRExprOpsIncGen)
+target_link_libraries(metaphir-surface-printer PUBLIC metaphir-dialect-expr)
 add_dependencies(metaphir-dialect-pattern MetaphIRPatternOpsIncGen)
 target_link_libraries(metaphir-dialect-pattern PUBLIC metaphir-ir MLIRIR
                                                       MLIRSupport

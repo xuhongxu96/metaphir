@@ -24,6 +24,8 @@ public:
   explicit PatternSettings(uint64_t Mask) : Mask(Mask), Specified(Mask) {}
 
   bool has(Setting Flag) const { return Mask & uint64_t(Flag); }
+  /// Whether Flag was written, to either value.
+  bool isSpecified(Setting Flag) const { return Specified & uint64_t(Flag); }
   void set(Setting Flag) {
     Mask |= uint64_t(Flag);
     Specified |= uint64_t(Flag);
