@@ -14,13 +14,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(LLVM REQUIRED CONFIG)
+find_package(MLIR REQUIRED CONFIG)
+list(APPEND CMAKE_MODULE_PATH ${MLIR_CMAKE_DIR} ${LLVM_CMAKE_DIR})
+include(TableGen)
+include(AddLLVM)
+include(AddMLIR)
 
 set(METAPHIR_ROOT ${PROJECT_SOURCE_DIR}/../..)
 
 add_compile_options(-fno-rtti
                     "SHELL:-include ${PROJECT_SOURCE_DIR}/NoAllocaMacro.h")
 include_directories(${METAPHIR_ROOT})
-include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
+# Where the dialects' generated headers are, under metaphir/Dialect.
+include_directories(${PROJECT_BINARY_DIR})
 add_subdirectory(${METAPHIR_ROOT}/metaphir metaphir)
 
 set(METAPHIR_WASM_LINK_OPTIONS

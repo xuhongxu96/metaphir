@@ -21,7 +21,8 @@ add_subdirectory(Matching)
 add_subdirectory(Index)
 add_subdirectory(Web)
 
-# A single lit invocation discovers and runs every .ll test under test/.
+# A single lit invocation discovers and runs every .ll and .mlir test under
+# test/.
 add_test(
   NAME MetaphIR.lit
   COMMAND
@@ -30,6 +31,7 @@ add_test(
     -D "metaphir_parse=$<TARGET_FILE:metaphir-parse>"
     -D "metaphir_match=$<TARGET_FILE:metaphir-match>"
     -D "metaphir_index=$<TARGET_FILE:metaphir-index>"
+    -D "metaphir_opt=$<TARGET_FILE:metaphir-opt>"
     ${METAPHIR_TEST_DIR})
 set_tests_properties(MetaphIR.lit PROPERTIES ENVIRONMENT
                      "${METAPHIR_TEST_ENVIRONMENT}")

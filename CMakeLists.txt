@@ -23,6 +23,24 @@ set(LLVM_DIR
     CACHE PATH "Directory containing LLVMConfig.cmake")
 find_package(LLVM 24.0.0 REQUIRED CONFIG)
 
+set(MLIR_DIR
+    ${PROJECT_SOURCE_DIR}/llvm-project/build/install/lib/cmake/mlir
+    CACHE PATH "Directory containing MLIRConfig.cmake")
+find_package(MLIR REQUIRED CONFIG)
+# MLIRConfig names mlir-tblgen without a path; an LLVM built with
+# --libraries-only has it only in its build tree.
+if(NOT IS_ABSOLUTE "${MLIR_TABLEGEN_EXE}")
+  find_program(METAPHIR_MLIR_TABLEGEN mlir-tblgen
+               HINTS ${LLVM_TOOLS_BINARY_DIR}
+                     ${PROJECT_SOURCE_DIR}/llvm-project/build/bin
+               REQUIRED)
+  set(MLIR_TABLEGEN_EXE ${METAPHIR_MLIR_TABLEGEN})
+endif()
+list(APPEND CMAKE_MODULE_PATH ${MLIR_CMAKE_DIR} ${LLVM_CMAKE_DIR})
+include(TableGen)
+include(AddLLVM)
+include(AddMLIR)
+
 enable_testing()
 include(GoogleTest)
 
@@ -49,7 +67,9 @@ function(add_metaphir_test test_name)
 endfunction()
 
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
+# Where the dialects' generated headers are, under metaphir/Dialect.
+include_directories(${PROJECT_BINARY_DIR})
 
 # Project targets (but not the vendored gtest above) build warning-clean.
 add_compile_options(-Wall -Wextra -Wno-unused-parameter -Werror)

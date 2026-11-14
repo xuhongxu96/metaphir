@@ -26,6 +26,14 @@ target_link_libraries(metaphir-index
     LLVMIRReader
 )
 
+add_executable(metaphir-opt metaphir-opt.cpp)
+target_link_libraries(metaphir-opt
+  PRIVATE
+    metaphir-dialect-pattern
+    MLIROptLib
+    MLIRTransforms
+)
+
 foreach(tool metaphir-lex metaphir-parse metaphir-match metaphir-index)
   target_compile_definitions(${tool}
     PRIVATE METAPHIR_VERSION="${PROJECT_VERSION}")

@@ -1,4 +1,5 @@
 add_subdirectory(IR)
+add_subdirectory(Dialect)
 add_subdirectory(Parser)
 add_subdirectory(Matching)
 add_subdirectory(Index)

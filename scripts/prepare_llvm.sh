@@ -29,8 +29,10 @@ LLVM_COMMIT="79b321b1238ceaf8261a5b177185a3ec5111918a"
 LLVM_DIR="$BASE_DIR/llvm-project"
 JOBS="${JOBS:-$(nproc)}"
 # What MetaphIR's build and tests run from the build tree; llvm-lit is
-# written when LLVM is configured, the others built.
-TEST_TOOLS=(FileCheck not split-file llvm-as llvm-tblgen llvm-min-tblgen)
+# written when LLVM is configured, the others built. mlir-tblgen generates
+# MetaphIR's dialects.
+TEST_TOOLS=(FileCheck not split-file llvm-as llvm-tblgen llvm-min-tblgen
+            mlir-tblgen)
 
 usage() {
     echo "Usage: $0 [debug|release] [--force] [--source-only] [--libraries-only] [--prune]"
@@ -125,7 +127,11 @@ fi
 echo "[$(date)] Building LLVM..."
 mkdir -p "$LLVM_BUILD_DIR"
 CMAKE_ARGS=(
-    -DLLVM_ENABLE_PROJECTS="llvm"
+    -DLLVM_ENABLE_PROJECTS="mlir"
+    # MetaphIR's dialects are written in C++ and ODS; nothing uses PDL.
+    -DMLIR_ENABLE_PDL_IN_PATTERNMATCH=OFF
+    -DMLIR_INCLUDE_TESTS=OFF
+    -DMLIR_INCLUDE_INTEGRATION_TESTS=OFF
     -DLLVM_TARGETS_TO_BUILD="X86"
     -DCMAKE_BUILD_TYPE="$LLVM_BUILD_TYPE"
     -DLLVM_INCLUDE_TESTS=ON

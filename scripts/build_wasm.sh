@@ -2,7 +2,8 @@
 # Build MetaphIR for the browser with Emscripten, under build-wasm/:
 #
 #   build-wasm/emsdk     the Emscripten SDK (unless EMSDK is set)
-#   build-wasm/host      llvm-tblgen, when llvm-project has no native build
+#   build-wasm/host      llvm-tblgen and mlir-tblgen, when llvm-project has
+#                        no native build
 #   build-wasm/llvm      LLVM's libraries, built for WebAssembly from
 #                        llvm-project (as scripts/prepare_llvm.sh left it),
 #                        again only when that or their options change
@@ -21,8 +22,8 @@
 #
 # llvm-project must be prepared by scripts/prepare_llvm.sh (--source-only
 # suffices): the native tools and these read published corpora alike only if
-# built from the same source. LLVM's table generator comes from the native
-# build (llvm-project/build/bin) when there is one.
+# built from the same source. LLVM's and MLIR's table generators come from
+# the native build (llvm-project/build/bin) when there is one.
 set -euo pipefail
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -71,7 +72,8 @@ LLVM_WASM_ARGS=(
     -DCMAKE_BUILD_TYPE=Release
     -DLLVM_TARGETS_TO_BUILD=""
     -DLLVM_DEFAULT_TARGET_TRIPLE=wasm32-unknown-emscripten
-    -DLLVM_ENABLE_PROJECTS=""
+    -DLLVM_ENABLE_PROJECTS="mlir"
+    -DMLIR_ENABLE_PDL_IN_PATTERNMATCH=OFF
     -DLLVM_ENABLE_THREADS=OFF
     -DLLVM_ENABLE_ZLIB=OFF
     -DLLVM_ENABLE_ZSTD=OFF
@@ -90,7 +92,9 @@ LLVM_WASM_ARGS=(
     -DLLVM_BUILD_TOOLS=OFF
 )
 LLVM_WASM_LIBS=(LLVMAnalysis LLVMAsmParser LLVMBitReader LLVMBitWriter LLVMCore
-                LLVMIRReader LLVMSupport LLVMTransformUtils)
+                LLVMIRReader LLVMSupport LLVMTransformUtils
+                MLIRIR MLIRSupport MLIRPass MLIRRewrite MLIRTransformUtils
+                MLIRAnalysis)
 LLVM_STAMP="$BUILD_DIR/llvm/.metaphir-built"
 LLVM_SOURCE="$(git -C "$BASE_DIR/llvm-project" rev-parse HEAD) $(git -C "$BASE_DIR/llvm-project" diff HEAD | sha256sum | cut -d' ' -f1)"
 LLVM_WANTED="$(printf '%s\n' "$LLVM_SOURCE" "$(emcc --version | head -1)" "${LLVM_WASM_ARGS[@]}" "${LLVM_WASM_LIBS[@]}" | sha256sum | cut -d' ' -f1)"
@@ -98,16 +102,18 @@ if [ -f "$LLVM_STAMP" ] && [ "$(cat "$LLVM_STAMP")" = "$LLVM_WANTED" ]; then
     echo "[$(date)] LLVM for WebAssembly is built already ($BUILD_DIR/llvm)."
 else
     rm -f "$LLVM_STAMP"
-    if [ ! -x "$NATIVE_BIN/llvm-tblgen" ]; then
-        echo "[$(date)] Building llvm-tblgen for this machine..."
+    if [ ! -x "$NATIVE_BIN/llvm-tblgen" ] || [ ! -x "$NATIVE_BIN/mlir-tblgen" ]; then
+        echo "[$(date)] Building llvm-tblgen and mlir-tblgen for this machine..."
         cmake -G Ninja -S "$BASE_DIR/llvm-project/llvm" -B "$BUILD_DIR/host" \
             -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_TARGETS_TO_BUILD="" \
+            -DLLVM_ENABLE_PROJECTS="mlir" \
             -DLLVM_INCLUDE_TESTS=OFF \
             -DLLVM_INCLUDE_BENCHMARKS=OFF \
             -DLLVM_INCLUDE_EXAMPLES=OFF \
             "${CCACHE_ARGS[@]}" >/dev/null
-        cmake --build "$BUILD_DIR/host" -- -j"$JOBS" llvm-tblgen llvm-min-tblgen
+        cmake --build "$BUILD_DIR/host" -- -j"$JOBS" llvm-tblgen llvm-min-tblgen \
+            mlir-tblgen
         NATIVE_BIN="$BUILD_DIR/host/bin"
     fi
 
@@ -115,17 +121,24 @@ else
     emcmake cmake -G Ninja -S "$BASE_DIR/llvm-project/llvm" -B "$BUILD_DIR/llvm" \
         "${LLVM_WASM_ARGS[@]}" \
         -DLLVM_TABLEGEN="$NATIVE_BIN/llvm-tblgen" \
+        -DMLIR_TABLEGEN="$NATIVE_BIN/mlir-tblgen" \
         -DLLVM_NATIVE_TOOL_DIR="$NATIVE_BIN" \
         "${CCACHE_ARGS[@]}" >/dev/null
     cmake --build "$BUILD_DIR/llvm" -- -j"$JOBS" "${LLVM_WASM_LIBS[@]}"
     find "$BUILD_DIR/llvm" -name '*.o' -delete
     echo "$LLVM_WANTED" > "$LLVM_STAMP"
 fi
+# The stamp's build may have used build-wasm/host's table generators.
+if [ ! -x "$NATIVE_BIN/mlir-tblgen" ]; then
+    NATIVE_BIN="$BUILD_DIR/host/bin"
+fi
 
 echo "[$(date)] Building MetaphIR for WebAssembly..."
 emcmake cmake -G Ninja -S "$BASE_DIR/web/wasm" -B "$BUILD_DIR/metaphir" \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_DIR="$BUILD_DIR/llvm/lib/cmake/llvm" \
+    -DMLIR_DIR="$BUILD_DIR/llvm/lib/cmake/mlir" \
+    -DMLIR_TABLEGEN_EXE="$NATIVE_BIN/mlir-tblgen" \
     "${CCACHE_ARGS[@]}" >/dev/null
 cmake --build "$BUILD_DIR/metaphir" -- -j"$JOBS" metaphir metaphir-match
 

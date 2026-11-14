@@ -4,11 +4,17 @@ import lit.formats
 
 config.name = "MetaphIR"
 config.test_format = lit.formats.ShTest()
-config.suffixes = [".ll"]
+config.suffixes = [".ll", ".mlir"]
 config.test_source_root = os.path.dirname(__file__)
 config.test_exec_root = os.path.join(config.metaphir_obj_root, "lit")
 
-for tool in ("metaphir-lex", "metaphir-parse", "metaphir-match", "metaphir-index"):
+for tool in (
+    "metaphir-lex",
+    "metaphir-parse",
+    "metaphir-match",
+    "metaphir-index",
+    "metaphir-opt",
+):
     param = tool.replace("-", "_")
     path = lit_config.params.get(param)
     if path is None:
