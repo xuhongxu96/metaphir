@@ -2,6 +2,7 @@
 // the tests of the passes run.
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/Transforms/Lowering.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/Tools/mlir-opt/MlirOptMain.h"
 #include "mlir/Transforms/Passes.h"
@@ -11,6 +12,7 @@ using namespace llvm;
 int main(int argc, char **argv) {
   mlir::registerCanonicalizerPass();
   mlir::registerCSEPass();
+  metaphir::registerLoweringPasses();
 
   mlir::DialectRegistry Registry;
   Registry.insert<metaphir::mpir::PatternDialect,

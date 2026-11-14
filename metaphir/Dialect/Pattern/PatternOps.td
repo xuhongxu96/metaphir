@@ -278,6 +278,17 @@ def Mpir_AltOp : Mpir_Op<"alt", [NoTerminator,
 // Constraints (expressions are in the mpir_expr dialect)
 //===----------------------------------------------------------------------===//
 
+def Mpir_BindOp : Mpir_Op<"bind", []> {
+  let summary = "Unifies a meta variable with what a value matches";
+  let description = [{
+    Lowered form only: what an alternative binds besides its yielded value,
+    such as a matcher branch's fixed flag ('[nsw = true]') or the capture of an
+    instruction that ':o' lets match its operand instead.
+  }];
+  let arguments = (ins Mpir_Term:$variable, Mpir_Term:$value);
+  let assemblyFormat = "$variable `,` $value attr-dict `:` type($variable) `,` type($value)";
+}
+
 def Mpir_RequireOp : Mpir_Op<"require", []> {
   let summary = "A constraint a match must satisfy";
   let arguments = (ins Mpir_Term:$condition);

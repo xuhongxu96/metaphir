@@ -31,7 +31,7 @@ target_link_libraries(metaphir-index
 add_executable(metaphir-opt metaphir-opt.cpp)
 target_link_libraries(metaphir-opt
   PRIVATE
-    metaphir-dialect-expr
+    metaphir-transforms
     MLIROptLib
     MLIRTransforms
 )
