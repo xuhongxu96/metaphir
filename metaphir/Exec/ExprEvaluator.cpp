@@ -49,8 +49,9 @@ static std::string describeVariable(mlir::Value V, StringRef Msg) {
 
 /// What a variable bound to Binding is when read as Read reads it: as
 /// detail::bindingValue reads it.
-static Expected<ConstraintValue>
-readBinding(mpir_expr::ReadOp Read, const Instantiation::Binding &Binding) {
+Expected<ConstraintValue> readBinding(mlir::Value ReadValue,
+                                      const Instantiation::Binding &Binding) {
+  auto Read = ReadValue.getDefiningOp<mpir_expr::ReadOp>();
   ExprRef Expression = getExprRef(Read.getResult());
   auto Incompatible = [&] {
     return make_error<ConstraintEvaluationError>(
@@ -185,7 +186,7 @@ Expected<ConstraintValue> ExprEvaluator::eval(mlir::Value E, Frame &F) {
     if (!Binding)
       return make_error<ConstraintEvaluationError>(
           Expression, describeVariable(Read.getValue(), "is not instantiated"));
-    return readBinding(Read, *Binding);
+    return readBinding(Read.getResult(), *Binding);
   }
   if (auto Array = dyn_cast<mpir_expr::ArrayOp>(Def)) {
     Expected<SmallVector<ConstraintValue, 2>> Elements =

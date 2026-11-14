@@ -419,7 +419,7 @@ FunctionLocation CorpusIndex::locate(uint32_t Number) const {
 }
 
 Expected<std::optional<std::vector<FunctionLocation>>>
-CorpusIndex::findCandidates(const FeatureQuery &Query) const {
+CorpusIndex::findCandidates(const FunctionFilter &Query) const {
   std::optional<std::vector<SmallVector<PostingKey, 3>>> Chosen =
       choosePostingKeys(
           Query, [&](const PostingKey &Key) { return getPostingCount(Key); });

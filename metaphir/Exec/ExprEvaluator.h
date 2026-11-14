@@ -31,6 +31,11 @@ class ValueTrackContext;
 /// The expression E names in errors: printed in the pattern language.
 ExprRef getExprRef(mlir::Value E);
 
+/// What a variable bound to Binding is when Read (an mpir_expr.read) reads
+/// it, as detail::bindingValue reads it.
+Expected<ConstraintValue> readBinding(mlir::Value Read,
+                                      const Instantiation::Binding &Binding);
+
 class ExprEvaluator {
 public:
   /// What a pattern value (an mpir_plan.slot) is bound to; null if unbound.

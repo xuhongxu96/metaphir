@@ -51,6 +51,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--match", required=True)
     ap.add_argument("--split-file", required=True)
+    ap.add_argument("--index", help="metaphir-index, to run the tests that "
+                    "build an index")
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--allow-explain-reasons", action="store_true",
                     help="ignore the reasons --explain gives for no "
@@ -67,12 +69,21 @@ def main():
             tmp = pathlib.Path(scratch) / f"t{index}"
             for line in run_lines(test):
                 line = line.replace("%s", str(test)).replace("%t", str(tmp))
-                if "split-file" in line and "metaphir-match" not in line:
+                if "metaphir-match" not in line and (
+                        "split-file" in line or "rm -rf" in line or
+                        (args.index and "%metaphir-index" in line)):
+                    # Set-up, which both engines share.
                     cmd = line.replace("split-file", args.split_file)
+                    if args.index:
+                        cmd = cmd.replace("%metaphir-index",
+                                          shlex.quote(args.index))
+                    cmd = re.split(r"\|\s*(FileCheck|count|not FileCheck)",
+                                   cmd)[0]
                     subprocess.run(cmd, shell=True, capture_output=True)
                     continue
                 if "%metaphir-match" not in line or "%metaphir-index" in line \
-                        or "--index" in line or "--packs" in line:
+                        or "--packs" in line or (
+                            "--index" in line and not args.index):
                     continue
                 # The command, without what checks its output.
                 cmd = re.split(r"\|\s*(FileCheck|count|not FileCheck)", line)[0]

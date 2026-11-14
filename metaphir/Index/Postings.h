@@ -16,7 +16,7 @@ namespace llvm {
 class raw_ostream;
 namespace metaphir {
 
-class FeatureQuery;
+class FunctionFilter;
 struct FeatureRequirement;
 
 /// A coarse feature the index lists the functions of: an instruction kind, an
@@ -70,7 +70,7 @@ getPostingKeys(const FeatureRequirement &Requirement);
 /// no function has one of its keys. std::nullopt if a variant needs no
 /// coarse feature, so that any function may match.
 std::optional<std::vector<SmallVector<PostingKey, 3>>>
-choosePostingKeys(const FeatureQuery &Query,
+choosePostingKeys(const FunctionFilter &Query,
                   function_ref<uint64_t(const PostingKey &)> Count);
 
 /// The union over variants of the intersections of the lists of their

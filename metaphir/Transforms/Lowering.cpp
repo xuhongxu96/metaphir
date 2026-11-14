@@ -976,6 +976,7 @@ static void lowerChoices(InstOp Inst) {
     if (!Swapped)
       return Build(false);
     AltOp Orders = MakeAlt(2);
+    Orders->setAttr("commuted", Builder.getUnitAttr());
     Fill(Orders, 0, [&] { return Build(false); });
     Fill(Orders, 1, [&] { return Build(true); });
     return Orders.getResult();

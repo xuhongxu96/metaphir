@@ -9,7 +9,7 @@ namespace metaphir {
 template <typename Predicate>
 static bool anySlot(const Site &S, Predicate Holds) {
   for (unsigned Slots = S.Slots; Slots; Slots &= Slots - 1)
-    if (Holds(S.Parent->getInstructionID(), unsigned(llvm::countr_zero(Slots))))
+    if (Holds(S.ID, unsigned(llvm::countr_zero(Slots))))
       return true;
   return false;
 }

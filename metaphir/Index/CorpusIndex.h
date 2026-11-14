@@ -138,7 +138,7 @@ public:
   /// and ordinal; none if the query needs no coarse feature, so that any
   /// function may match.
   Expected<std::optional<std::vector<FunctionLocation>>>
-  findCandidates(const FeatureQuery &Query) const;
+  findCandidates(const FunctionFilter &Query) const;
 
   /// Reads the summary of the functions of Entry, an entry of this index.
   /// Its fine features (see FunctionFeatures::Fine) are read only if

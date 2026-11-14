@@ -1,9 +1,11 @@
 // Runs MetaphIR's passes on patterns written as MLIR, as mlir-opt does: what
 // the tests of the passes run.
 #include "metaphir/Dialect/Expr/ExprDialect.h"
+#include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/ToIndex.h"
 #include "metaphir/Transforms/ToPlan.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/Tools/mlir-opt/MlirOptMain.h"
@@ -16,6 +18,7 @@ int main(int argc, char **argv) {
   mlir::registerCSEPass();
   metaphir::registerLoweringPasses();
   metaphir::registerToPlanPass();
+  metaphir::registerToIndexPass();
 
   mlir::DialectRegistry Registry;
   Registry

@@ -55,6 +55,8 @@ public:
 
   /// An encoding of the atom that fits in 12 bits.
   uint16_t getCode() const { return Code; }
+  /// The atom getCode encoded as Code.
+  static Atom fromCode(uint16_t Code) { return Atom(Code); }
 
   bool operator==(const Atom &Other) const { return Code == Other.Code; }
   bool operator<(const Atom &Other) const { return Code < Other.Code; }

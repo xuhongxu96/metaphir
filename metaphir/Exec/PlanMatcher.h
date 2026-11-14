@@ -11,6 +11,7 @@
 #define METAPHIR_EXEC_PLANMATCHER_H
 
 #include "metaphir/Exec/ExprEvaluator.h"
+#include "metaphir/Exec/TypePattern.h"
 #include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/Instantiation.h"
 #include "mlir/IR/Location.h"
@@ -59,7 +60,6 @@ public:
   ArrayRef<SlotInfo> getSlots() const { return Slots; }
 
   struct Step;
-  struct TypeNode;
 
 private:
   friend class PlanMatcher;
@@ -69,7 +69,7 @@ private:
   std::vector<Step> Steps;
   /// The alternatives of each either: where each begins and ends.
   std::vector<std::pair<unsigned, unsigned>> Regions;
-  std::vector<TypeNode> Types;
+  TypePatterns Types;
   unsigned NumRegisters = 0;
 };
 

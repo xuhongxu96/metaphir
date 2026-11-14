@@ -57,8 +57,7 @@ bool ShapeRequirement::isSatisfiedBy(const FunctionFeatures &Features) const {
 static bool hasSiteFact(const FunctionFeatures &Features, const Site &S,
                         Atom A) {
   for (unsigned Slots = S.Slots; Slots; Slots &= Slots - 1)
-    if (Features.hasFact(S.Parent->getInstructionID(), llvm::countr_zero(Slots),
-                         A))
+    if (Features.hasFact(S.ID, llvm::countr_zero(Slots), A))
       return true;
   return false;
 }
@@ -167,7 +166,7 @@ static std::optional<std::string> firstLack(const FeatureRequirement &R,
   }
   for (const auto &[S, A] : R.SiteFacts)
     if (!hasSiteFact(Features, S, A))
-      return "no " + opcode(S.Parent->getInstructionID()) +
+      return "no " + opcode(S.ID) +
              " in it has the constant operand the pattern gives it";
   return std::nullopt;
 }
@@ -305,7 +304,8 @@ requirementOfInstruction(const Instruction &Node,
     if (Operand->IsArray || !Operand->Val)
       continue;
     Direct.unite(requirementOf(*Operand->Val, OnStack));
-    Site S{&Node, operandSlots(Node, Position, ValueOperands.size())};
+    Site S{&Node, Node.getInstructionID(),
+           operandSlots(Node, Position, ValueOperands.size())};
     if (isa<MetaVariable, Instruction>(Operand->Val))
       Direct.OperandSites.push_back({Operand->Val, S});
     // An integer constant is matched as the index records literals.
@@ -430,7 +430,8 @@ FeatureQuery FeatureQuery::compute(const PatternVariants &Variants,
       SitesOf[Value].push_back(S);
     for (const Instruction *Self : Requirement.Selves) {
       V.Certain.insert(Self);
-      SitesOf[Self].push_back(Site{Self, uint8_t(1u << ResultSlot)});
+      SitesOf[Self].push_back(
+          Site{Self, Self->getInstructionID(), uint8_t(1u << ResultSlot)});
     }
     for (const Instruction *I : Lowered->getInstructions())
       if (V.Certain.count(I))

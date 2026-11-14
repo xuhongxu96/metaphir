@@ -15,7 +15,7 @@
 ; COMMUTATIVE-NEXT: }, {
 ; COMMUTATIVE-NEXT:   %i_a = "mpir.inst"(%{{.*}}, %y, %{{.*}}, %x)
 ; COMMUTATIVE-NEXT:   mpir.yield %i_a
-; COMMUTATIVE-NEXT: } {result_name = "a"}
+; COMMUTATIVE-NEXT: } {commuted, result_name = "a"}
 ; COMMUTATIVE:      %[[READ:.*]] = mpir_expr.read %x
 ; COMMUTATIVE-NEXT: %[[ZERO:.*]] = "mpir_expr.call"(%[[READ]], %[[ALT]])
 ; COMMUTATIVE-NEXT: mpir.require %[[ZERO]]

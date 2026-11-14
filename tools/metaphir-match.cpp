@@ -1,5 +1,7 @@
+#include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/SurfacePrinter.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Exec/PlanMatcher.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
@@ -12,6 +14,7 @@
 #include "metaphir/Parser/MIRParser.h"
 #include "metaphir/Parser/PatternParser.h"
 #include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/ToIndex.h"
 #include "metaphir/Transforms/ToPlan.h"
 #include "metaphir/Web/WebIndex.h"
 #include "metaphir/Web/WebQuery.h"
@@ -128,6 +131,15 @@ struct LoadedPattern {
   std::unique_ptr<mlir::MLIRContext> MLIRContext;
   mlir::OwningOpRef<mlir::ModuleOp> Module;
   std::unique_ptr<PlanProgram> Program;
+  std::unique_ptr<IndexQuery> Index;
+
+  /// What a function needs to match: from the index query, with
+  /// --engine=mlir.
+  const FunctionFilter &filter() const {
+    if (Index)
+      return *Index;
+    return Query;
+  }
 
   const FeatureQuery *getFilter() const {
     return NoPrefilter ? nullptr : &Query;
@@ -208,12 +220,15 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
       return nullptr;
     mlir::PassManager PM(Loaded->MLIRContext.get());
     PM.addPass(createToPlanPass());
+    PM.addPass(createToIndexPass());
     if (mlir::failed(PM.run(*Loaded->Module))) {
       Err << ToolName << ": error: the pattern has no match plan\n";
       return nullptr;
     }
     for (auto Plan : Loaded->Module->getOps<mpir_plan::MatcherOp>())
       Loaded->Program = PlanProgram::compile(Plan);
+    for (auto Query : Loaded->Module->getOps<mpir_index::QueryOp>())
+      Loaded->Index = std::make_unique<IndexQuery>(Query);
     return Loaded;
   }
   Pattern *RawPattern = nullptr;
@@ -283,13 +298,13 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
   if (Listed && Listed->empty())
     return nullptr;
   auto MayMatch = [&](const FunctionFeatures &Features) {
-    return Pattern.Query.mayMatch(Features);
+    return Pattern.filter().mayMatch(Features);
   };
   if (!Listed) {
     Expected<FunctionFeatures> Summary = Index.readSummary(*Entry, MayMatch);
     if (!Summary)
       return Summary.takeError();
-    if (!Summary->Fine || !Pattern.Query.mayMatch(*Summary))
+    if (!Summary->Fine || !Pattern.filter().mayMatch(*Summary))
       return nullptr;
   }
   // The fine features are read only where the coarse ones may match.
@@ -305,7 +320,7 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
   // The ordinals, among the module's defined functions, of those to match.
   SmallVector<size_t, 8> Candidates;
   for (auto [Ordinal, Function] : enumerate(*Indexed))
-    if (Function.Features.Fine && Pattern.Query.mayMatch(Function.Features))
+    if (Function.Features.Fine && Pattern.filter().mayMatch(Function.Features))
       Candidates.push_back(Ordinal);
   if (Candidates.empty())
     return nullptr;
@@ -395,7 +410,8 @@ static bool collectIndexedFiles(StringRef Input, const IndexUse &Use,
 /// matchFile's matching with a match plan, for --engine=mlir.
 static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
                               raw_ostream &Out, ArrayRef<Candidate> Functions,
-                              Module *M, unsigned &TargetIndex) {
+                              Module *M, MatchStats &Stats,
+                              unsigned &TargetIndex) {
   PlanMatcher Matcher(*Pattern.Program);
   std::optional<MaterializingUseOracle> Uses;
   if (M && M->getMaterializer()) {
@@ -412,8 +428,31 @@ static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
   };
   for (const Candidate &Function : Functions) {
     const llvm::Function *F = Function.F;
+    ++Stats.MatchedFunctions;
     bool HadStructuralMatch = false;
     SmallVector<PlanRejection, 4> Unsatisfied;
+    // A function whose features no variant can match has no match; when
+    // the rejecting constraints are asked for, only its structure counts.
+    if (!NoPrefilter && Pattern.Index) {
+      Target Program(*F, Function.Features ? &*Function.Features : nullptr);
+      const FunctionFeatures &Features = Program.getFeatures();
+      const FunctionFilter &Filter = Pattern.filter();
+      bool May = false;
+      for (unsigned Index = 0; Index != Filter.size() && !May; ++Index)
+        May = MatchesOnly ? Filter.mayMatchVariant(Index, Features)
+                          : Filter.mayMatchStructure(Index, Features);
+      if (!May) {
+        if (!MatchesOnly) {
+          Out << "target " << TargetIndex++ << ": @" << F->getName()
+              << "\n  no match\n";
+          if (Explain)
+            for (const std::string &Reason :
+                 Filter.explainNoStructure(Features))
+              Out << "  no structural match: " << Reason << '\n';
+        }
+        continue;
+      }
+    }
     std::vector<PlanMatch> Matches =
         Matcher.match(*F, MatchesOnly ? nullptr : &Unsatisfied,
                       MatchesOnly ? nullptr : &HadStructuralMatch);
@@ -442,11 +481,20 @@ static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
           }
         }
       } else if (Explain) {
-        for (const PlanConflict &C : Matcher.findConflicts(*F)) {
+        SmallVector<PlanConflict, 1> Conflicts = Matcher.findConflicts(*F);
+        for (const PlanConflict &C : Conflicts) {
           Out << "  no structural match: ";
           C.print(Out, SlotsFor(*F));
           Out << '\n';
         }
+        if (!Conflicts.empty())
+          continue;
+        FunctionFeatures Features = Function.Features && Function.Features->Fine
+                                        ? *Function.Features
+                                        : FunctionFeatures::compute(*F);
+        for (const std::string &Reason :
+             Pattern.filter().explainNoStructure(Features))
+          Out << "  no structural match: " << Reason << '\n';
       }
       continue;
     }
@@ -486,7 +534,7 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
   }
 
   if (Pattern.Program)
-    return matchFileWithPlan(Pattern, File, Out, Functions, M->get(),
+    return matchFileWithPlan(Pattern, File, Out, Functions, M->get(), Stats,
                              TargetIndex);
 
   // A matcher per module: its cached analyses belong to the module's
@@ -560,7 +608,7 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
                                         ? *Function.Features
                                         : FunctionFeatures::compute(*F);
         for (const std::string &Reason :
-             Pattern.Query.explainNoStructure(Features))
+             Pattern.filter().explainNoStructure(Features))
           Out << "  no structural match: " << Reason << '\n';
       }
       continue;
@@ -828,8 +876,8 @@ int main(int Argc, char **Argv) {
       return 1;
     return matchPacks(ToolName);
   }
-  if (UseEngine == Engine::MLIR && (!IndexFile.empty() || !PacksDir.empty())) {
-    errs() << ToolName << ": error: --engine=mlir does not use indexes yet\n";
+  if (UseEngine == Engine::MLIR && !PacksDir.empty()) {
+    errs() << ToolName << ": error: --engine=mlir does not use packs yet\n";
     return 1;
   }
   if (InputPaths.empty()) {
@@ -855,7 +903,7 @@ int main(int Argc, char **Argv) {
   std::optional<IndexUse> Use;
   if (Index) {
     Expected<std::optional<std::vector<FunctionLocation>>> Found =
-        Index->findCandidates(Pattern->Query);
+        Index->findCandidates(Pattern->filter());
     if (!Found) {
       logAllUnhandledErrors(Found.takeError(), errs(),
                             Twine(ToolName) + ": error: ");

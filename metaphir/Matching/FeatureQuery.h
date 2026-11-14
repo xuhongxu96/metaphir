@@ -3,6 +3,7 @@
 
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/Matching/Features.h"
+#include "metaphir/Matching/FunctionFilter.h"
 #include "metaphir/Matching/IndexDomain.h"
 #include "metaphir/Matching/Operators/AbstractCall.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -76,7 +77,7 @@ struct FeatureRequirement {
 
 /// The features a function needs for a lowered pattern to match: those of
 /// any one variant, whose constraints must also be satisfiable on them.
-class FeatureQuery {
+class FeatureQuery : public FunctionFilter {
 public:
   /// Definitions holds the 'constraint' definitions the patterns call;
   /// without it, constraints are not checked.
@@ -88,20 +89,23 @@ public:
   FeatureQuery &operator=(FeatureQuery &&);
   ~FeatureQuery();
 
-  size_t size() const { return Variants.size(); }
-  const FeatureRequirement &getRequirement(unsigned Index) const {
+  size_t size() const override { return Variants.size(); }
+  const FeatureRequirement &getRequirement(unsigned Index) const override {
     return Variants[Index].Requirement;
   }
 
   /// Whether a constraint of the variant is false whatever it binds, such as
   /// ';; false', so the variant matches no function.
-  bool isImpossible(unsigned Index) const { return Variants[Index].Impossible; }
+  bool isImpossible(unsigned Index) const override {
+    return Variants[Index].Impossible;
+  }
 
-  bool mayMatch(const FunctionFeatures &Features) const;
-  bool mayMatchVariant(unsigned Index, const FunctionFeatures &Features) const;
+  bool mayMatch(const FunctionFeatures &Features) const override;
+  bool mayMatchVariant(unsigned Index,
+                       const FunctionFeatures &Features) const override;
   /// Whether a variant's instructions can match, whatever its constraints.
   bool mayMatchStructure(unsigned Index,
-                         const FunctionFeatures &Features) const {
+                         const FunctionFeatures &Features) const override {
     return Variants[Index].Requirement.isSatisfiedBy(Features);
   }
 
@@ -110,7 +114,7 @@ public:
   /// a variant's features, that its instructions are not as the variant
   /// connects them. Without duplicates.
   SmallVector<std::string, 2>
-  explainNoStructure(const FunctionFeatures &Features) const;
+  explainNoStructure(const FunctionFeatures &Features) const override;
 
 private:
   struct Variant {

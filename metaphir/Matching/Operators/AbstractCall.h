@@ -20,11 +20,14 @@ class FunctionFeatures;
 /// one of Slots, of the instruction Parent matches, or (Slots holding
 /// ResultSlot) that instruction itself.
 struct Site {
-  const Instruction *Parent = nullptr;
+  /// The pattern instruction (an opaque handle: a MetaphIR instruction, or an
+  /// mpir operation), and the built-in matcher it is.
+  const void *Parent = nullptr;
+  Instruction::InstructionID ID = Instruction::InstructionID(0);
   /// Bit S is set for slot S; with ':c', operands can be in either of two.
   uint8_t Slots = 0;
 
-  auto tie() const { return std::make_tuple(Parent, Slots); }
+  auto tie() const { return std::make_tuple(Parent, ID, Slots); }
   bool operator<(const Site &Other) const { return tie() < Other.tie(); }
   bool operator==(const Site &Other) const { return tie() == Other.tie(); }
 };
@@ -78,7 +81,7 @@ struct AbstractCall {
   const FunctionFeatures &Features;
   /// For a value-tracking operator, the pattern instruction its context
   /// resolves to, if that instruction is certainly matched.
-  const Instruction *Context = nullptr;
+  const void *Context = nullptr;
 };
 
 /// False if some site of V lacks fact A in all its slots, where the index

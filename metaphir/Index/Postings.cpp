@@ -50,7 +50,7 @@ getPostingKeys(const FeatureRequirement &Requirement) {
 }
 
 std::optional<std::vector<SmallVector<PostingKey, 3>>>
-choosePostingKeys(const FeatureQuery &Query,
+choosePostingKeys(const FunctionFilter &Query,
                   function_ref<uint64_t(const PostingKey &)> Count) {
   // The shortest few lists narrow the most.
   constexpr size_t MaxIntersected = 3;

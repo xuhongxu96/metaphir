@@ -28,6 +28,8 @@ add_library(
   ConstantInteger.h
   FeatureQuery.cpp
   FeatureQuery.h
+  FunctionFilter.cpp
+  FunctionFilter.h
   Features.cpp
   Features.h
   Instantiation.cpp
