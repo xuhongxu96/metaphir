@@ -517,12 +517,21 @@ void Compiler::emitVariant(const Requirement &R) {
     if (!is_contained(SitesOf[V], S))
       SitesOf[V].push_back(S);
   }
-  for (InstOp Inst : Certain) {
-    Attribute S = Site(Inst, uint8_t(1u << ResultSlot));
-    SitesOf[canonical(Inst.getResult())].push_back(S);
-    if (Value Capture = Inst.getCapture())
-      SitesOf[Capture] = SitesOf[canonical(Inst.getResult())];
-  }
+  for (InstOp Inst : Certain)
+    SitesOf[canonical(Inst.getResult())].push_back(
+        Site(Inst, uint8_t(1u << ResultSlot)));
+  // A capture is at its instruction's sites, whether or not the instruction
+  // is sure to match as itself.
+  Pattern.walk([&](InstOp Inst) {
+    Value Capture = Inst.getCapture();
+    if (!Capture)
+      return;
+    auto It = SitesOf.find(canonical(Inst.getResult()));
+    if (It == SitesOf.end())
+      return;
+    SmallVector<Attribute, 2> Of = It->second;
+    SitesOf[Capture] = std::move(Of);
+  });
 
   // The constraints, reading the values as their sites.
   DenseMap<Value, Value> Readings;
