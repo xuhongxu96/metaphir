@@ -77,17 +77,17 @@ static StringRef targetName(ConstraintValue::ValueKind Target) {
 // is responsible for both producing the destination value and reporting the
 // precise reason a value cannot be converted.
 static Expected<ConstraintValue>
-coerceBooleanToInteger(const ConstraintValue &V, const Constraint &) {
+coerceBooleanToInteger(const ConstraintValue &V, ExprRef) {
   return integerResult(APInt(1, V.getBoolean()), true);
 }
 
 static Expected<ConstraintValue>
-coerceIntegerToBoolean(const ConstraintValue &V, const Constraint &) {
+coerceIntegerToBoolean(const ConstraintValue &V, ExprRef) {
   return ConstraintValue::getBoolean(!V.getInteger().isZero());
 }
 
-static Expected<ConstraintValue>
-coerceValueToInteger(const ConstraintValue &V, const Constraint &Expression) {
+static Expected<ConstraintValue> coerceValueToInteger(const ConstraintValue &V,
+                                                      ExprRef Expression) {
   // Constants are treated as signed, so that 'slt' on a negative constant is
   // correct; the unsigned operators still compare the bit pattern.
   if (std::optional<APInt> Integer = getConstantInteger(*V.getValue()))
@@ -97,7 +97,7 @@ coerceValueToInteger(const ConstraintValue &V, const Constraint &Expression) {
 }
 
 static Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
-                                                    const Constraint &) {
+                                                    ExprRef) {
   std::string Text;
   raw_string_ostream OS(Text);
   V.getType()->print(OS);
@@ -105,7 +105,7 @@ static Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
 }
 
 static Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
-                                                     const Constraint &) {
+                                                     ExprRef) {
   std::string Text;
   raw_string_ostream OS(Text);
   if (const auto *Instruction = dyn_cast<llvm::Instruction>(V.getValue()))
@@ -116,7 +116,7 @@ static Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
 }
 
 static Expected<ConstraintValue>
-coerceTypeArrayToStringArray(const ConstraintValue &V, const Constraint &) {
+coerceTypeArrayToStringArray(const ConstraintValue &V, ExprRef) {
   ConstraintValue::StringArrayStorage Strings;
   for (const llvm::Type *Type : V.getTypeArray()) {
     std::string Text;
@@ -128,8 +128,7 @@ coerceTypeArrayToStringArray(const ConstraintValue &V, const Constraint &) {
 }
 
 static Expected<ConstraintValue>
-coerceValueArrayToStringArray(const ConstraintValue &V,
-                              const Constraint &Expression) {
+coerceValueArrayToStringArray(const ConstraintValue &V, ExprRef Expression) {
   ConstraintValue::StringArrayStorage Strings;
   for (const llvm::Value *Value : V.getValueArray()) {
     Expected<std::string> String =
@@ -161,7 +160,7 @@ bool canCoerceTo(const ConstraintValue &V, ConstraintValue::ValueKind Target) {
 
 Expected<ConstraintValue> coerce(ConstraintValue V,
                                  ConstraintValue::ValueKind Target,
-                                 const Constraint &Expression) {
+                                 ExprRef Expression) {
   if (V.getKind() == Target)
     return V;
 
@@ -183,7 +182,7 @@ Expected<ConstraintValue> coerce(ConstraintValue V,
 }
 
 Expected<bool> requireBoolean(const ConstraintValue &Value,
-                              const Constraint &Expression) {
+                              ExprRef Expression) {
   Expected<ConstraintValue> Boolean =
       coerce(Value, ConstraintValue::Boolean, Expression);
   if (!Boolean)
@@ -192,7 +191,7 @@ Expected<bool> requireBoolean(const ConstraintValue &Value,
 }
 
 Expected<APSInt> requireInteger(const ConstraintValue &Value,
-                                const Constraint &Expression) {
+                                ExprRef Expression) {
   Expected<ConstraintValue> Integer =
       coerce(Value, ConstraintValue::Integer, Expression);
   if (!Integer)
@@ -201,7 +200,7 @@ Expected<APSInt> requireInteger(const ConstraintValue &Value,
 }
 
 Expected<std::string> requireString(const ConstraintValue &Value,
-                                    const Constraint &Expression) {
+                                    ExprRef Expression) {
   Expected<ConstraintValue> String =
       coerce(Value, ConstraintValue::String, Expression);
   if (!String)
@@ -210,7 +209,7 @@ Expected<std::string> requireString(const ConstraintValue &Value,
 }
 
 Expected<ConstraintValue::StringArrayStorage>
-requireStringArray(const ConstraintValue &Value, const Constraint &Expression) {
+requireStringArray(const ConstraintValue &Value, ExprRef Expression) {
   Expected<ConstraintValue> StringArray =
       coerce(Value, ConstraintValue::StringArray, Expression);
   if (!StringArray)
@@ -219,7 +218,7 @@ requireStringArray(const ConstraintValue &Value, const Constraint &Expression) {
 }
 
 Expected<const llvm::Value *> requireValue(const ConstraintValue &Value,
-                                           const Constraint &Expression) {
+                                           ExprRef Expression) {
   if (Value.getKind() != ConstraintValue::Value)
     return make_error<ConstraintEvaluationError>(
         Expression, "expected an LLVM value operand");
@@ -227,7 +226,7 @@ Expected<const llvm::Value *> requireValue(const ConstraintValue &Value,
 }
 
 Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,
-                                const Constraint &Expression) {
+                                ExprRef Expression) {
   if (Left.getKind() == Right.getKind()) {
     switch (Left.getKind()) {
     case ConstraintValue::Integer:
@@ -266,13 +265,13 @@ Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,
     else
       return *L == *R;
   };
-  auto RequireInteger = [](const ConstraintValue &V, const Constraint &E) {
+  auto RequireInteger = [](const ConstraintValue &V, ExprRef E) {
     return requireInteger(V, E);
   };
-  auto RequireString = [](const ConstraintValue &V, const Constraint &E) {
+  auto RequireString = [](const ConstraintValue &V, ExprRef E) {
     return requireString(V, E);
   };
-  auto RequireStringArray = [](const ConstraintValue &V, const Constraint &E) {
+  auto RequireStringArray = [](const ConstraintValue &V, ExprRef E) {
     return requireStringArray(V, E);
   };
 

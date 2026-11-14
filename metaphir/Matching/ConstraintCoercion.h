@@ -28,59 +28,57 @@ bool isStringArrayLike(const ConstraintValue &V);
 bool canCoerceTo(const ConstraintValue &V, ConstraintValue::ValueKind Target);
 Expected<ConstraintValue> coerce(ConstraintValue V,
                                  ConstraintValue::ValueKind Target,
-                                 const Constraint &Expression);
+                                 ExprRef Expression);
 
 // Coercion-aware accessors. They forward evaluation errors, coerce the value
 // into the requested representation, and report a structured error when no
 // coercion exists.
-Expected<bool> requireBoolean(const ConstraintValue &Value,
-                              const Constraint &Expression);
+Expected<bool> requireBoolean(const ConstraintValue &Value, ExprRef Expression);
 inline Expected<bool> requireBoolean(Expected<ConstraintValue> Result,
-                                     const Constraint &Expression) {
+                                     ExprRef Expression) {
   if (!Result)
     return Result.takeError();
   return requireBoolean(*Result, Expression);
 }
 
 Expected<APSInt> requireInteger(const ConstraintValue &Value,
-                                const Constraint &Expression);
+                                ExprRef Expression);
 inline Expected<APSInt> requireInteger(Expected<ConstraintValue> Result,
-                                       const Constraint &Expression) {
+                                       ExprRef Expression) {
   if (!Result)
     return Result.takeError();
   return requireInteger(*Result, Expression);
 }
 
 Expected<std::string> requireString(const ConstraintValue &Value,
-                                    const Constraint &Expression);
+                                    ExprRef Expression);
 inline Expected<std::string> requireString(Expected<ConstraintValue> Result,
-                                           const Constraint &Expression) {
+                                           ExprRef Expression) {
   if (!Result)
     return Result.takeError();
   return requireString(*Result, Expression);
 }
 
 Expected<ConstraintValue::StringArrayStorage>
-requireStringArray(const ConstraintValue &Value, const Constraint &Expression);
+requireStringArray(const ConstraintValue &Value, ExprRef Expression);
 inline Expected<ConstraintValue::StringArrayStorage>
-requireStringArray(Expected<ConstraintValue> Result,
-                   const Constraint &Expression) {
+requireStringArray(Expected<ConstraintValue> Result, ExprRef Expression) {
   if (!Result)
     return Result.takeError();
   return requireStringArray(*Result, Expression);
 }
 
 Expected<const llvm::Value *> requireValue(const ConstraintValue &Value,
-                                           const Constraint &Expression);
+                                           ExprRef Expression);
 inline Expected<const llvm::Value *>
-requireValue(Expected<ConstraintValue> Result, const Constraint &Expression) {
+requireValue(Expected<ConstraintValue> Result, ExprRef Expression) {
   if (!Result)
     return Result.takeError();
   return requireValue(*Result, Expression);
 }
 
 Expected<bool> evaluateEquality(ConstraintValue Left, ConstraintValue Right,
-                                const Constraint &Expression);
+                                ExprRef Expression);
 
 } // namespace detail
 } // namespace metaphir

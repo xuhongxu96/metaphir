@@ -1,6 +1,7 @@
 #ifndef METAPHIR_MATCHING_OPERATORS_OPERATORCALL_H
 #define METAPHIR_MATCHING_OPERATORS_OPERATORCALL_H
 
+#include "metaphir/Matching/ConstraintError.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/UseOracle.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -25,7 +26,7 @@ struct ConcreteCall {
   /// value-tracking operator's explicit context is not among them.
   ArrayRef<ConstraintValue> Operands;
   /// The operator, for diagnostics.
-  const Constraint &Expression;
+  ExprRef Expression;
   /// How a value used across functions is used in its module, if its use
   /// list is not complete.
   function_ref<std::optional<ModuleUses>(const llvm::Value &)> GetModuleUses;

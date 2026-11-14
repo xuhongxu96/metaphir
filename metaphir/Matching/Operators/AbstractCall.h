@@ -2,6 +2,7 @@
 #define METAPHIR_MATCHING_OPERATORS_ABSTRACTCALL_H
 
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/Matching/ConstraintError.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Operators/Facts.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -73,7 +74,7 @@ private:
 /// concrete() when all are.
 struct AbstractCall {
   ArrayRef<AbstractValue> Operands;
-  const Constraint &Expression;
+  ExprRef Expression;
   const FunctionFeatures &Features;
   /// For a value-tracking operator, the pattern instruction its context
   /// resolves to, if that instruction is certainly matched.
