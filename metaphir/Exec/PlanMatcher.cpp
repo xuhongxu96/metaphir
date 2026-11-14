@@ -853,7 +853,7 @@ bool PlanMatcher::Run::step(const Step &S) {
     if (!Constant)
       return false;
     const llvm::Type *T = Constant->getType();
-    uint64_t Count;
+    uint64_t Count = 0;
     switch (AggregateConstant::Delimiter(S.A)) {
     case AggregateConstant::Square:
       if (!isa<llvm::ArrayType>(T))
