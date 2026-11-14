@@ -60,6 +60,17 @@ if(Python3_FOUND)
       ${CMAKE_CURRENT_SOURCE_DIR}/Matching ${PROJECT_SOURCE_DIR}/eval/patterns
       ${PROJECT_SOURCE_DIR}/metaphir/StdLib)
 
+  # metaphir-match --engine=mlir must find what the classic engine finds.
+  # (Not yet the reasons --explain gives for no structural match, which
+  # come from the index's features.)
+  add_test(
+    NAME MetaphIR.match-differential
+    COMMAND
+      ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/match_differential.py
+      --match $<TARGET_FILE:metaphir-match> --split-file
+      ${METAPHIR_LLVM_UTILS_DIR}/split-file --allow-explain-reasons
+      ${CMAKE_CURRENT_SOURCE_DIR}/Matching)
+
   add_test(
     NAME MetaphIR.eval-scripts
     COMMAND ${Python3_EXECUTABLE} -m unittest discover -s

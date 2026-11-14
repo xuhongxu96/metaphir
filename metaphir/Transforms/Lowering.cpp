@@ -392,7 +392,10 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
           return mlir::failure();
         DenseSet<Operation *> Visited;
         setDefaultAnchor(*C, Anchor, Visited);
-        RequireOp::create(Builder, Location(Flag.getLoc()), *C);
+        auto Require = RequireOp::create(Builder, Location(Flag.getLoc()), *C);
+        // Checked before the pattern's own constraints, as what the flags
+        // say a binding is decides whether the others can be evaluated.
+        Require->setAttr("from_metaflag", Builder.getUnitAttr());
       }
       return mlir::success();
     };
@@ -809,8 +812,15 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
                       mlir::IntegerAttr::get(Type, APInt(1, Value)));
     BindOp::create(Builder, CallerLoc, Capture, Constant);
   }
-  YieldOp::create(Builder, CallerLoc,
-                  Mapping.lookupOrDefault(Yield.getValue()));
+  Value NewRoot = Mapping.lookupOrDefault(Yield.getValue());
+  // The use's capture names the root: constraints on the root, such as its
+  // metaflags', read it by that name.
+  if (Value Capture = Use.getCapture(); Capture && !Root.getCapture())
+    for (mlir::OpOperand &Operand :
+         llvm::make_early_inc_range(NewRoot.getUses()))
+      if (isa<mpir_expr::ReadOp>(Operand.getOwner()))
+        Operand.set(Capture);
+  YieldOp::create(Builder, CallerLoc, NewRoot);
   (void)CallerOperandFlags;
   return true;
 }
@@ -1091,9 +1101,11 @@ static void collectRegion(Bindings &Into, mlir::Region &Region) {
   Into.run();
 }
 
-/// The matchers of Block no other matcher of the pattern uses: those a
-/// match starts from.
-static SmallVector<Operation *, 4> getRoots(mlir::Block &Block) {
+} // namespace lowering
+
+SmallVector<mlir::Operation *, 4> getPatternRoots(mlir::Block &Block) {
+  using namespace mpir;
+  using mlir::Operation;
   SmallVector<Operation *, 4> Roots;
   for (Operation &Op : Block) {
     if (!isa<InstOp, AltOp>(Op))
@@ -1115,12 +1127,14 @@ static SmallVector<Operation *, 4> getRoots(mlir::Block &Block) {
   return Roots;
 }
 
+namespace lowering {
+
 static LogicalResult checkOrSelfBindings(PatternOp Pattern) {
   mlir::Block &Block = Pattern.getBody().front();
   DenseMap<Value, AltOp> BoundBy;
   Bindings Always;
   Always.BoundBy = &BoundBy;
-  for (Operation *Root : getRoots(Block))
+  for (Operation *Root : getPatternRoots(Block))
     Always.Pending.push_back(Root->getResult(0));
   Always.run();
   // Matchers in alternatives are reached from their alt; those of a region

@@ -18,8 +18,12 @@ static Sort sortOf(mlir::Value V) {
 }
 
 StringRef getMetaVariableName(mlir::Value V) {
-  if (auto Var = V.getDefiningOp<VarOp>())
-    return Var.getVarName();
+  if (Operation *Def = V.getDefiningOp()) {
+    // An mpir.var, or what stands for one elsewhere (a plan's slot).
+    if (auto Name = Def->getAttrOfType<StringAttr>("var_name"))
+      return Name.getValue();
+    return "";
+  }
   auto Arg = dyn_cast<BlockArgument>(V);
   if (!Arg)
     return "";
@@ -121,12 +125,18 @@ static void printType(raw_ostream &OS, mlir::Value T) {
 
 void printSurfaceValue(raw_ostream &OS, mlir::Value V) {
   Operation *Def = V.getDefiningOp();
-  if (!Def || isa<VarOp>(Def)) {
+  if (!Def || Def->hasAttr("var_name")) {
     if (sortOf(V) == Sort::IntrinsicID)
       OS << "@llvm.";
     OS << '?' << getMetaVariableName(V);
     return;
   }
+  // An instruction matcher, or what stands for one elsewhere.
+  if (!isa<InstOp, UseOp>(Def))
+    if (auto Name = Def->getAttrOfType<StringAttr>("result_name")) {
+      OS << '%' << Name.getValue();
+      return;
+    }
   if (auto Inst = dyn_cast<InstOp>(Def)) {
     OS << '%' << Inst.getResultName().value_or("");
     return;
@@ -440,7 +450,8 @@ void printSurfaceExpression(raw_ostream &OS, mlir::Value E) {
   }
   if (auto Read = dyn_cast<mpir_expr::ReadOp>(Def)) {
     mlir::Value V = Read.getValue();
-    if (V.getDefiningOp<InstOp>() || V.getDefiningOp<UseOp>())
+    Operation *ValueDef = V.getDefiningOp();
+    if (ValueDef && !ValueDef->hasAttr("var_name"))
       printSurfaceValue(OS, V);
     else if (StringRef Name = getMetaVariableName(V); !Name.empty())
       OS << '?' << Name;

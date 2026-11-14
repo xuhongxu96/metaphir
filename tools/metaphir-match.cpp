@@ -1,3 +1,6 @@
+#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Exec/PlanMatcher.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"
@@ -7,8 +10,13 @@
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Parser/MIRParser.h"
+#include "metaphir/Parser/PatternParser.h"
+#include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/ToPlan.h"
 #include "metaphir/Web/WebIndex.h"
 #include "metaphir/Web/WebQuery.h"
+#include "mlir/IR/MLIRContext.h"
+#include "mlir/Pass/PassManager.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/BitcodeReader.h"
@@ -93,6 +101,14 @@ static cl::opt<bool>
                 cl::desc("Match every variant, even in functions that lack "
                          "the instructions it needs (for testing)"),
                 cl::cat(Category));
+enum class Engine { Classic, MLIR };
+static cl::opt<Engine>
+    UseEngine("engine", cl::desc("The implementation to match with"),
+              cl::values(clEnumValN(Engine::Classic, "classic", "MetaphIR IR"),
+                         clEnumValN(Engine::MLIR, "mlir",
+                                    "the mpir dialects and match plans")),
+              cl::init(Engine::Classic), cl::cat(Category));
+
 static cl::opt<bool> NoConstraintPrefilter(
     "no-constraint-prefilter", cl::Hidden,
     cl::desc("Filter candidates by their features but not by evaluating the "
@@ -108,6 +124,10 @@ struct LoadedPattern {
   MIRContext Context;
   std::optional<PatternVariants> Variants;
   FeatureQuery Query;
+  // With --engine=mlir: the pattern's module, lowered, with its plan.
+  std::unique_ptr<mlir::MLIRContext> MLIRContext;
+  mlir::OwningOpRef<mlir::ModuleOp> Module;
+  std::unique_ptr<PlanProgram> Program;
 
   const FeatureQuery *getFilter() const {
     return NoPrefilter ? nullptr : &Query;
@@ -173,6 +193,29 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
   auto Loaded = std::make_unique<LoadedPattern>();
   if (Quiet)
     Loaded->Source.setDiagHandler([](const SMDiagnostic &, void *) {});
+  if (UseEngine == Engine::MLIR) {
+    Loaded->MLIRContext = std::make_unique<mlir::MLIRContext>(
+        mlir::MLIRContext::Threading::DISABLED);
+    SMDiagnostic Diag;
+    Loaded->Module = parsePatternFile(PatternFilename, Loaded->Source,
+                                      *Loaded->MLIRContext, Diag);
+    if (!Loaded->Module) {
+      Diag.print(ToolName.data(), Err);
+      return nullptr;
+    }
+    if (mlir::failed(lowerPatternModule(*Loaded->Module, Loaded->Source, Err,
+                                        ToolName.data())))
+      return nullptr;
+    mlir::PassManager PM(Loaded->MLIRContext.get());
+    PM.addPass(createToPlanPass());
+    if (mlir::failed(PM.run(*Loaded->Module))) {
+      Err << ToolName << ": error: the pattern has no match plan\n";
+      return nullptr;
+    }
+    for (auto Plan : Loaded->Module->getOps<mpir_plan::MatcherOp>())
+      Loaded->Program = PlanProgram::compile(Plan);
+    return Loaded;
+  }
   Pattern *RawPattern = nullptr;
   SMDiagnostic Diag;
   if (parseMIRFile(PatternFilename, Loaded->Source, Loaded->Context, RawPattern,
@@ -349,6 +392,72 @@ static bool collectIndexedFiles(StringRef Input, const IndexUse &Use,
   return true;
 }
 
+/// matchFile's matching with a match plan, for --engine=mlir.
+static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
+                              raw_ostream &Out, ArrayRef<Candidate> Functions,
+                              Module *M, unsigned &TargetIndex) {
+  PlanMatcher Matcher(*Pattern.Program);
+  std::optional<MaterializingUseOracle> Uses;
+  if (M && M->getMaterializer()) {
+    Uses.emplace(*M);
+    Matcher.setUseOracle(&*Uses);
+  }
+  std::optional<ModuleSlotTracker> Slots;
+  auto SlotsFor = [&](const Function &F) {
+    if (!Slots)
+      Slots.emplace(F.getParent());
+    if (Slots->getCurrentFunction() != &F)
+      Slots->incorporateFunction(F);
+    return &*Slots;
+  };
+  for (const Candidate &Function : Functions) {
+    const llvm::Function *F = Function.F;
+    bool HadStructuralMatch = false;
+    SmallVector<PlanRejection, 4> Unsatisfied;
+    std::vector<PlanMatch> Matches =
+        Matcher.match(*F, MatchesOnly ? nullptr : &Unsatisfied,
+                      MatchesOnly ? nullptr : &HadStructuralMatch);
+    if (MatchesOnly) {
+      for (const PlanMatch &Match : Matches)
+        Match.printLine(Out, File, *F, SlotsFor(*F),
+                        PrintInstructions ? &Pattern.Source : nullptr);
+      continue;
+    }
+    Out << "target " << TargetIndex++ << ": @" << F->getName() << '\n';
+    if (Matches.empty()) {
+      Out << "  no match\n";
+      if (HadStructuralMatch) {
+        for (const PlanRejection &U : Unsatisfied) {
+          Out << "  constraint not satisfied: ";
+          printSurfaceExpression(Out, U.Expression);
+          if (!U.Reason.empty())
+            Out << " (cannot evaluate: " << U.Reason << ")";
+          Out << '\n';
+          if (Explain) {
+            Out << "    rejected: ";
+            U.Rejected.print(Out, SlotsFor(*F));
+            Out << '\t';
+            U.Rejected.printInstructions(Out, Pattern.Source);
+            Out << '\n';
+          }
+        }
+      } else if (Explain) {
+        for (const PlanConflict &C : Matcher.findConflicts(*F)) {
+          Out << "  no structural match: ";
+          C.print(Out, SlotsFor(*F));
+          Out << '\n';
+        }
+      }
+      continue;
+    }
+    for (auto [Index, Match] : enumerate(Matches)) {
+      Out << "  match " << Index << ":\n    ";
+      Match.print(Out, SlotsFor(*F));
+      Out << '\n';
+    }
+  }
+}
+
 /// Matches the pattern against the functions of one file. Unless only matches
 /// are printed, each function is reported as the next target.
 static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
@@ -375,6 +484,10 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
     Stats.Failed = true;
     return;
   }
+
+  if (Pattern.Program)
+    return matchFileWithPlan(Pattern, File, Out, Functions, M->get(),
+                             TargetIndex);
 
   // A matcher per module: its cached analyses belong to the module's
   // functions.
@@ -714,6 +827,10 @@ int main(int Argc, char **Argv) {
     if (!loadPattern(ToolName, errs()))
       return 1;
     return matchPacks(ToolName);
+  }
+  if (UseEngine == Engine::MLIR && (!IndexFile.empty() || !PacksDir.empty())) {
+    errs() << ToolName << ": error: --engine=mlir does not use indexes yet\n";
+    return 1;
   }
   if (InputPaths.empty()) {
     errs() << ToolName

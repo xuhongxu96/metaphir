@@ -9,6 +9,9 @@ target_link_libraries(metaphir-parse PRIVATE metaphir-parser
 add_executable(metaphir-match metaphir-match.cpp)
 target_link_libraries(metaphir-match
   PRIVATE
+    metaphir-exec
+    metaphir-pattern-parser
+    metaphir-transforms
     metaphir-index-lib
     metaphir-web
     metaphir-matching

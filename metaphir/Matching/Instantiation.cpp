@@ -47,8 +47,8 @@ void appendUnique(MatchResults &Into, MatchResults &&From) {
       Into.push_back(std::move(Candidate));
 }
 
-static void printBinding(raw_ostream &OS, const Instantiation::Binding &Binding,
-                         ModuleSlotTracker *Slots) {
+void printBinding(raw_ostream &OS, const Instantiation::Binding &Binding,
+                  ModuleSlotTracker *Slots) {
   auto PrintValue = [&](const llvm::Value &Value) {
     if (Slots)
       Value.printAsOperand(OS, false, *Slots);

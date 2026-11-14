@@ -157,6 +157,9 @@ inline MatchResults singleResult(Instantiation State) {
 void appendUnique(MatchResults &Into, MatchResults &&From);
 
 raw_ostream &operator<<(raw_ostream &OS, const Instantiation::Binding &Binding);
+/// Prints a binding as a match prints it; Slots as for Instantiation::print.
+void printBinding(raw_ostream &OS, const Instantiation::Binding &Binding,
+                  ModuleSlotTracker *Slots);
 raw_ostream &operator<<(raw_ostream &OS, const Instantiation &Instantiation);
 
 } // namespace metaphir

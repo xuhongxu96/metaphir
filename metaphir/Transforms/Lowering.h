@@ -35,6 +35,11 @@ std::unique_ptr<mlir::Pass> createExpandMatchersPass();
 std::unique_ptr<mlir::Pass> createLowerAlternativesPass();
 std::unique_ptr<mlir::Pass> createCheckBindingsPass();
 
+/// The instruction matchers and alternatives of Block (of a lowered pattern,
+/// or of an alternative) that no other matcher uses as an operand: those a
+/// match of the block starts from.
+SmallVector<mlir::Operation *, 4> getPatternRoots(mlir::Block &Block);
+
 /// Adds the lowering passes, in order, to PM.
 void buildLoweringPipeline(mlir::OpPassManager &PM);
 

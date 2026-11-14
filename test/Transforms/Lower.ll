@@ -19,7 +19,7 @@
 ; COMMUTATIVE:      %[[READ:.*]] = mpir_expr.read %x
 ; COMMUTATIVE-NEXT: %[[ZERO:.*]] = "mpir_expr.call"(%[[READ]], %[[ALT]])
 ; COMMUTATIVE-NEXT: mpir.require %[[ZERO]]
-; COMMUTATIVE-NOT:  metaflag
+; COMMUTATIVE-NOT:  #mpir.metaflag
 
 ;--- or-self.mpir
 %d = sub i32 ?x, ?y
