@@ -2498,12 +2498,5 @@ mlir::OwningOpRef<mlir::ModuleOp> parsePatternFile(StringRef Filename,
   return parsePatternBuffer(std::move(*Buffer), SM, Context, Diag);
 }
 
-bool parsePatternLibrary(mlir::ModuleOp Module, StringRef Name,
-                         StringRef Source, SourceMgr &SM, SMDiagnostic &Diag) {
-  unsigned BufferID = SM.AddNewSourceBuffer(
-      MemoryBuffer::getMemBufferCopy(Source, Name), SMLoc());
-  return parseInto(Module, BufferID, SM, Diag, /*Library=*/true);
-}
-
 } // namespace metaphir
 } // namespace llvm

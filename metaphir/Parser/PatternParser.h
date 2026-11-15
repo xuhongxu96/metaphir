@@ -42,12 +42,6 @@ mlir::OwningOpRef<mlir::ModuleOp> parsePatternFile(StringRef Filename,
                                                    mlir::MLIRContext &Context,
                                                    SMDiagnostic &Diag);
 
-/// Parses Source as a library named Name into Module, after the definitions
-/// it has (the standard library's among them). Returns true on error, with
-/// the diagnostic in Diag.
-bool parsePatternLibrary(mlir::ModuleOp Module, StringRef Name,
-                         StringRef Source, SourceMgr &SM, SMDiagnostic &Diag);
-
 } // namespace metaphir
 } // namespace llvm
 
