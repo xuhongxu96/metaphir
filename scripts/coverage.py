@@ -24,9 +24,18 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_DIRS = ["metaphir/Parser", "metaphir/Dialect", "metaphir/Transforms"]
+DEFAULT_DIRS = ["metaphir/Parser", "metaphir/Dialect", "metaphir/Transforms",
+                "metaphir/Exec", "metaphir/Matching", "metaphir/Index", "metaphir/Web"]
 TOOLS = ["metaphir-lex", "metaphir-parse", "metaphir-match", "metaphir-index",
          "metaphir-opt"]
+
+
+def run_ctest(build: Path) -> int:
+    """The unit tests and the lit suite of build, as ctest runs them."""
+    return subprocess.run(
+        ["ctest", "--test-dir", str(build), "-j", "8", "--output-on-failure"],
+        check=False,
+    ).returncode
 
 
 def run_lit(build: Path, tests: list[str], utils: Path) -> int:
@@ -127,12 +136,20 @@ def main() -> int:
     parser.add_argument("--tests", nargs="*", default=[],
                         help="lit tests to run, relative to test/")
     parser.add_argument("--no-run", action="store_true")
+    parser.add_argument("--ctest", action="store_true",
+                        help="run every ctest test (the unit tests too), "
+                        "instead of the lit tests alone")
     parser.add_argument("--missing", action="store_true",
                         help="list the lines no test ran")
     args = parser.parse_args()
     build = args.build.resolve()
 
-    if not args.no_run and run_lit(build, args.tests, args.utils) != 0:
+    if args.ctest and not args.no_run:
+        for gcda in build.rglob("*.gcda"):
+            gcda.unlink()
+        if run_ctest(build) != 0:
+            print("coverage: some tests failed", file=sys.stderr)
+    elif not args.no_run and run_lit(build, args.tests, args.utils) != 0:
         print("coverage: some lit tests failed", file=sys.stderr)
 
     sources: list[Path] = []

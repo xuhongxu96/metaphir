@@ -1,0 +1,44 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=11 constraints=0
+; Types as the pattern language writes them: typed pointers, pointers in an
+; address space, scalable vectors, packed and plain structs, counted arrays
+; and a function type with and without parameters, variadic or not.
+%p = freeze i32* ?p1
+; CHECK: %p = freeze i32* ?p1
+%q = freeze ptr addrspace(3) ?q1
+; CHECK: %q = freeze ptr addrspace(3) ?q1
+%s = freeze <vscale x 4 x i32> ?s1
+; CHECK: %s = freeze <vscale x 4 x i32> ?s1
+%t = freeze <{i8, i16}> ?t1
+; CHECK: %t = freeze <{i8, i16}> ?t1
+%u = freeze [?n x i8] ?u1
+; CHECK: %u = freeze [?n x i8] ?u1
+%v = freeze {} ?v1
+; CHECK: %v = freeze {} ?v1
+%w = call void (...) ?f1()
+; CHECK: %w = call void (...) ?f1()
+%x = call i32 (i32, ...) ?f2(i32 ?x1)
+; CHECK: %x = call i32 (i32, ...) ?f2(i32 ?x1)
+%y = call void (i32) ?f3(i32 ?y1)
+; CHECK: %y = call void (i32) ?f3(i32 ?y1)
+%g = getelementptr inrange(0, 4) i8, ptr ?pp, i64 ?ii
+; CHECK: %g = getelementptr inrange(0, 4) i8, ptr ?pp, i64 ?ii
+%h = getelementptr inrange(0, 4) i8, ptr ?pq, i64 ?ij, i64 ?ik
+; CHECK: %h = getelementptr inrange(0, 4) i8, ptr ?pq, i64 ?ij, i64 ?ik
+; CHECK-DAG: meta ?p1 type=Value
+; CHECK-DAG: meta ?q1 type=Value
+; CHECK-DAG: meta ?s1 type=Value
+; CHECK-DAG: meta ?t1 type=Value
+; CHECK-DAG: meta ?n type=Nat
+; CHECK-DAG: meta ?u1 type=Value
+; CHECK-DAG: meta ?v1 type=Value
+; CHECK-DAG: meta ?f1 type=Function
+; CHECK-DAG: meta ?f2 type=Function
+; CHECK-DAG: meta ?x1 type=Value
+; CHECK-DAG: meta ?f3 type=Function
+; CHECK-DAG: meta ?y1 type=Value
+; CHECK-DAG: meta ?pp type=Value
+; CHECK-DAG: meta ?ii type=Value
+; CHECK-NEXT: meta ?pq type=Value
+; CHECK-NEXT: meta ?ij type=Value
+; CHECK-NEXT: meta ?ik type=Value
