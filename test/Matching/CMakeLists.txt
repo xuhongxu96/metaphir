@@ -11,4 +11,5 @@ add_metaphir_test(
   End2EndTest.cpp)
 
 target_link_libraries(metaphir-matching-test
-                      PRIVATE metaphir-matching metaphir-parser LLVMAsmParser)
+                      PRIVATE metaphir-matching metaphir-parser metaphir-compile
+                              LLVMAsmParser)

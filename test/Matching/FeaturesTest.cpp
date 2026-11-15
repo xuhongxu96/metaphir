@@ -1,15 +1,12 @@
 #include "metaphir/Matching/Features.h"
-#include "metaphir/IR/MIRContext.h"
-#include "metaphir/IR/PatternLowering.h"
-#include "metaphir/IR/PatternVariants.h"
-#include "metaphir/Matching/FeatureQuery.h"
-#include "metaphir/Matching/PatternMatcher.h"
-#include "metaphir/Matching/Target.h"
+#include "metaphir/Exec/CompiledPattern.h"
+#include "metaphir/IR/Instruction.h"
 #include "test/TestUtils.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -18,64 +15,52 @@ using MIRInstruction = llvm::metaphir::Instruction;
 
 namespace {
 
+/// A pattern's index query, checked against the functions of a module.
 class FeaturesTest : public testing::Test {
 protected:
-  MIRContext Context;
-  SourceMgr SM;
+  std::unique_ptr<CompiledPattern> Compiled;
+  const IndexQuery *Query = nullptr;
   LLVMContext IRContext;
   std::unique_ptr<Module> M;
-  PatternVariants Variants;
-  FeatureQuery Query;
 
   void parse(StringRef PatternSource, StringRef IR) {
-    Pattern *Parsed = test::parsePattern(PatternSource, SM, Context);
-    ASSERT_NE(Parsed, nullptr);
-    Expected<PatternVariants> Lowered = PatternLowering(Context).lower(Parsed);
-    ASSERT_TRUE(static_cast<bool>(Lowered)) << toString(Lowered.takeError());
-    Variants = std::move(*Lowered);
-    Query = FeatureQuery::compute(Variants, &Context);
+    std::string Errors;
+    raw_string_ostream Err(Errors);
+    Compiled = CompiledPattern::compile(
+        MemoryBuffer::getMemBufferCopy(PatternSource, "pattern"), Err);
+    ASSERT_NE(Compiled, nullptr) << Errors;
+    Query = Compiled->Query.get();
     M = test::parseLLVMModule(IR, IRContext);
     ASSERT_NE(M, nullptr);
     expectSound();
   }
 
   bool matches(const Function &F) {
-    return !PatternMatcher(&Context).match(Variants, Target(F)).empty();
+    return !PlanMatcher(*Compiled->Program).match(F).empty();
   }
 
   bool passes(StringRef Name) {
-    return Query.mayMatch(FunctionFeatures::compute(*M->getFunction(Name)));
+    return Query->mayMatch(FunctionFeatures::compute(*M->getFunction(Name)));
   }
 
   /// Whether the function passes with value-tracking facts recorded.
   bool passesWithValueFacts(StringRef Name) {
-    return Query.mayMatch(
+    return Query->mayMatch(
         FunctionFeatures::compute(*M->getFunction(Name), ValueFacts));
   }
 
   static constexpr FeatureOptions ValueFacts{/*ValueFacts=*/true};
 
-  // Every function with a match, and every variant with a match there, must
-  // pass the filter, with or without value-tracking facts.
+  // Every function with a match must pass the filter, with or without
+  // value-tracking facts.
   void expectSound() {
     for (const Function &F : *M) {
-      if (F.isDeclaration())
+      if (F.isDeclaration() || !matches(F))
         continue;
       SCOPED_TRACE(F.getName());
-      Target Program(F);
-      PatternMatcher Matcher(&Context);
-      EXPECT_EQ(Matcher.match(Variants, Program, nullptr, nullptr, &Query),
-                Matcher.match(Variants, Program));
-      for (const FeatureOptions &Options : {FeatureOptions(), ValueFacts}) {
-        FunctionFeatures Features = FunctionFeatures::compute(F, Options);
-        for (auto [Index, Variant] : enumerate(Variants)) {
-          if (!PatternMatcher(&Context).match(*Variant, Target(F)).empty()) {
-            EXPECT_TRUE(Query.mayMatchVariant(Index, Features))
-                << "variant " << Index << " pruned with value facts "
-                << Options.ValueFacts;
-          }
-        }
-      }
+      for (const FeatureOptions &Options : {FeatureOptions(), ValueFacts})
+        EXPECT_TRUE(Query->mayMatch(FunctionFeatures::compute(F, Options)))
+            << "pruned with value facts " << Options.ValueFacts;
     }
   }
 };
@@ -94,8 +79,8 @@ TEST_F(FeaturesTest, RequiresTheInstructions) {
       ret i32 %r
     }
   )");
-  ASSERT_EQ(Query.size(), 1u);
-  EXPECT_EQ(Query.getRequirement(0).Instructions,
+  ASSERT_EQ(Query->size(), 1u);
+  EXPECT_EQ(Query->getRequirement(0).Instructions,
             uint64_t(1) << MIRInstruction::I_udiv);
   EXPECT_TRUE(passes("udiv"));
   EXPECT_FALSE(passes("add"));
@@ -112,8 +97,8 @@ TEST_F(FeaturesTest, AFalseConstraintPrunesEveryFunction) {
       ret i32 %r
     }
   )");
-  ASSERT_EQ(Query.size(), 1u);
-  EXPECT_TRUE(Query.isImpossible(0));
+  ASSERT_EQ(Query->size(), 1u);
+  EXPECT_TRUE(Query->isImpossible(0));
   EXPECT_FALSE(passes("add"));
 }
 
@@ -129,7 +114,7 @@ TEST_F(FeaturesTest, AClosedConstraintThatFailsPrunesEveryFunction) {
       ret i32 %r
     }
   )");
-  EXPECT_TRUE(Query.isImpossible(0));
+  EXPECT_TRUE(Query->isImpossible(0));
   EXPECT_FALSE(passes("add"));
 }
 
@@ -144,11 +129,11 @@ TEST_F(FeaturesTest, AConstraintOnBindingsIsNotDecidedEarly) {
       ret i32 %r
     }
   )");
-  EXPECT_FALSE(Query.isImpossible(0));
+  EXPECT_FALSE(Query->isImpossible(0));
   EXPECT_TRUE(passes("add"));
 }
 
-TEST_F(FeaturesTest, WithoutDefinitionsConstraintsDoNotFilter) {
+TEST_F(FeaturesTest, TheStructureAloneDoesNotEvaluateConstraints) {
   parse(R"(
     %r = and i32 ?x, ?m:constantInt
   )",
@@ -159,9 +144,9 @@ TEST_F(FeaturesTest, WithoutDefinitionsConstraintsDoNotFilter) {
     }
   )");
   EXPECT_FALSE(passes("variable"));
-  // The feature prefilter still runs, but without evaluating the constraints.
-  Query = FeatureQuery::compute(Variants, /*Definitions=*/nullptr);
-  EXPECT_TRUE(passes("variable"));
+  // The instructions are there; only the constraint rejects the function.
+  EXPECT_TRUE(Query->mayMatchStructure(
+      0, FunctionFeatures::compute(*M->getFunction("variable"))));
   EXPECT_FALSE(matches(*M->getFunction("variable")));
 }
 
@@ -206,7 +191,7 @@ TEST_F(FeaturesTest, AnyVariantSuffices) {
       ret i8 %r
     }
   )");
-  EXPECT_EQ(Query.size(), 2u);
+  EXPECT_EQ(Query->size(), 2u);
   EXPECT_TRUE(matches(*M->getFunction("zext")));
   EXPECT_TRUE(matches(*M->getFunction("sext")));
   EXPECT_TRUE(passes("zext"));
@@ -990,7 +975,7 @@ TEST_F(FeaturesTest, MergedFeaturesAdmitEveryFunction) {
   for (const Function &F : *M)
     if (!F.isDeclaration())
       Module.merge(FunctionFeatures::compute(F));
-  EXPECT_TRUE(Query.mayMatch(Module));
+  EXPECT_TRUE(Query->mayMatch(Module));
   EXPECT_TRUE(Module.hasGlobal(hashGlobal(*M->getFunction("foo"))));
 }
 
