@@ -131,12 +131,14 @@ private:
   const WebIndex &Index;
   WebQueryMode Mode = WebQueryMode::Full;
   std::unique_ptr<Compiled> Pattern;
-  std::vector<SmallVector<PostingKey, 3>> Chosen;
-  /// The lists of the chosen keys: where they are and their lengths.
+  /// The lists of the pattern's keys: where they are, their lengths, and
+  /// whether the retrieval reads them.
   struct ChosenList {
     PostingKey Key;
     ByteRange Range;
     uint32_t Count;
+    /// Whether the list is read: the retrieval chose it.
+    bool Read = false;
   };
   std::vector<ChosenList> Lists;
   std::vector<uint32_t> Candidates;

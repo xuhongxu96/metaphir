@@ -155,8 +155,30 @@ void Compiler::assignSlots() {
       Name = Inst.getResultName().value_or("");
       OpcodeName =
           ("" + Instruction::getOpcodeName(Inst.getOpcode().getValue())).str();
-    } else if (auto N = Op->getAttrOfType<mlir::StringAttr>("result_name")) {
-      Name = N.getValue();
+    } else {
+      if (auto N = Op->getAttrOfType<mlir::StringAttr>("result_name"))
+        Name = N.getValue();
+      // An unnamed alternative of one instruction matcher (its ':c' orders,
+      // or its ':o') is named by its opcode, as the matcher is.
+      Operation *Inner = Op;
+      while (auto Alt = dyn_cast_or_null<AltOp>(Inner)) {
+        if (Alt->getNumRegions() == 0 ||
+            !(Alt->hasAttr("commuted") || Alt->hasAttr("or_self_region")))
+          break;
+        unsigned Region = 0;
+        if (auto R = Alt->getAttrOfType<mlir::IntegerAttr>("or_self_region"))
+          // The region of the matcher itself, not of its operand.
+          Region = R.getInt() == 0 ? 1 : 0;
+        if (Region >= Alt->getNumRegions())
+          break;
+        Inner = (*Alt->getRegion(Region).front().getOps<YieldOp>().begin())
+                    .getValue()
+                    .getDefiningOp();
+      }
+      if (auto Inst = dyn_cast_or_null<InstOp>(Inner))
+        OpcodeName =
+            ("" + Instruction::getOpcodeName(Inst.getOpcode().getValue()))
+                .str();
     }
     std::string Printed = Name.empty() ? OpcodeName : ("%" + Name).str();
     S.add(Result, Printed, plan::SlotKind::Instruction, Sort::Instruction, Loc,

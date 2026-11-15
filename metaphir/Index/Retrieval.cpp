@@ -84,6 +84,61 @@ Expected<Set> RetrievalPlan::evaluate(
   return eval(Root, Count, List);
 }
 
+bool RetrievalPlan::choose(unsigned Index,
+                           function_ref<uint64_t(const PostingKey &)> Count,
+                           SmallVectorImpl<PostingKey> &Keys) const {
+  const Node &N = Nodes[Index];
+  auto Add = [&](const PostingKey &Key) {
+    if (!is_contained(Keys, Key))
+      Keys.push_back(Key);
+  };
+  switch (N.K) {
+  case Kind::Universe:
+    return false;
+  case Kind::Postings:
+    Add(N.Key);
+    return true;
+  case Kind::Union: {
+    bool Narrowed = true;
+    for (unsigned Child : N.Children)
+      Narrowed &= choose(Child, Count, Keys);
+    return Narrowed;
+  }
+  case Kind::Intersect: {
+    // As eval reads them: the shortest few lists, unless one is empty, and
+    // every other operand.
+    SmallVector<std::pair<uint64_t, unsigned>, 4> Lists;
+    SmallVector<unsigned, 4> Others;
+    for (unsigned Child : N.Children) {
+      if (Nodes[Child].K == Kind::Postings)
+        Lists.push_back({Count(Nodes[Child].Key), Child});
+      else
+        Others.push_back(Child);
+    }
+    llvm::sort(Lists);
+    if (!Lists.empty() && Lists.front().first == 0)
+      return true;
+    bool Narrowed = false;
+    for (size_t I = 0; I != std::min(Lists.size(), MaxIntersected); ++I) {
+      Add(Nodes[Lists[I].second].Key);
+      Narrowed = true;
+    }
+    for (unsigned Child : Others)
+      Narrowed |= choose(Child, Count, Keys);
+    return Narrowed;
+  }
+  }
+  llvm_unreachable("invalid retrieval node");
+}
+
+std::optional<SmallVector<PostingKey, 8>> RetrievalPlan::chooseLists(
+    function_ref<uint64_t(const PostingKey &)> Count) const {
+  SmallVector<PostingKey, 8> Keys;
+  if (Nodes.empty() || !choose(Root, Count, Keys))
+    return std::nullopt;
+  return Keys;
+}
+
 SmallVector<PostingKey, 8> RetrievalPlan::getKeys() const {
   SmallVector<PostingKey, 8> Keys;
   for (const Node &N : Nodes)

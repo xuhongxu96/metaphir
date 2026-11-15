@@ -49,11 +49,21 @@ public:
   /// The keys whose lists evaluating may read.
   SmallVector<PostingKey, 8> getKeys() const;
 
+  /// The keys whose lists evaluating reads, given Count; std::nullopt if the
+  /// plan finds every function, reading none.
+  std::optional<SmallVector<PostingKey, 8>>
+  chooseLists(function_ref<uint64_t(const PostingKey &)> Count) const;
+
 private:
   Expected<std::optional<std::vector<uint32_t>>>
   eval(unsigned Index, function_ref<uint64_t(const PostingKey &)> Count,
        function_ref<Expected<ArrayRef<uint32_t>>(const PostingKey &)> List)
       const;
+
+  /// Adds the lists node Index reads to Keys; returns false if it is every
+  /// function.
+  bool choose(unsigned Index, function_ref<uint64_t(const PostingKey &)> Count,
+              SmallVectorImpl<PostingKey> &Keys) const;
 
   std::vector<Node> Nodes;
   unsigned Root = 0;
