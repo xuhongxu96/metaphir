@@ -117,13 +117,25 @@ static cl::opt<bool> NoConstraintPrefilter(
 
 namespace {
 
-/// A compiled pattern. Matching may evaluate the pattern's constraint
-/// definitions, so each thread has its own.
+/// The compiled pattern, as a thread uses it: shared, with the thread's own
+/// index query, which is not thread-safe, unless it is the main thread.
 struct LoadedPattern {
-  std::unique_ptr<CompiledPattern> Compiled;
+  std::unique_ptr<CompiledPattern> Owned;
+  const CompiledPattern *Compiled = nullptr;
+  std::unique_ptr<IndexQuery> OwnQuery;
 
   const SourceMgr &source() const { return Compiled->Source; }
-  const IndexQuery &filter() const { return *Compiled->Query; }
+  const IndexQuery &filter() const {
+    return OwnQuery ? *OwnQuery : *Compiled->Query;
+  }
+
+  /// Shared with another thread, with an index query of its own.
+  LoadedPattern share() const {
+    LoadedPattern Shared;
+    Shared.Compiled = Compiled;
+    Shared.OwnQuery = Compiled->makeQuery();
+    return Shared;
+  }
 
   /// Whether a function with Features may match, by the features alone.
   bool mayMatch(const FunctionFeatures &Features) const {
@@ -187,22 +199,19 @@ struct FileOutput {
 
 } // namespace
 
-/// Compiles the pattern, printing any error to Err. Warnings are printed to
-/// stderr unless Quiet.
-static std::unique_ptr<LoadedPattern>
-loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
+/// Compiles the pattern, printing any error to Err, and warnings to stderr.
+static std::unique_ptr<LoadedPattern> loadPattern(StringRef ToolName,
+                                                  raw_ostream &Err) {
   PipelineOptions Options;
   // What structuralize requires comes from the constraints.
   Options.Structuralize = !NoStructuralize && !NoConstraintPrefilter;
   Options.Factor = !NoFactor;
   auto Loaded = std::make_unique<LoadedPattern>();
-  Loaded->Compiled = CompiledPattern::compileFile(
-      PatternFilename, Err, ToolName.data(), Options, [&](SourceMgr &SM) {
-        if (Quiet)
-          SM.setDiagHandler([](const SMDiagnostic &, void *) {});
-      });
-  if (!Loaded->Compiled)
+  Loaded->Owned = CompiledPattern::compileFile(PatternFilename, Err,
+                                               ToolName.data(), Options);
+  if (!Loaded->Owned)
     return nullptr;
+  Loaded->Compiled = Loaded->Owned.get();
   return Loaded;
 }
 
@@ -497,7 +506,8 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
 
 /// Matches the files on Threads threads, printing each file's output in the
 /// order of Files as soon as it and the ones before it are done.
-static MatchStats matchInParallel(ArrayRef<std::string> Files,
+static MatchStats matchInParallel(const LoadedPattern &Pattern,
+                                  ArrayRef<std::string> Files,
                                   const IndexUse *Use, unsigned Threads,
                                   StringRef ToolName) {
   std::vector<FileOutput> Outputs(Files.size());
@@ -532,24 +542,20 @@ static MatchStats matchInParallel(ArrayRef<std::string> Files,
     });
   }
 
-  auto Work = [&] {
-    std::string PatternErrors;
-    raw_string_ostream PatternErr(PatternErrors);
-    // The pattern parsed on the main thread, which printed its warnings, so
-    // it parses here too.
-    std::unique_ptr<LoadedPattern> Pattern =
-        loadPattern(ToolName, PatternErr, /*Quiet=*/true);
+  // Each worker filters with an index query of its own, made here: the
+  // compiled pattern is only read once they run.
+  std::vector<LoadedPattern> Shared;
+  for (unsigned I = 0; I != Threads; ++I)
+    Shared.push_back(Pattern.share());
+  auto Work = [&](LoadedPattern &Own) {
     for (size_t Next; (Next = NextFile++) < Files.size();) {
       size_t FileIndex = Order[Next];
       FileOutput Output;
-      if (Pattern) {
+      {
         raw_string_ostream Out(Output.Out), Err(Output.Err);
         unsigned TargetIndex = 0;
-        matchFile(*Pattern, Use, Files[FileIndex], ToolName, Out, Err,
-                  Output.Stats, TargetIndex);
-      } else {
-        Output.Err = PatternErrors;
-        Output.Stats.Failed = true;
+        matchFile(Own, Use, Files[FileIndex], ToolName, Out, Err, Output.Stats,
+                  TargetIndex);
       }
       std::lock_guard<std::mutex> Lock(Mutex);
       Outputs[FileIndex] = std::move(Output);
@@ -560,7 +566,7 @@ static MatchStats matchInParallel(ArrayRef<std::string> Files,
 
   std::vector<std::thread> Workers;
   for (unsigned I = 0; I != Threads; ++I)
-    Workers.emplace_back(Work);
+    Workers.emplace_back(Work, std::ref(Shared[I]));
 
   MatchStats Stats;
   for (size_t FileIndex = 0; FileIndex != Files.size(); ++FileIndex) {
@@ -805,7 +811,7 @@ int main(int Argc, char **Argv) {
       Jobs ? Jobs.getValue() : hardware_concurrency().compute_thread_count();
   MatchStats Stats;
   if (Threads > 1) {
-    Stats = matchInParallel(InputFiles, UsePtr, Threads, ToolName);
+    Stats = matchInParallel(*Pattern, InputFiles, UsePtr, Threads, ToolName);
   } else {
     unsigned TargetIndex = 0;
     for (const std::string &InputFile : InputFiles)

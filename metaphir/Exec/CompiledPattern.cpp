@@ -19,9 +19,9 @@ CompiledPattern::compile(std::unique_ptr<MemoryBuffer> Buffer, raw_ostream &Err,
   auto Compiled = std::make_unique<CompiledPattern>();
   if (SetUp)
     SetUp(Compiled->Source);
-  // Each pattern has a context of its own, and is used by one thread.
-  Compiled->Context = std::make_unique<mlir::MLIRContext>(
-      mlir::MLIRContext::Threading::DISABLED);
+  // Each pattern has a context of its own, which the threads that share the
+  // pattern share.
+  Compiled->Context = std::make_unique<mlir::MLIRContext>();
   SMDiagnostic Diag;
   Compiled->Module = parsePatternBuffer(std::move(Buffer), Compiled->Source,
                                         *Compiled->Context, Diag);
@@ -57,6 +57,15 @@ CompiledPattern::compile(std::unique_ptr<MemoryBuffer> Buffer, raw_ostream &Err,
     return nullptr;
   }
   return Compiled;
+}
+
+std::unique_ptr<IndexQuery> CompiledPattern::makeQuery() const {
+  // Reading the module does not change it.
+  mlir::ModuleOp M =
+      const_cast<mlir::OwningOpRef<mlir::ModuleOp> &>(Module).get();
+  for (auto Query : M.getOps<mpir_index::QueryOp>())
+    return std::make_unique<IndexQuery>(Query);
+  return nullptr;
 }
 
 std::unique_ptr<CompiledPattern>

@@ -30,6 +30,9 @@ struct PipelineOptions {
   bool Factor = true;
 };
 
+/// Once compiled, the module is only read: threads may share a compiled
+/// pattern, each matching with a PlanMatcher of its own, and filtering with
+/// an IndexQuery of its own (see makeQuery).
 struct CompiledPattern {
   /// The pattern's source, which the module's locations point into.
   SourceMgr Source;
@@ -37,6 +40,9 @@ struct CompiledPattern {
   mlir::OwningOpRef<mlir::ModuleOp> Module;
   std::unique_ptr<PlanProgram> Program;
   std::unique_ptr<IndexQuery> Query;
+
+  /// Another IndexQuery of the module's query, as Query, for another thread.
+  std::unique_ptr<IndexQuery> makeQuery() const;
 
   /// Compiles the pattern in Buffer. Errors are printed to Err, as the
   /// parser prints them (with ProgName, if given); null on error. Warnings
