@@ -200,4 +200,52 @@ TEST_F(ConstraintCoercionTest, RequireHelpersReportCoercionErrors) {
             "operand");
 }
 
+// A failed coercion names what it was coercing to, for each kind of value.
+TEST_F(ConstraintCoercionTest, NamesEveryTargetOfAFailedCoercion) {
+  llvm::LLVMContext LLVMContext;
+  llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
+  for (ConstraintValue::ValueKind Target :
+       {ConstraintValue::Integer, ConstraintValue::Boolean,
+        ConstraintValue::String, ConstraintValue::StringArray,
+        ConstraintValue::Type, ConstraintValue::Value,
+        ConstraintValue::TypeArray, ConstraintValue::ValueArray,
+        ConstraintValue::BitVector}) {
+    Expected<ConstraintValue> Result =
+        coerce(ConstraintValue::getTypeArray({I32}), Target, zero());
+    if (Result)
+      continue;
+    std::string Message = toString(Result.takeError());
+    EXPECT_NE(Message.find("cannot"), std::string::npos) << Message;
+  }
+}
+
+// A value array coerces to the array of its values' texts.
+TEST_F(ConstraintCoercionTest, CoercesValueArraysToTexts) {
+  llvm::LLVMContext LLVMContext;
+  llvm::Constant *One = ConstantInt::get(llvm::Type::getInt32Ty(LLVMContext), 1);
+  Expected<ConstraintValue> Result = coerce(
+      ConstraintValue::getValueArray({One, One}), ConstraintValue::StringArray, zero());
+  ASSERT_TRUE(bool(Result));
+  EXPECT_EQ(Result->getStringArray().size(), 2u);
+  EXPECT_EQ(Result->getStringArray()[0], "1");
+}
+
+// Equality of arrays and of known bits compares their contents.
+TEST_F(ConstraintCoercionTest, ComparesArraysAndKnownBits) {
+  llvm::LLVMContext LLVMContext;
+  llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
+  llvm::Constant *One = ConstantInt::get(I32, 1);
+  auto equal = [&](ConstraintValue L, ConstraintValue R) {
+    return cantFail(evaluateEquality(std::move(L), std::move(R), zero()));
+  };
+  EXPECT_TRUE(equal(ConstraintValue::getTypeArray({I32}), ConstraintValue::getTypeArray({I32})));
+  EXPECT_FALSE(equal(ConstraintValue::getTypeArray({I32}), ConstraintValue::getTypeArray({})));
+  EXPECT_TRUE(equal(ConstraintValue::getValueArray({One}), ConstraintValue::getValueArray({One})));
+  EXPECT_FALSE(equal(ConstraintValue::getValueArray({One}), ConstraintValue::getValueArray({})));
+  EXPECT_TRUE(equal(ConstraintValue::getStringArray({"a"}), ConstraintValue::getStringArray({"a"})));
+  EXPECT_FALSE(equal(ConstraintValue::getStringArray({"a"}), ConstraintValue::getStringArray({"b"})));
+  llvm::KnownBits Bits(8);
+  EXPECT_TRUE(equal(ConstraintValue::getKnownBits(Bits), ConstraintValue::getKnownBits(Bits)));
+}
+
 } // namespace

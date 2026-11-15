@@ -104,15 +104,21 @@ static Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
   return ConstraintValue::getString(OS.str());
 }
 
-static Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
-                                                     mlir::Value) {
+/// A value as a string: an instruction as it is printed, any other value as
+/// an operand. Every value has one.
+static std::string valueText(const llvm::Value *Value) {
   std::string Text;
   raw_string_ostream OS(Text);
-  if (const auto *Instruction = dyn_cast<llvm::Instruction>(V.getValue()))
+  if (const auto *Instruction = dyn_cast<llvm::Instruction>(Value))
     Instruction->print(OS);
   else
-    V.getValue()->printAsOperand(OS, false);
-  return ConstraintValue::getString(OS.str());
+    Value->printAsOperand(OS, false);
+  return Text;
+}
+
+static Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
+                                                     mlir::Value) {
+  return ConstraintValue::getString(valueText(V.getValue()));
 }
 
 static Expected<ConstraintValue>
@@ -129,15 +135,10 @@ coerceTypeArrayToStringArray(const ConstraintValue &V, mlir::Value) {
 
 static Expected<ConstraintValue>
 coerceValueArrayToStringArray(const ConstraintValue &V,
-                              mlir::Value Expression) {
+                              mlir::Value) {
   ConstraintValue::StringArrayStorage Strings;
-  for (const llvm::Value *Value : V.getValueArray()) {
-    Expected<std::string> String =
-        requireString(ConstraintValue::getValue(Value), Expression);
-    if (!String)
-      return String.takeError();
-    Strings.push_back(std::move(*String));
-  }
+  for (const llvm::Value *Value : V.getValueArray())
+    Strings.push_back(valueText(Value));
   return ConstraintValue::getStringArray(std::move(Strings));
 }
 
