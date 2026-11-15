@@ -1,0 +1,45 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=9 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Calls: of a named function, of an intrinsic by name or by a variable
+; part of its name, of a function variable with its type, with the rest
+; of the arguments captured, with a label argument, and void calls.
+%a = call i32 @callee(i32 ?x, i8 ?y)
+; CHECK: %a = call i32 @callee(i32 ?x, i8 ?y)
+
+%b = call i32 @llvm.umax.i32(i32 %a, i32 1)
+; CHECK: %b = call i32 @llvm.umax.i32(i32 %a, i32 1)
+
+%c = call i?n @llvm.?id(i?n ?v, i1 false)
+; CHECK: %c = call i?n @llvm.?id(i?n ?v, i1 0)
+
+%d = call i32 (i32, ...) ?f(i32 %a)
+; CHECK: %d = call i32 (i32, ...) ?f(i32 %a)
+
+%e = call ?ret @llvm.?id2(...?types ?values)
+; CHECK: %e = call ?ret @llvm.?id2(...?types ?values)
+
+%f = call i32 @first(i32 %a, ...?rest_types ?rest_values)
+; CHECK: %f = call i32 @first(i32 %a, ...?rest_types ?rest_values)
+
+%lb = call void @take(label ?target)
+; CHECK: %lb = call void @take(label ?target)
+
+%num = call i32 @0(i32 %a)
+; CHECK: %num = call i32 @0(i32 %a)
+; CHECK-NEXT: call void @sink(i32 %f)
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?y type=Value
+; CHECK-DAG: meta ?n type=Nat
+; CHECK-DAG: meta ?id type=Intrinsic::ID
+; CHECK-DAG: meta ?v type=Value
+; CHECK-DAG: meta ?f type=Function
+; CHECK-DAG: meta ?ret type=Type
+; CHECK-DAG: meta ?id2 type=Intrinsic::ID
+; CHECK-DAG: meta ?types type=Type[]
+; CHECK-DAG: meta ?values type=Value[]
+; CHECK-DAG: meta ?rest_types type=Type[]
+; CHECK-DAG: meta ?rest_values type=Value[]
+; CHECK-DAG: meta ?target type=BasicBlock
+
+call void @sink(i32 %f)

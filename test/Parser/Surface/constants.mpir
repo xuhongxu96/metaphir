@@ -1,0 +1,47 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=12 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Constant operands: integers (wide ones too), floats, keywords, globals,
+; and aggregates of each delimiter.
+%a = add i32 ?x, 0
+; CHECK: %a = add i32 ?x, 0
+
+%b = add i32 %a, -1
+; CHECK: %b = add i32 %a, -1
+
+%c = add i128 ?w, 170141183460469231731687303715884105727
+; CHECK: %c = add i128 ?w, 170141183460469231731687303715884105727
+
+%d = add i1 ?bit, true
+; CHECK: %d = add i1 ?bit, 1
+
+%e = add i1 %d, false
+; CHECK: %e = add i1 %d, 0
+
+%f = fadd double ?fx, 1.5e-3
+; CHECK: %f = fadd double ?fx, 0.0015
+
+%g = fadd double %f, 0x7FF0000000000000
+; CHECK: %g = fadd double %f, +Inf
+
+%h = select i1 ?c, ptr null, ptr @global
+; CHECK: %h = select i1 ?c, ptr null, ptr @global
+
+%i = select i1 ?c, i32 poison, i32 undef
+; CHECK: %i = select i1 ?c, i32 poison, i32 undef
+
+%j = select i1 ?c, <2 x i32> zeroinitializer, <2 x i32> <i32 1, i32 2>
+; CHECK: %j = select i1 ?c, <2 x i32> zeroinitializer, <2 x i32> <i32 1, i32 2>
+
+%k = select i1 ?c, [2 x i8] [i8 1, i8 2], [2 x i8] ?arr
+; CHECK: %k = select i1 ?c, [2 x i8] [i8 1, i8 2], [2 x i8] ?arr
+
+%l = select i1 ?c, {i32, i8} {i32 1, i8 2}, {i32, i8} ?st
+; CHECK: %l = select i1 ?c, {i32, i8} {i32 1, i8 2}, {i32, i8} ?st
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?w type=Value
+; CHECK-DAG: meta ?bit type=i1
+; CHECK-DAG: meta ?fx type=Value
+; CHECK-DAG: meta ?c type=i1
+; CHECK-DAG: meta ?arr type=Value
+; CHECK-NEXT: meta ?st type=Value

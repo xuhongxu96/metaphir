@@ -1,0 +1,15 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=0 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; A file of definitions has no pattern. A branch without a '%ret' stands
+; for its last instruction.
+match lastIsRoot [] Binary (?ty ?a, ?b) {
+  %first = add ?ty ?a, ?b
+  %second = mul ?ty %first, ?b
+}
+constraint isSeven(?v) {
+  ?v == 7
+}
+metaflag:i:o :seven(?v) {
+  isSeven(?v)
+}

@@ -1,0 +1,50 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=14 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Casts: the source operand and the destination type, with 'nneg'.
+%t = trunc nuw i64 ?x to i32
+; CHECK: %t = trunc nuw i64 ?x to i32
+
+%z = zext nneg i32 %t to i64
+; CHECK: %z = zext nneg i32 %t to i64
+
+%s = sext i32 %t to i?wide
+; CHECK: %s = sext i32 %t to i?wide
+
+%ft = fptrunc double ?d to float
+; CHECK: %ft = fptrunc double ?d to float
+
+%fe = fpext float %ft to double
+; CHECK: %fe = fpext float %ft to double
+
+%fu = fptoui double %fe to i32
+; CHECK: %fu = fptoui double %fe to i32
+
+%fs = fptosi double %fe to i32
+; CHECK: %fs = fptosi double %fe to i32
+
+%uf = uitofp nneg i32 %fu to half
+; CHECK: %uf = uitofp nneg i32 %fu to half
+
+%sf = sitofp i32 %fs to bfloat
+; CHECK: %sf = sitofp i32 %fs to bfloat
+
+%pi = ptrtoint ptr ?p to i64
+; CHECK: %pi = ptrtoint ptr ?p to i64
+
+%pa = ptrtoaddr ptr ?p to i64
+; CHECK: %pa = ptrtoaddr ptr ?p to i64
+
+%ip = inttoptr i64 %pi to ptr
+; CHECK: %ip = inttoptr i64 %pi to ptr
+
+%bc = bitcast <2 x i32> ?v to i64
+; CHECK: %bc = bitcast <2 x i32> ?v to i64
+
+%fr = freeze i32 %t
+; CHECK: %fr = freeze i32 %t
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?wide type=Nat
+; CHECK-DAG: meta ?d type=Value
+; CHECK-DAG: meta ?p type=Value
+; CHECK-DAG: meta ?v type=Value

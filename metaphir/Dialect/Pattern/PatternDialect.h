@@ -53,7 +53,6 @@ enum class OperandKind : int32_t {
 unsigned getNumOperandValues(OperandKind Kind);
 /// Whether an operand of Kind is one of the instruction's value operands.
 bool isValueOperand(OperandKind Kind);
-StringRef stringifyOperandKind(OperandKind Kind);
 
 } // namespace mpir
 } // namespace metaphir

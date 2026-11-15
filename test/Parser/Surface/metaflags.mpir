@@ -1,0 +1,35 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=6 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Metaflags as written, kept for lowering: the built-in ones (':c', ':o'
+; with and without an index, ':or' and ':not' of others), those defined in
+; the file and in the standard library, with arguments, on instructions and
+; on operands.
+metaflag :between(?v, ?lo, ?hi) {
+  sle(?lo, ?v) && sle(?v, ?hi)
+}
+metaflag:i :isadd(?i) {
+  opcode(?i) == "add"
+}
+%a = add:c:s i32 ?x:zero, ?y:between(1, 10)
+; CHECK: %a = add:c:s i32 ?x:zero, ?y:between(1,10)
+
+%b = mul:o i32 %a, 3
+; CHECK: %b = mul:o i32 %a, 3
+
+%c = sub:o(1):isadd i32 0, %b
+; CHECK: %c = sub:o(1):isadd i32 0, %b
+
+%d = xor i32 %c, ?z:or(:zero, :allOnes)
+; CHECK: %d = xor i32 %c, ?z:or(:zero,:allOnes)
+
+%e = and i32 %d, ?w:not(:power2)
+; CHECK: %e = and i32 %d, ?w:not(:power2)
+
+%f = or i32 %e, ?u:or(:not(:zero), :between(2, 4))
+; CHECK: %f = or i32 %e, ?u:or(:not(:zero),:between(2,4))
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?y type=Value
+; CHECK-DAG: meta ?z type=Value
+; CHECK-DAG: meta ?w type=Value
+; CHECK-NEXT: meta ?u type=Value

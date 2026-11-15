@@ -1,0 +1,36 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=6 constraints=0
+; CHECK-NEXT: ?entry:
+; The pattern of the theme, printed back in the pattern language.
+; Control flow: blocks written as labels, phis with their incoming blocks,
+; branches and returns.
+?entry:
+
+%c = icmp ult i32 ?x, 10
+; CHECK: %c = icmp ult i32 ?x, 10
+; CHECK-NEXT: br i1 %c, label ?loop, label ?exit
+; CHECK-NEXT: ?loop:
+
+br i1 %c, label ?loop, label ?exit
+
+?loop:
+
+%i = phi i32 [0, ?entry], [?n, ?loop]
+; CHECK: %i = phi i32 [0, ?entry], [?n, ?loop]
+
+%next = add i32 %i, 1
+; CHECK: %next = add i32 %i, 1
+; CHECK-NEXT: br label ?exit
+; CHECK-NEXT: ?exit:
+; CHECK-NEXT: ret i32 %next
+; CHECK-DAG: meta ?entry type=BasicBlock
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?loop type=BasicBlock
+; CHECK-DAG: meta ?exit type=BasicBlock
+; CHECK-DAG: meta ?n type=Value
+
+br label ?exit
+
+?exit:
+
+ret i32 %next

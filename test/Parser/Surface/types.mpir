@@ -1,0 +1,90 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=20 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Type patterns: integer and byte types of fixed and variable width,
+; primitives, pointers, arrays and vectors of fixed and variable length,
+; structs, and type variables.
+%a = freeze i1 ?a1
+; CHECK: %a = freeze i1 ?a1
+
+%b = freeze b8 ?b1
+; CHECK: %b = freeze b8 ?b1
+
+%c = freeze i?n ?c1
+; CHECK: %c = freeze i?n ?c1
+
+%d = freeze b?m ?d1
+; CHECK: %d = freeze b?m ?d1
+
+%e = freeze half ?e1
+; CHECK: %e = freeze half ?e1
+
+%f = freeze bfloat ?f1
+; CHECK: %f = freeze bfloat ?f1
+
+%g = freeze float ?g1
+; CHECK: %g = freeze float ?g1
+
+%h = freeze double ?h1
+; CHECK: %h = freeze double ?h1
+
+%i = freeze fp128 ?i1
+; CHECK: %i = freeze fp128 ?i1
+
+%j = freeze ptr ?j1
+; CHECK: %j = freeze ptr ?j1
+
+%k = freeze ptr addrspace(3) ?k1
+; CHECK: %k = freeze ptr addrspace(3) ?k1
+
+%l = freeze [4 x i8] ?l1
+; CHECK: %l = freeze [4 x i8] ?l1
+
+%m = freeze [?len x i?n] ?m1
+; CHECK: %m = freeze [?len x i?n] ?m1
+
+%n = freeze <2 x float> ?n1
+; CHECK: %n = freeze <2 x float> ?n1
+
+%o = freeze <vscale x 4 x i32> ?o1
+; CHECK: %o = freeze <vscale x 4 x i32> ?o1
+
+%p = freeze <?lanes x i?n> ?p1
+; CHECK: %p = freeze <?lanes x i?n> ?p1
+
+%q = freeze {i32, ptr} ?q1
+; CHECK: %q = freeze {i32, ptr} ?q1
+
+%r = freeze <{i8, [2 x i16]}> ?r1
+; CHECK: %r = freeze <{i8, [2 x i16]}> ?r1
+
+%s = freeze {} ?s1
+; CHECK: %s = freeze {} ?s1
+
+%t = freeze ?ty ?t1
+; CHECK: %t = freeze ?ty ?t1
+; CHECK-DAG: meta ?a1 type=i1
+; CHECK-DAG: meta ?b1 type=Value
+; CHECK-DAG: meta ?n type=Nat
+; CHECK-DAG: meta ?c1 type=Value
+; CHECK-DAG: meta ?m type=Nat
+; CHECK-DAG: meta ?d1 type=Value
+; CHECK-DAG: meta ?e1 type=Value
+; CHECK-DAG: meta ?f1 type=Value
+; CHECK-DAG: meta ?g1 type=Value
+; CHECK-DAG: meta ?h1 type=Value
+; CHECK-DAG: meta ?i1 type=Value
+; CHECK-DAG: meta ?j1 type=Value
+; CHECK-DAG: meta ?k1 type=Value
+; CHECK-DAG: meta ?l1 type=Value
+; CHECK-DAG: meta ?len type=Nat
+; CHECK-DAG: meta ?m1 type=Value
+; CHECK-DAG: meta ?n1 type=Value
+; CHECK-DAG: meta ?o1 type=Value
+; CHECK-DAG: meta ?lanes type=Nat
+; CHECK-DAG: meta ?p1 type=Value
+; CHECK-DAG: meta ?q1 type=Value
+; CHECK-DAG: meta ?r1 type=Value
+; CHECK-DAG: meta ?s1 type=Value
+; CHECK-NEXT: meta ?ty type=Type
+; CHECK-NEXT: meta ?t1 type=Value

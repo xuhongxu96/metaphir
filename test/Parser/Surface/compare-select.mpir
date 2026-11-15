@@ -1,0 +1,37 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=8 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Comparisons with a written or a variable predicate, 'samesign', and
+; selects with fast-math flags.
+%c1 = icmp eq i32 ?x, 0
+; CHECK: %c1 = icmp eq i32 ?x, 0
+
+%c2 = icmp samesign ult i32 ?x, ?y
+; CHECK: %c2 = icmp samesign ult i32 ?x, ?y
+
+%c3 = icmp ?pred i32 ?x, ?y
+; CHECK: %c3 = icmp ?pred i32 ?x, ?y
+
+%c4 = fcmp nnan olt float ?f, 0.0
+; CHECK: %c4 = fcmp nnan olt float ?f, 0.0
+
+%c5 = fcmp ?fpred double ?d, ?e
+; CHECK: %c5 = fcmp ?fpred double ?d, ?e
+
+%s1 = select i1 %c1, i32 ?x, i32 ?y
+; CHECK: %s1 = select i1 %c1, i32 ?x, i32 ?y
+
+%s2 = select nnan i1 %c4, float ?f, float 1.0
+; CHECK: %s2 = select nnan i1 %c4, float ?f, float 1.0
+
+%s3 = select <2 x i1> ?mask, <2 x i32> ?v, <2 x i32> zeroinitializer
+; CHECK: %s3 = select <2 x i1> ?mask, <2 x i32> ?v, <2 x i32> zeroinitializer
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?y type=Value
+; CHECK-DAG: meta ?pred type=CmpPredicate
+; CHECK-DAG: meta ?f type=Value
+; CHECK-DAG: meta ?fpred type=CmpPredicate
+; CHECK-DAG: meta ?d type=Value
+; CHECK-DAG: meta ?e type=Value
+; CHECK-NEXT: meta ?mask type=Value
+; CHECK-NEXT: meta ?v type=Value

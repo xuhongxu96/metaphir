@@ -1,0 +1,44 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=2 constraints=8
+; The pattern of the theme, printed back in the pattern language.
+; Constraints: each kind of expression (literals, arrays and their
+; elements, unary and binary operators by precedence, built-in calls with
+; and without a context, calls of definitions), each anchored at the
+; instruction it follows.
+constraint inRange(?v, ?lo, ?hi) {
+  ule(?lo, ?v) && ule(?v, ?hi)
+}
+%a = add i?n ?x, ?c
+; CHECK: %a = add i?n ?x, ?c
+
+;; ?n == 32 || ?n == 64
+
+;; !isZero(?c) && inRange(?c, 1, 8)
+
+;; ?c * 2 + 1 - ?c != -3
+
+;; ["i8", "i16"][0] == "i8"
+
+;; bitWidth(?x) == 32 && isa(?x, "Argument")
+
+%b = icmp:?cmp ?p i?n %a, 0
+; CHECK: %b = icmp:?cmp ?p i?n %a, 0
+; CHECK-DAG: constraint (|| (== ?n 32) (== ?n 64))
+; CHECK-DAG: constraint (&& (! (isZero ?c)) (inRange ?c 1 8))
+; CHECK-DAG: constraint (!= (- (+ (* ?c 2) 1) ?c) (- 3))
+; CHECK-DAG: constraint (== ["i8","i16"][0] "i8")
+; CHECK-DAG: constraint (&& (== (bitWidth ?x) 32) (isa ?x "Argument"))
+
+;; isKnownNonZero(?x, ?cmp) && ?p == "eq"
+; CHECK: constraint (&& (isKnownNonZero ?x ?cmp) (== ?p "eq"))
+
+;; true
+; CHECK: constraint true
+
+;; !false
+; CHECK: constraint (! false)
+; CHECK-DAG: meta ?n type=Nat
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?c type=Value
+; CHECK-DAG: meta ?cmp type=Instruction
+; CHECK-DAG: meta ?p type=CmpPredicate

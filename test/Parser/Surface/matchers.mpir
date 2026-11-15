@@ -1,0 +1,38 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=4 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; 'match' definitions: of each syntax, commutative, with branches that fix
+; flags, with concrete parameter types, and their uses with flags, metaflags
+; and captures.
+match:c addOrOr [nsw, disjoint] Binary (?ty ?x, ?y) {
+  %ret = add ?ty ?x, ?y
+} or [nsw = false, disjoint = true] {
+  %ret = or ?ty ?x, ?y
+}
+match negate [nsw] Unary (?ty ?x) {
+  %ret = sub ?ty 0, ?x
+}
+match widen [nneg] Cast (?a ?x to ?b) {
+  %ret = zext ?a ?x to ?b
+} or [nneg = false] {
+  %ret = sext ?a ?x to ?b
+}
+match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
+  %ret = select i1 ?c, ?ty ?t, ?ty ?f
+}
+%a = addOrOr nsw:?nsw i32 ?x, ?y
+; CHECK: %a = addOrOr nsw:?nsw i32 ?x, ?y
+
+%b = negate:?neg:o i32 %a
+; CHECK: %b = negate:?neg:o i32 %a
+
+%c = widen i32 %b to i64
+; CHECK: %c = widen i32 %b to i64
+
+%d = pick i1 ?cond, i64 %c, i64 0
+; CHECK: %d = pick i1 ?cond, i64 %c, i64 0
+; CHECK-DAG: meta ?nsw type=i1
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?y type=Value
+; CHECK-DAG: meta ?neg type=Instruction
+; CHECK-NEXT: meta ?cond type=i1

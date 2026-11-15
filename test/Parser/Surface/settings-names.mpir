@@ -1,0 +1,18 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=4 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Settings apply to the instructions after them; names with dots and
+; hyphens are made printable; unnamed values and variables.
+;; treatIntAsVec(true)
+%a.b = add i32 ?x.y, 1
+; CHECK: %a.b = add i32 ?x.y, 1
+;; treatIntAsVec(false)
+%c-d = sub i32 %a.b, ?_
+; CHECK: %c-d = sub i32 %a.b, ?_$0
+%e = mul i32 %c-d, ?_
+; CHECK: %e = mul i32 %c-d, ?_$1
+; CHECK-NEXT: ret i32 %e
+; CHECK-DAG: meta ?x.y type=Value
+; CHECK-DAG: meta ?_$0 type=Value
+; CHECK-DAG: meta ?_$1 type=Value
+ret i32 %e

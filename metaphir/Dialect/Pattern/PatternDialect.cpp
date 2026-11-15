@@ -193,32 +193,6 @@ bool mpir::isValueOperand(OperandKind Kind) {
   }
 }
 
-StringRef mpir::stringifyOperandKind(OperandKind Kind) {
-  switch (Kind) {
-  case OperandKind::TypedValue:
-    return "typed";
-  case OperandKind::Value:
-    return "value";
-  case OperandKind::TypeOnly:
-    return "type";
-  case OperandKind::ValueArray:
-    return "values";
-  case OperandKind::TypedValueArray:
-    return "typed_values";
-  case OperandKind::Predicate:
-    return "predicate";
-  case OperandKind::Alignment:
-    return "align";
-  case OperandKind::AddressSpace:
-    return "addrspace";
-  case OperandKind::InRangeLower:
-    return "inrange_lower";
-  case OperandKind::InRangeUpper:
-    return "inrange_upper";
-  }
-  llvm_unreachable("invalid operand kind");
-}
-
 template <typename OpT>
 static SmallVector<MatcherOperandView, 4> operandsOf(OpT Op) {
   SmallVector<MatcherOperandView, 4> Result;

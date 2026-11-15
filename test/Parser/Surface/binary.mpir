@@ -1,0 +1,69 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=19 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Binary instruction matchers: each opcode, with its flags required ('nsw'),
+; absent ('!nuw') and captured ('exact:?e'), and the instruction captured
+; ('add:?sum').
+%a = add nsw !nuw i32 ?x, ?y
+; CHECK: %a = add nsw !nuw i32 ?x, ?y
+
+%b = sub nuw:?nuw i32 %a, 1
+; CHECK: %b = sub nuw:?nuw i32 %a, 1
+
+%c = mul:?prod i32 %b, ?y
+; CHECK: %c = mul:?prod i32 %b, ?y
+
+%d = udiv exact i32 %c, 2
+; CHECK: %d = udiv exact i32 %c, 2
+
+%e = sdiv exact:?e i32 %d, -3
+; CHECK: %e = sdiv exact:?e i32 %d, -3
+
+%f = urem i32 %e, ?y
+; CHECK: %f = urem i32 %e, ?y
+
+%g = srem i32 %f, ?y
+; CHECK: %g = srem i32 %f, ?y
+
+%h = shl nsw nuw i32 %g, 1
+; CHECK: %h = shl nsw nuw i32 %g, 1
+
+%i = lshr exact i32 %h, ?y
+; CHECK: %i = lshr exact i32 %h, ?y
+
+%j = ashr i32 %i, ?y
+; CHECK: %j = ashr i32 %i, ?y
+
+%k = and i32 %j, 255
+; CHECK: %k = and i32 %j, 255
+
+%l = or disjoint:?dj i32 %k, ?y
+; CHECK: %l = or disjoint:?dj i32 %k, ?y
+
+%m = xor i32 %l, -1
+; CHECK: %m = xor i32 %l, -1
+
+%n = fadd nnan ninf float ?fx, 1.0
+; CHECK: %n = fadd nnan ninf float ?fx, 1.0
+
+%o = fsub fast float %n, ?fx
+; CHECK: %o = fsub fast float %n, ?fx
+
+%p = fmul nsz arcp contract afn reassoc float %o, %o
+; CHECK: %p = fmul nsz arcp contract afn reassoc float %o, %o
+
+%q = fdiv !nnan float %p, 2.5
+; CHECK: %q = fdiv !nnan float %p, 2.5
+
+%r = frem float %q, ?fx
+; CHECK: %r = frem float %q, ?fx
+
+%s = fneg float %r
+; CHECK: %s = fneg float %r
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?y type=Value
+; CHECK-DAG: meta ?nuw type=i1
+; CHECK-DAG: meta ?prod type=Instruction
+; CHECK-DAG: meta ?e type=i1
+; CHECK-DAG: meta ?dj type=i1
+; CHECK-DAG: meta ?fx type=Value

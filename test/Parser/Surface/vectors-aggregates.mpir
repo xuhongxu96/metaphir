@@ -1,0 +1,32 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=7 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Vector and aggregate instructions: elements, shuffles, and fields by
+; their indices or captured as an array.
+%e = extractelement <4 x i32> ?v, i64 ?idx
+; CHECK: %e = extractelement <4 x i32> ?v, i64 ?idx
+
+%i = insertelement <4 x i32> ?v, i32 %e, i64 0
+; CHECK: %i = insertelement <4 x i32> ?v, i32 %e, i64 0
+
+%s = shufflevector <4 x i32> %i, <4 x i32> poison, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+; CHECK: %s = shufflevector <4 x i32> %i, <4 x i32> poison, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+
+%x = extractvalue {i32, {i8, i16}} ?agg, 1, 0
+; CHECK: %x = extractvalue {i32, {i8, i16}} ?agg, 1, 0
+
+%y = extractvalue {i32, float} ?agg2, ...?path
+; CHECK: %y = extractvalue {i32, float} ?agg2, ...?path
+
+%z = insertvalue {i32, float} ?agg2, float 1.0, 1
+; CHECK: %z = insertvalue {i32, float} ?agg2, float 1.0, 1
+
+%sv = shufflevector <vscale x 4 x i32> ?a, <vscale x 4 x i32> ?b, <vscale x 4 x i32> zeroinitializer
+; CHECK: %sv = shufflevector <vscale x 4 x i32> ?a, <vscale x 4 x i32> ?b, <vscale x 4 x i32> zeroinitializer
+; CHECK-DAG: meta ?v type=Value
+; CHECK-DAG: meta ?idx type=Nat
+; CHECK-DAG: meta ?agg type=Value
+; CHECK-DAG: meta ?agg2 type=Value
+; CHECK-DAG: meta ?path type=Value[]
+; CHECK-NEXT: meta ?a type=Value
+; CHECK-NEXT: meta ?b type=Value

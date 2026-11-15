@@ -1,0 +1,24 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=5 constraints=0
+; CHECK-NEXT: ?entry:
+; The pattern of the theme, printed back in the pattern language.
+; Numbered results and labels; 'anyblock:' ends the block the instructions
+; before it were required to share; a void return and a typed pointer.
+entry:
+%0 = add i32 ?x, 1
+; CHECK: %0 = add i32 ?x, 1
+%1 = mul i32 %0, %0
+; CHECK: %1 = mul i32 %0, %0
+; CHECK-NEXT: ?7:
+7:
+%2 = load i32, i32* ?p
+; CHECK: %2 = load i32, i32* ?p
+anyblock:
+%3 = sub i32 %2, %1
+; CHECK: %3 = sub i32 %2, %1
+; CHECK-NEXT: ret void
+; CHECK-NEXT: meta ?entry type=BasicBlock
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?7 type=BasicBlock
+; CHECK-DAG: meta ?p type=Value
+ret void

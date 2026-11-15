@@ -1127,6 +1127,102 @@ def update_mlir_test(
 
 
 
+SURFACE_RUN_RE = re.compile(
+    r"^%metaphir-parse\s+%s\s*\|\s*FileCheck\s+%s\s*$"
+)
+
+
+def surface_runs(lines: list[str]) -> list[str]:
+    """The RUN lines that check the surface printing of a pattern."""
+    return [
+        match["command"].strip()
+        for line in lines
+        if (match := RUN_RE.match(line)) and SURFACE_RUN_RE.match(match["command"].strip())
+    ]
+
+
+def surface_line_keys(output: list[str], inputs: list[str]) -> list[int]:
+    """The input line (index into inputs, 0 for before them all) each line of
+    the printed surface pattern comes from: an instruction by its result name,
+    a constraint by its order among the ';;' lines, a meta variable by its
+    first use."""
+    keys: list[int] = []
+    current = 0
+    constraints = [i for i, line in enumerate(inputs) if line.lstrip().startswith(";;")]
+    next_constraint = 0
+    for line in output:
+        text = line.strip()
+        key = current
+        if text.startswith("%"):
+            name = text.split(" ", 1)[0]
+            for i, candidate in enumerate(inputs):
+                if candidate.lstrip().startswith(name + " ="):
+                    key = i + 1
+                    break
+        elif text.startswith("constraint "):
+            if next_constraint < len(constraints):
+                key = constraints[next_constraint] + 1
+            next_constraint += 1
+        elif text.startswith("meta ?"):
+            name = text.split()[1]
+            for i, candidate in enumerate(inputs):
+                if re.search(re.escape(name) + r"\b", candidate):
+                    key = i + 1
+                    break
+        keys.append(key)
+        current = key
+    return keys
+
+
+def update_surface_test(
+    path: Path, lines: list[str], comment: str, tools: dict[str, Path]
+) -> str:
+    """The surface printing of a pattern, each printed line checked right after
+    the input line it comes from. A line the printer puts out of input order
+    (constraints and meta variables come after the instructions) is a CHECK-DAG,
+    so that it may match where it is printed."""
+    clean = [line for line in lines if not CHECK_DIRECTIVE_RE.match(line)]
+    run_index = next(i for i, line in enumerate(clean) if RUN_RE.match(line))
+    with tempfile.NamedTemporaryFile("w", suffix=path.suffix, delete=False) as temporary:
+        temporary.write("\n".join(clean) + "\n")
+    try:
+        command = f"{shlex.quote(str(tools['metaphir-parse']))} {shlex.quote(temporary.name)}"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+    finally:
+        os.unlink(temporary.name)
+    if result.returncode != 0:
+        raise ValueError(f"{path}: {command}\n{result.stderr}")
+    output = result.stdout.splitlines()
+    for line in output:
+        if "{{" in line or "[[" in line:
+            raise ValueError(f"{path}: output with FileCheck syntax: {line}")
+    keys = surface_line_keys(output, clean)
+    # Each printed line: CHECK when it follows the one before it, CHECK-DAG when
+    # the printer put it out of input order.
+    insertions: dict[int, list[str]] = {}
+    previous = -1
+    for index, (line, key) in enumerate(zip(output, keys)):
+        if key < previous:
+            key = previous
+            directive = "CHECK-DAG"
+        else:
+            directive = "CHECK" if index == 0 or key != previous else "CHECK-NEXT"
+        previous = key
+        if not line.strip():
+            directive = "CHECK-EMPTY"
+        target = key if key > 0 else run_index + 1
+        insertions.setdefault(target, []).append(
+            f"{comment} {directive}: {line}".rstrip()
+        )
+    result_lines: list[str] = []
+    for number, line in enumerate(clean, start=1):
+        result_lines.append(line)
+        result_lines += insertions.pop(number, [])
+    if insertions:
+        raise ValueError(f"{path}: checks for lines {sorted(insertions)}")
+    return "\n".join(result_lines) + "\n"
+
+
 def update_test(
     path: Path, lines: list[str], comment: str, kinds: set[str], tools: dict[str, Path]
 ) -> str:
@@ -1180,7 +1276,14 @@ def main() -> int:
             kinds, comment = test_kinds(lines, path)
             if not kinds:
                 continue
-            if mlir_runs_to_stages(lines, comment):
+            if surface_runs(lines):
+                surface_tools = {
+                    "metaphir-parse": find_tool(
+                        "metaphir-parse", args.metaphir_parse, "METAPHIR_PARSE"
+                    )
+                }
+                updated = update_surface_test(path, lines, comment, surface_tools)
+            elif mlir_runs_to_stages(lines, comment):
                 mlir_tools = {
                     kind: find_tool(
                         kind,

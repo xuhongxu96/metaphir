@@ -1,0 +1,39 @@
+; RUN: %metaphir-parse %s | FileCheck %s
+; CHECK: pattern instructions=8 constraints=0
+; The pattern of the theme, printed back in the pattern language.
+; Memory: allocas with a count and alignment, volatile loads and stores
+; with their alignment written or captured, and getelementptr with its
+; flags, indices and address space.
+%slot = alloca inalloca:?ia i32, i32 ?n, align 4
+; CHECK: %slot = alloca inalloca:?ia i32, i32 ?n, align 4
+
+%slot2 = alloca i64, addrspace(5)
+; CHECK: %slot2 = alloca i64, addrspace(5)
+
+%v = load volatile i32, ptr %slot, align ?align
+; CHECK: %v = load volatile i32, ptr %slot, align ?align
+
+%w = load i32, ptr addrspace(1) ?p
+; CHECK: %w = load i32, ptr addrspace(1) ?p
+
+%st = store i32 %v, ptr %slot, align 8
+; CHECK: %st = store i32 %v, ptr %slot, align 8
+
+%st2 = store volatile:?vol i32 ?x, ptr ?q
+; CHECK: %st2 = store volatile:?vol i32 ?x, ptr ?q
+
+%g = getelementptr inbounds:?ib nusw nuw:?gn [4 x i8], ptr %slot, i64 0, i64 ?i
+; CHECK: %g = getelementptr inbounds:?ib nusw nuw:?gn [4 x i8], ptr %slot, i64 0, i64 ?i
+
+%h = getelementptr i8, ptr ?q, i64 4
+; CHECK: %h = getelementptr i8, ptr ?q, i64 4
+; CHECK-DAG: meta ?ia type=i1
+; CHECK-DAG: meta ?n type=Nat
+; CHECK-DAG: meta ?align type=Nat
+; CHECK-DAG: meta ?p type=Value
+; CHECK-DAG: meta ?vol type=i1
+; CHECK-DAG: meta ?x type=Value
+; CHECK-DAG: meta ?q type=Value
+; CHECK-DAG: meta ?ib type=i1
+; CHECK-DAG: meta ?gn type=i1
+; CHECK-DAG: meta ?i type=Value
