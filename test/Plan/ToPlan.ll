@@ -2,7 +2,7 @@
 ; mpir-to-plan: a root is matched against every instruction, an instruction
 ; matcher checks its opcode, binds itself and matches its operands in order,
 ; and the alternatives of ':c' are alternatives of the plan.
-; RUN: %metaphir-parse --engine=mlir --emit=mlir %s | %metaphir-opt --mpir-lower --mpir-to-plan | FileCheck %s
+; RUN: %metaphir-parse --emit=mlir %s | %metaphir-opt --mpir-lower --mpir-to-plan | FileCheck %s
 
 %d = udiv i?n ?x, 2
 %s = add:c i?n %d, ?y

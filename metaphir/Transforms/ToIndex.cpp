@@ -1,12 +1,10 @@
 //===- ToIndex.cpp - Compile lowered patterns into index queries ----------===//
 //
 // mpir-to-index compiles each lowered mpir.pattern into an mpir_index.query
-// after it, as FeatureQuery::compute does for the variants PatternLowering
-// makes: one mpir_index.variant per choice of branch of each matcher use
+// after it: one mpir_index.variant per choice of branch of each matcher use
 // (each region of an mpir.alt a use became). The other alternatives are not
-// variants of their own, as FeatureQuery has them: the two operand orders of
-// ':c' make an operand's site either slot, and ':o' requires only what both
-// its alternatives need.
+// variants of their own: the two operand orders of ':c' make an operand's
+// site either slot, and ':o' requires only what both its alternatives need.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +13,7 @@
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
-#include "metaphir/Matching/FeatureQuery.h"
+#include "metaphir/Matching/FeatureRequirement.h"
 #include "metaphir/Matching/Features.h"
 #include "metaphir/Transforms/Lowering.h"
 #include "mlir/IR/Builders.h"
@@ -56,8 +54,8 @@ static Value yieldOf(mlir::Region &Region) {
 
 namespace {
 
-/// The requirement of a pattern value, as FeatureQuery's requirementOf
-/// computes it, keyed by canonical pattern values.
+/// The features a pattern value needs (the instructions that match it and
+/// what they use), keyed by canonical pattern values.
 struct Requirement {
   uint64_t Instructions = 0;
   SmallVector<ShapeRequirement, 2> Shapes;

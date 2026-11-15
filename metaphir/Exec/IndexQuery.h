@@ -1,9 +1,10 @@
 //===- IndexQuery.h - Run index queries on features -------------*- C++ -*-===//
 //
-// An mpir_index.query compiled for checking functions' features, as
-// FeatureQuery checks them: a function may match a variant if it has the
-// variant's features, its certain instructions can be typed by the
-// function's signatures, and no constraint is false on the features.
+// An mpir_index.query compiled for checking functions' features: for each
+// of its variants (ways a match can go), a function may match the variant
+// if it has the variant's features, its certain instructions can be typed
+// by the function's signatures, and no constraint is false on the
+// features.
 //
 //===----------------------------------------------------------------------===//
 
@@ -12,8 +13,7 @@
 
 #include "metaphir/Exec/TypePattern.h"
 #include "metaphir/Index/Retrieval.h"
-#include "metaphir/Matching/FeatureQuery.h"
-#include "metaphir/Matching/FunctionFilter.h"
+#include "metaphir/Matching/FeatureRequirement.h"
 #include "mlir/IR/Value.h"
 #include "llvm/IR/LLVMContext.h"
 #include <memory>
@@ -26,28 +26,39 @@ namespace mpir_index {
 class QueryOp;
 } // namespace mpir_index
 
-class IndexQuery : public FunctionFilter {
+class IndexQuery {
 public:
   /// Compiles Query, which must outlive this: its constraints are evaluated
   /// from its expressions.
   explicit IndexQuery(mpir_index::QueryOp Query);
-  ~IndexQuery() override;
+  ~IndexQuery();
 
-  size_t size() const override { return Variants.size(); }
-  const FeatureRequirement &getRequirement(unsigned Index) const override {
+  /// The number of variants.
+  size_t size() const { return Variants.size(); }
+  /// The features every function a variant matches has.
+  const FeatureRequirement &getRequirement(unsigned Index) const {
     return Variants[Index].Requirement;
   }
-  bool isImpossible(unsigned Index) const override {
-    return Variants[Index].Impossible;
-  }
-  bool mayMatchVariant(unsigned Index,
-                       const FunctionFeatures &Features) const override;
+  /// Whether a constraint of the variant is false whatever it binds, so the
+  /// variant matches no function.
+  bool isImpossible(unsigned Index) const { return Variants[Index].Impossible; }
+
+  /// Whether a function with Features may match some variant.
+  bool mayMatch(const FunctionFeatures &Features) const;
+  /// Whether a function with Features may match the variant, constraints
+  /// included.
+  bool mayMatchVariant(unsigned Index, const FunctionFeatures &Features) const;
+  /// Whether a variant's instructions can match, whatever its constraints.
   bool mayMatchStructure(unsigned Index,
-                         const FunctionFeatures &Features) const override {
+                         const FunctionFeatures &Features) const {
     return Variants[Index].Structural.isSatisfiedBy(Features);
   }
+  /// Why a function with Features has no structural match, in words: for
+  /// each variant whose features it lacks, the first of them; or, if it has
+  /// a variant's features, that its instructions are not as the variant
+  /// connects them. Without duplicates.
   SmallVector<std::string, 2>
-  explainNoStructure(const FunctionFeatures &Features) const override;
+  explainNoStructure(const FunctionFeatures &Features) const;
 
   /// The query's retrieval, if it has an mpir_index.retrieve.
   const RetrievalPlan *getRetrieval() const {

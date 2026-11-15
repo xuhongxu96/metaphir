@@ -2,9 +2,9 @@
 ; The lowering passes: metaflags become constraints, and ':c', ':o' and the
 ; branches of a 'match' matcher become mpir.alt.
 ; RUN: split-file %s %t
-; RUN: %metaphir-parse --engine=mlir --emit=mlir %t/commutative.mpir | %metaphir-opt --mpir-lower | FileCheck %s --check-prefix=COMMUTATIVE
-; RUN: %metaphir-parse --engine=mlir --emit=mlir %t/or-self.mpir | %metaphir-opt --mpir-lower | FileCheck %s --check-prefix=OR-SELF
-; RUN: %metaphir-parse --engine=mlir --emit=mlir %t/matcher.mpir | %metaphir-opt --mpir-lower | FileCheck %s --check-prefix=MATCHER
+; RUN: %metaphir-parse --emit=mlir %t/commutative.mpir | %metaphir-opt --mpir-lower | FileCheck %s --check-prefix=COMMUTATIVE
+; RUN: %metaphir-parse --emit=mlir %t/or-self.mpir | %metaphir-opt --mpir-lower | FileCheck %s --check-prefix=OR-SELF
+; RUN: %metaphir-parse --emit=mlir %t/matcher.mpir | %metaphir-opt --mpir-lower | FileCheck %s --check-prefix=MATCHER
 
 ;--- commutative.mpir
 %a = add:c i32 ?x:zero, ?y

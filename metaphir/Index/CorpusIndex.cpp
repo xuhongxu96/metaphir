@@ -419,35 +419,6 @@ FunctionLocation CorpusIndex::locate(uint32_t Number) const {
 }
 
 Expected<std::optional<std::vector<FunctionLocation>>>
-CorpusIndex::findCandidates(const FunctionFilter &Query) const {
-  std::optional<std::vector<SmallVector<PostingKey, 3>>> Chosen =
-      choosePostingKeys(
-          Query, [&](const PostingKey &Key) { return getPostingCount(Key); });
-  if (!Chosen)
-    return std::nullopt;
-  std::map<PostingKey, std::vector<uint32_t>> Lists;
-  for (const SmallVector<PostingKey, 3> &Keys : *Chosen)
-    for (const PostingKey &Key : Keys) {
-      if (Lists.count(Key))
-        continue;
-      Expected<std::vector<uint32_t>> Numbers = readPostings(Key);
-      if (!Numbers)
-        return Numbers.takeError();
-      Lists[Key] = std::move(*Numbers);
-    }
-  std::vector<uint32_t> Candidates =
-      combinePostings(*Chosen, [&](const PostingKey &Key) {
-        return ArrayRef<uint32_t>(Lists[Key]);
-      });
-
-  std::vector<FunctionLocation> Locations;
-  Locations.reserve(Candidates.size());
-  for (uint32_t Number : Candidates)
-    Locations.push_back(locate(Number));
-  return Locations;
-}
-
-Expected<std::optional<std::vector<FunctionLocation>>>
 CorpusIndex::findCandidates(const RetrievalPlan &Plan) const {
   std::map<PostingKey, std::vector<uint32_t>> Lists;
   Expected<std::optional<std::vector<uint32_t>>> Found =

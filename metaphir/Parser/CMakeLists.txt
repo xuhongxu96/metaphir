@@ -20,18 +20,6 @@ add_library(metaphir-parser
 
   MIRLexer.cpp
   MIRLexer.h
-
-  MIRParser.cpp
-  MIRParser.ParseConstraint.cpp
-  MIRParser.ParseDefinition.cpp
-  MIRParser.ParseInstruction.cpp
-  MIRParser.h
-
-  "${METAPHIR_STDLIB_OUTPUT}"
-)
-
-target_include_directories(metaphir-parser
-  PRIVATE "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
 target_link_libraries(metaphir-parser

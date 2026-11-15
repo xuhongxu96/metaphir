@@ -1,7 +1,7 @@
 ; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; The parser of the mpir dialect: definitions become symbols of the module,
 ; the pattern an mpir.pattern, constraints mpir_expr operations.
-; RUN: %metaphir-parse --engine=mlir --emit=mlir %s | FileCheck %s
+; RUN: %metaphir-parse --emit=mlir %s | FileCheck %s
 
 constraint small(?v) {
   ult(?v, 8)

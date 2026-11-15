@@ -3,7 +3,6 @@
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Exec/ExprEvaluator.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
-#include "metaphir/Matching/IndexDomain.h"
 #include "metaphir/Matching/Operators/AbstractCall.h"
 #include "metaphir/Matching/Operators/Arithmetic.h"
 #include "metaphir/Matching/Operators/CmpPredicates.h"
@@ -312,8 +311,13 @@ IndexQuery::joinSignatures(const Variant &V,
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// Evaluates mpir_expr on a function's features, as
-/// ConstraintEvaluator<IndexDomain> evaluates MetaphIR constraints.
+/// Evaluates mpir_expr on a function's features, where a constraint is
+/// false only if no match in the function can satisfy it.
+///
+/// Operators on concrete operands compute their result as on the IR; on
+/// others, they apply their abstract() faces, or are unknown. A concrete
+/// boolean B stands for "B, or an evaluation error": either rejects a match
+/// when B is false. An error is one the IR evaluation certainly has.
 class AbstractEvaluator {
 public:
   AbstractEvaluator(const FunctionFeatures &Features,
@@ -597,6 +601,13 @@ bool IndexQuery::constraintsMayHold(const Variant &V,
       return false;
   }
   return true;
+}
+
+bool IndexQuery::mayMatch(const FunctionFeatures &Features) const {
+  for (unsigned Index = 0; Index != size(); ++Index)
+    if (mayMatchVariant(Index, Features))
+      return true;
+  return false;
 }
 
 bool IndexQuery::mayMatchVariant(unsigned Index,

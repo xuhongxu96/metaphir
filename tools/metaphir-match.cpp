@@ -2,15 +2,9 @@
 #include "metaphir/Exec/CompiledPattern.h"
 #include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Exec/PlanMatcher.h"
-#include "metaphir/IR/MIRContext.h"
-#include "metaphir/IR/Pattern.h"
-#include "metaphir/IR/PatternLowering.h"
-#include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Index/CorpusIndex.h"
-#include "metaphir/Matching/FeatureQuery.h"
-#include "metaphir/Matching/PatternMatcher.h"
+#include "metaphir/Matching/Target.h"
 #include "metaphir/Matching/UseOracle.h"
-#include "metaphir/Parser/MIRParser.h"
 #include "metaphir/Web/WebIndex.h"
 #include "metaphir/Web/WebQuery.h"
 #include "llvm/ADT/STLExtras.h"
@@ -99,8 +93,8 @@ static cl::opt<bool>
                 cl::cat(Category));
 static cl::opt<bool> NoStructuralize(
     "no-structuralize", cl::Hidden,
-    cl::desc("With --engine=mlir, do not require what constraints say of "
-             "instructions as index features (for measuring)"),
+    cl::desc("Do not require what constraints say of instructions as index "
+             "features (for measuring)"),
     cl::cat(Category));
 
 static cl::opt<bool> PrintCandidates(
@@ -111,53 +105,33 @@ static cl::opt<bool> PrintCandidates(
 
 static cl::opt<bool> NoFactor(
     "no-factor", cl::Hidden,
-    cl::desc("With --engine=mlir, do not factor the lists every variant "
-             "reads out of the index lookup (for measuring)"),
+    cl::desc("Do not factor the lists every variant reads out of the index "
+             "lookup (for measuring)"),
     cl::cat(Category));
-
-enum class Engine { Classic, MLIR };
-static cl::opt<Engine>
-    UseEngine("engine", cl::desc("The implementation to match with"),
-              cl::values(clEnumValN(Engine::Classic, "classic", "MetaphIR IR"),
-                         clEnumValN(Engine::MLIR, "mlir",
-                                    "the mpir dialects and match plans")),
-              cl::init(Engine::MLIR), cl::cat(Category));
 
 static cl::opt<bool> NoConstraintPrefilter(
     "no-constraint-prefilter", cl::Hidden,
-    cl::desc("Filter candidates by their features but not by evaluating the "
-             "variants' constraints on them (for testing)"),
+    cl::desc("Filter candidates by the features their structure needs, not "
+             "by what their constraints need or evaluate to (for measuring)"),
     cl::cat(Category));
 
 namespace {
 
-/// A parsed and lowered pattern. Matching may evaluate the pattern's
-/// constraint definitions, so each thread has its own.
+/// A compiled pattern. Matching may evaluate the pattern's constraint
+/// definitions, so each thread has its own.
 struct LoadedPattern {
-  SourceMgr Source;
-  MIRContext Context;
-  std::optional<PatternVariants> Variants;
-  FeatureQuery Query;
-  // With --engine=mlir: the pattern's module, lowered, with its plan.
   std::unique_ptr<CompiledPattern> Compiled;
-  const PlanProgram *Program = nullptr;
-  const IndexQuery *Index = nullptr;
 
-  /// The pattern's source, as matches print its lines.
-  const SourceMgr &source() const {
-    return Compiled ? Compiled->Source : Source;
-  }
+  const SourceMgr &source() const { return Compiled->Source; }
+  const IndexQuery &filter() const { return *Compiled->Query; }
 
-  /// What a function needs to match: from the index query, with
-  /// --engine=mlir.
-  const FunctionFilter &filter() const {
-    if (Index)
-      return *Index;
-    return Query;
-  }
-
-  const FeatureQuery *getFilter() const {
-    return NoPrefilter ? nullptr : &Query;
+  /// Whether a function with Features may match, by the features alone.
+  bool mayMatch(const FunctionFeatures &Features) const {
+    if (!NoConstraintPrefilter)
+      return filter().mayMatch(Features);
+    return any_of(seq<unsigned>(0, filter().size()), [&](unsigned Variant) {
+      return filter().mayMatchStructure(Variant, Features);
+    });
   }
 };
 
@@ -213,47 +187,22 @@ struct FileOutput {
 
 } // namespace
 
-/// Parses and lowers the pattern, printing any error to Err. Warnings are
-/// printed to stderr unless Quiet.
+/// Compiles the pattern, printing any error to Err. Warnings are printed to
+/// stderr unless Quiet.
 static std::unique_ptr<LoadedPattern>
 loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
+  PipelineOptions Options;
+  // What structuralize requires comes from the constraints.
+  Options.Structuralize = !NoStructuralize && !NoConstraintPrefilter;
+  Options.Factor = !NoFactor;
   auto Loaded = std::make_unique<LoadedPattern>();
-  if (Quiet)
-    Loaded->Source.setDiagHandler([](const SMDiagnostic &, void *) {});
-  if (UseEngine == Engine::MLIR) {
-    PipelineOptions Options;
-    Options.Structuralize = !NoStructuralize;
-    Options.Factor = !NoFactor;
-    Loaded->Compiled = CompiledPattern::compileFile(
-        PatternFilename, Err, ToolName.data(), Options, [&](SourceMgr &SM) {
-          if (Quiet)
-            SM.setDiagHandler([](const SMDiagnostic &, void *) {});
-        });
-    if (!Loaded->Compiled)
-      return nullptr;
-    Loaded->Program = Loaded->Compiled->Program.get();
-    Loaded->Index = Loaded->Compiled->Query.get();
-    return Loaded;
-  }
-  Pattern *RawPattern = nullptr;
-  SMDiagnostic Diag;
-  if (parseMIRFile(PatternFilename, Loaded->Source, Loaded->Context, RawPattern,
-                   Diag)) {
-    Diag.print(ToolName.data(), Err);
+  Loaded->Compiled = CompiledPattern::compileFile(
+      PatternFilename, Err, ToolName.data(), Options, [&](SourceMgr &SM) {
+        if (Quiet)
+          SM.setDiagHandler([](const SMDiagnostic &, void *) {});
+      });
+  if (!Loaded->Compiled)
     return nullptr;
-  }
-  Expected<PatternVariants> Lowered =
-      PatternLowering(Loaded->Context).lower(RawPattern);
-  if (!Lowered) {
-    printLoweringErrors(Lowered.takeError(), Loaded->Source, Loaded->Context,
-                        Err, ToolName.data());
-    return nullptr;
-  }
-  Loaded->Variants = std::move(*Lowered);
-  // Without the definitions, the query still filters by features but cannot
-  // evaluate the constraints on them.
-  Loaded->Query = FeatureQuery::compute(
-      *Loaded->Variants, NoConstraintPrefilter ? nullptr : &Loaded->Context);
   return Loaded;
 }
 
@@ -302,13 +251,13 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
   if (Listed && Listed->empty())
     return nullptr;
   auto MayMatch = [&](const FunctionFeatures &Features) {
-    return Pattern.filter().mayMatch(Features);
+    return Pattern.mayMatch(Features);
   };
   if (!Listed) {
     Expected<FunctionFeatures> Summary = Index.readSummary(*Entry, MayMatch);
     if (!Summary)
       return Summary.takeError();
-    if (!Summary->Fine || !Pattern.filter().mayMatch(*Summary))
+    if (!Summary->Fine || !MayMatch(*Summary))
       return nullptr;
   }
   // The fine features are read only where the coarse ones may match.
@@ -324,7 +273,7 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
   // The ordinals, among the module's defined functions, of those to match.
   SmallVector<size_t, 8> Candidates;
   for (auto [Ordinal, Function] : enumerate(*Indexed))
-    if (Function.Features.Fine && Pattern.filter().mayMatch(Function.Features))
+    if (Function.Features.Fine && MayMatch(Function.Features))
       Candidates.push_back(Ordinal);
   if (Candidates.empty())
     return nullptr;
@@ -411,17 +360,22 @@ static bool collectIndexedFiles(StringRef Input, const IndexUse &Use,
   return true;
 }
 
-/// matchFile's matching with a match plan, for --engine=mlir.
-static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
-                              raw_ostream &Out, ArrayRef<Candidate> Functions,
-                              Module *M, MatchStats &Stats,
-                              unsigned &TargetIndex) {
-  PlanMatcher Matcher(*Pattern.Program);
+/// Matches the pattern against Functions, of the module M of File.
+static void matchFunctions(LoadedPattern &Pattern, StringRef File,
+                           raw_ostream &Out, ArrayRef<Candidate> Functions,
+                           Module *M, MatchStats &Stats,
+                           unsigned &TargetIndex) {
+  // A matcher per module: its cached analyses belong to the module's
+  // functions.
+  PlanMatcher Matcher(*Pattern.Compiled->Program);
+  // Uses of globals in functions not read yet count too.
   std::optional<MaterializingUseOracle> Uses;
   if (M && M->getMaterializer()) {
     Uses.emplace(*M);
     Matcher.setUseOracle(&*Uses);
   }
+  // Numbers the unnamed values of the function whose matches are printed; one
+  // per module, as numbering the module's globals is costly.
   std::optional<ModuleSlotTracker> Slots;
   auto SlotsFor = [&](const Function &F) {
     if (!Slots)
@@ -437,14 +391,15 @@ static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
     SmallVector<PlanRejection, 4> Unsatisfied;
     // A function whose features no variant can match has no match; when
     // the rejecting constraints are asked for, only its structure counts.
-    if (!NoPrefilter && Pattern.Index) {
+    if (!NoPrefilter) {
       Target Program(*F, Function.Features ? &*Function.Features : nullptr);
       const FunctionFeatures &Features = Program.getFeatures();
-      const FunctionFilter &Filter = Pattern.filter();
+      const IndexQuery &Filter = Pattern.filter();
       bool May = false;
       for (unsigned Index = 0; Index != Filter.size() && !May; ++Index)
-        May = MatchesOnly ? Filter.mayMatchVariant(Index, Features)
-                          : Filter.mayMatchStructure(Index, Features);
+        May = MatchesOnly && !NoConstraintPrefilter
+                  ? Filter.mayMatchVariant(Index, Features)
+                  : Filter.mayMatchStructure(Index, Features);
       if (!May) {
         if (!MatchesOnly) {
           Out << "target " << TargetIndex++ << ": @" << F->getName()
@@ -537,92 +492,7 @@ static void matchFile(LoadedPattern &Pattern, const IndexUse *Use,
     return;
   }
 
-  if (Pattern.Program)
-    return matchFileWithPlan(Pattern, File, Out, Functions, M->get(), Stats,
-                             TargetIndex);
-
-  // A matcher per module: its cached analyses belong to the module's
-  // functions.
-  PatternMatcher Matcher(&Pattern.Context);
-  // Uses of globals in functions not read yet count too.
-  std::optional<MaterializingUseOracle> Uses;
-  if (*M && (*M)->getMaterializer()) {
-    Uses.emplace(**M);
-    Matcher.setUseOracle(&*Uses);
-  }
-  // Numbers the unnamed values of the function whose matches are printed; one
-  // per module, as numbering the module's globals is costly.
-  std::optional<ModuleSlotTracker> Slots;
-  auto SlotsFor = [&](const Function &F) {
-    if (!Slots)
-      Slots.emplace(F.getParent());
-    if (Slots->getCurrentFunction() != &F)
-      Slots->incorporateFunction(F);
-    return &*Slots;
-  };
-  auto PrintMatch = [&](const Function &F, const Instantiation &Match) {
-    Match.print(Out, SlotsFor(F));
-  };
-  for (const Candidate &Function : Functions) {
-    const llvm::Function *F = Function.F;
-    ++Stats.MatchedFunctions;
-    Target Program(*F, Function.Features ? &*Function.Features : nullptr);
-    bool HadStructuralMatch = false;
-    SmallVector<UnsatisfiedConstraint, 4> Unsatisfied;
-    // Only the full output reports the constraints rejecting structural
-    // matches; without it, the filter can skip variants by them too.
-    MatchResults Matches = Matcher.match(
-        *Pattern.Variants, Program, MatchesOnly ? nullptr : &Unsatisfied,
-        MatchesOnly ? nullptr : &HadStructuralMatch, Pattern.getFilter());
-    if (MatchesOnly) {
-      for (const Instantiation &Match : Matches)
-        Match.printLine(Out, File, *F, SlotsFor(*F),
-                        PrintInstructions ? &Pattern.Source : nullptr);
-      continue;
-    }
-    Out << "target " << TargetIndex++ << ": @" << F->getName() << '\n';
-    if (Matches.empty()) {
-      Out << "  no match\n";
-      if (HadStructuralMatch) {
-        for (const UnsatisfiedConstraint &U : Unsatisfied) {
-          Out << "  constraint not satisfied: " << *U.Expression;
-          if (!U.Reason.empty())
-            Out << " (cannot evaluate: " << U.Reason << ")";
-          Out << '\n';
-          if (Explain) {
-            Out << "    rejected: ";
-            PrintMatch(*F, U.Rejected);
-            Out << '\t';
-            U.Rejected.printInstructions(Out, Pattern.Source);
-            Out << '\n';
-          }
-        }
-      } else if (Explain) {
-        // A variable that would be bound to two values says the most.
-        SmallVector<Instantiation::Conflict, 1> Conflicts =
-            Matcher.findConflicts(*Pattern.Variants, Program);
-        for (const Instantiation::Conflict &C : Conflicts) {
-          Out << "  no structural match: ";
-          Instantiation::printConflict(Out, C, SlotsFor(*F));
-          Out << '\n';
-        }
-        if (!Conflicts.empty())
-          continue;
-        FunctionFeatures Features = Function.Features && Function.Features->Fine
-                                        ? *Function.Features
-                                        : FunctionFeatures::compute(*F);
-        for (const std::string &Reason :
-             Pattern.filter().explainNoStructure(Features))
-          Out << "  no structural match: " << Reason << '\n';
-      }
-      continue;
-    }
-    for (auto [Index, Match] : enumerate(Matches)) {
-      Out << "  match " << Index << ":\n    ";
-      PrintMatch(*F, Match);
-      Out << '\n';
-    }
-  }
+  matchFunctions(Pattern, File, Out, Functions, M->get(), Stats, TargetIndex);
 }
 
 /// Matches the files on Threads threads, printing each file's output in the
@@ -880,10 +750,6 @@ int main(int Argc, char **Argv) {
       return 1;
     return matchPacks(ToolName);
   }
-  if (UseEngine == Engine::MLIR && !PacksDir.empty()) {
-    errs() << ToolName << ": error: --engine=mlir does not use packs yet\n";
-    return 1;
-  }
   if (InputPaths.empty()) {
     errs() << ToolName
            << ": error: expected LLVM IR files or directories to match\n";
@@ -906,10 +772,11 @@ int main(int Argc, char **Argv) {
   }
   std::optional<IndexUse> Use;
   if (Index) {
+    // The pipeline always plans the query's retrieval.
+    const RetrievalPlan *Retrieval = Pattern->filter().getRetrieval();
+    assert(Retrieval && "the index query has no retrieval");
     Expected<std::optional<std::vector<FunctionLocation>>> Found =
-        Pattern->Index && Pattern->Index->getRetrieval()
-            ? Index->findCandidates(*Pattern->Index->getRetrieval())
-            : Index->findCandidates(Pattern->filter());
+        Index->findCandidates(*Retrieval);
     if (!Found) {
       logAllUnhandledErrors(Found.takeError(), errs(),
                             Twine(ToolName) + ": error: ");

@@ -1,8 +1,8 @@
 //===- ToPlan.cpp - Compile lowered patterns into match plans -------------===//
 //
 // mpir-to-plan compiles each lowered mpir.pattern into an mpir_plan.matcher
-// that matches it as SubtreeMatcher and InstructionMatcher do: from each
-// root, over every instruction of the function; an instruction matcher
+// that matches it: from each root, over every instruction of the function;
+// an instruction matcher
 // checks its opcode, binds itself, then its block, its type-only operands,
 // its flags, its keyed operands, its capture, its operand count and its
 // operands in order; a matcher bound already matches only its binding.

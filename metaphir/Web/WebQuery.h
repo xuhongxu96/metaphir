@@ -16,8 +16,6 @@ namespace llvm {
 class raw_ostream;
 namespace metaphir {
 
-class FeatureQuery;
-
 /// How a query narrows the functions to match; all but Full are for
 /// measuring what each part of the index saves.
 enum class WebQueryMode : uint8_t {

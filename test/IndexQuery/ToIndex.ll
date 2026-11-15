@@ -3,7 +3,7 @@
 ; instructions, edges, siblings and facts a match needs, typing the
 ; instructions it is sure to match, and assuming the constraints on the
 ; sites the pattern's values are at.
-; RUN: %metaphir-parse --engine=mlir --emit=mlir %s | %metaphir-opt --mpir-lower --mpir-to-index | FileCheck %s
+; RUN: %metaphir-parse --emit=mlir %s | %metaphir-opt --mpir-lower --mpir-to-index | FileCheck %s
 
 %d = udiv i?n ?x, 2
 %r = shr i?n %d, ?y

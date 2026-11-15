@@ -1,10 +1,9 @@
 //===- Lowering.cpp - Lower surface patterns ------------------------------===//
 //
-// See Lowering.h. These passes do what PatternLowering does to MetaphIR IR,
-// with one difference of representation: where PatternLowering makes one
-// whole pattern per choice (each branch of each matcher use, each operand
-// order of ':c'), these make an mpir.alt where the choice is, and share the
-// rest of the pattern.
+// See Lowering.h. Each choice of a pattern (each branch of each matcher
+// use, each operand order of ':c', an operand of ':o' or the instruction)
+// becomes an mpir.alt where the choice is, sharing the rest of the pattern,
+// rather than a whole pattern per combination of choices.
 //
 //===----------------------------------------------------------------------===//
 
@@ -987,7 +986,7 @@ static void lowerChoices(InstOp Inst) {
   };
   Value Result;
   if (OrSelf) {
-    // Its operand first, then itself, as InstructionMatcher tries them.
+    // Its operand first, then itself, so matches come in that order.
     AltOp Alt = MakeAlt(2);
     Fill(Alt, 1, Itself);
     Fill(Alt, 0, [&]() -> Value {

@@ -16,9 +16,6 @@ namespace llvm {
 class raw_ostream;
 namespace metaphir {
 
-class FunctionFilter;
-struct FeatureRequirement;
-
 /// A coarse feature the index lists the functions of: an instruction kind, an
 /// edge or sibling key (see FunctionFeatures), or a global's hash.
 struct PostingKey {
@@ -60,24 +57,6 @@ void forEachPostingKey(const FunctionFeatures &Features, Callback Add) {
   for (uint64_t Global : Features.Globals)
     Add(PostingKey{PostingKey::Global, Global});
 }
-
-/// The posting keys every function a variant can match with Requirement has.
-SmallVector<PostingKey, 8>
-getPostingKeys(const FeatureRequirement &Requirement);
-
-/// For each variant of Query, the keys whose lists are intersected to find
-/// the functions it may match: the few shortest, as Count tells, or none if
-/// no function has one of its keys. std::nullopt if a variant needs no
-/// coarse feature, so that any function may match.
-std::optional<std::vector<SmallVector<PostingKey, 3>>>
-choosePostingKeys(const FunctionFilter &Query,
-                  function_ref<uint64_t(const PostingKey &)> Count);
-
-/// The union over variants of the intersections of the lists of their
-/// Chosen keys, as Lists gives them.
-std::vector<uint32_t>
-combinePostings(ArrayRef<SmallVector<PostingKey, 3>> Chosen,
-                function_ref<ArrayRef<uint32_t>(const PostingKey &)> Lists);
 
 /// Reads the list of Count function numbers that starts at Offset in Lists;
 /// they must be below NumFunctions.

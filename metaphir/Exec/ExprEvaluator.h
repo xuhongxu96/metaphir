@@ -1,9 +1,8 @@
 //===- ExprEvaluator.h - Evaluate mpir_expr on the IR -----------*- C++ -*-===//
 //
 // Evaluates constraint expressions of the mpir_expr dialect on what a match
-// bound, as ConstraintEvaluator<ConcreteDomain> evaluates MetaphIR
-// constraints: with the same operator descriptors (Operators/), coercions
-// and errors.
+// bound, with the operator descriptors' concrete() faces (Operators/), and
+// the coercions and errors of ConstraintCoercion.
 //
 //===----------------------------------------------------------------------===//
 
@@ -45,7 +44,9 @@ public:
   ExprEvaluator();
   ~ExprEvaluator();
 
-  /// See ConstraintInterpreter::setUseOracle.
+  /// Sets what tells how constants are used in their module, when the IR
+  /// matched has only part of it: uses of a global or constant expression
+  /// can be in any function. Oracle must outlive the evaluation.
   void setUseOracle(UseOracle *Oracle) { Uses = Oracle; }
   /// Drops the analyses cached for value-tracking operators.
   void resetAnalyses();

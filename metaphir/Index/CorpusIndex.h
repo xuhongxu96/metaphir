@@ -3,7 +3,6 @@
 
 #include "metaphir/Index/Postings.h"
 #include "metaphir/Index/Retrieval.h"
-#include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/Features.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -135,12 +134,9 @@ public:
   /// Where the function numbered Number is.
   FunctionLocation locate(uint32_t Number) const;
 
-  /// The functions whose coarse features may match Query, sorted by entry
-  /// and ordinal; none if the query needs no coarse feature, so that any
-  /// function may match.
-  Expected<std::optional<std::vector<FunctionLocation>>>
-  findCandidates(const FunctionFilter &Query) const;
-  /// The functions Plan finds, as findCandidates finds them for a query.
+  /// The functions whose coarse features Plan finds may match, sorted by
+  /// entry and ordinal; none if Plan reads no list, so that any function may
+  /// match.
   Expected<std::optional<std::vector<FunctionLocation>>>
   findCandidates(const RetrievalPlan &Plan) const;
 

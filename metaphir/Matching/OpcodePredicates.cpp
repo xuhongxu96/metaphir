@@ -1,5 +1,4 @@
 #include "metaphir/Matching/OpcodePredicates.h"
-#include "metaphir/Matching/InstructionMatcher.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instruction.h"
@@ -166,10 +165,6 @@ void collectMatcherOperands(const llvm::Instruction &Target,
       Operands.push_back(Operand.get());
     return;
   }
-}
-
-bool InstructionMatcher::matchInstructionTarget() {
-  return matchesInstructionID(Matcher.getInstructionID(), *TargetInstruction);
 }
 
 } // namespace metaphir

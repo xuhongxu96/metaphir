@@ -406,9 +406,8 @@ void PlanConflict::print(raw_ostream &OS, ModuleSlotTracker *Slots) const {
 // The interpreter
 //===----------------------------------------------------------------------===//
 
-/// The binding of an IR value to a meta variable of sort S, as
-/// SubtreeMatcher::getMetaVariableBinding makes it; none if a variable of
-/// that sort cannot be bound to the value.
+/// The binding of an IR value to a meta variable of sort S; none if a
+/// variable of that sort cannot be bound to the value.
 static std::optional<Binding> bindingBySort(const llvm::Value &Target, Sort S) {
   switch (S) {
   case Sort::Value:

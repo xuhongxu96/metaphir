@@ -8,6 +8,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include <tuple>
+#include <type_traits>
 #include <variant>
 
 namespace llvm {
@@ -100,6 +101,14 @@ AbstractValue lacksValueFact(const AbstractCall &Call, unsigned OperandIndex,
 /// measure, below it for a most one. Otherwise unknown.
 AbstractValue exceedsMeasure(const AbstractCall &Call, unsigned OperandIndex,
                              Measure M, unsigned Bound);
+
+namespace detail {
+/// Whether the operator descriptor Op has an abstract() face.
+template <class Op, class = void> struct HasAbstract : std::false_type {};
+template <class Op>
+struct HasAbstract<Op, std::void_t<decltype(&Op::abstract)>> : std::true_type {
+};
+} // namespace detail
 
 } // namespace metaphir
 } // namespace llvm

@@ -2,7 +2,7 @@
 ; mpir-index-retrieval and mpir-index-factor: the functions to check are
 ; those on the lists of some variant's features; a list every variant needs
 ; is read once, for all.
-; RUN: %metaphir-parse --engine=mlir --emit=mlir %s | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-retrieval --mpir-index-factor | FileCheck %s
+; RUN: %metaphir-parse --emit=mlir %s | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-retrieval --mpir-index-factor | FileCheck %s
 
 %r = shr i32 ?x, ?y
 %t = trunc i32 %r to i8

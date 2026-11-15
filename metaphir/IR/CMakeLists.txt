@@ -31,9 +31,6 @@ add_library(metaphir-ir
 
   SourceRange.h
 
-  PatternLowering.cpp
-  PatternLowering.h
-
   Value.h
   Constants.h
   Constants.cpp

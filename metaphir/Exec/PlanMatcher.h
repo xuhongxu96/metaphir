@@ -128,7 +128,7 @@ public:
   explicit PlanMatcher(const PlanProgram &Program);
   ~PlanMatcher();
 
-  /// See ConstraintInterpreter::setUseOracle.
+  /// See ExprEvaluator::setUseOracle.
   void setUseOracle(UseOracle *Oracle) { Evaluator.setUseOracle(Oracle); }
 
   /// The matches of the plan in F, each once. If there are none, the

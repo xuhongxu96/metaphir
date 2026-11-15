@@ -4,11 +4,6 @@ add_library(
   ConstraintCoercion.h
   ConstraintError.cpp
   ConstraintError.h
-  ConstraintInterpreter.cpp
-  ConstraintInterpreter.h
-  ConcreteDomain.cpp
-  ConcreteDomain.h
-  ConstraintEvaluator.h
   Operators/Arithmetic.cpp
   Operators/AbstractCall.cpp
   Operators/AbstractCall.h
@@ -26,31 +21,19 @@ add_library(
   ConstraintValue.h
   ConstantInteger.cpp
   ConstantInteger.h
-  FeatureQuery.cpp
-  FeatureQuery.h
-  FunctionFilter.cpp
-  FunctionFilter.h
+  FeatureRequirement.cpp
+  FeatureRequirement.h
   Features.cpp
   Features.h
   Instantiation.cpp
   IntegerSemantics.cpp
   IntegerSemantics.h
   Instantiation.h
-  TypeMatcher.cpp
-  TypeMatcher.h
   UseOracle.cpp
   UseOracle.h
-  SubtreeMatcher.cpp
-  SubtreeMatcher.h
-  IndexDomain.cpp
-  IndexDomain.h
-  InstructionMatcher.cpp
   OpcodePredicates.cpp
   OpcodePredicates.h
-  InstructionMatcher.h
   LLVMValueClasses.def
-  PatternMatcher.cpp
-  PatternMatcher.h
   Target.cpp
   Target.h
   TypeCode.cpp

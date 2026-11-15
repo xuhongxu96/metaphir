@@ -1,11 +1,5 @@
 #include "metaphir/Exec/CompiledPattern.h"
-#include "metaphir/IR/MIRContext.h"
-#include "metaphir/IR/Pattern.h"
-#include "metaphir/IR/PatternLowering.h"
-#include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Index/CorpusIndex.h"
-#include "metaphir/Matching/FeatureQuery.h"
-#include "metaphir/Parser/MIRParser.h"
 #include "metaphir/Web/WebPublisher.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
@@ -198,7 +192,7 @@ static int stats(StringRef ToolName) {
       CompiledPattern::compileFile(StatsPattern, errs(), ToolName.data());
   if (!Compiled)
     return 1;
-  const FunctionFilter &Query = *Compiled->Query;
+  const IndexQuery &Query = *Compiled->Query;
 
   Expected<CorpusIndex> Index = CorpusIndex::read(StatsIndex);
   if (!Index) {
