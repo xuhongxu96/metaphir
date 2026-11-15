@@ -109,7 +109,9 @@ def Mpir_YieldOp : Mpir_Op<"yield", []> {
 // Values
 //===----------------------------------------------------------------------===//
 
-def Mpir_VarOp : Mpir_Op<"var", [Pure,
+// Not Pure: two variables of one name (local copies of a matcher's) are
+// distinct, and must not be merged.
+def Mpir_VarOp : Mpir_Op<"var", [
     DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>]> {
   let summary = "A meta variable, '?name'";
   let arguments = (ins StrAttr:$var_name);

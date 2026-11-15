@@ -16,6 +16,7 @@
 #ifndef METAPHIR_DIALECT_INDEX_INDEXOPS_TD
 #define METAPHIR_DIALECT_INDEX_INDEXOPS_TD
 
+include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "metaphir/Dialect/Pattern/PatternBase.td"
@@ -25,6 +26,7 @@ def Index_Dialect : Dialect {
   let summary = "MetaphIR index queries";
   let cppNamespace = "::llvm::metaphir::mpir_index";
   let dependentDialects = ["::llvm::metaphir::mpir::PatternDialect"];
+  let useDefaultTypePrinterParser = 1;
 }
 
 class Index_Op<string mnemonic, list<Trait> traits = []>
@@ -155,6 +157,62 @@ def Index_AssumeOp : Index_Op<"assume"> {
   let summary = "A constraint that must not be false on the features";
   let arguments = (ins Mpir_Term:$condition);
   let assemblyFormat = "$condition attr-dict `:` type($condition)";
+}
+
+//===----------------------------------------------------------------------===//
+// Retrieval: which functions to check, from the posting lists
+//===----------------------------------------------------------------------===//
+
+def Index_SetType : TypeDef<Index_Dialect, "Set"> {
+  let mnemonic = "set";
+  let summary = "A set of functions of the corpus";
+}
+
+def Index_RetrieveOp : Index_Op<"retrieve", [HasParent<"QueryOp">,
+                                             SingleBlock, NoTerminator]> {
+  let summary = "The functions that may match, from the posting lists";
+  let description = [{
+    The region computes a superset of the functions some variant may match,
+    which mpir_index.result names. Where an intersection reads lists, the
+    executor may read only the shortest few: a superset still.
+  }];
+  let regions = (region SizedRegion<1>:$body);
+  let assemblyFormat = "attr-dict-with-keyword $body";
+}
+
+def Index_PostingsOp : Index_Op<"postings", [Pure]> {
+  let summary = "The functions with a coarse feature";
+  let description = [{
+    `kind` is a PostingKey's kind (0 instruction, 1 edge, 2 sibling, 3
+    global) and `key` its value: the instruction matcher, the edge or sibling
+    key, or (for a global) its name.
+  }];
+  let arguments = (ins I32Attr:$kind, AnyAttr:$key);
+  let results = (outs Index_SetType:$result);
+  let assemblyFormat = "$kind `,` $key attr-dict";
+}
+
+def Index_IntersectOp : Index_Op<"intersect", [Pure]> {
+  let arguments = (ins Variadic<Index_SetType>:$sets);
+  let results = (outs Index_SetType:$result);
+  let assemblyFormat = "$sets attr-dict";
+}
+
+def Index_UnionOp : Index_Op<"union", [Pure]> {
+  let arguments = (ins Variadic<Index_SetType>:$sets);
+  let results = (outs Index_SetType:$result);
+  let assemblyFormat = "$sets attr-dict";
+}
+
+def Index_UniverseOp : Index_Op<"universe", [Pure]> {
+  let summary = "Every function: no posting list narrows them down";
+  let results = (outs Index_SetType:$result);
+  let assemblyFormat = "attr-dict";
+}
+
+def Index_ResultOp : Index_Op<"result", [HasParent<"RetrieveOp">]> {
+  let arguments = (ins Index_SetType:$set);
+  let assemblyFormat = "$set attr-dict";
 }
 
 #endif // METAPHIR_DIALECT_INDEX_INDEXOPS_TD

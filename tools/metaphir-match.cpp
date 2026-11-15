@@ -14,6 +14,7 @@
 #include "metaphir/Parser/MIRParser.h"
 #include "metaphir/Parser/PatternParser.h"
 #include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/Retrieval.h"
 #include "metaphir/Transforms/Structuralize.h"
 #include "metaphir/Transforms/ToIndex.h"
 #include "metaphir/Transforms/ToPlan.h"
@@ -109,6 +110,18 @@ static cl::opt<bool> NoStructuralize(
     "no-structuralize", cl::Hidden,
     cl::desc("With --engine=mlir, do not require what constraints say of "
              "instructions as index features (for measuring)"),
+    cl::cat(Category));
+
+static cl::opt<bool> PrintCandidates(
+    "print-candidates", cl::Hidden,
+    cl::desc("With --index, print to stderr how many functions the posting "
+             "lists leave"),
+    cl::cat(Category));
+
+static cl::opt<bool> NoFactor(
+    "no-factor", cl::Hidden,
+    cl::desc("With --engine=mlir, do not factor the lists every variant "
+             "reads out of the index lookup (for measuring)"),
     cl::cat(Category));
 
 enum class Engine { Classic, MLIR };
@@ -230,6 +243,9 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
     PM.addPass(createToIndexPass());
     if (!NoStructuralize)
       PM.addPass(createIndexStructuralizePass());
+    PM.addPass(createIndexRetrievalPass());
+    if (!NoFactor)
+      PM.addPass(createIndexFactorPass());
     if (mlir::failed(PM.run(*Loaded->Module))) {
       Err << ToolName << ": error: the pattern has no match plan\n";
       return nullptr;
@@ -912,13 +928,19 @@ int main(int Argc, char **Argv) {
   std::optional<IndexUse> Use;
   if (Index) {
     Expected<std::optional<std::vector<FunctionLocation>>> Found =
-        Index->findCandidates(Pattern->filter());
+        Pattern->Index && Pattern->Index->getRetrieval()
+            ? Index->findCandidates(*Pattern->Index->getRetrieval())
+            : Index->findCandidates(Pattern->filter());
     if (!Found) {
       logAllUnhandledErrors(Found.takeError(), errs(),
                             Twine(ToolName) + ": error: ");
       return 1;
     }
     Use.emplace(IndexUse{*Index, std::nullopt});
+    if (PrintCandidates)
+      errs() << "candidates "
+             << (*Found ? std::to_string((*Found)->size()) : std::string("all"))
+             << '\n';
     if (*Found) {
       Use->Candidates.emplace();
       for (const FunctionLocation &Location : **Found)

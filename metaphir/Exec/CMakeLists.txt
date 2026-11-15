@@ -5,7 +5,7 @@ add_library(metaphir-exec ExprEvaluator.cpp ExprEvaluator.h TypePattern.cpp
                           PlanMatcher.h)
 add_dependencies(metaphir-exec MetaphIRPatternOpsIncGen MetaphIRExprOpsIncGen
                  MetaphIRPlanOpsIncGen MetaphIRIndexOpsIncGen)
-target_link_libraries(metaphir-exec PUBLIC metaphir-matching
+target_link_libraries(metaphir-exec PUBLIC metaphir-matching metaphir-index-core
                                            metaphir-surface-printer
                                            metaphir-dialect-plan
                                            metaphir-dialect-index)

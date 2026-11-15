@@ -2,6 +2,7 @@
 #define METAPHIR_INDEX_CORPUSINDEX_H
 
 #include "metaphir/Index/Postings.h"
+#include "metaphir/Index/Retrieval.h"
 #include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/Features.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
@@ -139,6 +140,9 @@ public:
   /// function may match.
   Expected<std::optional<std::vector<FunctionLocation>>>
   findCandidates(const FunctionFilter &Query) const;
+  /// The functions Plan finds, as findCandidates finds them for a query.
+  Expected<std::optional<std::vector<FunctionLocation>>>
+  findCandidates(const RetrievalPlan &Plan) const;
 
   /// Reads the summary of the functions of Entry, an entry of this index.
   /// Its fine features (see FunctionFeatures::Fine) are read only if

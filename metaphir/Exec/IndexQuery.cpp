@@ -44,9 +44,13 @@ static Site siteOf(mlir::ArrayAttr Attr) {
               uint8_t(Int(2))};
 }
 
+static RetrievalPlan compileRetrieval(mpir_index::RetrieveOp Retrieve);
+
 IndexQuery::IndexQuery(mpir_index::QueryOp Query)
     : TypeContext(std::make_unique<LLVMContext>()) {
   ExprEvaluator Concrete;
+  for (auto Retrieve : Query.getBody().front().getOps<mpir_index::RetrieveOp>())
+    Retrieval = compileRetrieval(Retrieve);
   for (auto VariantOp :
        Query.getBody().front().getOps<mpir_index::VariantOp>()) {
     Variant V;
@@ -147,6 +151,41 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
 }
 
 IndexQuery::~IndexQuery() = default;
+
+/// The retrieval plan of Retrieve's set expression.
+static RetrievalPlan compileRetrieval(mpir_index::RetrieveOp Retrieve) {
+  RetrievalPlan Plan;
+  DenseMap<mlir::Value, unsigned> Nodes;
+  for (Operation &Op : Retrieve.getBody().front()) {
+    RetrievalPlan::Node N;
+    if (auto P = dyn_cast<mpir_index::PostingsOp>(Op)) {
+      N.K = RetrievalPlan::Kind::Postings;
+      auto Kind = PostingKey::KeyKind(P.getKind());
+      uint64_t Value =
+          Kind == PostingKey::Global
+              ? hashGlobalName(cast<mlir::StringAttr>(P.getKey()).getValue())
+              : uint64_t(cast<mlir::IntegerAttr>(P.getKey()).getInt());
+      N.Key = PostingKey{Kind, Value};
+    } else if (auto I = dyn_cast<mpir_index::IntersectOp>(Op)) {
+      N.K = RetrievalPlan::Kind::Intersect;
+      for (mlir::Value S : I.getSets())
+        N.Children.push_back(Nodes.lookup(S));
+    } else if (auto U = dyn_cast<mpir_index::UnionOp>(Op)) {
+      N.K = RetrievalPlan::Kind::Union;
+      for (mlir::Value S : U.getSets())
+        N.Children.push_back(Nodes.lookup(S));
+    } else if (isa<mpir_index::UniverseOp>(Op)) {
+      N.K = RetrievalPlan::Kind::Universe;
+    } else if (auto Result = dyn_cast<mpir_index::ResultOp>(Op)) {
+      Plan.setRoot(Nodes.lookup(Result.getSet()));
+      continue;
+    } else {
+      continue;
+    }
+    Nodes[Op.getResult(0)] = Plan.add(std::move(N));
+  }
+  return Plan;
+}
 
 //===----------------------------------------------------------------------===//
 // Typing

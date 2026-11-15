@@ -447,6 +447,33 @@ CorpusIndex::findCandidates(const FunctionFilter &Query) const {
   return Locations;
 }
 
+Expected<std::optional<std::vector<FunctionLocation>>>
+CorpusIndex::findCandidates(const RetrievalPlan &Plan) const {
+  std::map<PostingKey, std::vector<uint32_t>> Lists;
+  Expected<std::optional<std::vector<uint32_t>>> Found =
+      Plan.evaluate([&](const PostingKey &Key) { return getPostingCount(Key); },
+                    [&](const PostingKey &Key) -> Expected<ArrayRef<uint32_t>> {
+                      auto It = Lists.find(Key);
+                      if (It == Lists.end()) {
+                        Expected<std::vector<uint32_t>> Numbers =
+                            readPostings(Key);
+                        if (!Numbers)
+                          return Numbers.takeError();
+                        It = Lists.emplace(Key, std::move(*Numbers)).first;
+                      }
+                      return ArrayRef<uint32_t>(It->second);
+                    });
+  if (!Found)
+    return Found.takeError();
+  if (!*Found)
+    return std::nullopt;
+  std::vector<FunctionLocation> Locations;
+  Locations.reserve((*Found)->size());
+  for (uint32_t Number : **Found)
+    Locations.push_back(locate(Number));
+  return Locations;
+}
+
 Expected<FunctionFeatures> CorpusIndex::readSummary(
     const IndexEntry &Entry,
     function_ref<bool(const FunctionFeatures &)> NeedsFine) const {

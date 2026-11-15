@@ -15,6 +15,9 @@
 
 #include "metaphir/Dialect/Index/IndexOpsDialect.h.inc"
 
+#define GET_TYPEDEF_CLASSES
+#include "metaphir/Dialect/Index/IndexOpsTypes.h.inc"
+
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Index/IndexOps.h.inc"
 

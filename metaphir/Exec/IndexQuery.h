@@ -11,6 +11,7 @@
 #define METAPHIR_EXEC_INDEXQUERY_H
 
 #include "metaphir/Exec/TypePattern.h"
+#include "metaphir/Index/Retrieval.h"
 #include "metaphir/Matching/FeatureQuery.h"
 #include "metaphir/Matching/FunctionFilter.h"
 #include "mlir/IR/Value.h"
@@ -48,6 +49,11 @@ public:
   SmallVector<std::string, 2>
   explainNoStructure(const FunctionFeatures &Features) const override;
 
+  /// The query's retrieval, if it has an mpir_index.retrieve.
+  const RetrievalPlan *getRetrieval() const {
+    return Retrieval ? &*Retrieval : nullptr;
+  }
+
   struct Typing;
   /// A way to type a variant's instructions: its type variables' bindings.
   using Row = std::vector<Instantiation::Binding>;
@@ -71,6 +77,7 @@ private:
                           const Row &Types) const;
 
   std::vector<Variant> Variants;
+  std::optional<RetrievalPlan> Retrieval;
   TypePatterns Types;
   /// Where the types of signatures are decoded; queries are therefore not
   /// thread-safe.

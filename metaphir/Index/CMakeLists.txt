@@ -2,7 +2,7 @@
 # build too.
 add_library(metaphir-index-core FeatureCoding.cpp FeatureCoding.h
                                 FunctionPack.cpp FunctionPack.h Postings.cpp
-                                Postings.h)
+                                Postings.h Retrieval.cpp Retrieval.h)
 
 target_link_libraries(metaphir-index-core PUBLIC metaphir-matching LLVMBitReader
                                                  LLVMCore LLVMSupport)
