@@ -26,7 +26,7 @@ static cl::opt<Engine>
     UseEngine("engine", cl::desc("The implementation to parse with"),
               cl::values(clEnumValN(Engine::Classic, "classic", "MetaphIR IR"),
                          clEnumValN(Engine::MLIR, "mlir", "the mpir dialect")),
-              cl::init(Engine::Classic), cl::cat(Category));
+              cl::init(Engine::MLIR), cl::cat(Category));
 
 enum class Emit { Surface, MLIR };
 static cl::opt<Emit> EmitKind(

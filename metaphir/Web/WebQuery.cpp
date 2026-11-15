@@ -1,20 +1,9 @@
 #include "metaphir/Web/WebQuery.h"
-#include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/SurfacePrinter.h"
-#include "metaphir/Dialect/Plan/PlanDialect.h"
-#include "metaphir/Exec/IndexQuery.h"
-#include "metaphir/Exec/PlanMatcher.h"
+#include "metaphir/Exec/CompiledPattern.h"
 #include "metaphir/IR/SourceRange.h"
 #include "metaphir/Index/FeatureCoding.h"
 #include "metaphir/Index/FunctionPack.h"
-#include "metaphir/Parser/PatternParser.h"
-#include "metaphir/Transforms/Lowering.h"
-#include "metaphir/Transforms/Retrieval.h"
-#include "metaphir/Transforms/Structuralize.h"
-#include "metaphir/Transforms/ToIndex.h"
-#include "metaphir/Transforms/ToPlan.h"
-#include "mlir/IR/MLIRContext.h"
-#include "mlir/Pass/PassManager.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/IR/AssemblyAnnotationWriter.h"
@@ -33,15 +22,10 @@
 namespace llvm {
 namespace metaphir {
 
-/// A parsed and lowered pattern: its module, with its match plan and its
-/// index query.
+/// A compiled pattern, and the warnings it was compiled with.
 struct WebQuery::Compiled {
-  SourceMgr Source;
   std::vector<PatternNote> Warnings;
-  mlir::MLIRContext Context{mlir::MLIRContext::Threading::DISABLED};
-  mlir::OwningOpRef<mlir::ModuleOp> Module;
-  std::unique_ptr<PlanProgram> Program;
-  std::unique_ptr<IndexQuery> Query;
+  std::unique_ptr<CompiledPattern> Pattern;
 };
 
 WebQuery::WebQuery(const WebIndex &Index) : Index(Index) {}
@@ -52,45 +36,24 @@ WebQuery::compile(const WebIndex &Index, StringRef Source, StringRef Name) {
   std::unique_ptr<WebQuery> Query(new WebQuery(Index));
   Query->Pattern = std::make_unique<Compiled>();
   Compiled &Pattern = *Query->Pattern;
+  std::string Message;
+  raw_string_ostream Err(Message);
   // Warnings are not errors: they are kept for the page.
-  Pattern.Source.setDiagHandler(
-      [](const SMDiagnostic &Diag, void *Warnings) {
-        bool Located = Diag.getLineNo() > 0;
-        static_cast<std::vector<PatternNote> *>(Warnings)->push_back(
-            {Diag.getMessage().str(), Located ? unsigned(Diag.getLineNo()) : 0,
-             Located ? unsigned(Diag.getColumnNo() + 1) : 0});
-      },
-      &Pattern.Warnings);
-  SMDiagnostic Diag;
-  Pattern.Module =
-      parsePatternBuffer(MemoryBuffer::getMemBufferCopy(Source, Name),
-                         Pattern.Source, Pattern.Context, Diag);
-  if (!Pattern.Module) {
-    std::string Message;
-    raw_string_ostream OS(Message);
-    Diag.print(/*ProgName=*/nullptr, OS, /*ShowColors=*/false);
+  Pattern.Pattern = CompiledPattern::compile(
+      MemoryBuffer::getMemBufferCopy(Source, Name), Err, /*ProgName=*/nullptr,
+      {}, [&](SourceMgr &SM) {
+        SM.setDiagHandler(
+            [](const SMDiagnostic &Diag, void *Warnings) {
+              bool Located = Diag.getLineNo() > 0;
+              static_cast<std::vector<PatternNote> *>(Warnings)->push_back(
+                  {Diag.getMessage().str(),
+                   Located ? unsigned(Diag.getLineNo()) : 0,
+                   Located ? unsigned(Diag.getColumnNo() + 1) : 0});
+            },
+            &Pattern.Warnings);
+      });
+  if (!Pattern.Pattern)
     return createStringError(Message);
-  }
-  {
-    std::string Message;
-    raw_string_ostream OS(Message);
-    if (mlir::failed(lowerPatternModule(*Pattern.Module, Pattern.Source, OS)))
-      return createStringError(Message);
-  }
-  mlir::PassManager PM(&Pattern.Context);
-  PM.addPass(createToPlanPass());
-  PM.addPass(createToIndexPass());
-  PM.addPass(createIndexStructuralizePass());
-  PM.addPass(createIndexRetrievalPass());
-  PM.addPass(createIndexFactorPass());
-  if (mlir::failed(PM.run(*Pattern.Module)))
-    return createStringError("the pattern has no match plan");
-  for (auto Plan : Pattern.Module->getOps<mpir_plan::MatcherOp>())
-    Pattern.Program = PlanProgram::compile(Plan);
-  for (auto IndexQ : Pattern.Module->getOps<mpir_index::QueryOp>())
-    Pattern.Query = std::make_unique<IndexQuery>(IndexQ);
-  if (!Pattern.Program || !Pattern.Query)
-    return createStringError("the pattern has no instructions");
   return Query;
 }
 
@@ -98,7 +61,8 @@ std::vector<ByteRange> WebQuery::getKeyRanges() const {
   std::vector<ByteRange> Ranges;
   if (Mode == WebQueryMode::NoIndex)
     return Ranges;
-  for (const PostingKey &Key : Pattern->Query->getRetrieval()->getKeys())
+  for (const PostingKey &Key :
+       Pattern->Pattern->Query->getRetrieval()->getKeys())
     if (std::optional<ByteRange> Block = Index.getKeyBlock(Key))
       Ranges.push_back(*Block);
   return mergeRanges(std::move(Ranges));
@@ -107,7 +71,7 @@ std::vector<ByteRange> WebQuery::getKeyRanges() const {
 Expected<std::vector<ByteRange>> WebQuery::findLists(const ByteCache &Cache) {
   if (Mode == WebQueryMode::NoIndex)
     return std::vector<ByteRange>();
-  const RetrievalPlan &Plan = *Pattern->Query->getRetrieval();
+  const RetrievalPlan &Plan = *Pattern->Pattern->Query->getRetrieval();
   std::map<PostingKey, std::optional<WebPosting>> Postings;
   for (const PostingKey &Key : Plan.getKeys()) {
     Expected<std::optional<WebPosting>> Found = Index.findPosting(Key, Cache);
@@ -165,7 +129,7 @@ WebQuery::findCandidates(const ByteCache &Cache) {
   for (const ChosenList &List : Lists)
     Counts[List.Key] = List.Count;
   Expected<std::optional<std::vector<uint32_t>>> Found =
-      Pattern->Query->getRetrieval()->evaluate(
+      Pattern->Pattern->Query->getRetrieval()->evaluate(
           [&](const PostingKey &Key) -> uint64_t {
             auto It = Counts.find(Key);
             return It == Counts.end() ? 0 : It->second;
@@ -248,7 +212,7 @@ WebQuery::filterCandidates(const ByteCache &Cache) {
     Expected<FunctionFeatures> Features = readFunctionFeatures(*Bytes);
     if (!Features)
       return Features.takeError();
-    const IndexQuery &Query = *Pattern->Query;
+    const IndexQuery &Query = *Pattern->Pattern->Query;
     if (Mode == WebQueryMode::NoConstraints
             ? !any_of(seq<unsigned>(0, Query.size()),
                       [&](unsigned Variant) {
@@ -348,7 +312,7 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned Slot,
     return Located(Unpacked.takeError());
   const llvm::Function &F = (*Unpacked)->getFunction();
 
-  PlanMatcher Matcher(*Pattern->Program);
+  PlanMatcher Matcher(*Pattern->Pattern->Program);
   Matcher.setUseOracle(Unpacked->get());
   bool Structural = false;
   SmallVector<PlanRejection, 4> Unsatisfied;
@@ -370,7 +334,7 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned Slot,
         raw_string_ostream Message(R.Constraint.Message);
         printSurfaceExpression(Message, U.Expression);
         SMLoc Loc = U.Written.Start;
-        const SourceMgr &SM = Pattern->Source;
+        const SourceMgr &SM = Pattern->Pattern->Source;
         if (getMainFileLine(SM, Loc))
           std::tie(R.Constraint.Line, R.Constraint.Column) =
               SM.getLineAndColumn(Loc, SM.getMainFileID());
@@ -378,13 +342,13 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned Slot,
         raw_string_ostream Bindings(R.Bindings);
         U.Rejected.print(Bindings, &Slots);
         raw_string_ostream Instructions(R.Instructions);
-        U.Rejected.printInstructions(Instructions, Pattern->Source);
+        U.Rejected.printInstructions(Instructions, Pattern->Pattern->Source);
       }
     return Error::success();
   }
   for (const PlanMatch &Match : Matches)
     Match.printLine(Out, Module.Path, F, &Slots,
-                    PrintInstructions ? &Pattern->Source : nullptr);
+                    PrintInstructions ? &Pattern->Pattern->Source : nullptr);
   return Error::success();
 }
 

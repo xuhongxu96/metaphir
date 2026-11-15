@@ -1,6 +1,5 @@
-#include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/SurfacePrinter.h"
-#include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Exec/CompiledPattern.h"
 #include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Exec/PlanMatcher.h"
 #include "metaphir/IR/MIRContext.h"
@@ -12,16 +11,8 @@
 #include "metaphir/Matching/PatternMatcher.h"
 #include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Parser/MIRParser.h"
-#include "metaphir/Parser/PatternParser.h"
-#include "metaphir/Transforms/Lowering.h"
-#include "metaphir/Transforms/Retrieval.h"
-#include "metaphir/Transforms/Structuralize.h"
-#include "metaphir/Transforms/ToIndex.h"
-#include "metaphir/Transforms/ToPlan.h"
 #include "metaphir/Web/WebIndex.h"
 #include "metaphir/Web/WebQuery.h"
-#include "mlir/IR/MLIRContext.h"
-#include "mlir/Pass/PassManager.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/BitcodeReader.h"
@@ -130,7 +121,7 @@ static cl::opt<Engine>
               cl::values(clEnumValN(Engine::Classic, "classic", "MetaphIR IR"),
                          clEnumValN(Engine::MLIR, "mlir",
                                     "the mpir dialects and match plans")),
-              cl::init(Engine::Classic), cl::cat(Category));
+              cl::init(Engine::MLIR), cl::cat(Category));
 
 static cl::opt<bool> NoConstraintPrefilter(
     "no-constraint-prefilter", cl::Hidden,
@@ -148,10 +139,14 @@ struct LoadedPattern {
   std::optional<PatternVariants> Variants;
   FeatureQuery Query;
   // With --engine=mlir: the pattern's module, lowered, with its plan.
-  std::unique_ptr<mlir::MLIRContext> MLIRContext;
-  mlir::OwningOpRef<mlir::ModuleOp> Module;
-  std::unique_ptr<PlanProgram> Program;
-  std::unique_ptr<IndexQuery> Index;
+  std::unique_ptr<CompiledPattern> Compiled;
+  const PlanProgram *Program = nullptr;
+  const IndexQuery *Index = nullptr;
+
+  /// The pattern's source, as matches print its lines.
+  const SourceMgr &source() const {
+    return Compiled ? Compiled->Source : Source;
+  }
 
   /// What a function needs to match: from the index query, with
   /// --engine=mlir.
@@ -226,34 +221,18 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
   if (Quiet)
     Loaded->Source.setDiagHandler([](const SMDiagnostic &, void *) {});
   if (UseEngine == Engine::MLIR) {
-    Loaded->MLIRContext = std::make_unique<mlir::MLIRContext>(
-        mlir::MLIRContext::Threading::DISABLED);
-    SMDiagnostic Diag;
-    Loaded->Module = parsePatternFile(PatternFilename, Loaded->Source,
-                                      *Loaded->MLIRContext, Diag);
-    if (!Loaded->Module) {
-      Diag.print(ToolName.data(), Err);
+    PipelineOptions Options;
+    Options.Structuralize = !NoStructuralize;
+    Options.Factor = !NoFactor;
+    Loaded->Compiled = CompiledPattern::compileFile(
+        PatternFilename, Err, ToolName.data(), Options, [&](SourceMgr &SM) {
+          if (Quiet)
+            SM.setDiagHandler([](const SMDiagnostic &, void *) {});
+        });
+    if (!Loaded->Compiled)
       return nullptr;
-    }
-    if (mlir::failed(lowerPatternModule(*Loaded->Module, Loaded->Source, Err,
-                                        ToolName.data())))
-      return nullptr;
-    mlir::PassManager PM(Loaded->MLIRContext.get());
-    PM.addPass(createToPlanPass());
-    PM.addPass(createToIndexPass());
-    if (!NoStructuralize)
-      PM.addPass(createIndexStructuralizePass());
-    PM.addPass(createIndexRetrievalPass());
-    if (!NoFactor)
-      PM.addPass(createIndexFactorPass());
-    if (mlir::failed(PM.run(*Loaded->Module))) {
-      Err << ToolName << ": error: the pattern has no match plan\n";
-      return nullptr;
-    }
-    for (auto Plan : Loaded->Module->getOps<mpir_plan::MatcherOp>())
-      Loaded->Program = PlanProgram::compile(Plan);
-    for (auto Query : Loaded->Module->getOps<mpir_index::QueryOp>())
-      Loaded->Index = std::make_unique<IndexQuery>(Query);
+    Loaded->Program = Loaded->Compiled->Program.get();
+    Loaded->Index = Loaded->Compiled->Query.get();
     return Loaded;
   }
   Pattern *RawPattern = nullptr;
@@ -484,7 +463,7 @@ static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
     if (MatchesOnly) {
       for (const PlanMatch &Match : Matches)
         Match.printLine(Out, File, *F, SlotsFor(*F),
-                        PrintInstructions ? &Pattern.Source : nullptr);
+                        PrintInstructions ? &Pattern.source() : nullptr);
       continue;
     }
     Out << "target " << TargetIndex++ << ": @" << F->getName() << '\n';
@@ -501,7 +480,7 @@ static void matchFileWithPlan(LoadedPattern &Pattern, StringRef File,
             Out << "    rejected: ";
             U.Rejected.print(Out, SlotsFor(*F));
             Out << '\t';
-            U.Rejected.printInstructions(Out, Pattern.Source);
+            U.Rejected.printInstructions(Out, Pattern.source());
             Out << '\n';
           }
         }

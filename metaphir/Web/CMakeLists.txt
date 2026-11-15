@@ -34,9 +34,8 @@ endif()
 add_library(metaphir-web WebIndex.cpp WebIndex.h WebQuery.cpp WebQuery.h
                          Zstd.cpp Zstd.h)
 
-target_link_libraries(metaphir-web PUBLIC metaphir-index-core metaphir-exec
-                                          metaphir-pattern-parser
-                                          metaphir-transforms ${METAPHIR_ZSTD})
+target_link_libraries(metaphir-web PUBLIC metaphir-index-core metaphir-compile
+                                          ${METAPHIR_ZSTD})
 
 # Publishing a corpus from its index.
 add_library(metaphir-web-publish WebPublisher.cpp WebPublisher.h)

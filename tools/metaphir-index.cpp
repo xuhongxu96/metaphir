@@ -1,3 +1,4 @@
+#include "metaphir/Exec/CompiledPattern.h"
 #include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/Pattern.h"
 #include "metaphir/IR/PatternLowering.h"
@@ -193,22 +194,11 @@ static void printShare(StringRef What, uint64_t Part, uint64_t Whole) {
 }
 
 static int stats(StringRef ToolName) {
-  SourceMgr Source;
-  MIRContext Context;
-  Pattern *RawPattern = nullptr;
-  SMDiagnostic Diag;
-  if (parseMIRFile(StatsPattern, Source, Context, RawPattern, Diag)) {
-    Diag.print(ToolName.data(), errs());
+  std::unique_ptr<CompiledPattern> Compiled =
+      CompiledPattern::compileFile(StatsPattern, errs(), ToolName.data());
+  if (!Compiled)
     return 1;
-  }
-  Expected<PatternVariants> Lowered =
-      PatternLowering(Context).lower(RawPattern);
-  if (!Lowered) {
-    printLoweringErrors(Lowered.takeError(), Source, Context, errs(),
-                        ToolName.data());
-    return 1;
-  }
-  FeatureQuery Query = FeatureQuery::compute(*Lowered, &Context);
+  const FunctionFilter &Query = *Compiled->Query;
 
   Expected<CorpusIndex> Index = CorpusIndex::read(StatsIndex);
   if (!Index) {
