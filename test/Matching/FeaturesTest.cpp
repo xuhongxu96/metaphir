@@ -11,7 +11,7 @@
 
 using namespace llvm;
 using namespace llvm::metaphir;
-using MIRInstruction = llvm::metaphir::Instruction;
+namespace MIRInstruction = llvm::metaphir::Instruction;
 
 namespace {
 

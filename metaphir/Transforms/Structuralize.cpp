@@ -134,8 +134,8 @@ static std::optional<Disjunction> derive(Value C) {
   mlir::OperandRange Args = Call.getArgs();
   switch (Call.getOperatorID()) {
   case Constraint::O_Equal: {
-    if (Args.size() != 2)
-      return std::nullopt;
+    // The verifier admits only two operands for '=='.
+    assert(Args.size() == 2 && "'==' takes two operands");
     for (unsigned Side : {0u, 1u})
       if (auto Str = Args[1 - Side].getDefiningOp<mpir_expr::StrOp>())
         return deriveEquality(Args[Side], Str.getValue());

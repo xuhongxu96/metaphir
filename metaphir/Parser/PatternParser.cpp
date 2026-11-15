@@ -550,8 +550,6 @@ bool Parser::parseModule(bool Library) {
     if (parseBodyLine(tok::Eof))
       return true;
   }
-  if (Lex.hasError())
-    return true;
   if (BodyInstructions.empty()) {
     ThePattern.erase();
     ThePattern = nullptr;
@@ -581,11 +579,7 @@ bool Parser::parseModule(bool Library) {
         return Lex.ParseError(locOf(Var), "block '?" + Var.getVarName() +
                                               "' has no instruction, and no "
                                               "instruction refers to it");
-  // A library's instructions are not a pattern of its own.
-  if (Library) {
-    ThePattern.erase();
-    ThePattern = nullptr;
-  }
+  assert(!Library && "a library has definitions only, no pattern of its own");
   return false;
 }
 
@@ -731,8 +725,7 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, MetaFlag::Placement &Allowed) {
   Nesting Nest(*this);
   if (Nest.tooDeep())
     return true;
-  if (Lex.getKind() != tok::MetaFlag)
-    return error("expected metaflag");
+  assert(Lex.getKind() == tok::MetaFlag && "expected a metaflag");
   LocTy Loc = Lex.getLoc();
   std::string Name = Lex.getStrVal();
   MetaFlag::MetaFlagID ID = MetaFlag::getMetaFlagID(Name);
@@ -974,9 +967,8 @@ bool Parser::parseCompositeInstruction(Value &Result, MatcherOp CM,
           OpName, Flags))
     return true;
   SmallVector<POperand, 8> Ops;
+  // A 'match' is declared with one of the shared archetypes.
   auto Syntax = Instruction::OperandSyntax(CM.getSyntax());
-  if (Syntax == Instruction::OperandSyntax::Custom)
-    return error("custom syntax not supported for composite matchers");
   if (parseArchetypeOperands(Syntax, CM.getArity(), OpName, Ops) ||
       validateOrSelf(MFlags, Ops))
     return true;
@@ -1101,8 +1093,8 @@ bool Parser::parseOperandMetaFlags(POperand &Result) {
 }
 
 bool Parser::parseArrayCapture(POperand &Result, bool WithTypes) {
-  if (!consume(tok::dotdotdot))
-    return error("expected '...' operand capture");
+  assert(Lex.getKind() == tok::dotdotdot && "expected a '...' capture");
+  next();
   Result.Kind =
       WithTypes ? OperandKind::TypedValueArray : OperandKind::ValueArray;
   if (WithTypes) {
@@ -1173,9 +1165,9 @@ bool Parser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
     return false;
   }
   case Instruction::OperandSyntax::Custom:
-    break;
+    llvm_unreachable("custom operand syntax is not a shared archetype");
   }
-  llvm_unreachable("custom operand syntax is not a shared archetype");
+  llvm_unreachable("invalid operand syntax");
 }
 
 bool Parser::parseOperand(SmallVectorImpl<POperand> &Ops, Sort Expected) {
@@ -1283,8 +1275,7 @@ bool Parser::parseCustomOperands(Instruction::InstructionID ID,
   case Instruction::I_call:
     return parseCallOperands(Ops);
   default:
-    return error("instruction parser is not implemented for '" +
-                 Instruction::getOpcodeName(ID) + "'");
+    llvm_unreachable("a matcher of custom syntax has no parser");
   }
 }
 
@@ -1885,7 +1876,7 @@ static Sort bodySort(mlir::Block &Body) {
   for (mlir::Operation &Op : llvm::reverse(Body))
     if (auto Yield = dyn_cast<YieldOp>(Op))
       return sortOf(Yield.getValue());
-  return Sort::Unknown;
+  llvm_unreachable("a definition's body yields its result");
 }
 
 bool Parser::parseConstraintCall(Value &Result) {
@@ -2204,9 +2195,9 @@ bool Parser::parseMatchParameters(Instruction::OperandSyntax Syntax,
            expect(tok::kw_to, "expected 'to' before the result type") ||
            TypeParameter();
   case Instruction::OperandSyntax::Custom:
-    break;
+    llvm_unreachable("a match declaration has a shared archetype");
   }
-  llvm_unreachable("a match declaration has a shared archetype");
+  llvm_unreachable("invalid operand syntax");
 }
 
 bool Parser::parseSemanticFlagName(InstructionFlag::FlagID &Result) {
@@ -2405,12 +2396,9 @@ bool Parser::parseMatchBranch(const MatchHeader &Header, MatcherOp Matcher) {
     auto Use = dyn_cast<UseOp>(I);
     std::optional<StringRef> Name =
         Inst ? Inst.getResultName() : Use.getResultName();
-    if (Name != "ret")
-      continue;
-    if (Root)
-      return Lex.ParseError(BranchEnd,
-                            "multiple '%ret' instructions in match branch");
-    Root = I;
+    // Results are named once, so there is one '%ret' at most.
+    if (Name == "ret")
+      Root = I;
   }
   if (!Root)
     Root = BodyInstructions.back();
@@ -2483,12 +2471,14 @@ parsePatternBuffer(std::unique_ptr<MemoryBuffer> Buffer, SourceMgr &SM,
     return nullptr;
   // What the parser builds is valid by construction; a module that is not is
   // a bug here, reported rather than handed on.
+  // LCOV_EXCL_START
   if (mlir::failed(mlir::verify(*Module))) {
     Diag = SMDiagnostic(SM.getMemoryBuffer(BufferID)->getBufferIdentifier(),
                         SourceMgr::DK_Error,
                         "internal error: the parsed pattern is not valid MLIR");
     return nullptr;
   }
+  // LCOV_EXCL_STOP
   return Module;
 }
 

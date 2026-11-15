@@ -8,12 +8,8 @@ namespace metaphir {
 namespace tok {
 
 enum Kind {
-  StartOfKind,
-
 #define MIR_TOKEN_KIND(Kind) Kind,
 #include "metaphir/Parser/MIRTokenKinds.def"
-
-  EndOfKind,
 };
 
 StringRef getTokenKindName(Kind Kind);

@@ -18,6 +18,15 @@ if(METAPHIR_USE_SANITIZER)
   set(METAPHIR_TEST_ENVIRONMENT "ASAN_OPTIONS=allow_user_poisoning=0")
 endif()
 
+option(METAPHIR_USE_COVERAGE
+       "Build MetaphIR with gcov instrumentation (see scripts/coverage.py)" OFF)
+if(METAPHIR_USE_COVERAGE)
+  # Without exceptions, as LLVM is built: their cleanup paths, which nothing
+  # takes, would count as lines not run.
+  add_compile_options(--coverage -O0 -fno-exceptions)
+  add_link_options(--coverage)
+endif()
+
 set(LLVM_DIR
     ${PROJECT_SOURCE_DIR}/llvm-project/build/install/lib/cmake/llvm
     CACHE PATH "Directory containing LLVMConfig.cmake")

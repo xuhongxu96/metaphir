@@ -123,18 +123,22 @@ def Mpir_IntOp : Mpir_Op<"int", [Pure]> {
   let summary = "An integer literal; signed if written negative";
   let arguments = (ins APIntAttr:$value);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "$value attr-dict `:` type($result)";
 }
 
 def Mpir_FloatOp : Mpir_Op<"float", [Pure]> {
   let summary = "A floating-point literal";
   let arguments = (ins AnyAttr:$value);
   let results = (outs Mpir_Term:$result);
+  // The value carries its own type, as '1.5 : f64'.
+  let assemblyFormat = "$value attr-dict `->` type($result)";
 }
 
 def Mpir_KeywordOp : Mpir_Op<"keyword", [Pure]> {
   let summary = "A keyword constant ('null', 'poison') or compare predicate";
   let arguments = (ins I32Attr:$keyword);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "custom<Keyword>($keyword) attr-dict `:` type($result)";
 }
 
 def Mpir_GlobalOp : Mpir_Op<"global", [Pure]> {
@@ -149,6 +153,7 @@ def Mpir_AggregateOp : Mpir_Op<"aggregate", [Pure]> {
   let description = [{ Operands alternate: a type, then its element. }];
   let arguments = (ins I32Attr:$delimiter, Variadic<Mpir_Term>:$elements);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "custom<Delimiter>($delimiter) `(` $elements `)` attr-dict `:` functional-type($elements, $result)";
 }
 
 //===----------------------------------------------------------------------===//
@@ -159,18 +164,21 @@ def Mpir_IntTypeOp : Mpir_Op<"type.int", [Pure]> {
   let summary = "'iN', or 'bN' when byte";
   let arguments = (ins I32Attr:$width, UnitAttr:$byte);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "$width (`byte` $byte^)? attr-dict `:` type($result)";
 }
 
 def Mpir_MetaIntTypeOp : Mpir_Op<"type.meta_int", [Pure]> {
   let summary = "'i?n' (or 'b?n'): an integer type of the width ?n is bound to";
   let arguments = (ins Mpir_Term:$width, UnitAttr:$byte);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "$width (`byte` $byte^)? attr-dict `:` functional-type($width, $result)";
 }
 
 def Mpir_PrimTypeOp : Mpir_Op<"type.prim", [Pure]> {
   let summary = "A primitive type (see Types.def)";
   let arguments = (ins I32Attr:$kind);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "custom<PrimType>($kind) attr-dict `:` type($result)";
 }
 
 def Mpir_PtrTypeOp : Mpir_Op<"type.ptr", [Pure]> {
@@ -178,6 +186,7 @@ def Mpir_PtrTypeOp : Mpir_Op<"type.ptr", [Pure]> {
   let arguments = (ins Optional<Mpir_Term>:$element,
                        OptionalAttr<I32Attr>:$address_space);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "($element^)? (`addrspace` `(` $address_space^ `)`)? attr-dict `:` functional-type($element, $result)";
 }
 
 def Mpir_SeqTypeOp : Mpir_Op<"type.seq", [Pure]> {
@@ -189,12 +198,14 @@ def Mpir_SeqTypeOp : Mpir_Op<"type.seq", [Pure]> {
   let arguments = (ins I32Attr:$kind, I64Attr:$count, Mpir_Term:$element,
                        Optional<Mpir_Term>:$count_var);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "custom<SeqKind>($kind) $count `x` $element (`count` $count_var^)? attr-dict `:` functional-type(operands, $result)";
 }
 
 def Mpir_StructTypeOp : Mpir_Op<"type.struct", [Pure]> {
   let summary = "'{T, ...}', or '<{T, ...}>' when packed";
   let arguments = (ins Variadic<Mpir_Term>:$elements, UnitAttr:$packed);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "(`packed` $packed^)? `{` $elements `}` attr-dict `:` functional-type($elements, $result)";
 }
 
 def Mpir_FuncTypeOp : Mpir_Op<"type.func", [Pure]> {
@@ -202,6 +213,7 @@ def Mpir_FuncTypeOp : Mpir_Op<"type.func", [Pure]> {
   let arguments = (ins Mpir_Term:$return_type, Variadic<Mpir_Term>:$params,
                        UnitAttr:$var_arg);
   let results = (outs Mpir_Term:$result);
+  let assemblyFormat = "$return_type `(` $params `)` (`vararg` $var_arg^)? attr-dict `:` functional-type(operands, $result)";
 }
 
 //===----------------------------------------------------------------------===//
@@ -247,6 +259,7 @@ def Mpir_InstOp : Mpir_Op<"inst", [AttrSizedOperandSegments,
     /// The operand index ':o' names, if ':o' is written.
     std::optional<unsigned> getOrSelfIndex();
   }];
+  let assemblyFormat = "$opcode (`capture` $capture^)? (`block` $parent_block^)? (`flags` `(` $flag_captures^ `)`)? `(` $operand_values `)` prop-dict attr-dict `:` functional-type(operands, $result)";
 }
 
 def Mpir_UseOp : Mpir_Op<"use", [AttrSizedOperandSegments,
@@ -261,6 +274,7 @@ def Mpir_UseOp : Mpir_Op<"use", [AttrSizedOperandSegments,
     bool isCommutative();
     std::optional<unsigned> getOrSelfIndex();
   }];
+  let assemblyFormat = "$matcher (`capture` $capture^)? (`block` $parent_block^)? (`flags` `(` $flag_captures^ `)`)? `(` $operand_values `)` prop-dict attr-dict `:` functional-type(operands, $result)";
 }
 
 def Mpir_AltOp : Mpir_Op<"alt", [NoTerminator,
@@ -273,7 +287,9 @@ def Mpir_AltOp : Mpir_Op<"alt", [NoTerminator,
   }];
   let results = (outs Mpir_Term:$result);
   let regions = (region VariadicRegion<SizedRegion<1>>:$alternatives);
-  let assemblyFormat = "$alternatives attr-dict `:` type($result)";
+  // The attributes have a keyword: an alternative-less mpir.alt (a use no
+  // branch fits) would otherwise print them where its regions go.
+  let assemblyFormat = "$alternatives attr-dict-with-keyword `:` type($result)";
 }
 
 //===----------------------------------------------------------------------===//

@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Regenerate FileCheck directives in MetaphIR lexer, parser and matcher tests."""
+"""Regenerate FileCheck directives in MetaphIR lexer, parser, matcher and pass
+tests.
+
+A test whose RUN line pipes MLIR (from metaphir-opt, or metaphir-parse
+--emit=mlir) to FileCheck gets, after the input of each of its cases, the
+CHECK lines mlir/utils/generate-test-checks.py writes for what the tools
+print now. Cases are separated by '// -----', and the RUN line then has
+--split-input-file. Locations are matched by any text. Review what is
+written: it records the output, right or wrong.
+"""
 
 from __future__ import annotations
 
@@ -43,9 +52,13 @@ LLVM_FUNCTION_RE = re.compile(r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\(")
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_TEST_DIR = REPO_ROOT / "test"
-TOOLS = ("metaphir-lex", "metaphir-parse", "metaphir-match")
-# lit (test/lit.cfg.py) only runs .ll files.
-TEST_EXTENSIONS = {".ll"}
+TOOLS = ("metaphir-lex", "metaphir-parse", "metaphir-match", "metaphir-opt")
+# What lit (test/lit.cfg.py) runs.
+TEST_EXTENSIONS = {".ll", ".mlir", ".mpir"}
+MLIR_CHECK_GENERATOR = (
+    REPO_ROOT / "llvm-project" / "mlir" / "utils" / "generate-test-checks.py"
+)
+MLIR_LOCATION_RE = re.compile(r"#loc\d*")
 # Tests whose CHECK lines are maintained by hand carry this marker.
 MANUAL_MARKER = "NOTE: CHECK lines are written by hand"
 
@@ -249,6 +262,11 @@ def parse_args() -> argparse.Namespace:
         "--metaphir-parse",
         type=Path,
         help="path to metaphir-parse (otherwise use METAPHIR_PARSE, PATH, or build/)",
+    )
+    parser.add_argument(
+        "--metaphir-opt",
+        type=Path,
+        help="path to metaphir-opt (otherwise use METAPHIR_OPT, PATH, or build/)",
     )
     parser.add_argument(
         "--metaphir-match",
@@ -815,6 +833,104 @@ def apply_checks(
     return "\n".join(separate_check_blocks(clean_lines)) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# Tests of MLIR output
+# ---------------------------------------------------------------------------
+
+
+def mlir_runs(lines: list[str]) -> list[str]:
+    """The RUN commands that pipe MLIR to FileCheck, each as one line."""
+    commands: list[str] = []
+    for line in lines:
+        if match := RUN_RE.match(line):
+            text = match["command"].rstrip()
+            if commands and commands[-1].endswith("\\"):
+                commands[-1] = commands[-1][:-1] + " " + text
+            else:
+                commands.append(text)
+    return [
+        command
+        for command in commands
+        if "FileCheck" in command
+        and not command.startswith("not ")
+        and ("%metaphir-opt" in command or "--emit=mlir" in command)
+    ]
+
+
+def gen_mlir_checks(output: str, prefix: str) -> list[str]:
+    # Locations are left to any text: their aliases' definitions go, and
+    # their uses become a placeholder the generator leaves alone.
+    output = "\n".join(
+        line for line in output.splitlines() if not re.match(r"^#loc\d* = ", line)
+    )
+    output = MLIR_LOCATION_RE.sub("LOCATION_PLACEHOLDER", output)
+    # A '%name' in a string (a plan's slot names) is not an SSA value.
+    output = output.replace('"%', '"PERCENT_PLACEHOLDER')
+    result = subprocess.run(
+        [sys.executable, str(MLIR_CHECK_GENERATOR), "--check-prefix", prefix],
+        input=output,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return [
+        line.replace("#LOCATION_PLACEHOLDER", "{{.*}}")
+        .replace("LOCATION_PLACEHOLDER", "{{.*}}")
+        .replace("PERCENT_PLACEHOLDER", "%")
+        for line in result.stdout.splitlines()
+        if re.match(rf"^// {re.escape(prefix)}(-[A-Z]+)?:", line)
+    ]
+
+
+def update_mlir_test(
+    path: Path, lines: list[str], comment: str, tools: dict[str, Path]
+) -> str:
+    separator = f"{comment} -----"
+    for command in mlir_runs(lines):
+        stages = command.split("|")
+        check = next(i for i, stage in enumerate(stages) if "FileCheck" in stage)
+        prefix = get_check_prefix(stages[check])
+        own = re.compile(rf"^\s*{re.escape(comment)}\s*{re.escape(prefix)}(-[A-Z]+)?:")
+        lines = [line for line in lines if not own.match(line)]
+
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=path.suffix, delete=False
+        ) as temporary:
+            temporary.write("\n".join(lines) + "\n")
+        shell = "|".join(stages[:check]).replace("%s", shlex.quote(temporary.name))
+        for name, tool in tools.items():
+            shell = shell.replace(f"%{name}", shlex.quote(str(tool)))
+        result = subprocess.run(
+            shell, shell=True, capture_output=True, text=True, check=False
+        )
+        os.unlink(temporary.name)
+        if result.returncode != 0:
+            raise ValueError(f"{path}: {command}\n{result.stderr}")
+        outputs = result.stdout.split("// -----")
+
+        bounds = [i for i, line in enumerate(lines) if line.strip() == separator]
+        starts = [0] + [bound + 1 for bound in bounds]
+        ends = bounds + [len(lines)]
+        if len(outputs) != len(starts):
+            raise ValueError(
+                f"{path}: {len(starts)} cases but {len(outputs)} outputs"
+            )
+        updated: list[str] = []
+        for case, (start, end) in enumerate(zip(starts, ends)):
+            body = lines[start:end]
+            while body and not body[-1].strip():
+                body.pop()
+            updated += body
+            checks = gen_mlir_checks(outputs[case], prefix)
+            if comment != "//":
+                checks = [comment + check[2:] for check in checks]
+            updated += checks
+            if case + 1 != len(starts):
+                updated += ["", separator]
+        lines = updated
+    return "\n".join(lines) + "\n"
+
+
 def update_test(
     path: Path, lines: list[str], comment: str, kinds: set[str], tools: dict[str, Path]
 ) -> str:
@@ -865,7 +981,20 @@ def main() -> int:
             kinds, comment = test_kinds(lines, path)
             if not kinds:
                 continue
-            if kinds == {"metaphir-lex"}:
+            if mlir_runs(lines):
+                mlir_tools = {
+                    kind: find_tool(
+                        kind,
+                        getattr(args, kind.replace("-", "_"), None),
+                        kind.upper().replace("-", "_"),
+                    )
+                    for kind in kinds
+                }
+                updated = update_mlir_test(path, lines, comment, mlir_tools)
+            elif "metaphir-opt" in kinds:
+                # Checked by --verify-diagnostics, or on what a tool reports.
+                continue
+            elif kinds == {"metaphir-lex"}:
                 if lexer is None:
                     lexer = find_tool("metaphir-lex", args.metaphir_lex, "METAPHIR_LEX")
                 updated = update_lexer_test(path, lines, comment, lexer)

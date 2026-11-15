@@ -13,8 +13,6 @@ struct SimplifyQuery;
 class Value;
 namespace metaphir {
 
-class Constraint;
-
 /// A built-in constraint operator applied to evaluated operands on the IR.
 ///
 /// Every operator is a descriptor struct, Op<ID> for its ID in

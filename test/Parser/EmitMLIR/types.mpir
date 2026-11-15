@@ -1,0 +1,100 @@
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Type patterns: integer and byte types of fixed and variable width,
+; primitives, pointers, arrays and vectors of fixed and variable length,
+; structs, and type variables.
+%a = freeze i1 ?a1
+%b = freeze b8 ?b1
+%c = freeze i?n ?c1
+%d = freeze b?m ?d1
+%e = freeze half ?e1
+%f = freeze bfloat ?f1
+%g = freeze float ?g1
+%h = freeze double ?h1
+%i = freeze fp128 ?i1
+%j = freeze ptr ?j1
+%k = freeze ptr addrspace(3) ?k1
+%l = freeze [4 x i8] ?l1
+%m = freeze [?len x i?n] ?m1
+%n = freeze <2 x float> ?n1
+%o = freeze <vscale x 4 x i32> ?o1
+%p = freeze <?lanes x i?n> ?p1
+%q = freeze {i32, ptr} ?q1
+%r = freeze <{i8, [2 x i16]}> ?r1
+%s = freeze {} ?s1
+%t = freeze ?ty ?t1
+; CHECK-LABEL:   mpir.pattern {
+; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 1 : <Type>
+; CHECK:           %[[VAR_0:.*]] = mpir.var "a1" : <Boolean>
+; CHECK:           %[[INST_0:.*]] = mpir.inst <freeze> (%[[TYPE_0]], %[[VAR_0]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Boolean>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_1:.*]] = mpir.type.int 8 byte : <Type>
+; CHECK:           %[[VAR_1:.*]] = mpir.var "b1" : <Operand>
+; CHECK:           %[[INST_1:.*]] = mpir.inst <freeze> (%[[TYPE_1]], %[[VAR_1]]) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_2:.*]] = mpir.var "n" : <Nat>
+; CHECK:           %[[TYPE_2:.*]] = mpir.type.meta_int %[[VAR_2]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_3:.*]] = mpir.var "c1" : <Operand>
+; CHECK:           %[[INST_2:.*]] = mpir.inst <freeze> (%[[TYPE_2]], %[[VAR_3]]) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_4:.*]] = mpir.var "m" : <Nat>
+; CHECK:           %[[TYPE_3:.*]] = mpir.type.meta_int %[[VAR_4]] byte : (!mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_5:.*]] = mpir.var "d1" : <Operand>
+; CHECK:           %[[INST_3:.*]] = mpir.inst <freeze> (%[[TYPE_3]], %[[VAR_5]]) <result_name = "d", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_4:.*]] = mpir.type.prim half : <Type>
+; CHECK:           %[[VAR_6:.*]] = mpir.var "e1" : <Operand>
+; CHECK:           %[[INST_4:.*]] = mpir.inst <freeze> (%[[TYPE_4]], %[[VAR_6]]) <result_name = "e", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_5:.*]] = mpir.type.prim bfloat : <Type>
+; CHECK:           %[[VAR_7:.*]] = mpir.var "f1" : <Operand>
+; CHECK:           %[[INST_5:.*]] = mpir.inst <freeze> (%[[TYPE_5]], %[[VAR_7]]) <result_name = "f", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_6:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[VAR_8:.*]] = mpir.var "g1" : <Operand>
+; CHECK:           %[[INST_6:.*]] = mpir.inst <freeze> (%[[TYPE_6]], %[[VAR_8]]) <result_name = "g", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_7:.*]] = mpir.type.prim double : <Type>
+; CHECK:           %[[VAR_9:.*]] = mpir.var "h1" : <Operand>
+; CHECK:           %[[INST_7:.*]] = mpir.inst <freeze> (%[[TYPE_7]], %[[VAR_9]]) <result_name = "h", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_8:.*]] = mpir.type.prim fp128 : <Type>
+; CHECK:           %[[VAR_10:.*]] = mpir.var "i1" : <Operand>
+; CHECK:           %[[INST_8:.*]] = mpir.inst <freeze> (%[[TYPE_8]], %[[VAR_10]]) <result_name = "i", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_9:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
+; CHECK:           %[[VAR_11:.*]] = mpir.var "j1" : <Operand>
+; CHECK:           %[[INST_9:.*]] = mpir.inst <freeze> (%[[TYPE_9]], %[[VAR_11]]) <result_name = "j", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_10:.*]] = mpir.type.ptr addrspace(3) : () -> !mpir.sort<Type>
+; CHECK:           %[[VAR_12:.*]] = mpir.var "k1" : <Operand>
+; CHECK:           %[[INST_10:.*]] = mpir.inst <freeze> (%[[TYPE_10]], %[[VAR_12]]) <result_name = "k", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_11:.*]] = mpir.type.int 8 : <Type>
+; CHECK:           %[[TYPE_12:.*]] = mpir.type.seq array 4 x %[[TYPE_11]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_13:.*]] = mpir.var "l1" : <Operand>
+; CHECK:           %[[INST_11:.*]] = mpir.inst <freeze> (%[[TYPE_12]], %[[VAR_13]]) <result_name = "l", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_14:.*]] = mpir.var "len" : <Nat>
+; CHECK:           %[[TYPE_13:.*]] = mpir.type.meta_int %[[VAR_2]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:           %[[TYPE_14:.*]] = mpir.type.seq array 0 x %[[TYPE_13]] count %[[VAR_14]] : (!mpir.sort<Type>, !mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_15:.*]] = mpir.var "m1" : <Operand>
+; CHECK:           %[[INST_12:.*]] = mpir.inst <freeze> (%[[TYPE_14]], %[[VAR_15]]) <result_name = "m", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_15:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[TYPE_16:.*]] = mpir.type.seq vector 2 x %[[TYPE_15]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_16:.*]] = mpir.var "n1" : <Operand>
+; CHECK:           %[[INST_13:.*]] = mpir.inst <freeze> (%[[TYPE_16]], %[[VAR_16]]) <result_name = "n", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_17:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[TYPE_18:.*]] = mpir.type.seq scalable 4 x %[[TYPE_17]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_17:.*]] = mpir.var "o1" : <Operand>
+; CHECK:           %[[INST_14:.*]] = mpir.inst <freeze> (%[[TYPE_18]], %[[VAR_17]]) <result_name = "o", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_18:.*]] = mpir.var "lanes" : <Nat>
+; CHECK:           %[[TYPE_19:.*]] = mpir.type.meta_int %[[VAR_2]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:           %[[TYPE_20:.*]] = mpir.type.seq vector 0 x %[[TYPE_19]] count %[[VAR_18]] : (!mpir.sort<Type>, !mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_19:.*]] = mpir.var "p1" : <Operand>
+; CHECK:           %[[INST_15:.*]] = mpir.inst <freeze> (%[[TYPE_20]], %[[VAR_19]]) <result_name = "p", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_21:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[TYPE_22:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
+; CHECK:           %[[TYPE_23:.*]] = mpir.type.struct{%[[TYPE_21]], %[[TYPE_22]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_20:.*]] = mpir.var "q1" : <Operand>
+; CHECK:           %[[INST_16:.*]] = mpir.inst <freeze> (%[[TYPE_23]], %[[VAR_20]]) <result_name = "q", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_24:.*]] = mpir.type.int 8 : <Type>
+; CHECK:           %[[TYPE_25:.*]] = mpir.type.int 16 : <Type>
+; CHECK:           %[[TYPE_26:.*]] = mpir.type.seq array 2 x %[[TYPE_25]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
+; CHECK:           %[[TYPE_27:.*]] = mpir.type.struct packed{%[[TYPE_24]], %[[TYPE_26]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
+; CHECK:           %[[VAR_21:.*]] = mpir.var "r1" : <Operand>
+; CHECK:           %[[INST_17:.*]] = mpir.inst <freeze> (%[[TYPE_27]], %[[VAR_21]]) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_28:.*]] = mpir.type.struct{} : () -> !mpir.sort<Type>
+; CHECK:           %[[VAR_22:.*]] = mpir.var "s1" : <Operand>
+; CHECK:           %[[INST_18:.*]] = mpir.inst <freeze> (%[[TYPE_28]], %[[VAR_22]]) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_23:.*]] = mpir.var "ty" : <Type>
+; CHECK:           %[[VAR_24:.*]] = mpir.var "t1" : <Operand>
+; CHECK:           %[[INST_19:.*]] = mpir.inst <freeze> (%[[VAR_23]], %[[VAR_24]]) <result_name = "t", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:         }

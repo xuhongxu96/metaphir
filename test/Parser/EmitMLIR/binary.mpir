@@ -1,0 +1,78 @@
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Binary instruction matchers: each opcode, with its flags required ('nsw'),
+; absent ('!nuw') and captured ('exact:?e'), and the instruction captured
+; ('add:?sum').
+%a = add nsw !nuw i32 ?x, ?y
+%b = sub nuw:?nuw i32 %a, 1
+%c = mul:?prod i32 %b, ?y
+%d = udiv exact i32 %c, 2
+%e = sdiv exact:?e i32 %d, -3
+%f = urem i32 %e, ?y
+%g = srem i32 %f, ?y
+%h = shl nsw nuw i32 %g, 1
+%i = lshr exact i32 %h, ?y
+%j = ashr i32 %i, ?y
+%k = and i32 %j, 255
+%l = or disjoint:?dj i32 %k, ?y
+%m = xor i32 %l, -1
+%n = fadd nnan ninf float ?fx, 1.0
+%o = fsub fast float %n, ?fx
+%p = fmul nsz arcp contract afn reassoc float %o, %o
+%q = fdiv !nnan float %p, 2.5
+%r = frem float %q, ?fx
+%s = fneg float %r
+; CHECK-LABEL:   mpir.pattern {
+; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
+; CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
+; CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <result_name = "a", flags = [0, 1], flag_modes = [0, 1], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_2:.*]] = mpir.var "nuw" : <Boolean>
+; CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INT_0:.*]] = mpir.int 1 : ui1 : <Value>
+; CHECK:           %[[INST_1:.*]] = mpir.inst <sub> flags(%[[VAR_2]]) (%[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[INT_0]]) <result_name = "b", flags = [1], flag_modes = [2], operand_kinds = [0, 0]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_3:.*]] = mpir.var "prod" : <Instruction>
+; CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INST_2:.*]] = mpir.inst <mul> capture %[[VAR_3]] (%[[TYPE_2]], %[[INST_1]], %[[TYPE_2]], %[[VAR_1]]) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_3:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INT_1:.*]] = mpir.int 2 : ui2 : <Value>
+; CHECK:           %[[INST_3:.*]] = mpir.inst <udiv> (%[[TYPE_3]], %[[INST_2]], %[[TYPE_3]], %[[INT_1]]) <result_name = "d", flags = [2], flag_modes = [0], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_4:.*]] = mpir.var "e" : <Boolean>
+; CHECK:           %[[TYPE_4:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INT_2:.*]] = mpir.int -3 : si3 : <Value>
+; CHECK:           %[[INST_4:.*]] = mpir.inst <sdiv> flags(%[[VAR_4]]) (%[[TYPE_4]], %[[INST_3]], %[[TYPE_4]], %[[INT_2]]) <result_name = "e", flags = [2], flag_modes = [2], operand_kinds = [0, 0]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_5:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INST_5:.*]] = mpir.inst <urem> (%[[TYPE_5]], %[[INST_4]], %[[TYPE_5]], %[[VAR_1]]) <result_name = "f", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_6:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INST_6:.*]] = mpir.inst <srem> (%[[TYPE_6]], %[[INST_5]], %[[TYPE_6]], %[[VAR_1]]) <result_name = "g", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_7:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INT_3:.*]] = mpir.int 1 : ui1 : <Value>
+; CHECK:           %[[INST_7:.*]] = mpir.inst <shl> (%[[TYPE_7]], %[[INST_6]], %[[TYPE_7]], %[[INT_3]]) <result_name = "h", flags = [0, 1], flag_modes = [0, 0], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_8:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INST_8:.*]] = mpir.inst <lshr> (%[[TYPE_8]], %[[INST_7]], %[[TYPE_8]], %[[VAR_1]]) <result_name = "i", flags = [2], flag_modes = [0], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_9:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INST_9:.*]] = mpir.inst <ashr> (%[[TYPE_9]], %[[INST_8]], %[[TYPE_9]], %[[VAR_1]]) <result_name = "j", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_10:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INT_4:.*]] = mpir.int 255 : ui8 : <Value>
+; CHECK:           %[[INST_10:.*]] = mpir.inst <and> (%[[TYPE_10]], %[[INST_9]], %[[TYPE_10]], %[[INT_4]]) <result_name = "k", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[VAR_5:.*]] = mpir.var "dj" : <Boolean>
+; CHECK:           %[[TYPE_11:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INST_11:.*]] = mpir.inst <or> flags(%[[VAR_5]]) (%[[TYPE_11]], %[[INST_10]], %[[TYPE_11]], %[[VAR_1]]) <result_name = "l", flags = [3], flag_modes = [2], operand_kinds = [0, 0]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_12:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[INT_5:.*]] = mpir.int -1 : si1 : <Value>
+; CHECK:           %[[INST_12:.*]] = mpir.inst <xor> (%[[TYPE_12]], %[[INST_11]], %[[TYPE_12]], %[[INT_5]]) <result_name = "m", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_13:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[VAR_6:.*]] = mpir.var "fx" : <Operand>
+; CHECK:           %[[FLOAT_0:.*]] = mpir.float 1.000000e+00 : f64 -> <Value>
+; CHECK:           %[[INST_13:.*]] = mpir.inst <fadd> (%[[TYPE_13]], %[[VAR_6]], %[[TYPE_13]], %[[FLOAT_0]]) <result_name = "n", flags = [11, 12], flag_modes = [0, 0], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_14:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[INST_14:.*]] = mpir.inst <fsub> (%[[TYPE_14]], %[[INST_13]], %[[TYPE_14]], %[[VAR_6]]) <result_name = "o", flags = [10], flag_modes = [0], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_15:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[INST_15:.*]] = mpir.inst <fmul> (%[[TYPE_15]], %[[INST_14]], %[[TYPE_15]], %[[INST_14]]) <result_name = "p", flags = [13, 14, 15, 16, 17], flag_modes = [0, 0, 0, 0, 0], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_16:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[FLOAT_1:.*]] = mpir.float 2.500000e+00 : f64 -> <Value>
+; CHECK:           %[[INST_16:.*]] = mpir.inst <fdiv> (%[[TYPE_16]], %[[INST_15]], %[[TYPE_16]], %[[FLOAT_1]]) <result_name = "q", flags = [11], flag_modes = [1], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_17:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[INST_17:.*]] = mpir.inst <frem> (%[[TYPE_17]], %[[INST_16]], %[[TYPE_17]], %[[VAR_6]]) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[TYPE_18:.*]] = mpir.type.prim float : <Type>
+; CHECK:           %[[INST_18:.*]] = mpir.inst <fneg> (%[[TYPE_18]], %[[INST_17]]) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
+; CHECK:         }

@@ -4,7 +4,7 @@ import lit.formats
 
 config.name = "MetaphIR"
 config.test_format = lit.formats.ShTest()
-config.suffixes = [".ll", ".mlir"]
+config.suffixes = [".ll", ".mlir", ".mpir"]
 config.test_source_root = os.path.dirname(__file__)
 config.test_exec_root = os.path.join(config.metaphir_obj_root, "lit")
 

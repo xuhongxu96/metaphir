@@ -18,7 +18,20 @@ StringRef InstructionFlag::getName(FlagID ID) {
   llvm_unreachable("invalid semantic flag ID");
 }
 
-const Instruction::Info &Instruction::getInfo(InstructionID ID) {
+namespace {
+/// Properties of a built-in instruction matcher, from
+/// InstructionMatchers.def.
+struct Info {
+  StringRef Name;
+  Instruction::FlagMask SupportedFlags;
+  bool Commutative;
+  Instruction::OperandSyntax Syntax;
+  unsigned Arity;
+};
+} // namespace
+
+static const Info &getInfo(Instruction::InstructionID ID) {
+  using namespace Instruction;
   static const Info Table[] = {
 #define MIR_INSTRUCTION_MATCHER(Name, TargetMatcher, Flags, Commutative,       \
                                 Syntax, Arity)                                 \
@@ -28,6 +41,22 @@ const Instruction::Info &Instruction::getInfo(InstructionID ID) {
   assert(static_cast<size_t>(ID) < std::size(Table) &&
          "invalid instruction kind");
   return Table[ID];
+}
+
+StringRef Instruction::getOpcodeName(InstructionID ID) {
+  return getInfo(ID).Name;
+}
+Instruction::FlagMask Instruction::getSupportedFlags(InstructionID ID) {
+  return getInfo(ID).SupportedFlags;
+}
+bool Instruction::isCommutative(InstructionID ID) {
+  return getInfo(ID).Commutative;
+}
+Instruction::OperandSyntax Instruction::getOperandSyntax(InstructionID ID) {
+  return getInfo(ID).Syntax;
+}
+unsigned Instruction::getOperandArity(InstructionID ID) {
+  return getInfo(ID).Arity;
 }
 
 } // namespace metaphir

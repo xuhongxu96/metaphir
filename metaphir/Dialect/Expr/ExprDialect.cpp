@@ -9,6 +9,42 @@ using namespace llvm::metaphir::mpir_expr;
 
 #include "metaphir/Dialect/Expr/ExprOpsDialect.cpp.inc"
 
+/// How an operator is written, as Constraint::OperatorKind numbers them.
+static constexpr llvm::StringLiteral KindNames[] = {"unary", "binary", "call"};
+
+/// 'binary "=="': how the operator is written, and its name.
+static ParseResult parseOperator(OpAsmParser &Parser, IntegerAttr &Op,
+                                 IntegerAttr &Kind) {
+  SMLoc Loc = Parser.getCurrentLocation();
+  StringRef KindName;
+  std::string Name;
+  if (Parser.parseKeyword(&KindName) || Parser.parseString(&Name))
+    return failure();
+  const auto *It = llvm::find(KindNames, KindName);
+  if (It == std::end(KindNames))
+    return Parser.emitError(Loc) << "expected unary, binary or call";
+  auto K = Constraint::OperatorKind(It - std::begin(KindNames));
+  Constraint::OperatorID ID = Constraint::getOperatorID(Name, K);
+  if (ID == Constraint::UnknownOperator)
+    return Parser.emitError(Loc)
+           << "unknown " << KindName << " operator '" << Name << "'";
+  Op = Parser.getBuilder().getI32IntegerAttr(ID);
+  Kind = Parser.getBuilder().getI32IntegerAttr(K);
+  return success();
+}
+
+static void printOperator(OpAsmPrinter &Printer, Operation *, IntegerAttr Op,
+                          IntegerAttr Kind) {
+  uint64_t K = Kind.getValue().getZExtValue();
+  if (K < std::size(KindNames))
+    Printer << KindNames[K];
+  else
+    Printer << "<invalid " << K << ">";
+  Printer << ' ';
+  Printer.printString(Constraint::getOperatorName(
+      Constraint::OperatorID(Op.getValue().getZExtValue())));
+}
+
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Expr/ExprOps.cpp.inc"
 

@@ -1,4 +1,5 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/IR/Constants.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "llvm/ADT/StringExtras.h"
@@ -16,6 +17,78 @@ using namespace llvm::metaphir::mpir;
 
 #define GET_ATTRDEF_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOpsAttrDefs.cpp.inc"
+
+//===----------------------------------------------------------------------===//
+// Custom assembly directives: enumerations by their names
+//===----------------------------------------------------------------------===//
+
+/// Parses one of Names as a keyword, setting Attr to its index.
+static ParseResult parseNamed(OpAsmParser &Parser, IntegerAttr &Attr,
+                              ArrayRef<StringRef> Names, StringRef What) {
+  SMLoc Loc = Parser.getCurrentLocation();
+  StringRef Name;
+  if (Parser.parseKeyword(&Name))
+    return failure();
+  for (auto [Index, Each] : llvm::enumerate(Names))
+    if (Each == Name) {
+      Attr = Parser.getBuilder().getI32IntegerAttr(Index);
+      return success();
+    }
+  return Parser.emitError(Loc) << "unknown " << What << " '" << Name << "'";
+}
+
+static void printNamed(OpAsmPrinter &Printer, IntegerAttr Attr,
+                       ArrayRef<StringRef> Names) {
+  uint64_t Index = Attr.getValue().getZExtValue();
+  if (Index < Names.size())
+    Printer << Names[Index];
+  else
+    Printer << "<invalid " << Index << ">";
+}
+
+static SmallVector<StringRef, 8> keywordNames() {
+  SmallVector<StringRef, 8> Names;
+#define MIR_KEYWORD_CONSTANT(ID, Spelling)                                     \
+  Names.push_back(KeywordConstant::getKeywordName(KeywordConstant::K_##ID));
+#include "metaphir/IR/KeywordConstants.def"
+  return Names;
+}
+static ParseResult parseKeyword(OpAsmParser &Parser, IntegerAttr &Attr) {
+  return parseNamed(Parser, Attr, keywordNames(), "keyword constant");
+}
+static void printKeyword(OpAsmPrinter &Printer, Operation *, IntegerAttr Attr) {
+  printNamed(Printer, Attr, keywordNames());
+}
+
+static constexpr StringRef PrimTypeNames[] = {
+#define MIR_TYPE(TypeID, TokenKind) #TokenKind,
+#include "metaphir/IR/Types.def"
+};
+static ParseResult parsePrimType(OpAsmParser &Parser, IntegerAttr &Attr) {
+  return parseNamed(Parser, Attr, PrimTypeNames, "primitive type");
+}
+static void printPrimType(OpAsmPrinter &Printer, Operation *,
+                          IntegerAttr Attr) {
+  printNamed(Printer, Attr, PrimTypeNames);
+}
+
+// As AggregateConstant::Delimiter and SeqTypeOp's kind number them.
+static constexpr StringRef DelimiterNames[] = {"array", "struct", "vector"};
+static ParseResult parseDelimiter(OpAsmParser &Parser, IntegerAttr &Attr) {
+  return parseNamed(Parser, Attr, DelimiterNames, "aggregate kind");
+}
+static void printDelimiter(OpAsmPrinter &Printer, Operation *,
+                           IntegerAttr Attr) {
+  printNamed(Printer, Attr, DelimiterNames);
+}
+
+static constexpr StringRef SeqKindNames[] = {"array", "vector", "scalable"};
+static ParseResult parseSeqKind(OpAsmParser &Parser, IntegerAttr &Attr) {
+  return parseNamed(Parser, Attr, SeqKindNames, "sequence kind");
+}
+static void printSeqKind(OpAsmPrinter &Printer, Operation *, IntegerAttr Attr) {
+  printNamed(Printer, Attr, SeqKindNames);
+}
 
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOps.cpp.inc"

@@ -1,6 +1,7 @@
 //===- metaphir-parse.cpp - Parse a MetaphIR pattern and print it ---------===//
 
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Pattern/SurfacePrinter.h"
 #include "metaphir/Parser/PatternParser.h"
 #include "mlir/IR/MLIRContext.h"
@@ -24,6 +25,11 @@ static cl::opt<Emit> EmitKind(
     cl::values(clEnumValN(Emit::Surface, "surface", "the pattern as parsed"),
                clEnumValN(Emit::MLIR, "mlir", "the module, as MLIR")),
     cl::init(Emit::Surface), cl::cat(Category));
+static cl::opt<bool> NoStdLib(
+    "no-stdlib",
+    cl::desc("With --emit=mlir, leave out the standard library's definitions "
+             "(the module printed then refers to some it does not have)"),
+    cl::cat(Category));
 
 int main(int Argc, char **Argv) {
   InitLLVM X(Argc, Argv);
@@ -44,6 +50,16 @@ int main(int Argc, char **Argv) {
     return 1;
   }
   if (EmitKind == Emit::MLIR) {
+    if (NoStdLib) {
+      // The pattern's file is SM's main buffer; the library's is another.
+      for (mlir::Operation &Op :
+           llvm::make_early_inc_range(*Module->getBody())) {
+        SMRange Range = getSourceRange(Op.getLoc());
+        if (Range.Start.isValid() &&
+            SM.FindBufferContainingLoc(Range.Start) != SM.getMainFileID())
+          Op.erase();
+      }
+    }
     Module->print(outs());
     outs() << '\n';
     return 0;

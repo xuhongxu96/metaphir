@@ -89,6 +89,11 @@ def Expr_CallOp : Expr_Op<"call", [AttrSizedOperandSegments]> {
   let arguments = (ins I32Attr:$op, I32Attr:$kind, Variadic<Mpir_Term>:$args,
                        Optional<Mpir_Term>:$anchor);
   let results = (outs Mpir_Term:$result);
+  // 'binary "==" (%a, %b)': the operator as written, rather than its IDs.
+  let assemblyFormat = [{
+    custom<Operator>($op, $kind) `(` $args `)` (`anchor` $anchor^)? attr-dict
+    `:` functional-type(operands, $result)
+  }];
   let hasVerifier = 1;
   let extraClassDeclaration = [{
     ::llvm::metaphir::Constraint::OperatorID getOperatorID() {

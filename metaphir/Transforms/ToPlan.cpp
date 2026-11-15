@@ -315,7 +315,9 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
     Builder.setInsertionPointToEnd(&Either->getRegion(0).emplaceBlock());
     plan::CheckBoundOp::create(Builder, Loc, i32(Slot),
                                Builder.getBoolAttr(true));
-    plan::BindOp::create(Builder, Loc, Reg, i32(Slot), mlir::IntegerAttr());
+    // Compared with what is there; after the roots, nothing is.
+    if (Reg)
+      plan::BindOp::create(Builder, Loc, Reg, i32(Slot), mlir::IntegerAttr());
     plan::YieldOp::create(Builder, Loc, mlir::ValueRange());
   }
   BoundState First = Bound;

@@ -8,14 +8,12 @@ namespace metaphir {
 /// 'label', ...), from Types.def. The others (integers, pointers,
 /// aggregates, vectors, functions and meta types) are ops of the mpir
 /// dialect.
-struct Type {
-  enum TypeID {
+namespace Type {
+enum TypeID {
 #define MIR_TYPE_ID(TypeID) TypeID,
 #include "metaphir/IR/Types.def"
-  };
-
-  Type() = delete;
 };
+} // namespace Type
 
 } // namespace metaphir
 } // namespace llvm

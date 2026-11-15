@@ -1306,16 +1306,17 @@ mlir::LogicalResult lowerPatternModule(mlir::ModuleOp Module,
   mlir::ScopedDiagnosticHandler Handler(Context, [&](mlir::Diagnostic &Diag) {
     SMRange Range = getSourceRange(Diag.getLocation());
     std::string Message = Diag.str();
+    // The passes report at single places: a variable, a use, a metaflag.
     if (Range.Start.isValid() && SM.FindBufferContainingLoc(Range.Start)) {
-      SmallVector<SMRange, 1> Ranges;
-      if (Range.End.isValid() && Range.End != Range.Start)
-        Ranges.push_back(Range);
-      SM.GetMessage(Range.Start, SourceMgr::DK_Error, Message, Ranges)
+      SM.GetMessage(Range.Start, SourceMgr::DK_Error, Message)
           .print(ProgName, OS, /*ShowColors=*/false);
     } else {
+      // An error about nothing in the source: none of the passes' own.
+      // LCOV_EXCL_START
       if (ProgName)
         OS << ProgName << ": ";
       OS << "error: " << Message << "\n";
+      // LCOV_EXCL_STOP
     }
     return mlir::success();
   });

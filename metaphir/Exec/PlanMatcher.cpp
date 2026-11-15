@@ -445,7 +445,7 @@ class PlanMatcher::Run {
 public:
   Run(const PlanProgram &Program, ExprEvaluator &Evaluator,
       const llvm::Function &F, bool Relaxed, bool Explaining)
-      : P(Program), Evaluator(Evaluator), F(F), Relaxed(Relaxed),
+      : P(Program), Evaluator(Evaluator), Relaxed(Relaxed),
         Explaining(Explaining), Registers(Program.NumRegisters),
         Slots(Program.Slots.size()) {
     for (const llvm::Instruction &I : instructions(F))
@@ -464,7 +464,6 @@ private:
   using Step = PlanProgram::Step;
   const PlanProgram &P;
   ExprEvaluator &Evaluator;
-  const llvm::Function &F;
   bool Relaxed;
   bool Explaining;
   SmallVector<const llvm::Instruction *, 64> Instructions;

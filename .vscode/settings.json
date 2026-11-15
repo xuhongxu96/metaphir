@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "*.def": "cpp",
-    }
+    },
+    "cmake.exportCompileCommandsFile": true
 }

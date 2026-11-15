@@ -9,8 +9,6 @@
 namespace llvm {
 namespace metaphir {
 
-class Constraint;
-
 namespace detail {
 
 // Coercion-class predicates. A value belongs to a class when it can be coerced
