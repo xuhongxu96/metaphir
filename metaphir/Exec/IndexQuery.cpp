@@ -52,7 +52,14 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
     Variant V;
     FeatureRequirement &R = V.Requirement;
     V.Impossible = VariantOp.getImpossible();
+    // The features the constraints need are left for last, once the
+    // structure's are known.
+    SmallVector<Operation *, 2> Derived;
     for (Operation &Op : VariantOp.getBody().front()) {
+      if (Op.hasAttr("derived")) {
+        Derived.push_back(&Op);
+        continue;
+      }
       if (auto Has = dyn_cast<mpir_index::HasInstructionOp>(Op)) {
         R.Instructions |= uint64_t(1) << Has.getOpcode().getValue();
       } else if (auto Has = dyn_cast<mpir_index::HasEdgeOp>(Op)) {
@@ -109,9 +116,24 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
         }
       }
     }
-    // Type variables the typings bind may be read by no constraint.
-    for (const Typing &T : V.Typings)
-      (void)T;
+    auto Normalize = [](FeatureRequirement &R) {
+      llvm::sort(R.Shapes);
+      llvm::sort(R.Siblings);
+      R.Siblings.erase(std::unique(R.Siblings.begin(), R.Siblings.end()),
+                       R.Siblings.end());
+      llvm::sort(R.Globals);
+      R.Globals.erase(std::unique(R.Globals.begin(), R.Globals.end()),
+                      R.Globals.end());
+      llvm::sort(R.SiteFacts);
+    };
+    Normalize(R);
+    V.Structural = R;
+    for (Operation *Op : Derived) {
+      if (auto Has = dyn_cast<mpir_index::HasInstructionOp>(Op))
+        R.Instructions |= uint64_t(1) << Has.getOpcode().getValue();
+      else if (auto Has = dyn_cast<mpir_index::HasGlobalOp>(Op))
+        R.Globals.push_back(hashGlobalName(Has.getName()));
+    }
     llvm::sort(R.Shapes);
     llvm::sort(R.Siblings);
     R.Siblings.erase(std::unique(R.Siblings.begin(), R.Siblings.end()),
@@ -586,7 +608,7 @@ SmallVector<std::string, 2>
 IndexQuery::explainNoStructure(const FunctionFeatures &Features) const {
   SmallVector<std::string, 2> Reasons;
   for (const Variant &V : Variants) {
-    const FeatureRequirement &R = V.Requirement;
+    const FeatureRequirement &R = V.Structural;
     std::optional<std::string> Lack;
     if (uint64_t Missing = R.Instructions & ~Features.Instructions) {
       SmallVector<std::string, 4> Names;

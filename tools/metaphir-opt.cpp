@@ -5,6 +5,7 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/Structuralize.h"
 #include "metaphir/Transforms/ToIndex.h"
 #include "metaphir/Transforms/ToPlan.h"
 #include "mlir/IR/DialectRegistry.h"
@@ -19,6 +20,7 @@ int main(int argc, char **argv) {
   metaphir::registerLoweringPasses();
   metaphir::registerToPlanPass();
   metaphir::registerToIndexPass();
+  metaphir::registerIndexStructuralizePass();
 
   mlir::DialectRegistry Registry;
   Registry

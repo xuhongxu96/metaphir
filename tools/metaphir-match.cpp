@@ -14,6 +14,7 @@
 #include "metaphir/Parser/MIRParser.h"
 #include "metaphir/Parser/PatternParser.h"
 #include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/Structuralize.h"
 #include "metaphir/Transforms/ToIndex.h"
 #include "metaphir/Transforms/ToPlan.h"
 #include "metaphir/Web/WebIndex.h"
@@ -104,6 +105,12 @@ static cl::opt<bool>
                 cl::desc("Match every variant, even in functions that lack "
                          "the instructions it needs (for testing)"),
                 cl::cat(Category));
+static cl::opt<bool> NoStructuralize(
+    "no-structuralize", cl::Hidden,
+    cl::desc("With --engine=mlir, do not require what constraints say of "
+             "instructions as index features (for measuring)"),
+    cl::cat(Category));
+
 enum class Engine { Classic, MLIR };
 static cl::opt<Engine>
     UseEngine("engine", cl::desc("The implementation to match with"),
@@ -221,6 +228,8 @@ loadPattern(StringRef ToolName, raw_ostream &Err, bool Quiet = false) {
     mlir::PassManager PM(Loaded->MLIRContext.get());
     PM.addPass(createToPlanPass());
     PM.addPass(createToIndexPass());
+    if (!NoStructuralize)
+      PM.addPass(createIndexStructuralizePass());
     if (mlir::failed(PM.run(*Loaded->Module))) {
       Err << ToolName << ": error: the pattern has no match plan\n";
       return nullptr;

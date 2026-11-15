@@ -43,7 +43,7 @@ public:
                        const FunctionFeatures &Features) const override;
   bool mayMatchStructure(unsigned Index,
                          const FunctionFeatures &Features) const override {
-    return Variants[Index].Requirement.isSatisfiedBy(Features);
+    return Variants[Index].Structural.isSatisfiedBy(Features);
   }
   SmallVector<std::string, 2>
   explainNoStructure(const FunctionFeatures &Features) const override;
@@ -54,6 +54,8 @@ public:
 
 private:
   struct Variant {
+    /// What its instructions need, and what its constraints need too.
+    FeatureRequirement Structural;
     FeatureRequirement Requirement;
     /// The names of the globals the requirement has the hashes of.
     SmallVector<std::string, 2> GlobalNames;
