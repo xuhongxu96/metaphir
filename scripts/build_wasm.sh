@@ -138,7 +138,7 @@ emcmake cmake -G Ninja -S "$BASE_DIR/web/wasm" -B "$BUILD_DIR/metaphir" \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_DIR="$BUILD_DIR/llvm/lib/cmake/llvm" \
     -DMLIR_DIR="$BUILD_DIR/llvm/lib/cmake/mlir" \
-    -DMLIR_TABLEGEN_EXE="$NATIVE_BIN/mlir-tblgen" \
+    -DMETAPHIR_MLIR_TABLEGEN="$NATIVE_BIN/mlir-tblgen" \
     "${CCACHE_ARGS[@]}" >/dev/null
 cmake --build "$BUILD_DIR/metaphir" -- -j"$JOBS" metaphir metaphir-match
 
