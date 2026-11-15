@@ -1,13 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Vector and aggregate instructions: elements, shuffles, and fields by
-; their indices or captured as an array.
-%e = extractelement <4 x i32> ?v, i64 ?idx
-%i = insertelement <4 x i32> ?v, i32 %e, i64 0
-%s = shufflevector <4 x i32> %i, <4 x i32> poison, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
-%x = extractvalue {i32, {i8, i16}} ?agg, 1, 0
-%y = extractvalue {i32, float} ?agg2, ...?path
-%z = insertvalue {i32, float} ?agg2, float 1.0, 1
-%sv = shufflevector <vscale x 4 x i32> ?a, <vscale x 4 x i32> ?b, <vscale x 4 x i32> zeroinitializer
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_1:.*]] = mpir.type.seq vector 4 x %[[TYPE_0]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
@@ -71,3 +61,13 @@
 ; CHECK:           %[[KEYWORD_1:.*]] = mpir.keyword zeroinitializer : <Value>
 ; CHECK:           %[[INST_6:.*]] = mpir.inst <shufflevector> (%[[TYPE_30]], %[[VAR_5]], %[[TYPE_32]], %[[VAR_6]], %[[TYPE_34]], %[[KEYWORD_1]]) <result_name = "sv", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Vector and aggregate instructions: elements, shuffles, and fields by
+; their indices or captured as an array.
+%e = extractelement <4 x i32> ?v, i64 ?idx
+%i = insertelement <4 x i32> ?v, i32 %e, i64 0
+%s = shufflevector <4 x i32> %i, <4 x i32> poison, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+%x = extractvalue {i32, {i8, i16}} ?agg, 1, 0
+%y = extractvalue {i32, float} ?agg2, ...?path
+%z = insertvalue {i32, float} ?agg2, float 1.0, 1
+%sv = shufflevector <vscale x 4 x i32> ?a, <vscale x 4 x i32> ?b, <vscale x 4 x i32> zeroinitializer

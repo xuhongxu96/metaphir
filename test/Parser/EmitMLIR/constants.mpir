@@ -1,18 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Constant operands: integers (wide ones too), floats, keywords, globals,
-; and aggregates of each delimiter.
-%a = add i32 ?x, 0
-%b = add i32 %a, -1
-%c = add i128 ?w, 170141183460469231731687303715884105727
-%d = add i1 ?bit, true
-%e = add i1 %d, false
-%f = fadd double ?fx, 1.5e-3
-%g = fadd double %f, 0x7FF0000000000000
-%h = select i1 ?c, ptr null, ptr @global
-%i = select i1 ?c, i32 poison, i32 undef
-%j = select i1 ?c, <2 x i32> zeroinitializer, <2 x i32> <i32 1, i32 2>
-%k = select i1 ?c, [2 x i8] [i8 1, i8 2], [2 x i8] ?arr
-%l = select i1 ?c, {i32, i8} {i32 1, i8 2}, {i32, i8} ?st
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
@@ -91,3 +76,18 @@
 ; CHECK:           %[[VAR_6:.*]] = mpir.var "st" : <Operand>
 ; CHECK:           %[[INST_11:.*]] = mpir.inst <select> (%[[TYPE_27]], %[[VAR_4]], %[[TYPE_30]], %[[AGGREGATE_2]], %[[TYPE_35]], %[[VAR_6]]) <result_name = "l", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Constant operands: integers (wide ones too), floats, keywords, globals,
+; and aggregates of each delimiter.
+%a = add i32 ?x, 0
+%b = add i32 %a, -1
+%c = add i128 ?w, 170141183460469231731687303715884105727
+%d = add i1 ?bit, true
+%e = add i1 %d, false
+%f = fadd double ?fx, 1.5e-3
+%g = fadd double %f, 0x7FF0000000000000
+%h = select i1 ?c, ptr null, ptr @global
+%i = select i1 ?c, i32 poison, i32 undef
+%j = select i1 ?c, <2 x i32> zeroinitializer, <2 x i32> <i32 1, i32 2>
+%k = select i1 ?c, [2 x i8] [i8 1, i8 2], [2 x i8] ?arr
+%l = select i1 ?c, {i32, i8} {i32 1, i8 2}, {i32, i8} ?st

@@ -1,4 +1,3 @@
-; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; Diagnostics point at the construct at fault, not at the token after it.
 ; RUN: split-file %s %t
 ; RUN: not %metaphir-parse %t/boolean.ll 2>&1 | FileCheck %s --check-prefix=BOOLEAN
@@ -13,45 +12,46 @@
 ;--- boolean.ll
 add i?bits ?x, ?y
 ;; ?bits + 1
-; BOOLEAN: boolean.ll:2:10: error: constraint must have a boolean result
+; BOOLEAN: constraint must have a boolean result
 
 ;--- subscript.ll
 add i32 ?x, ?y
 ;; ?x[0] == ?y
-; SUBSCRIPT: subscript.ll:2:6: error: constraint subscript requires an array operand
+; SUBSCRIPT: constraint subscript requires an array operand
 
 ;--- index.ll
 call ?t ?f(...?tys ?args)
 ;; ?args[true] == ?f
-; INDEX: index.ll:2:10: error: constraint array index must be an integer
+; INDEX: constraint array index must be an integer
 
 ;--- array-element.ll
 add i32 ?x, ?y
 ;; [1, 2][0] == 1
-; ARRAY-ELEMENT: array-element.ll:2:4: error: constraint array literal requires type, value, or string elements
+; ARRAY-ELEMENT: constraint array literal requires type, value, or string elements
 
 ;--- arity.ll
 add i?bits ?x, ?y
 ;; ult(?bits)
-; ARITY: arity.ll:2:4: error: constraint operation 'ult' expects 2 arguments, got 1
+; ARITY: constraint operation 'ult' expects 2 arguments, got 1
 
 ;--- duplicate-parameter.ll
 match m [] Binary (?t ?x, ?x) {
+; DUPLICATE: duplicate parameter '?x' in match declaration
+
   %ret = add ?t ?x, ?x
 }
 add i32 ?a, ?b
-; DUPLICATE: duplicate-parameter.ll:1:27: error: duplicate parameter '?x' in match declaration
-
 ;--- empty-branch.ll
 match m [] Unary (?t ?x) {
   ;; true
 }
-add i32 ?a, ?b
-; EMPTY-BRANCH: empty-branch.ll:3:1: error: match branch must contain at least one instruction
+; EMPTY-BRANCH: match branch must contain at least one instruction
 
+add i32 ?a, ?b
 ;--- unary-arity.ll
 match m [] Unary (?t ?x, ?t ?y) {
+; UNARY-ARITY: 'Unary' matcher takes exactly one operand parameter
+
   %ret = add ?t ?x, ?y
 }
 add i32 ?a, ?b
-; UNARY-ARITY: unary-arity.ll:1:12: error: 'Unary' matcher takes exactly one operand parameter

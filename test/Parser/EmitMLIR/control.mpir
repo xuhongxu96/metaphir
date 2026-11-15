@@ -1,15 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Control flow: blocks written as labels, phis with their incoming blocks,
-; branches and returns.
-?entry:
-%c = icmp ult i32 ?x, 10
-br i1 %c, label ?loop, label ?exit
-?loop:
-%i = phi i32 [0, ?entry], [?n, ?loop]
-%next = add i32 %i, 1
-br label ?exit
-?exit:
-ret i32 %next
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "entry" : <BasicBlock>
 ; CHECK:           %[[KEYWORD_0:.*]] = mpir.keyword ult : <Value>
@@ -35,3 +23,15 @@ ret i32 %next
 ; CHECK:           %[[TYPE_7:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_5:.*]] = mpir.inst <ret> block %[[VAR_3]] (%[[TYPE_7]], %[[INST_3]]) <flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Control flow: blocks written as labels, phis with their incoming blocks,
+; branches and returns.
+?entry:
+%c = icmp ult i32 ?x, 10
+br i1 %c, label ?loop, label ?exit
+?loop:
+%i = phi i32 [0, ?entry], [?n, ?loop]
+%next = add i32 %i, 1
+br label ?exit
+?exit:
+ret i32 %next

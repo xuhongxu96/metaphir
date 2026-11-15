@@ -5,74 +5,73 @@
 
 // A nested conjunction with an unreadable side.
 mpir.pattern {
-  %0 = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : <Operand>
-  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %1 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %2 = mpir_expr.call call "isZero"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %3 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %4 = mpir_expr.call call "opcode"(%3) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %5 = mpir_expr.str "mul" : <String>
-  %6 = mpir_expr.call binary "=="(%4, %5) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %7 = mpir_expr.call binary "&&"(%2, %6) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %8 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %9 = mpir_expr.call call "opcode"(%8) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %10 = mpir_expr.str "shl" : <String>
-  %11 = mpir_expr.call binary "=="(%9, %10) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %12 = mpir_expr.call binary "||"(%7, %11) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %12 : <Boolean>
-}
-mpir_index.query {
-  mpir_index.variant {
-    mpir_index.has_instruction <add>
-    mpir_index.has_shape <add>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand>
-    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %2 = mpir_index.node 0 : <Instruction>
-    %3 = mpir_expr.call call "isZero"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %4 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand>
-    %5 = mpir_expr.read %4 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %6 = mpir_index.node 0 : <Instruction>
-    %7 = mpir_expr.call call "opcode"(%5) anchor %6 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %8 = mpir_expr.str "mul" : <String>
-    %9 = mpir_index.node 0 : <Instruction>
-    %10 = mpir_expr.call binary "=="(%7, %8) anchor %9 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %11 = mpir_index.node 0 : <Instruction>
-    %12 = mpir_expr.call binary "&&"(%3, %10) anchor %11 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %13 = mpir_expr.read %4 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %14 = mpir_index.node 0 : <Instruction>
-    %15 = mpir_expr.call call "opcode"(%13) anchor %14 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %16 = mpir_expr.str "shl" : <String>
-    %17 = mpir_index.node 0 : <Instruction>
-    %18 = mpir_expr.call binary "=="(%15, %16) anchor %17 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %19 = mpir_index.node 0 : <Instruction>
-    %20 = mpir_expr.call binary "||"(%12, %18) anchor %19 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %20 : <Boolean>
-  }
-}
 // CHECK-LABEL:   mpir.pattern {
+  %0 = mpir.type.int 32 : <Type> loc("index-structuralize-nested.mlir":9:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
+  %x = mpir.var "x" : <Operand> loc("index-structuralize-nested.mlir":11:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
+  %y = mpir.var "y" : <Operand> loc("index-structuralize-nested.mlir":13:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
+  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-structuralize-nested.mlir":15:1)
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %1 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":17:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %2 = mpir_expr.call call "isZero"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":19:1)
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %3 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":21:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %4 = mpir_expr.call call "opcode"(%3) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":23:1)
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "opcode"(%[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %5 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":25:1)
 // CHECK:           %[[STR_0:.*]] = mpir_expr.str "mul" : <String>
+  %6 = mpir_expr.call binary "=="(%4, %5) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":27:1)
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call binary "=="(%[[CALL_1]], %[[STR_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %7 = mpir_expr.call binary "&&"(%2, %6) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":29:1)
 // CHECK:           %[[CALL_3:.*]] = mpir_expr.call binary "&&"(%[[CALL_0]], %[[CALL_2]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %8 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":31:1)
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %9 = mpir_expr.call call "opcode"(%8) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":33:1)
 // CHECK:           %[[CALL_4:.*]] = mpir_expr.call call "opcode"(%[[READ_2]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %10 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":35:1)
 // CHECK:           %[[STR_1:.*]] = mpir_expr.str "shl" : <String>
+  %11 = mpir_expr.call binary "=="(%9, %10) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":37:1)
 // CHECK:           %[[CALL_5:.*]] = mpir_expr.call binary "=="(%[[CALL_4]], %[[STR_1]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %12 = mpir_expr.call binary "||"(%7, %11) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":39:1)
 // CHECK:           %[[CALL_6:.*]] = mpir_expr.call binary "||"(%[[CALL_3]], %[[CALL_5]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %12 : <Boolean> loc("index-structuralize-nested.mlir":41:1)
 // CHECK:           mpir.require %[[CALL_6]] : <Boolean>
+} loc("index-structuralize-nested.mlir":43:1)
 // CHECK:         }
+mpir_index.query {
 // CHECK-LABEL:   mpir_index.query {
+  mpir_index.variant {
 // CHECK:           mpir_index.variant {
+    mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":49:1)
+    mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":50:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":51:1)
+    %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize-nested.mlir":52:1)
+    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":53:1)
+    %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":54:1)
+    %3 = mpir_expr.call call "isZero"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":55:1)
+    %4 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize-nested.mlir":56:1)
+    %5 = mpir_expr.read %4 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":57:1)
+    %6 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":58:1)
+    %7 = mpir_expr.call call "opcode"(%5) anchor %6 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":59:1)
+    %8 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":60:1)
+    %9 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":61:1)
+    %10 = mpir_expr.call binary "=="(%7, %8) anchor %9 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":62:1)
+    %11 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":63:1)
+    %12 = mpir_expr.call binary "&&"(%3, %10) anchor %11 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":64:1)
+    %13 = mpir_expr.read %4 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":65:1)
+    %14 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":66:1)
+    %15 = mpir_expr.call call "opcode"(%13) anchor %14 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":67:1)
+    %16 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":68:1)
+    %17 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":69:1)
+    %18 = mpir_expr.call binary "=="(%15, %16) anchor %17 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":70:1)
+    %19 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":71:1)
+    %20 = mpir_expr.call binary "||"(%12, %18) anchor %19 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":72:1)
+    mpir_index.assume %20 : <Boolean> loc("index-structuralize-nested.mlir":73:1)
+  } loc("index-structuralize-nested.mlir":74:1)
 // CHECK:             mpir_index.has_instruction <mul> {derived}
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
@@ -128,90 +127,90 @@ mpir_index.query {
 // CHECK:             %[[CALL_13:.*]] = mpir_expr.call binary "||"(%[[CALL_10]], %[[CALL_12]]) anchor %[[NODE_13]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:             mpir_index.assume %[[CALL_13]] : <Boolean>
 // CHECK:           }
+} loc("index-structuralize-nested.mlir":130:1)
 // CHECK:         }
 
 // -----
 
 // A nested disjunction with an impossible side: the other stands.
 mpir.pattern {
-  %self = mpir.var "self" : <Instruction>
-  %0 = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : <Operand>
-  %i_a = mpir.inst <add> capture %self (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %1 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %2 = mpir_expr.call call "opcode"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %3 = mpir_expr.str "mul" : <String>
-  %4 = mpir_expr.call binary "=="(%2, %3) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %5 = mpir_expr.read %self : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
-  %6 = mpir_expr.call call "opcode"(%5) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %7 = mpir_expr.str "sub" : <String>
-  %8 = mpir_expr.call binary "=="(%6, %7) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %9 = mpir_expr.call binary "||"(%4, %8) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %10 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %11 = mpir_expr.call call "opcode"(%10) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %12 = mpir_expr.str "shl" : <String>
-  %13 = mpir_expr.call binary "=="(%11, %12) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %14 = mpir_expr.call binary "||"(%9, %13) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %14 : <Boolean>
-}
-mpir_index.query {
-  mpir_index.variant {
-    mpir_index.has_instruction <add>
-    mpir_index.has_shape <add>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand>
-    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %2 = mpir_index.node 0 : <Instruction>
-    %3 = mpir_expr.call call "opcode"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %4 = mpir_expr.str "mul" : <String>
-    %5 = mpir_index.node 0 : <Instruction>
-    %6 = mpir_expr.call binary "=="(%3, %4) anchor %5 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %7 = mpir_index.sites [[0, 1, 8]] {var_name = "self"} : <Instruction>
-    %8 = mpir_expr.read %7 : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
-    %9 = mpir_index.node 0 : <Instruction>
-    %10 = mpir_expr.call call "opcode"(%8) anchor %9 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %11 = mpir_expr.str "sub" : <String>
-    %12 = mpir_index.node 0 : <Instruction>
-    %13 = mpir_expr.call binary "=="(%10, %11) anchor %12 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %14 = mpir_index.node 0 : <Instruction>
-    %15 = mpir_expr.call binary "||"(%6, %13) anchor %14 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %16 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand>
-    %17 = mpir_expr.read %16 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %18 = mpir_index.node 0 : <Instruction>
-    %19 = mpir_expr.call call "opcode"(%17) anchor %18 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %20 = mpir_expr.str "shl" : <String>
-    %21 = mpir_index.node 0 : <Instruction>
-    %22 = mpir_expr.call binary "=="(%19, %20) anchor %21 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %23 = mpir_index.node 0 : <Instruction>
-    %24 = mpir_expr.call binary "||"(%15, %22) anchor %23 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %24 : <Boolean>
-  }
-}
 // CHECK-LABEL:   mpir.pattern {
+  %self = mpir.var "self" : <Instruction> loc("index-structuralize-nested.mlir":138:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "self" : <Instruction>
+  %0 = mpir.type.int 32 : <Type> loc("index-structuralize-nested.mlir":140:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
+  %x = mpir.var "x" : <Operand> loc("index-structuralize-nested.mlir":142:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "x" : <Operand>
+  %y = mpir.var "y" : <Operand> loc("index-structuralize-nested.mlir":144:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "y" : <Operand>
+  %i_a = mpir.inst <add> capture %self (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-structuralize-nested.mlir":146:1)
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> capture %[[VAR_0]] (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[VAR_2]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %1 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":148:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %2 = mpir_expr.call call "opcode"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":150:1)
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "opcode"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %3 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":152:1)
 // CHECK:           %[[STR_0:.*]] = mpir_expr.str "mul" : <String>
+  %4 = mpir_expr.call binary "=="(%2, %3) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":154:1)
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[CALL_0]], %[[STR_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %5 = mpir_expr.read %self : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":156:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
+  %6 = mpir_expr.call call "opcode"(%5) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":158:1)
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "opcode"(%[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %7 = mpir_expr.str "sub" : <String> loc("index-structuralize-nested.mlir":160:1)
 // CHECK:           %[[STR_1:.*]] = mpir_expr.str "sub" : <String>
+  %8 = mpir_expr.call binary "=="(%6, %7) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":162:1)
 // CHECK:           %[[CALL_3:.*]] = mpir_expr.call binary "=="(%[[CALL_2]], %[[STR_1]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %9 = mpir_expr.call binary "||"(%4, %8) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":164:1)
 // CHECK:           %[[CALL_4:.*]] = mpir_expr.call binary "||"(%[[CALL_1]], %[[CALL_3]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %10 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":166:1)
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %11 = mpir_expr.call call "opcode"(%10) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":168:1)
 // CHECK:           %[[CALL_5:.*]] = mpir_expr.call call "opcode"(%[[READ_2]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %12 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":170:1)
 // CHECK:           %[[STR_2:.*]] = mpir_expr.str "shl" : <String>
+  %13 = mpir_expr.call binary "=="(%11, %12) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":172:1)
 // CHECK:           %[[CALL_6:.*]] = mpir_expr.call binary "=="(%[[CALL_5]], %[[STR_2]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %14 = mpir_expr.call binary "||"(%9, %13) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":174:1)
 // CHECK:           %[[CALL_7:.*]] = mpir_expr.call binary "||"(%[[CALL_4]], %[[CALL_6]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %14 : <Boolean> loc("index-structuralize-nested.mlir":176:1)
 // CHECK:           mpir.require %[[CALL_7]] : <Boolean>
+} loc("index-structuralize-nested.mlir":178:1)
 // CHECK:         }
+mpir_index.query {
 // CHECK-LABEL:   mpir_index.query {
+  mpir_index.variant {
 // CHECK:           mpir_index.variant {
+    mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":184:1)
+    mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":185:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":186:1)
+    %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize-nested.mlir":187:1)
+    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":188:1)
+    %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":189:1)
+    %3 = mpir_expr.call call "opcode"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":190:1)
+    %4 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":191:1)
+    %5 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":192:1)
+    %6 = mpir_expr.call binary "=="(%3, %4) anchor %5 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":193:1)
+    %7 = mpir_index.sites [[0, 1, 8]] {var_name = "self"} : <Instruction> loc("index-structuralize-nested.mlir":194:1)
+    %8 = mpir_expr.read %7 : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":195:1)
+    %9 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":196:1)
+    %10 = mpir_expr.call call "opcode"(%8) anchor %9 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":197:1)
+    %11 = mpir_expr.str "sub" : <String> loc("index-structuralize-nested.mlir":198:1)
+    %12 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":199:1)
+    %13 = mpir_expr.call binary "=="(%10, %11) anchor %12 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":200:1)
+    %14 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":201:1)
+    %15 = mpir_expr.call binary "||"(%6, %13) anchor %14 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":202:1)
+    %16 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize-nested.mlir":203:1)
+    %17 = mpir_expr.read %16 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":204:1)
+    %18 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":205:1)
+    %19 = mpir_expr.call call "opcode"(%17) anchor %18 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":206:1)
+    %20 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":207:1)
+    %21 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":208:1)
+    %22 = mpir_expr.call binary "=="(%19, %20) anchor %21 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":209:1)
+    %23 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":210:1)
+    %24 = mpir_expr.call binary "||"(%15, %22) anchor %23 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":211:1)
+    mpir_index.assume %24 : <Boolean> loc("index-structuralize-nested.mlir":212:1)
+  } loc("index-structuralize-nested.mlir":213:1)
 // CHECK:             mpir_index.has_instruction <mul> {derived}
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
@@ -275,87 +274,87 @@ mpir_index.query {
 // CHECK:             %[[CALL_15:.*]] = mpir_expr.call binary "||"(%[[CALL_12]], %[[CALL_14]]) anchor %[[NODE_15]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:             mpir_index.assume %[[CALL_15]] : <Boolean>
 // CHECK:           }
+} loc("index-structuralize-nested.mlir":277:1)
 // CHECK:         }
 
 // -----
 
 // ...with readable sides on both.
 mpir.pattern {
-  %0 = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : <Operand>
-  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %1 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %2 = mpir_expr.call call "opcode"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %3 = mpir_expr.str "mul" : <String>
-  %4 = mpir_expr.call binary "=="(%2, %3) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %5 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %6 = mpir_expr.call call "opcode"(%5) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %7 = mpir_expr.str "shl" : <String>
-  %8 = mpir_expr.call binary "=="(%6, %7) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %9 = mpir_expr.call binary "&&"(%4, %8) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %10 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %11 = mpir_expr.call call "opcode"(%10) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %12 = mpir_expr.str "xor" : <String>
-  %13 = mpir_expr.call binary "=="(%11, %12) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %14 = mpir_expr.call binary "||"(%9, %13) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %14 : <Boolean>
-}
-mpir_index.query {
-  mpir_index.variant {
-    mpir_index.has_instruction <add>
-    mpir_index.has_shape <add>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand>
-    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %2 = mpir_index.node 0 : <Instruction>
-    %3 = mpir_expr.call call "opcode"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %4 = mpir_expr.str "mul" : <String>
-    %5 = mpir_index.node 0 : <Instruction>
-    %6 = mpir_expr.call binary "=="(%3, %4) anchor %5 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %7 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand>
-    %8 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %9 = mpir_index.node 0 : <Instruction>
-    %10 = mpir_expr.call call "opcode"(%8) anchor %9 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %11 = mpir_expr.str "shl" : <String>
-    %12 = mpir_index.node 0 : <Instruction>
-    %13 = mpir_expr.call binary "=="(%10, %11) anchor %12 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %14 = mpir_index.node 0 : <Instruction>
-    %15 = mpir_expr.call binary "&&"(%6, %13) anchor %14 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %16 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %17 = mpir_index.node 0 : <Instruction>
-    %18 = mpir_expr.call call "opcode"(%16) anchor %17 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %19 = mpir_expr.str "xor" : <String>
-    %20 = mpir_index.node 0 : <Instruction>
-    %21 = mpir_expr.call binary "=="(%18, %19) anchor %20 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %22 = mpir_index.node 0 : <Instruction>
-    %23 = mpir_expr.call binary "||"(%15, %21) anchor %22 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %23 : <Boolean>
-  }
-}
 // CHECK-LABEL:   mpir.pattern {
+  %0 = mpir.type.int 32 : <Type> loc("index-structuralize-nested.mlir":285:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
+  %x = mpir.var "x" : <Operand> loc("index-structuralize-nested.mlir":287:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
+  %y = mpir.var "y" : <Operand> loc("index-structuralize-nested.mlir":289:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
+  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-structuralize-nested.mlir":291:1)
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %1 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":293:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %2 = mpir_expr.call call "opcode"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":295:1)
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "opcode"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %3 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":297:1)
 // CHECK:           %[[STR_0:.*]] = mpir_expr.str "mul" : <String>
+  %4 = mpir_expr.call binary "=="(%2, %3) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":299:1)
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[CALL_0]], %[[STR_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %5 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":301:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %6 = mpir_expr.call call "opcode"(%5) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":303:1)
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "opcode"(%[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %7 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":305:1)
 // CHECK:           %[[STR_1:.*]] = mpir_expr.str "shl" : <String>
+  %8 = mpir_expr.call binary "=="(%6, %7) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":307:1)
 // CHECK:           %[[CALL_3:.*]] = mpir_expr.call binary "=="(%[[CALL_2]], %[[STR_1]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %9 = mpir_expr.call binary "&&"(%4, %8) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":309:1)
 // CHECK:           %[[CALL_4:.*]] = mpir_expr.call binary "&&"(%[[CALL_1]], %[[CALL_3]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %10 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":311:1)
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %11 = mpir_expr.call call "opcode"(%10) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":313:1)
 // CHECK:           %[[CALL_5:.*]] = mpir_expr.call call "opcode"(%[[READ_2]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %12 = mpir_expr.str "xor" : <String> loc("index-structuralize-nested.mlir":315:1)
 // CHECK:           %[[STR_2:.*]] = mpir_expr.str "xor" : <String>
+  %13 = mpir_expr.call binary "=="(%11, %12) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":317:1)
 // CHECK:           %[[CALL_6:.*]] = mpir_expr.call binary "=="(%[[CALL_5]], %[[STR_2]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %14 = mpir_expr.call binary "||"(%9, %13) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":319:1)
 // CHECK:           %[[CALL_7:.*]] = mpir_expr.call binary "||"(%[[CALL_4]], %[[CALL_6]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %14 : <Boolean> loc("index-structuralize-nested.mlir":321:1)
 // CHECK:           mpir.require %[[CALL_7]] : <Boolean>
+} loc("index-structuralize-nested.mlir":323:1)
 // CHECK:         }
+mpir_index.query {
 // CHECK-LABEL:   mpir_index.query {
+  mpir_index.variant {
 // CHECK:           mpir_index.variant {
+    mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":329:1)
+    mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":330:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":331:1)
+    %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize-nested.mlir":332:1)
+    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":333:1)
+    %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":334:1)
+    %3 = mpir_expr.call call "opcode"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":335:1)
+    %4 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":336:1)
+    %5 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":337:1)
+    %6 = mpir_expr.call binary "=="(%3, %4) anchor %5 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":338:1)
+    %7 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize-nested.mlir":339:1)
+    %8 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":340:1)
+    %9 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":341:1)
+    %10 = mpir_expr.call call "opcode"(%8) anchor %9 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":342:1)
+    %11 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":343:1)
+    %12 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":344:1)
+    %13 = mpir_expr.call binary "=="(%10, %11) anchor %12 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":345:1)
+    %14 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":346:1)
+    %15 = mpir_expr.call binary "&&"(%6, %13) anchor %14 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":347:1)
+    %16 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":348:1)
+    %17 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":349:1)
+    %18 = mpir_expr.call call "opcode"(%16) anchor %17 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":350:1)
+    %19 = mpir_expr.str "xor" : <String> loc("index-structuralize-nested.mlir":351:1)
+    %20 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":352:1)
+    %21 = mpir_expr.call binary "=="(%18, %19) anchor %20 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":353:1)
+    %22 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":354:1)
+    %23 = mpir_expr.call binary "||"(%15, %21) anchor %22 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":355:1)
+    mpir_index.assume %23 : <Boolean> loc("index-structuralize-nested.mlir":356:1)
+  } loc("index-structuralize-nested.mlir":357:1)
 // CHECK:             mpir_index.has_instruction <mul> {derived}
 // CHECK:             mpir_index.has_instruction <shl> {derived}
 // CHECK:             mpir_index.has_instruction <add>
@@ -418,349 +417,349 @@ mpir_index.query {
 // CHECK:             %[[CALL_15:.*]] = mpir_expr.call binary "||"(%[[CALL_12]], %[[CALL_14]]) anchor %[[NODE_15]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:             mpir_index.assume %[[CALL_15]] : <Boolean>
 // CHECK:           }
+} loc("index-structuralize-nested.mlir":420:1)
 // CHECK:         }
 
 // -----
 
 // Too many disjunctions to split: none of them are.
 mpir.pattern {
-  %0 = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : <Operand>
-  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %1 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %2 = mpir_expr.call call "opcode"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %3 = mpir_expr.str "add" : <String>
-  %4 = mpir_expr.call binary "=="(%2, %3) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %5 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %6 = mpir_expr.call call "opcode"(%5) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %7 = mpir_expr.str "sub" : <String>
-  %8 = mpir_expr.call binary "=="(%6, %7) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %9 = mpir_expr.call binary "||"(%4, %8) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %9 : <Boolean>
-  %10 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %11 = mpir_expr.call call "opcode"(%10) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %12 = mpir_expr.str "sub" : <String>
-  %13 = mpir_expr.call binary "=="(%11, %12) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %14 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %15 = mpir_expr.call call "opcode"(%14) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %16 = mpir_expr.str "mul" : <String>
-  %17 = mpir_expr.call binary "=="(%15, %16) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %18 = mpir_expr.call binary "||"(%13, %17) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %18 : <Boolean>
-  %19 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %20 = mpir_expr.call call "opcode"(%19) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %21 = mpir_expr.str "mul" : <String>
-  %22 = mpir_expr.call binary "=="(%20, %21) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %23 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %24 = mpir_expr.call call "opcode"(%23) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %25 = mpir_expr.str "shl" : <String>
-  %26 = mpir_expr.call binary "=="(%24, %25) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %27 = mpir_expr.call binary "||"(%22, %26) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %27 : <Boolean>
-  %28 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %29 = mpir_expr.call call "opcode"(%28) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %30 = mpir_expr.str "shl" : <String>
-  %31 = mpir_expr.call binary "=="(%29, %30) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %32 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %33 = mpir_expr.call call "opcode"(%32) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %34 = mpir_expr.str "lshr" : <String>
-  %35 = mpir_expr.call binary "=="(%33, %34) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %36 = mpir_expr.call binary "||"(%31, %35) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %36 : <Boolean>
-  %37 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %38 = mpir_expr.call call "opcode"(%37) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %39 = mpir_expr.str "lshr" : <String>
-  %40 = mpir_expr.call binary "=="(%38, %39) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %41 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %42 = mpir_expr.call call "opcode"(%41) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %43 = mpir_expr.str "ashr" : <String>
-  %44 = mpir_expr.call binary "=="(%42, %43) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %45 = mpir_expr.call binary "||"(%40, %44) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %45 : <Boolean>
-  %46 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %47 = mpir_expr.call call "opcode"(%46) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %48 = mpir_expr.str "ashr" : <String>
-  %49 = mpir_expr.call binary "=="(%47, %48) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %50 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %51 = mpir_expr.call call "opcode"(%50) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %52 = mpir_expr.str "and" : <String>
-  %53 = mpir_expr.call binary "=="(%51, %52) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %54 = mpir_expr.call binary "||"(%49, %53) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %54 : <Boolean>
-  %55 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %56 = mpir_expr.call call "opcode"(%55) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %57 = mpir_expr.str "and" : <String>
-  %58 = mpir_expr.call binary "=="(%56, %57) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %59 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %60 = mpir_expr.call call "opcode"(%59) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %61 = mpir_expr.str "or" : <String>
-  %62 = mpir_expr.call binary "=="(%60, %61) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %63 = mpir_expr.call binary "||"(%58, %62) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %63 : <Boolean>
-  %64 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %65 = mpir_expr.call call "opcode"(%64) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %66 = mpir_expr.str "or" : <String>
-  %67 = mpir_expr.call binary "=="(%65, %66) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %68 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %69 = mpir_expr.call call "opcode"(%68) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %70 = mpir_expr.str "xor" : <String>
-  %71 = mpir_expr.call binary "=="(%69, %70) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %72 = mpir_expr.call binary "||"(%67, %71) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %72 : <Boolean>
-  %73 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %74 = mpir_expr.call call "opcode"(%73) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %75 = mpir_expr.str "xor" : <String>
-  %76 = mpir_expr.call binary "=="(%74, %75) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %77 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %78 = mpir_expr.call call "opcode"(%77) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-  %79 = mpir_expr.str "udiv" : <String>
-  %80 = mpir_expr.call binary "=="(%78, %79) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  %81 = mpir_expr.call binary "||"(%76, %80) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-  mpir.require %81 : <Boolean>
-}
-mpir_index.query {
-  mpir_index.variant {
-    mpir_index.has_instruction <add>
-    mpir_index.has_shape <add>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand>
-    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %2 = mpir_index.node 0 : <Instruction>
-    %3 = mpir_expr.call call "opcode"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %4 = mpir_expr.str "add" : <String>
-    %5 = mpir_index.node 0 : <Instruction>
-    %6 = mpir_expr.call binary "=="(%3, %4) anchor %5 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %7 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand>
-    %8 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %9 = mpir_index.node 0 : <Instruction>
-    %10 = mpir_expr.call call "opcode"(%8) anchor %9 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %11 = mpir_expr.str "sub" : <String>
-    %12 = mpir_index.node 0 : <Instruction>
-    %13 = mpir_expr.call binary "=="(%10, %11) anchor %12 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %14 = mpir_index.node 0 : <Instruction>
-    %15 = mpir_expr.call binary "||"(%6, %13) anchor %14 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %15 : <Boolean>
-    %16 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %17 = mpir_index.node 0 : <Instruction>
-    %18 = mpir_expr.call call "opcode"(%16) anchor %17 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %19 = mpir_expr.str "sub" : <String>
-    %20 = mpir_index.node 0 : <Instruction>
-    %21 = mpir_expr.call binary "=="(%18, %19) anchor %20 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %22 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %23 = mpir_index.node 0 : <Instruction>
-    %24 = mpir_expr.call call "opcode"(%22) anchor %23 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %25 = mpir_expr.str "mul" : <String>
-    %26 = mpir_index.node 0 : <Instruction>
-    %27 = mpir_expr.call binary "=="(%24, %25) anchor %26 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %28 = mpir_index.node 0 : <Instruction>
-    %29 = mpir_expr.call binary "||"(%21, %27) anchor %28 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %29 : <Boolean>
-    %30 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %31 = mpir_index.node 0 : <Instruction>
-    %32 = mpir_expr.call call "opcode"(%30) anchor %31 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %33 = mpir_expr.str "mul" : <String>
-    %34 = mpir_index.node 0 : <Instruction>
-    %35 = mpir_expr.call binary "=="(%32, %33) anchor %34 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %36 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %37 = mpir_index.node 0 : <Instruction>
-    %38 = mpir_expr.call call "opcode"(%36) anchor %37 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %39 = mpir_expr.str "shl" : <String>
-    %40 = mpir_index.node 0 : <Instruction>
-    %41 = mpir_expr.call binary "=="(%38, %39) anchor %40 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %42 = mpir_index.node 0 : <Instruction>
-    %43 = mpir_expr.call binary "||"(%35, %41) anchor %42 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %43 : <Boolean>
-    %44 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %45 = mpir_index.node 0 : <Instruction>
-    %46 = mpir_expr.call call "opcode"(%44) anchor %45 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %47 = mpir_expr.str "shl" : <String>
-    %48 = mpir_index.node 0 : <Instruction>
-    %49 = mpir_expr.call binary "=="(%46, %47) anchor %48 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %50 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %51 = mpir_index.node 0 : <Instruction>
-    %52 = mpir_expr.call call "opcode"(%50) anchor %51 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %53 = mpir_expr.str "lshr" : <String>
-    %54 = mpir_index.node 0 : <Instruction>
-    %55 = mpir_expr.call binary "=="(%52, %53) anchor %54 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %56 = mpir_index.node 0 : <Instruction>
-    %57 = mpir_expr.call binary "||"(%49, %55) anchor %56 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %57 : <Boolean>
-    %58 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %59 = mpir_index.node 0 : <Instruction>
-    %60 = mpir_expr.call call "opcode"(%58) anchor %59 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %61 = mpir_expr.str "lshr" : <String>
-    %62 = mpir_index.node 0 : <Instruction>
-    %63 = mpir_expr.call binary "=="(%60, %61) anchor %62 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %64 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %65 = mpir_index.node 0 : <Instruction>
-    %66 = mpir_expr.call call "opcode"(%64) anchor %65 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %67 = mpir_expr.str "ashr" : <String>
-    %68 = mpir_index.node 0 : <Instruction>
-    %69 = mpir_expr.call binary "=="(%66, %67) anchor %68 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %70 = mpir_index.node 0 : <Instruction>
-    %71 = mpir_expr.call binary "||"(%63, %69) anchor %70 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %71 : <Boolean>
-    %72 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %73 = mpir_index.node 0 : <Instruction>
-    %74 = mpir_expr.call call "opcode"(%72) anchor %73 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %75 = mpir_expr.str "ashr" : <String>
-    %76 = mpir_index.node 0 : <Instruction>
-    %77 = mpir_expr.call binary "=="(%74, %75) anchor %76 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %78 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %79 = mpir_index.node 0 : <Instruction>
-    %80 = mpir_expr.call call "opcode"(%78) anchor %79 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %81 = mpir_expr.str "and" : <String>
-    %82 = mpir_index.node 0 : <Instruction>
-    %83 = mpir_expr.call binary "=="(%80, %81) anchor %82 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %84 = mpir_index.node 0 : <Instruction>
-    %85 = mpir_expr.call binary "||"(%77, %83) anchor %84 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %85 : <Boolean>
-    %86 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %87 = mpir_index.node 0 : <Instruction>
-    %88 = mpir_expr.call call "opcode"(%86) anchor %87 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %89 = mpir_expr.str "and" : <String>
-    %90 = mpir_index.node 0 : <Instruction>
-    %91 = mpir_expr.call binary "=="(%88, %89) anchor %90 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %92 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %93 = mpir_index.node 0 : <Instruction>
-    %94 = mpir_expr.call call "opcode"(%92) anchor %93 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %95 = mpir_expr.str "or" : <String>
-    %96 = mpir_index.node 0 : <Instruction>
-    %97 = mpir_expr.call binary "=="(%94, %95) anchor %96 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %98 = mpir_index.node 0 : <Instruction>
-    %99 = mpir_expr.call binary "||"(%91, %97) anchor %98 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %99 : <Boolean>
-    %100 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %101 = mpir_index.node 0 : <Instruction>
-    %102 = mpir_expr.call call "opcode"(%100) anchor %101 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %103 = mpir_expr.str "or" : <String>
-    %104 = mpir_index.node 0 : <Instruction>
-    %105 = mpir_expr.call binary "=="(%102, %103) anchor %104 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %106 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %107 = mpir_index.node 0 : <Instruction>
-    %108 = mpir_expr.call call "opcode"(%106) anchor %107 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %109 = mpir_expr.str "xor" : <String>
-    %110 = mpir_index.node 0 : <Instruction>
-    %111 = mpir_expr.call binary "=="(%108, %109) anchor %110 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %112 = mpir_index.node 0 : <Instruction>
-    %113 = mpir_expr.call binary "||"(%105, %111) anchor %112 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %113 : <Boolean>
-    %114 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %115 = mpir_index.node 0 : <Instruction>
-    %116 = mpir_expr.call call "opcode"(%114) anchor %115 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %117 = mpir_expr.str "xor" : <String>
-    %118 = mpir_index.node 0 : <Instruction>
-    %119 = mpir_expr.call binary "=="(%116, %117) anchor %118 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %120 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-    %121 = mpir_index.node 0 : <Instruction>
-    %122 = mpir_expr.call call "opcode"(%120) anchor %121 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
-    %123 = mpir_expr.str "udiv" : <String>
-    %124 = mpir_index.node 0 : <Instruction>
-    %125 = mpir_expr.call binary "=="(%122, %123) anchor %124 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %126 = mpir_index.node 0 : <Instruction>
-    %127 = mpir_expr.call binary "||"(%119, %125) anchor %126 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %127 : <Boolean>
-  }
-}
 // CHECK-LABEL:   mpir.pattern {
+  %0 = mpir.type.int 32 : <Type> loc("index-structuralize-nested.mlir":428:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
+  %x = mpir.var "x" : <Operand> loc("index-structuralize-nested.mlir":430:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
+  %y = mpir.var "y" : <Operand> loc("index-structuralize-nested.mlir":432:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
+  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-structuralize-nested.mlir":434:1)
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %1 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":436:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %2 = mpir_expr.call call "opcode"(%1) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":438:1)
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "opcode"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %3 = mpir_expr.str "add" : <String> loc("index-structuralize-nested.mlir":440:1)
 // CHECK:           %[[STR_0:.*]] = mpir_expr.str "add" : <String>
+  %4 = mpir_expr.call binary "=="(%2, %3) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":442:1)
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[CALL_0]], %[[STR_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %5 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":444:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %6 = mpir_expr.call call "opcode"(%5) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":446:1)
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "opcode"(%[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %7 = mpir_expr.str "sub" : <String> loc("index-structuralize-nested.mlir":448:1)
 // CHECK:           %[[STR_1:.*]] = mpir_expr.str "sub" : <String>
+  %8 = mpir_expr.call binary "=="(%6, %7) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":450:1)
 // CHECK:           %[[CALL_3:.*]] = mpir_expr.call binary "=="(%[[CALL_2]], %[[STR_1]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %9 = mpir_expr.call binary "||"(%4, %8) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":452:1)
 // CHECK:           %[[CALL_4:.*]] = mpir_expr.call binary "||"(%[[CALL_1]], %[[CALL_3]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %9 : <Boolean> loc("index-structuralize-nested.mlir":454:1)
 // CHECK:           mpir.require %[[CALL_4]] : <Boolean>
+  %10 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":456:1)
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %11 = mpir_expr.call call "opcode"(%10) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":458:1)
 // CHECK:           %[[CALL_5:.*]] = mpir_expr.call call "opcode"(%[[READ_2]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %12 = mpir_expr.str "sub" : <String> loc("index-structuralize-nested.mlir":460:1)
 // CHECK:           %[[STR_2:.*]] = mpir_expr.str "sub" : <String>
+  %13 = mpir_expr.call binary "=="(%11, %12) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":462:1)
 // CHECK:           %[[CALL_6:.*]] = mpir_expr.call binary "=="(%[[CALL_5]], %[[STR_2]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %14 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":464:1)
 // CHECK:           %[[READ_3:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %15 = mpir_expr.call call "opcode"(%14) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":466:1)
 // CHECK:           %[[CALL_7:.*]] = mpir_expr.call call "opcode"(%[[READ_3]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %16 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":468:1)
 // CHECK:           %[[STR_3:.*]] = mpir_expr.str "mul" : <String>
+  %17 = mpir_expr.call binary "=="(%15, %16) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":470:1)
 // CHECK:           %[[CALL_8:.*]] = mpir_expr.call binary "=="(%[[CALL_7]], %[[STR_3]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %18 = mpir_expr.call binary "||"(%13, %17) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":472:1)
 // CHECK:           %[[CALL_9:.*]] = mpir_expr.call binary "||"(%[[CALL_6]], %[[CALL_8]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %18 : <Boolean> loc("index-structuralize-nested.mlir":474:1)
 // CHECK:           mpir.require %[[CALL_9]] : <Boolean>
+  %19 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":476:1)
 // CHECK:           %[[READ_4:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %20 = mpir_expr.call call "opcode"(%19) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":478:1)
 // CHECK:           %[[CALL_10:.*]] = mpir_expr.call call "opcode"(%[[READ_4]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %21 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":480:1)
 // CHECK:           %[[STR_4:.*]] = mpir_expr.str "mul" : <String>
+  %22 = mpir_expr.call binary "=="(%20, %21) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":482:1)
 // CHECK:           %[[CALL_11:.*]] = mpir_expr.call binary "=="(%[[CALL_10]], %[[STR_4]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %23 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":484:1)
 // CHECK:           %[[READ_5:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %24 = mpir_expr.call call "opcode"(%23) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":486:1)
 // CHECK:           %[[CALL_12:.*]] = mpir_expr.call call "opcode"(%[[READ_5]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %25 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":488:1)
 // CHECK:           %[[STR_5:.*]] = mpir_expr.str "shl" : <String>
+  %26 = mpir_expr.call binary "=="(%24, %25) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":490:1)
 // CHECK:           %[[CALL_13:.*]] = mpir_expr.call binary "=="(%[[CALL_12]], %[[STR_5]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %27 = mpir_expr.call binary "||"(%22, %26) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":492:1)
 // CHECK:           %[[CALL_14:.*]] = mpir_expr.call binary "||"(%[[CALL_11]], %[[CALL_13]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %27 : <Boolean> loc("index-structuralize-nested.mlir":494:1)
 // CHECK:           mpir.require %[[CALL_14]] : <Boolean>
+  %28 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":496:1)
 // CHECK:           %[[READ_6:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %29 = mpir_expr.call call "opcode"(%28) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":498:1)
 // CHECK:           %[[CALL_15:.*]] = mpir_expr.call call "opcode"(%[[READ_6]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %30 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":500:1)
 // CHECK:           %[[STR_6:.*]] = mpir_expr.str "shl" : <String>
+  %31 = mpir_expr.call binary "=="(%29, %30) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":502:1)
 // CHECK:           %[[CALL_16:.*]] = mpir_expr.call binary "=="(%[[CALL_15]], %[[STR_6]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %32 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":504:1)
 // CHECK:           %[[READ_7:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %33 = mpir_expr.call call "opcode"(%32) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":506:1)
 // CHECK:           %[[CALL_17:.*]] = mpir_expr.call call "opcode"(%[[READ_7]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %34 = mpir_expr.str "lshr" : <String> loc("index-structuralize-nested.mlir":508:1)
 // CHECK:           %[[STR_7:.*]] = mpir_expr.str "lshr" : <String>
+  %35 = mpir_expr.call binary "=="(%33, %34) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":510:1)
 // CHECK:           %[[CALL_18:.*]] = mpir_expr.call binary "=="(%[[CALL_17]], %[[STR_7]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %36 = mpir_expr.call binary "||"(%31, %35) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":512:1)
 // CHECK:           %[[CALL_19:.*]] = mpir_expr.call binary "||"(%[[CALL_16]], %[[CALL_18]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %36 : <Boolean> loc("index-structuralize-nested.mlir":514:1)
 // CHECK:           mpir.require %[[CALL_19]] : <Boolean>
+  %37 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":516:1)
 // CHECK:           %[[READ_8:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %38 = mpir_expr.call call "opcode"(%37) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":518:1)
 // CHECK:           %[[CALL_20:.*]] = mpir_expr.call call "opcode"(%[[READ_8]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %39 = mpir_expr.str "lshr" : <String> loc("index-structuralize-nested.mlir":520:1)
 // CHECK:           %[[STR_8:.*]] = mpir_expr.str "lshr" : <String>
+  %40 = mpir_expr.call binary "=="(%38, %39) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":522:1)
 // CHECK:           %[[CALL_21:.*]] = mpir_expr.call binary "=="(%[[CALL_20]], %[[STR_8]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %41 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":524:1)
 // CHECK:           %[[READ_9:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %42 = mpir_expr.call call "opcode"(%41) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":526:1)
 // CHECK:           %[[CALL_22:.*]] = mpir_expr.call call "opcode"(%[[READ_9]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %43 = mpir_expr.str "ashr" : <String> loc("index-structuralize-nested.mlir":528:1)
 // CHECK:           %[[STR_9:.*]] = mpir_expr.str "ashr" : <String>
+  %44 = mpir_expr.call binary "=="(%42, %43) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":530:1)
 // CHECK:           %[[CALL_23:.*]] = mpir_expr.call binary "=="(%[[CALL_22]], %[[STR_9]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %45 = mpir_expr.call binary "||"(%40, %44) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":532:1)
 // CHECK:           %[[CALL_24:.*]] = mpir_expr.call binary "||"(%[[CALL_21]], %[[CALL_23]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %45 : <Boolean> loc("index-structuralize-nested.mlir":534:1)
 // CHECK:           mpir.require %[[CALL_24]] : <Boolean>
+  %46 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":536:1)
 // CHECK:           %[[READ_10:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %47 = mpir_expr.call call "opcode"(%46) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":538:1)
 // CHECK:           %[[CALL_25:.*]] = mpir_expr.call call "opcode"(%[[READ_10]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %48 = mpir_expr.str "ashr" : <String> loc("index-structuralize-nested.mlir":540:1)
 // CHECK:           %[[STR_10:.*]] = mpir_expr.str "ashr" : <String>
+  %49 = mpir_expr.call binary "=="(%47, %48) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":542:1)
 // CHECK:           %[[CALL_26:.*]] = mpir_expr.call binary "=="(%[[CALL_25]], %[[STR_10]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %50 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":544:1)
 // CHECK:           %[[READ_11:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %51 = mpir_expr.call call "opcode"(%50) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":546:1)
 // CHECK:           %[[CALL_27:.*]] = mpir_expr.call call "opcode"(%[[READ_11]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %52 = mpir_expr.str "and" : <String> loc("index-structuralize-nested.mlir":548:1)
 // CHECK:           %[[STR_11:.*]] = mpir_expr.str "and" : <String>
+  %53 = mpir_expr.call binary "=="(%51, %52) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":550:1)
 // CHECK:           %[[CALL_28:.*]] = mpir_expr.call binary "=="(%[[CALL_27]], %[[STR_11]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %54 = mpir_expr.call binary "||"(%49, %53) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":552:1)
 // CHECK:           %[[CALL_29:.*]] = mpir_expr.call binary "||"(%[[CALL_26]], %[[CALL_28]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %54 : <Boolean> loc("index-structuralize-nested.mlir":554:1)
 // CHECK:           mpir.require %[[CALL_29]] : <Boolean>
+  %55 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":556:1)
 // CHECK:           %[[READ_12:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %56 = mpir_expr.call call "opcode"(%55) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":558:1)
 // CHECK:           %[[CALL_30:.*]] = mpir_expr.call call "opcode"(%[[READ_12]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %57 = mpir_expr.str "and" : <String> loc("index-structuralize-nested.mlir":560:1)
 // CHECK:           %[[STR_12:.*]] = mpir_expr.str "and" : <String>
+  %58 = mpir_expr.call binary "=="(%56, %57) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":562:1)
 // CHECK:           %[[CALL_31:.*]] = mpir_expr.call binary "=="(%[[CALL_30]], %[[STR_12]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %59 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":564:1)
 // CHECK:           %[[READ_13:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %60 = mpir_expr.call call "opcode"(%59) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":566:1)
 // CHECK:           %[[CALL_32:.*]] = mpir_expr.call call "opcode"(%[[READ_13]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %61 = mpir_expr.str "or" : <String> loc("index-structuralize-nested.mlir":568:1)
 // CHECK:           %[[STR_13:.*]] = mpir_expr.str "or" : <String>
+  %62 = mpir_expr.call binary "=="(%60, %61) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":570:1)
 // CHECK:           %[[CALL_33:.*]] = mpir_expr.call binary "=="(%[[CALL_32]], %[[STR_13]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %63 = mpir_expr.call binary "||"(%58, %62) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":572:1)
 // CHECK:           %[[CALL_34:.*]] = mpir_expr.call binary "||"(%[[CALL_31]], %[[CALL_33]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %63 : <Boolean> loc("index-structuralize-nested.mlir":574:1)
 // CHECK:           mpir.require %[[CALL_34]] : <Boolean>
+  %64 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":576:1)
 // CHECK:           %[[READ_14:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %65 = mpir_expr.call call "opcode"(%64) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":578:1)
 // CHECK:           %[[CALL_35:.*]] = mpir_expr.call call "opcode"(%[[READ_14]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %66 = mpir_expr.str "or" : <String> loc("index-structuralize-nested.mlir":580:1)
 // CHECK:           %[[STR_14:.*]] = mpir_expr.str "or" : <String>
+  %67 = mpir_expr.call binary "=="(%65, %66) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":582:1)
 // CHECK:           %[[CALL_36:.*]] = mpir_expr.call binary "=="(%[[CALL_35]], %[[STR_14]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %68 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":584:1)
 // CHECK:           %[[READ_15:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %69 = mpir_expr.call call "opcode"(%68) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":586:1)
 // CHECK:           %[[CALL_37:.*]] = mpir_expr.call call "opcode"(%[[READ_15]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %70 = mpir_expr.str "xor" : <String> loc("index-structuralize-nested.mlir":588:1)
 // CHECK:           %[[STR_15:.*]] = mpir_expr.str "xor" : <String>
+  %71 = mpir_expr.call binary "=="(%69, %70) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":590:1)
 // CHECK:           %[[CALL_38:.*]] = mpir_expr.call binary "=="(%[[CALL_37]], %[[STR_15]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %72 = mpir_expr.call binary "||"(%67, %71) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":592:1)
 // CHECK:           %[[CALL_39:.*]] = mpir_expr.call binary "||"(%[[CALL_36]], %[[CALL_38]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %72 : <Boolean> loc("index-structuralize-nested.mlir":594:1)
 // CHECK:           mpir.require %[[CALL_39]] : <Boolean>
+  %73 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":596:1)
 // CHECK:           %[[READ_16:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %74 = mpir_expr.call call "opcode"(%73) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":598:1)
 // CHECK:           %[[CALL_40:.*]] = mpir_expr.call call "opcode"(%[[READ_16]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %75 = mpir_expr.str "xor" : <String> loc("index-structuralize-nested.mlir":600:1)
 // CHECK:           %[[STR_16:.*]] = mpir_expr.str "xor" : <String>
+  %76 = mpir_expr.call binary "=="(%74, %75) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":602:1)
 // CHECK:           %[[CALL_41:.*]] = mpir_expr.call binary "=="(%[[CALL_40]], %[[STR_16]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %77 = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":604:1)
 // CHECK:           %[[READ_17:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
+  %78 = mpir_expr.call call "opcode"(%77) anchor %i_a : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":606:1)
 // CHECK:           %[[CALL_42:.*]] = mpir_expr.call call "opcode"(%[[READ_17]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
+  %79 = mpir_expr.str "udiv" : <String> loc("index-structuralize-nested.mlir":608:1)
 // CHECK:           %[[STR_17:.*]] = mpir_expr.str "udiv" : <String>
+  %80 = mpir_expr.call binary "=="(%78, %79) anchor %i_a : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":610:1)
 // CHECK:           %[[CALL_43:.*]] = mpir_expr.call binary "=="(%[[CALL_42]], %[[STR_17]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  %81 = mpir_expr.call binary "||"(%76, %80) anchor %i_a : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":612:1)
 // CHECK:           %[[CALL_44:.*]] = mpir_expr.call binary "||"(%[[CALL_41]], %[[CALL_43]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %81 : <Boolean> loc("index-structuralize-nested.mlir":614:1)
 // CHECK:           mpir.require %[[CALL_44]] : <Boolean>
+} loc("index-structuralize-nested.mlir":616:1)
 // CHECK:         }
+mpir_index.query {
 // CHECK-LABEL:   mpir_index.query {
+  mpir_index.variant {
 // CHECK:           mpir_index.variant {
+    mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":622:1)
+    mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":623:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":624:1)
+    %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize-nested.mlir":625:1)
+    %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":626:1)
+    %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":627:1)
+    %3 = mpir_expr.call call "opcode"(%1) anchor %2 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":628:1)
+    %4 = mpir_expr.str "add" : <String> loc("index-structuralize-nested.mlir":629:1)
+    %5 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":630:1)
+    %6 = mpir_expr.call binary "=="(%3, %4) anchor %5 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":631:1)
+    %7 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize-nested.mlir":632:1)
+    %8 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":633:1)
+    %9 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":634:1)
+    %10 = mpir_expr.call call "opcode"(%8) anchor %9 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":635:1)
+    %11 = mpir_expr.str "sub" : <String> loc("index-structuralize-nested.mlir":636:1)
+    %12 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":637:1)
+    %13 = mpir_expr.call binary "=="(%10, %11) anchor %12 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":638:1)
+    %14 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":639:1)
+    %15 = mpir_expr.call binary "||"(%6, %13) anchor %14 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":640:1)
+    mpir_index.assume %15 : <Boolean> loc("index-structuralize-nested.mlir":641:1)
+    %16 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":642:1)
+    %17 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":643:1)
+    %18 = mpir_expr.call call "opcode"(%16) anchor %17 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":644:1)
+    %19 = mpir_expr.str "sub" : <String> loc("index-structuralize-nested.mlir":645:1)
+    %20 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":646:1)
+    %21 = mpir_expr.call binary "=="(%18, %19) anchor %20 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":647:1)
+    %22 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":648:1)
+    %23 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":649:1)
+    %24 = mpir_expr.call call "opcode"(%22) anchor %23 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":650:1)
+    %25 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":651:1)
+    %26 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":652:1)
+    %27 = mpir_expr.call binary "=="(%24, %25) anchor %26 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":653:1)
+    %28 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":654:1)
+    %29 = mpir_expr.call binary "||"(%21, %27) anchor %28 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":655:1)
+    mpir_index.assume %29 : <Boolean> loc("index-structuralize-nested.mlir":656:1)
+    %30 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":657:1)
+    %31 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":658:1)
+    %32 = mpir_expr.call call "opcode"(%30) anchor %31 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":659:1)
+    %33 = mpir_expr.str "mul" : <String> loc("index-structuralize-nested.mlir":660:1)
+    %34 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":661:1)
+    %35 = mpir_expr.call binary "=="(%32, %33) anchor %34 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":662:1)
+    %36 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":663:1)
+    %37 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":664:1)
+    %38 = mpir_expr.call call "opcode"(%36) anchor %37 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":665:1)
+    %39 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":666:1)
+    %40 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":667:1)
+    %41 = mpir_expr.call binary "=="(%38, %39) anchor %40 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":668:1)
+    %42 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":669:1)
+    %43 = mpir_expr.call binary "||"(%35, %41) anchor %42 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":670:1)
+    mpir_index.assume %43 : <Boolean> loc("index-structuralize-nested.mlir":671:1)
+    %44 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":672:1)
+    %45 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":673:1)
+    %46 = mpir_expr.call call "opcode"(%44) anchor %45 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":674:1)
+    %47 = mpir_expr.str "shl" : <String> loc("index-structuralize-nested.mlir":675:1)
+    %48 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":676:1)
+    %49 = mpir_expr.call binary "=="(%46, %47) anchor %48 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":677:1)
+    %50 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":678:1)
+    %51 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":679:1)
+    %52 = mpir_expr.call call "opcode"(%50) anchor %51 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":680:1)
+    %53 = mpir_expr.str "lshr" : <String> loc("index-structuralize-nested.mlir":681:1)
+    %54 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":682:1)
+    %55 = mpir_expr.call binary "=="(%52, %53) anchor %54 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":683:1)
+    %56 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":684:1)
+    %57 = mpir_expr.call binary "||"(%49, %55) anchor %56 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":685:1)
+    mpir_index.assume %57 : <Boolean> loc("index-structuralize-nested.mlir":686:1)
+    %58 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":687:1)
+    %59 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":688:1)
+    %60 = mpir_expr.call call "opcode"(%58) anchor %59 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":689:1)
+    %61 = mpir_expr.str "lshr" : <String> loc("index-structuralize-nested.mlir":690:1)
+    %62 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":691:1)
+    %63 = mpir_expr.call binary "=="(%60, %61) anchor %62 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":692:1)
+    %64 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":693:1)
+    %65 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":694:1)
+    %66 = mpir_expr.call call "opcode"(%64) anchor %65 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":695:1)
+    %67 = mpir_expr.str "ashr" : <String> loc("index-structuralize-nested.mlir":696:1)
+    %68 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":697:1)
+    %69 = mpir_expr.call binary "=="(%66, %67) anchor %68 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":698:1)
+    %70 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":699:1)
+    %71 = mpir_expr.call binary "||"(%63, %69) anchor %70 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":700:1)
+    mpir_index.assume %71 : <Boolean> loc("index-structuralize-nested.mlir":701:1)
+    %72 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":702:1)
+    %73 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":703:1)
+    %74 = mpir_expr.call call "opcode"(%72) anchor %73 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":704:1)
+    %75 = mpir_expr.str "ashr" : <String> loc("index-structuralize-nested.mlir":705:1)
+    %76 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":706:1)
+    %77 = mpir_expr.call binary "=="(%74, %75) anchor %76 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":707:1)
+    %78 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":708:1)
+    %79 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":709:1)
+    %80 = mpir_expr.call call "opcode"(%78) anchor %79 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":710:1)
+    %81 = mpir_expr.str "and" : <String> loc("index-structuralize-nested.mlir":711:1)
+    %82 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":712:1)
+    %83 = mpir_expr.call binary "=="(%80, %81) anchor %82 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":713:1)
+    %84 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":714:1)
+    %85 = mpir_expr.call binary "||"(%77, %83) anchor %84 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":715:1)
+    mpir_index.assume %85 : <Boolean> loc("index-structuralize-nested.mlir":716:1)
+    %86 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":717:1)
+    %87 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":718:1)
+    %88 = mpir_expr.call call "opcode"(%86) anchor %87 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":719:1)
+    %89 = mpir_expr.str "and" : <String> loc("index-structuralize-nested.mlir":720:1)
+    %90 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":721:1)
+    %91 = mpir_expr.call binary "=="(%88, %89) anchor %90 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":722:1)
+    %92 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":723:1)
+    %93 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":724:1)
+    %94 = mpir_expr.call call "opcode"(%92) anchor %93 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":725:1)
+    %95 = mpir_expr.str "or" : <String> loc("index-structuralize-nested.mlir":726:1)
+    %96 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":727:1)
+    %97 = mpir_expr.call binary "=="(%94, %95) anchor %96 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":728:1)
+    %98 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":729:1)
+    %99 = mpir_expr.call binary "||"(%91, %97) anchor %98 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":730:1)
+    mpir_index.assume %99 : <Boolean> loc("index-structuralize-nested.mlir":731:1)
+    %100 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":732:1)
+    %101 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":733:1)
+    %102 = mpir_expr.call call "opcode"(%100) anchor %101 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":734:1)
+    %103 = mpir_expr.str "or" : <String> loc("index-structuralize-nested.mlir":735:1)
+    %104 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":736:1)
+    %105 = mpir_expr.call binary "=="(%102, %103) anchor %104 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":737:1)
+    %106 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":738:1)
+    %107 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":739:1)
+    %108 = mpir_expr.call call "opcode"(%106) anchor %107 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":740:1)
+    %109 = mpir_expr.str "xor" : <String> loc("index-structuralize-nested.mlir":741:1)
+    %110 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":742:1)
+    %111 = mpir_expr.call binary "=="(%108, %109) anchor %110 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":743:1)
+    %112 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":744:1)
+    %113 = mpir_expr.call binary "||"(%105, %111) anchor %112 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":745:1)
+    mpir_index.assume %113 : <Boolean> loc("index-structuralize-nested.mlir":746:1)
+    %114 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":747:1)
+    %115 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":748:1)
+    %116 = mpir_expr.call call "opcode"(%114) anchor %115 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":749:1)
+    %117 = mpir_expr.str "xor" : <String> loc("index-structuralize-nested.mlir":750:1)
+    %118 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":751:1)
+    %119 = mpir_expr.call binary "=="(%116, %117) anchor %118 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":752:1)
+    %120 = mpir_expr.read %7 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":753:1)
+    %121 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":754:1)
+    %122 = mpir_expr.call call "opcode"(%120) anchor %121 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize-nested.mlir":755:1)
+    %123 = mpir_expr.str "udiv" : <String> loc("index-structuralize-nested.mlir":756:1)
+    %124 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":757:1)
+    %125 = mpir_expr.call binary "=="(%122, %123) anchor %124 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":758:1)
+    %126 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":759:1)
+    %127 = mpir_expr.call binary "||"(%119, %125) anchor %126 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":760:1)
+    mpir_index.assume %127 : <Boolean> loc("index-structuralize-nested.mlir":761:1)
+  } loc("index-structuralize-nested.mlir":762:1)
 // CHECK:             mpir_index.has_instruction <add> {derived}
 // CHECK:             mpir_index.has_instruction <sub> {derived}
 // CHECK:             mpir_index.has_instruction <mul> {derived}
@@ -39160,4 +39159,5 @@ mpir_index.query {
 // CHECK:             %[[CALL_11519:.*]] = mpir_expr.call binary "||"(%[[CALL_11516]], %[[CALL_11518]]) anchor %[[NODE_11519]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:             mpir_index.assume %[[CALL_11519]] : <Boolean>
 // CHECK:           }
+} loc("index-structuralize-nested.mlir":39162:1)
 // CHECK:         }

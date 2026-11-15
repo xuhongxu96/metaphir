@@ -1,27 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; 'match' definitions: of each syntax, commutative, with branches that fix
-; flags, with concrete parameter types, and their uses with flags, metaflags
-; and captures.
-match:c addOrOr [nsw, disjoint] Binary (?ty ?x, ?y) {
-  %ret = add ?ty ?x, ?y
-} or [nsw = false, disjoint = true] {
-  %ret = or ?ty ?x, ?y
-}
-match negate [nsw] Unary (?ty ?x) {
-  %ret = sub ?ty 0, ?x
-}
-match widen [nneg] Cast (?a ?x to ?b) {
-  %ret = zext ?a ?x to ?b
-} or [nneg = false] {
-  %ret = sext ?a ?x to ?b
-}
-match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
-  %ret = select i1 ?c, ?ty ?t, ?ty ?f
-}
-%a = addOrOr nsw:?nsw i32 ?x, ?y
-%b = negate:?neg:o i32 %a
-%c = widen i32 %b to i64
-%d = pick i1 ?cond, i64 %c, i64 0
 ; CHECK-LABEL:   mpir.matcher @addOrOr <commutative, supported_flags = [0, 3], syntax = 1, arity = 2, param_names = ["ty", "x", "y"], param_is_type = [true, false, false]> {
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "ty" : <Type>
 ; CHECK:           mpir.signature %[[VAR_0]] : !mpir.sort<Type>
@@ -91,3 +67,27 @@ match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
 ; CHECK:           %[[INT_0:.*]] = mpir.int 0 : ui1 : <Value>
 ; CHECK:           %[[USE_3:.*]] = mpir.use @pick (%[[TYPE_4]], %[[VAR_4]], %[[TYPE_5]], %[[USE_2]], %[[TYPE_6]], %[[INT_0]]) <result_name = "d", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; 'match' definitions: of each syntax, commutative, with branches that fix
+; flags, with concrete parameter types, and their uses with flags, metaflags
+; and captures.
+match:c addOrOr [nsw, disjoint] Binary (?ty ?x, ?y) {
+  %ret = add ?ty ?x, ?y
+} or [nsw = false, disjoint = true] {
+  %ret = or ?ty ?x, ?y
+}
+match negate [nsw] Unary (?ty ?x) {
+  %ret = sub ?ty 0, ?x
+}
+match widen [nneg] Cast (?a ?x to ?b) {
+  %ret = zext ?a ?x to ?b
+} or [nneg = false] {
+  %ret = sext ?a ?x to ?b
+}
+match pick [] Nary (i1 ?c, ?ty ?t, ?ty ?f) {
+  %ret = select i1 ?c, ?ty ?t, ?ty ?f
+}
+%a = addOrOr nsw:?nsw i32 ?x, ?y
+%b = negate:?neg:o i32 %a
+%c = widen i32 %b to i64
+%d = pick i1 ?cond, i64 %c, i64 0

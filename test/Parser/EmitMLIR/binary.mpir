@@ -1,26 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Binary instruction matchers: each opcode, with its flags required ('nsw'),
-; absent ('!nuw') and captured ('exact:?e'), and the instruction captured
-; ('add:?sum').
-%a = add nsw !nuw i32 ?x, ?y
-%b = sub nuw:?nuw i32 %a, 1
-%c = mul:?prod i32 %b, ?y
-%d = udiv exact i32 %c, 2
-%e = sdiv exact:?e i32 %d, -3
-%f = urem i32 %e, ?y
-%g = srem i32 %f, ?y
-%h = shl nsw nuw i32 %g, 1
-%i = lshr exact i32 %h, ?y
-%j = ashr i32 %i, ?y
-%k = and i32 %j, 255
-%l = or disjoint:?dj i32 %k, ?y
-%m = xor i32 %l, -1
-%n = fadd nnan ninf float ?fx, 1.0
-%o = fsub fast float %n, ?fx
-%p = fmul nsz arcp contract afn reassoc float %o, %o
-%q = fdiv !nnan float %p, 2.5
-%r = frem float %q, ?fx
-%s = fneg float %r
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
@@ -76,3 +53,26 @@
 ; CHECK:           %[[TYPE_18:.*]] = mpir.type.prim float : <Type>
 ; CHECK:           %[[INST_18:.*]] = mpir.inst <fneg> (%[[TYPE_18]], %[[INST_17]]) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Binary instruction matchers: each opcode, with its flags required ('nsw'),
+; absent ('!nuw') and captured ('exact:?e'), and the instruction captured
+; ('add:?sum').
+%a = add nsw !nuw i32 ?x, ?y
+%b = sub nuw:?nuw i32 %a, 1
+%c = mul:?prod i32 %b, ?y
+%d = udiv exact i32 %c, 2
+%e = sdiv exact:?e i32 %d, -3
+%f = urem i32 %e, ?y
+%g = srem i32 %f, ?y
+%h = shl nsw nuw i32 %g, 1
+%i = lshr exact i32 %h, ?y
+%j = ashr i32 %i, ?y
+%k = and i32 %j, 255
+%l = or disjoint:?dj i32 %k, ?y
+%m = xor i32 %l, -1
+%n = fadd nnan ninf float ?fx, 1.0
+%o = fsub fast float %n, ?fx
+%p = fmul nsz arcp contract afn reassoc float %o, %o
+%q = fdiv !nnan float %p, 2.5
+%r = frem float %q, ?fx
+%s = fneg float %r

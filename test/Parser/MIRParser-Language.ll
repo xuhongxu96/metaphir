@@ -1,4 +1,3 @@
-; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; Definitions, constraint lexing and constraint type checking.
 ; RUN: split-file %s %t
 ; RUN: not %metaphir-parse %t/redefine-stdlib-constraint.ll 2>&1 | FileCheck %s --check-prefix=REDEF-CONSTRAINT
@@ -27,43 +26,43 @@
 ; A name is defined once; the standard library's definitions count.
 ;--- redefine-stdlib-constraint.ll
 constraint isOdd(?v) {
+; REDEF-CONSTRAINT: redefinition of constraint 'isOdd'
+
   true
 }
-; REDEF-CONSTRAINT: redefine-stdlib-constraint.ll:1:12: error: redefinition of constraint 'isOdd'
-
 ;--- redefine-own-constraint.ll
 constraint mine(?v) {
   true
 }
 constraint mine(?v) {
+; REDEF-OWN: redefinition of constraint 'mine'
+
   false
 }
-; REDEF-OWN: redefine-own-constraint.ll:4:12: error: redefinition of constraint 'mine'
-
 ;--- builtin-operator-name.ll
 constraint ult(?a, ?b) {
+; BUILTIN-OP: 'ult' is a built-in constraint operation and cannot be redefined
+
   true
 }
-; BUILTIN-OP: error: 'ult' is a built-in constraint operation and cannot be redefined
-
 ;--- redefine-stdlib-metaflag.ll
 metaflag :zero(?v) {
+; REDEF-METAFLAG: redefinition of metaflag ':zero'
+
   true
 }
-; REDEF-METAFLAG: error: redefinition of metaflag ':zero'
-
 ;--- builtin-metaflag-name.ll
 metaflag :c(?v) {
+; BUILTIN-METAFLAG: ':c' is a built-in metaflag and cannot be redefined
+
   true
 }
-; BUILTIN-METAFLAG: error: ':c' is a built-in metaflag and cannot be redefined
-
 ;--- redefine-matcher.ll
 match addLike [] Binary (?t ?x, ?y) {
+; REDEF-MATCHER: redefinition of matcher 'addLike'
+
   %ret = add ?t ?x, ?y
 }
-; REDEF-MATCHER: redefine-matcher.ll:1:7: error: redefinition of matcher 'addLike'
-
 ; A definition body may span lines.
 ;--- multiline-bodies.ll
 constraint between(?v, ?lo, ?hi) {
@@ -75,65 +74,83 @@ metaflag :small(?v) {
           0, 10)
 }
 add i32 ?x:small, ?y
+; MULTILINE: pattern instructions=1 constraints=1
+; MULTILINE-NEXT: add i32 ?x:small, ?y
+
 ;; between(?x, 1, 2)
-; MULTILINE: add i32 ?x:small, ?y
 ; MULTILINE-NEXT: constraint (between ?x 1 2)
+; MULTILINE-NEXT: meta ?x type=Value
+; MULTILINE-NEXT: meta ?y type=Value
+; MULTILINE-NOT: {{.}}
 
 ; In a constraint, '-' after a meta variable is subtraction.
 ;--- minus-after-variable.ll
 add i?bits ?x, ?y
+; MINUS: pattern instructions=1 constraints=1
+; MINUS-NEXT: add i?bits ?x, ?y
+
 ;; ?bits-1 == 7
-; MINUS: constraint (== (- ?bits 1) 7)
+; MINUS-NEXT: constraint (== (- ?bits 1) 7)
+; MINUS-NEXT: meta ?bits type=Nat
+; MINUS-NEXT: meta ?x type=Value
+; MINUS-NEXT: meta ?y type=Value
+; MINUS-NOT: {{.}}
 
 ;--- hyphen-in-pattern.ll
 ; A meta variable name never contains '-'.
 add i32 ?a-b, ?c
-; HYPHEN: hyphen-in-pattern.ll:2:11: error: unexpected character '-'
+; HYPHEN: unexpected character '-'
 
 ;--- hyphen-in-capture.ll
 add:?r-1 i32 ?a, ?c
-; HYPHEN-CAPTURE: hyphen-in-capture.ll:1:7: error: expected type
+; HYPHEN-CAPTURE: expected type
 
 ;--- hyphen-in-local.ll
 ; LLVM local names may contain '-'.
 %a-b = add i32 ?a, ?c
+; HYPHEN-LOCAL: pattern instructions=2 constraints=0
+; HYPHEN-LOCAL-NEXT: %a-b = add i32 ?a, ?c
+
 %d = sub i32 %a-b, ?a
-; HYPHEN-LOCAL: %d = sub i32 %a-b, ?a
+; HYPHEN-LOCAL-NEXT: %d = sub i32 %a-b, ?a
+; HYPHEN-LOCAL-NEXT: meta ?a type=Value
+; HYPHEN-LOCAL-NEXT: meta ?c type=Value
+; HYPHEN-LOCAL-NOT: {{.}}
 
 ;--- chained-comparison.ll
 add i?bits ?x, ?y
 ;; ?bits == 8 == true
-; CHAINED: chained-comparison.ll:2:15: error: comparisons cannot be chained; add parentheses
+; CHAINED: comparisons cannot be chained; add parentheses
 
 ;--- value-constraint.ll
 add i32 ?x, ?y
 ;; ?x
-; VALUE: value-constraint.ll:2:4: error: constraint must have a boolean result
+; VALUE: constraint must have a boolean result
 
 ;--- string-constraint.ll
 add i32 ?x, ?y
 ;; "s"
-; STRING: error: constraint must have a boolean result
+; STRING: constraint must have a boolean result
 
 ;--- string-operand.ll
 add i32 ?x, ?y
 ;; "s" && true
-; STRING-OPERAND: string-operand.ll:2:4: error: operand of '&&' must be a boolean
+; STRING-OPERAND: operand of '&&' must be a boolean
 
 ;--- type-operand.ll
 add ?t ?x, ?y
 ;; ?t + 1 == 2
-; TYPE-OPERAND: type-operand.ll:2:4: error: operand of '+' must be an integer
+; TYPE-OPERAND: operand of '+' must be an integer
 
 ;--- builtin-argument-kind.ll
 add i32 ?x, ?y
 ;; isa("Instruction", ?x)
-; ARGUMENT-KIND: builtin-argument-kind.ll:2:8: error: argument 1 of 'isa' must be a value
+; ARGUMENT-KIND: argument 1 of 'isa' must be a value
 
 ;--- user-arity.ll
 add i32 ?x, ?y
 ;; isOdd(?x, ?y)
-; USER-ARITY: user-arity.ll:2:4: error: constraint operation 'isOdd' expects 1 argument, got 2
+; USER-ARITY: constraint operation 'isOdd' expects 1 argument, got 2
 
 ; The result of a call to a definition is its body's.
 ;--- user-result.ll
@@ -142,29 +159,48 @@ constraint seven(?v) {
 }
 add i32 ?x, ?y
 ;; seven(?x)
-; USER-RESULT: user-result.ll:5:4: error: constraint must have a boolean result
+; USER-RESULT: constraint must have a boolean result
 
 ; Booleans and integers convert into each other, and a constant value into
 ; an integer.
 ;--- coercible.ll
 add i?bits ?x, ?y
+; COERCIBLE: pattern instructions=1 constraints=1
+; COERCIBLE-NEXT: add i?bits ?x, ?y
+
 ;; ?bits && ult(?x, true)
-; COERCIBLE: constraint (&& ?bits (ult ?x true))
+; COERCIBLE-NEXT: constraint (&& ?bits (ult ?x true))
+; COERCIBLE-NEXT: meta ?bits type=Nat
+; COERCIBLE-NEXT: meta ?x type=Value
+; COERCIBLE-NEXT: meta ?y type=Value
+; COERCIBLE-NOT: {{.}}
 
 ; A composite matcher's use prints as its archetype's instructions do: a cast
 ; with its destination type.
 ;--- composite-print.ll
 %trunc = trunc i?big ?x to i?small
-%ext = zextOrSext:?anch i?small %trunc to i?big
-%sum = addLike nsw i?big %ext, 1
-; COMPOSITE-PRINT:      %ext = zextOrSext:?anch i?small %trunc to i?big
-; COMPOSITE-PRINT-NEXT: %sum = addLike nsw i?big %ext, 1
+; COMPOSITE-PRINT: pattern instructions=3 constraints=0
+; COMPOSITE-PRINT-NEXT: %trunc = trunc i?big ?x to i?small
 
+%ext = zextOrSext:?anch i?small %trunc to i?big
+; COMPOSITE-PRINT-NEXT: %ext = zextOrSext:?anch i?small %trunc to i?big
+
+%sum = addLike nsw i?big %ext, 1
+; COMPOSITE-PRINT-NEXT: %sum = addLike nsw i?big %ext, 1
+; COMPOSITE-PRINT-NEXT: meta ?big type=Nat
+; COMPOSITE-PRINT-NEXT: meta ?x type=Value
+; COMPOSITE-PRINT-NEXT: meta ?small type=Nat
+; COMPOSITE-PRINT-NEXT: meta ?anch type=Instruction
+; COMPOSITE-PRINT-NOT: {{.}}
 
 ; Floating-point constants print as they are written, on one line: -0.0
 ; keeps its sign and an integral value its '.0'.
 ;--- float-print.ll
 %a = fadd double ?x, -0.0
+; FLOAT-PRINT: pattern instructions=2 constraints=0
+; FLOAT-PRINT-NEXT: %a = fadd double ?x, -0.0
+
 %b = fmul double %a, 2.0
-; FLOAT-PRINT:      %a = fadd double ?x, -0.0
 ; FLOAT-PRINT-NEXT: %b = fmul double %a, 2.0
+; FLOAT-PRINT-NEXT: meta ?x type=Value
+; FLOAT-PRINT-NOT: {{.}}

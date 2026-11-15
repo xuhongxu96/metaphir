@@ -387,10 +387,14 @@ def run_setup_commands(lines: list[str], temporary_path: Path, path: Path) -> No
             continue
         command = first_pipeline_stage(command).removeprefix("not ")
         command = substitute_shell_vars(command, path, temporary_path)
+        for name in ("metaphir-index", "metaphir-opt"):
+            command = command.replace(
+                f"%{name}", shlex.quote(str(REPO_ROOT / "build" / "tools" / name))
+            )
         proc = subprocess.run(
             command,
             shell=True,
-            cwd=str(temporary_path),
+            cwd=str(REPO_ROOT),
             capture_output=True,
             text=True,
             check=False,
@@ -835,10 +839,230 @@ def apply_checks(
 
 # ---------------------------------------------------------------------------
 # Tests of MLIR output
+#
+# An MLIR input carries a location on each operation line, naming the line
+# itself: loc("<file>":N:1). The tools keep locations, so each operation of
+# the output names the input line it came from, and its CHECK lines go right
+# after that line. A surface pattern (.mpir) needs no injected locations: the
+# parser locates operations at their lines already.
 # ---------------------------------------------------------------------------
 
+CHECK_DIRECTIVE_RE = re.compile(r"^\s*(//|;|#)\s*CHECK[-A-Z]*:")
+LOC_DEFINITION_RE = re.compile(r"^#(loc\d*) = (?P<body>.*)$")
+LOC_REFERENCE_RE = re.compile(r"#(loc\d*)\b")
+FILE_LOCATION_RE = re.compile(r'"(?P<file>[^"]*)":(?P<line>\d+):(?P<column>\d+)')
+TRAILING_LOCATION_RE = re.compile(r" loc\(#(loc\d*)\)$")
+INLINE_FILE_LOCATION_RE = re.compile(r' loc\("[^"]*":\d+:\d+\)')
+OPERATION_LINE_RE = re.compile(
+    r"^\s*(%|\"|mpir(_expr|_plan|_index)?\.|\})"
+)
 
-def mlir_runs(lines: list[str]) -> list[str]:
+
+def is_comment_or_text(line: str) -> bool:
+    return line.lstrip().startswith(("//", ";"))
+
+
+def set_file_locations(lines: list[str], name: str, inject: bool) -> list[str]:
+    """Writes each line's own number into the locations naming this file, and,
+    if inject, gives an operation line without a location one."""
+    result = []
+    file_location = re.compile(rf'"{re.escape(name)}":\d+:\d+')
+    for number, line in enumerate(lines, start=1):
+        line = file_location.sub(f'"{name}":{number}:1', line)
+        # Metaflags are located at the operation they are written on.
+        if "loc(unknown)" in line and not LOC_DEFINITION_RE.match(line):
+            line = line.replace("loc(unknown)", f'loc("{name}":{number}:1)')
+        if (
+            inject
+            and not is_comment_or_text(line)
+            and "loc(" not in line
+            and OPERATION_LINE_RE.match(line)
+            and not line.rstrip().endswith(("{", ",", "(", "[", "<", "\\"))
+        ):
+            line = f'{line.rstrip()} loc("{name}":{number}:1)'
+        result.append(line)
+    return result
+
+
+def opening_line(lines: list[str], number: int) -> int:
+    """The line a region's closing line (1-based) closes the opening of."""
+    line = lines[number - 1]
+    if not line.lstrip().startswith("}"):
+        return number
+    indent = len(line) - len(line.lstrip())
+    for above in range(number - 1, 0, -1):
+        text = lines[above - 1]
+        if (
+            text.rstrip().endswith("{")
+            and len(text) - len(text.lstrip()) == indent
+        ):
+            return above
+    return number
+
+
+class LocationResolver:
+    """What a location of the output names: the line of the input file it
+    came from, or None if it names another file."""
+
+    def __init__(self, definitions: dict[str, str], name: str) -> None:
+        self.definitions = definitions
+        self.name = name
+
+    def resolve(self, text: str, depth: int = 0) -> int | None:
+        if depth > 50:
+            return None
+        if "callsite(" in text and " at " in text:
+            # A callsite is the caller: the line of the use, outermost first.
+            caller = text.split(" at ", 1)[1]
+            for reference in reversed(LOC_REFERENCE_RE.findall(caller)):
+                found = self.resolve_name(reference, depth + 1)
+                if found is not None:
+                    return found
+            return None
+        match = FILE_LOCATION_RE.search(text)
+        if match:
+            # The file is named as the tool was given it, or as a location says.
+            same = Path(match["file"]).name == self.name
+            return int(match["line"]) if same else None
+        for reference in LOC_REFERENCE_RE.findall(text):
+            found = self.resolve_name(reference, depth + 1)
+            if found is not None:
+                return found
+        return None
+
+    def resolve_name(self, name: str, depth: int) -> int | None:
+        body = self.definitions.get(name)
+        return None if body is None else self.resolve(body, depth)
+
+
+def output_keys(
+    chunk: list[str], resolver: LocationResolver, opening
+) -> list[int | None]:
+    """The input line (or None) each non-blank line of the output is from. A
+    region's opening line is from the line that opens it, given the line of
+    its closing by opening (a function from input closing line to opening)."""
+    keys: list[int | None] = []
+    current: int | None = None
+    nonblank = [line for line in chunk if line.strip()]
+    for index, line in enumerate(nonblank):
+        trailing = TRAILING_LOCATION_RE.search(line)
+        if trailing:
+            current = resolver.resolve_name(trailing.group(1), 0)
+        elif line.rstrip().endswith("{"):
+            # A region's location is on its closing line, after the region.
+            indent = len(line) - len(line.lstrip())
+            for later in nonblank[index + 1 :]:
+                if later.lstrip().startswith("}") and (
+                    len(later) - len(later.lstrip()) == indent
+                ):
+                    closing = TRAILING_LOCATION_RE.search(later)
+                    if closing:
+                        found = resolver.resolve_name(closing.group(1), 0)
+                        current = None if found is None else opening(found)
+                    break
+        keys.append(current)
+    return keys
+
+
+def without_module(chunk: list[str]) -> list[str]:
+    """The chunk without the module it prints in: the generator does not check
+    the module's own lines."""
+    lines = [line for line in chunk if line.strip()]
+    if lines and lines[0].strip() == "module {":
+        lines = lines[1:]
+    if lines and re.match(r"^\}( loc\(#loc\d*\))?$", lines[-1].strip()):
+        lines = lines[:-1]
+    return lines
+
+
+def clean_for_checks(chunk: list[str]) -> list[str]:
+    """The output as lit compares it: without the location aliases."""
+    result = []
+    for line in chunk:
+        if LOC_DEFINITION_RE.match(line):
+            continue
+        line = TRAILING_LOCATION_RE.sub("", line)
+        # What lit's output, without debug information, does not print.
+        line = INLINE_FILE_LOCATION_RE.sub("", line)
+        # A '%name' in a string (a plan's slot names) is not an SSA value.
+        result.append(LOC_REFERENCE_RE.sub("LOCREF", line).replace('"%', '"PERCENT'))
+    return result
+
+
+def mlir_checks_for(chunk: list[str], prefix: str) -> list[list[str]]:
+    """The CHECK lines of one output chunk, grouped by the line they check:
+    one group for each non-blank line other than the module's own. A line the
+    generator splits (CHECK-SAME, CHECK-NEXT) stays in its group."""
+    text = "\n".join(line for line in clean_for_checks(chunk) if line.strip())
+    result = subprocess.run(
+        [sys.executable, str(MLIR_CHECK_GENERATOR), "--check-prefix", prefix],
+        input=text,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    groups: list[list[str]] = []
+    for line in result.stdout.splitlines():
+        if not re.match(rf"^// {re.escape(prefix)}(-[A-Z]+)?:", line):
+            continue
+        line = line.replace("LOCREF", "{{.*}}").replace('"PERCENT', '"%')
+        if re.match(rf"^// {re.escape(prefix)}-(SAME|NEXT):", line) and groups:
+            groups[-1].append(line)
+        else:
+            groups.append([line])
+    expected = len(without_module(chunk))
+    if len(groups) != expected:
+        raise ValueError(
+            f"the check generator wrote {len(groups)} lines for {expected} lines"
+        )
+    return groups
+
+
+def mlir_stage_checks(
+    shell: str, prefix: str, name: str, inputs: list[str], path: Path
+) -> dict[int, list[str]]:
+    """Runs one RUN pipeline on the input and returns, for each input line
+    (1-based), the CHECK lines of the output that came from it."""
+    with tempfile.TemporaryDirectory() as temporary:
+        input_path = Path(temporary) / name
+        input_path.write_text("\n".join(inputs) + "\n")
+        command = shell.replace("%s", shlex.quote(str(input_path)))
+        result = subprocess.run(
+            command, shell=True, capture_output=True, text=True, check=False
+        )
+    if result.returncode != 0:
+        raise ValueError(f"{path}: {shell}\n{result.stderr}")
+    by_line: dict[int, list[str]] = {}
+    chunks = result.stdout.split("// -----")
+    for chunk_text in chunks:
+        chunk = chunk_text.splitlines()
+        definitions = {
+            found.group(1): found["body"]
+            for found in map(LOC_DEFINITION_RE.match, chunk)
+            if found
+        }
+        resolver = LocationResolver(definitions, name)
+        whole = [line for line in chunk if not LOC_DEFINITION_RE.match(line)]
+        body = without_module(whole)
+        keys = output_keys(body, resolver, lambda line: opening_line(inputs, line))
+        checks = mlir_checks_for(whole, prefix)
+        assert len(keys) == len(checks)
+        # The checks keep the order of the output: a line from an earlier
+        # line of the input (a definition's, for one) stays where it is
+        # written, after the line before it.
+        current: int | None = None
+        for key, group in zip(keys, checks):
+            if key is None or (current is not None and key < current):
+                key = current
+            else:
+                current = key
+            if key is None:
+                key = 0
+            by_line.setdefault(key, []).extend(group)
+    return by_line
+
+
+def mlir_runs_to_stages(lines: list[str], comment: str) -> list[str]:
     """The RUN commands that pipe MLIR to FileCheck, each as one line."""
     commands: list[str] = []
     for line in lines:
@@ -851,84 +1075,56 @@ def mlir_runs(lines: list[str]) -> list[str]:
     return [
         command
         for command in commands
-        if "FileCheck" in command
-        and not command.startswith("not ")
+        if "FileCheck" in command and not command.startswith("not ")
         and ("%metaphir-opt" in command or "--emit=mlir" in command)
-    ]
-
-
-def gen_mlir_checks(output: str, prefix: str) -> list[str]:
-    # Locations are left to any text: their aliases' definitions go, and
-    # their uses become a placeholder the generator leaves alone.
-    output = "\n".join(
-        line for line in output.splitlines() if not re.match(r"^#loc\d* = ", line)
-    )
-    output = MLIR_LOCATION_RE.sub("LOCATION_PLACEHOLDER", output)
-    # A '%name' in a string (a plan's slot names) is not an SSA value.
-    output = output.replace('"%', '"PERCENT_PLACEHOLDER')
-    result = subprocess.run(
-        [sys.executable, str(MLIR_CHECK_GENERATOR), "--check-prefix", prefix],
-        input=output,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return [
-        line.replace("#LOCATION_PLACEHOLDER", "{{.*}}")
-        .replace("LOCATION_PLACEHOLDER", "{{.*}}")
-        .replace("PERCENT_PLACEHOLDER", "%")
-        for line in result.stdout.splitlines()
-        if re.match(rf"^// {re.escape(prefix)}(-[A-Z]+)?:", line)
     ]
 
 
 def update_mlir_test(
     path: Path, lines: list[str], comment: str, tools: dict[str, Path]
 ) -> str:
-    separator = f"{comment} -----"
-    for command in mlir_runs(lines):
+    name = path.name
+    inject = path.suffix == ".mlir"
+    runs = mlir_runs_to_stages(lines, comment)
+    # The lines without checks, located in this file.
+    # Checks of any comment style: a file may hold the ones of an earlier run.
+    clean = [line for line in lines if not CHECK_DIRECTIVE_RE.match(line)]
+    clean = set_file_locations(clean, name, inject)
+    insertions: dict[int, list[str]] = {}
+    for command in runs:
         stages = command.split("|")
         check = next(i for i, stage in enumerate(stages) if "FileCheck" in stage)
         prefix = get_check_prefix(stages[check])
-        own = re.compile(rf"^\s*{re.escape(comment)}\s*{re.escape(prefix)}(-[A-Z]+)?:")
-        lines = [line for line in lines if not own.match(line)]
-
-        with tempfile.NamedTemporaryFile(
-            "w", suffix=path.suffix, delete=False
-        ) as temporary:
-            temporary.write("\n".join(lines) + "\n")
-        shell = "|".join(stages[:check]).replace("%s", shlex.quote(temporary.name))
-        for name, tool in tools.items():
-            shell = shell.replace(f"%{name}", shlex.quote(str(tool)))
-        result = subprocess.run(
-            shell, shell=True, capture_output=True, text=True, check=False
-        )
-        os.unlink(temporary.name)
-        if result.returncode != 0:
-            raise ValueError(f"{path}: {command}\n{result.stderr}")
-        outputs = result.stdout.split("// -----")
-
-        bounds = [i for i, line in enumerate(lines) if line.strip() == separator]
-        starts = [0] + [bound + 1 for bound in bounds]
-        ends = bounds + [len(lines)]
-        if len(outputs) != len(starts):
-            raise ValueError(
-                f"{path}: {len(starts)} cases but {len(outputs)} outputs"
+        shell = "|".join(stages[:check])
+        if inject:
+            shell = shell.replace("metaphir-opt", "metaphir-opt --mlir-print-debuginfo")
+            shell = shell.replace("%metaphir-opt", "%metaphir-opt --mlir-print-debuginfo")
+        for kind, tool in tools.items():
+            shell = shell.replace(f"%{kind}", shlex.quote(str(tool)))
+        for key, checks in mlir_stage_checks(shell, prefix, name, clean, path).items():
+            insertions.setdefault(key, []).extend(checks)
+    # Checks without a line of their own (a pattern's, in a file whose parser
+    # does not locate it) go before the first line that has one.
+    leading = insertions.pop(0, [])
+    if leading:
+        located = sorted(insertions)
+        if located:
+            insertions[max(0, located[0] - 1)] = leading + insertions.get(
+                max(0, located[0] - 1), []
             )
-        updated: list[str] = []
-        for case, (start, end) in enumerate(zip(starts, ends)):
-            body = lines[start:end]
-            while body and not body[-1].strip():
-                body.pop()
-            updated += body
-            checks = gen_mlir_checks(outputs[case], prefix)
-            if comment != "//":
-                checks = [comment + check[2:] for check in checks]
-            updated += checks
-            if case + 1 != len(starts):
-                updated += ["", separator]
-        lines = updated
-    return "\n".join(lines) + "\n"
+        else:
+            insertions[0] = leading
+    output: list[str] = []
+    for check in insertions.pop(0, []):
+        output.append(comment + check[2:] if comment != "//" else check)
+    for number, line in enumerate(clean, start=1):
+        output.append(line)
+        for check in insertions.pop(number, []):
+            output.append(comment + check[2:] if comment != "//" else check)
+    if insertions:
+        raise ValueError(f"{path}: checks for lines {sorted(insertions)}")
+    return "\n".join(set_file_locations(output, name, False)) + "\n"
+
 
 
 def update_test(
@@ -966,6 +1162,9 @@ def update_test(
 
 def main() -> int:
     args = parse_args()
+    # The LLVM tools that RUN lines use (split-file, FileCheck, not).
+    llvm_bin = REPO_ROOT / "llvm-project" / "build" / "bin"
+    os.environ["PATH"] = os.pathsep.join([str(llvm_bin), os.environ.get("PATH", "")])
     lexer: Path | None = None
     parser: Path | None = None
     matcher: Path | None = None
@@ -981,7 +1180,7 @@ def main() -> int:
             kinds, comment = test_kinds(lines, path)
             if not kinds:
                 continue
-            if mlir_runs(lines):
+            if mlir_runs_to_stages(lines, comment):
                 mlir_tools = {
                     kind: find_tool(
                         kind,

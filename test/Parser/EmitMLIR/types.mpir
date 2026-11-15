@@ -1,27 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Type patterns: integer and byte types of fixed and variable width,
-; primitives, pointers, arrays and vectors of fixed and variable length,
-; structs, and type variables.
-%a = freeze i1 ?a1
-%b = freeze b8 ?b1
-%c = freeze i?n ?c1
-%d = freeze b?m ?d1
-%e = freeze half ?e1
-%f = freeze bfloat ?f1
-%g = freeze float ?g1
-%h = freeze double ?h1
-%i = freeze fp128 ?i1
-%j = freeze ptr ?j1
-%k = freeze ptr addrspace(3) ?k1
-%l = freeze [4 x i8] ?l1
-%m = freeze [?len x i?n] ?m1
-%n = freeze <2 x float> ?n1
-%o = freeze <vscale x 4 x i32> ?o1
-%p = freeze <?lanes x i?n> ?p1
-%q = freeze {i32, ptr} ?q1
-%r = freeze <{i8, [2 x i16]}> ?r1
-%s = freeze {} ?s1
-%t = freeze ?ty ?t1
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 1 : <Type>
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "a1" : <Boolean>
@@ -98,3 +74,27 @@
 ; CHECK:           %[[VAR_24:.*]] = mpir.var "t1" : <Operand>
 ; CHECK:           %[[INST_19:.*]] = mpir.inst <freeze> (%[[VAR_23]], %[[VAR_24]]) <result_name = "t", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Type patterns: integer and byte types of fixed and variable width,
+; primitives, pointers, arrays and vectors of fixed and variable length,
+; structs, and type variables.
+%a = freeze i1 ?a1
+%b = freeze b8 ?b1
+%c = freeze i?n ?c1
+%d = freeze b?m ?d1
+%e = freeze half ?e1
+%f = freeze bfloat ?f1
+%g = freeze float ?g1
+%h = freeze double ?h1
+%i = freeze fp128 ?i1
+%j = freeze ptr ?j1
+%k = freeze ptr addrspace(3) ?k1
+%l = freeze [4 x i8] ?l1
+%m = freeze [?len x i?n] ?m1
+%n = freeze <2 x float> ?n1
+%o = freeze <vscale x 4 x i32> ?o1
+%p = freeze <?lanes x i?n> ?p1
+%q = freeze {i32, ptr} ?q1
+%r = freeze <{i8, [2 x i16]}> ?r1
+%s = freeze {} ?s1
+%t = freeze ?ty ?t1

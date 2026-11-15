@@ -1,4 +1,3 @@
-; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; mpir-index-structuralize: what constraints say of an intrinsic's name or an
 ; instruction's kind becomes features the corpus index looks up.
 ; RUN: split-file %s %t

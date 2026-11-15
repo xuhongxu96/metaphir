@@ -1,19 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Casts: the source operand and the destination type, with 'nneg'.
-%t = trunc nuw i64 ?x to i32
-%z = zext nneg i32 %t to i64
-%s = sext i32 %t to i?wide
-%ft = fptrunc double ?d to float
-%fe = fpext float %ft to double
-%fu = fptoui double %fe to i32
-%fs = fptosi double %fe to i32
-%uf = uitofp nneg i32 %fu to half
-%sf = sitofp i32 %fs to bfloat
-%pi = ptrtoint ptr ?p to i64
-%pa = ptrtoaddr ptr ?p to i64
-%ip = inttoptr i64 %pi to ptr
-%bc = bitcast <2 x i32> ?v to i64
-%fr = freeze i32 %t
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
@@ -63,3 +47,19 @@
 ; CHECK:           %[[TYPE_27:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_13:.*]] = mpir.inst <freeze> (%[[TYPE_27]], %[[INST_0]]) <result_name = "fr", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Casts: the source operand and the destination type, with 'nneg'.
+%t = trunc nuw i64 ?x to i32
+%z = zext nneg i32 %t to i64
+%s = sext i32 %t to i?wide
+%ft = fptrunc double ?d to float
+%fe = fpext float %ft to double
+%fu = fptoui double %fe to i32
+%fs = fptosi double %fe to i32
+%uf = uitofp nneg i32 %fu to half
+%sf = sitofp i32 %fs to bfloat
+%pi = ptrtoint ptr ?p to i64
+%pa = ptrtoaddr ptr ?p to i64
+%ip = inttoptr i64 %pi to ptr
+%bc = bitcast <2 x i32> ?v to i64
+%fr = freeze i32 %t

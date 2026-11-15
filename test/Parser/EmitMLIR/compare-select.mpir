@@ -1,14 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Comparisons with a written or a variable predicate, 'samesign', and
-; selects with fast-math flags.
-%c1 = icmp eq i32 ?x, 0
-%c2 = icmp samesign ult i32 ?x, ?y
-%c3 = icmp ?pred i32 ?x, ?y
-%c4 = fcmp nnan olt float ?f, 0.0
-%c5 = fcmp ?fpred double ?d, ?e
-%s1 = select i1 %c1, i32 ?x, i32 ?y
-%s2 = select nnan i1 %c4, float ?f, float 1.0
-%s3 = select <2 x i1> ?mask, <2 x i32> ?v, <2 x i32> zeroinitializer
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[KEYWORD_0:.*]] = mpir.keyword eq : <Value>
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
@@ -52,3 +41,14 @@
 ; CHECK:           %[[KEYWORD_3:.*]] = mpir.keyword zeroinitializer : <Value>
 ; CHECK:           %[[INST_7:.*]] = mpir.inst <select> (%[[TYPE_12]], %[[VAR_7]], %[[TYPE_14]], %[[VAR_8]], %[[TYPE_16]], %[[KEYWORD_3]]) <result_name = "s3", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Comparisons with a written or a variable predicate, 'samesign', and
+; selects with fast-math flags.
+%c1 = icmp eq i32 ?x, 0
+%c2 = icmp samesign ult i32 ?x, ?y
+%c3 = icmp ?pred i32 ?x, ?y
+%c4 = fcmp nnan olt float ?f, 0.0
+%c5 = fcmp ?fpred double ?d, ?e
+%s1 = select i1 %c1, i32 ?x, i32 ?y
+%s2 = select nnan i1 %c4, float ?f, float 1.0
+%s3 = select <2 x i1> ?mask, <2 x i32> ?v, <2 x i32> zeroinitializer

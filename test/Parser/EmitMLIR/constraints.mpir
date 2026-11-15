@@ -1,21 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Constraints: each kind of expression (literals, arrays and their
-; elements, unary and binary operators by precedence, built-in calls with
-; and without a context, calls of definitions), each anchored at the
-; instruction it follows.
-constraint inRange(?v, ?lo, ?hi) {
-  ule(?lo, ?v) && ule(?v, ?hi)
-}
-%a = add i?n ?x, ?c
-;; ?n == 32 || ?n == 64
-;; !isZero(?c) && inRange(?c, 1, 8)
-;; ?c * 2 + 1 - ?c != -3
-;; ["i8", "i16"][0] == "i8"
-;; bitWidth(?x) == 32 && isa(?x, "Argument")
-%b = icmp:?cmp ?p i?n %a, 0
-;; isKnownNonZero(?x, ?cmp) && ?p == "eq"
-;; true
-;; !false
 ; CHECK-LABEL:   mpir.constraint_def @inRange <param_names = ["v", "lo", "hi"]> {
 ; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown>, %[[VAL_1:.*]]: !mpir.sort<Unknown>, %[[VAL_2:.*]]: !mpir.sort<Unknown>):
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_1]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
@@ -97,3 +79,21 @@ constraint inRange(?v, ?lo, ?hi) {
 ; CHECK:           %[[CALL_19:.*]] = mpir_expr.call unary "!"(%[[BOOL_1]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_19]] : <Boolean>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Constraints: each kind of expression (literals, arrays and their
+; elements, unary and binary operators by precedence, built-in calls with
+; and without a context, calls of definitions), each anchored at the
+; instruction it follows.
+constraint inRange(?v, ?lo, ?hi) {
+  ule(?lo, ?v) && ule(?v, ?hi)
+}
+%a = add i?n ?x, ?c
+;; ?n == 32 || ?n == 64
+;; !isZero(?c) && inRange(?c, 1, 8)
+;; ?c * 2 + 1 - ?c != -3
+;; ["i8", "i16"][0] == "i8"
+;; bitWidth(?x) == 32 && isa(?x, "Argument")
+%b = icmp:?cmp ?p i?n %a, 0
+;; isKnownNonZero(?x, ?cmp) && ?p == "eq"
+;; true
+;; !false

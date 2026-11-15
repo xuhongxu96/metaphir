@@ -1,14 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Numbered results and labels; 'anyblock:' ends the block the instructions
-; before it were required to share; a void return and a typed pointer.
-entry:
-%0 = add i32 ?x, 1
-%1 = mul i32 %0, %0
-7:
-%2 = load i32, i32* ?p
-anyblock:
-%3 = sub i32 %2, %1
-ret void
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "entry" : <BasicBlock>
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
@@ -28,3 +17,14 @@ ret void
 ; CHECK:           %[[TYPE_6:.*]] = mpir.type.prim void : <Type>
 ; CHECK:           %[[INST_4:.*]] = mpir.inst <ret> (%[[TYPE_6]]) <flags = [], flag_modes = [], operand_kinds = [2]> : (!mpir.sort<Type>) -> !mpir.sort<Instruction>
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
+; Numbered results and labels; 'anyblock:' ends the block the instructions
+; before it were required to share; a void return and a typed pointer.
+entry:
+%0 = add i32 ?x, 1
+%1 = mul i32 %0, %0
+7:
+%2 = load i32, i32* ?p
+anyblock:
+%3 = sub i32 %2, %1
+ret void
