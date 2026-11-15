@@ -42,6 +42,12 @@ BITCODE_GROUPS = [
 ]
 
 
+# The match plans of --engine=mlir must print what the classic engine does,
+# in every mode.
+for group in GROUPS + BITCODE_GROUPS:
+    group += [[*mode, "--engine=mlir"] for mode in group]
+
+
 # Packs number metadata within their function.
 METADATA = re.compile(r"!\d+")
 # The published corpus refuses patterns that need no instruction.

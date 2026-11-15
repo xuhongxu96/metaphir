@@ -905,6 +905,10 @@ LogicalResult Expander::expand(UseOp Use) {
     Alt.erase();
     Alt = New;
   }
+  // A use's ':o' has its operand last.
+  if (OrSelf)
+    Alt->setAttr("or_self_region",
+                 Builder.getI32IntegerAttr(Alt->getNumRegions() - 1));
   Use.getResult().replaceAllUsesWith(Alt.getResult());
   Use.erase();
   return mlir::success();
@@ -983,9 +987,10 @@ static void lowerChoices(InstOp Inst) {
   };
   Value Result;
   if (OrSelf) {
+    // Its operand first, then itself, as InstructionMatcher tries them.
     AltOp Alt = MakeAlt(2);
-    Fill(Alt, 0, Itself);
-    Fill(Alt, 1, [&]() -> Value {
+    Fill(Alt, 1, Itself);
+    Fill(Alt, 0, [&]() -> Value {
       Value Operand;
       unsigned Position = *OrSelf;
       for (const MatcherOperandView &Op : Parts.Operands)
@@ -999,6 +1004,7 @@ static void lowerChoices(InstOp Inst) {
     });
     Alt->setAttr("or_self_of", Builder.getStringAttr(Instruction::getOpcodeName(
                                    Inst.getOpcode().getValue())));
+    Alt->setAttr("or_self_region", Builder.getI32IntegerAttr(0));
     Result = Alt.getResult();
   } else {
     Result = Itself();
@@ -1067,11 +1073,16 @@ void Bindings::addValue(Value V) {
     if (Alt->hasAttr("or_self_of") && BoundBy) {
       // Matching its operand binds what the second alternative does;
       // matching itself, the first.
+      // The alternative in which the matcher matches its operand.
+      unsigned OperandRegion =
+          Alt->getAttrOfType<mlir::IntegerAttr>("or_self_region").getInt();
       Bindings Itself;
-      collectRegion(Itself, Alt->getRegion(0));
+      for (unsigned R = 0; R != Alt->getNumRegions(); ++R)
+        if (R != OperandRegion)
+          collectRegion(Itself, Alt->getRegion(R));
       for (Value Var : Itself.Variables)
         BoundBy->try_emplace(Var, Alt);
-      collectRegion(*this, Alt->getRegion(1));
+      collectRegion(*this, Alt->getRegion(OperandRegion));
       return;
     }
     for (mlir::Region &Region : Alt->getRegions())

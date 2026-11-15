@@ -24,14 +24,15 @@
 ;--- or-self.mpir
 %d = sub i32 ?x, ?y
 %s = add:?s:o i32 %d, 1
-; The add, or its first operand in its place, which then binds its capture.
+; The add's first operand in its place, which then binds its capture, or
+; the add.
 ; OR-SELF:      mpir.alt {
-; OR-SELF-NEXT:   %i_s = "mpir.inst"
-; OR-SELF-NEXT:   mpir.yield %i_s
-; OR-SELF-NEXT: }, {
 ; OR-SELF-NEXT:   mpir.bind %s, %i_d
 ; OR-SELF-NEXT:   mpir.yield %i_d
-; OR-SELF-NEXT: } {or_self_of = "add", result_name = "s"}
+; OR-SELF-NEXT: }, {
+; OR-SELF-NEXT:   %i_s = "mpir.inst"
+; OR-SELF-NEXT:   mpir.yield %i_s
+; OR-SELF-NEXT: } {or_self_of = "add", or_self_region = 0 : i32, result_name = "s"}
 
 ;--- matcher.mpir
 %r = shr exact:?e i32 ?x, ?y
