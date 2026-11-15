@@ -18,23 +18,23 @@
 namespace llvm {
 namespace metaphir {
 
-static constexpr unsigned NumInstructionIDs = Instruction::NumInstructionIDs;
+static constexpr unsigned NumInstructionIDs = instruction::NumInstructionIDs;
 static_assert(NumInstructionIDs <= 64,
               "instruction matchers must fit in a 64-bit mask");
 
-static constexpr unsigned NumFlagIDs = InstructionFlag::NumFlagIDs;
+static constexpr unsigned NumFlagIDs = instruction_flag::NumFlagIDs;
 static_assert(NumFlagIDs <= 32, "flags must fit in a 32-bit mask");
 
 static uint32_t flagBit(unsigned Flag) { return uint32_t(1) << Flag; }
 
 /// The flags of I that instruction matcher ID supports.
-static uint32_t supportedFlags(Instruction::InstructionID ID,
+static uint32_t supportedFlags(instruction::InstructionID ID,
                                const llvm::Instruction &I) {
   uint32_t Flags = 0;
-  Instruction::FlagMask Supported = Instruction::getSupportedFlags(ID);
+  instruction::FlagMask Supported = instruction::getSupportedFlags(ID);
   for (unsigned Flag = 0; Flag != NumFlagIDs; ++Flag)
     if (Supported >> Flag & 1 &&
-        hasSemanticFlag(InstructionFlag::FlagID(Flag), I))
+        hasSemanticFlag(instruction_flag::FlagID(Flag), I))
       Flags |= flagBit(Flag);
   return Flags;
 }
@@ -43,7 +43,7 @@ static uint32_t supportedFlags(Instruction::InstructionID ID,
 static uint64_t instructionMask(const llvm::Instruction &I) {
   uint64_t Mask = 0;
   for (unsigned ID = 0; ID != NumInstructionIDs; ++ID)
-    if (matchesInstructionID(Instruction::InstructionID(ID), I))
+    if (matchesInstructionID(instruction::InstructionID(ID), I))
       Mask |= uint64_t(1) << ID;
   return Mask;
 }
@@ -73,8 +73,8 @@ uint64_t hashGlobal(const llvm::GlobalValue &Global) {
   return hashGlobalName(Global.getName());
 }
 
-bool FunctionFeatures::mayHaveEdge(Instruction::InstructionID User,
-                                   Instruction::InstructionID Operand) const {
+bool FunctionFeatures::mayHaveEdge(instruction::InstructionID User,
+                                   instruction::InstructionID Operand) const {
   return std::binary_search(Edges.begin(), Edges.end(),
                             getEdgeKey(User, Operand));
 }
@@ -83,14 +83,14 @@ bool FunctionFeatures::hasGlobal(uint64_t Hash) const {
   return std::binary_search(Globals.begin(), Globals.end(), Hash);
 }
 
-bool FunctionFeatures::hasFact(Instruction::InstructionID ID, unsigned Slot,
+bool FunctionFeatures::hasFact(instruction::InstructionID ID, unsigned Slot,
                                Atom A) const {
   return std::binary_search(Facts.begin(), Facts.end(),
                             getFactKey(ID, Slot, A));
 }
 
 std::optional<unsigned>
-FunctionFeatures::getMeasure(Instruction::InstructionID ID, unsigned Slot,
+FunctionFeatures::getMeasure(instruction::InstructionID ID, unsigned Slot,
                              Measure M) const {
   uint32_t Key = getMeasureKey(ID, Slot, M, 0);
   auto It = llvm::lower_bound(Measures, Key);
@@ -149,14 +149,14 @@ public:
   void add(Atom A) override {
     for (uint64_t Each = IDs; Each; Each &= Each - 1)
       Features.Facts.push_back(FunctionFeatures::getFactKey(
-          Instruction::InstructionID(llvm::countr_zero(Each)), Slot, A));
+          instruction::InstructionID(llvm::countr_zero(Each)), Slot, A));
   }
 
   void measure(Measure M, unsigned Value) override {
     Value = std::min(Value, MaxMeasure);
     for (uint64_t Each = IDs; Each; Each &= Each - 1) {
       uint32_t Key = FunctionFeatures::getMeasureKey(
-          Instruction::InstructionID(llvm::countr_zero(Each)), Slot, M, 0);
+          instruction::InstructionID(llvm::countr_zero(Each)), Slot, M, 0);
       auto [It, Inserted] = MeasureValues.try_emplace(Key, Value);
       if (!Inserted)
         It->second = mergeMeasure(M, It->second, Value);
@@ -218,7 +218,7 @@ FunctionFeatures FunctionFeatures::compute(const Function &F,
       Sink.setSites(Mask, ResultSlot);
       Record(I, I, ResultSlot);
       for (uint64_t IDs = Mask; IDs; IDs &= IDs - 1) {
-        Sig.ID = Instruction::InstructionID(llvm::countr_zero(IDs));
+        Sig.ID = instruction::InstructionID(llvm::countr_zero(IDs));
         Sig.Flags = supportedFlags(Sig.ID, I);
         Features.Signatures.push_back(Sig);
       }
@@ -239,16 +239,16 @@ FunctionFeatures FunctionFeatures::compute(const Function &F,
         for (uint64_t Operands = OperandMask; Operands;
              Operands &= Operands - 1)
           Features.Edges.push_back(getEdgeKey(
-              Instruction::InstructionID(llvm::countr_zero(Users)),
-              Instruction::InstructionID(llvm::countr_zero(Operands))));
+              instruction::InstructionID(llvm::countr_zero(Users)),
+              instruction::InstructionID(llvm::countr_zero(Operands))));
     }
   }
   for (const auto &[Value, Mask] : Users)
     for (uint64_t First = Mask; First; First &= First - 1)
       for (uint64_t Second = First; Second; Second &= Second - 1)
         Features.Siblings.push_back(
-            getEdgeKey(Instruction::InstructionID(llvm::countr_zero(First)),
-                       Instruction::InstructionID(llvm::countr_zero(Second))));
+            getEdgeKey(instruction::InstructionID(llvm::countr_zero(First)),
+                       instruction::InstructionID(llvm::countr_zero(Second))));
   for (const auto &[Key, Value] : MeasureValues)
     Features.Measures.push_back(Key | Value);
   Features.HasValueFacts = Options.ValueFacts && ValueFactsLeft;

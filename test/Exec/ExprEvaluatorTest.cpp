@@ -105,30 +105,30 @@ protected:
 
   /// A built-in operator when Name is one, and a call of a 'constraint'
   /// definition otherwise.
-  Value operation(Constraint::OperatorKind Kind, StringRef Name,
+  Value operation(constraint::OperatorKind Kind, StringRef Name,
                   std::initializer_list<Value> Arguments) {
-    Constraint::OperatorID ID = Constraint::getOperatorID(Name, Kind);
-    if (ID == Constraint::UnknownOperator)
+    constraint::OperatorID ID = constraint::getOperatorID(Name, Kind);
+    if (ID == constraint::UnknownOperator)
       return mpir_expr::ApplyOp::create(
           Builder, loc(), sortType(Sort::Boolean),
           mlir::FlatSymbolRefAttr::get(&Context, Name),
           SmallVector<Value, 4>(Arguments));
     return mpir_expr::CallOp::create(
-        Builder, loc(), sortType(Constraint::getOperatorSchema(ID)->Result),
+        Builder, loc(), sortType(constraint::getOperatorSchema(ID)->Result),
         unsigned(ID), unsigned(Kind), SmallVector<Value, 4>(Arguments),
         Value());
   }
   Value unary(StringRef Name, Value Operand) {
-    return operation(Constraint::Unary, Name, {Operand});
+    return operation(constraint::Unary, Name, {Operand});
   }
   Value binary(StringRef Name, Value Left, Value Right) {
-    return operation(Constraint::Binary, Name, {Left, Right});
+    return operation(constraint::Binary, Name, {Left, Right});
   }
   Value call(StringRef Name, Value Operand) {
-    return operation(Constraint::Call, Name, {Operand});
+    return operation(constraint::Call, Name, {Operand});
   }
   Value call(StringRef Name, Value Left, Value Right) {
-    return operation(Constraint::Call, Name, {Left, Right});
+    return operation(constraint::Call, Name, {Left, Right});
   }
   Value array(Sort Type, std::initializer_list<Value> Elements) {
     return mpir_expr::ArrayOp::create(Builder, loc(), sortType(Type),
@@ -203,14 +203,14 @@ TEST_F(ExprEvaluatorTest, EvaluatesWideIntegersExactly) {
   EXPECT_EQ(evaluateInteger(call("ashr", integer(-8), integer(100))), -1);
 
   // With a bit width, operators behave like the LLVM instructions.
-  EXPECT_EQ(evaluateInteger(operation(Constraint::Call, "shl",
+  EXPECT_EQ(evaluateInteger(operation(constraint::Call, "shl",
                                       {integer(1), integer(7), integer(8)})),
             -128);
 }
 
 TEST_F(ExprEvaluatorTest, ReadsBitWidthResultsAsLLVMDoes) {
   auto withWidth = [&](StringRef Name, int64_t L, int64_t R, int64_t W) {
-    return operation(Constraint::Call, Name,
+    return operation(constraint::Call, Name,
                      {integer(L), integer(R), integer(W)});
   };
   // '==' compares values, and reads a W-bit result as signed.
@@ -219,7 +219,7 @@ TEST_F(ExprEvaluatorTest, ReadsBitWidthResultsAsLLVMDoes) {
   EXPECT_FALSE(
       evaluateBoolean(binary("==", withWidth("add", 127, 1, 8), integer(128))));
   EXPECT_TRUE(evaluateBoolean(
-      binary("==", operation(Constraint::Call, "neg", {integer(1), integer(8)}),
+      binary("==", operation(constraint::Call, "neg", {integer(1), integer(8)}),
              integer(-1))));
   // The unsigned comparisons read it as unsigned, as 'icmp ult' does.
   EXPECT_TRUE(
@@ -256,7 +256,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesSignedAndUnsignedComparisons) {
 }
 
 TEST_F(ExprEvaluatorTest, ShortCircuitsLogicalOperators) {
-  Value Unknown = operation(Constraint::Call, "unknown", {integer(1)});
+  Value Unknown = operation(constraint::Call, "unknown", {integer(1)});
   EXPECT_TRUE(evaluateBoolean(binary("||", boolean(true), Unknown)));
   EXPECT_FALSE(evaluateBoolean(binary("&&", boolean(false), Unknown)));
 }
@@ -447,7 +447,7 @@ TEST_F(ExprEvaluatorTest, CountsUsesWithTheUseOracle) {
   bind(Global, M->getNamedGlobal("g"));
   bind(Load, A);
   auto Uses = [&](StringRef Name, Value Value, int64_t N) {
-    return operation(Constraint::Call, Name, {Value, integer(N)});
+    return operation(constraint::Call, Name, {Value, integer(N)});
   };
 
   // %a has two uses, by one user.
@@ -479,17 +479,17 @@ TEST_F(ExprEvaluatorTest, EvaluatesOpcodePredicates) {
   bind(Subject, Cast.get());
 
   EXPECT_TRUE(evaluateBoolean(
-      binary("==", operation(Constraint::Call, "opcode", {ValueExpression}),
+      binary("==", operation(constraint::Call, "opcode", {ValueExpression}),
              string("zext"))));
   EXPECT_FALSE(evaluateBoolean(
-      binary("==", operation(Constraint::Call, "opcode", {ValueExpression}),
+      binary("==", operation(constraint::Call, "opcode", {ValueExpression}),
              string("add"))));
 
   Var IntegerValue = var("integer_value", Sort::Value);
   Value IntegerExpression = read(IntegerValue, Sort::Value);
   bind(IntegerValue, ConstantInt::get(I32, 1));
   Value NonInstruction =
-      operation(Constraint::Call, "opcode", {IntegerExpression});
+      operation(constraint::Call, "opcode", {IntegerExpression});
   Expected<ConstraintValue> Result = evaluateResult(NonInstruction);
   ASSERT_FALSE(Result);
   EXPECT_EQ(toString(Result.takeError()),
@@ -560,7 +560,7 @@ TEST_F(ExprEvaluatorTest, ReportsEvaluationErrors) {
     EXPECT_FALSE(toString(Result.takeError()).empty());
   }
 
-  Value Unknown = operation(Constraint::Call, "custom", {integer(1)});
+  Value Unknown = operation(constraint::Call, "custom", {integer(1)});
   Expected<ConstraintValue> UnknownResult = evaluateResult(Unknown);
   ASSERT_FALSE(UnknownResult);
   EXPECT_EQ(
@@ -577,7 +577,7 @@ TEST_F(ExprEvaluatorTest, ReportsEvaluationErrors) {
             "cannot evaluate constraint '?values[0]': array index is out of "
             "bounds");
 
-  Value InvalidShift = operation(Constraint::Call, "lshr",
+  Value InvalidShift = operation(constraint::Call, "lshr",
                                  {integer(1), integer(64), integer(64)});
   Expected<ConstraintValue> ShiftResult = evaluateResult(InvalidShift);
   ASSERT_FALSE(ShiftResult);
@@ -675,10 +675,10 @@ TEST_F(ExprEvaluatorTest, EvaluatesValueTrackingOperators) {
   // y and z are constrained to [0, 15], so y*z fits in i8 without unsigned
   // overflow; signed overflow is possible (15*15 > 127).
   EXPECT_TRUE(evaluateBoolean(
-      operation(Constraint::Call, "noOverflow",
+      operation(constraint::Call, "noOverflow",
                 {string("umul"), YExpression, ZExpression, CtxExpression})));
   EXPECT_FALSE(evaluateBoolean(
-      operation(Constraint::Call, "noOverflow",
+      operation(constraint::Call, "noOverflow",
                 {string("smul"), YExpression, ZExpression, CtxExpression})));
 
   // 255 * 2 does not fit in i8.
@@ -689,69 +689,69 @@ TEST_F(ExprEvaluatorTest, EvaluatesValueTrackingOperators) {
   bind(Big, ConstantInt::get(I8, 255));
   bind(Two, ConstantInt::get(I8, 2));
   EXPECT_FALSE(evaluateBoolean(operation(
-      Constraint::Call, "noOverflow",
+      constraint::Call, "noOverflow",
       {string("umul"), BigExpression, TwoExpression, CtxExpression})));
 
   // Sign predicates on the range-constrained argument.
-  EXPECT_TRUE(evaluateBoolean(operation(Constraint::Call, "isKnownNonNegative",
+  EXPECT_TRUE(evaluateBoolean(operation(constraint::Call, "isKnownNonNegative",
                                         {YExpression, CtxExpression})));
 
   // Known bits of the constant 5 (0b00000101): ones mask 0x05, zeros 0xFA.
   Var Const = var("c", Sort::Value);
   Value ConstExpression = read(Const, Sort::Value);
   bind(Const, ConstantInt::get(I8, 5));
-  EXPECT_TRUE(evaluateBoolean(operation(Constraint::Call, "isKnownNonZero",
+  EXPECT_TRUE(evaluateBoolean(operation(constraint::Call, "isKnownNonZero",
                                         {ConstExpression, CtxExpression})));
-  EXPECT_FALSE(evaluateBoolean(operation(Constraint::Call, "isKnownPowerOfTwo",
+  EXPECT_FALSE(evaluateBoolean(operation(constraint::Call, "isKnownPowerOfTwo",
                                          {ConstExpression, CtxExpression})));
-  EXPECT_TRUE(evaluateBoolean(operation(Constraint::Call, "isKnownPositive",
+  EXPECT_TRUE(evaluateBoolean(operation(constraint::Call, "isKnownPositive",
                                         {ConstExpression, CtxExpression})));
-  EXPECT_FALSE(evaluateBoolean(operation(Constraint::Call, "isKnownNegative",
+  EXPECT_FALSE(evaluateBoolean(operation(constraint::Call, "isKnownNegative",
                                          {ConstExpression, CtxExpression})));
 
   // Constant 4 is a power of two.
   Var Four = var("four", Sort::Value);
   Value FourExpression = read(Four, Sort::Value);
   bind(Four, ConstantInt::get(I8, 4));
-  EXPECT_TRUE(evaluateBoolean(operation(Constraint::Call, "isKnownPowerOfTwo",
+  EXPECT_TRUE(evaluateBoolean(operation(constraint::Call, "isKnownPowerOfTwo",
                                         {FourExpression, CtxExpression})));
 
   Expected<ConstraintValue> KnownBits = evaluateResult(operation(
-      Constraint::Call, "knownBits", {ConstExpression, CtxExpression}));
+      constraint::Call, "knownBits", {ConstExpression, CtxExpression}));
   ASSERT_TRUE(static_cast<bool>(KnownBits));
   EXPECT_EQ(KnownBits->getKnownBits().One, APInt(8, 0x05));
   EXPECT_EQ(KnownBits->getKnownBits().Zero, APInt(8, 0xFA));
 
-  Value KnownBitsCall = operation(Constraint::Call, "knownBits",
+  Value KnownBitsCall = operation(constraint::Call, "knownBits",
                                   {ConstExpression, CtxExpression});
   Expected<ConstraintValue> Zeros = evaluateResult(
-      operation(Constraint::Call, "knownZeros", {KnownBitsCall}));
+      operation(constraint::Call, "knownZeros", {KnownBitsCall}));
   ASSERT_TRUE(static_cast<bool>(Zeros));
   EXPECT_EQ(Zeros->getInteger(), APSInt(APInt(8, 0xFA), true));
   Expected<ConstraintValue> Ones =
-      evaluateResult(operation(Constraint::Call, "knownOnes", {KnownBitsCall}));
+      evaluateResult(operation(constraint::Call, "knownOnes", {KnownBitsCall}));
   ASSERT_TRUE(static_cast<bool>(Ones));
   EXPECT_EQ(Ones->getInteger(), APSInt(APInt(8, 0x05), true));
 
   // Bit-vector equality compares both masks.
   EXPECT_TRUE(
       evaluateBoolean(binary("==",
-                             operation(Constraint::Call, "knownBits",
+                             operation(constraint::Call, "knownBits",
                                        {ConstExpression, CtxExpression}),
-                             operation(Constraint::Call, "knownBits",
+                             operation(constraint::Call, "knownBits",
                                        {ConstExpression, CtxExpression}))));
 
   // masked-value-is-zero: 5 & 8 == 0, 5 & 4 != 0.
   EXPECT_TRUE(
-      evaluateBoolean(operation(Constraint::Call, "maskedValueIsZero",
+      evaluateBoolean(operation(constraint::Call, "maskedValueIsZero",
                                 {ConstExpression, integer(8), CtxExpression})));
   EXPECT_FALSE(
-      evaluateBoolean(operation(Constraint::Call, "maskedValueIsZero",
+      evaluateBoolean(operation(constraint::Call, "maskedValueIsZero",
                                 {ConstExpression, integer(4), CtxExpression})));
 
   // Unknown overflow kind.
   Expected<ConstraintValue> UnknownKind = evaluateResult(operation(
-      Constraint::Call, "noOverflow",
+      constraint::Call, "noOverflow",
       {string("foo"), ConstExpression, ConstExpression, CtxExpression}));
   ASSERT_FALSE(UnknownKind);
   EXPECT_EQ(toString(UnknownKind.takeError()),
@@ -763,7 +763,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesValueTrackingOperators) {
   Value FloatExpression = read(FloatValue, Sort::Value);
   bind(FloatValue, ConstantFP::get(Float, 1.0));
   Expected<ConstraintValue> NonInteger =
-      evaluateResult(operation(Constraint::Call, "isKnownNonNegative",
+      evaluateResult(operation(constraint::Call, "isKnownNonNegative",
                                {FloatExpression, CtxExpression}));
   ASSERT_FALSE(NonInteger);
   EXPECT_EQ(toString(NonInteger.takeError()),
@@ -772,7 +772,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesValueTrackingOperators) {
 
   // Context that is a value but not an instruction.
   Expected<ConstraintValue> BadContext = evaluateResult(operation(
-      Constraint::Call, "isKnownNonZero", {ConstExpression, BigExpression}));
+      constraint::Call, "isKnownNonZero", {ConstExpression, BigExpression}));
   ASSERT_FALSE(BadContext);
   EXPECT_EQ(toString(BadContext.takeError()),
             "cannot evaluate constraint '(isKnownNonZero ?c ?big)': expected "
@@ -808,14 +808,14 @@ TEST_F(ExprEvaluatorTest, ResolvesDefaultValueTrackContext) {
   Var PatternInst = instruction("root");
   bind(PatternInst, Binding(Root));
   Value NoOverflow =
-      anchored(operation(Constraint::Call, "noOverflow",
+      anchored(operation(constraint::Call, "noOverflow",
                          {string("umul"), YExpression, ZExpression}),
                PatternInst);
 
   EXPECT_TRUE(evaluateBoolean(NoOverflow));
 
   // Without a resolvable context instruction the operator reports an error.
-  Value Unanchored = operation(Constraint::Call, "noOverflow",
+  Value Unanchored = operation(constraint::Call, "noOverflow",
                                {string("umul"), YExpression, ZExpression});
   Expected<ConstraintValue> Result = evaluateResult(Unanchored);
   ASSERT_FALSE(Result);

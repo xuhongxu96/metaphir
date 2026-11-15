@@ -221,8 +221,8 @@ private:
 
 /// Whether Flag is ':c' or ':o', which are choices rather than constraints.
 static bool isChoiceFlag(MetaFlagAttr Flag) {
-  MetaFlag::MetaFlagID ID = MetaFlag::getMetaFlagID(Flag.getName());
-  return ID == MetaFlag::MF_c || ID == MetaFlag::MF_o;
+  metaflag::MetaFlagID ID = metaflag::getMetaFlagID(Flag.getName());
+  return ID == metaflag::MF_c || ID == metaflag::MF_o;
 }
 
 mlir::FailureOr<Value> Desugarer::lower(MetaFlagAttr Flag, Value Subject) {
@@ -233,17 +233,17 @@ mlir::FailureOr<Value> Desugarer::lower(MetaFlagAttr Flag, Value Subject) {
                        << "' has no value to use as its subject";
   mlir::MLIRContext *Context = Builder.getContext();
   auto BooleanType = sortType(Context, Sort::Boolean);
-  switch (MetaFlag::getMetaFlagID(Name)) {
-  case MetaFlag::MF_not: {
+  switch (metaflag::getMetaFlagID(Name)) {
+  case metaflag::MF_not: {
     auto Inner = dyn_cast<MetaFlagAttr>(Flag.getArgs()[0]);
     mlir::FailureOr<Value> Lowered = lower(Inner, Subject);
     if (mlir::failed(Lowered))
       return mlir::failure();
     return Value(mpir_expr::CallOp::create(
-        Builder, Loc, BooleanType, unsigned(Constraint::O_Not),
-        unsigned(Constraint::Unary), ValueRange{*Lowered}, Value()));
+        Builder, Loc, BooleanType, unsigned(constraint::O_Not),
+        unsigned(constraint::Unary), ValueRange{*Lowered}, Value()));
   }
-  case MetaFlag::MF_or: {
+  case metaflag::MF_or: {
     Value Result;
     for (Attribute A : Flag.getArgs()) {
       mlir::FailureOr<Value> Lowered = lower(cast<MetaFlagAttr>(A), Subject);
@@ -251,17 +251,17 @@ mlir::FailureOr<Value> Desugarer::lower(MetaFlagAttr Flag, Value Subject) {
         return mlir::failure();
       Result = Result ? Value(mpir_expr::CallOp::create(
                             Builder, Loc, BooleanType,
-                            unsigned(Constraint::O_LogicalOr),
-                            unsigned(Constraint::Binary),
+                            unsigned(constraint::O_LogicalOr),
+                            unsigned(constraint::Binary),
                             ValueRange{Result, *Lowered}, Value()))
                       : *Lowered;
     }
     return Result;
   }
-  case MetaFlag::MF_c:
-  case MetaFlag::MF_o:
+  case metaflag::MF_c:
+  case metaflag::MF_o:
     llvm_unreachable("choice flags are not constraints");
-  case MetaFlag::UnknownMetaFlag:
+  case metaflag::UnknownMetaFlag:
     break;
   }
   auto Def = dyn_cast_or_null<MetaFlagDefOp>(
@@ -494,27 +494,27 @@ private:
 /// The positions of the archetype's parameters among a use's operands:
 /// (parameter, operand) pairs for its types, then for its values.
 static void archetypePositions(
-    Instruction::OperandSyntax Syntax, unsigned Arity,
+    instruction::OperandSyntax Syntax, unsigned Arity,
     SmallVectorImpl<std::pair<unsigned, unsigned>> &TypePositions,
     SmallVectorImpl<std::pair<unsigned, unsigned>> &ValuePositions) {
   switch (Syntax) {
-  case Instruction::OperandSyntax::Nary:
+  case instruction::OperandSyntax::Nary:
     for (unsigned I = 0; I != Arity; ++I) {
       TypePositions.push_back({2 * I, I});
       ValuePositions.push_back({2 * I + 1, I});
     }
     break;
-  case Instruction::OperandSyntax::Binary:
+  case instruction::OperandSyntax::Binary:
     TypePositions.push_back({0, 0});
     ValuePositions.push_back({1, 0});
     ValuePositions.push_back({2, 1});
     break;
-  case Instruction::OperandSyntax::Cast:
+  case instruction::OperandSyntax::Cast:
     TypePositions.push_back({0, 0});
     ValuePositions.push_back({1, 0});
     TypePositions.push_back({2, 1});
     break;
-  case Instruction::OperandSyntax::Custom:
+  case instruction::OperandSyntax::Custom:
     llvm_unreachable("composite matchers use a shared archetype");
   }
 }
@@ -545,7 +545,7 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
   DenseMap<Value, Value> ArgTypes;
 
   SmallVector<std::pair<unsigned, unsigned>, 8> TypePositions, ValuePositions;
-  archetypePositions(Instruction::OperandSyntax(Matcher.getSyntax()),
+  archetypePositions(instruction::OperandSyntax(Matcher.getSyntax()),
                      Matcher.getArity(), TypePositions, ValuePositions);
   for (auto [ParamIndex, OpIndex] : TypePositions) {
     Value CallerTy = CallerOps[OpIndex].Type;
@@ -672,7 +672,7 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
           Builder, Use.getLoc(), sortType(Context, Sort::Boolean),
           Builder.getStringAttr(
               (OmittedFlagPrefix + UsePrefix + "$" +
-               InstructionFlag::getName(InstructionFlag::FlagID(FlagID)))
+               instruction_flag::getName(instruction_flag::FlagID(FlagID)))
                   .str()));
     }
     FlagValues[FlagID] = FlagValue;
@@ -937,7 +937,7 @@ static void lowerChoices(InstOp Inst) {
   std::optional<std::pair<unsigned, unsigned>> Swapped;
   if (Commutative) {
     unsigned NumOperands = ValuePositions.size();
-    if (Inst.getOpcode().getValue() == Instruction::I_call && NumOperands == 3)
+    if (Inst.getOpcode().getValue() == instruction::I_call && NumOperands == 3)
       Swapped = {1u, 2u};
     else if (NumOperands == 2)
       Swapped = {0u, 1u};
@@ -949,8 +949,8 @@ static void lowerChoices(InstOp Inst) {
     if (Swap) {
       std::swap(P.Operands[ValuePositions[Swapped->first]],
                 P.Operands[ValuePositions[Swapped->second]]);
-      Instruction::InstructionID ID = Inst.getOpcode().getValue();
-      SwappedPredicate = ID == Instruction::I_icmp || ID == Instruction::I_fcmp;
+      instruction::InstructionID ID = Inst.getOpcode().getValue();
+      SwappedPredicate = ID == instruction::I_icmp || ID == instruction::I_fcmp;
     }
     return P
         .build(Builder, Loc, InstOp::getOperationName(), Key, SwappedPredicate)
@@ -1001,7 +1001,7 @@ static void lowerChoices(InstOp Inst) {
         BindOp::create(Builder, Loc, Parts.Capture, Operand);
       return Operand;
     });
-    Alt->setAttr("or_self_of", Builder.getStringAttr(Instruction::getOpcodeName(
+    Alt->setAttr("or_self_of", Builder.getStringAttr(instruction::getOpcodeName(
                                    Inst.getOpcode().getValue())));
     Alt->setAttr("or_self_region", Builder.getI32IntegerAttr(0));
     Result = Alt.getResult();

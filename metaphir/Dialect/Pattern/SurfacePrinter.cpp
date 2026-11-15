@@ -63,9 +63,9 @@ static void printType(raw_ostream &OS, mlir::Value T) {
     return;
   }
   if (auto Prim = dyn_cast<PrimTypeOp>(Def)) {
-    switch (Type::TypeID(Prim.getKind())) {
+    switch (primitive_type::TypeID(Prim.getKind())) {
 #define MIR_TYPE(TypeID, Spelling)                                             \
-  case Type::TypeID:                                                           \
+  case primitive_type::TypeID:                                                           \
     OS << #Spelling;                                                           \
     return;
 #include "metaphir/IR/Types.def"
@@ -163,8 +163,8 @@ void printSurfaceValue(raw_ostream &OS, mlir::Value V) {
     return;
   }
   if (auto Keyword = dyn_cast<KeywordOp>(Def)) {
-    OS << KeywordConstant::getKeywordName(
-        KeywordConstant::KeywordID(Keyword.getKeyword()));
+    OS << keyword_constant::getKeywordName(
+        keyword_constant::KeywordID(Keyword.getKeyword()));
     return;
   }
   if (auto Aggregate = dyn_cast<AggregateOp>(Def)) {
@@ -273,16 +273,16 @@ void printSurfaceInstruction(raw_ostream &OS, Operation *I) {
 
   if (ResultName)
     OS << '%' << *ResultName << " = ";
-  Instruction::OperandSyntax Syntax;
+  instruction::OperandSyntax Syntax;
   if (Inst) {
-    OS << Instruction::getOpcodeName(Inst.getOpcode().getValue());
-    Syntax = Instruction::getOperandSyntax(Inst.getOpcode().getValue());
+    OS << instruction::getOpcodeName(Inst.getOpcode().getValue());
+    Syntax = instruction::getOperandSyntax(Inst.getOpcode().getValue());
   } else {
     OS << Use.getMatcher();
     auto Matcher = SymbolTable::lookupNearestSymbolFrom<MatcherOp>(
         I, Use.getMatcherAttr());
-    Syntax = Matcher ? Instruction::OperandSyntax(Matcher.getSyntax())
-                     : Instruction::OperandSyntax::Nary;
+    Syntax = Matcher ? instruction::OperandSyntax(Matcher.getSyntax())
+                     : instruction::OperandSyntax::Nary;
   }
   if (Capture)
     OS << ":?" << getMetaVariableName(Capture);
@@ -294,21 +294,21 @@ void printSurfaceInstruction(raw_ostream &OS, Operation *I) {
     OS << ' ';
     if (FlagMode(Mode) == FlagMode::Negated)
       OS << '!';
-    OS << InstructionFlag::getName(InstructionFlag::FlagID(Flag));
+    OS << instruction_flag::getName(instruction_flag::FlagID(Flag));
     if (FlagMode(Mode) == FlagMode::Captured)
       OS << ":?" << getMetaVariableName(FlagCaptures[NextCapture++]);
   }
   ArrayRef<PrintedOperand> Ops = Unkeyed;
-  if (Ops.empty() && Syntax != Instruction::OperandSyntax::Custom)
+  if (Ops.empty() && Syntax != instruction::OperandSyntax::Custom)
     return;
   switch (Syntax) {
-  case Instruction::OperandSyntax::Binary:
+  case instruction::OperandSyntax::Binary:
     OS << ' ';
     printOperand(OS, Ops[0]);
     OS << ", ";
     printOperand(OS, Ops[1], /*WithoutType=*/true);
     return;
-  case Instruction::OperandSyntax::Cast:
+  case instruction::OperandSyntax::Cast:
     OS << ' ';
     printOperand(OS, Ops[0]);
     if (Ops.size() > 1 && Ops[1].View.Type) {
@@ -316,14 +316,14 @@ void printSurfaceInstruction(raw_ostream &OS, Operation *I) {
       printType(OS, Ops[1].View.Type);
     }
     return;
-  case Instruction::OperandSyntax::Nary:
+  case instruction::OperandSyntax::Nary:
     OS << ' ';
     printSeparated(OS, Ops);
     return;
-  case Instruction::OperandSyntax::Custom:
+  case instruction::OperandSyntax::Custom:
     break;
   }
-  using ID = Instruction::InstructionID;
+  using ID = instruction::InstructionID;
   switch (Inst.getOpcode().getValue()) {
   case ID::I_icmp:
   case ID::I_fcmp:
@@ -460,7 +460,7 @@ void printSurfaceExpression(raw_ostream &OS, mlir::Value E) {
     return;
   }
   if (auto Call = dyn_cast<mpir_expr::CallOp>(Def)) {
-    OS << '(' << Constraint::getOperatorName(Call.getOperatorID());
+    OS << '(' << constraint::getOperatorName(Call.getOperatorID());
     for (mlir::Value A : Call.getArgs()) {
       OS << ' ';
       printSurfaceExpression(OS, A);

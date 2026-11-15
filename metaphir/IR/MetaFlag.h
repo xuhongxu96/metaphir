@@ -9,7 +9,7 @@ namespace metaphir {
 
 /// The built-in metaflags (':c', ':o', ':or', ':not'), from MetaFlags.def,
 /// and what they accept. The others are defined by 'metaflag' definitions.
-namespace MetaFlag {
+namespace metaflag {
 enum MetaFlagID {
   UnknownMetaFlag,
 #define MIR_META_FLAG_ID(Name) MF_##Name,
@@ -36,7 +36,7 @@ constexpr unsigned UnlimitedArgs = ~0u;
 std::optional<Schema> getSchema(MetaFlagID ID);
 MetaFlagID getMetaFlagID(StringRef Name);
 StringRef getMetaFlagName(MetaFlagID ID);
-} // namespace MetaFlag
+} // namespace metaflag
 
 } // namespace metaphir
 } // namespace llvm

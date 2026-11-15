@@ -132,7 +132,7 @@ Expected<ConstraintValue> OpNegate::concrete(const ConcreteCall &Call) {
 /// integers and widened so that the result is exact, unless an explicit bit
 /// width W asks for the LLVM instruction on iW: then the operands are cast to
 /// W bits and the result is a W-bit pattern.
-static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
+static Expected<ConstraintValue> evaluateBinary(constraint::OperatorID ID,
                                                 const ConcreteCall &Call) {
   Expected<APSInt> Left = requireInteger(Call.Operands[0], Call.Expression);
   if (!Left)
@@ -146,17 +146,17 @@ static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
 
   // A comparison reads a bit pattern as its signedness says.
   switch (ID) {
-  case Constraint::O_SLT:
-  case Constraint::O_SLE:
-  case Constraint::O_SGT:
-  case Constraint::O_SGE:
-  case Constraint::O_ULT:
-  case Constraint::O_ULE:
-  case Constraint::O_UGT:
-  case Constraint::O_UGE: {
+  case constraint::O_SLT:
+  case constraint::O_SLE:
+  case constraint::O_SGT:
+  case constraint::O_SGE:
+  case constraint::O_ULT:
+  case constraint::O_ULE:
+  case constraint::O_UGT:
+  case constraint::O_UGE: {
     bool UnsignedComparison =
-        ID == Constraint::O_ULT || ID == Constraint::O_ULE ||
-        ID == Constraint::O_UGT || ID == Constraint::O_UGE;
+        ID == constraint::O_ULT || ID == constraint::O_ULE ||
+        ID == constraint::O_UGT || ID == constraint::O_UGE;
     *Left = readForComparison(*Left, Call.Operands[0].isModular(),
                               UnsignedComparison);
     *Right = readForComparison(*Right, Call.Operands[1].isModular(),
@@ -175,13 +175,13 @@ static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
     R = castToBitWidth(*Right, **BitWidth);
   } else {
     switch (ID) {
-    case Constraint::O_Multiply:
+    case constraint::O_Multiply:
       ExtraBits = std::min(Left->getBitWidth(), Right->getBitWidth());
       break;
-    case Constraint::O_Add:
-    case Constraint::O_Subtract:
+    case constraint::O_Add:
+    case constraint::O_Subtract:
     // The most negative value divided by -1 needs one more bit.
-    case Constraint::O_SDiv:
+    case constraint::O_SDiv:
       ExtraBits = 1;
       break;
     default:
@@ -198,47 +198,47 @@ static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
   };
 
   switch (ID) {
-  case Constraint::O_Add:
+  case constraint::O_Add:
     return Result(L + R, Unsigned);
-  case Constraint::O_Subtract:
+  case constraint::O_Subtract:
     return Result(L - R, false);
-  case Constraint::O_Multiply:
+  case constraint::O_Multiply:
     return Result(L * R, Unsigned);
-  case Constraint::O_And:
+  case constraint::O_And:
     return Result(L & R, Unsigned);
-  case Constraint::O_Or:
+  case constraint::O_Or:
     return Result(L | R, Unsigned);
-  case Constraint::O_Xor:
+  case constraint::O_Xor:
     return Result(L ^ R, Unsigned);
-  case Constraint::O_SDiv:
-  case Constraint::O_UDiv:
-  case Constraint::O_SRem:
-  case Constraint::O_URem:
+  case constraint::O_SDiv:
+  case constraint::O_UDiv:
+  case constraint::O_SRem:
+  case constraint::O_URem:
     if (R.isZero())
       return make_error<ConstraintEvaluationError>(Call.Expression,
                                                    "division by zero");
-    if (ID == Constraint::O_SDiv)
+    if (ID == constraint::O_SDiv)
       return Result(L.sdiv(R), false);
-    if (ID == Constraint::O_UDiv)
+    if (ID == constraint::O_UDiv)
       return Result(L.udiv(R), true);
-    if (ID == Constraint::O_SRem)
+    if (ID == constraint::O_SRem)
       return Result(L.srem(R), false);
     return Result(L.urem(R), true);
-  case Constraint::O_SLT:
+  case constraint::O_SLT:
     return ConstraintValue::getBoolean(L.slt(R));
-  case Constraint::O_ULT:
+  case constraint::O_ULT:
     return ConstraintValue::getBoolean(L.ult(R));
-  case Constraint::O_SLE:
+  case constraint::O_SLE:
     return ConstraintValue::getBoolean(L.sle(R));
-  case Constraint::O_ULE:
+  case constraint::O_ULE:
     return ConstraintValue::getBoolean(L.ule(R));
-  case Constraint::O_SGT:
+  case constraint::O_SGT:
     return ConstraintValue::getBoolean(L.sgt(R));
-  case Constraint::O_UGT:
+  case constraint::O_UGT:
     return ConstraintValue::getBoolean(L.ugt(R));
-  case Constraint::O_SGE:
+  case constraint::O_SGE:
     return ConstraintValue::getBoolean(L.sge(R));
-  case Constraint::O_UGE:
+  case constraint::O_UGE:
     return ConstraintValue::getBoolean(L.uge(R));
   default:
     llvm_unreachable("not a binary integer operator");
@@ -247,7 +247,7 @@ static Expected<ConstraintValue> evaluateBinary(Constraint::OperatorID ID,
 
 #define MIR_BINARY_OPERATOR(ID)                                                \
   Expected<ConstraintValue> Op##ID::concrete(const ConcreteCall &Call) {       \
-    return evaluateBinary(Constraint::O_##ID, Call);                           \
+    return evaluateBinary(constraint::O_##ID, Call);                           \
   }
 MIR_BINARY_OPERATOR(Add)
 MIR_BINARY_OPERATOR(Subtract)
@@ -269,7 +269,7 @@ MIR_BINARY_OPERATOR(SGE)
 MIR_BINARY_OPERATOR(UGE)
 #undef MIR_BINARY_OPERATOR
 
-static Expected<ConstraintValue> evaluateShift(Constraint::OperatorID ID,
+static Expected<ConstraintValue> evaluateShift(constraint::OperatorID ID,
                                                const ConcreteCall &Call) {
   Expected<std::optional<unsigned>> BitWidth = optionalBitWidth(Call, 2);
   if (!BitWidth)
@@ -292,7 +292,7 @@ static Expected<ConstraintValue> evaluateShift(Constraint::OperatorID ID,
   // Without one, integers are mathematical: shl keeps every bit, and a right
   // shift past the operand's bits leaves only its sign.
   uint64_t Shift = Amount->getLimitedValue();
-  if (!*BitWidth && ID == Constraint::O_Shl) {
+  if (!*BitWidth && ID == constraint::O_Shl) {
     if (Shift > llvm::IntegerType::MAX_INT_BITS)
       return make_error<ConstraintEvaluationError>(
           Call.Expression, "shift amount is out of range");
@@ -303,13 +303,13 @@ static Expected<ConstraintValue> evaluateShift(Constraint::OperatorID ID,
   unsigned Width = Integer.getBitWidth();
   APInt Result;
   switch (ID) {
-  case Constraint::O_Lshr:
+  case constraint::O_Lshr:
     Result = Shift >= Width ? APInt::getZero(Width) : Integer.lshr(Shift);
     break;
-  case Constraint::O_Ashr:
+  case constraint::O_Ashr:
     Result = Integer.ashr(std::min<uint64_t>(Shift, Width - 1));
     break;
-  case Constraint::O_Shl:
+  case constraint::O_Shl:
     Result = Integer.shl(Shift);
     break;
   default:
@@ -318,19 +318,19 @@ static Expected<ConstraintValue> evaluateShift(Constraint::OperatorID ID,
   if (*BitWidth)
     return ConstraintValue::getModularInteger(std::move(Result));
   return integerResult(std::move(Result),
-                       ID != Constraint::O_Ashr && Value->isUnsigned());
+                       ID != constraint::O_Ashr && Value->isUnsigned());
 }
 
 Expected<ConstraintValue> OpLshr::concrete(const ConcreteCall &Call) {
-  return evaluateShift(Constraint::O_Lshr, Call);
+  return evaluateShift(constraint::O_Lshr, Call);
 }
 
 Expected<ConstraintValue> OpAshr::concrete(const ConcreteCall &Call) {
-  return evaluateShift(Constraint::O_Ashr, Call);
+  return evaluateShift(constraint::O_Ashr, Call);
 }
 
 Expected<ConstraintValue> OpShl::concrete(const ConcreteCall &Call) {
-  return evaluateShift(Constraint::O_Shl, Call);
+  return evaluateShift(constraint::O_Shl, Call);
 }
 
 Expected<ConstraintValue> OpLog2::concrete(const ConcreteCall &Call) {

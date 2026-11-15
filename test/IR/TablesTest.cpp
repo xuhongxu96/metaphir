@@ -17,46 +17,46 @@ using namespace llvm::metaphir;
 namespace {
 
 TEST(TablesTest, GeneratedInstructionProperties) {
-  EXPECT_EQ(Instruction::getOpcodeName(Instruction::I_add), "add");
-  EXPECT_TRUE(Instruction::isCommutative(Instruction::I_add));
-  EXPECT_FALSE(Instruction::isCommutative(Instruction::I_sub));
-  EXPECT_NE(Instruction::getSupportedFlags(Instruction::I_add) &
-                Instruction::mask(InstructionFlag::F_nsw),
+  EXPECT_EQ(instruction::getOpcodeName(instruction::I_add), "add");
+  EXPECT_TRUE(instruction::isCommutative(instruction::I_add));
+  EXPECT_FALSE(instruction::isCommutative(instruction::I_sub));
+  EXPECT_NE(instruction::getSupportedFlags(instruction::I_add) &
+                instruction::mask(instruction_flag::F_nsw),
             0u);
-  EXPECT_EQ(Instruction::getSupportedFlags(Instruction::I_add) &
-                Instruction::mask(InstructionFlag::F_exact),
+  EXPECT_EQ(instruction::getSupportedFlags(instruction::I_add) &
+                instruction::mask(instruction_flag::F_exact),
             0u);
-  EXPECT_EQ(InstructionFlag::getName(InstructionFlag::F_nsw), "nsw");
+  EXPECT_EQ(instruction_flag::getName(instruction_flag::F_nsw), "nsw");
 }
 
 TEST(TablesTest, UsesEnumeratedKeywordConstants) {
-  EXPECT_EQ(KeywordConstant::getKeywordName(KeywordConstant::K_Poison),
+  EXPECT_EQ(keyword_constant::getKeywordName(keyword_constant::K_Poison),
             "poison");
 }
 
 TEST(TablesTest, GeneratedExtensibilitySchemas) {
-  auto Or = MetaFlag::getSchema(MetaFlag::MF_or);
+  auto Or = metaflag::getSchema(metaflag::MF_or);
   ASSERT_TRUE(Or);
-  EXPECT_EQ(Or->Arguments, MetaFlag::FlagArgument);
-  EXPECT_EQ(Or->AllowedPlacement, MetaFlag::OperandPlacement);
-  EXPECT_FALSE(MetaFlag::getSchema(MetaFlag::UnknownMetaFlag));
-  EXPECT_EQ(MetaFlag::getMetaFlagID("c"), MetaFlag::MF_c);
-  EXPECT_EQ(MetaFlag::getMetaFlagID("future_flag"), MetaFlag::UnknownMetaFlag);
+  EXPECT_EQ(Or->Arguments, metaflag::FlagArgument);
+  EXPECT_EQ(Or->AllowedPlacement, metaflag::OperandPlacement);
+  EXPECT_FALSE(metaflag::getSchema(metaflag::UnknownMetaFlag));
+  EXPECT_EQ(metaflag::getMetaFlagID("c"), metaflag::MF_c);
+  EXPECT_EQ(metaflag::getMetaFlagID("future_flag"), metaflag::UnknownMetaFlag);
 
-  auto ULT = Constraint::getOperatorSchema(Constraint::O_ULT);
+  auto ULT = constraint::getOperatorSchema(constraint::O_ULT);
   ASSERT_TRUE(ULT);
   EXPECT_EQ(ULT->Result, Sort::Boolean);
   EXPECT_EQ(ULT->MinArity, 2u);
   EXPECT_EQ(ULT->MaxArity, 2u);
-  EXPECT_FALSE(Constraint::getOperatorSchema(Constraint::UnknownOperator));
-  EXPECT_EQ(Constraint::getOperatorID("ult", Constraint::Call),
-            Constraint::O_ULT);
-  EXPECT_EQ(Constraint::getOperatorID("-", Constraint::Unary),
-            Constraint::O_Negate);
-  EXPECT_EQ(Constraint::getOperatorID("-", Constraint::Binary),
-            Constraint::O_Subtract);
-  EXPECT_EQ(Constraint::getOperatorID("future_predicate", Constraint::Call),
-            Constraint::UnknownOperator);
+  EXPECT_FALSE(constraint::getOperatorSchema(constraint::UnknownOperator));
+  EXPECT_EQ(constraint::getOperatorID("ult", constraint::Call),
+            constraint::O_ULT);
+  EXPECT_EQ(constraint::getOperatorID("-", constraint::Unary),
+            constraint::O_Negate);
+  EXPECT_EQ(constraint::getOperatorID("-", constraint::Binary),
+            constraint::O_Subtract);
+  EXPECT_EQ(constraint::getOperatorID("future_predicate", constraint::Call),
+            constraint::UnknownOperator);
 }
 
 } // namespace

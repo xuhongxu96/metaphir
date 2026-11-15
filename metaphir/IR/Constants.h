@@ -8,20 +8,20 @@ namespace metaphir {
 
 /// The keyword constants ('null', 'poison', ...) and comparison predicates,
 /// from KeywordConstants.def.
-namespace KeywordConstant {
+namespace keyword_constant {
 enum KeywordID {
 #define MIR_KEYWORD_CONSTANT(ID, Spelling) K_##ID,
 #include "metaphir/IR/KeywordConstants.def"
 };
 
 StringRef getKeywordName(KeywordID ID);
-} // namespace KeywordConstant
+} // namespace keyword_constant
 
 /// How an aggregate constant is delimited: an array ('[...]'), a struct
 /// ('{...}') or a vector ('<...>').
-namespace AggregateConstant {
+namespace aggregate_constant {
 enum Delimiter { Square, Brace, Angle };
-} // namespace AggregateConstant
+} // namespace aggregate_constant
 
 } // namespace metaphir
 } // namespace llvm

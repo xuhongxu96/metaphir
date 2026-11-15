@@ -96,8 +96,8 @@ def Expr_CallOp : Expr_Op<"call", [AttrSizedOperandSegments]> {
   }];
   let hasVerifier = 1;
   let extraClassDeclaration = [{
-    ::llvm::metaphir::Constraint::OperatorID getOperatorID() {
-      return ::llvm::metaphir::Constraint::OperatorID(getOp());
+    ::llvm::metaphir::constraint::OperatorID getOperatorID() {
+      return ::llvm::metaphir::constraint::OperatorID(getOp());
     }
   }];
 }

@@ -65,10 +65,10 @@ static bool readSignatures(DataExtractor &Data, DataExtractor::Cursor &C,
   uint64_t ID = 0;
   for (uint64_t I = 0; I != NumSignatures && C; ++I) {
     ID += Data.getULEB128(C);
-    if (ID >= Instruction::NumInstructionIDs)
+    if (ID >= instruction::NumInstructionIDs)
       return false;
     Signature Sig;
-    Sig.ID = Instruction::InstructionID(ID);
+    Sig.ID = instruction::InstructionID(ID);
     uint64_t Flags = Data.getULEB128(C);
     if (Flags > UINT32_MAX)
       return false;
@@ -147,7 +147,7 @@ Expected<FunctionFeatures> readFunctionFeatures(StringRef Bytes) {
 SmallVector<std::string, 96> getFeatureSchema() {
   SmallVector<std::string, 96> Schema;
 #define MIR_INSTRUCTION_MATCHER_ID(Name)                                       \
-  Schema.push_back(Instruction::getOpcodeName(Instruction::I_##Name).str());
+  Schema.push_back(instruction::getOpcodeName(instruction::I_##Name).str());
 #include "metaphir/IR/InstructionMatchers.def"
   for (unsigned P = 0; P != Atom::NumPredicates; ++P)
     Schema.push_back(("atom:" + Atom::getName(Atom::Predicate(P))).str());

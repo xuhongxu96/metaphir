@@ -69,7 +69,7 @@ struct POperand {
 
 /// A semantic flag written on an instruction matcher.
 struct PFlag {
-  InstructionFlag::FlagID ID;
+  instruction_flag::FlagID ID;
   FlagMode Mode;
   Value Capture;
 };
@@ -79,8 +79,8 @@ struct PMetaFlag {
   MetaFlagAttr Attr;
   SMLoc Loc;
   StringRef getName() const { return Attr.getName().getValue(); }
-  MetaFlag::MetaFlagID getID() const {
-    return MetaFlag::getMetaFlagID(getName());
+  metaflag::MetaFlagID getID() const {
+    return metaflag::getMetaFlagID(getName());
   }
 };
 
@@ -219,13 +219,13 @@ private:
   bool parseInstructionMetaFlags(SmallVectorImpl<PMetaFlag> &Result,
                                  bool IsCommutative, StringRef OwnerName);
   bool
-  parseSemanticFlags(function_ref<bool(InstructionFlag::FlagID)> IsSupported,
+  parseSemanticFlags(function_ref<bool(instruction_flag::FlagID)> IsSupported,
                      StringRef OwnerName, SmallVectorImpl<PFlag> &Result);
-  bool parseMetaFlag(PMetaFlag &Result, MetaFlag::Placement &Allowed);
+  bool parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed);
   bool parseMetaFlags(SmallVectorImpl<PMetaFlag> &Result,
-                      MetaFlag::Placement Placement);
+                      metaflag::Placement Placement);
   bool validateOrSelf(ArrayRef<PMetaFlag> MFlags, ArrayRef<POperand> Ops);
-  bool validateInstruction(Instruction::InstructionID ID,
+  bool validateInstruction(instruction::InstructionID ID,
                            ArrayRef<PMetaFlag> MFlags, ArrayRef<POperand> Ops);
   Operation *buildMatcherUse(StringRef OpName, mlir::NamedAttribute Matcher,
                              StringRef ResultName, ArrayRef<PFlag> Flags,
@@ -235,9 +235,9 @@ private:
                                  StringRef ResultName, LocTy Loc);
 
   // Operands.
-  bool parseArchetypeOperands(Instruction::OperandSyntax Syntax, unsigned Arity,
+  bool parseArchetypeOperands(instruction::OperandSyntax Syntax, unsigned Arity,
                               StringRef OpName, SmallVectorImpl<POperand> &Ops);
-  bool parseCustomOperands(Instruction::InstructionID ID,
+  bool parseCustomOperands(instruction::InstructionID ID,
                            SmallVectorImpl<POperand> &Ops);
   bool parseOperand(SmallVectorImpl<POperand> &Ops,
                     Sort Expected = Sort::Operand);
@@ -281,7 +281,7 @@ private:
   bool parseConstraintArray(Value &Result);
   bool parseConstraintCall(Value &Result);
   bool parseConstraintArguments(SmallVectorImpl<Value> &Args);
-  bool makeOperator(Value &Result, Constraint::OperatorKind Kind,
+  bool makeOperator(Value &Result, constraint::OperatorKind Kind,
                     StringRef Spelling, ArrayRef<Value> Args, LocTy Loc);
   bool checkOperands(mpir_expr::CallOp Operator, StringRef Spelling);
   bool requireBooleanConstraint(Value C);
@@ -308,21 +308,21 @@ private:
   struct MatchHeader {
     std::string Name;
     bool IsCommutative = false;
-    SmallVector<InstructionFlag::FlagID, 4> SupportedFlags;
-    Instruction::OperandSyntax Syntax = Instruction::OperandSyntax::Nary;
+    SmallVector<instruction_flag::FlagID, 4> SupportedFlags;
+    instruction::OperandSyntax Syntax = instruction::OperandSyntax::Nary;
     unsigned Arity = 0;
     SmallVector<ParamDef, 4> Parameters;
   };
   bool parseTopLevelMatch();
   bool parseMatchHeader(MatchHeader &Header, MatcherOp &Matcher, LocTy Loc);
-  bool parseMatchParameters(Instruction::OperandSyntax Syntax,
+  bool parseMatchParameters(instruction::OperandSyntax Syntax,
                             SmallVectorImpl<ParamDef> &Result);
   bool parseMatchBranch(const MatchHeader &Header, MatcherOp Matcher);
   bool parseBranchFlags(
-      ArrayRef<InstructionFlag::FlagID> SupportedFlags,
-      SmallVectorImpl<std::pair<InstructionFlag::FlagID, bool>> &Result);
+      ArrayRef<instruction_flag::FlagID> SupportedFlags,
+      SmallVectorImpl<std::pair<instruction_flag::FlagID, bool>> &Result);
   bool consumeBranchSeparator();
-  bool parseSemanticFlagName(InstructionFlag::FlagID &Result);
+  bool parseSemanticFlagName(instruction_flag::FlagID &Result);
 };
 
 } // namespace
@@ -345,45 +345,45 @@ static bool isOpcode(tok::Kind K) {
   }
 }
 
-static Instruction::InstructionID instructionID(tok::Kind K) {
+static instruction::InstructionID instructionID(tok::Kind K) {
   switch (K) {
 #define MIR_INSTRUCTION_MATCHER_NAME(Name)                                     \
   case tok::kw_##Name:                                                         \
-    return Instruction::I_##Name;
+    return instruction::I_##Name;
 #include "metaphir/IR/InstructionMatchers.def"
   default:
     llvm_unreachable("not an instruction token");
   }
 }
 
-static std::optional<KeywordConstant::KeywordID>
+static std::optional<keyword_constant::KeywordID>
 predicateKeywordID(tok::Kind K) {
   switch (K) {
 #define MIR_PREDICATE_KEYWORD(ID, Spelling)                                    \
   case tok::kw_##Spelling:                                                     \
-    return KeywordConstant::K_##ID;
+    return keyword_constant::K_##ID;
 #include "metaphir/IR/KeywordConstants.def"
   default:
     return std::nullopt;
   }
 }
 
-static std::optional<Type::TypeID> primitiveTypeID(tok::Kind K) {
+static std::optional<primitive_type::TypeID> primitiveTypeID(tok::Kind K) {
   switch (K) {
 #define MIR_TYPE(TypeID, TokenKind)                                            \
   case tok::kw_##TokenKind:                                                    \
-    return Type::TypeID;
+    return primitive_type::TypeID;
 #include "metaphir/IR/Types.def"
   default:
     return std::nullopt;
   }
 }
 
-static std::optional<InstructionFlag::FlagID> getSemanticFlag(tok::Kind K) {
+static std::optional<instruction_flag::FlagID> getSemanticFlag(tok::Kind K) {
   switch (K) {
 #define MIR_FLAG_TOKEN_KIND(Name)                                              \
   case tok::kw_##Name:                                                         \
-    return InstructionFlag::F_##Name;
+    return instruction_flag::F_##Name;
 #include "metaphir/IR/Flags.def"
   default:
     return std::nullopt;
@@ -668,30 +668,30 @@ bool Parser::parseInstructionCapture(Value &Capture) {
 bool Parser::parseInstructionMetaFlags(SmallVectorImpl<PMetaFlag> &Result,
                                        bool IsCommutative,
                                        StringRef OwnerName) {
-  if (parseMetaFlags(Result, MetaFlag::InstructionPlacement))
+  if (parseMetaFlags(Result, metaflag::InstructionPlacement))
     return true;
   for (const PMetaFlag &F : Result)
-    if (F.getID() == MetaFlag::MF_c && !IsCommutative)
+    if (F.getID() == metaflag::MF_c && !IsCommutative)
       return Lex.ParseError(F.Loc, "commutative matching is not valid for '" +
                                        OwnerName + "'");
   return false;
 }
 
 bool Parser::parseSemanticFlags(
-    function_ref<bool(InstructionFlag::FlagID)> IsSupported,
+    function_ref<bool(instruction_flag::FlagID)> IsSupported,
     StringRef OwnerName, SmallVectorImpl<PFlag> &Result) {
   while (true) {
     LocTy Loc = Lex.getLoc();
     bool Negated = consume(tok::exclaim);
-    std::optional<InstructionFlag::FlagID> Flag =
+    std::optional<instruction_flag::FlagID> Flag =
         getSemanticFlag(Lex.getKind());
     if (!Flag) {
       if (Negated)
         return error("expected a flag after '!'");
       return false;
     }
-    InstructionFlag::FlagID FlagID = *Flag;
-    StringRef FlagName = InstructionFlag::getName(FlagID);
+    instruction_flag::FlagID FlagID = *Flag;
+    StringRef FlagName = instruction_flag::getName(FlagID);
     if (!IsSupported(FlagID))
       return Lex.ParseError(Loc, "flag '" + FlagName + "' is not valid for '" +
                                      OwnerName + "'");
@@ -721,14 +721,14 @@ bool Parser::parseSemanticFlags(
   }
 }
 
-bool Parser::parseMetaFlag(PMetaFlag &Result, MetaFlag::Placement &Allowed) {
+bool Parser::parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed) {
   Nesting Nest(*this);
   if (Nest.tooDeep())
     return true;
   assert(Lex.getKind() == tok::MetaFlag && "expected a metaflag");
   LocTy Loc = Lex.getLoc();
   std::string Name = Lex.getStrVal();
-  MetaFlag::MetaFlagID ID = MetaFlag::getMetaFlagID(Name);
+  metaflag::MetaFlagID ID = metaflag::getMetaFlagID(Name);
   next();
   SmallVector<mlir::Attribute, 4> Args;
   unsigned NumFlagArgs = 0;
@@ -737,10 +737,10 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, MetaFlag::Placement &Allowed) {
       do {
         if (Lex.getKind() == tok::MetaFlag) {
           PMetaFlag Nested;
-          MetaFlag::Placement NestedAllowed = MetaFlag::OperandPlacement;
+          metaflag::Placement NestedAllowed = metaflag::OperandPlacement;
           if (parseMetaFlag(Nested, NestedAllowed))
             return true;
-          if (!(NestedAllowed & MetaFlag::OperandPlacement))
+          if (!(NestedAllowed & metaflag::OperandPlacement))
             return Lex.ParseError(Nested.Loc,
                                   "metaflag ':" + Nested.getName() +
                                       "' is not valid as a nested metaflag");
@@ -760,21 +760,21 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, MetaFlag::Placement &Allowed) {
     if (expect(tok::rparen, "expected ')' after metaflag arguments"))
       return true;
   }
-  if (std::optional<MetaFlag::Schema> Schema = MetaFlag::getSchema(ID)) {
+  if (std::optional<metaflag::Schema> Schema = metaflag::getSchema(ID)) {
     Allowed = Schema->AllowedPlacement;
     if (Args.size() < Schema->MinArguments ||
         Args.size() > Schema->MaxArguments)
       return Lex.ParseError(
           Loc, "invalid number of arguments for metaflag ':" + Name + "'");
-    if (Schema->Arguments == MetaFlag::IntegerArgument && NumFlagArgs)
+    if (Schema->Arguments == metaflag::IntegerArgument && NumFlagArgs)
       return Lex.ParseError(Loc, "metaflag ':" + Name +
                                      "' expects integer arguments");
-    if (Schema->Arguments == MetaFlag::FlagArgument &&
+    if (Schema->Arguments == metaflag::FlagArgument &&
         NumFlagArgs != Args.size())
       return Lex.ParseError(Loc, "metaflag ':" + Name +
                                      "' expects nested metaflags");
   } else if (auto Def = lookup<MetaFlagDefOp>(Name)) {
-    Allowed = MetaFlag::Placement(Def.getPlacement());
+    Allowed = metaflag::Placement(Def.getPlacement());
     unsigned NumArguments = Def.getParamNames().size() - 1;
     if (Args.size() != NumArguments)
       return Lex.ParseError(Loc, "metaflag ':" + Name + "' expects " +
@@ -790,10 +790,10 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, MetaFlag::Placement &Allowed) {
 }
 
 bool Parser::parseMetaFlags(SmallVectorImpl<PMetaFlag> &Result,
-                            MetaFlag::Placement Placement) {
+                            metaflag::Placement Placement) {
   while (Lex.getKind() == tok::MetaFlag) {
     PMetaFlag F;
-    MetaFlag::Placement Allowed = MetaFlag::OperandPlacement;
+    metaflag::Placement Allowed = metaflag::OperandPlacement;
     if (parseMetaFlag(F, Allowed))
       return true;
     if (!(Allowed & Placement))
@@ -902,26 +902,26 @@ bool Parser::parseInstruction(Value &Result) {
     }
     return error("expected instruction matcher");
   }
-  Instruction::InstructionID ID = instructionID(Lex.getKind());
-  StringRef Op = Instruction::getOpcodeName(ID);
+  instruction::InstructionID ID = instructionID(Lex.getKind());
+  StringRef Op = instruction::getOpcodeName(ID);
   next();
   Value Capture;
   SmallVector<PMetaFlag, 4> MFlags;
   SmallVector<PFlag, 8> Flags;
   if (parseInstructionCapture(Capture) ||
-      parseInstructionMetaFlags(MFlags, Instruction::isCommutative(ID), Op) ||
+      parseInstructionMetaFlags(MFlags, instruction::isCommutative(ID), Op) ||
       parseSemanticFlags(
-          [ID](InstructionFlag::FlagID F) {
-            return (Instruction::getSupportedFlags(ID) &
-                    Instruction::mask(F)) != 0;
+          [ID](instruction_flag::FlagID F) {
+            return (instruction::getSupportedFlags(ID) &
+                    instruction::mask(F)) != 0;
           },
           Op, Flags))
     return true;
   SmallVector<POperand, 8> Ops;
-  Instruction::OperandSyntax Syntax = Instruction::getOperandSyntax(ID);
-  if (Syntax == Instruction::OperandSyntax::Custom
+  instruction::OperandSyntax Syntax = instruction::getOperandSyntax(ID);
+  if (Syntax == instruction::OperandSyntax::Custom
           ? parseCustomOperands(ID, Ops)
-          : parseArchetypeOperands(Syntax, Instruction::getOperandArity(ID), Op,
+          : parseArchetypeOperands(Syntax, instruction::getOperandArity(ID), Op,
                                    Ops))
     return true;
   if (validateInstruction(ID, MFlags, Ops))
@@ -961,14 +961,14 @@ bool Parser::parseCompositeInstruction(Value &Result, MatcherOp CM,
   SmallVector<PFlag, 8> Flags;
   ArrayRef<int32_t> Supported = CM.getSupportedFlags();
   if (parseSemanticFlags(
-          [Supported](InstructionFlag::FlagID F) {
+          [Supported](instruction_flag::FlagID F) {
             return is_contained(Supported, int32_t(F));
           },
           OpName, Flags))
     return true;
   SmallVector<POperand, 8> Ops;
   // A 'match' is declared with one of the shared archetypes.
-  auto Syntax = Instruction::OperandSyntax(CM.getSyntax());
+  auto Syntax = instruction::OperandSyntax(CM.getSyntax());
   if (parseArchetypeOperands(Syntax, CM.getArity(), OpName, Ops) ||
       validateOrSelf(MFlags, Ops))
     return true;
@@ -986,7 +986,7 @@ bool Parser::parseCompositeInstruction(Value &Result, MatcherOp CM,
 bool Parser::validateOrSelf(ArrayRef<PMetaFlag> MFlags,
                             ArrayRef<POperand> Ops) {
   for (const PMetaFlag &F : MFlags) {
-    if (F.getID() != MetaFlag::MF_o)
+    if (F.getID() != metaflag::MF_o)
       continue;
     uint64_t Index = 0;
     ArrayRef<mlir::Attribute> Args = F.Attr.getArgs().getValue();
@@ -1008,13 +1008,13 @@ bool Parser::validateOrSelf(ArrayRef<PMetaFlag> MFlags,
   return false;
 }
 
-bool Parser::validateInstruction(Instruction::InstructionID ID,
+bool Parser::validateInstruction(instruction::InstructionID ID,
                                  ArrayRef<PMetaFlag> MFlags,
                                  ArrayRef<POperand> Ops) {
   if (validateOrSelf(MFlags, Ops))
     return true;
   for (const PMetaFlag &F : MFlags) {
-    if (F.getID() == MetaFlag::MF_c && ID == Instruction::I_call) {
+    if (F.getID() == metaflag::MF_c && ID == instruction::I_call) {
       unsigned ArgumentCount = Ops.size() >= 2 ? Ops.size() - 2 : 0;
       bool HasArray =
           any_of(Ops, [](const POperand &O) { return O.isArray(); });
@@ -1047,7 +1047,7 @@ static std::optional<unsigned> integerWidth(Value Ty) {
 }
 
 /// Whether a type pattern is the primitive type ID.
-static bool isPrimitive(Value Ty, Type::TypeID ID) {
+static bool isPrimitive(Value Ty, primitive_type::TypeID ID) {
   if (auto Prim = Ty.getDefiningOp<PrimTypeOp>())
     return Prim.getKind() == unsigned(ID);
   return false;
@@ -1060,7 +1060,7 @@ bool Parser::parseTypedOperand(POperand &Result, Sort Expected) {
   if (Expected == Sort::Operand) {
     if (integerWidth(Result.Ty) == 1u)
       Expected = Sort::Boolean;
-    else if (isPrimitive(Result.Ty, Type::LabelTyID))
+    else if (isPrimitive(Result.Ty, primitive_type::LabelTyID))
       Expected = Sort::BasicBlock;
   }
   Result.ValLoc = Lex.getLoc();
@@ -1071,7 +1071,7 @@ bool Parser::parseTypedOperand(POperand &Result, Sort Expected) {
 
 bool Parser::parseOperandMetaFlags(POperand &Result) {
   SmallVector<PMetaFlag, 4> Flags;
-  if (parseMetaFlags(Flags, MetaFlag::OperandPlacement))
+  if (parseMetaFlags(Flags, metaflag::OperandPlacement))
     return true;
   if (Flags.empty())
     return false;
@@ -1115,7 +1115,7 @@ bool Parser::parseArrayCapture(POperand &Result, bool WithTypes) {
   return false;
 }
 
-bool Parser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
+bool Parser::parseArchetypeOperands(instruction::OperandSyntax Syntax,
                                     unsigned Arity, StringRef OpName,
                                     SmallVectorImpl<POperand> &Ops) {
   auto Typed = [&]() -> bool {
@@ -1129,14 +1129,14 @@ bool Parser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
     return expect(tok::comma, "expected ',' between operands");
   };
   switch (Syntax) {
-  case Instruction::OperandSyntax::Nary:
+  case instruction::OperandSyntax::Nary:
     for (unsigned I = 0; I < Arity; ++I)
       if ((I && Comma()) || Typed())
         return true;
     if (Lex.getKind() == tok::comma)
       return error("'" + OpName + "' takes " + pluralize(Arity, "operand"));
     return false;
-  case Instruction::OperandSyntax::Binary: {
+  case instruction::OperandSyntax::Binary: {
     POperand A;
     if (parseTypedOperand(A))
       return true;
@@ -1151,7 +1151,7 @@ bool Parser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
     Ops.push_back(B);
     return false;
   }
-  case Instruction::OperandSyntax::Cast: {
+  case instruction::OperandSyntax::Cast: {
     if (Typed())
       return true;
     if (Lex.getKind() != tok::kw_to)
@@ -1164,7 +1164,7 @@ bool Parser::parseArchetypeOperands(Instruction::OperandSyntax Syntax,
     Ops.push_back(Dst);
     return false;
   }
-  case Instruction::OperandSyntax::Custom:
+  case instruction::OperandSyntax::Custom:
     llvm_unreachable("custom operand syntax is not a shared archetype");
   }
   llvm_unreachable("invalid operand syntax");
@@ -1229,32 +1229,32 @@ bool Parser::parseTrailingOperands(SmallVectorImpl<POperand> &Ops,
   return false;
 }
 
-bool Parser::parseCustomOperands(Instruction::InstructionID ID,
+bool Parser::parseCustomOperands(instruction::InstructionID ID,
                                  SmallVectorImpl<POperand> &Ops) {
   switch (ID) {
-  case Instruction::I_extractelement:
+  case instruction::I_extractelement:
     return parseOperand(Ops) || parseOperandComma() ||
            parseOperand(Ops, Sort::Nat);
-  case Instruction::I_extractvalue:
+  case instruction::I_extractvalue:
     return parseOperand(Ops) || parseTrailingOperands(Ops, NatIndices);
-  case Instruction::I_insertvalue:
+  case instruction::I_insertvalue:
     return parseOperand(Ops) || parseOperandComma() || parseOperand(Ops) ||
            parseTrailingOperands(Ops, NatIndices);
-  case Instruction::I_alloca:
+  case instruction::I_alloca:
     return parseAllocaOperands(Ops);
-  case Instruction::I_load:
+  case instruction::I_load:
     return parseTypeOperand(Ops) || parseOperandComma() || parseOperand(Ops) ||
            parseAlign(Ops);
-  case Instruction::I_store:
+  case instruction::I_store:
     return parseOperand(Ops) || parseOperandComma() || parseOperand(Ops) ||
            parseAlign(Ops);
-  case Instruction::I_getelementptr:
+  case instruction::I_getelementptr:
     return parseGEPOperands(Ops);
-  case Instruction::I_ret: {
+  case instruction::I_ret: {
     POperand O;
     if (parseType(O.Ty, /*AllowVoid=*/true))
       return true;
-    if (isPrimitive(O.Ty, Type::VoidTyID)) {
+    if (isPrimitive(O.Ty, primitive_type::VoidTyID)) {
       O.Kind = OperandKind::TypeOnly;
     } else {
       O.Kind = OperandKind::TypedValue;
@@ -1265,14 +1265,14 @@ bool Parser::parseCustomOperands(Instruction::InstructionID ID,
     Ops.push_back(O);
     return false;
   }
-  case Instruction::I_br:
+  case instruction::I_br:
     return parseBranchOperands(Ops);
-  case Instruction::I_icmp:
-  case Instruction::I_fcmp:
+  case instruction::I_icmp:
+  case instruction::I_fcmp:
     return parseCompareOperands(Ops);
-  case Instruction::I_phi:
+  case instruction::I_phi:
     return parsePhiOperands(Ops);
-  case Instruction::I_call:
+  case instruction::I_call:
     return parseCallOperands(Ops);
   default:
     llvm_unreachable("a matcher of custom syntax has no parser");
@@ -1315,7 +1315,7 @@ bool Parser::parseBranchOperands(SmallVectorImpl<POperand> &Ops) {
   POperand First;
   if (parseType(First.Ty))
     return true;
-  bool IsLabel = isPrimitive(First.Ty, Type::LabelTyID);
+  bool IsLabel = isPrimitive(First.Ty, primitive_type::LabelTyID);
   bool IsBool = integerWidth(First.Ty) == 1u;
   First.ValLoc = Lex.getLoc();
   if (parseValue(First.Val, IsLabel  ? Sort::BasicBlock
@@ -1337,7 +1337,7 @@ bool Parser::parseCompareOperands(SmallVectorImpl<POperand> &Ops) {
     Pred.Val = getMeta(Lex.getStrVal(), Sort::CmpPredicate, Lex.getLoc());
     if (!Pred.Val)
       return true;
-  } else if (std::optional<KeywordConstant::KeywordID> Predicate =
+  } else if (std::optional<keyword_constant::KeywordID> Predicate =
                  predicateKeywordID(Lex.getKind())) {
     Pred.Val = KeywordOp::create(Builder, loc(Lex.getLoc()),
                                  sortType(Sort::Value), *Predicate);
@@ -1346,7 +1346,7 @@ bool Parser::parseCompareOperands(SmallVectorImpl<POperand> &Ops) {
   }
   next();
   Ops.push_back(Pred);
-  return parseArchetypeOperands(Instruction::OperandSyntax::Binary, 2, "", Ops);
+  return parseArchetypeOperands(instruction::OperandSyntax::Binary, 2, "", Ops);
 }
 
 bool Parser::parsePhiOperands(SmallVectorImpl<POperand> &Ops) {
@@ -1455,10 +1455,10 @@ bool Parser::parseBaseType(Value &Result, bool AllowVoid) {
   default:
     break;
   }
-  std::optional<Type::TypeID> ID = primitiveTypeID(Lex.getKind());
+  std::optional<primitive_type::TypeID> ID = primitiveTypeID(Lex.getKind());
   if (!ID)
     return error("expected type");
-  if (*ID == Type::VoidTyID && !AllowVoid)
+  if (*ID == primitive_type::VoidTyID && !AllowVoid)
     return error("void type is not allowed here");
   Result = PrimTypeOp::create(Builder, loc(Loc), TypeSort, unsigned(*ID));
   next();
@@ -1655,7 +1655,7 @@ bool Parser::parseValue(Value &Result, Sort Expected) {
 #define MIR_CONSTANT_KEYWORD(ID, Kind)                                         \
   case tok::kw_##Kind:                                                         \
     Result = KeywordOp::create(Builder, loc(Loc), sortType(Sort::Value),       \
-                               unsigned(KeywordConstant::K_##ID));             \
+                               unsigned(keyword_constant::K_##ID));             \
     next();                                                                    \
     return false;
 #include "metaphir/Parser/MIRKeywords.def"
@@ -1674,10 +1674,10 @@ bool Parser::parseAggregateConstant(Value &Result) {
   tok::Kind Close = Open == tok::lsquare  ? tok::rsquare
                     : Open == tok::lbrace ? tok::rbrace
                                           : tok::greater;
-  AggregateConstant::Delimiter Delimiter =
-      Open == tok::lsquare ? AggregateConstant::Square
-      : Open == tok::less  ? AggregateConstant::Angle
-                           : AggregateConstant::Brace;
+  aggregate_constant::Delimiter Delimiter =
+      Open == tok::lsquare ? aggregate_constant::Square
+      : Open == tok::less  ? aggregate_constant::Angle
+                           : aggregate_constant::Brace;
   next();
   SmallVector<Value, 16> Elements;
   if (parseCommaList(Close,
@@ -1750,25 +1750,25 @@ bool Parser::checkOperands(mpir_expr::CallOp Operator, StringRef Spelling) {
   mlir::OperandRange Arguments = Operator.getArgs();
   for (unsigned Index = 0; Index != Arguments.size(); ++Index) {
     Sort Expected =
-        Constraint::getArgumentType(Operator.getOperatorID(), Index);
-    if (Constraint::canCoerce(sortOf(Arguments[Index]), Expected))
+        constraint::getArgumentType(Operator.getOperatorID(), Index);
+    if (constraint::canCoerce(sortOf(Arguments[Index]), Expected))
       continue;
     std::string What =
-        Operator.getKind() == unsigned(Constraint::Call)
+        Operator.getKind() == unsigned(constraint::Call)
             ? ("argument " + Twine(Index + 1) + " of '" + Spelling + "'").str()
             : ("operand of '" + Spelling + "'").str();
     return Lex.ParseError(locOf(Arguments[Index]),
-                          What + " must be " + Constraint::describe(Expected));
+                          What + " must be " + constraint::describe(Expected));
   }
   return false;
 }
 
-bool Parser::makeOperator(Value &Result, Constraint::OperatorKind Kind,
+bool Parser::makeOperator(Value &Result, constraint::OperatorKind Kind,
                           StringRef Spelling, ArrayRef<Value> Args, LocTy Loc) {
-  Constraint::OperatorID ID = Constraint::getOperatorID(Spelling, Kind);
-  assert(ID != Constraint::UnknownOperator && "operator token without an ID");
+  constraint::OperatorID ID = constraint::getOperatorID(Spelling, Kind);
+  assert(ID != constraint::UnknownOperator && "operator token without an ID");
   auto Operator = mpir_expr::CallOp::create(
-      Builder, loc(Loc), sortType(Constraint::getOperatorSchema(ID)->Result),
+      Builder, loc(Loc), sortType(constraint::getOperatorSchema(ID)->Result),
       unsigned(ID), unsigned(Kind), Args, Value());
   Result = Operator;
   return checkOperands(Operator, Spelling);
@@ -1793,7 +1793,7 @@ bool Parser::parseConstraintBinary(Value &Result, unsigned MinPrecedence) {
     if (parseConstraintBinary(Right, Op->Precedence + 1))
       return true;
     Value Args[] = {Result, Right};
-    if (makeOperator(Result, Constraint::Binary, Op->Spelling, Args, Loc))
+    if (makeOperator(Result, constraint::Binary, Op->Spelling, Args, Loc))
       return true;
     if (Op->Precedence == ComparisonPrecedence) {
       const BinaryOperatorInfo *Next = findBinaryOperator(Lex.getKind());
@@ -1822,7 +1822,7 @@ bool Parser::parseConstraintUnary(Value &Result) {
   if (parseConstraintUnary(Operand))
     return true;
   Value Args[] = {Operand};
-  return makeOperator(Result, Constraint::Unary, Spelling, Args, Loc);
+  return makeOperator(Result, constraint::Unary, Spelling, Args, Loc);
 }
 
 bool Parser::parseConstraintPostfix(Value &Result) {
@@ -1894,14 +1894,14 @@ bool Parser::parseConstraintCall(Value &Result) {
                                    describeArity(Min, Max) + ", got " +
                                    Twine(Args.size()));
   };
-  Constraint::OperatorID ID = Constraint::getOperatorID(Name, Constraint::Call);
-  if (std::optional<Constraint::OperatorSchema> Schema =
-          Constraint::getOperatorSchema(ID)) {
+  constraint::OperatorID ID = constraint::getOperatorID(Name, constraint::Call);
+  if (std::optional<constraint::OperatorSchema> Schema =
+          constraint::getOperatorSchema(ID)) {
     if (Args.size() < Schema->MinArity || Args.size() > Schema->MaxArity)
       return ArityError(Schema->MinArity, Schema->MaxArity);
     auto Call = mpir_expr::CallOp::create(
         Builder, loc(Loc), sortType(Schema->Result), unsigned(ID),
-        unsigned(Constraint::Call), Args, Value());
+        unsigned(constraint::Call), Args, Value());
     Result = Call;
     return checkOperands(Call, Name);
   }
@@ -2074,8 +2074,8 @@ static mlir::ArrayAttr stringArray(OpBuilder &Builder,
 
 bool Parser::parseTopLevelConstraint() {
   next();
-  if (Constraint::getOperatorID(Lex.getTokenText(), Constraint::Call) !=
-      Constraint::UnknownOperator)
+  if (constraint::getOperatorID(Lex.getTokenText(), constraint::Call) !=
+      constraint::UnknownOperator)
     return error(
         "'" + Lex.getTokenText() +
         "' is a built-in constraint operation and cannot be redefined");
@@ -2111,17 +2111,17 @@ bool Parser::parseTopLevelMetaFlag() {
   unsigned Placement = 0;
   while (Lex.getKind() == tok::MetaFlag &&
          (Lex.getStrVal() == "i" || Lex.getStrVal() == "o")) {
-    Placement |= Lex.getStrVal() == "i" ? MetaFlag::InstructionPlacement
-                                        : MetaFlag::OperandPlacement;
+    Placement |= Lex.getStrVal() == "i" ? metaflag::InstructionPlacement
+                                        : metaflag::OperandPlacement;
     next();
   }
   if (Placement == 0)
-    Placement = MetaFlag::OperandPlacement;
+    Placement = metaflag::OperandPlacement;
   if (Lex.getKind() != tok::MetaFlag)
     return error("expected ':' followed by a metaflag name");
   LocTy Loc = Lex.getLoc();
   std::string Name = Lex.getStrVal();
-  if (MetaFlag::getMetaFlagID(Name) != MetaFlag::UnknownMetaFlag)
+  if (metaflag::getMetaFlagID(Name) != metaflag::UnknownMetaFlag)
     return error("':" + Name +
                  "' is a built-in metaflag and cannot be redefined");
   if (lookup<MetaFlagDefOp>(Name))
@@ -2153,7 +2153,7 @@ bool Parser::parseTopLevelMetaFlag() {
 // 'match' definitions
 //===----------------------------------------------------------------------===//
 
-bool Parser::parseMatchParameters(Instruction::OperandSyntax Syntax,
+bool Parser::parseMatchParameters(instruction::OperandSyntax Syntax,
                                   SmallVectorImpl<ParamDef> &Result) {
   auto TypeParameter = [&]() -> bool {
     ParamDef P;
@@ -2182,26 +2182,26 @@ bool Parser::parseMatchParameters(Instruction::OperandSyntax Syntax,
     return expect(tok::comma, "expected ',' between operand parameters");
   };
   switch (Syntax) {
-  case Instruction::OperandSyntax::Nary:
+  case instruction::OperandSyntax::Nary:
     if (Lex.getKind() == tok::rparen)
       return error("'Nary' matcher needs at least one operand parameter");
     return parseCommaList(
         tok::rparen, [&] { return TypeParameter() || OperandParameter(); });
-  case Instruction::OperandSyntax::Binary:
+  case instruction::OperandSyntax::Binary:
     return TypeParameter() || OperandParameter() || Comma() ||
            OperandParameter();
-  case Instruction::OperandSyntax::Cast:
+  case instruction::OperandSyntax::Cast:
     return TypeParameter() || OperandParameter() ||
            expect(tok::kw_to, "expected 'to' before the result type") ||
            TypeParameter();
-  case Instruction::OperandSyntax::Custom:
+  case instruction::OperandSyntax::Custom:
     llvm_unreachable("a match declaration has a shared archetype");
   }
   llvm_unreachable("invalid operand syntax");
 }
 
-bool Parser::parseSemanticFlagName(InstructionFlag::FlagID &Result) {
-  std::optional<InstructionFlag::FlagID> ID = getSemanticFlag(Lex.getKind());
+bool Parser::parseSemanticFlagName(instruction_flag::FlagID &Result) {
+  std::optional<instruction_flag::FlagID> ID = getSemanticFlag(Lex.getKind());
   if (!ID)
     return error("expected semantic flag name");
   Result = *ID;
@@ -2236,19 +2236,19 @@ bool Parser::parseMatchHeader(MatchHeader &Header, MatcherOp &Matcher,
   LocTy ArchetypeLoc = Lex.getLoc();
   bool IsUnary = false;
   if (consume(tok::kw_Unary)) {
-    Header.Syntax = Instruction::OperandSyntax::Nary;
+    Header.Syntax = instruction::OperandSyntax::Nary;
     IsUnary = true;
   } else if (consume(tok::kw_Nary)) {
-    Header.Syntax = Instruction::OperandSyntax::Nary;
+    Header.Syntax = instruction::OperandSyntax::Nary;
   } else if (consume(tok::kw_Binary)) {
-    Header.Syntax = Instruction::OperandSyntax::Binary;
+    Header.Syntax = instruction::OperandSyntax::Binary;
   } else if (consume(tok::kw_Cast)) {
-    Header.Syntax = Instruction::OperandSyntax::Cast;
+    Header.Syntax = instruction::OperandSyntax::Cast;
   } else {
     return error("expected archetype 'Unary', 'Nary', 'Binary' or 'Cast'");
   }
   if (Header.IsCommutative &&
-      Header.Syntax != Instruction::OperandSyntax::Binary)
+      Header.Syntax != instruction::OperandSyntax::Binary)
     return error(
         "only 'Binary' matchers can be declared commutative with ':c'");
   if (expect(tok::lparen, "expected '(' before parameter list"))
@@ -2313,18 +2313,18 @@ bool Parser::parseMatchHeader(MatchHeader &Header, MatcherOp &Matcher,
 }
 
 bool Parser::parseBranchFlags(
-    ArrayRef<InstructionFlag::FlagID> SupportedFlags,
-    SmallVectorImpl<std::pair<InstructionFlag::FlagID, bool>> &Result) {
+    ArrayRef<instruction_flag::FlagID> SupportedFlags,
+    SmallVectorImpl<std::pair<instruction_flag::FlagID, bool>> &Result) {
   if (!consume(tok::lsquare))
     return false;
   if (parseCommaList(tok::rsquare, [&] {
         LocTy Loc = Lex.getLoc();
-        InstructionFlag::FlagID ID;
+        instruction_flag::FlagID ID;
         if (parseSemanticFlagName(ID))
           return true;
         if (!is_contained(SupportedFlags, ID))
           return Lex.ParseError(Loc,
-                                "flag '" + InstructionFlag::getName(ID) +
+                                "flag '" + instruction_flag::getName(ID) +
                                     "' is not declared in matcher's supported "
                                     "flags");
         bool Value = true;
@@ -2346,7 +2346,7 @@ bool Parser::parseBranchFlags(
 
 bool Parser::parseMatchBranch(const MatchHeader &Header, MatcherOp Matcher) {
   skipNewlines();
-  SmallVector<std::pair<InstructionFlag::FlagID, bool>, 2> FixedFlags;
+  SmallVector<std::pair<instruction_flag::FlagID, bool>, 2> FixedFlags;
   if (parseBranchFlags(Header.SupportedFlags, FixedFlags))
     return true;
   LocTy Loc = Lex.getLoc();

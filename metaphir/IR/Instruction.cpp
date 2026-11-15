@@ -6,7 +6,7 @@
 namespace llvm {
 namespace metaphir {
 
-StringRef InstructionFlag::getName(FlagID ID) {
+StringRef instruction_flag::getName(FlagID ID) {
   switch (ID) {
 #define MIR_FLAG_TOKEN_KIND(Name)                                              \
   case F_##Name:                                                               \
@@ -23,15 +23,15 @@ namespace {
 /// InstructionMatchers.def.
 struct Info {
   StringRef Name;
-  Instruction::FlagMask SupportedFlags;
+  instruction::FlagMask SupportedFlags;
   bool Commutative;
-  Instruction::OperandSyntax Syntax;
+  instruction::OperandSyntax Syntax;
   unsigned Arity;
 };
 } // namespace
 
-static const Info &getInfo(Instruction::InstructionID ID) {
-  using namespace Instruction;
+static const Info &getInfo(instruction::InstructionID ID) {
+  using namespace instruction;
   static const Info Table[] = {
 #define MIR_INSTRUCTION_MATCHER(Name, TargetMatcher, Flags, Commutative,       \
                                 Syntax, Arity)                                 \
@@ -43,19 +43,19 @@ static const Info &getInfo(Instruction::InstructionID ID) {
   return Table[ID];
 }
 
-StringRef Instruction::getOpcodeName(InstructionID ID) {
+StringRef instruction::getOpcodeName(InstructionID ID) {
   return getInfo(ID).Name;
 }
-Instruction::FlagMask Instruction::getSupportedFlags(InstructionID ID) {
+instruction::FlagMask instruction::getSupportedFlags(InstructionID ID) {
   return getInfo(ID).SupportedFlags;
 }
-bool Instruction::isCommutative(InstructionID ID) {
+bool instruction::isCommutative(InstructionID ID) {
   return getInfo(ID).Commutative;
 }
-Instruction::OperandSyntax Instruction::getOperandSyntax(InstructionID ID) {
+instruction::OperandSyntax instruction::getOperandSyntax(InstructionID ID) {
   return getInfo(ID).Syntax;
 }
-unsigned Instruction::getOperandArity(InstructionID ID) {
+unsigned instruction::getOperandArity(InstructionID ID) {
   return getInfo(ID).Arity;
 }
 

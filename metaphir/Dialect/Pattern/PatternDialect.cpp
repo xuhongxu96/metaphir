@@ -49,7 +49,7 @@ static void printNamed(OpAsmPrinter &Printer, IntegerAttr Attr,
 static SmallVector<StringRef, 8> keywordNames() {
   SmallVector<StringRef, 8> Names;
 #define MIR_KEYWORD_CONSTANT(ID, Spelling)                                     \
-  Names.push_back(KeywordConstant::getKeywordName(KeywordConstant::K_##ID));
+  Names.push_back(keyword_constant::getKeywordName(keyword_constant::K_##ID));
 #include "metaphir/IR/KeywordConstants.def"
   return Names;
 }
@@ -72,7 +72,7 @@ static void printPrimType(OpAsmPrinter &Printer, Operation *,
   printNamed(Printer, Attr, PrimTypeNames);
 }
 
-// As AggregateConstant::Delimiter and SeqTypeOp's kind number them.
+// As aggregate_constant::Delimiter and SeqTypeOp's kind number them.
 static constexpr StringRef DelimiterNames[] = {"array", "struct", "vector"};
 static ParseResult parseDelimiter(OpAsmParser &Parser, IntegerAttr &Attr) {
   return parseNamed(Parser, Attr, DelimiterNames, "aggregate kind");
@@ -155,16 +155,16 @@ Attribute OpcodeAttr::parse(AsmParser &Parser, mlir::Type) {
   if (Parser.parseLess() || Parser.parseKeywordOrString(&Name) ||
       Parser.parseGreater())
     return {};
-  for (unsigned ID = 0; ID != Instruction::NumInstructionIDs; ++ID)
-    if (Instruction::getOpcodeName(Instruction::InstructionID(ID)) == Name)
+  for (unsigned ID = 0; ID != instruction::NumInstructionIDs; ++ID)
+    if (instruction::getOpcodeName(instruction::InstructionID(ID)) == Name)
       return OpcodeAttr::get(Parser.getContext(),
-                             Instruction::InstructionID(ID));
+                             instruction::InstructionID(ID));
   Parser.emitError(Loc, "unknown instruction matcher '") << Name << "'";
   return {};
 }
 
 void OpcodeAttr::print(AsmPrinter &Printer) const {
-  Printer << "<" << Instruction::getOpcodeName(getValue()) << ">";
+  Printer << "<" << instruction::getOpcodeName(getValue()) << ">";
 }
 
 //===----------------------------------------------------------------------===//
@@ -282,16 +282,16 @@ template <typename OpT> static LogicalResult verifyMatcherUse(OpT Op) {
 LogicalResult InstOp::verify() {
   if (failed(verifyMatcherUse(*this)))
     return failure();
-  Instruction::InstructionID ID = getOpcode().getValue();
+  instruction::InstructionID ID = getOpcode().getValue();
   for (int32_t Flag : getFlags())
-    if (Flag < 0 || Flag >= InstructionFlag::NumFlagIDs ||
-        !(Instruction::getSupportedFlags(ID) &
-          Instruction::mask(InstructionFlag::FlagID(Flag))))
+    if (Flag < 0 || Flag >= instruction_flag::NumFlagIDs ||
+        !(instruction::getSupportedFlags(ID) &
+          instruction::mask(instruction_flag::FlagID(Flag))))
       return emitOpError("flag ") << Flag << " is not valid for '"
-                                  << Instruction::getOpcodeName(ID) << "'";
-  if (isCommutative() && !Instruction::isCommutative(ID))
+                                  << instruction::getOpcodeName(ID) << "'";
+  if (isCommutative() && !instruction::isCommutative(ID))
     return emitOpError("'")
-           << Instruction::getOpcodeName(ID) << "' is not commutative";
+           << instruction::getOpcodeName(ID) << "' is not commutative";
   return success();
 }
 

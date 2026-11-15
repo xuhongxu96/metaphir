@@ -20,7 +20,7 @@ AbstractValue lacksFact(const AbstractCall &Call, unsigned OperandIndex,
   if (!V.isSites())
     return AbstractValue::unknown();
   for (const Site &S : V.getSites())
-    if (!anySlot(S, [&](Instruction::InstructionID ID, unsigned Slot) {
+    if (!anySlot(S, [&](instruction::InstructionID ID, unsigned Slot) {
           return Call.Features.hasFact(ID, Slot, A);
         }))
       return AbstractValue::concrete(ConstraintValue::getBoolean(false));
@@ -42,7 +42,7 @@ contextSites(const AbstractCall &Call, unsigned OperandIndex) {
 }
 
 /// Whether value tracking was skipped for some value in the slot.
-static bool skipped(const AbstractCall &Call, Instruction::InstructionID ID,
+static bool skipped(const AbstractCall &Call, instruction::InstructionID ID,
                     unsigned Slot) {
   return Call.Features.hasFact(ID, Slot, Atom::ValueTrackingSkipped);
 }
@@ -54,7 +54,7 @@ AbstractValue lacksValueFact(const AbstractCall &Call, unsigned OperandIndex,
   if (!Anchored)
     return AbstractValue::unknown();
   for (const Site &S : *Anchored)
-    if (!anySlot(S, [&](Instruction::InstructionID ID, unsigned Slot) {
+    if (!anySlot(S, [&](instruction::InstructionID ID, unsigned Slot) {
           return skipped(Call, ID, Slot) || Call.Features.hasFact(ID, Slot, A);
         }))
       return AbstractValue::concrete(ConstraintValue::getBoolean(false));
@@ -79,7 +79,7 @@ AbstractValue exceedsMeasure(const AbstractCall &Call, unsigned OperandIndex,
     llvm_unreachable("invalid measure order");
   };
   for (const Site &S : *Anchored)
-    if (!anySlot(S, [&](Instruction::InstructionID ID, unsigned Slot) {
+    if (!anySlot(S, [&](instruction::InstructionID ID, unsigned Slot) {
           if (skipped(Call, ID, Slot))
             return true;
           std::optional<unsigned> Recorded =

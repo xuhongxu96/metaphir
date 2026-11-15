@@ -17,93 +17,93 @@ static bool matchBranch(const llvm::Instruction &Target) {
   return isa<CondBrInst, UncondBrInst>(Target);
 }
 
-bool matchesInstructionID(Instruction::InstructionID ID,
+bool matchesInstructionID(instruction::InstructionID ID,
                           const llvm::Instruction &Target) {
   switch (ID) {
 #define MIR_INSTRUCTION_MATCHER_TARGET(Name, TargetMatcher)                    \
-  case Instruction::I_##Name:                                                  \
+  case instruction::I_##Name:                                                  \
     return TargetMatcher(Target);
 #include "metaphir/IR/InstructionMatchers.def"
-  case Instruction::NumInstructionIDs:
+  case instruction::NumInstructionIDs:
     break;
   }
   llvm_unreachable("invalid instruction matcher ID");
 }
 
-bool hasSemanticFlag(InstructionFlag::FlagID ID,
+bool hasSemanticFlag(instruction_flag::FlagID ID,
                      const llvm::Instruction &Target) {
   switch (ID) {
-  case InstructionFlag::F_nsw:
+  case instruction_flag::F_nsw:
     return Target.hasNoSignedWrap();
-  case InstructionFlag::F_nuw:
+  case instruction_flag::F_nuw:
     if (const auto *GEP = dyn_cast<GEPOperator>(&Target))
       return GEP->hasNoUnsignedWrap();
     return Target.hasNoUnsignedWrap();
   // A flag the instruction cannot carry is absent. (The supported flags of
   // each matcher are declared in InstructionMatchers.def.)
-  case InstructionFlag::F_exact:
+  case instruction_flag::F_exact:
     if (const auto *Exact = dyn_cast<PossiblyExactOperator>(&Target))
       return Exact->isExact();
     return false;
-  case InstructionFlag::F_disjoint:
+  case instruction_flag::F_disjoint:
     if (const auto *Disjoint = dyn_cast<PossiblyDisjointInst>(&Target))
       return Disjoint->isDisjoint();
     return false;
-  case InstructionFlag::F_inalloca:
+  case instruction_flag::F_inalloca:
     if (const auto *Alloca = dyn_cast<AllocaInst>(&Target))
       return Alloca->isUsedWithInAlloca();
     return false;
-  case InstructionFlag::F_volatile:
+  case instruction_flag::F_volatile:
     if (const auto *Load = dyn_cast<LoadInst>(&Target))
       return Load->isVolatile();
     if (const auto *Store = dyn_cast<StoreInst>(&Target))
       return Store->isVolatile();
     return false;
-  case InstructionFlag::F_inbounds:
+  case instruction_flag::F_inbounds:
     if (const auto *GEP = dyn_cast<GetElementPtrInst>(&Target))
       return GEP->isInBounds();
     return false;
-  case InstructionFlag::F_nusw:
+  case instruction_flag::F_nusw:
     if (const auto *GEP = dyn_cast<GetElementPtrInst>(&Target))
       return GEP->hasNoUnsignedSignedWrap();
     return false;
-  case InstructionFlag::F_nneg:
+  case instruction_flag::F_nneg:
     return Target.hasNonNeg();
-  case InstructionFlag::F_samesign:
+  case instruction_flag::F_samesign:
     if (const auto *Compare = dyn_cast<ICmpInst>(&Target))
       return Compare->hasSameSign();
     return false;
-  case InstructionFlag::F_fast:
-  case InstructionFlag::F_nnan:
-  case InstructionFlag::F_ninf:
-  case InstructionFlag::F_nsz:
-  case InstructionFlag::F_arcp:
-  case InstructionFlag::F_contract:
-  case InstructionFlag::F_afn:
-  case InstructionFlag::F_reassoc: {
+  case instruction_flag::F_fast:
+  case instruction_flag::F_nnan:
+  case instruction_flag::F_ninf:
+  case instruction_flag::F_nsz:
+  case instruction_flag::F_arcp:
+  case instruction_flag::F_contract:
+  case instruction_flag::F_afn:
+  case instruction_flag::F_reassoc: {
     FastMathFlags Flags = Target.getFastMathFlagsOrNone();
     switch (ID) {
-    case InstructionFlag::F_fast:
+    case instruction_flag::F_fast:
       return Flags.isFast();
-    case InstructionFlag::F_nnan:
+    case instruction_flag::F_nnan:
       return Flags.noNaNs();
-    case InstructionFlag::F_ninf:
+    case instruction_flag::F_ninf:
       return Flags.noInfs();
-    case InstructionFlag::F_nsz:
+    case instruction_flag::F_nsz:
       return Flags.noSignedZeros();
-    case InstructionFlag::F_arcp:
+    case instruction_flag::F_arcp:
       return Flags.allowReciprocal();
-    case InstructionFlag::F_contract:
+    case instruction_flag::F_contract:
       return Flags.allowContract();
-    case InstructionFlag::F_afn:
+    case instruction_flag::F_afn:
       return Flags.approxFunc();
-    case InstructionFlag::F_reassoc:
+    case instruction_flag::F_reassoc:
       return Flags.allowReassoc();
     default:
       llvm_unreachable("not a fast-math flag");
     }
   }
-  case InstructionFlag::NumFlagIDs:
+  case instruction_flag::NumFlagIDs:
     llvm_unreachable("invalid instruction flag ID");
   }
   llvm_unreachable("invalid instruction flag ID");

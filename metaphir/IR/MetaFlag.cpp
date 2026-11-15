@@ -5,7 +5,7 @@
 namespace llvm {
 namespace metaphir {
 
-StringRef MetaFlag::getMetaFlagName(MetaFlagID ID) {
+StringRef metaflag::getMetaFlagName(MetaFlagID ID) {
   switch (ID) {
 #define MIR_META_FLAG_ID(FlagName)                                             \
   case MF_##FlagName:                                                          \
@@ -17,14 +17,14 @@ StringRef MetaFlag::getMetaFlagName(MetaFlagID ID) {
   llvm_unreachable("invalid meta flag ID");
 }
 
-MetaFlag::MetaFlagID MetaFlag::getMetaFlagID(StringRef Name) {
+metaflag::MetaFlagID metaflag::getMetaFlagID(StringRef Name) {
   return StringSwitch<MetaFlagID>(Name)
 #define MIR_META_FLAG_ID(FlagName) .Case(#FlagName, MF_##FlagName)
 #include "metaphir/IR/MetaFlags.def"
       .Default(UnknownMetaFlag);
 }
 
-std::optional<MetaFlag::Schema> MetaFlag::getSchema(MetaFlagID ID) {
+std::optional<metaflag::Schema> metaflag::getSchema(MetaFlagID ID) {
   switch (ID) {
 #define MIR_META_FLAG_SCHEMA(FlagName, Placement, MinArgs, MaxArgs,            \
                              ArgumentKind)                                     \

@@ -40,14 +40,14 @@ TEST(SortTest, ResolvesOperandToValue) {
 }
 
 TEST(SortTest, CoercesBySubsortOrConversion) {
-  EXPECT_TRUE(Constraint::canCoerce(Sort::Nat, Sort::Integer));
-  EXPECT_TRUE(Constraint::canCoerce(Sort::CmpPredicate, Sort::String));
-  EXPECT_TRUE(Constraint::canCoerce(Sort::Value, Sort::Integer));
-  EXPECT_TRUE(Constraint::canCoerce(Sort::Boolean, Sort::Integer));
-  EXPECT_TRUE(Constraint::canCoerce(Sort::Integer, Sort::Boolean));
-  EXPECT_TRUE(Constraint::canCoerce(Sort::Type, Sort::String));
-  EXPECT_FALSE(Constraint::canCoerce(Sort::Nat, Sort::Value));
-  EXPECT_FALSE(Constraint::canCoerce(Sort::Type, Sort::Integer));
+  EXPECT_TRUE(constraint::canCoerce(Sort::Nat, Sort::Integer));
+  EXPECT_TRUE(constraint::canCoerce(Sort::CmpPredicate, Sort::String));
+  EXPECT_TRUE(constraint::canCoerce(Sort::Value, Sort::Integer));
+  EXPECT_TRUE(constraint::canCoerce(Sort::Boolean, Sort::Integer));
+  EXPECT_TRUE(constraint::canCoerce(Sort::Integer, Sort::Boolean));
+  EXPECT_TRUE(constraint::canCoerce(Sort::Type, Sort::String));
+  EXPECT_FALSE(constraint::canCoerce(Sort::Nat, Sort::Value));
+  EXPECT_FALSE(constraint::canCoerce(Sort::Type, Sort::Integer));
 }
 
 } // namespace

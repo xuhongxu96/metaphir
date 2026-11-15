@@ -154,10 +154,10 @@ TEST_F(PatternParserTest, InstructionMetaFlagConstrainsTheInstruction) {
   ASSERT_TRUE(Require);
   auto Equal = Require.getCondition().getDefiningOp<mpir_expr::CallOp>();
   ASSERT_TRUE(Equal);
-  EXPECT_EQ(Equal.getOperatorID(), unsigned(Constraint::O_Equal));
+  EXPECT_EQ(Equal.getOperatorID(), unsigned(constraint::O_Equal));
   auto Opcode = Equal.getArgs()[0].getDefiningOp<mpir_expr::CallOp>();
   ASSERT_TRUE(Opcode);
-  EXPECT_EQ(Opcode.getOperatorID(), unsigned(Constraint::O_Opcode));
+  EXPECT_EQ(Opcode.getOperatorID(), unsigned(constraint::O_Opcode));
   auto Read = Opcode.getArgs()[0].getDefiningOp<mpir_expr::ReadOp>();
   ASSERT_TRUE(Read);
   EXPECT_EQ(Read.getValue(), Add.getResult());

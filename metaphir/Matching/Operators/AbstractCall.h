@@ -23,7 +23,7 @@ struct Site {
   /// The pattern instruction (an index query's mpir_index.node number), and
   /// the built-in matcher it is.
   int64_t Node = -1;
-  Instruction::InstructionID ID = Instruction::InstructionID(0);
+  instruction::InstructionID ID = instruction::InstructionID(0);
   /// Bit S is set for slot S; with ':c', operands can be in either of two.
   uint8_t Slots = 0;
 

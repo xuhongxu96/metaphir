@@ -335,7 +335,7 @@ Expected<ConstraintValue> ExprEvaluator::evalCall(Operation *Op, Frame &F) {
   auto Builtin = [&](auto Descriptor) -> Expected<ConstraintValue> {
     using Op = decltype(Descriptor);
     if constexpr (Op::ShortCircuits) {
-      return Logical(Call.getOperatorID() == Constraint::O_LogicalOr);
+      return Logical(Call.getOperatorID() == constraint::O_LogicalOr);
     } else {
       Expected<SmallVector<ConstraintValue, 2>> Operands =
           evalAll(Arguments, F);
@@ -387,10 +387,10 @@ Expected<ConstraintValue> ExprEvaluator::evalCall(Operation *Op, Frame &F) {
 
   switch (Call.getOperatorID()) {
 #define MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)                             \
-  case Constraint::O_##ID:                                                     \
+  case constraint::O_##ID:                                                     \
     return Builtin(Op##ID());
 #define MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(ID, Name, Kind, Result, BaseArity) \
-  case Constraint::O_##ID:                                                     \
+  case constraint::O_##ID:                                                     \
     return ValueTrack(Op##ID(), BaseArity);
 #include "metaphir/IR/ConstraintOperators.def"
   default:

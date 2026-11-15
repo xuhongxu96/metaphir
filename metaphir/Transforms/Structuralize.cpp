@@ -38,7 +38,7 @@ namespace {
 /// A feature a function needs.
 struct Atom_ {
   enum Kind { Instruction, Global } K;
-  Instruction::InstructionID ID = Instruction::InstructionID(0);
+  instruction::InstructionID ID = instruction::InstructionID(0);
   std::string Name;
 
   bool operator==(const Atom_ &Other) const {
@@ -51,13 +51,13 @@ using Disjunction = SmallVector<SmallVector<Atom_, 2>, 2>;
 
 /// The built-in instruction matcher that accepts exactly the instructions of
 /// the LLVM opcode Name, if there is one.
-static std::optional<Instruction::InstructionID> matcherOf(StringRef Name) {
+static std::optional<instruction::InstructionID> matcherOf(StringRef Name) {
   // 'br' is two kinds of instruction in LLVM, which one matcher accepts.
   if (Name == "br")
     return std::nullopt;
-  for (unsigned ID = 0; ID != Instruction::NumInstructionIDs; ++ID)
-    if (Instruction::getOpcodeName(Instruction::InstructionID(ID)) == Name)
-      return Instruction::InstructionID(ID);
+  for (unsigned ID = 0; ID != instruction::NumInstructionIDs; ++ID)
+    if (instruction::getOpcodeName(instruction::InstructionID(ID)) == Name)
+      return instruction::InstructionID(ID);
   return std::nullopt;
 }
 
@@ -75,7 +75,7 @@ static bool atCallSlot(index::SitesOp Sites, unsigned SlotBits) {
     auto Int = [&](unsigned I) {
       return cast<mlir::IntegerAttr>(Site[I]).getInt();
     };
-    if (Int(1) == Instruction::I_call && Int(2) == int64_t(SlotBits))
+    if (Int(1) == instruction::I_call && Int(2) == int64_t(SlotBits))
       return true;
   }
   return false;
@@ -97,22 +97,22 @@ static std::optional<Disjunction> deriveEquality(Value E, StringRef Literal) {
   if (!Sites)
     return std::nullopt;
   switch (Call.getOperatorID()) {
-  case Constraint::O_Intrinsic:
+  case constraint::O_Intrinsic:
     // Only a call can call an intrinsic.
     if (atCallSlot(Sites, 1u << ResultSlot))
       return Disjunction{{{Atom_::Global, {}, Literal.str()}}};
     return std::nullopt;
-  case Constraint::O_Opcode: {
-    std::optional<Instruction::InstructionID> ID = matcherOf(Literal);
+  case constraint::O_Opcode: {
+    std::optional<instruction::InstructionID> ID = matcherOf(Literal);
     // A value an instruction matcher matches as itself is of its kind: the
     // constraint holds only if that is the kind it names.
     for (mlir::Attribute A : Sites.getSites()) {
       auto Site = cast<mlir::ArrayAttr>(A);
       auto Kind =
-          Instruction::InstructionID(cast<mlir::IntegerAttr>(Site[1]).getInt());
+          instruction::InstructionID(cast<mlir::IntegerAttr>(Site[1]).getInt());
       if (cast<mlir::IntegerAttr>(Site[2]).getInt() ==
               int64_t(1u << ResultSlot) &&
-          matcherOf(Instruction::getOpcodeName(Kind)) == Kind && ID != Kind)
+          matcherOf(instruction::getOpcodeName(Kind)) == Kind && ID != Kind)
         return Disjunction();
     }
     if (ID)
@@ -133,7 +133,7 @@ static std::optional<Disjunction> derive(Value C) {
     return std::nullopt;
   mlir::OperandRange Args = Call.getArgs();
   switch (Call.getOperatorID()) {
-  case Constraint::O_Equal: {
+  case constraint::O_Equal: {
     // The verifier admits only two operands for '=='.
     assert(Args.size() == 2 && "'==' takes two operands");
     for (unsigned Side : {0u, 1u})
@@ -141,7 +141,7 @@ static std::optional<Disjunction> derive(Value C) {
         return deriveEquality(Args[Side], Str.getValue());
     return std::nullopt;
   }
-  case Constraint::O_LogicalAnd: {
+  case constraint::O_LogicalAnd: {
     // What either side needs; both, if both need something. A side that
     // cannot hold (no disjunct) makes the conjunction not hold either.
     std::optional<Disjunction> Left = derive(Args[0]);
@@ -161,7 +161,7 @@ static std::optional<Disjunction> derive(Value C) {
       }
     return Product;
   }
-  case Constraint::O_LogicalOr: {
+  case constraint::O_LogicalOr: {
     // Either side, only if each needs something; a side that cannot hold
     // leaves the other.
     std::optional<Disjunction> Left = derive(Args[0]);

@@ -23,7 +23,7 @@ namespace metaphir {
 /// An instruction a match needs: one matched by ID, with all the Present
 /// and none of the Absent flags, whose result has Width bits (unless 0).
 struct ShapeRequirement {
-  Instruction::InstructionID ID;
+  instruction::InstructionID ID;
   uint32_t Present = 0;
   uint32_t Absent = 0;
   unsigned Width = 0;
@@ -44,7 +44,7 @@ struct FeatureRequirement {
   uint64_t Instructions = 0;
   /// Sorted and unique.
   SmallVector<ShapeRequirement, 2> Shapes;
-  SmallVector<std::pair<Instruction::InstructionID, Instruction::InstructionID>,
+  SmallVector<std::pair<instruction::InstructionID, instruction::InstructionID>,
               4>
       Edges;
   /// Sorted and unique.

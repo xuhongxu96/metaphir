@@ -59,13 +59,13 @@ namespace {
 struct Requirement {
   uint64_t Instructions = 0;
   SmallVector<ShapeRequirement, 2> Shapes;
-  SmallVector<std::pair<Instruction::InstructionID, Instruction::InstructionID>,
+  SmallVector<std::pair<instruction::InstructionID, instruction::InstructionID>,
               4>
       Edges;
   SmallVector<std::string, 2> Globals;
   /// Facts at sites, as (node, slots, atom).
   SmallVector<std::tuple<Operation *, uint8_t, Atom>, 2> SiteFacts;
-  SmallVector<std::pair<Value, Instruction::InstructionID>, 4> Uses;
+  SmallVector<std::pair<Value, instruction::InstructionID>, 4> Uses;
   SmallVector<std::tuple<Value, Operation *, uint8_t>, 4> OperandSites;
   SmallVector<Operation *, 4> Selves;
 
@@ -186,7 +186,7 @@ static uint32_t flagBit(unsigned Flag) { return uint32_t(1) << Flag; }
 
 /// The shape of the instructions Node matches.
 static ShapeRequirement shapeOf(InstOp Node) {
-  Instruction::InstructionID ID = Node.getOpcode().getValue();
+  instruction::InstructionID ID = Node.getOpcode().getValue();
   ShapeRequirement Shape{ID};
   for (auto [Flag, Mode] : zip(Node.getFlags(), Node.getFlagModes())) {
     if (FlagMode(Mode) == FlagMode::Captured)
@@ -201,9 +201,9 @@ static ShapeRequirement shapeOf(InstOp Node) {
       continue;
     bool OfResult =
         isValueOperand(Op.Kind)
-            ? Instruction::getOperandSyntax(ID) ==
-                  Instruction::OperandSyntax::Binary
-            : ID != Instruction::I_alloca && ID != Instruction::I_getelementptr;
+            ? instruction::getOperandSyntax(ID) ==
+                  instruction::OperandSyntax::Binary
+            : ID != instruction::I_alloca && ID != instruction::I_getelementptr;
     if (OfResult && fixedWidth(Op.Type)) {
       Shape.Width = fixedWidth(Op.Type);
       break;
@@ -215,7 +215,7 @@ static ShapeRequirement shapeOf(InstOp Node) {
 Requirement Compiler::requirementOfInstruction(InstOp Node, bool Commutative) {
   if (!OnStack.insert(Node).second)
     return {};
-  Instruction::InstructionID ID = Node.getOpcode().getValue();
+  instruction::InstructionID ID = Node.getOpcode().getValue();
   SmallVector<MatcherOperandView, 8> Values;
   for (const MatcherOperandView &Op : getMatcherOperands(Node))
     if (isValueOperand(Op.Kind))
@@ -226,12 +226,12 @@ Requirement Compiler::requirementOfInstruction(InstOp Node, bool Commutative) {
   ShapeRequirement Shape = shapeOf(Node);
   if (Shape.Present || Shape.Absent || Shape.Width)
     Direct.Shapes.push_back(Shape);
-  bool UsesOperands = ID != Instruction::I_phi &&
-                      ID != Instruction::I_extractvalue &&
-                      ID != Instruction::I_insertvalue;
+  bool UsesOperands = ID != instruction::I_phi &&
+                      ID != instruction::I_extractvalue &&
+                      ID != instruction::I_insertvalue;
   std::optional<std::pair<unsigned, unsigned>> Swapped;
   if (Commutative) {
-    if (ID == Instruction::I_call && Values.size() == 3)
+    if (ID == instruction::I_call && Values.size() == 3)
       Swapped = {1u, 2u};
     else if (Values.size() == 2)
       Swapped = {0u, 1u};
@@ -354,7 +354,7 @@ void Compiler::emitVariant(const Requirement &R) {
   mlir::Block &Body = Variant.getBody().emplaceBlock();
   OpBuilder::InsertionGuard Guard(Builder);
   Builder.setInsertionPointToEnd(&Body);
-  auto Opcode = [&](Instruction::InstructionID ID) {
+  auto Opcode = [&](instruction::InstructionID ID) {
     return OpcodeAttr::get(Context, ID);
   };
 
@@ -377,8 +377,8 @@ void Compiler::emitVariant(const Requirement &R) {
   for (uint64_t IDs = R.Instructions; IDs; IDs &= IDs - 1)
     index::HasInstructionOp::create(
         Builder, Loc,
-        Opcode(Instruction::InstructionID(llvm::countr_zero(IDs))));
-  SmallVector<std::pair<Instruction::InstructionID, Instruction::InstructionID>,
+        Opcode(instruction::InstructionID(llvm::countr_zero(IDs))));
+  SmallVector<std::pair<instruction::InstructionID, instruction::InstructionID>,
               4>
       Edges(R.Edges.begin(), R.Edges.end());
   llvm::sort(Edges);
@@ -386,10 +386,10 @@ void Compiler::emitVariant(const Requirement &R) {
   for (auto [User, Operand] : Edges)
     index::HasEdgeOp::create(Builder, Loc, Opcode(User), Opcode(Operand));
   // Instructions using the same value are siblings.
-  SmallVector<std::pair<Instruction::InstructionID, Instruction::InstructionID>,
+  SmallVector<std::pair<instruction::InstructionID, instruction::InstructionID>,
               4>
       Siblings;
-  SmallVector<std::pair<const void *, Instruction::InstructionID>, 8> Uses;
+  SmallVector<std::pair<const void *, instruction::InstructionID>, 8> Uses;
   for (auto [V, ID] : R.Uses)
     Uses.push_back({V.getAsOpaquePointer(), ID});
   llvm::sort(Uses);

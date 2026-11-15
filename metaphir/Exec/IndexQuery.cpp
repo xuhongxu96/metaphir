@@ -18,7 +18,7 @@ using namespace detail;
 using mlir::Operation;
 
 struct IndexQuery::Typing {
-  Instruction::InstructionID ID;
+  instruction::InstructionID ID;
   uint32_t Present = 0;
   uint32_t Absent = 0;
   bool Commutative = false;
@@ -34,7 +34,7 @@ static Site siteOf(mlir::ArrayAttr Attr) {
   auto Int = [&](unsigned I) {
     return cast<mlir::IntegerAttr>(Attr[I]).getInt();
   };
-  return Site{Int(0), Instruction::InstructionID(Int(1)), uint8_t(Int(2))};
+  return Site{Int(0), instruction::InstructionID(Int(1)), uint8_t(Int(2))};
 }
 
 static RetrievalPlan compileRetrieval(mpir_index::RetrieveOp Retrieve);
@@ -216,7 +216,7 @@ IndexQuery::joinSignatures(const Variant &V,
         for (unsigned P = 0; P != NumOperands; ++P)
           Positions.push_back(P);
         if (Swapped) {
-          if (T.ID == Instruction::I_call && NumOperands == 3)
+          if (T.ID == instruction::I_call && NumOperands == 3)
             std::swap(Positions[1], Positions[2]);
           else if (NumOperands == 2)
             std::swap(Positions[0], Positions[1]);
@@ -240,8 +240,8 @@ IndexQuery::joinSignatures(const Variant &V,
             if (!Pattern || Position >= NumOperandSlots)
               continue;
             Code = It->Operands[Position];
-          } else if (T.ID != Instruction::I_alloca &&
-                     T.ID != Instruction::I_getelementptr) {
+          } else if (T.ID != instruction::I_alloca &&
+                     T.ID != instruction::I_getelementptr) {
             Code = It->Result;
           }
           const llvm::Type *Target = decodeType(Code, *TypeContext);
@@ -513,7 +513,7 @@ Expected<AbstractValue> AbstractEvaluator::evalCall(mpir_expr::CallOp Call,
   auto Builtin = [&](auto Descriptor) -> Expected<AbstractValue> {
     using Op = decltype(Descriptor);
     if constexpr (Op::ShortCircuits) {
-      return Logical(Call.getOperatorID() == Constraint::O_LogicalOr);
+      return Logical(Call.getOperatorID() == constraint::O_LogicalOr);
     } else {
       Expected<SmallVector<AbstractValue, 2>> Operands = evalAll(Arguments, F);
       if (!Operands)
@@ -559,10 +559,10 @@ Expected<AbstractValue> AbstractEvaluator::evalCall(mpir_expr::CallOp Call,
 
   switch (Call.getOperatorID()) {
 #define MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)                             \
-  case Constraint::O_##ID:                                                     \
+  case constraint::O_##ID:                                                     \
     return Builtin(Op##ID());
 #define MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(ID, Name, Kind, Result, BaseArity) \
-  case Constraint::O_##ID:                                                     \
+  case constraint::O_##ID:                                                     \
     return ValueTrack(Op##ID(), BaseArity);
 #include "metaphir/IR/ConstraintOperators.def"
   default:
@@ -619,8 +619,8 @@ bool IndexQuery::mayMatchVariant(unsigned Index,
 // Explanations
 //===----------------------------------------------------------------------===//
 
-static std::string opcode(Instruction::InstructionID ID) {
-  return ("`" + Instruction::getOpcodeName(ID) + "`").str();
+static std::string opcode(instruction::InstructionID ID) {
+  return ("`" + instruction::getOpcodeName(ID) + "`").str();
 }
 
 static std::string joinWords(ArrayRef<std::string> Words, StringRef Last) {
@@ -633,8 +633,8 @@ static std::string joinWords(ArrayRef<std::string> Words, StringRef Last) {
   return Text;
 }
 
-static std::string article(Instruction::InstructionID ID) {
-  return StringRef("aeiou").contains(Instruction::getOpcodeName(ID).front())
+static std::string article(instruction::InstructionID ID) {
+  return StringRef("aeiou").contains(instruction::getOpcodeName(ID).front())
              ? "an"
              : "a";
 }
@@ -657,7 +657,7 @@ IndexQuery::explainNoStructure(const FunctionFeatures &Features) const {
       SmallVector<std::string, 4> Names;
       for (; Missing; Missing &= Missing - 1)
         Names.push_back(
-            opcode(Instruction::InstructionID(llvm::countr_zero(Missing))));
+            opcode(instruction::InstructionID(llvm::countr_zero(Missing))));
       Lack = "it has no " + joinWords(Names, "or");
     }
     if (!Lack)
@@ -690,12 +690,12 @@ IndexQuery::explainNoStructure(const FunctionFeatures &Features) const {
         SmallVector<std::string, 4> Parts;
         for (unsigned Flag = 0; Flag != 32; ++Flag) {
           if (Shape.Present & (uint32_t(1) << Flag))
-            Parts.push_back(("has " + InstructionFlag::getName(
-                                          InstructionFlag::FlagID(Flag)))
+            Parts.push_back(("has " + instruction_flag::getName(
+                                          instruction_flag::FlagID(Flag)))
                                 .str());
           if (Shape.Absent & (uint32_t(1) << Flag))
-            Parts.push_back(("lacks " + InstructionFlag::getName(
-                                            InstructionFlag::FlagID(Flag)))
+            Parts.push_back(("lacks " + instruction_flag::getName(
+                                            instruction_flag::FlagID(Flag)))
                                 .str());
         }
         if (Shape.Width)

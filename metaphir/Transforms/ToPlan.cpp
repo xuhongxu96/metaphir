@@ -154,7 +154,7 @@ void Compiler::assignSlots() {
     if (auto Inst = dyn_cast<InstOp>(Op)) {
       Name = Inst.getResultName().value_or("");
       OpcodeName =
-          ("" + Instruction::getOpcodeName(Inst.getOpcode().getValue())).str();
+          ("" + instruction::getOpcodeName(Inst.getOpcode().getValue())).str();
     } else {
       if (auto N = Op->getAttrOfType<mlir::StringAttr>("result_name"))
         Name = N.getValue();
@@ -177,7 +177,7 @@ void Compiler::assignSlots() {
       }
       if (auto Inst = dyn_cast_or_null<InstOp>(Inner))
         OpcodeName =
-            ("" + Instruction::getOpcodeName(Inst.getOpcode().getValue()))
+            ("" + instruction::getOpcodeName(Inst.getOpcode().getValue()))
                 .str();
     }
     std::string Printed = Name.empty() ? OpcodeName : ("%" + Name).str();
@@ -348,7 +348,7 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
 void Compiler::matchInstruction(InstOp Inst, Value Reg) {
   Location Loc = Inst.getLoc();
   bool TreatIntAsVec = Inst.getTreatIntAsVec().value_or(false);
-  Instruction::InstructionID ID = Inst.getOpcode().getValue();
+  instruction::InstructionID ID = Inst.getOpcode().getValue();
   plan::CheckOpcodeOp::create(Builder, Loc, Reg, Inst.getOpcodeAttr());
   unsigned Slot = slotOf(Inst.getResult());
   plan::BindOp::create(Builder, Loc, Reg, i32(Slot), mlir::IntegerAttr());

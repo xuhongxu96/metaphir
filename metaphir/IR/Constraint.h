@@ -10,7 +10,7 @@ namespace metaphir {
 
 /// The built-in operators of constraint expressions ('==', '&&', 'isZero',
 /// ...), from ConstraintOperators.def, and the sorts they take and give.
-namespace Constraint {
+namespace constraint {
 /// How an operator is written.
 enum OperatorKind { Unary, Binary, Call };
 enum OperatorID {
@@ -38,7 +38,7 @@ bool canCoerce(Sort From, Sort To);
 Sort getArgumentType(OperatorID ID, unsigned Index);
 /// A phrase naming a sort for diagnostics, e.g. "an integer".
 StringRef describe(Sort Type);
-} // namespace Constraint
+} // namespace constraint
 
 } // namespace metaphir
 } // namespace llvm

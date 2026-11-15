@@ -61,20 +61,20 @@ bool TypePatterns::match(unsigned Index, const llvm::Type &Target,
   };
   switch (Node.Kind) {
   case plan::TypePatternKind::Primitive:
-    switch (Type::TypeID(Node.A)) {
-    case Type::HalfTyID:
+    switch (primitive_type::TypeID(Node.A)) {
+    case primitive_type::HalfTyID:
       return Target.isHalfTy();
-    case Type::BFloatTyID:
+    case primitive_type::BFloatTyID:
       return Target.isBFloatTy();
-    case Type::FloatTyID:
+    case primitive_type::FloatTyID:
       return Target.isFloatTy();
-    case Type::DoubleTyID:
+    case primitive_type::DoubleTyID:
       return Target.isDoubleTy();
-    case Type::FP128TyID:
+    case primitive_type::FP128TyID:
       return Target.isFP128Ty();
-    case Type::VoidTyID:
+    case primitive_type::VoidTyID:
       return Target.isVoidTy();
-    case Type::LabelTyID:
+    case primitive_type::LabelTyID:
       return Target.isLabelTy();
     default:
       return false;

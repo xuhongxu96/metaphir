@@ -11,7 +11,7 @@
 
 using namespace llvm;
 using namespace llvm::metaphir;
-namespace MIRInstruction = llvm::metaphir::Instruction;
+namespace MIRInstruction = llvm::metaphir::instruction;
 
 namespace {
 
@@ -81,7 +81,7 @@ TEST_F(FeaturesTest, RequiresTheInstructions) {
   )");
   ASSERT_EQ(Query->size(), 1u);
   EXPECT_EQ(Query->getRequirement(0).Instructions,
-            uint64_t(1) << MIRInstruction::I_udiv);
+            uint64_t(1) << instruction::I_udiv);
   EXPECT_TRUE(passes("udiv"));
   EXPECT_FALSE(passes("add"));
 }
@@ -356,7 +356,7 @@ TEST_F(FeaturesTest, BothBranchKindsAreBranches) {
   EXPECT_FALSE(matches(*M->getFunction("conditional")));
   EXPECT_TRUE(
       FunctionFeatures::compute(*M->getFunction("conditional")).Instructions &
-      uint64_t(1) << MIRInstruction::I_br);
+      uint64_t(1) << instruction::I_br);
 }
 
 TEST_F(FeaturesTest, RequiresNamedFlags) {
@@ -991,7 +991,7 @@ TEST(MeasureOrderTest, DeclaresAnOrderForEveryMeasure) {
 }
 
 TEST(MeasureOrderTest, MergingFeaturesKeepsEachMeasuresOrder) {
-  auto ID = MIRInstruction::I_add;
+  auto ID = instruction::I_add;
   FunctionFeatures A, B;
   A.Measures = {
       FunctionFeatures::getMeasureKey(ID, 0, Measure::TrailingZeros, 3),

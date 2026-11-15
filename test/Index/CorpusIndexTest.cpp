@@ -7,7 +7,7 @@
 
 using namespace llvm;
 using namespace llvm::metaphir;
-namespace MIRInstruction = llvm::metaphir::Instruction;
+namespace MIRInstruction = llvm::metaphir::instruction;
 
 namespace {
 
@@ -124,7 +124,7 @@ TEST_F(CorpusIndexTest, ListsFunctionsByFeature) {
   Expected<CorpusIndex> Index = CorpusIndex::read(IndexFile);
   ASSERT_TRUE(static_cast<bool>(Index)) << toString(Index.takeError());
 
-  PostingKey Add{PostingKey::Instruction, MIRInstruction::I_add};
+  PostingKey Add{PostingKey::Instruction, instruction::I_add};
   EXPECT_EQ(Index->getPostingCount(Add), 2u);
   Expected<std::vector<uint32_t>> Adds = Index->readPostings(Add);
   ASSERT_TRUE(static_cast<bool>(Adds)) << toString(Adds.takeError());
@@ -136,7 +136,7 @@ TEST_F(CorpusIndexTest, ListsFunctionsByFeature) {
                 PostingKey{PostingKey::Global, hashGlobalName("g")}),
             1u);
   EXPECT_EQ(Index->getPostingCount(
-                PostingKey{PostingKey::Instruction, MIRInstruction::I_udiv}),
+                PostingKey{PostingKey::Instruction, instruction::I_udiv}),
             0u);
 }
 
@@ -189,8 +189,8 @@ TEST_F(CorpusIndexTest, RejectsOtherFiles) {
       << toString(CutPostings.takeError());
   Expected<std::vector<uint32_t>> Postings = CutPostings->readPostings(
       PostingKey{PostingKey::Sibling,
-                 FunctionFeatures::getEdgeKey(MIRInstruction::I_ret,
-                                              MIRInstruction::I_ret)});
+                 FunctionFeatures::getEdgeKey(instruction::I_ret,
+                                              instruction::I_ret)});
   ASSERT_FALSE(static_cast<bool>(Postings));
   consumeError(Postings.takeError());
 

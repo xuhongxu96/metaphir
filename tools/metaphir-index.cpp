@@ -130,16 +130,16 @@ static void printFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
   for (unsigned ID = 0; ID != 64; ++ID)
     if (Features.Instructions >> ID & 1)
       OS << ' '
-         << metaphir::Instruction::getOpcodeName(
-                metaphir::Instruction::InstructionID(ID));
+         << metaphir::instruction::getOpcodeName(
+                metaphir::instruction::InstructionID(ID));
   OS << ';';
   for (uint16_t Edge : Features.Edges)
     OS << ' '
-       << metaphir::Instruction::getOpcodeName(
-              metaphir::Instruction::InstructionID(Edge / 64))
+       << metaphir::instruction::getOpcodeName(
+              metaphir::instruction::InstructionID(Edge / 64))
        << '-'
-       << metaphir::Instruction::getOpcodeName(
-              metaphir::Instruction::InstructionID(Edge % 64));
+       << metaphir::instruction::getOpcodeName(
+              metaphir::instruction::InstructionID(Edge % 64));
   OS << "; " << Features.Globals.size() << " globals\n";
 }
 

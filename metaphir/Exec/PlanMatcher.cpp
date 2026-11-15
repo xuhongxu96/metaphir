@@ -81,7 +81,7 @@ struct PlanProgram::Step {
   bool BySort = false;
   /// Either: its alternatives, Regions[A, A + B), and where the path goes on.
   unsigned After = 0;
-  Instruction::InstructionID Opcode = Instruction::InstructionID(0);
+  instruction::InstructionID Opcode = instruction::InstructionID(0);
   std::optional<APSInt> Integer;
   std::optional<APFloat> Float;
   std::string Name;
@@ -594,7 +594,7 @@ bool PlanMatcher::Run::step(const Step &S) {
     return true;
   case Step::GetFlag:
     Registers[S.Dst] = Binding(
-        hasSemanticFlag(InstructionFlag::FlagID(S.A), *instruction(S.Src)));
+        hasSemanticFlag(instruction_flag::FlagID(S.A), *instruction(S.Src)));
     return true;
   case Step::GetKeyed: {
     const llvm::Instruction &I = *instruction(S.Src);
@@ -649,7 +649,7 @@ bool PlanMatcher::Run::step(const Step &S) {
     return I && matchesInstructionID(S.Opcode, *I);
   }
   case Step::CheckFlag:
-    return hasSemanticFlag(InstructionFlag::FlagID(S.A), *instruction(S.Src)) ==
+    return hasSemanticFlag(instruction_flag::FlagID(S.A), *instruction(S.Src)) ==
            S.Flag;
   case Step::CheckOperandCount: {
     size_t Count = operandsOf(*instruction(S.Src)).size();
@@ -685,15 +685,15 @@ bool PlanMatcher::Run::step(const Step &S) {
     return Converted.bitwiseIsEqual(Floating->getValueAPF());
   }
   case Step::CheckKeyword: {
-    auto ID = KeywordConstant::KeywordID(S.A);
+    auto ID = keyword_constant::KeywordID(S.A);
     if (const auto *Predicate =
             std::get_if<CmpInst::Predicate>(&Registers[S.Src].Data))
-      return KeywordConstant::getKeywordName(ID) ==
+      return keyword_constant::getKeywordName(ID) ==
              CmpInst::getPredicateName(*Predicate);
     const llvm::Value *V = value(S.Src);
     switch (ID) {
 #define MIR_MATCHABLE_CONSTANT_KEYWORD(Name, Spelling, LLVMClass)              \
-  case KeywordConstant::K_##Name:                                              \
+  case keyword_constant::K_##Name:                                              \
     return isa<LLVMClass>(V);
 #include "metaphir/IR/KeywordConstants.def"
     default:
@@ -708,18 +708,18 @@ bool PlanMatcher::Run::step(const Step &S) {
       return false;
     const llvm::Type *T = Constant->getType();
     uint64_t Count = 0;
-    switch (AggregateConstant::Delimiter(S.A)) {
-    case AggregateConstant::Square:
+    switch (aggregate_constant::Delimiter(S.A)) {
+    case aggregate_constant::Square:
       if (!isa<llvm::ArrayType>(T))
         return false;
       Count = cast<llvm::ArrayType>(T)->getNumElements();
       break;
-    case AggregateConstant::Brace:
+    case aggregate_constant::Brace:
       if (!isa<llvm::StructType>(T))
         return false;
       Count = cast<llvm::StructType>(T)->getNumElements();
       break;
-    case AggregateConstant::Angle:
+    case aggregate_constant::Angle:
       if (!isa<FixedVectorType>(T))
         return false;
       Count = cast<FixedVectorType>(T)->getNumElements();

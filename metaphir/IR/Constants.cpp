@@ -4,7 +4,7 @@
 namespace llvm {
 namespace metaphir {
 
-StringRef KeywordConstant::getKeywordName(KeywordID ID) {
+StringRef keyword_constant::getKeywordName(KeywordID ID) {
   switch (ID) {
 #define MIR_KEYWORD_CONSTANT(ID, Spelling)                                     \
   case K_##ID:                                                                 \

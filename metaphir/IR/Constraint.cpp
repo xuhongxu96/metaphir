@@ -5,8 +5,8 @@
 namespace llvm {
 namespace metaphir {
 
-std::optional<Constraint::OperatorSchema>
-Constraint::getOperatorSchema(OperatorID ID) {
+std::optional<constraint::OperatorSchema>
+constraint::getOperatorSchema(OperatorID ID) {
   switch (ID) {
 #define MIR_CONSTRAINT_OPERATOR_SCHEMA(OperatorID, Name, Kind, Result,         \
                                        MinArity, MaxArity)                     \
@@ -19,7 +19,7 @@ Constraint::getOperatorSchema(OperatorID ID) {
   return std::nullopt;
 }
 
-Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
+constraint::OperatorID constraint::getOperatorID(StringRef Name,
                                                  OperatorKind Kind) {
   static const auto OperatorMaps = [] {
     struct Maps {
@@ -28,19 +28,19 @@ Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
       StringMap<OperatorID> Call;
     } M;
 #define MIR_CONSTRAINT_OPERATOR_ID(OperatorID, OperatorName, OperatorKind)     \
-  if (OperatorKind == Constraint::Unary)                                       \
-    M.Unary[OperatorName] = Constraint::O_##OperatorID;                        \
-  else if (OperatorKind == Constraint::Binary)                                 \
-    M.Binary[OperatorName] = Constraint::O_##OperatorID;                       \
-  else if (OperatorKind == Constraint::Call)                                   \
-    M.Call[OperatorName] = Constraint::O_##OperatorID;
+  if (OperatorKind == constraint::Unary)                                       \
+    M.Unary[OperatorName] = constraint::O_##OperatorID;                        \
+  else if (OperatorKind == constraint::Binary)                                 \
+    M.Binary[OperatorName] = constraint::O_##OperatorID;                       \
+  else if (OperatorKind == constraint::Call)                                   \
+    M.Call[OperatorName] = constraint::O_##OperatorID;
 #define MIR_CONSTRAINT_OPERATOR_ALIAS(OperatorID, OperatorName, OperatorKind)  \
-  if (OperatorKind == Constraint::Unary)                                       \
-    M.Unary[OperatorName] = Constraint::O_##OperatorID;                        \
-  else if (OperatorKind == Constraint::Binary)                                 \
-    M.Binary[OperatorName] = Constraint::O_##OperatorID;                       \
-  else if (OperatorKind == Constraint::Call)                                   \
-    M.Call[OperatorName] = Constraint::O_##OperatorID;
+  if (OperatorKind == constraint::Unary)                                       \
+    M.Unary[OperatorName] = constraint::O_##OperatorID;                        \
+  else if (OperatorKind == constraint::Binary)                                 \
+    M.Binary[OperatorName] = constraint::O_##OperatorID;                       \
+  else if (OperatorKind == constraint::Call)                                   \
+    M.Call[OperatorName] = constraint::O_##OperatorID;
 #include "metaphir/IR/ConstraintOperators.def"
     return M;
   }();
@@ -62,7 +62,7 @@ Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
   return It != Map->end() ? It->second : UnknownOperator;
 }
 
-StringRef Constraint::getOperatorName(OperatorID ID) {
+StringRef constraint::getOperatorName(OperatorID ID) {
   switch (ID) {
 #define MIR_CONSTRAINT_OPERATOR_ID(OperatorID, Name, Kind)                     \
   case O_##OperatorID:                                                         \
@@ -74,7 +74,7 @@ StringRef Constraint::getOperatorName(OperatorID ID) {
   llvm_unreachable("invalid constraint function ID");
 }
 
-bool Constraint::canCoerce(Sort From, Sort To) {
+bool constraint::canCoerce(Sort From, Sort To) {
   if (From == Sort::Unknown || To == Sort::Unknown || isSubsort(From, To))
     return true;
   Sort Represented = getRepresentation(From);
@@ -87,7 +87,7 @@ bool Constraint::canCoerce(Sort From, Sort To) {
   return false;
 }
 
-Sort Constraint::getArgumentType(OperatorID ID, unsigned Index) {
+Sort constraint::getArgumentType(OperatorID ID, unsigned Index) {
   switch (ID) {
   case O_LogicalOr:
   case O_LogicalAnd:
@@ -189,7 +189,7 @@ Sort Constraint::getArgumentType(OperatorID ID, unsigned Index) {
   llvm_unreachable("invalid constraint operator");
 }
 
-StringRef Constraint::describe(Sort Type) {
+StringRef constraint::describe(Sort Type) {
   switch (getRepresentation(Type)) {
   case Sort::Unknown:
     return "any value";

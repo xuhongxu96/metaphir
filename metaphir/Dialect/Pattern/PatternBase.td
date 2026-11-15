@@ -37,7 +37,7 @@ def Mpir_OpcodeAttr : AttrDef<Pattern_Dialect, "Opcode"> {
   let mnemonic = "opcode";
   let summary = "A built-in instruction matcher (see InstructionMatchers.def)";
   let parameters =
-      (ins "::llvm::metaphir::Instruction::InstructionID":$value);
+      (ins "::llvm::metaphir::instruction::InstructionID":$value);
   let hasCustomAssemblyFormat = 1;
 }
 

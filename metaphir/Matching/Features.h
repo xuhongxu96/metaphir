@@ -22,7 +22,7 @@ namespace metaphir {
 /// of those the matcher supports, and its types: its result's, and those of
 /// its first matcher operands (see collectMatcherOperands).
 struct Signature {
-  Instruction::InstructionID ID = Instruction::InstructionID(0);
+  instruction::InstructionID ID = instruction::InstructionID(0);
   uint32_t Flags = 0;
   TypeCode Result = NoType;
   std::array<TypeCode, NumOperandSlots> Operands = {NoType, NoType, NoType};
@@ -71,13 +71,13 @@ public:
   SmallVector<uint64_t, 4> Globals;
 
   /// The key of fact A at a site.
-  static uint32_t getFactKey(Instruction::InstructionID ID, unsigned Slot,
+  static uint32_t getFactKey(instruction::InstructionID ID, unsigned Slot,
                              Atom A) {
     return uint32_t(ID) << 14 | Slot << 12 | A.getCode();
   }
   /// The key of measure M at a site, with its value. The measure takes four
   /// bits and the value eight.
-  static uint32_t getMeasureKey(Instruction::InstructionID ID, unsigned Slot,
+  static uint32_t getMeasureKey(instruction::InstructionID ID, unsigned Slot,
                                 Measure M, unsigned Value) {
     static_assert(unsigned(Measure::NumMeasures) <= 16,
                   "a measure key has four bits for the measure");
@@ -92,26 +92,26 @@ public:
 
   /// The key of an edge from an instruction matched by User to its operand
   /// matched by Operand.
-  static uint16_t getEdgeKey(Instruction::InstructionID User,
-                             Instruction::InstructionID Operand) {
+  static uint16_t getEdgeKey(instruction::InstructionID User,
+                             instruction::InstructionID Operand) {
     return uint16_t(User) * 64 + Operand;
   }
   /// The instruction matchers of an edge or sibling key.
-  static std::pair<Instruction::InstructionID, Instruction::InstructionID>
+  static std::pair<instruction::InstructionID, instruction::InstructionID>
   splitEdgeKey(uint16_t Key) {
-    return {Instruction::InstructionID(Key / 64),
-            Instruction::InstructionID(Key % 64)};
+    return {instruction::InstructionID(Key / 64),
+            instruction::InstructionID(Key % 64)};
   }
 
   static FunctionFeatures compute(const Function &F,
                                   const FeatureOptions &Options = {});
 
-  bool mayHaveEdge(Instruction::InstructionID User,
-                   Instruction::InstructionID Operand) const;
+  bool mayHaveEdge(instruction::InstructionID User,
+                   instruction::InstructionID Operand) const;
   bool hasGlobal(uint64_t Hash) const;
-  bool hasFact(Instruction::InstructionID ID, unsigned Slot, Atom A) const;
+  bool hasFact(instruction::InstructionID ID, unsigned Slot, Atom A) const;
   /// The value of measure M at a site, if recorded.
-  std::optional<unsigned> getMeasure(Instruction::InstructionID ID,
+  std::optional<unsigned> getMeasure(instruction::InstructionID ID,
                                      unsigned Slot, Measure M) const;
 
   /// Adds Other's features, e.g. to summarize a module by its functions.
