@@ -190,9 +190,6 @@ SmallVector<IndexQuery::Row, 4>
 IndexQuery::joinSignatures(const Variant &V,
                            const FunctionFeatures &Features) const {
   unsigned NumVars = V.NumTypeVariables;
-  // Type variables are numbered by the typings too.
-  for (const Typing &T : V.Typings)
-    (void)T;
   auto Unbound = [](const Binding &B) {
     return std::holds_alternative<std::monostate>(B.Data);
   };

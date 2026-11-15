@@ -504,4 +504,27 @@ TEST(BindingTest, ComparesNonValueBindings) {
   EXPECT_EQ(Binding(true), Binding(true));
 }
 
+TEST_F(PlanMatcherTest, LimitsHowDeeplyConstraintsCall) {
+  // Each definition calls the next, down to a constraint that holds.
+  auto chain = [](unsigned Depth) {
+    std::string Source;
+    raw_string_ostream OS(Source);
+    OS << "constraint c" << Depth << "(?b) {\n  ?b\n}\n";
+    for (unsigned I = Depth; I-- != 0;)
+      OS << "constraint c" << I << "(?b) {\n  c" << I + 1 << "(?b)\n}\n";
+    OS << "%e = zext nneg:?n i8 ?x to i32\n;; c0(?n)\n";
+    return Source;
+  };
+  auto M = parse(R"(
+    define i32 @g(i8 %b) {
+      %e = zext nneg i8 %b to i32
+      ret i32 %e
+    }
+  )");
+  ASSERT_NE(M, nullptr);
+  // A chain well within the limit matches; one past it matches nothing.
+  EXPECT_EQ(match(*compile(chain(3)), *M->getFunction("g")).size(), 1u);
+  EXPECT_TRUE(match(*compile(chain(300)), *M->getFunction("g")).empty());
+}
+
 } // namespace

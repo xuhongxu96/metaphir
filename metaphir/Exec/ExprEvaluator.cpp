@@ -394,10 +394,12 @@ Expected<ConstraintValue> ExprEvaluator::evalCall(Operation *Op, Frame &F) {
     return ValueTrack(Op##ID(), BaseArity);
 #include "metaphir/IR/ConstraintOperators.def"
   default:
-    break;
+    // Every operator of the table has a case above.
+    // LCOV_EXCL_START
+    return make_error<ConstraintEvaluationError>(
+        Expression, "constraint operator without a descriptor");
+    // LCOV_EXCL_STOP
   }
-  return make_error<ConstraintEvaluationError>(
-      Expression, "constraint operator without a descriptor");
 }
 
 } // namespace metaphir

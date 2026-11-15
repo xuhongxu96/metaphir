@@ -40,6 +40,9 @@ CompiledPattern::compile(std::unique_ptr<MemoryBuffer> Buffer, raw_ostream &Err,
   PM.addPass(createIndexRetrievalPass());
   if (Options.Factor)
     PM.addPass(createIndexFactorPass());
+  // The passes leave a verified module, and a pattern that parsed has an
+  // instruction, so it has a matcher and a query. The checks are for bugs.
+  // LCOV_EXCL_START
   if (mlir::failed(PM.run(*Compiled->Module))) {
     if (ProgName)
       Err << ProgName << ": ";
@@ -56,6 +59,7 @@ CompiledPattern::compile(std::unique_ptr<MemoryBuffer> Buffer, raw_ostream &Err,
     Err << "error: the pattern has no instructions\n";
     return nullptr;
   }
+  // LCOV_EXCL_STOP
   return Compiled;
 }
 

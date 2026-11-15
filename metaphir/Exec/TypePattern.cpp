@@ -77,7 +77,7 @@ bool TypePatterns::match(unsigned Index, const llvm::Type &Target,
     case primitive_type::LabelTyID:
       return Target.isLabelTy();
     default:
-      return false;
+      llvm_unreachable("invalid primitive type pattern");
     }
   case plan::TypePatternKind::Integer: {
     unsigned Bits = Node.A;
@@ -139,19 +139,9 @@ bool TypePatterns::match(unsigned Index, const llvm::Type &Target,
         return false;
     return true;
   }
-  case plan::TypePatternKind::Function: {
-    const auto *Function = dyn_cast<llvm::FunctionType>(&Target);
-    if (!Function || bool(Node.A) != Function->isVarArg() ||
-        Node.Children.size() - 1 != Function->getNumParams() ||
-        !match(Node.Children[0], *Function->getReturnType(), TreatIntAsVec,
-               Unify))
-      return false;
-    for (unsigned I = 0; I != Function->getNumParams(); ++I)
-      if (!match(Node.Children[I + 1], *Function->getParamType(I),
-                 TreatIntAsVec, Unify))
-        return false;
-    return true;
-  }
+  case plan::TypePatternKind::Function:
+    // Targets are the types of values, and no value has a function type.
+    return false;
   }
   llvm_unreachable("invalid type pattern");
 }

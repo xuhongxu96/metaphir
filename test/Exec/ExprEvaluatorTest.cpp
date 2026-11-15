@@ -939,4 +939,50 @@ TEST_F(ExprEvaluatorTest, ReportsOperatorsWithoutDescriptors) {
   consumeError(Result.takeError());
 }
 
+TEST_F(ExprEvaluatorTest, ReportsErrorsOfEveryPart) {
+  Var Missing = var("missing", Sort::Nat);
+  Value Bad = read(Missing, Sort::Integer);
+  Value BadArray = read(Missing, Sort::ValueArray);
+  Value Empty = array(Sort::ValueArray, {});
+  // The message of the error E evaluates to, which must contain Text.
+  auto Reports = [&](Value E, StringRef Text) {
+    Expected<ConstraintValue> Result = evaluateResult(E);
+    if (Result) {
+      ADD_FAILURE() << "evaluated to " << Result->getKind();
+      return;
+    }
+    std::string Message = toString(Result.takeError());
+    EXPECT_NE(Message.find(Text.str()), std::string::npos)
+        << Text.str() << ": " << Message;
+  };
+
+  // Array elements, of each kind of array.
+  Reports(array(Sort::ValueArray, {read(Missing, Sort::Value)}),
+          "not instantiated");
+  Reports(array(Sort::StringArray, {integer(1)}), "string");
+
+  // Accesses: the array, the index, and the index's kind and bounds.
+  Reports(access(BadArray, integer(0), Sort::Value), "not instantiated");
+  Reports(access(Empty, Bad, Sort::Value), "not instantiated");
+  Reports(access(Empty, string("x"), Sort::Value), "integer");
+  Reports(access(array(Sort::TypeArray, {}), integer(0), Sort::Type),
+          "out of bounds");
+  Reports(access(array(Sort::StringArray, {}), integer(0), Sort::String),
+          "out of bounds");
+
+  // Logical operators: the right operand, evaluated and as a boolean.
+  Reports(binary("&&", boolean(true), read(Missing, Sort::Boolean)),
+          "not instantiated");
+  Reports(binary("&&", boolean(true), string("x")), "boolean");
+
+  // Value-tracking operators: their operands, and an explicit context.
+  Reports(call("knownBits", read(Missing, Sort::Value)), "not instantiated");
+  Reports(call("knownBits", integer(1), read(Missing, Sort::Value)),
+          "not instantiated");
+  Reports(call("knownBits", integer(1), integer(2)), "value");
+
+  // Expressions that are not constraint expressions at all.
+  Reports(slot(Missing), "not a constraint expression");
+}
+
 } // namespace
