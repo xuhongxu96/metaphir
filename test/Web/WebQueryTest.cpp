@@ -1,14 +1,18 @@
 #include "metaphir/Web/WebQuery.h"
 #include "metaphir/Index/CorpusIndex.h"
+#include "metaphir/Index/FunctionPack.h"
 #include "metaphir/Web/WebIndex.h"
 #include "metaphir/Web/WebPublisher.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
+#include <zstd.h>
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -112,13 +116,15 @@ protected:
   /// Matches Pattern, reading only the bytes each stage asks for; with
   /// PrintInstructions, the matches list the instructions they matched.
   Result query(StringRef Pattern, bool PrintInstructions = false,
-               bool ReportRejecting = false) {
+               bool ReportRejecting = false,
+               WebQueryMode Mode = WebQueryMode::Full) {
     Result R;
     Expected<std::unique_ptr<WebQuery>> Query =
         WebQuery::compile(*Web, Pattern, "pattern.mpir");
     EXPECT_TRUE(static_cast<bool>(Query)) << toString(Query.takeError());
     if (!Query)
       return R;
+    (*Query)->setMode(Mode);
     ByteCache Cache;
     fetch((*Query)->getKeyRanges(), Cache);
     using Stage =
@@ -148,6 +154,97 @@ protected:
       EXPECT_FALSE(static_cast<bool>(E)) << toString(std::move(E));
     }
     return R;
+  }
+
+  /// Runs Query's first Stages steps (getKeyRanges, then findLists,
+  /// findCandidates, findFeatures and filterCandidates), reading into Cache
+  /// the bytes each asks for, each range's bytes first passed to Patch.
+  /// Returns the first error.
+  Error runStages(WebQuery &Query, ByteCache &Cache, unsigned Stages,
+                  function_ref<void(const ByteRange &, std::string &)> Patch =
+                      nullptr) {
+    auto Fetch = [&](ArrayRef<ByteRange> Ranges) {
+      for (const ByteRange &Range : Ranges) {
+        std::string Bytes = Files[unsigned(Range.File)]
+                                ->getBuffer()
+                                .substr(Range.Offset, Range.Size)
+                                .str();
+        if (Patch)
+          Patch(Range, Bytes);
+        Cache.add(Range.File, Range.Offset, std::move(Bytes));
+      }
+    };
+    Fetch(Query.getKeyRanges());
+    if (Stages == 0)
+      return Error::success();
+    using Stage =
+        Expected<std::vector<ByteRange>> (WebQuery::*)(const ByteCache &);
+    for (Stage Next : {&WebQuery::findLists, &WebQuery::findCandidates,
+                       &WebQuery::findFeatures, &WebQuery::filterCandidates}) {
+      if (Stages-- == 1)
+        return Error::success();
+      Expected<std::vector<ByteRange>> Ranges = (Query.*Next)(Cache);
+      if (!Ranges)
+        return Ranges.takeError();
+      Fetch(*Ranges);
+    }
+    return Error::success();
+  }
+
+  /// Compresses Payload with Dictionary, as the published frames are.
+  static std::string compressWith(StringRef Dictionary, StringRef Payload) {
+    ZSTD_CCtx *Context = ZSTD_createCCtx();
+    std::string Frame(ZSTD_compressBound(Payload.size()), '\0');
+    size_t Size = ZSTD_compress_usingDict(
+        Context, Frame.data(), Frame.size(), Payload.data(), Payload.size(),
+        Dictionary.data(), Dictionary.size(), /*level=*/1);
+    ZSTD_freeCCtx(Context);
+    Frame.resize(Size);
+    return Frame;
+  }
+
+  /// Bytes that no format reads, as deterministic noise.
+  static std::string noise(size_t Size) {
+    std::string Bytes(Size, '\0');
+    uint32_t State = 12345;
+    for (char &C : Bytes) {
+      State = State * 1103515245 + 12345;
+      C = char(State >> 16);
+    }
+    return Bytes;
+  }
+
+  /// A frame of exactly Size bytes compressed with Dictionary, whose payload
+  /// is noise: a raw block grows one byte for each byte of payload.
+  static std::string frameOfSize(StringRef Dictionary, size_t Size) {
+    size_t Length = Size;
+    std::string Frame;
+    for (unsigned Try = 0; Try != 16; ++Try) {
+      Frame = compressWith(Dictionary, noise(Length));
+      if (Frame.size() == Size)
+        return Frame;
+      if (Frame.size() > Size) {
+        if (Length == 0 || Frame.size() - Size > Length)
+          break;
+        Length -= Frame.size() - Size;
+      } else {
+        Length += Size - Frame.size();
+      }
+    }
+    return {};
+  }
+
+  /// A pack frame holding Payload, compressed with the packs' dictionary.
+  std::string packFrame(StringRef Payload) {
+    return compressWith(Web->getHeader().PackDictionary, Payload);
+  }
+
+  /// The error matching Function from Frame with Query, or "" if there is none.
+  static std::string matchError(WebQuery &Query, uint32_t Function,
+                                StringRef Frame, unsigned Slot) {
+    std::string Matches;
+    raw_string_ostream OS(Matches);
+    return toString(Query.match(Function, Frame, Slot, OS));
   }
 };
 
@@ -327,5 +424,168 @@ TEST_F(WebQueryTest, RejectsOtherHeaders) {
   EXPECT_FALSE(static_cast<bool>(WebIndex::read(Header)));
   EXPECT_FALSE(static_cast<bool>(WebIndex::read("")));
 }
+
+std::string uleb(uint64_t Value) {
+  std::string Bytes;
+  raw_string_ostream OS(Bytes);
+  encodeULEB128(Value, OS);
+  OS.flush();
+  return Bytes;
+}
+
+std::string errorOf(Error E) { return toString(std::move(E)); }
+
+TEST_F(WebQueryTest, MatchesTheSameInEveryMode) {
+  writeFile("a.ll", R"(
+    define i32 @f(i32 %x) {
+      %r = add i32 %x, 1
+      ret i32 %r
+    }
+    define i32 @g(i32 %x) {
+      %r = mul i32 %x, 3
+      ret i32 %r
+    }
+  )");
+  publish();
+  const char *Pattern = "%r = add i32 ?x, 1\n";
+  Result Full = query(Pattern);
+  EXPECT_EQ(Full.Matches, "a.ll\t@f\t{?x = %x}\n");
+  EXPECT_EQ(query(Pattern, false, false, WebQueryMode::NoConstraints).Matches,
+            Full.Matches);
+  // Without the index every function is a candidate, and every pack is read.
+  Result NoIndex = query(Pattern, false, false, WebQueryMode::NoIndex);
+  EXPECT_EQ(NoIndex.Matches, Full.Matches);
+  EXPECT_EQ(NoIndex.Candidates, (std::vector<uint32_t>{0, 1}));
+}
+
+TEST_F(WebQueryTest, ReportsStagesThatLackTheirBytes) {
+  writeFile("a.ll", R"(
+    define i32 @f(i32 %x) {
+      %r = add i32 %x, 1
+      ret i32 %r
+    }
+  )");
+  publish();
+  auto Compile = [&] {
+    Expected<std::unique_ptr<WebQuery>> Query =
+        WebQuery::compile(*Web, "%r = add i32 ?x, 1\n", "p.mpir");
+    EXPECT_TRUE(static_cast<bool>(Query)) << toString(Query.takeError());
+    return Query ? std::move(*Query) : nullptr;
+  };
+  ByteCache Empty;
+
+  // The lists are read to find the candidates.
+  std::unique_ptr<WebQuery> Lists = Compile();
+  ASSERT_NE(Lists, nullptr);
+  EXPECT_TRUE(errorToBool(Lists->findLists(Empty).takeError()));
+
+  std::unique_ptr<WebQuery> Candidates = Compile();
+  ASSERT_NE(Candidates, nullptr);
+  ByteCache Keys;
+  ASSERT_FALSE(errorToBool(runStages(*Candidates, Keys, 2)));
+  EXPECT_TRUE(errorToBool(Candidates->findCandidates(Empty).takeError()));
+
+  // The features and packs are found from the index entries.
+  std::unique_ptr<WebQuery> Features = Compile();
+  ASSERT_NE(Features, nullptr);
+  ByteCache Through;
+  ASSERT_FALSE(errorToBool(runStages(*Features, Through, 3)));
+  ASSERT_EQ(Features->getCandidates().size(), 1u);
+  EXPECT_TRUE(errorToBool(Features->findFeatures(Empty).takeError()));
+  EXPECT_TRUE(errorToBool(Features->filterCandidates(Empty).takeError()));
+}
+
+TEST_F(WebQueryTest, RejectsCorruptFeaturesAndIndexEntries) {
+  writeFile("a.ll", R"(
+    define i32 @f(i32 %x) {
+      %r = add i32 %x, 1
+      ret i32 %r
+    }
+  )");
+  publish();
+  auto Compile = [&] {
+    Expected<std::unique_ptr<WebQuery>> Query =
+        WebQuery::compile(*Web, "%r = add i32 ?x, 1\n", "p.mpir");
+    EXPECT_TRUE(static_cast<bool>(Query)) << toString(Query.takeError());
+    return Query ? std::move(*Query) : nullptr;
+  };
+
+  // Features that are no zstd frame.
+  std::unique_ptr<WebQuery> NotAFrame = Compile();
+  ASSERT_NE(NotAFrame, nullptr);
+  ByteCache Cache;
+  std::string Error = errorOf(runStages(
+      *NotAFrame, Cache, 5,
+      [](const ByteRange &Range, std::string &Bytes) {
+        if (Range.File == WebFile::Features)
+          Bytes = noise(Bytes.size());
+      }));
+  EXPECT_NE(Error.find("zstd"), std::string::npos) << Error;
+
+  // Features that are a frame of no features.
+  std::unique_ptr<WebQuery> NoFeatures = Compile();
+  ASSERT_NE(NoFeatures, nullptr);
+  ByteCache Other;
+  Error = errorOf(runStages(
+      *NoFeatures, Other, 5,
+      [&](const ByteRange &Range, std::string &Bytes) {
+        if (Range.File == WebFile::Features) {
+          std::string Frame =
+              frameOfSize(Web->getHeader().FeatureDictionary, Bytes.size());
+          ASSERT_FALSE(Frame.empty());
+          Bytes = Frame;
+        }
+      }));
+  EXPECT_FALSE(Error.empty());
+
+  // Index entries whose features start after they end.
+  std::unique_ptr<WebQuery> Unordered = Compile();
+  ASSERT_NE(Unordered, nullptr);
+  ByteCache Entries;
+  Error = errorOf(runStages(
+      *Unordered, Entries, 4,
+      [](const ByteRange &Range, std::string &Bytes) {
+        if (Range.File == WebFile::Index)
+          for (unsigned I = 0; I != 8; ++I)
+            Bytes[I] = '\xff';
+      }));
+  EXPECT_EQ(Error, "function index out of order");
+}
+
+TEST_F(WebQueryTest, RejectsCorruptPackFrames) {
+  writeFile("a.ll", R"(
+    define i32 @f(i32 %x) {
+      %r = add i32 %x, 1
+      ret i32 %r
+    }
+  )");
+  publish();
+  Expected<std::unique_ptr<WebQuery>> Query =
+      WebQuery::compile(*Web, "%r = add i32 ?x, 1\n", "p.mpir");
+  ASSERT_TRUE(static_cast<bool>(Query)) << toString(Query.takeError());
+  WebQuery &Q = **Query;
+
+  // A pack whose size is past the frame's end.
+  EXPECT_NE(matchError(Q, 0, packFrame(uleb(1000)), 0)
+                .find("a pack past the end"),
+            std::string::npos);
+  // A slot past the frame's packs.
+  EXPECT_NE(matchError(Q, 0, packFrame(uleb(0)), 1).find("no pack 1"),
+            std::string::npos);
+  // An empty pack, which is no function pack.
+  EXPECT_NE(matchError(Q, 0, packFrame(uleb(0)), 0).find("function pack:"),
+            std::string::npos);
+  // A function pack whose bitcode does not read.
+  FunctionPack Broken;
+  Broken.Bitcode = "not bitcode";
+  std::string Encoded;
+  Broken.encode(Encoded);
+  EXPECT_NE(matchError(Q, 0, packFrame(uleb(Encoded.size()) + Encoded), 0)
+                .find("a.ll: function 0:"),
+            std::string::npos);
+  // A frame that no dictionary reads.
+  EXPECT_NE(matchError(Q, 0, noise(40), 0), "");
+}
+
 
 } // namespace

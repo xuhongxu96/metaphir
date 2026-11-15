@@ -4,11 +4,13 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
@@ -436,6 +438,129 @@ TEST_F(FunctionPackTest, RejectsMalformedPacks) {
   ASSERT_TRUE(static_cast<bool>(Cut));
   LLVMContext Into;
   EXPECT_FALSE(static_cast<bool>(UnpackedFunction::read(*Cut, Into)));
+}
+
+TEST_F(FunctionPackTest, RejectsCountsThatDoNotFitThePack) {
+  // Function 0 and a count of 1000 uses, but no use follows.
+  EXPECT_TRUE(
+      errorToBool(FunctionPack::decode(std::string("\0\xe8\x07", 3)).takeError()));
+  // Function 0 and one use, which is cut off.
+  EXPECT_TRUE(errorToBool(FunctionPack::decode(std::string("\0\1", 2)).takeError()));
+  // Function 0 and one use whose count does not fit an unsigned.
+  std::string Encoded;
+  raw_string_ostream OS(Encoded);
+  encodeULEB128(0, OS);
+  encodeULEB128(1, OS);
+  encodeULEB128(uint64_t(1) << 33, OS);
+  OS.flush();
+  EXPECT_TRUE(errorToBool(FunctionPack::decode(Encoded).takeError()));
+}
+
+TEST_F(FunctionPackTest, RejectsPacksThatDoNotFitTheirFunction) {
+  // A constant expression, as ConstantData is not used across functions.
+  pack(R"(
+    @g = internal global [4 x i32] zeroinitializer
+    define void @f() {
+      store i32 1, ptr getelementptr (i8, ptr @g, i64 4)
+      ret void
+    }
+    define void @h() {
+      store i32 2, ptr getelementptr (i8, ptr @g, i64 4)
+      ret void
+    }
+  )");
+  LLVMContext Into;
+  {
+    FunctionPack Pack = Packs["f"];
+    Pack.FunctionIndex = 5;
+    Expected<std::unique_ptr<UnpackedFunction>> Read =
+        UnpackedFunction::read(Pack, Into);
+    EXPECT_FALSE(static_cast<bool>(Read));
+    consumeError(Read.takeError());
+  }
+  {
+    // The pack has no use for the constant the function refers to.
+    FunctionPack Pack = Packs["f"];
+    Pack.Uses.clear();
+    Expected<std::unique_ptr<UnpackedFunction>> Read =
+        UnpackedFunction::read(Pack, Into);
+    EXPECT_FALSE(static_cast<bool>(Read));
+    consumeError(Read.takeError());
+  }
+  {
+    // The pack has a use for a constant the function does not refer to.
+    FunctionPack Pack = Packs["f"];
+    Pack.Uses.push_back(ModuleUses{1, false});
+    Expected<std::unique_ptr<UnpackedFunction>> Read =
+        UnpackedFunction::read(Pack, Into);
+    EXPECT_FALSE(static_cast<bool>(Read));
+    consumeError(Read.takeError());
+  }
+}
+
+TEST_F(FunctionPackTest, KnowsTheUsesOfTheConstantsItHolds) {
+  pack(R"(
+    @g = internal global [4 x i32] zeroinitializer
+    define void @f() {
+      store i32 1, ptr getelementptr (i8, ptr @g, i64 4)
+      ret void
+    }
+    define void @h() {
+      store i32 2, ptr getelementptr (i8, ptr @g, i64 4)
+      ret void
+    }
+  )");
+  LLVMContext Into;
+  std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
+  ASSERT_NE(F, nullptr);
+  const Value *Gep = F->getFunction().getEntryBlock().front().getOperand(1);
+  EXPECT_TRUE(F->getModuleUses(*Gep));
+  EXPECT_FALSE(F->getModuleUses(*ConstantInt::get(Type::getInt32Ty(Into), 9)));
+}
+
+TEST_F(FunctionPackTest, KeepsPlaceholdersForUnnamedAliasesAndIFuncs) {
+  // The unnamed alias and ifunc come before the global the function uses, so
+  // the pack keeps placeholders for them to keep the numbering.
+  pack(R"(
+    @g = internal global i32 0
+    @0 = alias i32, ptr @g
+    @1 = ifunc void (), ptr @resolve
+    @2 = internal global i32 0
+    define internal ptr @resolve() {
+      ret ptr null
+    }
+    define void @f() {
+      store i32 1, ptr @2
+      ret void
+    }
+  )");
+  LLVMContext Into;
+  std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
+  ASSERT_NE(F, nullptr);
+  EXPECT_EQ(print(F->getFunction()), print(*M->getFunction("f")));
+}
+
+TEST_F(FunctionPackTest, DropsMetadataThatRefersToAnotherFunction) {
+  pack(R"(
+    define void @g() {
+    l:
+      ret void
+    }
+    define void @f() !blocks !0 !nested !1 !pair !2 {
+      ret void
+    }
+    !0 = !{ptr blockaddress(@g, %l)}
+    !1 = !{{ptr} {ptr blockaddress(@g, %l)}}
+    !2 = !{{ptr, ptr} {ptr getelementptr (i8, ptr @g, i64 4), ptr getelementptr (i8, ptr @g, i64 4)}}
+  )");
+  LLVMContext Into;
+  std::unique_ptr<UnpackedFunction> F = unpack("f", Into);
+  ASSERT_NE(F, nullptr);
+  const llvm::Function &Packed = F->getFunction();
+  EXPECT_EQ(Packed.getMetadata("blocks"), nullptr);
+  EXPECT_EQ(Packed.getMetadata("nested"), nullptr);
+  // A value of the module that is not a block address stays.
+  EXPECT_NE(Packed.getMetadata("pair"), nullptr);
 }
 
 } // namespace

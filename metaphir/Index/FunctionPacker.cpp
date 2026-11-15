@@ -32,8 +32,6 @@ bool holdsDebugInfo(const Metadata *MD,
                     SmallPtrSetImpl<const Metadata *> &Seen) {
   if (!Seen.insert(MD).second)
     return false;
-  if (isa<DIArgList>(MD))
-    return true;
   const auto *Node = dyn_cast<MDNode>(MD);
   if (!Node)
     return false;
@@ -84,8 +82,7 @@ bool constantLeavesPack(const Constant *C, const Function &F,
   });
 }
 
-/// Whether MD reaches a value the pack does not hold, or a value local to
-/// another function.
+/// Whether MD reaches a value the pack does not hold.
 bool leavesPack(const Metadata *MD, const Function &F,
                 SmallPtrSetImpl<const Metadata *> &Seen,
                 SmallPtrSetImpl<const Constant *> &SeenConstants) {
@@ -93,20 +90,12 @@ bool leavesPack(const Metadata *MD, const Function &F,
     return false;
   if (const auto *ConstantMD = dyn_cast<ConstantAsMetadata>(MD))
     return constantLeavesPack(ConstantMD->getValue(), F, SeenConstants);
-  if (const auto *Local = dyn_cast<LocalAsMetadata>(MD)) {
-    const Value *V = Local->getValue();
-    const Function *Owner = nullptr;
-    if (const auto *Arg = dyn_cast<Argument>(V))
-      Owner = Arg->getParent();
-    else if (const auto *I = dyn_cast<Instruction>(V))
-      Owner = I->getFunction();
-    return Owner != &F;
-  }
   if (const auto *Node = dyn_cast<MDNode>(MD))
     return any_of(Node->operands(), [&](const MDOperand &Operand) {
       return Operand && leavesPack(Operand.get(), F, Seen, SeenConstants);
     });
-  // Strings are fine; an argument list is debug info, dropped before this.
+  // Strings are fine. Local values cannot be attached to a function or an
+  // instruction, so anything else is not kept.
   return !isa<MDString>(MD);
 }
 
@@ -476,9 +465,13 @@ Error packFunctions(Module &M,
       Module &Packed = Builder.getModule();
       std::string Problems;
       raw_string_ostream ProblemsOS(Problems);
+      // A pack that fails to verify is a bug in the packer, reported rather
+      // than handed on; no valid module found so far makes one.
+      // LCOV_EXCL_START
       if (Valid && verifyModule(Packed, &ProblemsOS))
         return createStringError("cannot pack @" + F->getName() + ": " +
                                  Problems);
+      // LCOV_EXCL_STOP
       Pack.FunctionIndex =
           std::distance(Packed.begin(), Builder.getFunction().getIterator());
       // With the use lists' order (see copyUseListOrder), and without the

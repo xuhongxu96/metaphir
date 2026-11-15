@@ -51,8 +51,12 @@ public:
     size_t Size =
         ZSTD_compress_usingCDict(Context.get(), Out.data(), Out.size(),
                                  Bytes.data(), Bytes.size(), Dict);
+    // The output holds ZSTD_compressBound bytes, so compression can fail only
+    // for lack of memory.
+    // LCOV_EXCL_START
     if (ZSTD_isError(Size))
       return createStringError(Twine("zstd: ") + ZSTD_getErrorName(Size));
+    // LCOV_EXCL_STOP
     Out.resize(Size);
     return Out;
   }
@@ -77,8 +81,11 @@ static Expected<EncodedModule> encodeModule(const CorpusIndex &Index,
                              ": changed since indexed; index it again");
 
   Expected<std::vector<IndexedFunction>> Functions = Index.readFunctions(Entry);
+  // The index reads its function records lazily, so a corrupt one shows here.
+  // LCOV_EXCL_START
   if (!Functions)
     return Functions.takeError();
+  // LCOV_EXCL_STOP
   for (const IndexedFunction &Function : *Functions) {
     raw_string_ostream OS(Encoded.Features.emplace_back());
     writeFunctionFeatures(OS, Function.Features);
@@ -163,18 +170,51 @@ static std::string trainDictionary(ArrayRef<std::string> Samples,
   return Dictionary;
 }
 
+namespace {
+/// A file of the published corpus, written as a stream. A stream that still
+/// holds a write error aborts when destroyed, so the errors are reported by
+/// close, and the file is closed by the destructor if it was not.
+class OutputFile {
+public:
+  OutputFile(StringRef Directory, StringRef Name) : Path(Directory) {
+    sys::path::append(Path, Name);
+  }
+  ~OutputFile() {
+    if (OS) {
+      OS->close();
+      OS->clear_error();
+    }
+  }
+
+  Error open() {
+    std::error_code EC;
+    OS.emplace(Path, EC);
+    return EC ? createFileError(Path, EC) : Error::success();
+  }
+
+  raw_ostream &stream() { return *OS; }
+
+  /// Closes the file, reporting the error of any write to it.
+  Error close() {
+    OS->close();
+    std::error_code EC = OS->error();
+    OS->clear_error();
+    OS.reset();
+    return EC ? createFileError(Path, EC) : Error::success();
+  }
+
+private:
+  SmallString<256> Path;
+  std::optional<raw_fd_ostream> OS;
+};
+} // namespace
+
 static Error writeFile(StringRef Directory, StringRef Name, StringRef Bytes) {
-  SmallString<256> Path(Directory);
-  sys::path::append(Path, Name);
-  std::error_code EC;
-  raw_fd_ostream OS(Path, EC);
-  if (EC)
-    return createFileError(Path, EC);
-  OS << Bytes;
-  OS.close();
-  if (OS.has_error())
-    return createFileError(Path, OS.error());
-  return Error::success();
+  OutputFile File(Directory, Name);
+  if (Error E = File.open())
+    return E;
+  File.stream() << Bytes;
+  return File.close();
 }
 
 Error publishCorpus(const CorpusIndex &Index, StringRef Output,
@@ -244,24 +284,16 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
   Compressor FeatureCompressor(Header.FeatureDictionary,
                                Options.CompressionLevel);
   Compressor PackCompressor(Header.PackDictionary, Options.CompressionLevel);
-  auto OpenFile = [&](WebFile File,
-                      std::optional<raw_fd_ostream> &OS) -> Error {
-    SmallString<256> Path(Output);
-    sys::path::append(Path, getWebFileName(File));
-    std::error_code EC;
-    OS.emplace(Path, EC);
-    if (EC)
-      return createFileError(Path, EC);
-    return Error::success();
-  };
-  std::optional<raw_fd_ostream> FeaturesOS, PacksOS, IndexOS;
-  if (Error E = OpenFile(WebFile::Features, FeaturesOS))
+  OutputFile FeaturesOS(Output, getWebFileName(WebFile::Features));
+  OutputFile PacksOS(Output, getWebFileName(WebFile::Packs));
+  OutputFile IndexOS(Output, getWebFileName(WebFile::Index));
+  if (Error E = FeaturesOS.open())
     return E;
-  if (Error E = OpenFile(WebFile::Packs, PacksOS))
+  if (Error E = PacksOS.open())
     return E;
-  if (Error E = OpenFile(WebFile::Index, IndexOS))
+  if (Error E = IndexOS.open())
     return E;
-  support::endian::Writer IndexW(*IndexOS, llvm::endianness::little);
+  support::endian::Writer IndexW(IndexOS.stream(), llvm::endianness::little);
   uint64_t FeaturesSize = 0, PacksSize = 0;
   auto WriteEntry = [&](uint64_t Pack) {
     IndexW.write<uint64_t>(FeaturesSize);
@@ -334,39 +366,47 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
       std::vector<uint64_t> FrameOffsets;
       for (size_t Frame = 0; Frame != NumFrames; ++Frame) {
         Expected<std::string> &Packs = *Work.Results[NumFeatures + Frame];
+        // LCOV_EXCL_START
         if (!Packs)
           return Packs.takeError();
+        // LCOV_EXCL_STOP
         FrameOffsets.push_back(PacksSize);
-        *PacksOS << *Packs;
+        PacksOS.stream() << *Packs;
         PacksSize += Packs->size();
       }
       for (size_t Feature = 0; Feature != NumFeatures; ++Feature) {
         Expected<std::string> &Features = *Work.Results[Feature];
+        // LCOV_EXCL_START
         if (!Features)
           return Features.takeError();
+        // LCOV_EXCL_STOP
         auto [Frame, Slot] = Work.Grouped.Of[Feature];
         uint64_t Size = (*Work.Results[NumFeatures + Frame])->size();
         if (!PackLocation::fits(FrameOffsets[Frame], Size, Slot))
           return createStringError(Indexed.Path +
                                    ": the packs are too large to publish");
         WriteEntry(PackLocation::encode(FrameOffsets[Frame], Size, Slot));
-        *FeaturesOS << *Features;
+        FeaturesOS.stream() << *Features;
         FeaturesSize += Features->size();
       }
     }
     Report("published " + Twine(End) + " of " + Twine(All.size()) + " modules");
   }
+  // LCOV_EXCL_START
+  // Packs of 2^36 bytes or more: a published corpus of tens of gigabytes.
   if (!PackLocation::fits(PacksSize, 0, 0))
     return createStringError("the packs are too large to publish");
+  // LCOV_EXCL_STOP
   WriteEntry(PackLocation::encode(PacksSize, 0, 0));
+  // Each module's packs were checked against its entry above, and the index
+  // sums the entries.
+  // LCOV_EXCL_START
   if (Header.NumFunctions != Index.getNumFunctions())
     return createStringError("the index's functions differ from its modules'");
-  for (std::optional<raw_fd_ostream> *OS : {&FeaturesOS, &PacksOS, &IndexOS}) {
-    (*OS)->close();
-    if ((*OS)->has_error())
-      return createStringError("cannot write the published corpus: " +
-                               (*OS)->error().message());
-  }
+  // LCOV_EXCL_STOP
+  for (OutputFile *File : {&FeaturesOS, &PacksOS, &IndexOS})
+    if (Error E = File->close())
+      return E;
 
   // The postings, as indexed.
   StringRef Records = Index.getPostingRecords();
@@ -398,9 +438,12 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
       ZSTD_compress2(Context, Compressed.data(), Compressed.size(),
                      HeaderBytes.data(), HeaderBytes.size());
   ZSTD_freeCCtx(Context);
+  // The output holds ZSTD_compressBound bytes: see Compressor::compress.
+  // LCOV_EXCL_START
   if (ZSTD_isError(CompressedSize))
     return createStringError(Twine("zstd: ") +
                              ZSTD_getErrorName(CompressedSize));
+  // LCOV_EXCL_STOP
   Compressed.resize(CompressedSize);
   if (Error E = writeFile(Output, WebHeaderFileName, Compressed))
     return E;
@@ -414,8 +457,11 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
     StringRef Name = getWebFileName(WebFile(File));
     sys::path::append(Path, Name);
     uint64_t Size = 0;
+    // The file was just written.
+    // LCOV_EXCL_START
     if (std::error_code EC = sys::fs::file_size(Path, Size))
       return createFileError(Path, EC);
+    // LCOV_EXCL_STOP
     Files[Name] = int64_t(Size);
     Build = xxh3_64bits(Twine(Build).concat(Twine(Size)).str());
   }
