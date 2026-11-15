@@ -18,6 +18,7 @@ configure_file(lit.site.cfg.py.in ${METAPHIR_TEST_DIR}/lit.site.cfg.py @ONLY)
 add_subdirectory(Parser)
 add_subdirectory(IR)
 add_subdirectory(Matching)
+add_subdirectory(Exec)
 add_subdirectory(Index)
 add_subdirectory(Web)
 
