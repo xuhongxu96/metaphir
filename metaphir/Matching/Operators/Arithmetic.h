@@ -12,7 +12,7 @@ namespace metaphir {
 // Operators on integers, booleans and equality: pure functions of their
 // operands, the same on the IR and on the index.
 
-/// '&&' and '||', which ConstraintEvaluator evaluates itself, as they
+/// '&&' and '||', which the evaluators evaluate themselves, as they
 /// short-circuit.
 struct OpLogicalOr {
   static constexpr bool ShortCircuits = true;

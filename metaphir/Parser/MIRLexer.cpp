@@ -1,5 +1,4 @@
 #include "metaphir/Parser/MIRLexer.h"
-#include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/Parser/MIRToken.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
@@ -120,9 +119,12 @@ void MIRLexer::Warning(LocTy WarningLoc, const Twine &Msg) const {
 // Lexer definition.
 //===----------------------------------------------------------------------===//
 
-MIRLexer::MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &Err,
-                   MIRContext &C)
-    : CurBuf(StartBuf), Diag(Err), SM(SM), Context(C) {
+raw_ostream &operator<<(raw_ostream &OS, const IntTypeToken &T) {
+  return OS << (T.Byte ? 'b' : 'i') << T.Bits;
+}
+
+MIRLexer::MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &Err)
+    : CurBuf(StartBuf), Diag(Err), SM(SM) {
   // The lexer reads one character past a token to classify it, and relies on
   // the NUL terminator that MemoryBuffer guarantees to stop at the end.
   assert(*CurBuf.end() == '\0' && "lexer buffer must be NUL-terminated");
@@ -527,16 +529,13 @@ tok::Kind MIRLexer::LexIdentifier() {
     CurPtr = IntOrByteEnd;
     unsigned NumBits = 0;
     if (StringRef(StartChar, CurPtr - StartChar).getAsInteger(10, NumBits) ||
-        NumBits < 1 || NumBits > IntegerType::MaxBits) {
+        NumBits < 1 || NumBits > IntTypeToken::MaxBits) {
       LexError((IntOrByteIdentifier == 'i' ? "integer" : "byte") +
                Twine(" bit width must be between 1 and ") +
-               Twine(IntegerType::MaxBits));
+               Twine(IntTypeToken::MaxBits));
       return tok::Error;
     }
-    if (IntOrByteIdentifier == 'i')
-      TyVal = IntegerType::get(Context, NumBits);
-    else
-      TyVal = ByteType::get(Context, NumBits);
+    TyVal = IntTypeToken{NumBits, IntOrByteIdentifier != 'i'};
 
     return tok::Type;
   }

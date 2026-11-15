@@ -1,9 +1,4 @@
 #include "metaphir/Matching/Features.h"
-#include "metaphir/IR/Constants.h"
-#include "metaphir/IR/DerivedTypes.h"
-#include "metaphir/IR/MetaVariable.h"
-#include "metaphir/IR/Pattern.h"
-#include "metaphir/IR/PatternVariants.h"
 #include "metaphir/Matching/OpcodePredicates.h"
 #include "metaphir/Matching/Operators/Arithmetic.h"
 #include "metaphir/Matching/Operators/ValuePredicates.h"
@@ -71,7 +66,7 @@ static void unionSorted(SmallVectorImpl<T> &Values, ArrayRef<T> Other) {
 uint64_t hashGlobalName(StringRef Name) { return xxh3_64bits(Name); }
 
 uint64_t hashGlobal(const llvm::GlobalValue &Global) {
-  // Mirrors SubtreeMatcher: a pattern's llvm.* name stands for an intrinsic's
+  // As matching reads it: a pattern's llvm.* name stands for an intrinsic's
   // base name, any other name for the global's own.
   if (const auto *F = dyn_cast<Function>(&Global); F && F->isIntrinsic())
     return hashGlobalName(Intrinsic::getBaseName(F->getIntrinsicID()));

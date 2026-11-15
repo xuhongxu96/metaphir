@@ -59,8 +59,8 @@ protected:
   }
 
   /// What the meta variable ?Name is bound to in Match.
-  const Instantiation::Binding *lookup(const CompiledPattern &Pattern,
-                                       const PlanMatch &Match, StringRef Name) {
+  const Binding *lookup(const CompiledPattern &Pattern, const PlanMatch &Match,
+                        StringRef Name) {
     for (auto [Slot, Info] : enumerate(Pattern.Program->getSlots()))
       if (!Info.IsInstruction && Info.Name == Name)
         return Match.lookup(Slot);
@@ -71,8 +71,8 @@ protected:
   /// The binding of ?Name in the first match of Pattern in the first
   /// function IR defines. The module stays until the next call, for what
   /// the binding points to.
-  std::optional<Instantiation::Binding>
-  bindingOf(StringRef Pattern, StringRef IR, StringRef Name) {
+  std::optional<Binding> bindingOf(StringRef Pattern, StringRef IR,
+                                   StringRef Name) {
     std::unique_ptr<CompiledPattern> P = compile(Pattern);
     Kept = parse(IR);
     Module *M = Kept.get();
@@ -87,7 +87,7 @@ protected:
       ADD_FAILURE() << "no match of " << Pattern.str();
       return std::nullopt;
     }
-    const Instantiation::Binding *B = lookup(*P, Matches.front(), Name);
+    const Binding *B = lookup(*P, Matches.front(), Name);
     if (!B)
       return std::nullopt;
     return *B;
@@ -199,7 +199,7 @@ TEST_F(PlanMatcherTest, InstructionAndMetaVariableCanShareName) {
   ASSERT_NE(M, nullptr);
   std::vector<PlanMatch> Matches = match(*Pattern, *M->getFunction("f"));
   ASSERT_EQ(Matches.size(), 1u);
-  const Instantiation::Binding *X = lookup(*Pattern, Matches[0], "x");
+  const Binding *X = lookup(*Pattern, Matches[0], "x");
   ASSERT_NE(X, nullptr);
   EXPECT_EQ(std::get<const llvm::Value *>(X->Data),
             M->getFunction("f")->getArg(0));
@@ -223,10 +223,8 @@ TEST_F(PlanMatcherTest, MatchesVectorTypes) {
   ASSERT_NE(M, nullptr);
   std::vector<PlanMatch> Matches = match(*Pattern, *M->getFunction("vec"));
   ASSERT_EQ(Matches.size(), 1u);
-  EXPECT_EQ(*lookup(*Pattern, Matches[0], "n"),
-            Instantiation::Binding(APInt(64, 2)));
-  EXPECT_EQ(*lookup(*Pattern, Matches[0], "small"),
-            Instantiation::Binding(APInt(64, 64)));
+  EXPECT_EQ(*lookup(*Pattern, Matches[0], "n"), Binding(APInt(64, 2)));
+  EXPECT_EQ(*lookup(*Pattern, Matches[0], "small"), Binding(APInt(64, 64)));
 }
 
 // A metaflag on an instruction constrains the instruction itself.
@@ -313,9 +311,9 @@ TEST_F(PlanMatcherTest, BindsOperandTypeParameters) {
   )";
   EXPECT_EQ(
       bindingOf("%r = freeze [?count x ?element] ?x\n", Freeze, "element"),
-      Instantiation::Binding(llvm::Type::getInt32Ty(LLVMContext)));
+      Binding(llvm::Type::getInt32Ty(LLVMContext)));
   EXPECT_EQ(bindingOf("%r = freeze [?count x ?element] ?x\n", Freeze, "count"),
-            Instantiation::Binding(APInt(64, 4)));
+            Binding(APInt(64, 4)));
 }
 
 TEST_F(PlanMatcherTest, BindsResultTypes) {
@@ -326,7 +324,7 @@ TEST_F(PlanMatcherTest, BindsResultTypes) {
     }
   )",
                       "result_type"),
-            Instantiation::Binding(llvm::Type::getInt32Ty(LLVMContext)));
+            Binding(llvm::Type::getInt32Ty(LLVMContext)));
 }
 
 TEST_F(PlanMatcherTest, BindsPredicatesAndCapturedFlags) {
@@ -337,7 +335,7 @@ TEST_F(PlanMatcherTest, BindsPredicatesAndCapturedFlags) {
     }
   )",
                       "predicate"),
-            Instantiation::Binding(CmpInst::ICMP_SLT));
+            Binding(CmpInst::ICMP_SLT));
   EXPECT_EQ(bindingOf("%r = add nsw:?has_nsw i32 ?x, ?y\n", R"(
     define i32 @f(i32 %x, i32 %y) {
       %r = add i32 %x, %y
@@ -345,7 +343,7 @@ TEST_F(PlanMatcherTest, BindsPredicatesAndCapturedFlags) {
     }
   )",
                       "has_nsw"),
-            Instantiation::Binding(false));
+            Binding(false));
 }
 
 TEST_F(PlanMatcherTest, BindsKeyedIntegerOperands) {
@@ -356,7 +354,7 @@ TEST_F(PlanMatcherTest, BindsKeyedIntegerOperands) {
     }
   )",
                       "alignment"),
-            Instantiation::Binding(APInt(64, 8)));
+            Binding(APInt(64, 8)));
 }
 
 TEST_F(PlanMatcherTest, RequiresFastMathFlags) {
@@ -386,26 +384,23 @@ TEST_F(PlanMatcherTest, CapturesTrailingCallArguments) {
     }
   )";
   StringRef Pattern = "%r = call i32 @callee(i32 ?prefix, ...?types ?values)\n";
-  std::optional<Instantiation::Binding> Types =
-      bindingOf(Pattern, Call, "types");
+  std::optional<Binding> Types = bindingOf(Pattern, Call, "types");
   ASSERT_TRUE(Types);
-  const auto &CapturedTypes = std::get<Instantiation::TypeArray>(Types->Data);
+  const auto &CapturedTypes = std::get<Binding::TypeArray>(Types->Data);
   ASSERT_EQ(CapturedTypes.size(), 2u);
   EXPECT_TRUE(CapturedTypes[0]->isIntegerTy(8));
   EXPECT_TRUE(CapturedTypes[1]->isPointerTy());
 
-  std::optional<Instantiation::Binding> Values =
-      bindingOf(Pattern, Call, "values");
+  std::optional<Binding> Values = bindingOf(Pattern, Call, "values");
   ASSERT_TRUE(Values);
-  const auto &CapturedValues =
-      std::get<Instantiation::ValueArray>(Values->Data);
+  const auto &CapturedValues = std::get<Binding::ValueArray>(Values->Data);
   ASSERT_EQ(CapturedValues.size(), 2u);
   EXPECT_EQ(CapturedValues[0]->getName(), "y");
   EXPECT_EQ(CapturedValues[1]->getName(), "p");
 }
 
 TEST_F(PlanMatcherTest, CapturesAggregateIndices) {
-  std::optional<Instantiation::Binding> Indices = bindingOf(
+  std::optional<Binding> Indices = bindingOf(
       "%r = extractvalue {i32, {i8, i16}} ?aggregate, ...?indices\n", R"(
     define i8 @f({i32, {i8, i16}} %aggregate) {
       %r = extractvalue {i32, {i8, i16}} %aggregate, 1, 0
@@ -414,7 +409,7 @@ TEST_F(PlanMatcherTest, CapturesAggregateIndices) {
   )",
       "indices");
   ASSERT_TRUE(Indices);
-  const auto &Captured = std::get<Instantiation::ValueArray>(Indices->Data);
+  const auto &Captured = std::get<Binding::ValueArray>(Indices->Data);
   ASSERT_EQ(Captured.size(), 2u);
   EXPECT_EQ(cast<ConstantInt>(Captured[0])->getZExtValue(), 1u);
   EXPECT_EQ(cast<ConstantInt>(Captured[1])->getZExtValue(), 0u);
@@ -493,21 +488,20 @@ TEST_F(PlanMatcherTest, MatchesTypes) {
                       "define void @f(i32 %x) {\n  %r = freeze i32 %x\n  ret "
                       "void\n}\n",
                       "bits"),
-            Instantiation::Binding(APInt(64, 32)));
+            Binding(APInt(64, 32)));
   EXPECT_EQ(bindingOf("%r = freeze b?bits ?x\n",
                       "define void @f(b8 %x) {\n  %r = freeze b8 %x\n  ret "
                       "void\n}\n",
                       "bits"),
-            Instantiation::Binding(APInt(64, 8)));
+            Binding(APInt(64, 8)));
 }
 
 TEST(BindingTest, ComparesNonValueBindings) {
-  Instantiation::Binding Predicate(CmpInst::ICMP_EQ);
-  EXPECT_EQ(Predicate, Instantiation::Binding(CmpInst::ICMP_EQ));
-  EXPECT_NE(Predicate, Instantiation::Binding(CmpInst::ICMP_NE));
-  EXPECT_EQ(Instantiation::Binding(APInt(32, 17)),
-            Instantiation::Binding(APInt(32, 17)));
-  EXPECT_EQ(Instantiation::Binding(true), Instantiation::Binding(true));
+  Binding Predicate(CmpInst::ICMP_EQ);
+  EXPECT_EQ(Predicate, Binding(CmpInst::ICMP_EQ));
+  EXPECT_NE(Predicate, Binding(CmpInst::ICMP_NE));
+  EXPECT_EQ(Binding(APInt(32, 17)), Binding(APInt(32, 17)));
+  EXPECT_EQ(Binding(true), Binding(true));
 }
 
 } // namespace

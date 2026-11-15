@@ -33,7 +33,7 @@ protected:
   mlir::OwningOpRef<mlir::ModuleOp> Module;
   mlir::Value Zero;
 
-  ExprRef zero() { return getExprRef(Zero); }
+  mlir::Value zero() { return Zero; }
 };
 
 // Coercion of a value into the same kind is the identity coercion.
@@ -140,7 +140,7 @@ TEST_F(ConstraintCoercionTest, CoercesArraysToStringArrays) {
   Constant *Two = ConstantInt::get(I32, 2);
 
   ConstraintValue Types =
-      ConstraintValue::getTypeArray(Instantiation::TypeArray{I8, I32});
+      ConstraintValue::getTypeArray(Binding::TypeArray{I8, I32});
   EXPECT_TRUE(isStringArrayLike(Types));
   Expected<ConstraintValue> TypeStrings =
       coerce(Types, ConstraintValue::StringArray, zero());
@@ -149,7 +149,7 @@ TEST_F(ConstraintCoercionTest, CoercesArraysToStringArrays) {
             (ConstraintValue::StringArrayStorage{"i8", "i32"}));
 
   ConstraintValue Values =
-      ConstraintValue::getValueArray(Instantiation::ValueArray{One, Two});
+      ConstraintValue::getValueArray(Binding::ValueArray{One, Two});
   EXPECT_TRUE(isStringArrayLike(Values));
   Expected<ConstraintValue> ValueStrings =
       coerce(Values, ConstraintValue::StringArray, zero());

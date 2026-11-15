@@ -34,10 +34,10 @@
 #endif
 
 // A value-tracking backed operator with an optional trailing context
-// instruction. The evaluator (ConstraintEvaluator::evalValueTrack) resolves
-// the context (explicit ?ctx or the constraint's context instruction), and
-// the domain applies the operator: on the IR, ConcreteDomain builds the
-// SimplifyQuery.
+// instruction. The evaluator resolves the context (explicit ?ctx, or the
+// instruction the call is anchored at) and applies the operator: on the IR,
+// ExprEvaluator builds the SimplifyQuery; on features, IndexQuery looks at
+// the context's sites.
 #ifndef MIR_CONSTRAINT_VALUE_TRACK_OPERATOR
 #define MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(ID, Name, Kind, Result, BaseArity) \
   MIR_CONSTRAINT_OPERATOR_OPT_CTX(ID, Name, Kind, Result, BaseArity)

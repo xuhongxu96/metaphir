@@ -1,8 +1,7 @@
 //===- TypePattern.h - Type patterns of plans and index queries -*- C++ -*-===//
 //
 // The type patterns mpir_plan.check_type and mpir_index.typing encode (see
-// PlanDialect.h), decoded into trees, and matched against LLVM types as
-// TypeMatcher matches MetaphIR types.
+// PlanDialect.h), decoded into trees, and matched against LLVM types.
 //
 //===----------------------------------------------------------------------===//
 
@@ -10,7 +9,7 @@
 #define METAPHIR_EXEC_TYPEPATTERN_H
 
 #include "metaphir/Dialect/Plan/PlanDialect.h"
-#include "metaphir/Matching/Instantiation.h"
+#include "metaphir/Matching/Binding.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
@@ -30,9 +29,9 @@ public:
   /// Decodes Pattern, returning the index of its root.
   unsigned add(mlir::ArrayAttr Pattern);
 
-  /// Unifies a type variable (a slot) with a binding, as Instantiation::unify.
-  using UnifyFn =
-      function_ref<bool(unsigned Slot, const Instantiation::Binding &)>;
+  /// Unifies a type variable (a slot) with a binding: binds it if it is
+  /// unbound, and otherwise tells whether its binding is that one.
+  using UnifyFn = function_ref<bool(unsigned Slot, const Binding &)>;
 
   /// Whether the pattern at Index matches Target, binding its variables.
   bool match(unsigned Index, const llvm::Type &Target, bool TreatIntAsVec,

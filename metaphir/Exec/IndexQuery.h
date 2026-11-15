@@ -67,7 +67,7 @@ public:
 
   struct Typing;
   /// A way to type a variant's instructions: its type variables' bindings.
-  using Row = std::vector<Instantiation::Binding>;
+  using Row = std::vector<Binding>;
 
 private:
   struct Variant {

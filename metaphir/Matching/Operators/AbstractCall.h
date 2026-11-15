@@ -14,21 +14,20 @@
 namespace llvm {
 namespace metaphir {
 
-class Constraint;
 class FunctionFeatures;
 
 /// A place a pattern value certainly occupies in every match: an operand, in
-/// one of Slots, of the instruction Parent matches, or (Slots holding
+/// one of Slots, of the instruction Node matches, or (Slots holding
 /// ResultSlot) that instruction itself.
 struct Site {
-  /// The pattern instruction (an opaque handle: a MetaphIR instruction, or an
-  /// mpir operation), and the built-in matcher it is.
-  const void *Parent = nullptr;
+  /// The pattern instruction (an index query's mpir_index.node number), and
+  /// the built-in matcher it is.
+  int64_t Node = -1;
   Instruction::InstructionID ID = Instruction::InstructionID(0);
   /// Bit S is set for slot S; with ':c', operands can be in either of two.
   uint8_t Slots = 0;
 
-  auto tie() const { return std::make_tuple(Parent, ID, Slots); }
+  auto tie() const { return std::make_tuple(Node, ID, Slots); }
   bool operator<(const Site &Other) const { return tie() < Other.tie(); }
   bool operator==(const Site &Other) const { return tie() == Other.tie(); }
 };
@@ -74,15 +73,16 @@ private:
 
 /// A built-in constraint operator applied to abstract operands, on a
 /// function's features. An operator's abstract(const AbstractCall &) is
-/// called when some operand is not concrete; ConstraintEvaluator applies its
+/// called when some operand is not concrete; IndexQuery applies its
 /// concrete() when all are.
 struct AbstractCall {
   ArrayRef<AbstractValue> Operands;
-  ExprRef Expression;
+  mlir::Value Expression;
   const FunctionFeatures &Features;
-  /// For a value-tracking operator, the pattern instruction its context
-  /// resolves to, if that instruction is certainly matched.
-  const void *Context = nullptr;
+  /// For a value-tracking operator, the node of the pattern instruction its
+  /// context resolves to, if that instruction is certainly matched; -1 if
+  /// not.
+  int64_t Context = -1;
 };
 
 /// False if some site of V lacks fact A in all its slots, where the index

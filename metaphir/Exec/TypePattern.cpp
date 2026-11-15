@@ -5,7 +5,6 @@
 namespace llvm {
 namespace metaphir {
 
-using Binding = Instantiation::Binding;
 namespace plan = mpir_plan;
 
 unsigned TypePatterns::add(mlir::ArrayAttr Pattern) {

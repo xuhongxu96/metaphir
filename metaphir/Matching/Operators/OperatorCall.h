@@ -19,14 +19,15 @@ class Constraint;
 ///
 /// Every operator is a descriptor struct, Op<ID> for its ID in
 /// ConstraintOperators.def, whose static concrete(const ConcreteCall &)
-/// computes its result on the IR. How operands are evaluated is up to
-/// ConstraintEvaluator, so the descriptors only apply the operator.
+/// computes its result on the IR. How operands are evaluated is up to the
+/// evaluators (ExprEvaluator, IndexQuery), so the descriptors only apply the
+/// operator.
 struct ConcreteCall {
   /// The evaluated operands, including an optional trailing bit width; a
   /// value-tracking operator's explicit context is not among them.
   ArrayRef<ConstraintValue> Operands;
   /// The operator, for diagnostics.
-  ExprRef Expression;
+  mlir::Value Expression;
   /// How a value used across functions is used in its module, if its use
   /// list is not complete.
   function_ref<std::optional<ModuleUses>(const llvm::Value &)> GetModuleUses;

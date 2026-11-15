@@ -11,7 +11,7 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/Constraint.h"
-#include "metaphir/Matching/Instantiation.h"
+#include "metaphir/Matching/Binding.h"
 #include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Matching/ValueTrackContext.h"
 #include "mlir/IR/Builders.h"
@@ -62,7 +62,7 @@ protected:
   mlir::OpBuilder Builder;
   mlir::OwningOpRef<mlir::ModuleOp> PlanModule;
   ExprEvaluator Evaluator;
-  std::vector<Instantiation::Binding> Slots;
+  std::vector<Binding> Slots;
 
   mlir::Location loc() { return Builder.getUnknownLoc(); }
   mpir::SortType sortType(Sort S) { return mpir::SortType::get(&Context, S); }
@@ -76,7 +76,7 @@ protected:
     V.IsInstruction = true;
     return V;
   }
-  void bind(const Var &V, Instantiation::Binding B) { Slots[V.Slot] = B; }
+  void bind(const Var &V, Binding B) { Slots[V.Slot] = B; }
 
   /// What V's slot is, as an expression reads it.
   Value slot(const Var &V) {
@@ -105,7 +105,7 @@ protected:
 
   /// A built-in operator when Name is one, and a call of a 'constraint'
   /// definition otherwise.
-  Value operation(Constraint::ConstraintID Kind, StringRef Name,
+  Value operation(Constraint::OperatorKind Kind, StringRef Name,
                   std::initializer_list<Value> Arguments) {
     Constraint::OperatorID ID = Constraint::getOperatorID(Name, Kind);
     if (ID == Constraint::UnknownOperator)
@@ -147,12 +147,11 @@ protected:
   }
 
   Expected<ConstraintValue> evaluateResult(Value E) {
-    return Evaluator.evaluate(
-        E, [&](unsigned Slot) -> const Instantiation::Binding * {
-          return std::holds_alternative<std::monostate>(Slots[Slot].Data)
-                     ? nullptr
-                     : &Slots[Slot];
-        });
+    return Evaluator.evaluate(E, [&](unsigned Slot) -> const Binding * {
+      return std::holds_alternative<std::monostate>(Slots[Slot].Data)
+                 ? nullptr
+                 : &Slots[Slot];
+    });
   }
   ConstraintValue evaluate(Value E) { return cantFail(evaluateResult(E)); }
   int64_t evaluateInteger(Value E) {
@@ -273,8 +272,8 @@ TEST_F(ExprEvaluatorTest, AccessesTypeAndValueArrays) {
   Var Values = var("values", Sort::ValueArray);
   Value TypesExpression = read(Types, Sort::TypeArray);
   Value ValuesExpression = read(Values, Sort::ValueArray);
-  bind(Types, Instantiation::TypeArray{I8, I32});
-  bind(Values, Instantiation::ValueArray{One, Two});
+  bind(Types, Binding::TypeArray{I8, I32});
+  bind(Values, Binding::ValueArray{One, Two});
 
   ConstraintValue TypeElement =
       evaluate(access(TypesExpression, integer(1), Sort::Type));
@@ -301,9 +300,8 @@ TEST_F(ExprEvaluatorTest, AccessesTypeAndValueArrays) {
       evaluate(array(Sort::TypeArray, {TypeExpression, TypeExpression}));
   ConstraintValue ValueLiteral =
       evaluate(array(Sort::ValueArray, {ValueExpression, ValueExpression}));
-  EXPECT_EQ(TypeLiteral.getTypeArray(), (Instantiation::TypeArray{I8, I8}));
-  EXPECT_EQ(ValueLiteral.getValueArray(),
-            (Instantiation::ValueArray{One, One}));
+  EXPECT_EQ(TypeLiteral.getTypeArray(), (Binding::TypeArray{I8, I8}));
+  EXPECT_EQ(ValueLiteral.getValueArray(), (Binding::ValueArray{One, One}));
 
   Value TypeStrings = array(Sort::StringArray, {string("i8"), string("i32")});
   Value ValueStrings = array(Sort::StringArray, {string("1"), string("2")});
@@ -571,7 +569,7 @@ TEST_F(ExprEvaluatorTest, ReportsEvaluationErrors) {
 
   Var Values = var("values", Sort::ValueArray);
   Value ValuesExpression = read(Values, Sort::ValueArray);
-  bind(Values, Instantiation::ValueArray{});
+  bind(Values, Binding::ValueArray{});
   Value OutOfBounds = access(ValuesExpression, integer(0), Sort::Value);
   Expected<ConstraintValue> BoundsResult = evaluateResult(OutOfBounds);
   ASSERT_FALSE(BoundsResult);
@@ -808,7 +806,7 @@ TEST_F(ExprEvaluatorTest, ResolvesDefaultValueTrackContext) {
 
   // The pattern instruction preceding the constraint supplies the context.
   Var PatternInst = instruction("root");
-  bind(PatternInst, Instantiation::Binding(Root));
+  bind(PatternInst, Binding(Root));
   Value NoOverflow =
       anchored(operation(Constraint::Call, "noOverflow",
                          {string("umul"), YExpression, ZExpression}),

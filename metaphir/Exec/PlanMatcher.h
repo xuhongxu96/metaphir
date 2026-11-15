@@ -13,7 +13,7 @@
 #include "metaphir/Exec/ExprEvaluator.h"
 #include "metaphir/Exec/TypePattern.h"
 #include "metaphir/IR/Sort.h"
-#include "metaphir/Matching/Instantiation.h"
+#include "metaphir/Matching/Binding.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/Value.h"
 #include "llvm/ADT/SmallVector.h"
@@ -76,21 +76,30 @@ private:
 /// A match: the bindings of a plan's slots.
 class PlanMatch {
 public:
-  PlanMatch(const PlanProgram &Program,
-            std::vector<Instantiation::Binding> Bindings)
+  PlanMatch(const PlanProgram &Program, std::vector<Binding> Bindings)
       : Program(&Program), Bindings(std::move(Bindings)) {}
 
-  const Instantiation::Binding *lookup(unsigned Slot) const {
+  const Binding *lookup(unsigned Slot) const {
     return std::holds_alternative<std::monostate>(Bindings[Slot].Data)
                ? nullptr
                : &Bindings[Slot];
   }
 
-  /// As Instantiation::print: the named meta variables, sorted by name.
+  /// Prints the named meta variables' bindings, sorted by name; Slots as
+  /// for printBinding.
   void print(raw_ostream &OS, ModuleSlotTracker *Slots = nullptr) const;
-  /// As Instantiation::printInstructions.
+  /// Prints the IR instructions the pattern's instructions matched, as
+  /// "{%name@line = #position, ...}": each pattern instruction by its result
+  /// name (or opcode) and, if it is in the main file of Source (the
+  /// pattern's), its line there -- for one inlined from a matcher, that of
+  /// the use of the matcher; the IR instruction by its position among its
+  /// function's instructions. An or-self matcher stands for the instruction
+  /// it matched in its place; one that matched another kind of value is
+  /// left out.
   void printInstructions(raw_ostream &OS, const SourceMgr &Source) const;
-  /// As Instantiation::printLine.
+  /// Prints the match as metaphir-match --matches-only does: Module,
+  /// @function and bindings, and with Source the instructions it matched,
+  /// separated by tabs, on a line.
   void printLine(raw_ostream &OS, StringRef Module, const llvm::Function &F,
                  ModuleSlotTracker *Slots,
                  const SourceMgr *Source = nullptr) const;
@@ -99,7 +108,7 @@ public:
 
 private:
   const PlanProgram *Program;
-  std::vector<Instantiation::Binding> Bindings;
+  std::vector<Binding> Bindings;
 };
 
 /// A constraint that rejected a structural match.
@@ -116,10 +125,11 @@ struct PlanRejection {
 /// A meta variable a relaxed match found bound to two targets.
 struct PlanConflict {
   std::string Variable;
-  Instantiation::Binding First;
-  Instantiation::Binding Second;
+  Binding First;
+  Binding Second;
 
-  /// As Instantiation::printConflict.
+  /// Prints the conflict as "?x would be both %a and %b"; Slots as for
+  /// printBinding.
   void print(raw_ostream &OS, ModuleSlotTracker *Slots = nullptr) const;
 };
 

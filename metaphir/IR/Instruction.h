@@ -1,59 +1,14 @@
 #ifndef METAPHIR_IR_INSTRUCTION_H
 #define METAPHIR_IR_INSTRUCTION_H
 
-#include "metaphir/IR/Constants.h"
-#include "metaphir/IR/MetaFlag.h"
-#include "metaphir/IR/PatternSettings.h"
+#include "llvm/ADT/StringRef.h"
 #include <cstdint>
-#include <optional>
 
 namespace llvm {
 namespace metaphir {
 
-class CompositeMatcher;
-class MetaVariable;
-
-/// An operand of an instruction matcher. Most are typed values ('i32 ?x');
-/// others are bare types (a cast's destination, IsInstructionOperand false),
-/// array captures of the remaining operands ('...?types ?values', IsArray),
-/// or keyed operands such as a predicate or alignment (Key).
-struct MatcherOperand {
-  enum KeyedOperandKind {
-    NotKeyed,
-    Predicate,
-    Alignment,
-    AddressSpace,
-    InRangeLower,
-    InRangeUpper,
-    NumKeyedOperandKinds
-  };
-
-  Type *Ty = nullptr;
-  Value *Val = nullptr;
-  bool IsArray = false;
-  bool IsInstructionOperand = true;
-  MetaVariable *TypeArray = nullptr;
-  MetaVariable *ValueArray = nullptr;
-  KeyedOperandKind Key = NotKeyed;
-  ArrayRef<MetaFlag *> MetaFlags;
-
-  MatcherOperand(Type *Ty = nullptr, Value *Val = nullptr, bool IsArray = false,
-                 bool IsInstructionOperand = true,
-                 MetaVariable *TypeArray = nullptr,
-                 MetaVariable *ValueArray = nullptr,
-                 KeyedOperandKind Key = NotKeyed,
-                 ArrayRef<MetaFlag *> MetaFlags = {})
-      : Ty(Ty), Val(Val), IsArray(IsArray),
-        IsInstructionOperand(IsInstructionOperand), TypeArray(TypeArray),
-        ValueArray(ValueArray), Key(Key), MetaFlags(MetaFlags) {}
-
-  void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
-};
-
-/// A semantic flag written on an instruction matcher. 'nsw' requires the flag,
-/// '!nsw' (Negated) requires its absence, and 'nsw:?v' (Capture) accepts either
-/// and binds ?v to whether it is present. A flag that is not written matches
-/// either way.
+/// The semantic flags an instruction matcher can name ('nsw', 'nnan', ...),
+/// from Flags.def.
 struct InstructionFlag {
   enum FlagID {
 #define MIR_FLAG_TOKEN_KIND(Name) F_##Name,
@@ -61,18 +16,14 @@ struct InstructionFlag {
     NumFlagIDs,
   };
 
-  FlagID ID = NumFlagIDs;
-  MetaVariable *Capture = nullptr;
-  bool Negated = false;
-
   static StringRef getName(FlagID ID);
+
+  InstructionFlag() = delete;
 };
 
-/// An instruction matcher: a built-in one (an InstructionID from
-/// InstructionMatchers.def) or a use of a composite ('match') matcher.
-/// Created by the factories, owned by the MIRContext, not uniqued.
-class Instruction : public Value {
-public:
+/// The built-in instruction matchers, from InstructionMatchers.def, and
+/// their properties.
+struct Instruction {
   enum InstructionID {
 #define MIR_INSTRUCTION_MATCHER_ID(Name) I_##Name,
 #include "metaphir/IR/InstructionMatchers.def"
@@ -119,63 +70,6 @@ public:
 
   static constexpr FlagMask FastMathNNegFlags = FastMathFlags | NNegFlag;
 
-  InstructionID getInstructionID() const {
-    assert(!isComposite() &&
-           "a composite matcher use has no built-in instruction ID");
-    return ID;
-  }
-  StringRef getOpcodeName() const;
-  StringRef getResultName() const { return ResultName; }
-  ArrayRef<InstructionFlag> getFlags() const { return Flags; }
-
-  ArrayRef<MetaFlag *> getMetaFlags() const { return MetaFlags; }
-  void setMetaFlags(MIRContext &Context, ArrayRef<MetaFlag *> Flags);
-  bool hasMetaFlag(MetaFlag::MetaFlagID FlagID) const {
-    return llvm::any_of(MetaFlags, [FlagID](const MetaFlag *Flag) {
-      return Flag->getMetaFlagID() == FlagID;
-    });
-  }
-
-  MetaVariable *getParentBlock() const { return ParentBlock; }
-  PatternSettings getSettings() const { return Settings; }
-  ArrayRef<MatcherOperand> getUnkeyedOperands() const {
-    return UnkeyedOperands;
-  }
-  SmallVector<MatcherOperand, 4> getKeyedOperands() const;
-  const MatcherOperand *
-  getKeyedOperand(MatcherOperand::KeyedOperandKind Kind) const;
-
-  MetaVariable *getCapture() const { return Capture; }
-
-  Value *getOrSelfValue() const { return OrSelfValue; }
-
-  /// The index, among the value operands, of the operand that ':o' lets match
-  /// in place of this instruction; none without ':o'.
-  std::optional<unsigned> getOrSelfOperandIndex() const;
-  /// The two positions, among NumOperands matcher operands, that ':c' swaps:
-  /// a two-argument call's arguments (after the callee), or the two operands
-  /// of anything else; none if there are not two to swap. The parser admits
-  /// ':c' only where there are.
-  std::optional<std::pair<unsigned, unsigned>>
-  getCommutedOperands(unsigned NumOperands) const {
-    if (getInstructionID() == I_call && NumOperands == 3)
-      return std::make_pair(1u, 2u);
-    if (NumOperands == 2)
-      return std::make_pair(0u, 1u);
-    return std::nullopt;
-  }
-  void setOrSelfValue(Value *V) { OrSelfValue = V; }
-
-  /// The instruction using a composite matcher that this one was expanded
-  /// from, if it was: its source range is in the composite's definition, the
-  /// use's (or its own origin's) in the pattern that used it.
-  const Instruction *getExpandedFrom() const { return ExpandedFrom; }
-  void setExpandedFrom(const Instruction *Use) { ExpandedFrom = Use; }
-
-  static bool classof(const Value *V) {
-    return V->getValueID() == InstructionVal;
-  }
-
   static constexpr FlagMask mask(InstructionFlag::FlagID ID) {
     return FlagMask(1) << ID;
   }
@@ -192,35 +86,8 @@ public:
   static unsigned getOperandArity(InstructionID ID) {
     return getInfo(ID).Arity;
   }
-  bool isComposite() const { return Composite != nullptr; }
-  CompositeMatcher *getCompositeMatcher() const { return Composite; }
-  StringRef getCustomOpcodeName() const;
 
-  static Instruction *
-  create(MIRContext &Context, InstructionID ID, StringRef ResultName,
-         ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
-         ArrayRef<MatcherOperand> Operands, MetaVariable *Capture,
-         SourceRange Range, MetaVariable *ParentBlock,
-         PatternSettings Settings = {});
-  static Instruction *createComposite(MIRContext &Context, StringRef ResultName,
-                                      CompositeMatcher *Composite,
-                                      ArrayRef<InstructionFlag> Flags,
-                                      ArrayRef<MetaFlag *> MetaFlags,
-                                      ArrayRef<MatcherOperand> Operands,
-                                      MetaVariable *Capture, SourceRange Range,
-                                      MetaVariable *ParentBlock,
-                                      PatternSettings Settings = {});
-
-  /// Creates an instruction of the same kind as Proto -- the same built-in
-  /// matcher, or the same composite -- expanded from where Proto was, with
-  /// everything else given anew.
-  /// Operands holds keyed and unkeyed operands, as for create().
-  static Instruction *
-  createLike(MIRContext &Context, const Instruction &Proto,
-             StringRef ResultName, ArrayRef<InstructionFlag> Flags,
-             ArrayRef<MetaFlag *> MetaFlags, ArrayRef<MatcherOperand> Operands,
-             MetaVariable *Capture, SourceRange Range,
-             MetaVariable *ParentBlock, PatternSettings Settings);
+  Instruction() = delete;
 
 private:
   /// Properties of a built-in instruction matcher, from
@@ -233,40 +100,7 @@ private:
     unsigned Arity;
   };
   static const Info &getInfo(InstructionID ID);
-
-  InstructionID ID;
-  StringRef ResultName;
-  ArrayRef<InstructionFlag> Flags;
-  ArrayRef<MetaFlag *> MetaFlags;
-  ArrayRef<MatcherOperand> UnkeyedOperands;
-  ArrayRef<MatcherOperand> KeyedOperands;
-  uint64_t KeyedOperandMask;
-  MetaVariable *Capture = nullptr;
-  // For an expanded composite's ':o', this is the caller operand used by the
-  // or-self alternative. It is separate from the branch root's operands.
-  Value *OrSelfValue = nullptr;
-  MetaVariable *ParentBlock;
-  PatternSettings Settings;
-  CompositeMatcher *Composite = nullptr;
-  const Instruction *ExpandedFrom = nullptr;
-
-  Instruction(InstructionID ID, StringRef ResultName,
-              ArrayRef<InstructionFlag> Flags, ArrayRef<MetaFlag *> MetaFlags,
-              ArrayRef<MatcherOperand> UnkeyedOperands,
-              ArrayRef<MatcherOperand> KeyedOperands, uint64_t KeyedOperandMask,
-              MetaVariable *Capture, SourceRange Range,
-              MetaVariable *ParentBlock, PatternSettings Settings,
-              CompositeMatcher *Composite = nullptr)
-      : Value(InstructionVal, Range), ID(ID), ResultName(ResultName),
-        Flags(Flags), MetaFlags(MetaFlags), UnkeyedOperands(UnkeyedOperands),
-        KeyedOperands(KeyedOperands), KeyedOperandMask(KeyedOperandMask),
-        Capture(Capture), ParentBlock(ParentBlock), Settings(Settings),
-        Composite(Composite) {}
 };
-
-raw_ostream &operator<<(raw_ostream &OS, const InstructionFlag &F);
-raw_ostream &operator<<(raw_ostream &OS, const MatcherOperand &O);
-raw_ostream &operator<<(raw_ostream &OS, const Instruction &I);
 
 } // namespace metaphir
 } // namespace llvm

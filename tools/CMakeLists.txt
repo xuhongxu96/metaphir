@@ -1,9 +1,8 @@
 add_executable(metaphir-lex metaphir-lex.cpp)
-target_link_libraries(metaphir-lex PRIVATE metaphir-parser)
+target_link_libraries(metaphir-lex PRIVATE metaphir-lexer)
 
 add_executable(metaphir-parse metaphir-parse.cpp)
 target_link_libraries(metaphir-parse PRIVATE metaphir-parser
-                                             metaphir-pattern-parser
                                              metaphir-surface-printer)
 
 add_executable(metaphir-match metaphir-match.cpp)
@@ -13,7 +12,6 @@ target_link_libraries(metaphir-match
     metaphir-index-lib
     metaphir-web
     metaphir-matching
-    metaphir-parser
     LLVMAsmParser
     LLVMIRReader
 )
@@ -25,7 +23,6 @@ target_link_libraries(metaphir-index
     metaphir-index-lib
     metaphir-web-publish
     metaphir-matching
-    metaphir-parser
     LLVMAsmParser
     LLVMIRReader
 )

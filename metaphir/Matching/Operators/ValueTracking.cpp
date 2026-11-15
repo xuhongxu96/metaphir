@@ -16,7 +16,7 @@ using namespace detail;
 /// Value with an integer (or vector-of-integer) type, as required by the
 /// integer value-tracking queries.
 static Expected<const llvm::Value *>
-requireIntegerValue(const ConstraintValue &Value, ExprRef Expression) {
+requireIntegerValue(const ConstraintValue &Value, mlir::Value Expression) {
   Expected<const llvm::Value *> Val = requireValue(Value, Expression);
   if (!Val)
     return Val.takeError();
@@ -29,7 +29,7 @@ requireIntegerValue(const ConstraintValue &Value, ExprRef Expression) {
 /// Value with a floating-point (or vector-of-FP) type, as required by the
 /// floating-point value-tracking queries.
 static Expected<const llvm::Value *>
-requireFPValue(const ConstraintValue &Value, ExprRef Expression) {
+requireFPValue(const ConstraintValue &Value, mlir::Value Expression) {
   Expected<const llvm::Value *> Val = requireValue(Value, Expression);
   if (!Val)
     return Val.takeError();

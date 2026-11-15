@@ -53,15 +53,48 @@ scripts/prepare_llvm.sh [debug|release] [--force] [--source-only] [--libraries-o
 
 | Directory | |
 |---|---|
-| `metaphir/IR` | the pattern IR: types, values, instruction matchers, constraints, `PatternLowering` |
-| `metaphir/Parser` | lexer and parser; `metaphir/StdLib/stdlib.mpir` is embedded and loaded into every context |
-| `metaphir/Matching` | matching lowered patterns against LLVM IR and evaluating constraints |
+| `metaphir/IR` | the language's vocabulary, from `.def` tables: instruction matchers and their flags, metaflags, constraint operators, keywords, primitive types, sorts, settings |
+| `metaphir/Parser` | lexer, and the parser, which emits the `mpir` dialect; `metaphir/StdLib/stdlib.mpir` is embedded and parsed before every pattern |
+| `metaphir/Dialect` | the dialects patterns are compiled through (see below), and the surface printer, which prints `mpir` in the pattern language |
+| `metaphir/Transforms` | the passes between them |
+| `metaphir/Exec` | what runs the result: the match plan interpreter, the constraint evaluator, index queries on features; `CompiledPattern` runs the whole pipeline |
+| `metaphir/Matching` | the LLVM side: function features, constraint values and their coercions, and each operator's semantics (`Operators/`) |
 | `metaphir/Index` | corpus indexes: per-function features for skipping what a pattern cannot match, and function packs |
 | `metaphir/Web` | corpora published for matching by byte ranges over HTTP |
 | `web` | the website, and the WebAssembly build |
 | `tools` | the command-line tools |
-| `test` | unit tests (gtest) and lit tests (`.ll`) |
+| `test` | unit tests (gtest) and lit tests (`.ll`, `.mlir`) |
 | `eval` | evaluation against InstCombine: patterns, harness, results and report |
+
+## How a pattern is compiled
+
+Patterns are MLIR. The parser emits a module of the surface dialect, and
+passes compile it into a match plan and an index query:
+
+| Dialect | |
+|---|---|
+| `mpir` | patterns: instruction matchers (`mpir.inst`), uses of `match` matchers (`mpir.use`), meta variables, types, and `match`, `constraint` and `metaflag` definitions |
+| `mpir_expr` | constraint expressions, shared by the other three |
+| `mpir_plan` | match plans: what to check of which instruction, in order, with choices (`either`) |
+| `mpir_index` | index queries: the features each way a match can go (`variant`) needs, its constraints on them, and the posting lists to read (`retrieve`) |
+
+| Pass | |
+|---|---|
+| `mpir-lower` | desugars metaflags into constraints, inlines matcher uses as `mpir.alt` (one region per branch), turns `:c` and `:o` into `mpir.alt`, and checks that `:o` leaves no meta variable unbound |
+| `mpir-to-plan` | compiles a lowered pattern into an `mpir_plan.matcher` |
+| `mpir-to-index` | compiles it into an `mpir_index.query`: a variant per choice of matcher branches |
+| `mpir-index-structuralize` | requires what constraints say of instructions (`opcode(?v) == "mul"`, `intrinsic(?c) == "llvm.ctlz"`, `?id == "llvm.ctlz"` for `@llvm.?id`) as features the posting lists have |
+| `mpir-index-retrieval` | adds the lookup: the union over variants of the intersection of their lists |
+| `mpir-index-factor` | factors a list every variant reads out of the union |
+
+`metaphir-opt` runs any of them on MLIR text, as `mlir-opt` does; it is what
+the pass tests under `test/Transforms`, `test/Plan` and `test/IndexQuery`
+run, on what `metaphir-parse --emit=mlir` prints:
+
+```sh
+metaphir-parse --emit=mlir pattern.mpir |
+  metaphir-opt --mpir-lower --mpir-to-index --mpir-index-retrieval
+```
 
 ## Testing
 

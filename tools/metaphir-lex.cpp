@@ -1,7 +1,5 @@
 //===- metaphir-lex.cpp - Print the tokens of a MetaphIR file -------------===//
 
-#include "metaphir/IR/MIRContext.h"
-#include "metaphir/IR/Type.h"
 #include "metaphir/Parser/MIRLexer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
@@ -27,11 +25,6 @@ static void printTokenValue(raw_ostream &OS, const T &Value) {
   OS << " " << Value;
 }
 
-static void printTokenValue(raw_ostream &OS, Type *Value) {
-  if (Value)
-    OS << " " << *Value;
-}
-
 int main(int Argc, char **Argv) {
   InitLLVM X(Argc, Argv);
   cl::HideUnrelatedOptions(Category);
@@ -52,8 +45,7 @@ int main(int Argc, char **Argv) {
   SourceMgr SM;
   unsigned BufferID = SM.AddNewSourceBuffer(std::move(*Buffer), SMLoc());
   SMDiagnostic Diag;
-  MIRContext Context;
-  MIRLexer Lexer(SM.getMemoryBuffer(BufferID)->getBuffer(), SM, Diag, Context);
+  MIRLexer Lexer(SM.getMemoryBuffer(BufferID)->getBuffer(), SM, Diag);
 
   while (true) {
     tok::Kind Kind = Lexer.Lex();

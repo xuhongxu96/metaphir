@@ -1,5 +1,7 @@
 add_library(
   metaphir-matching
+  Binding.cpp
+  Binding.h
   ConstraintCoercion.cpp
   ConstraintCoercion.h
   ConstraintError.cpp
@@ -25,10 +27,8 @@ add_library(
   FeatureRequirement.h
   Features.cpp
   Features.h
-  Instantiation.cpp
   IntegerSemantics.cpp
   IntegerSemantics.h
-  Instantiation.h
   UseOracle.cpp
   UseOracle.h
   OpcodePredicates.cpp
@@ -41,5 +41,5 @@ add_library(
   ValueTrackContext.cpp
   ValueTrackContext.h)
 
-target_link_libraries(metaphir-matching PUBLIC metaphir-ir LLVMAnalysis
+target_link_libraries(metaphir-matching PUBLIC metaphir-ir metaphir-surface-printer LLVMAnalysis
                                                   LLVMCore LLVMSupport)

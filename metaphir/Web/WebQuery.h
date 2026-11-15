@@ -107,7 +107,7 @@ public:
   /// of Frame, and
   /// prints its matches to Out, one per line: the module, @function and
   /// bindings, and with PrintInstructions the instructions matched (see
-  /// Instantiation::printInstructions), separated by tabs. With Rejecting,
+  /// PlanMatch::printInstructions), separated by tabs. With Rejecting,
   /// a function with structural matches but none satisfying the constraints
   /// adds the constraints that rejected them, as metaphir-match prints.
   /// HadStructuralMatch tells whether the function had any structural

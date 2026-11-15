@@ -1,7 +1,7 @@
-; Operand metaflags may be used inside a 'match' body. Expanding the composite
-; matcher inlines those instructions, so PatternLowering desugars each expanded
-; variant as well -- otherwise the inlined flags would reach matching without
-; having been turned into constraints.
+; Operand metaflags may be used inside a 'match' body. Expanding the matcher
+; inlines those instructions, so their flags are desugared in each branch as
+; well -- otherwise the inlined flags would reach matching without having been
+; turned into constraints.
 
 ; RUN: split-file %s %t
 ; RUN: %metaphir-match %t/one-branch.mpir %t/input.ll | FileCheck %s --check-prefix=ONE

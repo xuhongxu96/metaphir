@@ -1,52 +1,37 @@
+# The language's vocabulary: its instruction matchers, flags, metaflags,
+# constraint operators, keywords, primitive types, sorts and settings, and
+# what each takes. The patterns themselves are the mpir dialect's.
 add_library(metaphir-ir
-  MIRContext.cpp
-  MIRContext.h
-
-  MIRContextImpl.h
-  MIRContextImpl.cpp
-
-  Type.cpp
-  Type.h
-
-  DerivedTypes.cpp
-  DerivedTypes.h
-
-  Pattern.cpp
-  Pattern.h
-  PatternVariants.h
+  Constants.cpp
+  Constants.h
+  KeywordConstants.def
 
   Constraint.cpp
   Constraint.h
-
   ConstraintCoercions.def
   ConstraintOperators.def
-
-  CompositeMatcher.cpp
-  CompositeMatcher.h
-
-  LibraryDefs.h
-
-  PatternSettings.cpp
-  PatternSettings.h
-
-  SourceRange.h
-
-  Value.h
-  Constants.h
-  Constants.cpp
+  CmpPredicateOperators.def
+  ConstantClasses.def
 
   Instruction.cpp
   Instruction.h
+  InstructionMatchers.def
+  Flags.def
 
   MetaFlag.cpp
   MetaFlag.h
+  MetaFlags.def
 
-  MetaVariable.h
-  MetaVariable.cpp
+  PatternSettings.cpp
+  PatternSettings.h
+  PatternSettings.def
 
   Sort.cpp
   Sort.h
   Sorts.def
+
+  Type.h
+  Types.def
 )
 
 target_link_libraries(metaphir-ir

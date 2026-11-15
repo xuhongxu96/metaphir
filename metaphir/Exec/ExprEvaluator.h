@@ -9,9 +9,9 @@
 #ifndef METAPHIR_EXEC_EXPREVALUATOR_H
 #define METAPHIR_EXEC_EXPREVALUATOR_H
 
+#include "metaphir/Matching/Binding.h"
 #include "metaphir/Matching/ConstraintError.h"
 #include "metaphir/Matching/ConstraintValue.h"
-#include "metaphir/Matching/Instantiation.h"
 #include "metaphir/Matching/UseOracle.h"
 #include "mlir/IR/Value.h"
 #include "mlir/IR/ValueRange.h"
@@ -27,19 +27,14 @@ namespace detail {
 class ValueTrackContext;
 } // namespace detail
 
-/// The expression E names in errors: printed in the pattern language.
-ExprRef getExprRef(mlir::Value E);
-
 /// What a variable bound to Binding is when Read (an mpir_expr.read) reads
 /// it, as detail::bindingValue reads it.
-Expected<ConstraintValue> readBinding(mlir::Value Read,
-                                      const Instantiation::Binding &Binding);
+Expected<ConstraintValue> readBinding(mlir::Value Read, const Binding &Binding);
 
 class ExprEvaluator {
 public:
   /// What a pattern value (an mpir_plan.slot) is bound to; null if unbound.
-  using SlotLookup =
-      function_ref<const Instantiation::Binding *(unsigned Slot)>;
+  using SlotLookup = function_ref<const Binding *(unsigned Slot)>;
 
   ExprEvaluator();
   ~ExprEvaluator();
@@ -60,7 +55,7 @@ private:
   Expected<SmallVector<ConstraintValue, 2>> evalAll(mlir::ValueRange Values,
                                                     Frame &F);
   /// What V, a slot or a definition's parameter, is bound to.
-  const Instantiation::Binding *lookup(mlir::Value V, Frame &F);
+  const Binding *lookup(mlir::Value V, Frame &F);
   Expected<ConstraintValue> evalCall(mlir::Operation *Call, Frame &F);
   Expected<ConstraintValue> evalApply(mlir::Operation *Apply, Frame &F);
   std::optional<ModuleUses> getModuleUses(const llvm::Value &V);

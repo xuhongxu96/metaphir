@@ -1,7 +1,7 @@
 #ifndef METAPHIR_MATCHING_CONSTRAINTVALUE_H
 #define METAPHIR_MATCHING_CONSTRAINTVALUE_H
 
-#include "metaphir/Matching/Instantiation.h"
+#include "metaphir/Matching/Binding.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/Support/KnownBits.h"
 #include <string>
@@ -49,8 +49,8 @@ public:
   StringRef getString() const;
   const llvm::Type *getType() const;
   const llvm::Value *getValue() const;
-  const Instantiation::TypeArray &getTypeArray() const;
-  const Instantiation::ValueArray &getValueArray() const;
+  const Binding::TypeArray &getTypeArray() const;
+  const Binding::ValueArray &getValueArray() const;
   const StringArrayStorage &getStringArray() const;
   const llvm::KnownBits &getKnownBits() const;
 
@@ -60,16 +60,16 @@ public:
   static ConstraintValue getString(StringRef Value);
   static ConstraintValue getType(const llvm::Type *Value);
   static ConstraintValue getValue(const llvm::Value *Value);
-  static ConstraintValue getTypeArray(Instantiation::TypeArray Value);
-  static ConstraintValue getValueArray(Instantiation::ValueArray Value);
+  static ConstraintValue getTypeArray(Binding::TypeArray Value);
+  static ConstraintValue getValueArray(Binding::ValueArray Value);
   static ConstraintValue getStringArray(StringArrayStorage Value);
   static ConstraintValue getKnownBits(llvm::KnownBits Value);
 
 private:
-  using Storage = std::variant<APSInt, bool, std::string, const llvm::Type *,
-                               const llvm::Value *, Instantiation::TypeArray,
-                               Instantiation::ValueArray, StringArrayStorage,
-                               llvm::KnownBits>;
+  using Storage =
+      std::variant<APSInt, bool, std::string, const llvm::Type *,
+                   const llvm::Value *, Binding::TypeArray, Binding::ValueArray,
+                   StringArrayStorage, llvm::KnownBits>;
 
   Storage Data;
   bool Modular = false;

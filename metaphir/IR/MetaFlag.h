@@ -1,18 +1,15 @@
 #ifndef METAPHIR_IR_META_FLAG_H
 #define METAPHIR_IR_META_FLAG_H
 
-#include "metaphir/IR/MetaVariable.h"
-#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 #include <optional>
-#include <variant>
 
 namespace llvm {
 namespace metaphir {
 
-/// A metaflag written on an operand or instruction (':c', ':or(:zero, ...)',
-/// ':s'): built in, or defined by a 'metaflag' definition.
-class MetaFlag {
-public:
+/// The built-in metaflags (':c', ':o', ':or', ':not'), from MetaFlags.def,
+/// and what they accept. The others are defined by 'metaflag' definitions.
+struct MetaFlag {
   enum MetaFlagID {
     UnknownMetaFlag,
 #define MIR_META_FLAG_ID(Name) MF_##Name,
@@ -34,44 +31,14 @@ public:
     ArgumentKind Arguments;
   };
 
-  struct Argument {
-    enum Kind { Integer, Flag };
-
-    Kind K = Integer;
-    int64_t IntegerValue = 0;
-    MetaFlag *FlagValue = nullptr;
-  };
-
   static constexpr unsigned UnlimitedArgs = ~0u;
-
-  StringRef getName() const;
-  MetaFlagID getMetaFlagID() const;
-  bool isUserDefined() const { return std::holds_alternative<StringRef>(Flag); }
-  ArrayRef<Argument> getArguments() const { return Arguments; }
-  SourceRange getSourceRange() const { return Range; }
 
   static std::optional<Schema> getSchema(MetaFlagID ID);
   static MetaFlagID getMetaFlagID(StringRef Name);
   static StringRef getMetaFlagName(MetaFlagID ID);
-  static MetaFlag *createBuiltin(MIRContext &Context, MetaFlagID ID,
-                                 ArrayRef<Argument> Arguments,
-                                 SourceRange Range);
-  static MetaFlag *createUserDefined(MIRContext &Context, StringRef Name,
-                                     ArrayRef<Argument> Arguments,
-                                     SourceRange Range);
 
-private:
-  std::variant<MetaFlagID, StringRef> Flag;
-  ArrayRef<Argument> Arguments;
-  SourceRange Range;
-
-  MetaFlag(std::variant<MetaFlagID, StringRef> Flag,
-           ArrayRef<Argument> Arguments, SourceRange Range)
-      : Flag(Flag), Arguments(Arguments), Range(Range) {}
+  MetaFlag() = delete;
 };
-
-raw_ostream &operator<<(raw_ostream &OS, const MetaFlag::Argument &A);
-raw_ostream &operator<<(raw_ostream &OS, const MetaFlag &F);
 
 } // namespace metaphir
 } // namespace llvm

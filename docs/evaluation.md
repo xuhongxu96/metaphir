@@ -156,9 +156,10 @@ and next to the query times; `summary.json` has them per PR in
 The same counts are recorded for the ablations. `REPORT.md` compares the
 index, the index without value facts, and matching with
 `--no-constraint-prefilter`. That option keeps the feature prefilter but does
-not evaluate the variants' constraints on a candidate's features: a function
-passes when its features can match structurally, even if a constraint would
-reject every match, so more packs are checked. The no-value-facts index changes
+not evaluate the variants' constraints on a candidate's features, nor require
+the features they name: a function passes when its features can match
+structurally, even if a constraint would reject every match, so more packs are
+checked. The no-value-facts index changes
 packs only for the patterns whose constraints read value facts (pr209322, both
 pr212132 cases, pr216046); for the others the fine features select the same
 packs. The full scan reads every function and file. Every timing is the median

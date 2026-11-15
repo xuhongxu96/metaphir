@@ -74,5 +74,12 @@ SMRange getOutermostSourceRange(Location Loc) {
   return getSourceRange(Loc);
 }
 
+std::optional<unsigned> getMainFileLine(const SourceMgr &SM, SMLoc Loc) {
+  if (!Loc.isValid() || SM.getNumBuffers() == 0 ||
+      SM.FindBufferContainingLoc(Loc) != SM.getMainFileID())
+    return std::nullopt;
+  return SM.getLineAndColumn(Loc, SM.getMainFileID()).first;
+}
+
 } // namespace metaphir
 } // namespace llvm

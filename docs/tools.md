@@ -263,6 +263,10 @@ meta ?n type=Nat
 meta ?x type=Value
 ```
 
+With `--emit=mlir`, it prints the module the parser made of the pattern (in
+the `mpir` dialect; see [development](development.md#how-a-pattern-is-compiled)),
+which `metaphir-opt` runs passes on.
+
 `metaphir-lex` prints the tokens of a file; `--line-numbers` prefixes each
 with its line:
 
@@ -291,8 +295,9 @@ function's **features**:
 | globals | the globals the function uses (none here) |
 | value facts at each instruction kind's operands | the constant `2` at operand 1 of `udiv`; constant classes; use counts; value-tracking facts (when indexing) |
 
-A pattern variant is matched only where the function can have a match. Each
-condition below prunes a function of `corpus` (checked with
+A pattern is matched only where the function can have a match: where it has
+what some way a match can go (a choice of branches of the matchers it uses)
+needs. Each condition below prunes a function of `corpus` (checked with
 `metaphir-index stats`):
 
 | Condition | Pattern | Pruned |
@@ -301,9 +306,12 @@ condition below prunes a function of `corpus` (checked with
 | their types must agree on the type variables | `%r = urem i8 ?x, ?c` | every function: their `urem`s are `i32` |
 | no constraint may be false on the facts | `%r = urem i?n ?x, ?c` with `;; ?c == 4` | every function: the only `urem` constant is `2` |
 
-Constraints use the same evaluator as they do on IR
-(`metaphir/Matching/ConstraintEvaluator.h`). Facts may leave a result unknown;
-unknown constraints do not prune candidates.
+Constraints are evaluated on the features with the same operators as on IR
+(`metaphir/Exec/IndexQuery.cpp`). Facts may leave a result unknown; unknown
+constraints do not prune candidates. A constraint that says what kind of
+instruction a value is, or which intrinsic a call calls (`opcode(?v) ==
+"mul"`, `intrinsic(?c) == "llvm.ctlz"`), also requires that instruction or
+intrinsic as a feature, which the posting lists find.
 
 Each operator's IR, recording, and index semantics are documented together in
 `metaphir/Matching/Operators/`.

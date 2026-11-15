@@ -1,100 +1,9 @@
 #include "metaphir/IR/Constraint.h"
-#include "metaphir/IR/MIRContext.h"
-#include "metaphir/IR/MIRContextImpl.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 namespace metaphir {
-
-IntegerConstraint *IntegerConstraint::create(MIRContext &Context,
-                                             const APSInt &Number,
-                                             SourceRange Range) {
-  bool Negative = Number.isSigned() && Number.isNegative();
-  APSInt Literal =
-      Negative
-          ? APSInt(
-                Number.sextOrTrunc(std::max(64u, Number.getSignificantBits())),
-                /*isUnsigned=*/false)
-          : APSInt(Number.zextOrTrunc(std::max(64u, Number.getActiveBits())),
-                   /*isUnsigned=*/true);
-  auto *Result =
-      new (Context.pImpl->Alloc) IntegerConstraint(std::move(Literal), Range);
-  if (Result->Number.needsCleanup())
-    Context.pImpl->ConstraintsToDestroy.push_back(Result);
-  return Result;
-}
-
-IntegerConstraint *IntegerConstraint::create(MIRContext &Context,
-                                             int64_t Number,
-                                             SourceRange Range) {
-  return create(Context, APSInt(APInt(64, uint64_t(Number), true), false),
-                Range);
-}
-
-BooleanConstraint *BooleanConstraint::create(MIRContext &Context, bool State,
-                                             SourceRange Range) {
-  return new (Context.pImpl->Alloc) BooleanConstraint(State, Range);
-}
-
-StringConstraint *StringConstraint::create(MIRContext &Context, StringRef Value,
-                                           SourceRange Range) {
-  return new (Context.pImpl->Alloc)
-      StringConstraint(Context.pImpl->Saver.save(Value), Range);
-}
-
-ArrayConstraint *ArrayConstraint::create(MIRContext &Context, Sort Type,
-                                         ArrayRef<Constraint *> Elements,
-                                         SourceRange Range) {
-  return new (Context.pImpl->Alloc)
-      ArrayConstraint(Type, Context.pImpl->copyArray(Elements), Range);
-}
-
-VariableConstraint *VariableConstraint::create(MIRContext &Context,
-                                               Value *Variable, Sort Type,
-                                               SourceRange Range) {
-  return new (Context.pImpl->Alloc) VariableConstraint(Variable, Type, Range);
-}
-
-ArrayAccessConstraint *
-ArrayAccessConstraint::create(MIRContext &Context, Sort Type, Constraint *Array,
-                              Constraint *Index, SourceRange Range) {
-  return new (Context.pImpl->Alloc)
-      ArrayAccessConstraint(Type, Array, Index, Range);
-}
-
-OperatorConstraint *OperatorConstraint::createBuiltin(
-    MIRContext &Context, ConstraintID ID, Sort Type, OperatorID OpID,
-    ArrayRef<Constraint *> Arguments, SourceRange Range) {
-  assert(
-      OpID != UnknownOperator &&
-      "built-in OperatorConstraint::createBuiltin requires a known OperatorID");
-  return new (Context.pImpl->Alloc) OperatorConstraint(
-      ID, Type, OpID, Context.pImpl->copyArray<Constraint *>(Arguments), Range);
-}
-
-OperatorConstraint *OperatorConstraint::createUserDefined(
-    MIRContext &Context, ConstraintID ID, Sort Type, StringRef Operator,
-    ArrayRef<Constraint *> Arguments, SourceRange Range) {
-  assert(Constraint::getOperatorID(Operator, ID) == UnknownOperator &&
-         "custom OperatorConstraint::createUserDefined cannot be called with a "
-         "built-in operator name");
-  StringRef SavedOperator = Context.pImpl->Saver.save(Operator);
-  return new (Context.pImpl->Alloc) OperatorConstraint(
-      ID, Type, SavedOperator,
-      Context.pImpl->copyArray<Constraint *>(Arguments), Range);
-}
-
-Constraint::OperatorID OperatorConstraint::getOperatorID() const {
-  if (const auto *ID = std::get_if<OperatorID>(&Op))
-    return *ID;
-  return UnknownOperator;
-}
-
-StringRef OperatorConstraint::getOperator() const {
-  if (const auto *ID = std::get_if<OperatorID>(&Op))
-    return Constraint::getOperatorName(*ID);
-  return std::get<StringRef>(Op);
-}
 
 std::optional<Constraint::OperatorSchema>
 Constraint::getOperatorSchema(OperatorID ID) {
@@ -111,7 +20,7 @@ Constraint::getOperatorSchema(OperatorID ID) {
 }
 
 Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
-                                                 ConstraintID Kind) {
+                                                 OperatorKind Kind) {
   static const auto OperatorMaps = [] {
     struct Maps {
       StringMap<OperatorID> Unary;
@@ -147,8 +56,6 @@ Constraint::OperatorID Constraint::getOperatorID(StringRef Name,
   case Call:
     Map = &OperatorMaps.Call;
     break;
-  default:
-    return UnknownOperator;
   }
 
   auto It = Map->find(Name);
@@ -308,75 +215,6 @@ StringRef Constraint::describe(Sort Type) {
     break;
   }
   llvm_unreachable("a representation sort has no description");
-}
-
-void Constraint::setDefaultContextInstruction(const Instruction *CxtI) {
-  if (!Context)
-    Context = CxtI;
-  switch (ID) {
-  case Array:
-    for (Constraint *Element : cast<ArrayConstraint>(this)->getElements())
-      Element->setDefaultContextInstruction(CxtI);
-    break;
-  case ArrayAccess: {
-    auto *Access = cast<ArrayAccessConstraint>(this);
-    Access->getArray()->setDefaultContextInstruction(CxtI);
-    Access->getIndex()->setDefaultContextInstruction(CxtI);
-    break;
-  }
-  case Unary:
-  case Binary:
-  case Call:
-    for (Constraint *Argument : cast<OperatorConstraint>(this)->getArguments())
-      Argument->setDefaultContextInstruction(CxtI);
-    break;
-  case Integer:
-  case Boolean:
-  case String:
-  case Variable:
-    break;
-  }
-}
-
-raw_ostream &operator<<(raw_ostream &OS, const Constraint &C) {
-  switch (C.getConstraintID()) {
-  case Constraint::Integer:
-    return OS << cast<IntegerConstraint>(C).getValue();
-  case Constraint::Boolean:
-    return OS << (cast<BooleanConstraint>(C).getValue() ? "true" : "false");
-  case Constraint::String:
-    return OS << '"' << cast<StringConstraint>(C).getValue() << '"';
-  case Constraint::Array: {
-    const auto &Array = cast<ArrayConstraint>(C);
-    OS << '[';
-    for (unsigned Index = 0; Index != Array.getElements().size(); ++Index) {
-      if (Index)
-        OS << ',';
-      OS << *Array.getElements()[Index];
-    }
-    return OS << ']';
-  }
-  case Constraint::Variable: {
-    const Value *V = cast<VariableConstraint>(C).getVariable();
-    if (const auto *MV = dyn_cast<MetaVariable>(V))
-      return OS << *MV;
-    return OS << *V;
-  }
-  case Constraint::ArrayAccess: {
-    const auto &Access = cast<ArrayAccessConstraint>(C);
-    return OS << *Access.getArray() << '[' << *Access.getIndex() << ']';
-  }
-  case Constraint::Unary:
-  case Constraint::Binary:
-  case Constraint::Call: {
-    const auto &Operator = cast<OperatorConstraint>(C);
-    OS << '(' << Operator.getOperator();
-    for (const Constraint *Argument : Operator.getArguments())
-      OS << ' ' << *Argument;
-    return OS << ')';
-  }
-  }
-  llvm_unreachable("invalid constraint kind");
 }
 
 } // namespace metaphir

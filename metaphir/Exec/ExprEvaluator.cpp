@@ -28,12 +28,6 @@ static Sort sortOf(mlir::Value V) {
   return cast<mpir::SortType>(V.getType()).getSort();
 }
 
-ExprRef getExprRef(mlir::Value E) {
-  return ExprRef(E.getAsOpaquePointer(), [](raw_ostream &OS, const void *P) {
-    printSurfaceExpression(OS, mlir::Value::getFromOpaquePointer(P));
-  });
-}
-
 /// The name a variable is read under, in a diagnostic.
 static std::string describeVariable(mlir::Value V, StringRef Msg) {
   std::string Str;
@@ -50,9 +44,9 @@ static std::string describeVariable(mlir::Value V, StringRef Msg) {
 /// What a variable bound to Binding is when read as Read reads it: as
 /// detail::bindingValue reads it.
 Expected<ConstraintValue> readBinding(mlir::Value ReadValue,
-                                      const Instantiation::Binding &Binding) {
+                                      const Binding &Binding) {
   auto Read = ReadValue.getDefiningOp<mpir_expr::ReadOp>();
-  ExprRef Expression = getExprRef(Read.getResult());
+  mlir::Value Expression = Read.getResult();
   auto Incompatible = [&] {
     return make_error<ConstraintEvaluationError>(
         Expression,
@@ -89,13 +83,11 @@ Expected<ConstraintValue> readBinding(mlir::Value ReadValue,
       return ConstraintValue::getValue(*Value);
     break;
   case Sort::TypeArray:
-    if (const auto *Types =
-            std::get_if<Instantiation::TypeArray>(&Binding.Data))
+    if (const auto *Types = std::get_if<Binding::TypeArray>(&Binding.Data))
       return ConstraintValue::getTypeArray(*Types);
     break;
   case Sort::ValueArray:
-    if (const auto *Values =
-            std::get_if<Instantiation::ValueArray>(&Binding.Data))
+    if (const auto *Values = std::get_if<Binding::ValueArray>(&Binding.Data))
       return ConstraintValue::getValueArray(*Values);
     break;
   case Sort::Unknown:
@@ -114,9 +106,9 @@ Expected<ConstraintValue> readBinding(mlir::Value ReadValue,
             return ConstraintValue::getString(CmpInst::getPredicateName(Val));
           else if constexpr (std::is_same_v<T, Intrinsic::ID>)
             return ConstraintValue::getString(Intrinsic::getBaseName(Val));
-          else if constexpr (std::is_same_v<T, Instantiation::TypeArray>)
+          else if constexpr (std::is_same_v<T, Binding::TypeArray>)
             return ConstraintValue::getTypeArray(Val);
-          else if constexpr (std::is_same_v<T, Instantiation::ValueArray>)
+          else if constexpr (std::is_same_v<T, Binding::ValueArray>)
             return ConstraintValue::getValueArray(Val);
           else
             return Incompatible();
@@ -132,7 +124,7 @@ Expected<ConstraintValue> readBinding(mlir::Value ReadValue,
 /// arguments.
 struct ExprEvaluator::Frame {
   SlotLookup Slots;
-  DenseMap<mlir::Value, Instantiation::Binding> Parameters;
+  DenseMap<mlir::Value, Binding> Parameters;
 };
 
 ExprEvaluator::ExprEvaluator()
@@ -153,7 +145,7 @@ Expected<ConstraintValue> ExprEvaluator::evaluate(mlir::Value E,
   return eval(E, F);
 }
 
-const Instantiation::Binding *ExprEvaluator::lookup(mlir::Value V, Frame &F) {
+const Binding *ExprEvaluator::lookup(mlir::Value V, Frame &F) {
   if (auto Slot = V.getDefiningOp<mpir_plan::SlotOp>())
     return F.Slots(Slot.getSlot());
   auto It = F.Parameters.find(V);
@@ -174,7 +166,7 @@ ExprEvaluator::evalAll(mlir::ValueRange Values, Frame &F) {
 
 Expected<ConstraintValue> ExprEvaluator::eval(mlir::Value E, Frame &F) {
   Operation *Def = E.getDefiningOp();
-  ExprRef Expression = getExprRef(E);
+  mlir::Value Expression = E;
   if (auto Int = dyn_cast<mpir_expr::IntOp>(Def))
     return ConstraintValue::getInteger(Int.getAPSInt());
   if (auto Bool = dyn_cast<mpir_expr::BoolOp>(Def))
@@ -182,7 +174,7 @@ Expected<ConstraintValue> ExprEvaluator::eval(mlir::Value E, Frame &F) {
   if (auto Str = dyn_cast<mpir_expr::StrOp>(Def))
     return ConstraintValue::getString(Str.getValue());
   if (auto Read = dyn_cast<mpir_expr::ReadOp>(Def)) {
-    const Instantiation::Binding *Binding = lookup(Read.getValue(), F);
+    const Binding *Binding = lookup(Read.getValue(), F);
     if (!Binding)
       return make_error<ConstraintEvaluationError>(
           Expression, describeVariable(Read.getValue(), "is not instantiated"));
@@ -195,13 +187,13 @@ Expected<ConstraintValue> ExprEvaluator::eval(mlir::Value E, Frame &F) {
       return Elements.takeError();
     switch (sortOf(Array)) {
     case Sort::TypeArray: {
-      Instantiation::TypeArray Types;
+      Binding::TypeArray Types;
       for (const ConstraintValue &Element : *Elements)
         Types.push_back(Element.getType());
       return ConstraintValue::getTypeArray(std::move(Types));
     }
     case Sort::ValueArray: {
-      Instantiation::ValueArray Values;
+      Binding::ValueArray Values;
       for (const ConstraintValue &Element : *Elements)
         Values.push_back(Element.getValue());
       return ConstraintValue::getValueArray(std::move(Values));
@@ -263,7 +255,7 @@ Expected<ConstraintValue> ExprEvaluator::eval(mlir::Value E, Frame &F) {
 
 Expected<ConstraintValue> ExprEvaluator::evalApply(Operation *Op, Frame &F) {
   auto Apply = cast<mpir_expr::ApplyOp>(Op);
-  ExprRef Expression = getExprRef(Apply.getResult());
+  mlir::Value Expression = Apply.getResult();
   auto Def = mlir::SymbolTable::lookupNearestSymbolFrom<mpir::ConstraintDefOp>(
       Op, Apply.getCalleeAttr());
   if (!Def)
@@ -278,33 +270,33 @@ Expected<ConstraintValue> ExprEvaluator::evalApply(Operation *Op, Frame &F) {
     Expected<ConstraintValue> Value = eval(Arg, F);
     if (!Value)
       return Value.takeError();
-    std::optional<Instantiation::Binding> Binding;
+    std::optional<Binding> Parameter;
     switch (Value->getKind()) {
     case ConstraintValue::Integer:
-      Binding = Instantiation::Binding(Value->getInteger());
+      Parameter = Binding(Value->getInteger());
       break;
     case ConstraintValue::Boolean:
-      Binding = Instantiation::Binding(Value->getBoolean());
+      Parameter = Binding(Value->getBoolean());
       break;
     case ConstraintValue::Type:
-      Binding = Instantiation::Binding(Value->getType());
+      Parameter = Binding(Value->getType());
       break;
     case ConstraintValue::Value:
-      Binding = Instantiation::Binding(Value->getValue());
+      Parameter = Binding(Value->getValue());
       break;
     case ConstraintValue::TypeArray:
-      Binding = Instantiation::Binding(Value->getTypeArray());
+      Parameter = Binding(Value->getTypeArray());
       break;
     case ConstraintValue::ValueArray:
-      Binding = Instantiation::Binding(Value->getValueArray());
+      Parameter = Binding(Value->getValueArray());
       break;
     default:
       break;
     }
-    if (!Binding)
+    if (!Parameter)
       return make_error<ConstraintEvaluationError>(
           Expression, "unsupported argument type for user-defined constraint");
-    Callee.Parameters[Body.getArgument(Index)] = std::move(*Binding);
+    Callee.Parameters[Body.getArgument(Index)] = std::move(*Parameter);
   }
   mlir::Value Result = (*Body.getOps<mpir::YieldOp>().begin()).getValue();
   ++CallDepth;
@@ -315,7 +307,7 @@ Expected<ConstraintValue> ExprEvaluator::evalApply(Operation *Op, Frame &F) {
 
 Expected<ConstraintValue> ExprEvaluator::evalCall(Operation *Op, Frame &F) {
   auto Call = cast<mpir_expr::CallOp>(Op);
-  ExprRef Expression = getExprRef(Call.getResult());
+  mlir::Value Expression = Call.getResult();
   mlir::OperandRange Arguments = Call.getArgs();
   auto GetModuleUses = [this](const llvm::Value &V) {
     return getModuleUses(V);
@@ -377,7 +369,7 @@ Expected<ConstraintValue> ExprEvaluator::evalCall(Operation *Op, Frame &F) {
             Expression, "expected an instruction context operand");
     } else {
       if (mlir::Value Anchor = Call.getAnchor())
-        if (const Instantiation::Binding *Binding = lookup(Anchor, F))
+        if (const Binding *Binding = lookup(Anchor, F))
           if (const auto *Value =
                   std::get_if<const llvm::Value *>(&Binding->Data))
             Context = dyn_cast<llvm::Instruction>(*Value);

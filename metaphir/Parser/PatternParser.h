@@ -5,8 +5,6 @@
 // 'constraint' as mpir.constraint_def, 'metaflag' as mpir.metaflag_def), and,
 // if the file has instructions, its pattern as an mpir.pattern.
 //
-// The language, and every diagnostic, is that of MIRParser.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef METAPHIR_PARSER_PATTERNPARSER_H

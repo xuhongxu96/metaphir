@@ -14,7 +14,6 @@
 namespace llvm {
 namespace metaphir {
 
-using Binding = Instantiation::Binding;
 using namespace detail;
 using mlir::Operation;
 
@@ -30,17 +29,12 @@ struct IndexQuery::Typing {
   SmallVector<bool, 4> IsValue;
 };
 
-/// The handle a site names node by.
-static const void *nodeHandle(int64_t Node) {
-  return reinterpret_cast<const void *>(uintptr_t(Node + 1));
-}
-
+/// The site an mpir_index.sites element is: [node, opcode, slots].
 static Site siteOf(mlir::ArrayAttr Attr) {
   auto Int = [&](unsigned I) {
     return cast<mlir::IntegerAttr>(Attr[I]).getInt();
   };
-  return Site{nodeHandle(Int(0)), Instruction::InstructionID(Int(1)),
-              uint8_t(Int(2))};
+  return Site{Int(0), Instruction::InstructionID(Int(1)), uint8_t(Int(2))};
 }
 
 static RetrievalPlan compileRetrieval(mpir_index::RetrieveOp Retrieve);
@@ -79,7 +73,7 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
                             Has.getAbsent(), Has.getWidth()});
       } else if (auto Has = dyn_cast<mpir_index::HasFactOp>(Op)) {
         R.SiteFacts.push_back(
-            {Site{nodeHandle(Has.getNode()), Has.getOpcode().getValue(),
+            {Site{int64_t(Has.getNode()), Has.getOpcode().getValue(),
                   uint8_t(Has.getSlots())},
              Atom::fromCode(Has.getAtom())});
       } else if (auto T = dyn_cast<mpir_index::TypingOp>(Op)) {
@@ -107,7 +101,7 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
           Expected<ConstraintValue> Result = Concrete.evaluate(
               Assume.getCondition(),
               [](unsigned) -> const Binding * { return nullptr; });
-          ExprRef Expression = getExprRef(Assume.getCondition());
+          mlir::Value Expression = Assume.getCondition();
           Expected<bool> Holds = Result ? requireBoolean(*Result, Expression)
                                         : Expected<bool>(Result.takeError());
           if (!Holds) {
@@ -414,13 +408,13 @@ Expected<AbstractValue> AbstractEvaluator::eval(mlir::Value E, Frame &F) {
       return AbstractValue::unknown();
     switch (cast<mpir::SortType>(Array.getType()).getSort()) {
     case Sort::TypeArray: {
-      Instantiation::TypeArray Types;
+      Binding::TypeArray Types;
       for (const ConstraintValue &V : *Values)
         Types.push_back(V.getType());
       return Concrete(ConstraintValue::getTypeArray(std::move(Types)));
     }
     case Sort::ValueArray: {
-      Instantiation::ValueArray Vals;
+      Binding::ValueArray Vals;
       for (const ConstraintValue &V : *Values)
         Vals.push_back(V.getValue());
       return Concrete(ConstraintValue::getValueArray(std::move(Vals)));
@@ -428,8 +422,7 @@ Expected<AbstractValue> AbstractEvaluator::eval(mlir::Value E, Frame &F) {
     default: {
       ConstraintValue::StringArrayStorage Strings;
       for (const ConstraintValue &V : *Values) {
-        Expected<std::string> S =
-            requireString(V, getExprRef(Array.getResult()));
+        Expected<std::string> S = requireString(V, Array.getResult());
         if (!S)
           return S.takeError();
         Strings.push_back(std::move(*S));
@@ -450,7 +443,7 @@ Expected<AbstractValue> AbstractEvaluator::eval(mlir::Value E, Frame &F) {
 
 Expected<AbstractValue> AbstractEvaluator::evalApply(mpir_expr::ApplyOp Apply,
                                                      Frame &F) {
-  ExprRef Expression = getExprRef(Apply.getResult());
+  mlir::Value Expression = Apply.getResult();
   auto Def = mlir::SymbolTable::lookupNearestSymbolFrom<mpir::ConstraintDefOp>(
       Apply, Apply.getCalleeAttr());
   if (!Def)
@@ -477,7 +470,7 @@ Expected<AbstractValue> AbstractEvaluator::evalApply(mpir_expr::ApplyOp Apply,
 
 Expected<AbstractValue> AbstractEvaluator::evalCall(mpir_expr::CallOp Call,
                                                     Frame &F) {
-  ExprRef Expression = getExprRef(Call.getResult());
+  mlir::Value Expression = Call.getResult();
   mlir::OperandRange Arguments = Call.getArgs();
   auto Boolean = [](bool B) {
     return AbstractValue::concrete(ConstraintValue::getBoolean(B));
@@ -548,17 +541,17 @@ Expected<AbstractValue> AbstractEvaluator::evalCall(mpir_expr::CallOp Call,
         evalAll(Arguments.take_front(BaseArity), F);
     if (!Operands)
       return Operands.takeError();
-    const void *Context = nullptr;
+    int64_t Context = -1;
     if (Arguments.size() > BaseArity) {
       Expected<AbstractValue> Explicit = eval(Arguments[BaseArity], F);
       if (!Explicit)
         return Explicit.takeError();
     } else if (mlir::Value Anchor = Call.getAnchor()) {
       if (auto Node = Anchor.getDefiningOp<mpir_index::NodeOp>())
-        Context = nodeHandle(Node.getNode());
+        Context = Node.getNode();
     }
     if constexpr (detail::HasAbstract<Op>::value)
-      if (Context)
+      if (Context >= 0)
         return Op::abstract(
             AbstractCall{*Operands, Expression, Features, Context});
     return AbstractValue::unknown();
@@ -592,7 +585,7 @@ bool IndexQuery::constraintsMayHold(const Variant &V,
     }
     if (!Result->isConcrete())
       continue;
-    Expected<bool> Holds = requireBoolean(Result->getConcrete(), getExprRef(C));
+    Expected<bool> Holds = requireBoolean(Result->getConcrete(), C);
     if (!Holds) {
       consumeError(Holds.takeError());
       return false;

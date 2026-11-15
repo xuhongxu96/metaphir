@@ -25,9 +25,9 @@ int main(int argc, char **argv) {
   metaphir::registerIndexRetrievalPasses();
 
   mlir::DialectRegistry Registry;
-  Registry
-      .insert<metaphir::mpir::PatternDialect, metaphir::mpir_expr::ExprDialect,
-              metaphir::mpir_plan::PlanDialect>();
+  Registry.insert<
+      metaphir::mpir::PatternDialect, metaphir::mpir_expr::ExprDialect,
+      metaphir::mpir_plan::PlanDialect, metaphir::mpir_index::IndexDialect>();
   return mlir::asMainReturnCode(
       mlir::MlirOptMain(argc, argv, "MetaphIR pass driver\n", Registry));
 }

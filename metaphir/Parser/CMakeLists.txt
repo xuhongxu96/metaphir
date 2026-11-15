@@ -11,7 +11,7 @@ add_custom_command(
   COMMENT "Embedding stdlib.mpir into StdLibSource.inc"
 )
 
-add_library(metaphir-parser
+add_library(metaphir-lexer
   MIRKeywords.def
   MIRTokenKinds.def
 
@@ -22,16 +22,15 @@ add_library(metaphir-parser
   MIRLexer.h
 )
 
-target_link_libraries(metaphir-parser
+target_link_libraries(metaphir-lexer
   PUBLIC
     LLVMSupport
     metaphir-ir
 )
 
 # The parser that emits the mpir dialect.
-add_library(metaphir-pattern-parser PatternParser.cpp PatternParser.h
-                                    "${METAPHIR_STDLIB_OUTPUT}")
-target_include_directories(metaphir-pattern-parser
-                           PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(metaphir-pattern-parser PUBLIC metaphir-parser
-                                                     metaphir-dialect-expr)
+add_library(metaphir-parser PatternParser.cpp PatternParser.h
+                            "${METAPHIR_STDLIB_OUTPUT}")
+target_include_directories(metaphir-parser PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(metaphir-parser PUBLIC metaphir-lexer
+                                             metaphir-dialect-expr)

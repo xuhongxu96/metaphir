@@ -1,9 +1,8 @@
 //===- PatternParser.cpp - Parse patterns into the mpir dialect -----------===//
 //
-// A port of MIRParser that builds operations of the mpir and mpir_expr
-// dialects in place of MetaphIR IR objects. The grammar, the order in which
-// it is checked and every diagnostic are MIRParser's; see its files for the
-// grammar of each part.
+// Parses the MetaphIR language (see docs/) into operations of the mpir and
+// mpir_expr dialects, with the lexer of MIRLexer. Each part of the grammar is
+// parsed, and checked, in the section of its name below.
 //
 //===----------------------------------------------------------------------===//
 
@@ -11,13 +10,13 @@
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
+#include "metaphir/IR/Constants.h"
 #include "metaphir/IR/Constraint.h"
-#include "metaphir/IR/DerivedTypes.h"
 #include "metaphir/IR/Instruction.h"
-#include "metaphir/IR/MIRContext.h"
 #include "metaphir/IR/MetaFlag.h"
 #include "metaphir/IR/PatternSettings.h"
 #include "metaphir/IR/Sort.h"
+#include "metaphir/IR/Type.h"
 #include "metaphir/Parser/MIRLexer.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -90,8 +89,8 @@ class Parser {
 public:
   Parser(StringRef Buffer, SourceMgr &SM, SMDiagnostic &Error,
          mlir::ModuleOp Module)
-      : SM(SM), Lex(Buffer, SM, Error, LexContext),
-        Context(Module.getContext()), Builder(Context), Module(Module) {}
+      : SM(SM), Lex(Buffer, SM, Error), Context(Module.getContext()),
+        Builder(Context), Module(Module) {}
 
   /// Parses the buffer: definitions, then an optional pattern body.
   /// Library is true for a library, which may hold only definitions.
@@ -101,8 +100,6 @@ private:
   using LocTy = MIRLexer::LocTy;
 
   SourceMgr &SM;
-  /// Owns the types the lexer makes of 'iN' tokens.
-  MIRContext LexContext;
   MIRLexer Lex;
   mlir::MLIRContext *Context;
   OpBuilder Builder;
@@ -284,7 +281,7 @@ private:
   bool parseConstraintArray(Value &Result);
   bool parseConstraintCall(Value &Result);
   bool parseConstraintArguments(SmallVectorImpl<Value> &Args);
-  bool makeOperator(Value &Result, Constraint::ConstraintID Kind,
+  bool makeOperator(Value &Result, Constraint::OperatorKind Kind,
                     StringRef Spelling, ArrayRef<Value> Args, LocTy Loc);
   bool checkOperands(mpir_expr::CallOp Operator, StringRef Spelling);
   bool requireBooleanConstraint(Value C);
@@ -1425,11 +1422,9 @@ bool Parser::parseBaseType(Value &Result, bool AllowVoid) {
   auto TypeSort = sortType(Sort::Type);
   switch (Lex.getKind()) {
   case tok::Type: {
-    const Type *T = Lex.getTyVal();
-    unsigned Bits = isa<IntegerType>(T) ? cast<IntegerType>(T)->getNumBits()
-                                        : cast<ByteType>(T)->getNumBits();
-    auto Op = IntTypeOp::create(Builder, loc(Loc), TypeSort, Bits);
-    if (isa<ByteType>(T))
+    IntTypeToken T = Lex.getTyVal();
+    auto Op = IntTypeOp::create(Builder, loc(Loc), TypeSort, T.Bits);
+    if (T.Byte)
       Op.setByte(true);
     Result = Op;
     next();
@@ -1712,6 +1707,19 @@ bool Parser::parseAggregateConstant(Value &Result) {
 
 //===----------------------------------------------------------------------===//
 // Constraint expressions
+//
+// Loosest binding first:
+//
+//   expr     ::= expr '||' expr | expr '&&' expr
+//              | expr ('==' | '!=') expr          (not chained)
+//              | expr ('+' | '-') expr | expr '*' expr
+//              | ('!' | '-') expr | postfix
+//   postfix  ::= primary ('[' expr ']')*
+//   primary  ::= integer | 'true' | 'false' | string | '[' expr, ... ']'
+//              | ?var | '(' expr ')' | name '(' expr, ... ')'
+//
+// Operands are type-checked against the operator as they are parsed; a type
+// that is only known once matched (Unknown) is accepted.
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -1764,7 +1772,7 @@ bool Parser::checkOperands(mpir_expr::CallOp Operator, StringRef Spelling) {
   return false;
 }
 
-bool Parser::makeOperator(Value &Result, Constraint::ConstraintID Kind,
+bool Parser::makeOperator(Value &Result, Constraint::OperatorKind Kind,
                           StringRef Spelling, ArrayRef<Value> Args, LocTy Loc) {
   Constraint::OperatorID ID = Constraint::getOperatorID(Spelling, Kind);
   assert(ID != Constraint::UnknownOperator && "operator token without an ID");
@@ -1923,7 +1931,7 @@ bool Parser::parseConstraintPrimary(Value &Result) {
   switch (Lex.getKind()) {
   case tok::APSInt: {
     // A non-negative literal is unsigned and a negative one signed, each at
-    // least 64 bits wide (as IntegerConstraint::create makes them).
+    // least 64 bits wide.
     const APSInt &Number = Lex.getAPSIntVal();
     bool Negative = Number.isSigned() && Number.isNegative();
     APSInt Literal =
@@ -1959,7 +1967,7 @@ bool Parser::parseConstraintPrimary(Value &Result) {
                    Lex.getStrVal() + "'");
     Value M = It->second;
     next();
-    // Read as the variable's sort so far, as VariableConstraint is.
+    // Read as the variable's sort so far.
     Result = mpir_expr::ReadOp::create(
         Builder, loc(Loc), sortType(getRepresentation(resolveSort(sortOf(M)))),
         M);

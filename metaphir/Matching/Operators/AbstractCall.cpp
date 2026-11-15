@@ -32,11 +32,11 @@ AbstractValue lacksFact(const AbstractCall &Call, unsigned OperandIndex,
 static std::optional<SmallVector<Site, 2>>
 contextSites(const AbstractCall &Call, unsigned OperandIndex) {
   const AbstractValue &V = Call.Operands[OperandIndex];
-  if (!V.isSites() || !Call.Context || !Call.Features.HasValueFacts)
+  if (!V.isSites() || Call.Context < 0 || !Call.Features.HasValueFacts)
     return std::nullopt;
   SmallVector<Site, 2> Anchored;
   for (const Site &S : V.getSites())
-    if (S.Parent == Call.Context)
+    if (S.Node == Call.Context)
       Anchored.push_back(S);
   return Anchored;
 }

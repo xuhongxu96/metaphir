@@ -18,7 +18,6 @@
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/Exec/TypePattern.h"
 #include "metaphir/IR/Constants.h"
-#include "metaphir/IR/SourceRange.h"
 #include "metaphir/Matching/ConstantInteger.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/OpcodePredicates.h"
@@ -38,7 +37,6 @@
 namespace llvm {
 namespace metaphir {
 
-using Binding = Instantiation::Binding;
 namespace plan = mpir_plan;
 
 //===----------------------------------------------------------------------===//
@@ -569,12 +567,12 @@ bool PlanMatcher::Run::step(const Step &S) {
   case Step::GetOperandsFrom: {
     ArrayRef<const llvm::Value *> Ops = operandsOf(*instruction(S.Src));
     if (S.Flag) {
-      Instantiation::TypeArray Types;
+      Binding::TypeArray Types;
       for (const llvm::Value *V : Ops.drop_front(S.A))
         Types.push_back(V->getType());
       Registers[S.Dst] = Binding(std::move(Types));
     } else {
-      Registers[S.Dst] = Binding(Instantiation::ValueArray(
+      Registers[S.Dst] = Binding(Binding::ValueArray(
           Ops.drop_front(S.A).begin(), Ops.drop_front(S.A).end()));
     }
     return true;
@@ -825,7 +823,7 @@ void PlanMatcher::Run::emit() {
         Evaluator.evaluate(C->Condition, [&](unsigned Slot) -> const Binding * {
           return isBound(Slot) ? &Slots[Slot] : nullptr;
         });
-    ExprRef Expression = getExprRef(C->Condition);
+    mlir::Value Expression = C->Condition;
     Expected<bool> Holds = Result ? detail::requireBoolean(*Result, Expression)
                                   : Expected<bool>(Result.takeError());
     if (!Holds) {

@@ -14,15 +14,21 @@ class SMDiagnostic;
 
 namespace metaphir {
 
-class Type;
-class MIRContext;
+/// The value of a tok::Type token: 'iN' or 'bN'.
+struct IntTypeToken {
+  /// The most bits an integer or byte type can have, as in LLVM.
+  static constexpr unsigned MaxBits = 1u << 23;
+
+  unsigned Bits = 0;
+  bool Byte = false;
+};
+raw_ostream &operator<<(raw_ostream &OS, const IntTypeToken &T);
 
 class MIRLexer {
 public:
   using LocTy = SMLoc;
 
-  explicit MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &,
-                    MIRContext &C);
+  explicit MIRLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &);
   tok::Kind Lex();
   /// Rewinds to Loc, the start of a token previously returned in pattern
   /// syntax, and lexes it again. Gives the parser one-token lookahead.
@@ -35,7 +41,7 @@ public:
   LocTy getPrevTokEnd() const { return SMLoc::getFromPointer(PrevTokEnd); }
   tok::Kind getKind() const { return CurKind; }
   const std::string &getStrVal() const { return StrVal; }
-  Type *getTyVal() const { return TyVal; }
+  IntTypeToken getTyVal() const { return TyVal; }
   unsigned getUIntVal() const { return UIntVal; }
   char getMetaIntPrefix() const { return MetaIntPrefix; }
   const APSInt &getAPSIntVal() const { return APSIntVal; }
@@ -85,7 +91,6 @@ private:
 
   DiagnosticState Diag;
   SourceMgr &SM;
-  MIRContext &Context;
 
   /// Constraint expressions use a different token set than pattern syntax
   /// (see LexConstraintToken), so the lexer tracks which sublanguage it is
@@ -115,7 +120,7 @@ private:
   std::string StrVal;
   unsigned UIntVal = 0;
   char MetaIntPrefix = 'i';
-  Type *TyVal = nullptr;
+  IntTypeToken TyVal;
   APFloat APFloatVal{0.0};
   APSInt APSIntVal{0};
 

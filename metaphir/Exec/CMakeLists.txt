@@ -12,5 +12,5 @@ target_link_libraries(metaphir-exec PUBLIC metaphir-matching metaphir-index-core
 # A pattern compiled through the whole pipeline, from its source.
 add_library(metaphir-compile CompiledPattern.cpp CompiledPattern.h)
 target_link_libraries(metaphir-compile PUBLIC metaphir-exec
-                                              metaphir-pattern-parser
+                                              metaphir-parser
                                               metaphir-transforms)

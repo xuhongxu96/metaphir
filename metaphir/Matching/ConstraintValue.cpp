@@ -1,5 +1,5 @@
 #include "metaphir/Matching/ConstraintValue.h"
-#include "metaphir/Matching/Instantiation.h"
+#include "metaphir/Matching/Binding.h"
 #include <type_traits>
 
 namespace llvm {
@@ -19,9 +19,9 @@ ConstraintValue::ValueKind ConstraintValue::getKind() const {
           return Type;
         else if constexpr (std::is_same_v<T, const llvm::Value *>)
           return Value;
-        else if constexpr (std::is_same_v<T, Instantiation::TypeArray>)
+        else if constexpr (std::is_same_v<T, Binding::TypeArray>)
           return TypeArray;
-        else if constexpr (std::is_same_v<T, Instantiation::ValueArray>)
+        else if constexpr (std::is_same_v<T, Binding::ValueArray>)
           return ValueArray;
         else if constexpr (std::is_same_v<T, llvm::KnownBits>)
           return BitVector;
@@ -51,12 +51,12 @@ const llvm::Value *ConstraintValue::getValue() const {
   return std::get<const llvm::Value *>(Data);
 }
 
-const Instantiation::TypeArray &ConstraintValue::getTypeArray() const {
-  return std::get<Instantiation::TypeArray>(Data);
+const Binding::TypeArray &ConstraintValue::getTypeArray() const {
+  return std::get<Binding::TypeArray>(Data);
 }
 
-const Instantiation::ValueArray &ConstraintValue::getValueArray() const {
-  return std::get<Instantiation::ValueArray>(Data);
+const Binding::ValueArray &ConstraintValue::getValueArray() const {
+  return std::get<Binding::ValueArray>(Data);
 }
 
 const ConstraintValue::StringArrayStorage &
@@ -94,12 +94,11 @@ ConstraintValue ConstraintValue::getValue(const llvm::Value *Value) {
   return ConstraintValue(Value);
 }
 
-ConstraintValue ConstraintValue::getTypeArray(Instantiation::TypeArray Value) {
+ConstraintValue ConstraintValue::getTypeArray(Binding::TypeArray Value) {
   return ConstraintValue(std::move(Value));
 }
 
-ConstraintValue
-ConstraintValue::getValueArray(Instantiation::ValueArray Value) {
+ConstraintValue ConstraintValue::getValueArray(Binding::ValueArray Value) {
   return ConstraintValue(std::move(Value));
 }
 
