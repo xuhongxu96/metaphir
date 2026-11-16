@@ -19,7 +19,7 @@
         },
         "initCommands": [
             // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
-            "command script import ${workspaceFolder}/llvm-project/llvm/utils/lldbDataFormatters.py",
+            "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
             "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
         ]
     }

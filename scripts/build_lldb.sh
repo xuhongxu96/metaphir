@@ -6,7 +6,7 @@
 #   build-lldb/build     the build tree (Ninja)
 #   build-lldb/install   the install: bin/lldb, bin/lldb-dap, bin/lldb-server,
 #                        and LLDB's Python package in lib/python3/site-packages
-#   build-lldb/formatters  MLIR's LLDB data formatters, patched (see below)
+#   build-lldb/formatters  LLVM's and MLIR's LLDB data formatters, patched (see below)
 #
 # The release build is installed into build-lldb/install, which VS Code reads
 # through ${workspaceFolder}. Needs a C++ compiler, CMake, Ninja, and Python 3
@@ -121,23 +121,88 @@ text = replace_once(
 
 class ValueSynthProvider:''',
 )
-# No children for a null value.
+# Values have no children, and their summary is a plain name: reading them
+# calls functions in the stopped program (getOwner, debug_getType, ...), and
+# that crashes LLDB while the parser is stopped on a value (a breakpoint at
+# setDefaultContext, for one). Null values still print as <null>.
 text = replace_once(
     text,
     "    def num_children(self):\n        # 7: BlockArgument:",
-    "    def num_children(self):\n"
-    "        if _is_null_value(self.valobj):\n"
-    "            return 0\n\n"
+    "    def num_children(self):\n        return 0\n\n"
     "        # 7: BlockArgument:",
 )
-# The summary of a null value is <null>.
 text = replace_once(
     text,
     '    """Define an LLDB summary provider for Values."""\n\n',
     '    """Define an LLDB summary provider for Values."""\n\n'
     '    if _is_null_value(valobj):\n'
-    '        return "<null>"\n\n',
+    '        return "<null>"\n'
+    '    return "mlir::Value"\n\n',
 )
+open(target, "w").write(text)
+print("patched", target)
+PY
+# LLVM's data formatters show every SmallVector as empty: its size is in
+# SmallVectorBase, whose members the debug info does not describe. The copy
+# here reads the layout directly: BeginX (a pointer) at offset 0, and Size (an
+# unsigned 32-bit) at offset 8. Children are built from their addresses, so no
+# function runs in the program.
+python3 - "$REPO/llvm-project/llvm/utils/lldbDataFormatters.py" \
+    "$FORMATTERS/lldbDataFormatters.py" <<'PY'
+import sys
+
+source, target = sys.argv[1:3]
+text = open(source).read()
+
+NEW_PROVIDER = '''class SmallVectorSynthProvider:
+    """Provider for llvm::SmallVector, read from memory (see the patch in build_lldb.sh)."""
+
+    def __init__(self, valobj, internal_dict) -> None:
+        self.valobj = valobj
+        self.update()
+
+    def num_children(self) -> int:
+        return self.count
+
+    def get_child_index(self, name):
+        try:
+            return int(name.lstrip("[").rstrip("]"))
+        except:
+            return -1
+
+    def get_child_at_index(self, index):
+        if index < 0 or index >= self.count:
+            return None
+        return self.valobj.CreateValueFromAddress(
+            "[" + str(index) + "]",
+            self.begin_address + index * self.type_size,
+            self.data_type,
+        )
+
+    def update(self):
+        the_type = self.valobj.GetType()
+        if the_type.IsReferenceType():
+            the_type = the_type.GetDereferencedType()
+        if the_type.IsPointerType():
+            the_type = the_type.GetPointeeType()
+        self.data_type = the_type.GetTemplateArgumentType(0)
+        self.type_size = self.data_type.GetByteSize()
+        assert self.type_size != 0
+        process = self.valobj.GetProcess()
+        address = self.valobj.GetLoadAddress()
+        error = lldb.SBError()
+        self.begin_address = process.ReadPointerFromMemory(address, error)
+        self.count = 0
+        if error.Success():
+            count = process.ReadUnsignedFromMemory(address + 8, 4, error)
+            if error.Success():
+                self.count = count
+
+
+'''
+start = text.index("class SmallVectorSynthProvider:")
+end = text.index("class ArrayRefSynthProvider:")
+text = text[:start] + NEW_PROVIDER + text[end:]
 open(target, "w").write(text)
 print("patched", target)
 PY
