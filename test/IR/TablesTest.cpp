@@ -39,6 +39,18 @@ TEST(TablesTest, GeneratedExtensibilitySchemas) {
   ASSERT_TRUE(Or);
   EXPECT_EQ(Or->Arguments, metaflag::FlagArgument);
   EXPECT_EQ(Or->AllowedPlacement, metaflag::OperandPlacement);
+  EXPECT_TRUE(Or->Nestable);
+  auto Not = metaflag::getSchema(metaflag::MF_not);
+  ASSERT_TRUE(Not);
+  EXPECT_TRUE(Not->Nestable);
+  // ':c' and ':o' change how an instruction is matched, so they cannot be
+  // nested inside another metaflag.
+  auto Commutative = metaflag::getSchema(metaflag::MF_c);
+  ASSERT_TRUE(Commutative);
+  EXPECT_FALSE(Commutative->Nestable);
+  auto OperandIndex = metaflag::getSchema(metaflag::MF_o);
+  ASSERT_TRUE(OperandIndex);
+  EXPECT_FALSE(OperandIndex->Nestable);
   EXPECT_FALSE(metaflag::getSchema(metaflag::UnknownMetaFlag));
   EXPECT_EQ(metaflag::getMetaFlagID("c"), metaflag::MF_c);
   EXPECT_EQ(metaflag::getMetaFlagID("future_flag"), metaflag::UnknownMetaFlag);

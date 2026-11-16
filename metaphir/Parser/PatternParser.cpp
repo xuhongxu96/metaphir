@@ -78,6 +78,9 @@ struct PFlag {
 struct PMetaFlag {
   MetaFlagAttr Attr;
   SMLoc Loc;
+  /// Where the flag may be written, and whether it may be nested.
+  metaflag::Placement Allowed = metaflag::AnyPlacement;
+  bool Nestable = true;
   StringRef getName() const { return Attr.getName().getValue(); }
   metaflag::MetaFlagID getID() const {
     return metaflag::getMetaFlagID(getName());
@@ -221,9 +224,9 @@ private:
   bool
   parseSemanticFlags(function_ref<bool(instruction_flag::FlagID)> IsSupported,
                      StringRef OwnerName, SmallVectorImpl<PFlag> &Result);
-  bool parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed);
+  bool parseMetaFlag(PMetaFlag &Result, metaflag::Placement Position);
   bool parseMetaFlags(SmallVectorImpl<PMetaFlag> &Result,
-                      metaflag::Placement Placement);
+                      metaflag::Placement Position);
   bool validateOrSelf(ArrayRef<PMetaFlag> MFlags, ArrayRef<POperand> Ops);
   bool validateInstruction(instruction::InstructionID ID,
                            ArrayRef<PMetaFlag> MFlags, ArrayRef<POperand> Ops);
@@ -721,7 +724,9 @@ bool Parser::parseSemanticFlags(
   }
 }
 
-bool Parser::parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed) {
+/// Parses one metaflag written in Position, the placement the flag it is
+/// nested in allows. Its own placement is for the caller to check.
+bool Parser::parseMetaFlag(PMetaFlag &Result, metaflag::Placement Position) {
   Nesting Nest(*this);
   if (Nest.tooDeep())
     return true;
@@ -732,19 +737,16 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed) {
   next();
   SmallVector<mlir::Attribute, 4> Args;
   unsigned NumFlagArgs = 0;
+  SmallVector<PMetaFlag, 2> NestedFlags;
   if (consume(tok::lparen)) {
     if (Lex.getKind() != tok::rparen) {
       do {
         if (Lex.getKind() == tok::MetaFlag) {
-          PMetaFlag Nested;
-          metaflag::Placement NestedAllowed = metaflag::OperandPlacement;
-          if (parseMetaFlag(Nested, NestedAllowed))
+          PMetaFlag NestedFlag;
+          if (parseMetaFlag(NestedFlag, Position))
             return true;
-          if (!(NestedAllowed & metaflag::OperandPlacement))
-            return Lex.ParseError(Nested.Loc,
-                                  "metaflag ':" + Nested.getName() +
-                                      "' is not valid as a nested metaflag");
-          Args.push_back(Nested.Attr);
+          NestedFlags.push_back(NestedFlag);
+          Args.push_back(NestedFlag.Attr);
           ++NumFlagArgs;
         } else if (Lex.getKind() == tok::APSInt) {
           if (!Lex.getAPSIntVal().isRepresentableByInt64())
@@ -760,8 +762,11 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed) {
     if (expect(tok::rparen, "expected ')' after metaflag arguments"))
       return true;
   }
+  metaflag::Placement Allowed;
+  bool Nestable = true;
   if (std::optional<metaflag::Schema> Schema = metaflag::getSchema(ID)) {
     Allowed = Schema->AllowedPlacement;
+    Nestable = Schema->Nestable;
     if (Args.size() < Schema->MinArguments ||
         Args.size() > Schema->MaxArguments)
       return Lex.ParseError(
@@ -783,6 +788,17 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed) {
   } else {
     return Lex.ParseError(Loc, "unknown metaflag ':" + Name + "'");
   }
+  // A nested metaflag is written where the flag holding it is.
+  for (const PMetaFlag &N : NestedFlags) {
+    if (!N.Nestable)
+      return Lex.ParseError(N.Loc,
+                            "metaflag ':" + N.getName() + "' cannot be nested");
+    if (!(N.Allowed & Position))
+      return Lex.ParseError(N.Loc, "metaflag ':" + N.getName() +
+                                       "' is not valid in this position");
+  }
+  Result.Allowed = Allowed;
+  Result.Nestable = Nestable;
   Result.Attr = MetaFlagAttr::get(Context, Builder.getStringAttr(Name),
                                   Builder.getArrayAttr(Args), loc(Loc));
   Result.Loc = Loc;
@@ -790,13 +806,12 @@ bool Parser::parseMetaFlag(PMetaFlag &Result, metaflag::Placement &Allowed) {
 }
 
 bool Parser::parseMetaFlags(SmallVectorImpl<PMetaFlag> &Result,
-                            metaflag::Placement Placement) {
+                            metaflag::Placement Position) {
   while (Lex.getKind() == tok::MetaFlag) {
     PMetaFlag F;
-    metaflag::Placement Allowed = metaflag::OperandPlacement;
-    if (parseMetaFlag(F, Allowed))
+    if (parseMetaFlag(F, Position))
       return true;
-    if (!(Allowed & Placement))
+    if (!(F.Allowed & Position))
       return Lex.ParseError(F.Loc, "metaflag ':" + F.getName() +
                                        "' is not valid in this position");
     Result.push_back(F);
@@ -1655,7 +1670,7 @@ bool Parser::parseValue(Value &Result, Sort Expected) {
 #define MIR_CONSTANT_KEYWORD(ID, Kind)                                         \
   case tok::kw_##Kind:                                                         \
     Result = KeywordOp::create(Builder, loc(Loc), sortType(Sort::Value),       \
-                               unsigned(keyword_constant::K_##ID));             \
+                               unsigned(keyword_constant::K_##ID));            \
     next();                                                                    \
     return false;
 #include "metaphir/Parser/MIRKeywords.def"

@@ -49,7 +49,7 @@ define i32 @nested_flags_no_match(i32 %x, i32 %y) {
 ; OR-ERROR-NEXT:                ^
 ; OR-ERROR-NOT: {{.}}
 
-; NESTED-ERROR: error: metaflag ':c' is not valid as a nested metaflag
+; NESTED-ERROR: error: metaflag ':c' cannot be nested
 ; NESTED-ERROR-NEXT: %r = add i32 ?x:or(:c), ?y
 ; NESTED-ERROR-NEXT:                    ^
 ; NESTED-ERROR-NOT: {{.}}

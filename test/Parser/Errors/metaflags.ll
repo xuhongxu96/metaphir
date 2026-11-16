@@ -3,6 +3,7 @@
 ; RUN: not %metaphir-parse %t/mf-unknown.mpir 2>&1 | FileCheck %s --check-prefix=MF-UNKNOWN
 ; RUN: not %metaphir-parse %t/mf-nested-unknown.mpir 2>&1 | FileCheck %s --check-prefix=MF-NESTED-UNKNOWN
 ; RUN: not %metaphir-parse %t/mf-nested-placement.mpir 2>&1 | FileCheck %s --check-prefix=MF-NESTED-PLACEMENT
+; RUN: not %metaphir-parse %t/mf-nested-unnestable.mpir 2>&1 | FileCheck %s --check-prefix=MF-NESTED-UNNESTABLE
 ; RUN: not %metaphir-parse %t/mf-argument.mpir 2>&1 | FileCheck %s --check-prefix=MF-ARGUMENT
 ; RUN: not %metaphir-parse %t/mf-close.mpir 2>&1 | FileCheck %s --check-prefix=MF-CLOSE
 ; RUN: not %metaphir-parse %t/mf-count.mpir 2>&1 | FileCheck %s --check-prefix=MF-COUNT
@@ -30,7 +31,11 @@ metaflag:i :onlyinst(?i) {
   true
 }
 %a = add i32 ?x:not(:onlyinst), 1
-; MF-NESTED-PLACEMENT: metaflag ':onlyinst' is not valid as a nested metaflag
+; MF-NESTED-PLACEMENT: metaflag ':onlyinst' is not valid in this position
+
+;--- mf-nested-unnestable.mpir
+%a = add i32 ?x:not(:o(1)), 1
+; MF-NESTED-UNNESTABLE: metaflag ':o' cannot be nested
 
 ;--- mf-argument.mpir
 %a = add i32 ?x:or(?y), 1

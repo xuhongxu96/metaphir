@@ -28,9 +28,9 @@ MetaFlagID getMetaFlagID(StringRef Name) {
 std::optional<Schema> getSchema(MetaFlagID ID) {
   switch (ID) {
 #define MIR_META_FLAG_SCHEMA(FlagName, Placement, MinArgs, MaxArgs,            \
-                             ArgumentKind)                                     \
+                             ArgumentKind, Nestable)                           \
   case MF_##FlagName:                                                          \
-    return Schema{Placement, MinArgs, MaxArgs, ArgumentKind};
+    return Schema{Placement, MinArgs, MaxArgs, ArgumentKind, Nestable};
 #include "metaphir/IR/MetaFlags.def"
   case UnknownMetaFlag:
     break;

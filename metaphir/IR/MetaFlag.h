@@ -29,6 +29,8 @@ struct Schema {
   unsigned MinArguments;
   unsigned MaxArguments;
   ArgumentKind Arguments;
+  /// Whether the flag may be an argument of another metaflag.
+  bool Nestable;
 };
 
 constexpr unsigned UnlimitedArgs = ~0u;
