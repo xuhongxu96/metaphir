@@ -4,11 +4,23 @@
     },
     "cmake.exportCompileCommandsFile": true,
     // The Testing view (CMake Tools) runs and debugs the CTest tests, which
-    // are the gtest cases; Debug in that view launches them with this
-    // configuration. The program and arguments come from CTest.
+    // are the gtest cases, with lldb-dap as built by scripts/build_lldb.sh.
+    // VS Code expands ${workspaceFolder} in debug configurations, so the
+    // adapter, its Python path and the data formatters are set here, as in
+    // launch.json.
     "cmake.debugConfig": {
         "type": "lldb-dap",
         "request": "launch",
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "debugAdapterExecutable": "${workspaceFolder}/build-lldb/install/bin/lldb-dap",
+        "debugAdapterEnv": {
+            "PATH": "${workspaceFolder}/build-lldb/install/bin:${env:PATH}",
+            "PYTHONPATH": "${workspaceFolder}/build-lldb/install/lib/python3/site-packages"
+        },
+        "initCommands": [
+            // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
+            "command script import ${workspaceFolder}/llvm-project/llvm/utils/lldbDataFormatters.py",
+            "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
+        ]
     }
 }
