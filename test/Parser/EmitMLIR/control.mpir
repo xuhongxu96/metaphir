@@ -1,37 +1,37 @@
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | FileCheck %s
 ; CHECK-LABEL:   mpir.pattern {
+; Control flow: blocks written as labels, phis with their incoming blocks,
+; branches and returns.
+?entry:
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "entry" : <BasicBlock>
+%c = icmp ult i32 ?x, 10
 ; CHECK:           %[[KEYWORD_0:.*]] = mpir.keyword ult : <Value>
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "x" : <Operand>
 ; CHECK:           %[[INT_0:.*]] = mpir.int 10 : ui4 : <Value>
 ; CHECK:           %[[INST_0:.*]] = mpir.inst <icmp> block %[[VAR_0]] (%[[KEYWORD_0]], %[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[INT_0]]) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [5, 0, 0]> : (!mpir.sort<BasicBlock>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+br i1 %c, label ?loop, label ?exit
 ; CHECK:           %[[TYPE_1:.*]] = mpir.type.int 1 : <Type>
 ; CHECK:           %[[TYPE_2:.*]] = mpir.type.prim label : <Type>
 ; CHECK:           %[[VAR_2:.*]] = mpir.var "loop" : <BasicBlock>
 ; CHECK:           %[[TYPE_3:.*]] = mpir.type.prim label : <Type>
 ; CHECK:           %[[VAR_3:.*]] = mpir.var "exit" : <BasicBlock>
 ; CHECK:           %[[INST_1:.*]] = mpir.inst <br> block %[[VAR_0]] (%[[TYPE_1]], %[[INST_0]], %[[TYPE_2]], %[[VAR_2]], %[[TYPE_3]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<BasicBlock>) -> !mpir.sort<Instruction>
+?loop:
+%i = phi i32 [0, ?entry], [?n, ?loop]
 ; CHECK:           %[[TYPE_4:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INT_1:.*]] = mpir.int 0 : ui1 : <Value>
 ; CHECK:           %[[VAR_4:.*]] = mpir.var "n" : <Operand>
 ; CHECK:           %[[INST_2:.*]] = mpir.inst <phi> block %[[VAR_2]] (%[[TYPE_4]], %[[INT_1]], %[[VAR_0]], %[[TYPE_4]], %[[VAR_4]], %[[VAR_2]]) <result_name = "i", flags = [], flag_modes = [], operand_kinds = [0, 1, 0, 1]> : (!mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<BasicBlock>) -> !mpir.sort<Instruction>
+%next = add i32 %i, 1
 ; CHECK:           %[[TYPE_5:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INT_2:.*]] = mpir.int 1 : ui1 : <Value>
 ; CHECK:           %[[INST_3:.*]] = mpir.inst <add> block %[[VAR_2]] (%[[TYPE_5]], %[[INST_2]], %[[TYPE_5]], %[[INT_2]]) <result_name = "next", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+br label ?exit
 ; CHECK:           %[[TYPE_6:.*]] = mpir.type.prim label : <Type>
 ; CHECK:           %[[INST_4:.*]] = mpir.inst <br> block %[[VAR_2]] (%[[TYPE_6]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<BasicBlock>) -> !mpir.sort<Instruction>
+?exit:
+ret i32 %next
 ; CHECK:           %[[TYPE_7:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_5:.*]] = mpir.inst <ret> block %[[VAR_3]] (%[[TYPE_7]], %[[INST_3]]) <flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:         }
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Control flow: blocks written as labels, phis with their incoming blocks,
-; branches and returns.
-?entry:
-%c = icmp ult i32 ?x, 10
-br i1 %c, label ?loop, label ?exit
-?loop:
-%i = phi i32 [0, ?entry], [?n, ?loop]
-%next = add i32 %i, 1
-br label ?exit
-?exit:
-ret i32 %next

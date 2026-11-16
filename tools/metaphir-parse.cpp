@@ -4,7 +4,9 @@
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Pattern/SurfacePrinter.h"
 #include "metaphir/Parser/PatternParser.h"
+#include "mlir/IR/AsmState.h"
 #include "mlir/IR/MLIRContext.h"
+#include "mlir/IR/OperationSupport.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/Path.h"
@@ -36,6 +38,8 @@ int main(int Argc, char **Argv) {
   cl::HideUnrelatedOptions(Category);
   cl::SetVersionPrinter(
       [](raw_ostream &OS) { OS << "MetaphIR " METAPHIR_VERSION "\n"; });
+  // The MLIR printer's options, such as --mlir-print-debuginfo.
+  mlir::registerAsmPrinterCLOptions();
   StringRef ToolName = sys::path::filename(Argv[0]);
   cl::ParseCommandLineOptions(Argc, Argv,
                               "Parse a MetaphIR pattern and print it\n");
@@ -60,7 +64,7 @@ int main(int Argc, char **Argv) {
           Op.erase();
       }
     }
-    Module->print(outs());
+    Module->print(outs(), mlir::OpPrintingFlags());
     outs() << '\n';
     return 0;
   }

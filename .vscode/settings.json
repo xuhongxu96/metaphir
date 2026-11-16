@@ -1,6 +1,14 @@
 {
     "files.associations": {
-        "*.def": "cpp",
+        "*.def": "cpp"
     },
-    "cmake.exportCompileCommandsFile": true
+    "cmake.exportCompileCommandsFile": true,
+    // The Testing view (CMake Tools) runs and debugs the CTest tests, which
+    // are the gtest cases; Debug in that view launches them with this
+    // configuration. The program and arguments come from CTest.
+    "cmake.debugConfig": {
+        "type": "lldb-dap",
+        "request": "launch",
+        "cwd": "${workspaceFolder}"
+    }
 }

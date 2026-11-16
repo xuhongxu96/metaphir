@@ -1,65 +1,65 @@
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | FileCheck %s
 ; CHECK-LABEL:   mpir.pattern {
+; Casts: the source operand and the destination type, with 'nneg'.
+%t = trunc nuw i64 ?x to i32
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
 ; CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_0:.*]] = mpir.inst <trunc> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_1]]) <result_name = "t", flags = [1], flag_modes = [0], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%z = zext nneg i32 %t to i64
 ; CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_3:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[INST_1:.*]] = mpir.inst <zext> (%[[TYPE_2]], %[[INST_0]], %[[TYPE_3]]) <result_name = "z", flags = [8], flag_modes = [0], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%s = sext i32 %t to i?wide
 ; CHECK:           %[[TYPE_4:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "wide" : <Nat>
 ; CHECK:           %[[TYPE_5:.*]] = mpir.type.meta_int %[[VAR_1]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
 ; CHECK:           %[[INST_2:.*]] = mpir.inst <sext> (%[[TYPE_4]], %[[INST_0]], %[[TYPE_5]]) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%ft = fptrunc double ?d to float
 ; CHECK:           %[[TYPE_6:.*]] = mpir.type.prim double : <Type>
 ; CHECK:           %[[VAR_2:.*]] = mpir.var "d" : <Operand>
 ; CHECK:           %[[TYPE_7:.*]] = mpir.type.prim float : <Type>
 ; CHECK:           %[[INST_3:.*]] = mpir.inst <fptrunc> (%[[TYPE_6]], %[[VAR_2]], %[[TYPE_7]]) <result_name = "ft", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%fe = fpext float %ft to double
 ; CHECK:           %[[TYPE_8:.*]] = mpir.type.prim float : <Type>
 ; CHECK:           %[[TYPE_9:.*]] = mpir.type.prim double : <Type>
 ; CHECK:           %[[INST_4:.*]] = mpir.inst <fpext> (%[[TYPE_8]], %[[INST_3]], %[[TYPE_9]]) <result_name = "fe", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%fu = fptoui double %fe to i32
 ; CHECK:           %[[TYPE_10:.*]] = mpir.type.prim double : <Type>
 ; CHECK:           %[[TYPE_11:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_5:.*]] = mpir.inst <fptoui> (%[[TYPE_10]], %[[INST_4]], %[[TYPE_11]]) <result_name = "fu", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%fs = fptosi double %fe to i32
 ; CHECK:           %[[TYPE_12:.*]] = mpir.type.prim double : <Type>
 ; CHECK:           %[[TYPE_13:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_6:.*]] = mpir.inst <fptosi> (%[[TYPE_12]], %[[INST_4]], %[[TYPE_13]]) <result_name = "fs", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%uf = uitofp nneg i32 %fu to half
 ; CHECK:           %[[TYPE_14:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_15:.*]] = mpir.type.prim half : <Type>
 ; CHECK:           %[[INST_7:.*]] = mpir.inst <uitofp> (%[[TYPE_14]], %[[INST_5]], %[[TYPE_15]]) <result_name = "uf", flags = [8], flag_modes = [0], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%sf = sitofp i32 %fs to bfloat
 ; CHECK:           %[[TYPE_16:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_17:.*]] = mpir.type.prim bfloat : <Type>
 ; CHECK:           %[[INST_8:.*]] = mpir.inst <sitofp> (%[[TYPE_16]], %[[INST_6]], %[[TYPE_17]]) <result_name = "sf", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%pi = ptrtoint ptr ?p to i64
 ; CHECK:           %[[TYPE_18:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_3:.*]] = mpir.var "p" : <Operand>
 ; CHECK:           %[[TYPE_19:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[INST_9:.*]] = mpir.inst <ptrtoint> (%[[TYPE_18]], %[[VAR_3]], %[[TYPE_19]]) <result_name = "pi", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%pa = ptrtoaddr ptr ?p to i64
 ; CHECK:           %[[TYPE_20:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
 ; CHECK:           %[[TYPE_21:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[INST_10:.*]] = mpir.inst <ptrtoaddr> (%[[TYPE_20]], %[[VAR_3]], %[[TYPE_21]]) <result_name = "pa", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%ip = inttoptr i64 %pi to ptr
 ; CHECK:           %[[TYPE_22:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[TYPE_23:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
 ; CHECK:           %[[INST_11:.*]] = mpir.inst <inttoptr> (%[[TYPE_22]], %[[INST_9]], %[[TYPE_23]]) <result_name = "ip", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%bc = bitcast <2 x i32> ?v to i64
 ; CHECK:           %[[TYPE_24:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_25:.*]] = mpir.type.seq vector 2 x %[[TYPE_24]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_4:.*]] = mpir.var "v" : <Operand>
 ; CHECK:           %[[TYPE_26:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[INST_12:.*]] = mpir.inst <bitcast> (%[[TYPE_25]], %[[VAR_4]], %[[TYPE_26]]) <result_name = "bc", flags = [], flag_modes = [], operand_kinds = [0, 2]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
+%fr = freeze i32 %t
 ; CHECK:           %[[TYPE_27:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_13:.*]] = mpir.inst <freeze> (%[[TYPE_27]], %[[INST_0]]) <result_name = "fr", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:         }
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Casts: the source operand and the destination type, with 'nneg'.
-%t = trunc nuw i64 ?x to i32
-%z = zext nneg i32 %t to i64
-%s = sext i32 %t to i?wide
-%ft = fptrunc double ?d to float
-%fe = fpext float %ft to double
-%fu = fptoui double %fe to i32
-%fs = fptosi double %fe to i32
-%uf = uitofp nneg i32 %fu to half
-%sf = sitofp i32 %fs to bfloat
-%pi = ptrtoint ptr ?p to i64
-%pa = ptrtoaddr ptr ?p to i64
-%ip = inttoptr i64 %pi to ptr
-%bc = bitcast <2 x i32> ?v to i64
-%fr = freeze i32 %t

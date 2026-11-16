@@ -1,4 +1,9 @@
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | FileCheck %s
 ; CHECK-LABEL:   mpir.pattern {
+; Calls: of a named function, of an intrinsic by name or by a variable
+; part of its name, of a function variable with its type, with the rest
+; of the arguments captured, with a label argument, and void calls.
+%a = call i32 @callee(i32 ?x, i8 ?y)
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[GLOBAL_0:.*]] = mpir.global "callee" : <Value>
 ; CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
@@ -6,12 +11,14 @@
 ; CHECK:           %[[TYPE_2:.*]] = mpir.type.int 8 : <Type>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
 ; CHECK:           %[[INST_0:.*]] = mpir.inst <call> (%[[TYPE_0]], %[[GLOBAL_0]], %[[TYPE_1]], %[[VAR_0]], %[[TYPE_2]], %[[VAR_1]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [2, 1, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+%b = call i32 @llvm.umax.i32(i32 %a, i32 1)
 ; CHECK:           %[[TYPE_3:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[GLOBAL_1:.*]] = mpir.global "llvm.umax.i32" : <Value>
 ; CHECK:           %[[TYPE_4:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_5:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INT_0:.*]] = mpir.int 1 : ui1 : <Value>
 ; CHECK:           %[[INST_1:.*]] = mpir.inst <call> (%[[TYPE_3]], %[[GLOBAL_1]], %[[TYPE_4]], %[[INST_0]], %[[TYPE_5]], %[[INT_0]]) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [2, 1, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+%c = call i?n @llvm.?id(i?n ?v, i1 false)
 ; CHECK:           %[[VAR_2:.*]] = mpir.var "n" : <Nat>
 ; CHECK:           %[[TYPE_6:.*]] = mpir.type.meta_int %[[VAR_2]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_3:.*]] = mpir.var "id" : <IntrinsicID>
@@ -20,47 +27,40 @@
 ; CHECK:           %[[TYPE_8:.*]] = mpir.type.int 1 : <Type>
 ; CHECK:           %[[INT_1:.*]] = mpir.int 0 : ui1 : <Value>
 ; CHECK:           %[[INST_2:.*]] = mpir.inst <call> (%[[TYPE_6]], %[[VAR_3]], %[[TYPE_7]], %[[VAR_4]], %[[TYPE_8]], %[[INT_1]]) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [2, 1, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<IntrinsicID>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+%d = call i32 (i32, ...) ?f(i32 %a)
 ; CHECK:           %[[TYPE_9:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_10:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_11:.*]] = mpir.type.func %[[TYPE_9]](%[[TYPE_10]]) vararg : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_5:.*]] = mpir.var "f" : <Function>
 ; CHECK:           %[[TYPE_12:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_3:.*]] = mpir.inst <call> (%[[TYPE_11]], %[[VAR_5]], %[[TYPE_12]], %[[INST_0]]) <result_name = "d", flags = [], flag_modes = [], operand_kinds = [2, 1, 0]> : (!mpir.sort<Type>, !mpir.sort<Function>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
+%e = call ?ret @llvm.?id2(...?types ?values)
 ; CHECK:           %[[VAR_6:.*]] = mpir.var "ret" : <Type>
 ; CHECK:           %[[VAR_7:.*]] = mpir.var "id2" : <IntrinsicID>
 ; CHECK:           %[[VAR_8:.*]] = mpir.var "types" : <TypeArray>
 ; CHECK:           %[[VAR_9:.*]] = mpir.var "values" : <ValueArray>
 ; CHECK:           %[[INST_4:.*]] = mpir.inst <call> (%[[VAR_6]], %[[VAR_7]], %[[VAR_8]], %[[VAR_9]]) <result_name = "e", flags = [], flag_modes = [], operand_kinds = [2, 1, 4]> : (!mpir.sort<Type>, !mpir.sort<IntrinsicID>, !mpir.sort<TypeArray>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction>
+%f = call i32 @first(i32 %a, ...?rest_types ?rest_values)
 ; CHECK:           %[[TYPE_13:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[GLOBAL_2:.*]] = mpir.global "first" : <Value>
 ; CHECK:           %[[TYPE_14:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_10:.*]] = mpir.var "rest_types" : <TypeArray>
 ; CHECK:           %[[VAR_11:.*]] = mpir.var "rest_values" : <ValueArray>
 ; CHECK:           %[[INST_5:.*]] = mpir.inst <call> (%[[TYPE_13]], %[[GLOBAL_2]], %[[TYPE_14]], %[[INST_0]], %[[VAR_10]], %[[VAR_11]]) <result_name = "f", flags = [], flag_modes = [], operand_kinds = [2, 1, 0, 4]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<TypeArray>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction>
+%lb = call void @take(label ?target)
 ; CHECK:           %[[TYPE_15:.*]] = mpir.type.prim void : <Type>
 ; CHECK:           %[[GLOBAL_3:.*]] = mpir.global "take" : <Value>
 ; CHECK:           %[[TYPE_16:.*]] = mpir.type.prim label : <Type>
 ; CHECK:           %[[VAR_12:.*]] = mpir.var "target" : <BasicBlock>
 ; CHECK:           %[[INST_6:.*]] = mpir.inst <call> (%[[TYPE_15]], %[[GLOBAL_3]], %[[TYPE_16]], %[[VAR_12]]) <result_name = "lb", flags = [], flag_modes = [], operand_kinds = [2, 1, 0]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<BasicBlock>) -> !mpir.sort<Instruction>
+%num = call i32 @0(i32 %a)
 ; CHECK:           %[[TYPE_17:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[GLOBAL_4:.*]] = mpir.global "0" : <Value>
 ; CHECK:           %[[TYPE_18:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_7:.*]] = mpir.inst <call> (%[[TYPE_17]], %[[GLOBAL_4]], %[[TYPE_18]], %[[INST_0]]) <result_name = "num", flags = [], flag_modes = [], operand_kinds = [2, 1, 0]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
+call void @sink(i32 %f)
 ; CHECK:           %[[TYPE_19:.*]] = mpir.type.prim void : <Type>
 ; CHECK:           %[[GLOBAL_5:.*]] = mpir.global "sink" : <Value>
 ; CHECK:           %[[TYPE_20:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INST_8:.*]] = mpir.inst <call> (%[[TYPE_19]], %[[GLOBAL_5]], %[[TYPE_20]], %[[INST_5]]) <flags = [], flag_modes = [], operand_kinds = [2, 1, 0]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:         }
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Calls: of a named function, of an intrinsic by name or by a variable
-; part of its name, of a function variable with its type, with the rest
-; of the arguments captured, with a label argument, and void calls.
-%a = call i32 @callee(i32 ?x, i8 ?y)
-%b = call i32 @llvm.umax.i32(i32 %a, i32 1)
-%c = call i?n @llvm.?id(i?n ?v, i1 false)
-%d = call i32 (i32, ...) ?f(i32 %a)
-%e = call ?ret @llvm.?id2(...?types ?values)
-%f = call i32 @first(i32 %a, ...?rest_types ?rest_values)
-%lb = call void @take(label ?target)
-%num = call i32 @0(i32 %a)
-call void @sink(i32 %f)

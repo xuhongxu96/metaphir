@@ -1,5 +1,12 @@
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | FileCheck %s
+; Constraints: each kind of expression (literals, arrays and their
+; elements, unary and binary operators by precedence, built-in calls with
+; and without a context, calls of definitions), each anchored at the
+; instruction it follows.
+constraint inRange(?v, ?lo, ?hi) {
 ; CHECK-LABEL:   mpir.constraint_def @inRange <param_names = ["v", "lo", "hi"]> {
-; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown>, %[[VAL_1:.*]]: !mpir.sort<Unknown>, %[[VAL_2:.*]]: !mpir.sort<Unknown>):
+; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}]), %[[VAL_1:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}]), %[[VAL_2:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}])):
+  ule(?lo, ?v) && ule(?v, ?hi)
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_1]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
 ; CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAL_0]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
 ; CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "ule"(%[[READ_0]], %[[READ_1]]) : (!mpir.sort<Unknown>, !mpir.sort<Unknown>) -> !mpir.sort<Boolean>
@@ -10,11 +17,14 @@
 ; CHECK:           mpir.yield %[[CALL_2]] : <Boolean>
 ; CHECK:         }
 ; CHECK-LABEL:   mpir.pattern {
+}
+%a = add i?n ?x, ?c
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "n" : <Nat>
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.meta_int %[[VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "x" : <Operand>
 ; CHECK:           %[[VAR_2:.*]] = mpir.var "c" : <Operand>
 ; CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[VAR_2]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+;; ?n == 32 || ?n == 64
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
 ; CHECK:           %[[INT_0:.*]] = mpir_expr.int 32 : ui64 : <Integer>
 ; CHECK:           %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[READ_0]], %[[INT_0]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
@@ -23,6 +33,7 @@
 ; CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[READ_1]], %[[INT_1]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           %[[CALL_2:.*]] = mpir_expr.call binary "||"(%[[CALL_0]], %[[CALL_1]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_2]] : <Boolean>
+;; !isZero(?c) && inRange(?c, 1, 8)
 ; CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:           %[[CALL_3:.*]] = mpir_expr.call call "isZero"(%[[READ_2]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           %[[CALL_4:.*]] = mpir_expr.call unary "!"(%[[CALL_3]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
@@ -32,6 +43,7 @@
 ; CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @inRange(%[[READ_3]], %[[INT_2]], %[[INT_3]]) : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Integer>) -> !mpir.sort<Boolean>
 ; CHECK:           %[[CALL_5:.*]] = mpir_expr.call binary "&&"(%[[CALL_4]], %[[APPLY_0]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_5]] : <Boolean>
+;; ?c * 2 + 1 - ?c != -3
 ; CHECK:           %[[READ_4:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:           %[[INT_4:.*]] = mpir_expr.int 2 : ui64 : <Integer>
 ; CHECK:           %[[CALL_6:.*]] = mpir_expr.call binary "*"(%[[READ_4]], %[[INT_4]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Integer>
@@ -43,6 +55,7 @@
 ; CHECK:           %[[CALL_9:.*]] = mpir_expr.call unary "-"(%[[INT_6]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Integer>
 ; CHECK:           %[[CALL_10:.*]] = mpir_expr.call binary "!="(%[[CALL_8]], %[[CALL_9]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_10]] : <Boolean>
+;; ["i8", "i16"][0] == "i8"
 ; CHECK:           %[[STR_0:.*]] = mpir_expr.str "i8" : <String>
 ; CHECK:           %[[STR_1:.*]] = mpir_expr.str "i16" : <String>
 ; CHECK:           %[[ARRAY_0:.*]] = mpir_expr.array %[[STR_0]], %[[STR_1]] : (!mpir.sort<String>, !mpir.sort<String>) -> !mpir.sort<StringArray>
@@ -51,6 +64,7 @@
 ; CHECK:           %[[STR_2:.*]] = mpir_expr.str "i8" : <String>
 ; CHECK:           %[[CALL_11:.*]] = mpir_expr.call binary "=="(%[[INDEX_0]], %[[STR_2]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_11]] : <Boolean>
+;; bitWidth(?x) == 32 && isa(?x, "Argument")
 ; CHECK:           %[[READ_6:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:           %[[CALL_12:.*]] = mpir_expr.call call "bitWidth"(%[[READ_6]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Integer>
 ; CHECK:           %[[INT_8:.*]] = mpir_expr.int 32 : ui64 : <Integer>
@@ -60,11 +74,13 @@
 ; CHECK:           %[[CALL_14:.*]] = mpir_expr.call call "isa"(%[[READ_7]], %[[STR_3]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           %[[CALL_15:.*]] = mpir_expr.call binary "&&"(%[[CALL_13]], %[[CALL_14]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_15]] : <Boolean>
+%b = icmp:?cmp ?p i?n %a, 0
 ; CHECK:           %[[VAR_3:.*]] = mpir.var "cmp" : <Instruction>
 ; CHECK:           %[[VAR_4:.*]] = mpir.var "p" : <CmpPredicate>
 ; CHECK:           %[[TYPE_1:.*]] = mpir.type.meta_int %[[VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
 ; CHECK:           %[[INT_9:.*]] = mpir.int 0 : ui1 : <Value>
 ; CHECK:           %[[INST_1:.*]] = mpir.inst <icmp> capture %[[VAR_3]] (%[[VAR_4]], %[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[INT_9]]) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [5, 0, 0]> : (!mpir.sort<Instruction>, !mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+;; isKnownNonZero(?x, ?cmp) && ?p == "eq"
 ; CHECK:           %[[READ_8:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:           %[[READ_9:.*]] = mpir_expr.read %[[VAR_3]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 ; CHECK:           %[[CALL_16:.*]] = mpir_expr.call call "isKnownNonZero"(%[[READ_8]], %[[READ_9]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
@@ -73,27 +89,11 @@
 ; CHECK:           %[[CALL_17:.*]] = mpir_expr.call binary "=="(%[[READ_10]], %[[STR_4]]) anchor %[[INST_1]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           %[[CALL_18:.*]] = mpir_expr.call binary "&&"(%[[CALL_16]], %[[CALL_17]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_18]] : <Boolean>
+;; true
 ; CHECK:           %[[BOOL_0:.*]] = mpir_expr.bool true : <Boolean>
 ; CHECK:           mpir.require %[[BOOL_0]] : <Boolean>
+;; !false
 ; CHECK:           %[[BOOL_1:.*]] = mpir_expr.bool false : <Boolean>
 ; CHECK:           %[[CALL_19:.*]] = mpir_expr.call unary "!"(%[[BOOL_1]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.require %[[CALL_19]] : <Boolean>
 ; CHECK:         }
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; Constraints: each kind of expression (literals, arrays and their
-; elements, unary and binary operators by precedence, built-in calls with
-; and without a context, calls of definitions), each anchored at the
-; instruction it follows.
-constraint inRange(?v, ?lo, ?hi) {
-  ule(?lo, ?v) && ule(?v, ?hi)
-}
-%a = add i?n ?x, ?c
-;; ?n == 32 || ?n == 64
-;; !isZero(?c) && inRange(?c, 1, 8)
-;; ?c * 2 + 1 - ?c != -3
-;; ["i8", "i16"][0] == "i8"
-;; bitWidth(?x) == 32 && isa(?x, "Argument")
-%b = icmp:?cmp ?p i?n %a, 0
-;; isKnownNonZero(?x, ?cmp) && ?p == "eq"
-;; true
-;; !false

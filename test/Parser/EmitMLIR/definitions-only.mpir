@@ -1,36 +1,36 @@
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | FileCheck %s
+; A file of definitions has no pattern. A branch without a '%ret' stands
+; for its last instruction.
+match lastIsRoot [] Binary (?ty ?a, ?b) {
 ; CHECK-LABEL:   mpir.matcher @lastIsRoot <supported_flags = [], syntax = 1, arity = 2, param_names = ["ty", "a", "b"], param_is_type = [true, false, false]> {
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "ty" : <Type>
 ; CHECK:           mpir.signature %[[VAR_0]] : !mpir.sort<Type>
 ; CHECK:           mpir.branch <param_args = [0, 1, 2], fixed_flags = [], fixed_flag_values = []> {
-; CHECK:           ^bb0(%[[VAL_0:.*]]: !mpir.sort<Type>, %[[VAL_1:.*]]: !mpir.sort<Operand>, %[[VAL_2:.*]]: !mpir.sort<Operand>):
+; CHECK:           ^bb0(%[[VAL_0:.*]]: !mpir.sort<Type> loc(fused<"mpir.range">[{{.*}}, {{.*}}]), %[[VAL_1:.*]]: !mpir.sort<Operand> loc(fused<"mpir.range">[{{.*}}, {{.*}}]), %[[VAL_2:.*]]: !mpir.sort<Operand> loc(fused<"mpir.range">[{{.*}}, {{.*}}])):
+  %first = add ?ty ?a, ?b
 ; CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[VAL_0]], %[[VAL_1]], %[[VAL_0]], %[[VAL_2]]) <result_name = "first", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %second = mul ?ty %first, ?b
 ; CHECK:             %[[INST_1:.*]] = mpir.inst <mul> (%[[VAL_0]], %[[INST_0]], %[[VAL_0]], %[[VAL_2]]) <result_name = "second", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             mpir.yield %[[INST_1]] : <Instruction>
 ; CHECK:           }
 ; CHECK:         }
+}
+constraint isSeven(?v) {
 ; CHECK-LABEL:   mpir.constraint_def @isSeven <param_names = ["v"]> {
-; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown>):
+; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}])):
+  ?v == 7
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_0]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
 ; CHECK:           %[[INT_0:.*]] = mpir_expr.int 7 : ui64 : <Integer>
 ; CHECK:           %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[READ_0]], %[[INT_0]]) : (!mpir.sort<Unknown>, !mpir.sort<Integer>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.yield %[[CALL_0]] : <Boolean>
 ; CHECK:         }
+}
+metaflag:i:o :seven(?v) {
 ; CHECK-LABEL:   mpir.metaflag_def @seven <param_names = ["v"], placement = 3> {
-; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown>):
+; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}])):
+  isSeven(?v)
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_0]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
 ; CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @isSeven(%[[READ_0]]) : (!mpir.sort<Unknown>) -> !mpir.sort<Boolean>
 ; CHECK:           mpir.yield %[[APPLY_0]] : <Boolean>
 ; CHECK:         }
-; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | FileCheck %s
-; A file of definitions has no pattern. A branch without a '%ret' stands
-; for its last instruction.
-match lastIsRoot [] Binary (?ty ?a, ?b) {
-  %first = add ?ty ?a, ?b
-  %second = mul ?ty %first, ?b
-}
-constraint isSeven(?v) {
-  ?v == 7
-}
-metaflag:i:o :seven(?v) {
-  isSeven(?v)
 }

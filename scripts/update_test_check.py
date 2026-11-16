@@ -1085,6 +1085,15 @@ def update_mlir_test(
 ) -> str:
     name = path.name
     inject = path.suffix == ".mlir"
+    # metaphir-parse locates each operation at its pattern line, and prints the
+    # locations only with --mlir-print-debuginfo, as metaphir-opt does: the RUN
+    # line says so, so that the checks it records are the ones it runs.
+    lines = [
+        re.sub(r"%metaphir-parse --emit=mlir(?! --mlir-print-debuginfo)",
+               "%metaphir-parse --emit=mlir --mlir-print-debuginfo", line)
+        if RUN_RE.match(line) else line
+        for line in lines
+    ]
     runs = mlir_runs_to_stages(lines, comment)
     # The lines without checks, located in this file.
     # Checks of any comment style: a file may hold the ones of an earlier run.
