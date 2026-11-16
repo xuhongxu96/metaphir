@@ -6,7 +6,8 @@
 namespace llvm {
 namespace metaphir {
 
-StringRef instruction_flag::getName(FlagID ID) {
+namespace instruction_flag {
+StringRef getName(FlagID ID) {
   switch (ID) {
 #define MIR_FLAG_TOKEN_KIND(Name)                                              \
   case F_##Name:                                                               \
@@ -17,6 +18,7 @@ StringRef instruction_flag::getName(FlagID ID) {
   }
   llvm_unreachable("invalid semantic flag ID");
 }
+} // namespace instruction_flag
 
 namespace {
 /// Properties of a built-in instruction matcher, from
@@ -43,21 +45,15 @@ static const Info &getInfo(instruction::InstructionID ID) {
   return Table[ID];
 }
 
-StringRef instruction::getOpcodeName(InstructionID ID) {
-  return getInfo(ID).Name;
-}
-instruction::FlagMask instruction::getSupportedFlags(InstructionID ID) {
+namespace instruction {
+StringRef getOpcodeName(InstructionID ID) { return getInfo(ID).Name; }
+FlagMask getSupportedFlags(InstructionID ID) {
   return getInfo(ID).SupportedFlags;
 }
-bool instruction::isCommutative(InstructionID ID) {
-  return getInfo(ID).Commutative;
-}
-instruction::OperandSyntax instruction::getOperandSyntax(InstructionID ID) {
-  return getInfo(ID).Syntax;
-}
-unsigned instruction::getOperandArity(InstructionID ID) {
-  return getInfo(ID).Arity;
-}
+bool isCommutative(InstructionID ID) { return getInfo(ID).Commutative; }
+OperandSyntax getOperandSyntax(InstructionID ID) { return getInfo(ID).Syntax; }
+unsigned getOperandArity(InstructionID ID) { return getInfo(ID).Arity; }
+} // namespace instruction
 
 } // namespace metaphir
 } // namespace llvm

@@ -4,9 +4,9 @@
 
 namespace llvm {
 namespace metaphir {
+namespace constraint {
 
-std::optional<constraint::OperatorSchema>
-constraint::getOperatorSchema(OperatorID ID) {
+std::optional<OperatorSchema> getOperatorSchema(OperatorID ID) {
   switch (ID) {
 #define MIR_CONSTRAINT_OPERATOR_SCHEMA(OperatorID, Name, Kind, Result,         \
                                        MinArity, MaxArity)                     \
@@ -19,8 +19,7 @@ constraint::getOperatorSchema(OperatorID ID) {
   return std::nullopt;
 }
 
-constraint::OperatorID constraint::getOperatorID(StringRef Name,
-                                                 OperatorKind Kind) {
+OperatorID getOperatorID(StringRef Name, OperatorKind Kind) {
   static const auto OperatorMaps = [] {
     struct Maps {
       StringMap<OperatorID> Unary;
@@ -62,7 +61,7 @@ constraint::OperatorID constraint::getOperatorID(StringRef Name,
   return It != Map->end() ? It->second : UnknownOperator;
 }
 
-StringRef constraint::getOperatorName(OperatorID ID) {
+StringRef getOperatorName(OperatorID ID) {
   switch (ID) {
 #define MIR_CONSTRAINT_OPERATOR_ID(OperatorID, Name, Kind)                     \
   case O_##OperatorID:                                                         \
@@ -74,7 +73,7 @@ StringRef constraint::getOperatorName(OperatorID ID) {
   llvm_unreachable("invalid constraint function ID");
 }
 
-bool constraint::canCoerce(Sort From, Sort To) {
+bool canCoerce(Sort From, Sort To) {
   if (From == Sort::Unknown || To == Sort::Unknown || isSubsort(From, To))
     return true;
   Sort Represented = getRepresentation(From);
@@ -87,7 +86,7 @@ bool constraint::canCoerce(Sort From, Sort To) {
   return false;
 }
 
-Sort constraint::getArgumentType(OperatorID ID, unsigned Index) {
+Sort getArgumentType(OperatorID ID, unsigned Index) {
   switch (ID) {
   case O_LogicalOr:
   case O_LogicalAnd:
@@ -189,7 +188,7 @@ Sort constraint::getArgumentType(OperatorID ID, unsigned Index) {
   llvm_unreachable("invalid constraint operator");
 }
 
-StringRef constraint::describe(Sort Type) {
+StringRef describe(Sort Type) {
   switch (getRepresentation(Type)) {
   case Sort::Unknown:
     return "any value";
@@ -217,5 +216,6 @@ StringRef constraint::describe(Sort Type) {
   llvm_unreachable("a representation sort has no description");
 }
 
+} // namespace constraint
 } // namespace metaphir
 } // namespace llvm

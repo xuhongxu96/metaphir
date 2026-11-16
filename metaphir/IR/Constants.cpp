@@ -3,8 +3,9 @@
 
 namespace llvm {
 namespace metaphir {
+namespace keyword_constant {
 
-StringRef keyword_constant::getKeywordName(KeywordID ID) {
+StringRef getKeywordName(KeywordID ID) {
   switch (ID) {
 #define MIR_KEYWORD_CONSTANT(ID, Spelling)                                     \
   case K_##ID:                                                                 \
@@ -14,5 +15,6 @@ StringRef keyword_constant::getKeywordName(KeywordID ID) {
   llvm_unreachable("invalid keyword constant ID");
 }
 
+} // namespace keyword_constant
 } // namespace metaphir
 } // namespace llvm
