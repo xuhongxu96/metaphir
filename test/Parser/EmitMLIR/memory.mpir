@@ -9,33 +9,33 @@
 ; CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "n" : <Nat>
 ; CHECK:           %[[INT_0:.*]] = mpir.int 4 : ui3 : <Value>
-; CHECK:           %[[INST_0:.*]] = mpir.inst <alloca> flags(%[[VAR_0]]) (%[[TYPE_0]], %[[TYPE_1]], %[[VAR_1]], %[[INT_0]]) <result_name = "slot", flags = [4], flag_modes = [2], operand_kinds = [2, 0, 6]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Nat>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_0:.*]] = mpir.inst <alloca> flags(%[[VAR_0]]) (%[[TYPE_0]], %[[TYPE_1]], %[[VAR_1]], %[[INT_0]]) <flags = [inalloca], flag_modes = [captured], operand_kinds = [type_only, typed_value, alignment], result_name = "slot"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Nat>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %slot2 = alloca i64, addrspace(5)
 ; CHECK:           %[[TYPE_2:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[INT_1:.*]] = mpir.int 5 : ui3 : <Value>
-; CHECK:           %[[INST_1:.*]] = mpir.inst <alloca> (%[[TYPE_2]], %[[INT_1]]) <result_name = "slot2", flags = [], flag_modes = [], operand_kinds = [2, 7]> : (!mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_1:.*]] = mpir.inst <alloca> (%[[TYPE_2]], %[[INT_1]]) <flags = [], flag_modes = [], operand_kinds = [type_only, address_space], result_name = "slot2"> : (!mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %v = load volatile i32, ptr %slot, align ?align
 ; CHECK:           %[[TYPE_3:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_4:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_2:.*]] = mpir.var "align" : <Nat>
-; CHECK:           %[[INST_2:.*]] = mpir.inst <load> (%[[TYPE_3]], %[[TYPE_4]], %[[INST_0]], %[[VAR_2]]) <result_name = "v", flags = [5], flag_modes = [0], operand_kinds = [2, 0, 6]> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Nat>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_2:.*]] = mpir.inst <load> (%[[TYPE_3]], %[[TYPE_4]], %[[INST_0]], %[[VAR_2]]) <flags = [volatile], flag_modes = [required], operand_kinds = [type_only, typed_value, alignment], result_name = "v"> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Nat>) -> !mpir.sort<Instruction>
 %w = load i32, ptr addrspace(1) ?p
 ; CHECK:           %[[TYPE_5:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_6:.*]] = mpir.type.ptr addrspace(1) : () -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_3:.*]] = mpir.var "p" : <Operand>
-; CHECK:           %[[INST_3:.*]] = mpir.inst <load> (%[[TYPE_5]], %[[TYPE_6]], %[[VAR_3]]) <result_name = "w", flags = [], flag_modes = [], operand_kinds = [2, 0]> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_3:.*]] = mpir.inst <load> (%[[TYPE_5]], %[[TYPE_6]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [type_only, typed_value], result_name = "w"> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 %st = store i32 %v, ptr %slot, align 8
 ; CHECK:           %[[TYPE_7:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_8:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
 ; CHECK:           %[[INT_2:.*]] = mpir.int 8 : ui4 : <Value>
-; CHECK:           %[[INST_4:.*]] = mpir.inst <store> (%[[TYPE_7]], %[[INST_2]], %[[TYPE_8]], %[[INST_0]], %[[INT_2]]) <result_name = "st", flags = [], flag_modes = [], operand_kinds = [0, 0, 6]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_4:.*]] = mpir.inst <store> (%[[TYPE_7]], %[[INST_2]], %[[TYPE_8]], %[[INST_0]], %[[INT_2]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, alignment], result_name = "st"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %st2 = store volatile:?vol i32 ?x, ptr ?q
 ; CHECK:           %[[VAR_4:.*]] = mpir.var "vol" : <Boolean>
 ; CHECK:           %[[TYPE_9:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_5:.*]] = mpir.var "x" : <Operand>
 ; CHECK:           %[[TYPE_10:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_6:.*]] = mpir.var "q" : <Operand>
-; CHECK:           %[[INST_5:.*]] = mpir.inst <store> flags(%[[VAR_4]]) (%[[TYPE_9]], %[[VAR_5]], %[[TYPE_10]], %[[VAR_6]]) <result_name = "st2", flags = [5], flag_modes = [2], operand_kinds = [0, 0]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_5:.*]] = mpir.inst <store> flags(%[[VAR_4]]) (%[[TYPE_9]], %[[VAR_5]], %[[TYPE_10]], %[[VAR_6]]) <flags = [volatile], flag_modes = [captured], operand_kinds = [typed_value, typed_value], result_name = "st2"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 %g = getelementptr inbounds:?ib nusw nuw:?gn [4 x i8], ptr %slot, i64 0, i64 ?i
 ; CHECK:           %[[VAR_7:.*]] = mpir.var "ib" : <Boolean>
 ; CHECK:           %[[VAR_8:.*]] = mpir.var "gn" : <Boolean>
@@ -46,11 +46,11 @@
 ; CHECK:           %[[INT_3:.*]] = mpir.int 0 : ui1 : <Value>
 ; CHECK:           %[[TYPE_15:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[VAR_9:.*]] = mpir.var "i" : <Operand>
-; CHECK:           %[[INST_6:.*]] = mpir.inst <getelementptr> flags(%[[VAR_7]], %[[VAR_8]]) (%[[TYPE_12]], %[[TYPE_13]], %[[INST_0]], %[[TYPE_14]], %[[INT_3]], %[[TYPE_15]], %[[VAR_9]]) <result_name = "g", flags = [6, 7, 1], flag_modes = [2, 0, 2], operand_kinds = [2, 0, 0, 0]> : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_6:.*]] = mpir.inst <getelementptr> flags(%[[VAR_7]], %[[VAR_8]]) (%[[TYPE_12]], %[[TYPE_13]], %[[INST_0]], %[[TYPE_14]], %[[INT_3]], %[[TYPE_15]], %[[VAR_9]]) <flags = [inbounds, nusw, nuw], flag_modes = [captured, required, captured], operand_kinds = [type_only, typed_value, typed_value, typed_value], result_name = "g"> : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 %h = getelementptr i8, ptr ?q, i64 4
 ; CHECK:           %[[TYPE_16:.*]] = mpir.type.int 8 : <Type>
 ; CHECK:           %[[TYPE_17:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
 ; CHECK:           %[[TYPE_18:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[INT_4:.*]] = mpir.int 4 : ui3 : <Value>
-; CHECK:           %[[INST_7:.*]] = mpir.inst <getelementptr> (%[[TYPE_16]], %[[TYPE_17]], %[[VAR_6]], %[[TYPE_18]], %[[INT_4]]) <result_name = "h", flags = [], flag_modes = [], operand_kinds = [2, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_7:.*]] = mpir.inst <getelementptr> (%[[TYPE_16]], %[[TYPE_17]], %[[VAR_6]], %[[TYPE_18]], %[[INT_4]]) <flags = [], flag_modes = [], operand_kinds = [type_only, typed_value, typed_value], result_name = "h"> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 ; CHECK:         }

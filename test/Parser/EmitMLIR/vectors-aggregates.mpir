@@ -8,14 +8,14 @@
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "v" : <Operand>
 ; CHECK:           %[[TYPE_2:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "idx" : <Nat>
-; CHECK:           %[[INST_0:.*]] = mpir.inst <extractelement> (%[[TYPE_1]], %[[VAR_0]], %[[TYPE_2]], %[[VAR_1]]) <result_name = "e", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Nat>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_0:.*]] = mpir.inst <extractelement> (%[[TYPE_1]], %[[VAR_0]], %[[TYPE_2]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "e"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Nat>) -> !mpir.sort<Instruction>
 %i = insertelement <4 x i32> ?v, i32 %e, i64 0
 ; CHECK:           %[[TYPE_3:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_4:.*]] = mpir.type.seq vector 4 x %[[TYPE_3]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
 ; CHECK:           %[[TYPE_5:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_6:.*]] = mpir.type.int 64 : <Type>
 ; CHECK:           %[[INT_0:.*]] = mpir.int 0 : ui1 : <Value>
-; CHECK:           %[[INST_1:.*]] = mpir.inst <insertelement> (%[[TYPE_4]], %[[VAR_0]], %[[TYPE_5]], %[[INST_0]], %[[TYPE_6]], %[[INT_0]]) <result_name = "i", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_1:.*]] = mpir.inst <insertelement> (%[[TYPE_4]], %[[VAR_0]], %[[TYPE_5]], %[[INST_0]], %[[TYPE_6]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "i"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %s = shufflevector <4 x i32> %i, <4 x i32> poison, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
 ; CHECK:           %[[TYPE_7:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_8:.*]] = mpir.type.seq vector 4 x %[[TYPE_7]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
@@ -33,7 +33,7 @@
 ; CHECK:           %[[TYPE_16:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INT_4:.*]] = mpir.int 1 : ui1 : <Value>
 ; CHECK:           %[[AGGREGATE_0:.*]] = mpir.aggregate vector(%[[TYPE_13]], %[[INT_1]], %[[TYPE_14]], %[[INT_2]], %[[TYPE_15]], %[[INT_3]], %[[TYPE_16]], %[[INT_4]]) : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Value>
-; CHECK:           %[[INST_2:.*]] = mpir.inst <shufflevector> (%[[TYPE_8]], %[[INST_1]], %[[TYPE_10]], %[[KEYWORD_0]], %[[TYPE_12]], %[[AGGREGATE_0]]) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_2:.*]] = mpir.inst <shufflevector> (%[[TYPE_8]], %[[INST_1]], %[[TYPE_10]], %[[KEYWORD_0]], %[[TYPE_12]], %[[AGGREGATE_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "s"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %x = extractvalue {i32, {i8, i16}} ?agg, 1, 0
 ; CHECK:           %[[TYPE_17:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_18:.*]] = mpir.type.int 8 : <Type>
@@ -43,14 +43,14 @@
 ; CHECK:           %[[VAR_2:.*]] = mpir.var "agg" : <Operand>
 ; CHECK:           %[[INT_5:.*]] = mpir.int 1 : ui1 : <Value>
 ; CHECK:           %[[INT_6:.*]] = mpir.int 0 : ui1 : <Value>
-; CHECK:           %[[INST_3:.*]] = mpir.inst <extractvalue> (%[[TYPE_21]], %[[VAR_2]], %[[INT_5]], %[[INT_6]]) <result_name = "x", flags = [], flag_modes = [], operand_kinds = [0, 1, 1]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_3:.*]] = mpir.inst <extractvalue> (%[[TYPE_21]], %[[VAR_2]], %[[INT_5]], %[[INT_6]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, value, value], result_name = "x"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %y = extractvalue {i32, float} ?agg2, ...?path
 ; CHECK:           %[[TYPE_22:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_23:.*]] = mpir.type.prim float : <Type>
 ; CHECK:           %[[TYPE_24:.*]] = mpir.type.struct{%[[TYPE_22]], %[[TYPE_23]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
 ; CHECK:           %[[VAR_3:.*]] = mpir.var "agg2" : <Operand>
 ; CHECK:           %[[VAR_4:.*]] = mpir.var "path" : <ValueArray>
-; CHECK:           %[[INST_4:.*]] = mpir.inst <extractvalue> (%[[TYPE_24]], %[[VAR_3]], %[[VAR_4]]) <result_name = "y", flags = [], flag_modes = [], operand_kinds = [0, 3]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_4:.*]] = mpir.inst <extractvalue> (%[[TYPE_24]], %[[VAR_3]], %[[VAR_4]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, value_array], result_name = "y"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction>
 %z = insertvalue {i32, float} ?agg2, float 1.0, 1
 ; CHECK:           %[[TYPE_25:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_26:.*]] = mpir.type.prim float : <Type>
@@ -58,7 +58,7 @@
 ; CHECK:           %[[TYPE_28:.*]] = mpir.type.prim float : <Type>
 ; CHECK:           %[[FLOAT_0:.*]] = mpir.float 1.000000e+00 : f64 -> <Value>
 ; CHECK:           %[[INT_7:.*]] = mpir.int 1 : ui1 : <Value>
-; CHECK:           %[[INST_5:.*]] = mpir.inst <insertvalue> (%[[TYPE_27]], %[[VAR_3]], %[[TYPE_28]], %[[FLOAT_0]], %[[INT_7]]) <result_name = "z", flags = [], flag_modes = [], operand_kinds = [0, 0, 1]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_5:.*]] = mpir.inst <insertvalue> (%[[TYPE_27]], %[[VAR_3]], %[[TYPE_28]], %[[FLOAT_0]], %[[INT_7]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, value], result_name = "z"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %sv = shufflevector <vscale x 4 x i32> ?a, <vscale x 4 x i32> ?b, <vscale x 4 x i32> zeroinitializer
 ; CHECK:           %[[TYPE_29:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_30:.*]] = mpir.type.seq scalable 4 x %[[TYPE_29]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
@@ -69,5 +69,5 @@
 ; CHECK:           %[[TYPE_33:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[TYPE_34:.*]] = mpir.type.seq scalable 4 x %[[TYPE_33]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
 ; CHECK:           %[[KEYWORD_1:.*]] = mpir.keyword zeroinitializer : <Value>
-; CHECK:           %[[INST_6:.*]] = mpir.inst <shufflevector> (%[[TYPE_30]], %[[VAR_5]], %[[TYPE_32]], %[[VAR_6]], %[[TYPE_34]], %[[KEYWORD_1]]) <result_name = "sv", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_6:.*]] = mpir.inst <shufflevector> (%[[TYPE_30]], %[[VAR_5]], %[[TYPE_32]], %[[VAR_6]], %[[TYPE_34]], %[[KEYWORD_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "sv"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 ; CHECK:         }

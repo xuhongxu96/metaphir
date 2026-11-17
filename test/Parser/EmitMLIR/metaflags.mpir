@@ -4,7 +4,7 @@
 ; the file and in the standard library, with arguments, on instructions and
 ; on operands.
 metaflag :between(?v, ?lo, ?hi) {
-; CHECK-LABEL:   mpir.metaflag_def @between <param_names = ["v", "lo", "hi"], placement = 2> {
+; CHECK-LABEL:   mpir.metaflag_def @between <placement = operand, param_names = ["v", "lo", "hi"]> {
 ; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}]), %[[VAL_1:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}]), %[[VAL_2:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}])):
   sle(?lo, ?v) && sle(?v, ?hi)
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_1]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
@@ -18,7 +18,7 @@ metaflag :between(?v, ?lo, ?hi) {
 ; CHECK:         }
 }
 metaflag:i :isadd(?i) {
-; CHECK-LABEL:   mpir.metaflag_def @isadd <param_names = ["i"], placement = 1> {
+; CHECK-LABEL:   mpir.metaflag_def @isadd <placement = instruction, param_names = ["i"]> {
 ; CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown> loc(fused<"mpir.range">[{{.*}}, {{.*}}])):
   opcode(?i) == "add"
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_0]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
@@ -33,25 +33,25 @@ metaflag:i :isadd(?i) {
 ; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
-; CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0], metaflags = [#mpir.metaflag<"c", [], {{.*}}>, #mpir.metaflag<"s", [], {{.*}}>], operand_metaflags = {{\[\[}}#mpir.metaflag<"zero", [], {{.*}}>], [#mpir.metaflag<"between", [1, 10], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a", metaflags = [#mpir.metaflag<"c", [], {{.*}}>, #mpir.metaflag<"s", [], {{.*}}>], operand_metaflags = {{\[\[}}#mpir.metaflag<"zero", [], {{.*}}>], [#mpir.metaflag<"between", [1, 10], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 %b = mul:o i32 %a, 3
 ; CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INT_0:.*]] = mpir.int 3 : ui2 : <Value>
-; CHECK:           %[[INST_1:.*]] = mpir.inst <mul> (%[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[INT_0]]) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [0, 0], metaflags = [#mpir.metaflag<"o", [], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_1:.*]] = mpir.inst <mul> (%[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b", metaflags = [#mpir.metaflag<"o", [], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 %c = sub:o(1):isadd i32 0, %b
 ; CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[INT_1:.*]] = mpir.int 0 : ui1 : <Value>
-; CHECK:           %[[INST_2:.*]] = mpir.inst <sub> (%[[TYPE_2]], %[[INT_1]], %[[TYPE_2]], %[[INST_1]]) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [0, 0], metaflags = [#mpir.metaflag<"o", [1], {{.*}}>, #mpir.metaflag<"isadd", [], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_2:.*]] = mpir.inst <sub> (%[[TYPE_2]], %[[INT_1]], %[[TYPE_2]], %[[INST_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "c", metaflags = [#mpir.metaflag<"o", [1], {{.*}}>, #mpir.metaflag<"isadd", [], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 %d = xor i32 %c, ?z:or(:zero, :allOnes)
 ; CHECK:           %[[TYPE_3:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_2:.*]] = mpir.var "z" : <Operand>
-; CHECK:           %[[INST_3:.*]] = mpir.inst <xor> (%[[TYPE_3]], %[[INST_2]], %[[TYPE_3]], %[[VAR_2]]) <result_name = "d", flags = [], flag_modes = [], operand_kinds = [0, 0], operand_metaflags = {{\[\[}}], [#mpir.metaflag<"or", [#mpir.metaflag<"zero", [], {{.*}}>, #mpir.metaflag<"allOnes", [], {{.*}}>], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_3:.*]] = mpir.inst <xor> (%[[TYPE_3]], %[[INST_2]], %[[TYPE_3]], %[[VAR_2]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "d", operand_metaflags = {{\[\[}}], [#mpir.metaflag<"or", [#mpir.metaflag<"zero", [], {{.*}}>, #mpir.metaflag<"allOnes", [], {{.*}}>], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 %e = and i32 %d, ?w:not(:power2)
 ; CHECK:           %[[TYPE_4:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_3:.*]] = mpir.var "w" : <Operand>
-; CHECK:           %[[INST_4:.*]] = mpir.inst <and> (%[[TYPE_4]], %[[INST_3]], %[[TYPE_4]], %[[VAR_3]]) <result_name = "e", flags = [], flag_modes = [], operand_kinds = [0, 0], operand_metaflags = {{\[\[}}], [#mpir.metaflag<"not", [#mpir.metaflag<"power2", [], {{.*}}>], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_4:.*]] = mpir.inst <and> (%[[TYPE_4]], %[[INST_3]], %[[TYPE_4]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "e", operand_metaflags = {{\[\[}}], [#mpir.metaflag<"not", [#mpir.metaflag<"power2", [], {{.*}}>], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 %f = or i32 %e, ?u:or(:not(:zero), :between(2, 4))
 ; CHECK:           %[[TYPE_5:.*]] = mpir.type.int 32 : <Type>
 ; CHECK:           %[[VAR_4:.*]] = mpir.var "u" : <Operand>
-; CHECK:           %[[INST_5:.*]] = mpir.inst <or> (%[[TYPE_5]], %[[INST_4]], %[[TYPE_5]], %[[VAR_4]]) <result_name = "f", flags = [], flag_modes = [], operand_kinds = [0, 0], operand_metaflags = {{\[\[}}], [#mpir.metaflag<"or", [#mpir.metaflag<"not", [#mpir.metaflag<"zero", [], {{.*}}>], {{.*}}>, #mpir.metaflag<"between", [2, 4], {{.*}}>], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[INST_5:.*]] = mpir.inst <or> (%[[TYPE_5]], %[[INST_4]], %[[TYPE_5]], %[[VAR_4]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "f", operand_metaflags = {{\[\[}}], [#mpir.metaflag<"or", [#mpir.metaflag<"not", [#mpir.metaflag<"zero", [], {{.*}}>], {{.*}}>, #mpir.metaflag<"between", [2, 4], {{.*}}>], {{.*}}>]]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:         }

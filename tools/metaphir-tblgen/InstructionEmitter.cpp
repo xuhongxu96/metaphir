@@ -54,6 +54,9 @@ void emitInstructions(const RecordKeeper &Records, raw_ostream &OS) {
         "typed operands; the\n/// number comes from getOperandArity (or the "
         "composite matcher's parameter\n/// list).\n"
         "enum class OperandSyntax { Nary, Binary, Cast, Custom };\n\n"
+        "/// The spelling of each OperandSyntax, in the dialect.\n"
+        "inline constexpr StringRef OperandSyntaxNames[] = {\"nary\", "
+        "\"binary\", \"cast\", \"custom\"};\n\n"
         "constexpr FlagMask mask(instruction_flag::FlagID ID) {\n"
         "  return FlagMask(1) << ID;\n}\n\n";
   for (const Record *S : Sets) {

@@ -19,6 +19,7 @@ include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "metaphir/Dialect/Pattern/PatternBase.td"
+include "metaphir/Dialect/Plan/PlanEnums.td"
 
 def Plan_Dialect : Dialect {
   let name = "mpir_plan";
@@ -45,14 +46,14 @@ def Plan_MatcherOp : Plan_Op<"matcher", [IsolatedFromAbove, SingleBlock,
   let summary = "The plan of one pattern";
   let description = [{
     Slot i is a meta variable or an instruction matcher of the pattern:
-    `slot_names[i]` its name, `slot_kinds[i]` 0 for a meta variable and 1
-    for an instruction matcher, `slot_sorts[i]` the variable's sort, and
+    `slot_names[i]` its name, `slot_kinds[i]` whether it is a meta
+    variable or an instruction matcher, `slot_sorts[i]` the variable's sort, and
     `slot_locs[i]` where it was written (for an instruction inlined from a
     matcher, where the use is).
   }];
   let arguments = (ins StrArrayAttr:$slot_names,
-                       DenseI32ArrayAttr:$slot_kinds,
-                       DenseI32ArrayAttr:$slot_sorts,
+                       ArrayProp<EnumProp<Plan_SlotKind>>:$slot_kinds,
+                       ArrayProp<Mpir_SortProp>:$slot_sorts,
                        ArrayAttr:$slot_locs);
   let regions = (region SizedRegion<1>:$body);
   let assemblyFormat = "prop-dict attr-dict-with-keyword $body";
@@ -121,7 +122,7 @@ def Plan_GetParentBlockOp : Plan_Op<"get_parent_block", [Pure]> {
 
 def Plan_GetFlagOp : Plan_Op<"get_flag", [Pure]> {
   let summary = "Whether an instruction carries a semantic flag";
-  let arguments = (ins Plan_RegType:$instruction, I32Attr:$flag);
+  let arguments = (ins Plan_RegType:$instruction, Mpir_FlagProp:$flag);
   let results = (outs Plan_RegType:$result);
   let assemblyFormat = "$instruction `[` $flag `]` attr-dict";
 }
@@ -132,7 +133,7 @@ def Plan_GetKeyedOp : Plan_Op<"get_keyed", [Pure]> {
     `kind` is an OperandKind; with `swapped`, a compare's predicate is the
     one of its operands swapped. An absent inrange bound is no value.
   }];
-  let arguments = (ins Plan_RegType:$instruction, I32Attr:$kind,
+  let arguments = (ins Plan_RegType:$instruction, EnumProp<Mpir_OperandKind>:$kind,
                        UnitAttr:$swapped);
   let results = (outs Plan_RegType:$result);
   let assemblyFormat = "$instruction `[` $kind `]` prop-dict attr-dict";
@@ -157,7 +158,7 @@ def Plan_CheckOpcodeOp : Plan_Op<"check_opcode"> {
 
 def Plan_CheckFlagOp : Plan_Op<"check_flag"> {
   let summary = "The instruction carries the flag, or does not";
-  let arguments = (ins Plan_RegType:$instruction, I32Attr:$flag,
+  let arguments = (ins Plan_RegType:$instruction, Mpir_FlagProp:$flag,
                        BoolAttr:$present);
   let assemblyFormat = "$instruction `[` $flag `]` `is` $present attr-dict";
 }
@@ -198,7 +199,7 @@ def Plan_CheckConstantOp : Plan_Op<"check_constant"> {
 
 def Plan_CheckAggregateOp : Plan_Op<"check_aggregate"> {
   let summary = "The value is an aggregate constant of the kind and size";
-  let arguments = (ins Plan_RegType:$value, I32Attr:$delimiter, I32Attr:$count);
+  let arguments = (ins Plan_RegType:$value, Mpir_DelimiterProp:$delimiter, I32Attr:$count);
   let assemblyFormat = "$value `,` $delimiter `,` $count attr-dict";
 }
 

@@ -197,7 +197,7 @@ void ProgramBuilder::op(mlir::Operation &Op) {
   if (auto Get = dyn_cast<plan::GetKeyedOp>(Op)) {
     S.Src = reg(Get.getInstruction());
     S.Dst = reg(Get.getResult());
-    S.A = Get.getKind();
+    S.A = int32_t(Get.getKind());
     S.Flag = Get.getSwapped();
     return Emit(Step::GetKeyed);
   }
@@ -292,7 +292,7 @@ std::unique_ptr<PlanProgram> PlanProgram::compile(plan::MatcherOp Matcher) {
            Matcher.getSlotSorts(), Matcher.getSlotLocs())) {
     SlotInfo Info;
     Info.Name = cast<mlir::StringAttr>(Name).getValue().str();
-    Info.IsInstruction = Kind == int32_t(plan::SlotKind::Instruction);
+    Info.IsInstruction = Kind == plan::SlotKind::Instruction;
     Info.VariableSort = Sort(S);
     Info.Written = getOutermostSourceRange(cast<mlir::LocationAttr>(Loc)).Start;
     Program->Slots.push_back(std::move(Info));

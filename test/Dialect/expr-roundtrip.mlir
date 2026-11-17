@@ -23,8 +23,8 @@ mpir.pattern {
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
   %i32 = mpir.type.int 32 : !mpir.sort<Type> loc("expr-roundtrip.mlir":24:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
-  %i = mpir.inst <freeze>(%i32, %x) <result_name = "f", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expr-roundtrip.mlir":26:1)
-// CHECK:           %[[INST_0:.*]] = mpir.inst <freeze> (%[[TYPE_0]], %[[VAR_0]]) <result_name = "f", flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %i = mpir.inst <freeze>(%i32, %x) <result_name = "f", flags = [], flag_modes = [], operand_kinds = [typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expr-roundtrip.mlir":26:1)
+// CHECK:           %[[INST_0:.*]] = mpir.inst <freeze> (%[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value], result_name = "f"> : (!mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
   %rx = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("expr-roundtrip.mlir":28:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
   %ri = mpir_expr.read %i : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("expr-roundtrip.mlir":30:1)

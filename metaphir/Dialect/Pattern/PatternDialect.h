@@ -11,6 +11,7 @@
 #include "metaphir/IR/Sort.h"
 #include "mlir/Bytecode/BytecodeOpInterface.h"
 #include "mlir/IR/Attributes.h"
+#include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/OpDefinition.h"
@@ -19,35 +20,20 @@
 #include "mlir/IR/SymbolTable.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
+#include "metaphir/Dialect/Pattern/NamedEnum.h"
+#include "metaphir/Dialect/Pattern/PatternEnums.h.inc"
+
 namespace llvm {
 namespace metaphir {
 namespace mpir {
 
-/// How a semantic flag is written on an instruction matcher: 'nsw' requires
-/// it, '!nsw' requires its absence, 'nsw:?v' binds ?v to whether it is there.
-enum class FlagMode : int32_t { Required = 0, Negated = 1, Captured = 2 };
-
-/// The kinds of matcher operand, and how many of an instruction's
-/// operand_values each takes.
-enum class OperandKind : int32_t {
-  /// 'i32 ?x': a type pattern and a value.
-  TypedValue = 0,
-  /// A value whose type is not written: a phi's block, a callee, an index.
-  Value = 1,
-  /// A bare type that is not an operand: a cast's destination, a load's
-  /// result type, 'ret void'.
-  TypeOnly = 2,
-  /// '...?values': the remaining operands.
-  ValueArray = 3,
-  /// '...?types ?values': the remaining operands and their types.
-  TypedValueArray = 4,
-  /// Keyed operands, each one value.
-  Predicate = 5,
-  Alignment = 6,
-  AddressSpace = 7,
-  InRangeLower = 8,
-  InRangeUpper = 9,
-};
+/// Sets the flags, flag modes and operand kinds of the mpir.inst or mpir.use that
+/// State builds. They are properties rather than attributes, so State's
+/// attributes cannot carry them.
+void setMatcherProperties(mlir::Builder &Builder, mlir::OperationState &State,
+                          ArrayRef<instruction_flag::FlagID> Flags,
+                          ArrayRef<FlagMode> Modes,
+                          ArrayRef<OperandKind> Kinds);
 
 /// How many operand_values an operand of Kind takes.
 unsigned getNumOperandValues(OperandKind Kind);

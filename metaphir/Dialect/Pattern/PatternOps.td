@@ -47,8 +47,8 @@ def Mpir_MatcherOp : Mpir_Op<"matcher", [Symbol, SymbolName, SymbolVisibility, I
   let arguments = (ins SymbolNameAttr:$sym_name,
                        OptionalAttr<StrAttr>:$sym_visibility,
                        UnitAttr:$commutative,
-                       DenseI32ArrayAttr:$supported_flags,
-                       I32Attr:$syntax,
+                       ArrayProp<Mpir_FlagProp>:$supported_flags,
+                       Mpir_SyntaxProp:$syntax,
                        I32Attr:$arity,
                        StrArrayAttr:$param_names,
                        DenseBoolArrayAttr:$param_is_type);
@@ -74,7 +74,7 @@ def Mpir_BranchOp : Mpir_Op<"branch", [HasParent<"MatcherOp">, SingleBlock,
     matcher stands for.
   }];
   let arguments = (ins DenseI32ArrayAttr:$param_args,
-                       DenseI32ArrayAttr:$fixed_flags,
+                       ArrayProp<Mpir_FlagProp>:$fixed_flags,
                        DenseBoolArrayAttr:$fixed_flag_values);
   let regions = (region SizedRegion<1>:$body);
   let assemblyFormat = "prop-dict attr-dict-with-keyword $body";
@@ -94,7 +94,7 @@ def Mpir_MetaFlagDefOp : Mpir_Op<"metaflag_def", [Symbol, SymbolName, SymbolVisi
   let summary = "A 'metaflag' definition; its first parameter is the subject";
   let arguments = (ins SymbolNameAttr:$sym_name,
                        OptionalAttr<StrAttr>:$sym_visibility, StrArrayAttr:$param_names,
-                       I32Attr:$placement);
+                       Mpir_PlacementProp:$placement);
   let regions = (region SizedRegion<1>:$body);
   let assemblyFormat = "$sym_name prop-dict attr-dict-with-keyword $body";
 }
@@ -136,9 +136,9 @@ def Mpir_FloatOp : Mpir_Op<"float", [Pure]> {
 
 def Mpir_KeywordOp : Mpir_Op<"keyword", [Pure]> {
   let summary = "A keyword constant ('null', 'poison') or compare predicate";
-  let arguments = (ins I32Attr:$keyword);
+  let arguments = (ins Mpir_KeywordProp:$keyword);
   let results = (outs Mpir_Term:$result);
-  let assemblyFormat = "custom<Keyword>($keyword) attr-dict `:` type($result)";
+  let assemblyFormat = "$keyword attr-dict `:` type($result)";
 }
 
 def Mpir_GlobalOp : Mpir_Op<"global", [Pure]> {
@@ -151,9 +151,9 @@ def Mpir_GlobalOp : Mpir_Op<"global", [Pure]> {
 def Mpir_AggregateOp : Mpir_Op<"aggregate", [Pure]> {
   let summary = "An array, struct or vector constant of typed elements";
   let description = [{ Operands alternate: a type, then its element. }];
-  let arguments = (ins I32Attr:$delimiter, Variadic<Mpir_Term>:$elements);
+  let arguments = (ins Mpir_DelimiterProp:$delimiter, Variadic<Mpir_Term>:$elements);
   let results = (outs Mpir_Term:$result);
-  let assemblyFormat = "custom<Delimiter>($delimiter) `(` $elements `)` attr-dict `:` functional-type($elements, $result)";
+  let assemblyFormat = "$delimiter `(` $elements `)` attr-dict `:` functional-type($elements, $result)";
 }
 
 //===----------------------------------------------------------------------===//
@@ -176,9 +176,9 @@ def Mpir_MetaIntTypeOp : Mpir_Op<"type.meta_int", [Pure]> {
 
 def Mpir_PrimTypeOp : Mpir_Op<"type.prim", [Pure]> {
   let summary = "A primitive type (see Types.td)";
-  let arguments = (ins I32Attr:$kind);
+  let arguments = (ins Mpir_PrimTypeProp:$kind);
   let results = (outs Mpir_Term:$result);
-  let assemblyFormat = "custom<PrimType>($kind) attr-dict `:` type($result)";
+  let assemblyFormat = "$kind attr-dict `:` type($result)";
 }
 
 def Mpir_PtrTypeOp : Mpir_Op<"type.ptr", [Pure]> {
@@ -192,13 +192,13 @@ def Mpir_PtrTypeOp : Mpir_Op<"type.ptr", [Pure]> {
 def Mpir_SeqTypeOp : Mpir_Op<"type.seq", [Pure]> {
   let summary = "'[N x T]', '<N x T>' or '<vscale x N x T>'";
   let description = [{
-    `kind` is 0 for an array, 1 for a vector and 2 for a scalable vector. The
+    `kind` says whether it is an array, a vector or a scalable vector. The
     element count is `count`, or the meta variable `count_var`.
   }];
-  let arguments = (ins I32Attr:$kind, I64Attr:$count, Mpir_Term:$element,
+  let arguments = (ins EnumProp<Mpir_SeqKind>:$kind, I64Attr:$count, Mpir_Term:$element,
                        Optional<Mpir_Term>:$count_var);
   let results = (outs Mpir_Term:$result);
-  let assemblyFormat = "custom<SeqKind>($kind) $count `x` $element (`count` $count_var^)? attr-dict `:` functional-type(operands, $result)";
+  let assemblyFormat = "$kind $count `x` $element (`count` $count_var^)? attr-dict `:` functional-type(operands, $result)";
 }
 
 def Mpir_StructTypeOp : Mpir_Op<"type.struct", [Pure]> {
@@ -227,11 +227,11 @@ class Mpir_MatcherUseBase {
       OptionalAttr<StrAttr>:$result_name,
       // The semantic flags written, and for each how (see FlagMode); a
       // captured flag takes the next of flag_captures.
-      DenseI32ArrayAttr:$flags,
-      DenseI32ArrayAttr:$flag_modes,
+      ArrayProp<Mpir_FlagProp>:$flags,
+      ArrayProp<EnumProp<Mpir_FlagMode>>:$flag_modes,
       // The matcher operands, by kind (see OperandKind); each takes the next
       // one or two of operand_values.
-      DenseI32ArrayAttr:$operand_kinds,
+      ArrayProp<EnumProp<Mpir_OperandKind>>:$operand_kinds,
       // Surface form: the metaflags written on the instruction, and on each
       // operand (an array per operand), as written.
       OptionalAttr<ArrayAttr>:$metaflags,

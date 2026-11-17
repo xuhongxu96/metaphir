@@ -5,23 +5,16 @@
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{operand kinds need 2 operand values, but it has 1}}
-  %a = mpir.inst <freeze>(%x) <flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.inst <freeze>(%x) <flags = [], flag_modes = [], operand_kinds = [typed_value]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
 
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
-  // expected-error @+1 {{has an invalid operand kind 42}}
-  %a = mpir.inst <freeze>(%x) <flags = [], flag_modes = [], operand_kinds = [42]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
-}
-
-// -----
-
-mpir.pattern {
-  %x = mpir.var "x" : !mpir.sort<Value>
-  // expected-error @+1 {{has an invalid operand kind -1}}
-  %a = mpir.inst <freeze>(%x) <flags = [], flag_modes = [], operand_kinds = [-1]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
+  // expected-error @+2 {{for a kind of matcher operand, got: bogus}}
+  // expected-error @+1 {{invalid value for property operand_kinds}}
+  %a = mpir.inst <freeze>(%x) <flags = [], flag_modes = [], operand_kinds = [bogus]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -29,23 +22,16 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{needs one mode per flag}}
-  %a = mpir.inst <add>(%x, %x) <flags = [0], flag_modes = [], operand_kinds = [1, 1]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.inst <add>(%x, %x) <flags = [nsw], flag_modes = [], operand_kinds = [value, value]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
 
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
-  // expected-error @+1 {{has an invalid flag mode 7}}
-  %a = mpir.inst <add>(%x, %x) <flags = [0], flag_modes = [7], operand_kinds = [1, 1]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-}
-
-// -----
-
-mpir.pattern {
-  %x = mpir.var "x" : !mpir.sort<Value>
-  // expected-error @+1 {{has an invalid flag mode -1}}
-  %a = mpir.inst <add>(%x, %x) <flags = [0], flag_modes = [-1], operand_kinds = [1, 1]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  // expected-error @+2 {{for how a flag is written, got: bogus}}
+  // expected-error @+1 {{invalid value for property flag_modes}}
+  %a = mpir.inst <add>(%x, %x) <flags = [nsw], flag_modes = [bogus], operand_kinds = [value, value]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -53,7 +39,7 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{needs one capture per captured flag}}
-  %a = mpir.inst <add>(%x, %x) <flags = [0], flag_modes = [2], operand_kinds = [1, 1]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.inst <add>(%x, %x) <flags = [nsw], flag_modes = [captured], operand_kinds = [value, value]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -61,7 +47,7 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{needs one metaflag list per operand}}
-  %a = mpir.inst <add>(%x, %x) <flags = [], flag_modes = [], operand_kinds = [1, 1], operand_metaflags = [[]]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.inst <add>(%x, %x) <flags = [], flag_modes = [], operand_kinds = [value, value], operand_metaflags = [[]]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -69,23 +55,16 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{flag 2 is not valid for 'add'}}
-  %a = mpir.inst <add>(%x, %x) <flags = [2], flag_modes = [0], operand_kinds = [1, 1]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.inst <add>(%x, %x) <flags = [exact], flag_modes = [required], operand_kinds = [value, value]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
 
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
-  // expected-error @+1 {{flag 99 is not valid for 'add'}}
-  %a = mpir.inst <add>(%x, %x) <flags = [99], flag_modes = [0], operand_kinds = [1, 1]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-}
-
-// -----
-
-mpir.pattern {
-  %x = mpir.var "x" : !mpir.sort<Value>
-  // expected-error @+1 {{flag -1 is not valid for 'add'}}
-  %a = mpir.inst <add>(%x, %x) <flags = [-1], flag_modes = [0], operand_kinds = [1, 1]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  // expected-error @+2 {{expected a semantic flag, got: bogus}}
+  // expected-error @+1 {{invalid value for property flags}}
+  %a = mpir.inst <add>(%x, %x) <flags = [bogus], flag_modes = [required], operand_kinds = [value, value]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -93,7 +72,7 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{'sub' is not commutative}}
-  %a = mpir.inst <sub>(%x, %x) <flags = [], flag_modes = [], operand_kinds = [1, 1], metaflags = [#mpir.metaflag<"s", [], loc(unknown)>, #mpir.metaflag<"c", [], loc(unknown)>]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.inst <sub>(%x, %x) <flags = [], flag_modes = [], operand_kinds = [value, value], metaflags = [#mpir.metaflag<"s", [], loc(unknown)>, #mpir.metaflag<"c", [], loc(unknown)>]> : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -101,7 +80,7 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{operand kinds need 2 operand values, but it has 1}}
-  %a = mpir.use @m(%x) <flags = [], flag_modes = [], operand_kinds = [0]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.use @m(%x) <flags = [], flag_modes = [], operand_kinds = [typed_value]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -109,7 +88,7 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{uses unknown matcher 'nowhere'}}
-  %a = mpir.use @nowhere(%x) <flags = [], flag_modes = [], operand_kinds = [1]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.use @nowhere(%x) <flags = [], flag_modes = [], operand_kinds = [value]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
@@ -164,27 +143,30 @@ mpir.pattern {
 mpir.pattern {
   %x = mpir.var "x" : !mpir.sort<Value>
   // expected-error @+1 {{unknown instruction matcher 'bogus'}}
-  %a = mpir.inst <bogus>(%x) <flags = [], flag_modes = [], operand_kinds = [1]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %a = mpir.inst <bogus>(%x) <flags = [], flag_modes = [], operand_kinds = [value]> : (!mpir.sort<Value>) -> !mpir.sort<Instruction>
 }
 
 // -----
 
 mpir.pattern {
-  // expected-error @+1 {{unknown keyword constant 'nothing'}}
+  // expected-error @+2 {{expected a keyword constant, got: nothing}}
+  // expected-error @+1 {{invalid value for property keyword}}
   %k = mpir.keyword nothing : !mpir.sort<Value>
 }
 
 // -----
 
 mpir.pattern {
-  // expected-error @+1 {{unknown primitive type 'quad'}}
+  // expected-error @+2 {{expected a primitive type, got: quad}}
+  // expected-error @+1 {{invalid value for property kind}}
   %t = mpir.type.prim quad : !mpir.sort<Type>
 }
 
 // -----
 
 mpir.pattern {
-  // expected-error @+1 {{unknown aggregate kind 'list'}}
+  // expected-error @+2 {{expected an aggregate kind, got: list}}
+  // expected-error @+1 {{invalid value for property delimiter}}
   %a = mpir.aggregate list() : () -> !mpir.sort<Value>
 }
 
@@ -192,14 +174,16 @@ mpir.pattern {
 
 mpir.pattern {
   %t = mpir.type.int 8 : !mpir.sort<Type>
-  // expected-error @+1 {{unknown sequence kind 'matrix'}}
+  // expected-error @+2 {{for a kind of sequence type, got: matrix}}
+  // expected-error @+1 {{invalid value for property kind}}
   %s = mpir.type.seq matrix 4 x %t : (!mpir.sort<Type>) -> !mpir.sort<Type>
 }
 
 // -----
 
 mpir.pattern {
-  // expected-error @+1 {{expected valid keyword}}
+  // expected-error @+2 {{expected valid keyword}}
+  // expected-error @+1 {{invalid value for property keyword}}
   %k = mpir.keyword 5 : !mpir.sort<Value>
 }
 

@@ -89,9 +89,9 @@ static void printType(raw_ostream &OS, mlir::Value T) {
     return;
   }
   if (auto Seq = dyn_cast<SeqTypeOp>(Def)) {
-    bool Array = Seq.getKind() == 0;
+    bool Array = Seq.getKind() == SeqKind::Array;
     OS << (Array ? '[' : '<');
-    if (Seq.getKind() == 2)
+    if (Seq.getKind() == SeqKind::ScalableVector)
       OS << "vscale x ";
     if (Seq.getCountVar())
       OS << '?' << getMetaVariableName(Seq.getCountVar());
@@ -243,8 +243,8 @@ void printSurfaceInstruction(raw_ostream &OS, Operation *I) {
       Inst ? Inst.getMetaflags() : Use.getMetaflags();
   std::optional<ArrayAttr> OperandFlags =
       Inst ? Inst.getOperandMetaflags() : Use.getOperandMetaflags();
-  ArrayRef<int32_t> Flags = Inst ? Inst.getFlags() : Use.getFlags();
-  ArrayRef<int32_t> Modes = Inst ? Inst.getFlagModes() : Use.getFlagModes();
+  ArrayRef<instruction_flag::FlagID> Flags = Inst ? Inst.getFlags() : Use.getFlags();
+  ArrayRef<FlagMode> Modes = Inst ? Inst.getFlagModes() : Use.getFlagModes();
   mlir::OperandRange FlagCaptures =
       Inst ? Inst.getFlagCaptures() : Use.getFlagCaptures();
 

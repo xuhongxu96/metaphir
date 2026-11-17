@@ -18,8 +18,8 @@ mpir.pattern {
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
   %4 = mpir.int 2 : ui2 : <Value> loc("index-structuralize-variables.mlir":19:1)
 // CHECK:           %[[INT_1:.*]] = mpir.int 2 : ui2 : <Value>
-  %i_s = mpir.inst <select> (%0, %c, %1, %2, %3, %4) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("index-structuralize-variables.mlir":21:1)
-// CHECK:           %[[INST_0:.*]] = mpir.inst <select> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_1]], %[[INT_0]], %[[TYPE_2]], %[[INT_1]]) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [0, 0, 0]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+  %i_s = mpir.inst <select> (%0, %c, %1, %2, %3, %4) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("index-structuralize-variables.mlir":21:1)
+// CHECK:           %[[INST_0:.*]] = mpir.inst <select> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_1]], %[[INT_0]], %[[TYPE_2]], %[[INT_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "s"> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
   %5 = mpir_expr.read %c : (!mpir.sort<Boolean>) -> !mpir.sort<Boolean> loc("index-structuralize-variables.mlir":23:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Boolean>) -> !mpir.sort<Boolean>
   mpir.require %5 : <Boolean> loc("index-structuralize-variables.mlir":25:1)
@@ -62,8 +62,8 @@ mpir.pattern {
 // CHECK:           %[[VAR_1:.*]] = mpir.var "x" : <Operand>
   %y = mpir.var "y" : <Operand> loc("index-structuralize-variables.mlir":63:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "y" : <Operand>
-  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-structuralize-variables.mlir":65:1)
-// CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[VAR_2]]) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [0, 0]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-structuralize-variables.mlir":65:1)
+// CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[VAR_2]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
   %1 = mpir_expr.read %n : (!mpir.sort<Nat>) -> !mpir.sort<Integer> loc("index-structuralize-variables.mlir":67:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
   %2 = mpir_expr.call call "bitWidth"(%1) anchor %i_a : (!mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Integer> loc("index-structuralize-variables.mlir":69:1)

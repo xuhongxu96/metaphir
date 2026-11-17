@@ -77,10 +77,10 @@ struct MatcherUse {
   FORWARD(std::optional<StringRef>, getResultName)
   FORWARD(std::optional<mlir::ArrayAttr>, getMetaflags)
   FORWARD(std::optional<mlir::ArrayAttr>, getOperandMetaflags)
-  FORWARD(ArrayRef<int32_t>, getFlags)
-  FORWARD(ArrayRef<int32_t>, getFlagModes)
+  FORWARD(ArrayRef<instruction_flag::FlagID>, getFlags)
+  FORWARD(ArrayRef<FlagMode>, getFlagModes)
   FORWARD(mlir::OperandRange, getFlagCaptures)
-  FORWARD(ArrayRef<int32_t>, getOperandKinds)
+  FORWARD(ArrayRef<OperandKind>, getOperandKinds)
   FORWARD(std::optional<bool>, getTreatIntAsVec)
 #undef FORWARD
   Value getCapture() const {
@@ -97,7 +97,8 @@ struct MatcherUse {
 struct MatcherParts {
   std::string ResultName;
   bool HasResultName = false;
-  SmallVector<int32_t, 4> Flags, Modes;
+  SmallVector<instruction_flag::FlagID, 4> Flags;
+  SmallVector<FlagMode, 4> Modes;
   SmallVector<Value, 2> FlagCaptures;
   SmallVector<MatcherOperandView, 8> Operands;
   SmallVector<Attribute, 4> MetaFlags;
@@ -135,18 +136,16 @@ struct MatcherParts {
     State.addAttribute(Key.getName(), Key.getValue());
     if (HasResultName)
       State.addAttribute("result_name", Builder.getStringAttr(ResultName));
-    State.addAttribute("flags", Builder.getDenseI32ArrayAttr(Flags));
-    State.addAttribute("flag_modes", Builder.getDenseI32ArrayAttr(Modes));
-    SmallVector<int32_t, 8> Kinds;
+    SmallVector<OperandKind, 8> Kinds;
     SmallVector<Value, 8> Values;
     for (const MatcherOperandView &Op : Operands) {
-      Kinds.push_back(int32_t(Op.Kind));
+      Kinds.push_back(Op.Kind);
       if (Op.Type)
         Values.push_back(Op.Type);
       if (Op.Val)
         Values.push_back(Op.Val);
     }
-    State.addAttribute("operand_kinds", Builder.getDenseI32ArrayAttr(Kinds));
+    setMatcherProperties(Builder, State, Flags, Modes, Kinds);
     if (!MetaFlags.empty())
       State.addAttribute("metaflags", Builder.getArrayAttr(MetaFlags));
     if (any_of(OperandMetaFlags,
@@ -625,22 +624,21 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
   MatcherUse UseView(Use);
   SmallVector<std::pair<Value, bool>, 2> FixedFlags;
   DenseMap<int32_t, std::pair<Value, std::optional<bool>>> FlagValues;
-  ArrayRef<int32_t> UseFlags = Use.getFlags();
-  ArrayRef<int32_t> UseModes = Use.getFlagModes();
+  ArrayRef<instruction_flag::FlagID> UseFlags = Use.getFlags();
+  ArrayRef<FlagMode> UseModes = Use.getFlagModes();
   SmallVector<Value, 4> UseCaptures;
   {
     unsigned Next = 0;
-    for (int32_t Mode : UseModes)
-      UseCaptures.push_back(FlagMode(Mode) == FlagMode::Captured
-                                ? Use.getFlagCaptures()[Next++]
-                                : Value());
+    for (FlagMode Mode : UseModes)
+      UseCaptures.push_back(
+          Mode == FlagMode::Captured ? Use.getFlagCaptures()[Next++] : Value());
   }
-  ArrayRef<int32_t> FixedIDs = Branch.getFixedFlags();
+  ArrayRef<instruction_flag::FlagID> FixedIDs = Branch.getFixedFlags();
   ArrayRef<bool> FixedValues = Branch.getFixedFlagValues();
   OpBuilder::InsertionGuard Guard(Builder);
   Builder.setInsertionPoint(Alt);
-  for (int32_t FlagID : Matcher.getSupportedFlags()) {
-    const int32_t *UseFlag = find(UseFlags, FlagID);
+  for (instruction_flag::FlagID FlagID : Matcher.getSupportedFlags()) {
+    const instruction_flag::FlagID *UseFlag = find(UseFlags, FlagID);
     std::optional<unsigned> UseIndex;
     if (UseFlag != UseFlags.end())
       UseIndex = UseFlag - UseFlags.begin();
@@ -648,13 +646,13 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
     if (UseIndex && isWildcardCapture(UseCaptures[*UseIndex]))
       UseIndex.reset();
     std::optional<bool> Fixed;
-    if (const int32_t *F = find(FixedIDs, FlagID); F != FixedIDs.end())
+    if (const instruction_flag::FlagID *F = find(FixedIDs, FlagID); F != FixedIDs.end())
       Fixed = FixedValues[F - FixedIDs.begin()];
 
     std::pair<Value, std::optional<bool>> FlagValue;
     Value UseCapture = UseIndex ? UseCaptures[*UseIndex] : Value();
     if (UseIndex && !UseCapture) {
-      bool Required = FlagMode(UseModes[*UseIndex]) != FlagMode::Negated;
+      bool Required = UseModes[*UseIndex] != FlagMode::Negated;
       if (Fixed && *Fixed != Required)
         return false;
       FlagValue.second = Required;
@@ -765,11 +763,12 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
       Parts.ResultName = (UsePrefix + "$" + Parts.ResultName).str();
     }
     // Flags: a supported flag on the root takes the use's flag.
-    SmallVector<int32_t, 4> Flags, Modes;
+    SmallVector<instruction_flag::FlagID, 4> Flags;
+    SmallVector<FlagMode, 4> Modes;
     SmallVector<Value, 2> Captures;
     unsigned NextCapture = 0;
     for (auto [Flag, Mode] : zip(Parts.Flags, Parts.Modes)) {
-      Value Capture = FlagMode(Mode) == FlagMode::Captured
+      Value Capture = Mode == FlagMode::Captured
                           ? Parts.FlagCaptures[NextCapture++]
                           : Value();
       if (!IsRoot || !is_contained(Matcher.getSupportedFlags(), Flag)) {
@@ -782,11 +781,10 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
       auto [Var, Constant] = FlagValues.lookup(Flag);
       Flags.push_back(Flag);
       if (Var) {
-        Modes.push_back(int32_t(FlagMode::Captured));
+        Modes.push_back(FlagMode::Captured);
         Captures.push_back(Var);
       } else {
-        Modes.push_back(
-            int32_t(*Constant ? FlagMode::Required : FlagMode::Negated));
+        Modes.push_back(*Constant ? FlagMode::Required : FlagMode::Negated);
       }
     }
     Parts.Flags = Flags;

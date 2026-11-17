@@ -1,9 +1,9 @@
 ; mpir-index-structuralize: what constraints say of an intrinsic's name or an
 ; instruction's kind becomes features the corpus index looks up.
 ; RUN: split-file %s %t
-; RUN: %metaphir-parse --emit=mlir %t/callee.mpir | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-structuralize | FileCheck %s --check-prefix=CALLEE
-; RUN: %metaphir-parse --emit=mlir %t/either.mpir | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-structuralize | FileCheck %s --check-prefix=EITHER
-; RUN: %metaphir-parse --emit=mlir %t/opcode.mpir | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-structuralize | FileCheck %s --check-prefix=OPCODE
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo %t/callee.mpir | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-structuralize | FileCheck %s --check-prefix=CALLEE
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo %t/either.mpir | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-structuralize | FileCheck %s --check-prefix=EITHER
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo %t/opcode.mpir | %metaphir-opt --mpir-lower --mpir-to-index --mpir-index-structuralize | FileCheck %s --check-prefix=OPCODE
 
 ;--- callee.mpir
 %c = call i?n @llvm.?id(i?n ?x, i1 ?z)

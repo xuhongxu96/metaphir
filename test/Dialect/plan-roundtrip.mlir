@@ -1,8 +1,8 @@
 // RUN: %metaphir-opt %s | %metaphir-opt | FileCheck %s
 // The mpir_plan dialect's operations print as they parse.
 
-mpir_plan.matcher <slot_names = ["x", "%r", "t", "blk"], slot_kinds = [0, 1, 0, 0], slot_sorts = [2, 3, 1, 7], slot_locs = [loc("plan-roundtrip.mlir":4:1), loc("plan-roundtrip.mlir":4:1), loc("plan-roundtrip.mlir":4:1), loc("plan-roundtrip.mlir":4:1)]> {
-// CHECK-LABEL:   mpir_plan.matcher <slot_names = ["x", "%r", "t", "blk"], slot_kinds = [0, 1, 0, 0], slot_sorts = [2, 3, 1, 7], slot_locs = [{{.*}}, {{.*}}, {{.*}}, {{.*}}]> {
+mpir_plan.matcher <slot_names = ["x", "%r", "t", "blk"], slot_kinds = [variable, instruction, variable, variable], slot_sorts = [Value, Instruction, Operand, Boolean], slot_locs = [loc("plan-roundtrip.mlir":4:1), loc("plan-roundtrip.mlir":4:1), loc("plan-roundtrip.mlir":4:1), loc("plan-roundtrip.mlir":4:1)]> {
+// CHECK-LABEL:   mpir_plan.matcher <slot_kinds = [variable, instruction, variable, variable], slot_sorts = [Value, Instruction, Operand, Boolean], slot_names = ["x", "%r", "t", "blk"], slot_locs = [{{.*}}, {{.*}}, {{.*}}, {{.*}}]> {
   %i = mpir_plan.foreach_instruction loc("plan-roundtrip.mlir":6:1)
 // CHECK:           %[[FOREACH_INSTRUCTION_0:.*]] = mpir_plan.foreach_instruction
   mpir_plan.check_opcode %i, <call> loc("plan-roundtrip.mlir":8:1)
@@ -33,14 +33,14 @@ mpir_plan.matcher <slot_names = ["x", "%r", "t", "blk"], slot_kinds = [0, 1, 0, 
 // CHECK:           %[[GET_OPERANDS_FROM_0:.*]] = mpir_plan.get_operands_from %[[FOREACH_INSTRUCTION_0]][1 :]
   %tys = mpir_plan.get_operands_from %i[1:] <types> loc("plan-roundtrip.mlir":34:1)
 // CHECK:           %[[GET_OPERANDS_FROM_1:.*]] = mpir_plan.get_operands_from %[[FOREACH_INSTRUCTION_0]][1 :] <types>
-  %flag = mpir_plan.get_flag %i[0] loc("plan-roundtrip.mlir":36:1)
-// CHECK:           %[[GET_FLAG_0:.*]] = mpir_plan.get_flag %[[FOREACH_INSTRUCTION_0]][0]
-  mpir_plan.check_flag %i[1] is false loc("plan-roundtrip.mlir":38:1)
-// CHECK:           mpir_plan.check_flag %[[FOREACH_INSTRUCTION_0]][1] is false
-  %k = mpir_plan.get_keyed %i[5] loc("plan-roundtrip.mlir":40:1)
-// CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][5]
-  %ks = mpir_plan.get_keyed %i[5] <swapped> loc("plan-roundtrip.mlir":42:1)
-// CHECK:           %[[GET_KEYED_1:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][5] <swapped>
+  %flag = mpir_plan.get_flag %i[nsw] loc("plan-roundtrip.mlir":36:1)
+// CHECK:           %[[GET_FLAG_0:.*]] = mpir_plan.get_flag %[[FOREACH_INSTRUCTION_0]][nsw]
+  mpir_plan.check_flag %i[nuw] is false loc("plan-roundtrip.mlir":38:1)
+// CHECK:           mpir_plan.check_flag %[[FOREACH_INSTRUCTION_0]][nuw] is false
+  %k = mpir_plan.get_keyed %i[predicate] loc("plan-roundtrip.mlir":40:1)
+// CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
+  %ks = mpir_plan.get_keyed %i[predicate] <swapped> loc("plan-roundtrip.mlir":42:1)
+// CHECK:           %[[GET_KEYED_1:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate] <swapped>
   %e = mpir_plan.get_element %rest[0] loc("plan-roundtrip.mlir":44:1)
 // CHECK:           %[[GET_ELEMENT_0:.*]] = mpir_plan.get_element %[[GET_OPERANDS_FROM_0]][0]
   mpir_plan.check_constant %o, 7 : ui3 loc("plan-roundtrip.mlir":46:1)
@@ -49,8 +49,8 @@ mpir_plan.matcher <slot_names = ["x", "%r", "t", "blk"], slot_kinds = [0, 1, 0, 
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_0]], 0 : i32 <keyword>
   mpir_plan.check_constant %o, 1.0 : f64 <treat_int_as_vec> loc("plan-roundtrip.mlir":50:1)
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_0]], 1.000000e+00 : f64 <treat_int_as_vec>
-  mpir_plan.check_aggregate %o, 0, 2 loc("plan-roundtrip.mlir":52:1)
-// CHECK:           mpir_plan.check_aggregate %[[GET_OPERAND_0]], 0, 2
+  mpir_plan.check_aggregate %o, array, 2 loc("plan-roundtrip.mlir":52:1)
+// CHECK:           mpir_plan.check_aggregate %[[GET_OPERAND_0]], array, 2
   mpir_plan.check_bound 0 is false loc("plan-roundtrip.mlir":54:1)
 // CHECK:           mpir_plan.check_bound 0 is false
 // CHECK:           %[[EITHER_0:.*]]:2 = mpir_plan.either {

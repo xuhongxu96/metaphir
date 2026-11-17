@@ -12,6 +12,8 @@ using namespace llvm::metaphir::mpir_plan;
 #define GET_TYPEDEF_CLASSES
 #include "metaphir/Dialect/Plan/PlanOpsTypes.cpp.inc"
 
+#include "metaphir/Dialect/Plan/PlanEnums.cpp.inc"
+
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Plan/PlanOps.cpp.inc"
 

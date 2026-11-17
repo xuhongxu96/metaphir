@@ -777,22 +777,21 @@ Operation *Parser::buildMatcherUse(StringRef OpName,
   State.addAttribute(Matcher.getName(), Matcher.getValue());
   if (!ResultName.empty())
     State.addAttribute("result_name", Builder.getStringAttr(ResultName));
-  SmallVector<int32_t, 4> FlagIDs, Modes;
+  SmallVector<instruction_flag::FlagID, 4> FlagIDs;
+  SmallVector<FlagMode, 4> Modes;
   SmallVector<Value, 2> FlagCaptures;
   for (const PFlag &F : Flags) {
     FlagIDs.push_back(F.ID);
-    Modes.push_back(int32_t(F.Mode));
+    Modes.push_back(F.Mode);
     if (F.Capture)
       FlagCaptures.push_back(F.Capture);
   }
-  State.addAttribute("flags", Builder.getDenseI32ArrayAttr(FlagIDs));
-  State.addAttribute("flag_modes", Builder.getDenseI32ArrayAttr(Modes));
-  SmallVector<int32_t, 8> Kinds;
+  SmallVector<OperandKind, 8> Kinds;
   SmallVector<Value, 8> Values;
   SmallVector<mlir::Attribute, 8> OperandFlags;
   bool AnyOperandFlags = false;
   for (const POperand &Op : Ops) {
-    Kinds.push_back(int32_t(Op.Kind));
+    Kinds.push_back(Op.Kind);
     switch (Op.Kind) {
     case OperandKind::TypedValue:
     case OperandKind::TypedValueArray:
@@ -809,7 +808,7 @@ Operation *Parser::buildMatcherUse(StringRef OpName,
     OperandFlags.push_back(Builder.getArrayAttr(Op.MetaFlags));
     AnyOperandFlags |= !Op.MetaFlags.empty();
   }
-  State.addAttribute("operand_kinds", Builder.getDenseI32ArrayAttr(Kinds));
+  setMatcherProperties(Builder, State, FlagIDs, Modes, Kinds);
   if (!MFlags.empty()) {
     SmallVector<mlir::Attribute, 4> Attrs;
     for (const PMetaFlag &F : MFlags)
@@ -908,10 +907,10 @@ bool Parser::parseCompositeInstruction(Value &Result, MatcherOp CM,
   if (parseInstructionMetaFlags(MFlags, CM.getCommutative(), OpName))
     return true;
   SmallVector<PFlag, 8> Flags;
-  ArrayRef<int32_t> Supported = CM.getSupportedFlags();
+  ArrayRef<instruction_flag::FlagID> Supported = CM.getSupportedFlags();
   if (parseSemanticFlags(
           [Supported](instruction_flag::FlagID F) {
-            return is_contained(Supported, int32_t(F));
+            return is_contained(Supported, F);
           },
           OpName, Flags))
     return true;
@@ -1410,7 +1409,7 @@ bool Parser::parseBaseType(Value &Result, bool AllowVoid) {
     return error("expected type");
   if (*ID == primitive_type::VoidTyID && !AllowVoid)
     return error("void type is not allowed here");
-  Result = PrimTypeOp::create(Builder, loc(Loc), TypeSort, unsigned(*ID));
+  Result = PrimTypeOp::create(Builder, loc(Loc), TypeSort, *ID);
   next();
   return false;
 }
@@ -1468,9 +1467,11 @@ bool Parser::parseSequenceType(Value &Result, bool IsVector, LocTy Loc) {
                                    "expected '" + Twine(IsVector ? '>' : ']') +
                                        "' after " + What + " type"))
     return true;
-  Result = SeqTypeOp::create(Builder, loc(Loc), sortType(Sort::Type),
-                             IsVector ? (Scalable ? 2 : 1) : 0, Count, Element,
-                             CountVar);
+  Result = SeqTypeOp::create(
+      Builder, loc(Loc), sortType(Sort::Type),
+      IsVector ? (Scalable ? SeqKind::ScalableVector : SeqKind::Vector)
+               : SeqKind::Array,
+      Count, Element, CountVar);
   return false;
 }
 
@@ -1609,8 +1610,7 @@ bool Parser::parseValue(Value &Result, Sort Expected) {
   default:
     if (std::optional<keyword_constant::KeywordID> Constant =
             tok::getConstantKeyword(Lex.getKind())) {
-      Result = KeywordOp::create(Builder, loc(Loc), sortType(Sort::Value),
-                                 unsigned(*Constant));
+      Result = KeywordOp::create(Builder, loc(Loc), sortType(Sort::Value), *Constant);
       next();
       return false;
     }
@@ -1642,7 +1642,7 @@ bool Parser::parseAggregateConstant(Value &Result) {
       expect(Close, "expected end of aggregate constant"))
     return true;
   Result = AggregateOp::create(Builder, loc(Loc), sortType(Sort::Value),
-                               unsigned(Delimiter), Elements);
+                               Delimiter, Elements);
   return false;
 }
 
@@ -2058,15 +2058,16 @@ bool Parser::parseTopLevelConstraint() {
 
 bool Parser::parseTopLevelMetaFlag() {
   next();
-  unsigned Placement = 0;
+  unsigned Mask = 0;
   while (Lex.getKind() == tok::MetaFlag &&
          (Lex.getStrVal() == "i" || Lex.getStrVal() == "o")) {
-    Placement |= Lex.getStrVal() == "i" ? metaflag::InstructionPlacement
+    Mask |= Lex.getStrVal() == "i" ? metaflag::InstructionPlacement
                                         : metaflag::OperandPlacement;
     next();
   }
-  if (Placement == 0)
-    Placement = metaflag::OperandPlacement;
+  if (Mask == 0)
+    Mask = metaflag::OperandPlacement;
+  auto Placement = metaflag::Placement(Mask);
   if (Lex.getKind() != tok::MetaFlag)
     return error("expected ':' followed by a metaflag name");
   LocTy Loc = Lex.getLoc();
@@ -2211,8 +2212,8 @@ bool Parser::parseMatchHeader(MatchHeader &Header, MatcherOp &Matcher,
   Builder.setInsertionPointToEnd(Module.getBody());
   Matcher = MatcherOp::create(
       Builder, loc(NameLoc), Builder.getStringAttr(Header.Name),
-      mlir::StringAttr(), mlir::UnitAttr(), Builder.getDenseI32ArrayAttr({}),
-      Builder.getI32IntegerAttr(0), Builder.getI32IntegerAttr(0),
+      mlir::StringAttr(), mlir::UnitAttr(), ArrayRef<instruction_flag::FlagID>(),
+      instruction::OperandSyntax::Nary, Builder.getI32IntegerAttr(0),
       Builder.getArrayAttr({}), Builder.getDenseBoolArrayAttr({}));
   insertDefinition(Matcher);
   mlir::Block &Body = Matcher.getBody().emplaceBlock();
@@ -2245,8 +2246,8 @@ bool Parser::parseMatchHeader(MatchHeader &Header, MatcherOp &Matcher,
                                        "' in match declaration");
   }
 
-  SmallVector<int32_t, 4> Flags(Header.SupportedFlags.begin(),
-                                Header.SupportedFlags.end());
+  SmallVector<instruction_flag::FlagID, 4> Flags(Header.SupportedFlags.begin(),
+                                               Header.SupportedFlags.end());
   SmallVector<std::string, 4> Names;
   SmallVector<bool, 4> IsType;
   for (const ParamDef &P : Header.Parameters) {
@@ -2256,7 +2257,7 @@ bool Parser::parseMatchHeader(MatchHeader &Header, MatcherOp &Matcher,
   if (Header.IsCommutative)
     Matcher.setCommutative(true);
   Matcher.setSupportedFlags(Flags);
-  Matcher.setSyntax(unsigned(Header.Syntax));
+  Matcher.setSyntax(Header.Syntax);
   Matcher.setArity(Header.Arity);
   Matcher.setParamNamesAttr(stringArray(Builder, Names));
   Matcher.setParamIsType(IsType);
@@ -2307,7 +2308,7 @@ bool Parser::parseMatchBranch(const MatchHeader &Header, MatcherOp Matcher) {
 
   OpBuilder::InsertionGuard Guard(Builder);
   Builder.setInsertionPointToEnd(&Matcher.getBody().front());
-  SmallVector<int32_t, 2> FlagIDs;
+  SmallVector<instruction_flag::FlagID, 2> FlagIDs;
   SmallVector<bool, 2> FlagValues;
   for (auto [ID, Value] : FixedFlags) {
     FlagIDs.push_back(ID);
@@ -2315,7 +2316,7 @@ bool Parser::parseMatchBranch(const MatchHeader &Header, MatcherOp Matcher) {
   }
   auto Branch =
       BranchOp::create(Builder, loc(Loc), Builder.getDenseI32ArrayAttr({}),
-                       Builder.getDenseI32ArrayAttr(FlagIDs),
+                       FlagIDs,
                        Builder.getDenseBoolArrayAttr(FlagValues));
   mlir::Block &Body = Branch.getBody().emplaceBlock();
 

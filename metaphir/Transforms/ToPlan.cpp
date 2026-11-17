@@ -48,8 +48,8 @@ namespace {
 /// The slots of a plan.
 struct Slots {
   SmallVector<Attribute, 16> Names;
-  SmallVector<int32_t, 16> Kinds;
-  SmallVector<int32_t, 16> Sorts;
+  SmallVector<plan::SlotKind, 16> Kinds;
+  SmallVector<Sort, 16> Sorts;
   SmallVector<Attribute, 16> Locs;
   DenseMap<Value, unsigned> Of;
 
@@ -57,8 +57,8 @@ struct Slots {
                Location Loc, mlir::MLIRContext *Context) {
     unsigned Slot = Names.size();
     Names.push_back(mlir::StringAttr::get(Context, Name));
-    Kinds.push_back(int32_t(Kind));
-    Sorts.push_back(int32_t(S));
+    Kinds.push_back(Kind);
+    Sorts.push_back(S);
     Locs.push_back(Loc);
     Of[V] = Slot;
     return Slot;
@@ -214,7 +214,7 @@ mlir::ArrayAttr Compiler::typePattern(Value T) {
     Int(!Ptr.getElement());
   } else if (auto Seq = dyn_cast<SeqTypeOp>(Def)) {
     Int(int64_t(plan::TypePatternKind::Sequence));
-    Int(Seq.getKind());
+    Int(int64_t(Seq.getKind()));
     Int(Seq.getCount());
     Int(Seq.getCountVar() ? int64_t(slotOf(Seq.getCountVar())) : -1);
     Parts.push_back(typePattern(Seq.getElement()));
@@ -273,7 +273,7 @@ void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
   }
   if (auto Keyword = dyn_cast<KeywordOp>(Def)) {
     auto Check = plan::CheckConstantOp::create(Builder, Loc, Reg,
-                                               Keyword.getKeywordAttr());
+                                               Builder.getI32IntegerAttr(Keyword.getKeyword()));
     Check.setKeyword(true);
     return;
   }
@@ -284,7 +284,7 @@ void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
   if (auto Aggregate = dyn_cast<AggregateOp>(Def)) {
     mlir::OperandRange Elements = Aggregate.getElements();
     plan::CheckAggregateOp::create(Builder, Loc, Reg,
-                                   i32(Aggregate.getDelimiter()),
+                                   Aggregate.getDelimiter(),
                                    i32(Elements.size() / 2));
     for (unsigned I = 0; I + 1 < Elements.size(); I += 2) {
       Value Element =
@@ -382,12 +382,12 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
       case FlagMode::Required:
       case FlagMode::Negated:
         plan::CheckFlagOp::create(
-            Builder, Loc, Reg, i32(Flag),
+            Builder, Loc, Reg, Flag,
             Builder.getBoolAttr(FlagMode(Mode) == FlagMode::Required));
         break;
       case FlagMode::Captured: {
         Value Present =
-            plan::GetFlagOp::create(Builder, Loc, reg(), Reg, i32(Flag));
+            plan::GetFlagOp::create(Builder, Loc, reg(), Reg, Flag);
         bindVariable(Present, Inst.getFlagCaptures()[NextCapture++],
                      /*AsSort=*/false);
         break;
@@ -402,8 +402,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     for (const MatcherOperandView &Op : Operands) {
       if (Op.Kind != Kind)
         continue;
-      Value Keyed = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg,
-                                             i32(int32_t(Kind)));
+      Value Keyed = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg, Kind);
       if (isVariable(Op.Val))
         bindVariable(Keyed, Op.Val, /*AsSort=*/false);
       else
@@ -431,7 +430,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     if (Op.Kind != OperandKind::Predicate)
       continue;
     auto Predicate = plan::GetKeyedOp::create(
-        Builder, Loc, reg(), Reg, i32(int32_t(OperandKind::Predicate)));
+        Builder, Loc, reg(), Reg, OperandKind::Predicate);
     if (Inst.getSwappedPredicate())
       Predicate.setSwapped(true);
     (void)ID;
@@ -440,7 +439,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     } else {
       auto Keyword = cast<KeywordOp>(Op.Val.getDefiningOp());
       auto Check = plan::CheckConstantOp::create(Builder, Loc, Predicate,
-                                                 Keyword.getKeywordAttr());
+                                                 Builder.getI32IntegerAttr(Keyword.getKeyword()));
       Check.setKeyword(true);
     }
   }
@@ -570,7 +569,7 @@ Value Compiler::cloneExpression(Value E, mlir::IRMapping &Mapping) {
     unsigned Slot = slotOf(E);
     auto SlotOp = plan::SlotOp::create(Builder, Loc, E.getType(), i32(Slot));
     StringRef Name = cast<mlir::StringAttr>(S.Names[Slot]).getValue();
-    if (S.Kinds[Slot] == int32_t(plan::SlotKind::Instruction))
+    if (S.Kinds[Slot] == plan::SlotKind::Instruction)
       SlotOp->setAttr("result_name",
                       Builder.getStringAttr(
                           Name.starts_with("%") ? Name.drop_front() : Name));
@@ -618,7 +617,7 @@ plan::MatcherOp Compiler::compile() {
   assignSlots();
   auto Matcher = plan::MatcherOp::create(
       Builder, Pattern.getLoc(), Builder.getArrayAttr({}),
-      Builder.getDenseI32ArrayAttr({}), Builder.getDenseI32ArrayAttr({}),
+      ArrayRef<plan::SlotKind>(), ArrayRef<Sort>(),
       Builder.getArrayAttr({}));
   mlir::Block &Body = Matcher.getBody().emplaceBlock();
   OpBuilder::InsertionGuard Guard(Builder);

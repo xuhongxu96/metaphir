@@ -1,4 +1,8 @@
 # The mpir_plan dialect: match plans.
+set(LLVM_TARGET_DEFINITIONS PlanEnums.td)
+mlir_tablegen(PlanEnums.h.inc -gen-enum-decls)
+mlir_tablegen(PlanEnums.cpp.inc -gen-enum-defs)
+
 set(LLVM_TARGET_DEFINITIONS PlanOps.td)
 mlir_tablegen(PlanOps.h.inc -gen-op-decls)
 mlir_tablegen(PlanOps.cpp.inc -gen-op-defs)

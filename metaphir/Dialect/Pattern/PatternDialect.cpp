@@ -19,66 +19,7 @@ using namespace llvm::metaphir::mpir;
 #define GET_ATTRDEF_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOpsAttrDefs.cpp.inc"
 
-//===----------------------------------------------------------------------===//
-// Custom assembly directives: enumerations by their names
-//===----------------------------------------------------------------------===//
-
-/// Parses one of Names as a keyword, setting Attr to its index.
-static ParseResult parseNamed(OpAsmParser &Parser, IntegerAttr &Attr,
-                              ArrayRef<StringRef> Names, StringRef What) {
-  SMLoc Loc = Parser.getCurrentLocation();
-  StringRef Name;
-  if (Parser.parseKeyword(&Name))
-    return failure();
-  for (auto [Index, Each] : llvm::enumerate(Names))
-    if (Each == Name) {
-      Attr = Parser.getBuilder().getI32IntegerAttr(Index);
-      return success();
-    }
-  return Parser.emitError(Loc) << "unknown " << What << " '" << Name << "'";
-}
-
-static void printNamed(OpAsmPrinter &Printer, IntegerAttr Attr,
-                       ArrayRef<StringRef> Names) {
-  uint64_t Index = Attr.getValue().getZExtValue();
-  if (Index < Names.size())
-    Printer << Names[Index];
-  else
-    Printer << "<invalid " << Index << ">";
-}
-
-static ParseResult parseKeyword(OpAsmParser &Parser, IntegerAttr &Attr) {
-  return parseNamed(Parser, Attr, keyword_constant::getKeywordNames(),
-                    "keyword constant");
-}
-static void printKeyword(OpAsmPrinter &Printer, Operation *, IntegerAttr Attr) {
-  printNamed(Printer, Attr, keyword_constant::getKeywordNames());
-}
-
-static ParseResult parsePrimType(OpAsmParser &Parser, IntegerAttr &Attr) {
-  return parseNamed(Parser, Attr, primitive_type::getNames(), "primitive type");
-}
-static void printPrimType(OpAsmPrinter &Printer, Operation *,
-                          IntegerAttr Attr) {
-  printNamed(Printer, Attr, primitive_type::getNames());
-}
-
-static ParseResult parseDelimiter(OpAsmParser &Parser, IntegerAttr &Attr) {
-  return parseNamed(Parser, Attr, aggregate_constant::getNames(),
-                    "aggregate kind");
-}
-static void printDelimiter(OpAsmPrinter &Printer, Operation *,
-                           IntegerAttr Attr) {
-  printNamed(Printer, Attr, aggregate_constant::getNames());
-}
-
-static constexpr StringRef SeqKindNames[] = {"array", "vector", "scalable"};
-static ParseResult parseSeqKind(OpAsmParser &Parser, IntegerAttr &Attr) {
-  return parseNamed(Parser, Attr, SeqKindNames, "sequence kind");
-}
-static void printSeqKind(OpAsmPrinter &Printer, Operation *, IntegerAttr Attr) {
-  printNamed(Printer, Attr, SeqKindNames);
-}
+#include "metaphir/Dialect/Pattern/PatternEnums.cpp.inc"
 
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOps.cpp.inc"
@@ -153,6 +94,27 @@ unsigned mpir::getNumOperandValues(OperandKind Kind) {
   }
 }
 
+template <typename EnumT>
+static mlir::ArrayAttr getEnumArrayAttr(mlir::Builder &Builder,
+                                        ArrayRef<EnumT> Values) {
+  SmallVector<mlir::Attribute, 8> Attrs;
+  for (EnumT Value : Values)
+    Attrs.push_back(Builder.getI32IntegerAttr(int32_t(Value)));
+  return Builder.getArrayAttr(Attrs);
+}
+
+void mpir::setMatcherProperties(mlir::Builder &Builder,
+                                mlir::OperationState &State,
+                                ArrayRef<instruction_flag::FlagID> Flags,
+                                ArrayRef<FlagMode> Modes,
+                                ArrayRef<OperandKind> Kinds) {
+  State.propertiesAttr = Builder.getDictionaryAttr(
+      {Builder.getNamedAttr("flags", getEnumArrayAttr(Builder, Flags)),
+       Builder.getNamedAttr("flag_modes", getEnumArrayAttr(Builder, Modes)),
+       Builder.getNamedAttr("operand_kinds",
+                            getEnumArrayAttr(Builder, Kinds))});
+}
+
 bool mpir::isKeyedOperand(OperandKind Kind) {
   return Kind >= OperandKind::Predicate;
 }
@@ -174,8 +136,7 @@ static SmallVector<MatcherOperandView, 4> operandsOf(OpT Op) {
   SmallVector<MatcherOperandView, 4> Result;
   ValueRange Values = Op.getOperandValues();
   unsigned Next = 0;
-  for (int32_t Raw : Op.getOperandKinds()) {
-    auto Kind = OperandKind(Raw);
+  for (OperandKind Kind : Op.getOperandKinds()) {
     MatcherOperandView View{Kind, {}, {}};
     switch (Kind) {
     case OperandKind::TypedValue:
@@ -204,11 +165,8 @@ SmallVector<MatcherOperandView, 4> mpir::getMatcherOperands(Operation *Op) {
 /// Checks what the matcher uses' attributes say about their operands.
 template <typename OpT> static LogicalResult verifyMatcherUse(OpT Op) {
   unsigned Needed = 0;
-  for (int32_t Raw : Op.getOperandKinds()) {
-    if (Raw < 0 || Raw > int32_t(OperandKind::InRangeUpper))
-      return Op.emitOpError("has an invalid operand kind ") << Raw;
-    Needed += getNumOperandValues(OperandKind(Raw));
-  }
+  for (OperandKind Kind : Op.getOperandKinds())
+    Needed += getNumOperandValues(Kind);
   if (Needed != Op.getOperandValues().size())
     return Op.emitOpError("operand kinds need ")
            << Needed << " operand values, but it has "
@@ -216,11 +174,8 @@ template <typename OpT> static LogicalResult verifyMatcherUse(OpT Op) {
   if (Op.getFlags().size() != Op.getFlagModes().size())
     return Op.emitOpError("needs one mode per flag");
   unsigned Captured = 0;
-  for (int32_t Mode : Op.getFlagModes()) {
-    if (Mode < 0 || Mode > int32_t(FlagMode::Captured))
-      return Op.emitOpError("has an invalid flag mode ") << Mode;
-    Captured += Mode == int32_t(FlagMode::Captured);
-  }
+  for (FlagMode Mode : Op.getFlagModes())
+    Captured += Mode == FlagMode::Captured;
   if (Captured != Op.getFlagCaptures().size())
     return Op.emitOpError("needs one capture per captured flag");
   if (std::optional<ArrayAttr> PerOperand = Op.getOperandMetaflags())

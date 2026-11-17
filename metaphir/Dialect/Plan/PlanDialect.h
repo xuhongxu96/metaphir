@@ -26,6 +26,8 @@
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
+#include "metaphir/Dialect/Plan/PlanEnums.h.inc"
+
 namespace llvm {
 namespace metaphir {
 namespace mpir_plan {
@@ -40,9 +42,6 @@ enum class TypePatternKind : int64_t {
   Struct = 6,
   Function = 7,
 };
-
-/// What a slot of a plan stands for.
-enum class SlotKind : int32_t { Variable = 0, Instruction = 1 };
 
 } // namespace mpir_plan
 } // namespace metaphir

@@ -453,7 +453,7 @@ void Compiler::emitVariant(const Requirement &R) {
       Int(!Ptr.getElement());
     } else if (auto Seq = dyn_cast<SeqTypeOp>(Def)) {
       Int(int64_t(mpir_plan::TypePatternKind::Sequence));
-      Int(Seq.getKind());
+      Int(int64_t(Seq.getKind()));
       Int(Seq.getCount());
       Int(Seq.getCountVar() ? int64_t(Var(Seq.getCountVar())) : -1);
       Parts.push_back(TypePattern(Seq.getElement()));
