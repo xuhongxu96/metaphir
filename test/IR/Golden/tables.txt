@@ -1,0 +1,274 @@
+[instructions]
+0 fneg flags=0x3fc00 commutative=0 syntax=0 arity=1
+1 add flags=0x3 commutative=1 syntax=1 arity=2
+2 fadd flags=0x3fc00 commutative=1 syntax=1 arity=2
+3 sub flags=0x3 commutative=0 syntax=1 arity=2
+4 fsub flags=0x3fc00 commutative=0 syntax=1 arity=2
+5 mul flags=0x3 commutative=1 syntax=1 arity=2
+6 fmul flags=0x3fc00 commutative=1 syntax=1 arity=2
+7 udiv flags=0x4 commutative=0 syntax=1 arity=2
+8 sdiv flags=0x4 commutative=0 syntax=1 arity=2
+9 fdiv flags=0x3fc00 commutative=0 syntax=1 arity=2
+10 urem flags=0x0 commutative=0 syntax=1 arity=2
+11 srem flags=0x0 commutative=0 syntax=1 arity=2
+12 frem flags=0x3fc00 commutative=0 syntax=1 arity=2
+13 shl flags=0x3 commutative=0 syntax=1 arity=2
+14 lshr flags=0x4 commutative=0 syntax=1 arity=2
+15 ashr flags=0x4 commutative=0 syntax=1 arity=2
+16 and flags=0x0 commutative=1 syntax=1 arity=2
+17 or flags=0x8 commutative=1 syntax=1 arity=2
+18 xor flags=0x0 commutative=1 syntax=1 arity=2
+19 extractelement flags=0x0 commutative=0 syntax=3 arity=0
+20 insertelement flags=0x0 commutative=0 syntax=0 arity=3
+21 shufflevector flags=0x0 commutative=0 syntax=0 arity=3
+22 extractvalue flags=0x0 commutative=0 syntax=3 arity=0
+23 insertvalue flags=0x0 commutative=0 syntax=3 arity=0
+24 alloca flags=0x10 commutative=0 syntax=3 arity=0
+25 load flags=0x20 commutative=0 syntax=3 arity=0
+26 store flags=0x20 commutative=0 syntax=3 arity=0
+27 getelementptr flags=0xc2 commutative=0 syntax=3 arity=0
+28 trunc flags=0x3 commutative=0 syntax=2 arity=1
+29 zext flags=0x100 commutative=0 syntax=2 arity=1
+30 sext flags=0x0 commutative=0 syntax=2 arity=1
+31 fptrunc flags=0x3fc00 commutative=0 syntax=2 arity=1
+32 fpext flags=0x3fc00 commutative=0 syntax=2 arity=1
+33 fptoui flags=0x0 commutative=0 syntax=2 arity=1
+34 fptosi flags=0x0 commutative=0 syntax=2 arity=1
+35 uitofp flags=0x3fd00 commutative=0 syntax=2 arity=1
+36 sitofp flags=0x3fc00 commutative=0 syntax=2 arity=1
+37 ptrtoint flags=0x0 commutative=0 syntax=2 arity=1
+38 ptrtoaddr flags=0x0 commutative=0 syntax=2 arity=1
+39 inttoptr flags=0x0 commutative=0 syntax=2 arity=1
+40 bitcast flags=0x0 commutative=0 syntax=2 arity=1
+41 ret flags=0x0 commutative=0 syntax=3 arity=0
+42 br flags=0x0 commutative=0 syntax=3 arity=0
+43 icmp flags=0x200 commutative=1 syntax=3 arity=0
+44 fcmp flags=0x3fc00 commutative=1 syntax=3 arity=0
+45 phi flags=0x3fc00 commutative=0 syntax=3 arity=0
+46 select flags=0x3fc00 commutative=0 syntax=0 arity=3
+47 freeze flags=0x0 commutative=0 syntax=0 arity=1
+48 call flags=0x0 commutative=1 syntax=3 arity=0
+[flags]
+0 nsw
+1 nuw
+2 exact
+3 disjoint
+4 inalloca
+5 volatile
+6 inbounds
+7 nusw
+8 nneg
+9 samesign
+10 fast
+11 nnan
+12 ninf
+13 nsz
+14 arcp
+15 contract
+16 afn
+17 reassoc
+[metaflags]
+1 c placement=1 args=0..0 kind=0
+2 o placement=1 args=0..1 kind=1
+3 or placement=2 args=1..4294967295 kind=2
+4 not placement=2 args=1..1 kind=2
+[sorts]
+0 Unknown representation=Unknown
+1 Operand representation=Value
+2 Value representation=Value
+3 Instruction representation=Value
+4 Function representation=Value
+5 BasicBlock representation=Value
+6 Nat representation=Integer
+7 i1 representation=i1
+8 Integer representation=Integer
+9 String representation=String
+10 CmpPredicate representation=String
+11 Intrinsic::ID representation=String
+12 Type representation=Type
+13 BitVector representation=BitVector
+14 Type[] representation=Type[]
+15 Value[] representation=Value[]
+16 String[] representation=String[]
+[primitive types]
+0 half
+1 bfloat
+2 float
+3 double
+4 fp128
+5 void
+6 label
+[keyword constants]
+0 null
+1 poison
+2 undef
+3 zeroinitializer
+4 false
+5 true
+6 oeq
+7 ogt
+8 oge
+9 olt
+10 ole
+11 one
+12 ord
+13 ueq
+14 ugt
+15 uge
+16 ult
+17 ule
+18 une
+19 uno
+20 eq
+21 ne
+22 sgt
+23 sge
+24 slt
+25 sle
+[constraint operators]
+1 || result=i1 arity=2..2 binary args=i1,i1,i1,i1
+2 && result=i1 arity=2..2 binary args=i1,i1,i1,i1
+3 == result=i1 arity=2..3 binary args=Unknown,Unknown,Integer,Unknown
+4 != result=i1 arity=2..3 binary args=Unknown,Unknown,Integer,Unknown
+5 + result=Integer arity=2..3 binary args=Integer,Integer,Integer,Integer
+6 - result=Integer arity=2..3 binary args=Integer,Integer,Integer,Integer
+7 * result=Integer arity=2..3 binary args=Integer,Integer,Integer,Integer
+8 ! result=i1 arity=1..1 unary args=i1,i1,i1,i1
+9 - result=Integer arity=1..2 unary args=Integer,Integer,Integer,Integer
+10 slt result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+11 ult result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+12 sle result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+13 ule result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+14 sgt result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+15 ugt result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+16 sge result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+17 uge result=i1 arity=2..2 call args=Integer,Integer,Integer,Integer
+18 sdiv result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+19 udiv result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+20 srem result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+21 urem result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+22 lshr result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+23 ashr result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+24 shl result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+25 and result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+26 or result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+27 xor result=Integer arity=2..3 call args=Integer,Integer,Integer,Integer
+28 isa result=i1 arity=2..2 call args=Value,String,String,String
+29 opcode result=String arity=1..1 call args=Value,Value,Value,Value
+30 log2 result=Integer arity=1..1 call args=Integer,Integer,Integer,Integer
+31 popcount result=Integer arity=1..1 call args=Integer,Integer,Integer,Integer
+32 isAnyIntegralConstant result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+33 isForbidPoison result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+34 isConstantSplat result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+35 isScalar result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+36 hasOneUse result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+37 hasOneUser result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+38 hasNUses result=i1 arity=2..2 call args=Value,Integer,Value,Value
+39 hasNUsesOrMore result=i1 arity=2..2 call args=Value,Integer,Value,Value
+40 isZero result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+41 isAllOnes result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+42 isPower2 result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+43 isPower2OrZero result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+44 isNegatedPower2 result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+45 isNegatedPower2OrZero result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+46 isLowBitMask result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+47 isLowBitMaskOrZero result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+48 isShiftedMask result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+49 isSignMask result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+50 isMaxSignedValue result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+51 isNegative result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+52 isNonNegative result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+53 isStrictlyPositive result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+54 isNonPositive result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+55 isNonZeroInt result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+56 isAnyZeroFP result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+57 isPosZeroFP result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+58 isNegZeroFP result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+59 isInf result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+60 isNaN result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+61 isPoison result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+62 isUndef result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+63 isImmConstant result=i1 arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+64 intrinsic result=String arity=1..1 call args=Value,Value,Value,Value
+65 predicate result=String arity=1..1 call args=Value,Value,Value,Value
+66 isEquality result=i1 arity=1..1 call args=String,String,String,String
+67 isSigned result=i1 arity=1..1 call args=String,String,String,String
+68 isUnsigned result=i1 arity=1..1 call args=String,String,String,String
+69 isLT result=i1 arity=1..1 call args=String,String,String,String
+70 isGT result=i1 arity=1..1 call args=String,String,String,String
+71 isLE result=i1 arity=1..1 call args=String,String,String,String
+72 isGE result=i1 arity=1..1 call args=String,String,String,String
+73 swappedPredicate result=String arity=1..1 call args=String,String,String,String
+74 inversePredicate result=String arity=1..1 call args=String,String,String,String
+75 strictPredicate result=String arity=1..1 call args=String,String,String,String
+76 nonStrictPredicate result=String arity=1..1 call args=String,String,String,String
+77 flippedSignednessPredicate result=String arity=1..1 call args=String,String,String,String
+78 countl_zero result=Integer arity=1..2 call args=Integer,Integer,Integer,Integer
+79 countr_zero result=Integer arity=1..2 call args=Integer,Integer,Integer,Integer
+80 countl_one result=Integer arity=1..2 call args=Integer,Integer,Integer,Integer
+81 countr_one result=Integer arity=1..2 call args=Integer,Integer,Integer,Integer
+82 bitWidth result=Integer arity=1..1 call args=Unknown,Unknown,Unknown,Unknown
+83 noOverflow result=i1 arity=3..4 call args=String,Value,Value,Value
+84 knownBits result=BitVector arity=1..2 call args=Value,Value,Value,Value
+85 isKnownNonZero result=i1 arity=1..2 call args=Value,Value,Value,Value
+86 isKnownNegative result=i1 arity=1..2 call args=Value,Value,Value,Value
+87 isGuaranteedNotToBeUndef result=i1 arity=1..2 call args=Value,Value,Value,Value
+88 isKnownNonNegative result=i1 arity=1..2 call args=Value,Value,Value,Value
+89 isKnownPositive result=i1 arity=1..2 call args=Value,Value,Value,Value
+90 isKnownPowerOfTwo result=i1 arity=1..2 call args=Value,Value,Value,Value
+91 isKnownPowerOfTwoOrZero result=i1 arity=1..2 call args=Value,Value,Value,Value
+92 isGuaranteedNotToBePoison result=i1 arity=1..2 call args=Value,Value,Value,Value
+93 isGuaranteedNotToBeUndefOrPoison result=i1 arity=1..2 call args=Value,Value,Value,Value
+94 maskedValueIsZero result=i1 arity=2..3 call args=Value,Integer,Value,Value
+95 inSignedRange result=i1 arity=3..4 call args=Value,Integer,Integer,Value
+96 inUnsignedRange result=i1 arity=3..4 call args=Value,Integer,Integer,Value
+97 numSignBits result=Integer arity=1..2 call args=Value,Value,Value,Value
+98 maxSignificantBits result=Integer arity=1..2 call args=Value,Value,Value,Value
+99 isKnownNeverNaN result=i1 arity=1..2 call args=Value,Value,Value,Value
+100 isKnownNeverInfinity result=i1 arity=1..2 call args=Value,Value,Value,Value
+101 isKnownNeverInfOrNaN result=i1 arity=1..2 call args=Value,Value,Value,Value
+102 cannotBeNegativeZero result=i1 arity=1..2 call args=Value,Value,Value,Value
+103 cannotBeOrderedLessThanZero result=i1 arity=1..2 call args=Value,Value,Value,Value
+104 knownZeros result=Integer arity=1..1 call args=BitVector,BitVector,BitVector,BitVector
+105 knownOnes result=Integer arity=1..1 call args=BitVector,BitVector,BitVector,BitVector
+[constraint operator aliases]
+add -> +
+sub -> -
+mul -> *
+neg -> -
+eq -> ==
+ne -> !=
+[coercions]
+Unknown -> Operand
+Unknown -> Value
+Unknown -> Instruction
+Unknown -> Function
+Unknown -> BasicBlock
+Unknown -> Nat
+Unknown -> i1
+Unknown -> Integer
+Unknown -> String
+Unknown -> CmpPredicate
+Unknown -> Intrinsic::ID
+Unknown -> Type
+Unknown -> BitVector
+Unknown -> Type[]
+Unknown -> Value[]
+Unknown -> String[]
+Operand -> Value
+Operand -> Integer
+Operand -> String
+Value -> Integer
+Value -> String
+Instruction -> Integer
+Instruction -> String
+Function -> Integer
+Function -> String
+BasicBlock -> Value
+BasicBlock -> Integer
+BasicBlock -> String
+Nat -> i1
+Integer -> i1
+Type -> String
+Type[] -> String[]
+Value[] -> String[]

@@ -1,2 +1,2 @@
-add_metaphir_test(metaphir-parser-test PatternParserTest.cpp)
+add_metaphir_test(metaphir-parser-test PatternParserTest.cpp TokenKindsTest.cpp)
 target_link_libraries(metaphir-parser-test PRIVATE metaphir-compile)

@@ -56,3 +56,20 @@ if(Python3_FOUND)
     COMMAND ${Python3_EXECUTABLE} -m unittest discover -s
             ${PROJECT_SOURCE_DIR}/eval/scripts -p "test_*.py")
 endif()
+
+# The website's syntax highlighting lists the language's keywords from
+# web/src/generated/keywords.json, which is checked in so the site builds
+# without this tree. Fails when it is stale; `update-web-keywords` rewrites it.
+metaphir_tablegen(web-keywords.json -gen-web-keywords)
+add_custom_target(MetaphIRWebKeywords ALL
+                  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/web-keywords.json")
+add_custom_target(
+  update-web-keywords
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/web-keywords.json"
+          "${PROJECT_SOURCE_DIR}/web/src/generated/keywords.json"
+  DEPENDS MetaphIRWebKeywords)
+add_test(
+  NAME MetaphIR.web-keywords
+  COMMAND ${CMAKE_COMMAND} -E compare_files
+          "${CMAKE_CURRENT_BINARY_DIR}/web-keywords.json"
+          "${PROJECT_SOURCE_DIR}/web/src/generated/keywords.json")

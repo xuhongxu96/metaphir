@@ -1,6 +1,6 @@
 //===- TablesTest.cpp - The language's vocabulary ------------------------===//
 //
-// What the .def tables generate: instruction matchers' properties, keyword
+// What the .td tables generate: instruction matchers' properties, keyword
 // names, and the schemas of metaflags and constraint operators.
 //
 //===----------------------------------------------------------------------===//
@@ -9,6 +9,8 @@
 #include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MetaFlag.h"
+#include "metaphir/IR/PatternSettings.h"
+#include "metaphir/IR/Sort.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -69,6 +71,18 @@ TEST(TablesTest, GeneratedExtensibilitySchemas) {
             constraint::O_Subtract);
   EXPECT_EQ(constraint::getOperatorID("future_predicate", constraint::Call),
             constraint::UnknownOperator);
+}
+
+TEST(TablesTest, PatternSettingsStartAtTheirDefaults) {
+  // Each setting declares its default in PatternSettings.td, and a fresh
+  // PatternSettings starts from them, with none written.
+  PatternSettings Settings;
+  EXPECT_EQ(
+      Settings.has(pattern_setting::treatIntAsVec),
+      bool(pattern_setting::DefaultMask & pattern_setting::treatIntAsVec));
+  EXPECT_FALSE(Settings.isSpecified(pattern_setting::treatIntAsVec));
+  // treatIntAsVec is off unless a pattern turns it on.
+  EXPECT_EQ(pattern_setting::DefaultMask, 0u);
 }
 
 } // namespace

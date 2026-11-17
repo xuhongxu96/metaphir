@@ -11,6 +11,7 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/Binding.h"
 #include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Matching/ValueTrackContext.h"
@@ -860,7 +861,6 @@ TEST_F(ExprEvaluatorTest, IntegerPredicatesRejectNonIntegers) {
   }
 }
 
-
 // A variable's binding, read as each sort: a constant reads as its number or
 // truth value; predicates and intrinsics read as their names; a binding of
 // another kind is incompatible.
@@ -868,7 +868,8 @@ TEST_F(ExprEvaluatorTest, ReadsBindingsAsTheirSort) {
   llvm::LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   llvm::Constant *Seven = ConstantInt::get(I32, 7);
-  llvm::Constant *True1 = ConstantInt::get(llvm::Type::getInt1Ty(LLVMContext), 1);
+  llvm::Constant *True1 =
+      ConstantInt::get(llvm::Type::getInt1Ty(LLVMContext), 1);
   Var V = var("v", Sort::Integer);
 
   auto readAs = [&](Sort S, Binding B) {
@@ -882,21 +883,24 @@ TEST_F(ExprEvaluatorTest, ReadsBindingsAsTheirSort) {
             APSInt(APInt(8, 3), true));
   EXPECT_TRUE(cantFail(readAs(Sort::Boolean, Binding(True1))).getBoolean());
   EXPECT_FALSE(cantFail(readAs(Sort::Boolean, Binding(false))).getBoolean());
-  EXPECT_EQ(cantFail(readAs(Sort::String, Binding(CmpInst::ICMP_ULT)))
-                .getString(),
-            "ult");
-  EXPECT_EQ(cantFail(readAs(Sort::String, Binding(Intrinsic::ctlz))).getString(),
-            "llvm.ctlz");
+  EXPECT_EQ(
+      cantFail(readAs(Sort::String, Binding(CmpInst::ICMP_ULT))).getString(),
+      "ult");
+  EXPECT_EQ(
+      cantFail(readAs(Sort::String, Binding(Intrinsic::ctlz))).getString(),
+      "llvm.ctlz");
   EXPECT_TRUE(cantFail(readAs(Sort::Type, Binding(I32))).getType() == I32);
-  EXPECT_TRUE(cantFail(readAs(Sort::Value, Binding(Seven))).getValue() == Seven);
+  EXPECT_TRUE(cantFail(readAs(Sort::Value, Binding(Seven))).getValue() ==
+              Seven);
   EXPECT_EQ(cantFail(readAs(Sort::TypeArray, Binding(Binding::TypeArray{I32})))
                 .getTypeArray()
                 .size(),
             1u);
-  EXPECT_EQ(cantFail(readAs(Sort::ValueArray, Binding(Binding::ValueArray{Seven})))
-                .getValueArray()
-                .size(),
-            1u);
+  EXPECT_EQ(
+      cantFail(readAs(Sort::ValueArray, Binding(Binding::ValueArray{Seven})))
+          .getValueArray()
+          .size(),
+      1u);
   // A binding of another kind is not a value of the sort.
   EXPECT_FALSE(bool(readAs(Sort::Integer, Binding(I32))));
   EXPECT_FALSE(bool(readAs(Sort::Boolean, Binding(Binding::TypeArray{}))));
@@ -913,15 +917,18 @@ TEST_F(ExprEvaluatorTest, ReadsUnknownSortBindingsAsTheyAre) {
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   llvm::Constant *Seven = ConstantInt::get(I32, 7);
   Var V = var("u", Sort::Unknown);
-  auto readUnknown = [&](Binding B) { return readBinding(read(V, Sort::Unknown), B); };
+  auto readUnknown = [&](Binding B) {
+    return readBinding(read(V, Sort::Unknown), B);
+  };
   EXPECT_TRUE(cantFail(readUnknown(Binding(Seven))).getValue() == Seven);
   EXPECT_TRUE(cantFail(readUnknown(Binding(I32))).getType() == I32);
-  EXPECT_EQ(cantFail(readUnknown(Binding(APSInt(APInt(8, 2), false))))
-                .getInteger(),
-            APSInt(APInt(8, 2), false));
+  EXPECT_EQ(
+      cantFail(readUnknown(Binding(APSInt(APInt(8, 2), false)))).getInteger(),
+      APSInt(APInt(8, 2), false));
   EXPECT_TRUE(cantFail(readUnknown(Binding(true))).getBoolean());
   EXPECT_EQ(cantFail(readUnknown(Binding(CmpInst::ICMP_EQ))).getString(), "eq");
-  EXPECT_EQ(cantFail(readUnknown(Binding(Intrinsic::umin))).getString(), "llvm.umin");
+  EXPECT_EQ(cantFail(readUnknown(Binding(Intrinsic::umin))).getString(),
+            "llvm.umin");
   EXPECT_EQ(cantFail(readUnknown(Binding(Binding::TypeArray{I32})))
                 .getTypeArray()
                 .size(),

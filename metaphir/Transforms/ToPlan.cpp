@@ -15,6 +15,7 @@
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/IR/PatternSettings.h"
 #include "metaphir/Transforms/Lowering.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -347,7 +348,8 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
 
 void Compiler::matchInstruction(InstOp Inst, Value Reg) {
   Location Loc = Inst.getLoc();
-  bool TreatIntAsVec = Inst.getTreatIntAsVec().value_or(false);
+  bool TreatIntAsVec = Inst.getTreatIntAsVec().value_or(
+      pattern_setting::getDefault(pattern_setting::treatIntAsVec));
   instruction::InstructionID ID = Inst.getOpcode().getValue();
   plan::CheckOpcodeOp::create(Builder, Loc, Reg, Inst.getOpcodeAttr());
   unsigned Slot = slotOf(Inst.getResult());

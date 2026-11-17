@@ -1,24 +1,9 @@
 // Syntax highlighting for MetaphIR patterns and LLVM IR in Monaco.
 
 import type * as Monaco from "monaco-editor/editor/editor.api";
-import instructionMatchers from "../../metaphir/IR/InstructionMatchers.def?raw";
-import keywordDefs from "../../metaphir/Parser/MIRKeywords.def?raw";
-import constantDefs from "../../metaphir/IR/KeywordConstants.def?raw";
+import keywordTable from "./generated/keywords.json";
 
-/** The names a .def file lists with macro, as its first argument. */
-function namesOf(def: string, macro: string): string[] {
-  const pattern = new RegExp(`^${macro}\\(\\s*([A-Za-z_.0-9]+)`, "gm");
-  return [...def.matchAll(pattern)].map((m) => m[1]);
-}
-
-const instructions = namesOf(instructionMatchers, "MIR_INSTRUCTION_MATCHER");
-const keywords = [
-  ...namesOf(keywordDefs, "MIR_KEYWORD"),
-  // Constant keywords are listed by ID, then spelling.
-  ...[...constantDefs.matchAll(/^MIR_\w*_KEYWORD\(\s*\w+\s*,\s*([\w.]+)/gm)].map(
-    (m) => m[1],
-  ),
-];
+const { instructions, keywords } = keywordTable;
 
 const metaphir: Monaco.languages.IMonarchLanguage = {
   instructions,

@@ -54,13 +54,23 @@ int main(int Argc, char **Argv) {
     if (LineNumbers)
       outs() << SM.FindLineNumber(Lexer.getLoc(), BufferID) << ": ";
     outs() << tok::getTokenKindName(Kind);
-    switch (Kind) {
-#define MIR_TOKEN_KIND_HAS_VALUE(Name, Value)                                  \
-  case tok::Name:                                                              \
-    printTokenValue(outs(), Lexer.get##Value());                               \
-    break;
-#include "metaphir/Parser/MIRTokenKinds.def"
-    default:
+    switch (tok::getValueKind(Kind)) {
+    case tok::ValueKind::None:
+      break;
+    case tok::ValueKind::UIntVal:
+      printTokenValue(outs(), Lexer.getUIntVal());
+      break;
+    case tok::ValueKind::StrVal:
+      printTokenValue(outs(), Lexer.getStrVal());
+      break;
+    case tok::ValueKind::TyVal:
+      printTokenValue(outs(), Lexer.getTyVal());
+      break;
+    case tok::ValueKind::APFloatVal:
+      printTokenValue(outs(), Lexer.getAPFloatVal());
+      break;
+    case tok::ValueKind::APSIntVal:
+      printTokenValue(outs(), Lexer.getAPSIntVal());
       break;
     }
     outs() << '\n';

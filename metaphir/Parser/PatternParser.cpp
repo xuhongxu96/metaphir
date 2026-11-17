@@ -17,6 +17,7 @@
 #include "metaphir/IR/PatternSettings.h"
 #include "metaphir/IR/Sort.h"
 #include "metaphir/IR/Type.h"
+#include "metaphir/Parser/KeywordTokens.h"
 #include "metaphir/Parser/MIRLexer.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -338,73 +339,6 @@ static std::string pluralize(uint64_t Count, StringRef Noun) {
   return (Twine(Count) + " " + Noun + (Count == 1 ? "" : "s")).str();
 }
 
-static bool isOpcode(tok::Kind K) {
-  switch (K) {
-#define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Name) case tok::kw_##Name:
-#include "metaphir/IR/InstructionMatchers.def"
-    return true;
-  default:
-    return false;
-  }
-}
-
-static instruction::InstructionID instructionID(tok::Kind K) {
-  switch (K) {
-#define MIR_INSTRUCTION_MATCHER_NAME(Name)                                     \
-  case tok::kw_##Name:                                                         \
-    return instruction::I_##Name;
-#include "metaphir/IR/InstructionMatchers.def"
-  default:
-    llvm_unreachable("not an instruction token");
-  }
-}
-
-static std::optional<keyword_constant::KeywordID>
-predicateKeywordID(tok::Kind K) {
-  switch (K) {
-#define MIR_PREDICATE_KEYWORD(ID, Spelling)                                    \
-  case tok::kw_##Spelling:                                                     \
-    return keyword_constant::K_##ID;
-#include "metaphir/IR/KeywordConstants.def"
-  default:
-    return std::nullopt;
-  }
-}
-
-static std::optional<primitive_type::TypeID> primitiveTypeID(tok::Kind K) {
-  switch (K) {
-#define MIR_TYPE(TypeID, TokenKind)                                            \
-  case tok::kw_##TokenKind:                                                    \
-    return primitive_type::TypeID;
-#include "metaphir/IR/Types.def"
-  default:
-    return std::nullopt;
-  }
-}
-
-static std::optional<instruction_flag::FlagID> getSemanticFlag(tok::Kind K) {
-  switch (K) {
-#define MIR_FLAG_TOKEN_KIND(Name)                                              \
-  case tok::kw_##Name:                                                         \
-    return instruction_flag::F_##Name;
-#include "metaphir/IR/Flags.def"
-  default:
-    return std::nullopt;
-  }
-}
-
-static std::optional<PatternSettings::Setting>
-settingFromKeyword(tok::Kind Kind) {
-  switch (Kind) {
-#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
-  case tok::kw_##Name:                                                         \
-    return PatternSettings::Name;
-#include "metaphir/IR/PatternSettings.def"
-  default:
-    return std::nullopt;
-  }
-}
-
 std::string Parser::describeToken() const {
   switch (Lex.getKind()) {
   case tok::Newline:
@@ -504,11 +438,11 @@ bool Parser::parseBlockLabel() {
 bool Parser::parsePatternSetting(PatternSettings::Setting Setting) {
   next();
   if (expect(tok::lparen,
-             "expected '(' after '" + PatternSettings::getName(Setting) + "'"))
+             "expected '(' after '" + pattern_setting::getName(Setting) + "'"))
     return true;
   if (Lex.getKind() != tok::kw_true && Lex.getKind() != tok::kw_false)
     return error("expected 'true' or 'false' in '" +
-                 PatternSettings::getName(Setting) + "'");
+                 pattern_setting::getName(Setting) + "'");
   if (Lex.getKind() == tok::kw_true)
     Settings.set(Setting);
   else
@@ -611,7 +545,7 @@ bool Parser::parseBodyLine(tok::Kind Terminator) {
   if (consume(tok::ConstraintMarker)) {
     LocTy Loc = Lex.getLoc();
     if (std::optional<PatternSettings::Setting> Setting =
-            settingFromKeyword(Lex.getKind())) {
+            tok::getPatternSetting(Lex.getKind())) {
       if (parsePatternSetting(*Setting))
         return true;
       return expectEndOfLine(Terminator,
@@ -687,7 +621,7 @@ bool Parser::parseSemanticFlags(
     LocTy Loc = Lex.getLoc();
     bool Negated = consume(tok::exclaim);
     std::optional<instruction_flag::FlagID> Flag =
-        getSemanticFlag(Lex.getKind());
+        tok::getSemanticFlag(Lex.getKind());
     if (!Flag) {
       if (Negated)
         return error("expected a flag after '!'");
@@ -884,10 +818,10 @@ Operation *Parser::buildMatcherUse(StringRef OpName,
   }
   if (AnyOperandFlags)
     State.addAttribute("operand_metaflags", Builder.getArrayAttr(OperandFlags));
-  if (Settings.isSpecified(PatternSettings::treatIntAsVec))
+  if (Settings.isSpecified(pattern_setting::treatIntAsVec))
     State.addAttribute(
         "treat_int_as_vec",
-        Builder.getBoolAttr(Settings.has(PatternSettings::treatIntAsVec)));
+        Builder.getBoolAttr(Settings.has(pattern_setting::treatIntAsVec)));
   if (Capture)
     State.addOperands(Capture);
   if (CurrentBlock)
@@ -909,7 +843,7 @@ bool Parser::parseInstruction(Value &Result) {
   if (parseInstructionResult(ResultNameStorage))
     return true;
   StringRef ResultName = ResultNameStorage;
-  if (!isOpcode(Lex.getKind())) {
+  if (!tok::getInstruction(Lex.getKind())) {
     if (Lex.getKind() == tok::Identifier) {
       std::string OpName = Lex.getStrVal();
       if (auto CM = lookup<MatcherOp>(OpName))
@@ -917,7 +851,7 @@ bool Parser::parseInstruction(Value &Result) {
     }
     return error("expected instruction matcher");
   }
-  instruction::InstructionID ID = instructionID(Lex.getKind());
+  instruction::InstructionID ID = *tok::getInstruction(Lex.getKind());
   StringRef Op = instruction::getOpcodeName(ID);
   next();
   Value Capture;
@@ -1353,7 +1287,7 @@ bool Parser::parseCompareOperands(SmallVectorImpl<POperand> &Ops) {
     if (!Pred.Val)
       return true;
   } else if (std::optional<keyword_constant::KeywordID> Predicate =
-                 predicateKeywordID(Lex.getKind())) {
+                 tok::getPredicateKeyword(Lex.getKind())) {
     Pred.Val = KeywordOp::create(Builder, loc(Lex.getLoc()),
                                  sortType(Sort::Value), *Predicate);
   } else {
@@ -1470,7 +1404,8 @@ bool Parser::parseBaseType(Value &Result, bool AllowVoid) {
   default:
     break;
   }
-  std::optional<primitive_type::TypeID> ID = primitiveTypeID(Lex.getKind());
+  std::optional<primitive_type::TypeID> ID =
+      tok::getPrimitiveType(Lex.getKind());
   if (!ID)
     return error("expected type");
   if (*ID == primitive_type::VoidTyID && !AllowVoid)
@@ -1667,18 +1602,18 @@ bool Parser::parseValue(Value &Result, Sort Expected) {
         Loc);
     next();
     return false;
-#define MIR_CONSTANT_KEYWORD(ID, Kind)                                         \
-  case tok::kw_##Kind:                                                         \
-    Result = KeywordOp::create(Builder, loc(Loc), sortType(Sort::Value),       \
-                               unsigned(keyword_constant::K_##ID));            \
-    next();                                                                    \
-    return false;
-#include "metaphir/Parser/MIRKeywords.def"
   case tok::lsquare:
   case tok::lbrace:
   case tok::less:
     return parseAggregateConstant(Result);
   default:
+    if (std::optional<keyword_constant::KeywordID> Constant =
+            tok::getConstantKeyword(Lex.getKind())) {
+      Result = KeywordOp::create(Builder, loc(Loc), sortType(Sort::Value),
+                                 unsigned(*Constant));
+      next();
+      return false;
+    }
     return error("expected value");
   }
 }
@@ -2216,7 +2151,8 @@ bool Parser::parseMatchParameters(instruction::OperandSyntax Syntax,
 }
 
 bool Parser::parseSemanticFlagName(instruction_flag::FlagID &Result) {
-  std::optional<instruction_flag::FlagID> ID = getSemanticFlag(Lex.getKind());
+  std::optional<instruction_flag::FlagID> ID =
+      tok::getSemanticFlag(Lex.getKind());
   if (!ID)
     return error("expected semantic flag name");
   Result = *ID;

@@ -80,8 +80,8 @@ TEST_F(FeaturesTest, RequiresTheInstructions) {
     }
   )");
   ASSERT_EQ(Query->size(), 1u);
-  EXPECT_EQ(Query->getRequirement(0).Instructions,
-            uint64_t(1) << instruction::I_udiv);
+  EXPECT_EQ(Query->getRequirement(0).Instructions, uint64_t(1)
+                                                       << instruction::I_udiv);
   EXPECT_TRUE(passes("udiv"));
   EXPECT_FALSE(passes("add"));
 }

@@ -9,6 +9,7 @@
 
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/Sort.h"
 #include "llvm/ADT/APSInt.h"
 
 #include "metaphir/Dialect/Expr/ExprOpsDialect.h.inc"

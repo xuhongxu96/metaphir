@@ -44,7 +44,7 @@ contextSites(const AbstractCall &Call, unsigned OperandIndex) {
 /// Whether value tracking was skipped for some value in the slot.
 static bool skipped(const AbstractCall &Call, instruction::InstructionID ID,
                     unsigned Slot) {
-  return Call.Features.hasFact(ID, Slot, Atom::ValueTrackingSkipped);
+  return Call.Features.hasFact(ID, Slot, fact::ValueTrackingSkipped);
 }
 
 AbstractValue lacksValueFact(const AbstractCall &Call, unsigned OperandIndex,

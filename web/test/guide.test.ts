@@ -2,7 +2,7 @@
 // (scripts/build_wasm.sh): each pattern shown matches the IR beside it,
 // binding what the IR marks; each operator's example and idiom's pattern
 // compiles or matches; and the reference lists every built-in constraint
-// operator (metaphir/IR/*.def), and every meta flag and matcher of the
+// operator (metaphir/IR/ConstraintOperators.td), and every meta flag and matcher of the
 // standard library (metaphir/StdLib/stdlib.mpir).
 
 import assert from "node:assert/strict";
@@ -110,12 +110,11 @@ const differ = (listed: Iterable<string>, defined: Set<string>) => {
 };
 
 test("lists every built-in constraint operator", () => {
-  const builtIn = new Set<string>();
-  for (const def of ["ConstraintOperators", "ConstantClasses", "CmpPredicateOperators"]) {
-    const text = readFileSync(join(repo, `metaphir/IR/${def}.def`), "utf8");
-    const code = text.split("\n").filter((l) => !/^\s*(\/\/|#include)/.test(l));
-    for (const name of namesIn(code.join("\n"), /"([^"]+)"/g)) builtIn.add(name);
-  }
+  // The spellings of every built-in operator, generated from the tables.
+  const { operators } = JSON.parse(
+    readFileSync(join(repo, "web/src/generated/keywords.json"), "utf8"),
+  ) as { operators: string[] };
+  const builtIn = new Set<string>(operators);
   assert.ok(builtIn.size > 80, `only ${builtIn.size} operators read`);
   // The operators an entry writes: those called, and those written as symbols.
   const written = OPERATORS.flatMap((o) => o.entries.map(([w]) => w));

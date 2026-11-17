@@ -1,5 +1,6 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/IR/Constants.h"
+#include "metaphir/IR/Type.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "llvm/ADT/StringExtras.h"
@@ -46,40 +47,29 @@ static void printNamed(OpAsmPrinter &Printer, IntegerAttr Attr,
     Printer << "<invalid " << Index << ">";
 }
 
-static SmallVector<StringRef, 8> keywordNames() {
-  SmallVector<StringRef, 8> Names;
-#define MIR_KEYWORD_CONSTANT(ID, Spelling)                                     \
-  Names.push_back(keyword_constant::getKeywordName(keyword_constant::K_##ID));
-#include "metaphir/IR/KeywordConstants.def"
-  return Names;
-}
 static ParseResult parseKeyword(OpAsmParser &Parser, IntegerAttr &Attr) {
-  return parseNamed(Parser, Attr, keywordNames(), "keyword constant");
+  return parseNamed(Parser, Attr, keyword_constant::getKeywordNames(),
+                    "keyword constant");
 }
 static void printKeyword(OpAsmPrinter &Printer, Operation *, IntegerAttr Attr) {
-  printNamed(Printer, Attr, keywordNames());
+  printNamed(Printer, Attr, keyword_constant::getKeywordNames());
 }
 
-static constexpr StringRef PrimTypeNames[] = {
-#define MIR_TYPE(TypeID, TokenKind) #TokenKind,
-#include "metaphir/IR/Types.def"
-};
 static ParseResult parsePrimType(OpAsmParser &Parser, IntegerAttr &Attr) {
-  return parseNamed(Parser, Attr, PrimTypeNames, "primitive type");
+  return parseNamed(Parser, Attr, primitive_type::getNames(), "primitive type");
 }
 static void printPrimType(OpAsmPrinter &Printer, Operation *,
                           IntegerAttr Attr) {
-  printNamed(Printer, Attr, PrimTypeNames);
+  printNamed(Printer, Attr, primitive_type::getNames());
 }
 
-// As aggregate_constant::Delimiter and SeqTypeOp's kind number them.
-static constexpr StringRef DelimiterNames[] = {"array", "struct", "vector"};
 static ParseResult parseDelimiter(OpAsmParser &Parser, IntegerAttr &Attr) {
-  return parseNamed(Parser, Attr, DelimiterNames, "aggregate kind");
+  return parseNamed(Parser, Attr, aggregate_constant::getNames(),
+                    "aggregate kind");
 }
 static void printDelimiter(OpAsmPrinter &Printer, Operation *,
                            IntegerAttr Attr) {
-  printNamed(Printer, Attr, DelimiterNames);
+  printNamed(Printer, Attr, aggregate_constant::getNames());
 }
 
 static constexpr StringRef SeqKindNames[] = {"array", "vector", "scalable"};
@@ -112,31 +102,13 @@ void PatternDialect::initialize() {
 // Types and attributes
 //===----------------------------------------------------------------------===//
 
-static std::optional<Sort> parseSortName(StringRef Name) {
-#define MIR_SORT(ID, SortName, Representation)                                 \
-  if (Name == #ID)                                                             \
-    return Sort::ID;
-#include "metaphir/IR/Sorts.def"
-  return std::nullopt;
-}
-
-static StringRef sortKeyword(Sort S) {
-  switch (S) {
-#define MIR_SORT(ID, SortName, Representation)                                 \
-  case Sort::ID:                                                               \
-    return #ID;
-#include "metaphir/IR/Sorts.def"
-  }
-  llvm_unreachable("invalid sort");
-}
-
 // !mpir.sort<Value>
 mlir::Type SortType::parse(AsmParser &Parser) {
   StringRef Name;
   SMLoc Loc = Parser.getCurrentLocation();
   if (Parser.parseLess() || Parser.parseKeyword(&Name) || Parser.parseGreater())
     return {};
-  std::optional<Sort> S = parseSortName(Name);
+  std::optional<Sort> S = getSortFromKeyword(Name);
   if (!S) {
     Parser.emitError(Loc, "unknown sort '") << Name << "'";
     return {};
@@ -145,7 +117,7 @@ mlir::Type SortType::parse(AsmParser &Parser) {
 }
 
 void SortType::print(AsmPrinter &Printer) const {
-  Printer << "<" << sortKeyword(getSort()) << ">";
+  Printer << "<" << getSortKeyword(getSort()) << ">";
 }
 
 // #mpir.opcode<add>

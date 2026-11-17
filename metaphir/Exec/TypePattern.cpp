@@ -1,5 +1,5 @@
 #include "metaphir/Exec/TypePattern.h"
-#include "metaphir/IR/Type.h"
+#include "metaphir/Exec/PrimitiveTypeMatch.h"
 #include "llvm/IR/DerivedTypes.h"
 
 namespace llvm {
@@ -61,24 +61,7 @@ bool TypePatterns::match(unsigned Index, const llvm::Type &Target,
   };
   switch (Node.Kind) {
   case plan::TypePatternKind::Primitive:
-    switch (primitive_type::TypeID(Node.A)) {
-    case primitive_type::HalfTyID:
-      return Target.isHalfTy();
-    case primitive_type::BFloatTyID:
-      return Target.isBFloatTy();
-    case primitive_type::FloatTyID:
-      return Target.isFloatTy();
-    case primitive_type::DoubleTyID:
-      return Target.isDoubleTy();
-    case primitive_type::FP128TyID:
-      return Target.isFP128Ty();
-    case primitive_type::VoidTyID:
-      return Target.isVoidTy();
-    case primitive_type::LabelTyID:
-      return Target.isLabelTy();
-    default:
-      llvm_unreachable("invalid primitive type pattern");
-    }
+    return primitive_type::matches(primitive_type::TypeID(Node.A), Target);
   case plan::TypePatternKind::Integer: {
     unsigned Bits = Node.A;
     bool Byte = Node.B;

@@ -68,9 +68,13 @@ target_compile_definitions(metaphir-gtest PUBLIC GTEST_HAS_RTTI=0)
 add_library(metaphir-gtest-main STATIC ${GTEST_ROOT}/src/gtest_main.cc)
 target_link_libraries(metaphir-gtest-main PUBLIC metaphir-gtest)
 
+include(cmake/MetaphirTableGen.cmake)
+
 function(add_metaphir_test test_name)
     add_executable(${test_name} ${ARGN})
     target_link_libraries(${test_name} PRIVATE metaphir-gtest-main)
+    target_compile_definitions(${test_name}
+        PRIVATE METAPHIR_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
     gtest_discover_tests(${test_name}
         PROPERTIES ENVIRONMENT "${METAPHIR_TEST_ENVIRONMENT}")
 endfunction()

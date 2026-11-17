@@ -1,5 +1,6 @@
 #include "metaphir/Matching/Operators/ValueTracking.h"
 #include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "llvm/Analysis/SimplifyQuery.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -493,7 +494,7 @@ void recordValueTracking(const RecordCall &Call) {
   // facts are unknown.
   if (!Call.Value.getType()->isIntOrIntVectorTy() &&
       !Call.Value.getType()->isPtrOrPtrVectorTy()) {
-    Call.Sink.add(Atom::ValueTrackingSkipped);
+    Call.Sink.add(fact::ValueTrackingSkipped);
     return;
   }
   OpIsKnownNonZero::record(Call);

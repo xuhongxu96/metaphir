@@ -60,28 +60,6 @@ static const char *isLabelTail(const char *CurPtr) {
   }
 }
 
-/// The keyword spelled Keyword, or tok::Identifier if it is none.
-static tok::Kind lookupKeyword(StringRef Keyword) {
-  static const StringMap<tok::Kind> Keywords = [] {
-    StringMap<tok::Kind> Map;
-#define KEYWORD(Spelling) Map[#Spelling] = tok::kw_##Spelling;
-#define MIR_KEYWORD_TOKEN_KIND(Kind) KEYWORD(Kind)
-#include "metaphir/Parser/MIRKeywords.def"
-#define MIR_PREDICATE_KEYWORD(ID, Spelling) KEYWORD(Spelling)
-#include "metaphir/IR/KeywordConstants.def"
-#define MIR_TYPE_TOKEN_KIND(Kind) KEYWORD(Kind)
-#include "metaphir/IR/Types.def"
-#define MIR_INSTRUCTION_MATCHER_TOKEN_KIND(Kind) KEYWORD(Kind)
-#include "metaphir/IR/InstructionMatchers.def"
-#define MIR_FLAG_TOKEN_KIND(Kind) KEYWORD(Kind)
-#include "metaphir/IR/Flags.def"
-#undef KEYWORD
-    return Map;
-  }();
-  auto It = Keywords.find(Keyword);
-  return It == Keywords.end() ? tok::Identifier : It->second;
-}
-
 /// Describes a character for a diagnostic: printable characters are quoted,
 /// others are written as a hexadecimal escape.
 static std::string describeChar(int C) {
@@ -547,7 +525,7 @@ tok::Kind MIRLexer::LexIdentifier() {
   --StartChar;
   StringRef Keyword(StartChar, CurPtr - StartChar);
 
-  if (tok::Kind Kind = lookupKeyword(Keyword); Kind != tok::Identifier)
+  if (tok::Kind Kind = tok::lookupKeyword(Keyword); Kind != tok::Identifier)
     return Kind;
 
   // [us]0x[0-9A-Fa-f]+ is an integer written as a hexadecimal bit pattern:
@@ -775,11 +753,7 @@ tok::Kind MIRLexer::LexConstraintToken() {
           return tok::kw_true;
         if (StrVal == "false")
           return tok::kw_false;
-#define MIR_PATTERN_SETTING_TOKEN_KIND(Name)                                   \
-  if (StrVal == #Name)                                                         \
-    return tok::kw_##Name;
-#include "metaphir/IR/PatternSettings.def"
-        return tok::Identifier;
+        return tok::lookupPatternSetting(StrVal);
       }
       return LexUnexpected(CurChar);
     case EOF:

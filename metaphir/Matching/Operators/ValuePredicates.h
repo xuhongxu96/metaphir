@@ -2,6 +2,7 @@
 #define METAPHIR_MATCHING_OPERATORS_VALUEPREDICATES_H
 
 #include "metaphir/Matching/Operators/AbstractCall.h"
+#include "metaphir/Matching/Operators/ConstantClassOps.inc"
 #include "metaphir/Matching/Operators/Facts.h"
 #include "metaphir/Matching/Operators/OperatorCall.h"
 #include "llvm/Support/Error.h"
@@ -24,7 +25,7 @@ namespace metaphir {
 #define MIR_DECLARE_RECORDED_PREDICATE(ID)                                     \
   struct Op##ID {                                                              \
     static constexpr bool ShortCircuits = false;                               \
-    static constexpr Atom::Predicate Fact = Atom::ID;                          \
+    static constexpr fact::Predicate Fact = fact::ID;                          \
     static bool holds(const llvm::Value &V);                                   \
     static Expected<ConstraintValue> concrete(const ConcreteCall &Call);       \
     static void record(const RecordCall &Call);                                \
@@ -33,7 +34,7 @@ namespace metaphir {
 
 struct OpIsa {
   static constexpr bool ShortCircuits = false;
-  /// Whether V is of the ClassIndex-th class of LLVMValueClasses.def.
+  /// Whether V is of the ClassIndex-th class of LLVMValueClasses.td.
   static bool holds(const llvm::Value &V, unsigned ClassIndex);
   /// Whether the index records the class: not those nearly every value at a
   /// site is of.
@@ -44,20 +45,6 @@ struct OpIsa {
 };
 
 MIR_DECLARE_OPERATOR(Opcode)
-
-/// A constant class the index does not record.
-#define MIR_DECLARE_PREDICATE(ID)                                              \
-  struct Op##ID {                                                              \
-    static constexpr bool ShortCircuits = false;                               \
-    static bool holds(const llvm::Value &V);                                   \
-    static Expected<ConstraintValue> concrete(const ConcreteCall &Call);       \
-  };
-#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)                     \
-  MIR_DECLARE_RECORDED_PREDICATE(ID)
-#define MIR_UNRECORDED_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)          \
-  MIR_DECLARE_PREDICATE(ID)
-#include "metaphir/IR/ConstantClasses.def"
-#undef MIR_DECLARE_PREDICATE
 
 MIR_DECLARE_RECORDED_PREDICATE(IsAnyIntegralConstant)
 MIR_DECLARE_RECORDED_PREDICATE(IsImmConstant)

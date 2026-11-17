@@ -32,6 +32,7 @@ include_directories(${METAPHIR_ROOT})
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 # Where the dialects' generated headers are, under metaphir/Dialect.
 include_directories(${PROJECT_BINARY_DIR})
+include(${METAPHIR_ROOT}/cmake/MetaphirTableGen.cmake)
 add_subdirectory(${METAPHIR_ROOT}/metaphir metaphir)
 
 set(METAPHIR_WASM_LINK_OPTIONS

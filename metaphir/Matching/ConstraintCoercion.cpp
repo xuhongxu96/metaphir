@@ -1,6 +1,8 @@
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstantInteger.h"
+#include "metaphir/Matching/ConstraintCoercions.inc"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -13,36 +15,21 @@ namespace metaphir {
 
 namespace detail {
 
-namespace {
-enum CoercionOp {
-  UnknownCoercion = 0,
-#define MIR_COERCION(Src, Dst, Op) Coerce##Op,
-#include "metaphir/IR/ConstraintCoercions.def"
-};
-} // namespace
-
-// The coercion lattice as a dense [Src][Dst] matrix. Each cell holds the
-// coercion operator converting a source kind into a destination kind, or
-// UnknownCoercion when no such conversion exists. The matrix is zero-filled
-// (UnknownCoercion) and the admissible edges are stamped in from
-// ConstraintCoercions.def, so lookup is O(1) and the whole lattice stays
-// explicit.
-static const std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
-                        ConstraintValue::NumValueKinds>
-    CoercionMatrix = [] {
-      std::array<std::array<CoercionOp, ConstraintValue::NumValueKinds>,
-                 ConstraintValue::NumValueKinds>
-          Matrix{};
-#define MIR_COERCION(Src, Dst, Op)                                             \
-  Matrix[ConstraintValue::Src][ConstraintValue::Dst] = Coerce##Op;
-#include "metaphir/IR/ConstraintCoercions.def"
-      return Matrix;
-    }();
-
-static std::optional<CoercionOp> lookupRule(ConstraintValue::ValueKind Src,
-                                            ConstraintValue::ValueKind Dst) {
-  CoercionOp Op = CoercionMatrix[Src][Dst];
-  return Op == UnknownCoercion ? std::nullopt : std::optional<CoercionOp>(Op);
+// The coercion lattice as a dense [Src][Dst] matrix of the conversions in
+// ConstraintCoercions.td, so lookup is O(1) and the whole lattice stays
+// explicit. A cell is null when there is no such conversion.
+static CoercionFn getCoercion(ConstraintValue::ValueKind Src,
+                              ConstraintValue::ValueKind Dst) {
+  using Matrix =
+      std::array<std::array<CoercionFn, ConstraintValue::NumValueKinds>,
+                 ConstraintValue::NumValueKinds>;
+  static const Matrix M = [] {
+    Matrix M{};
+    for (const Coercion &C : Coercions)
+      M[C.Src][C.Dst] = C.Convert;
+    return M;
+  }();
+  return M[Src][Dst];
 }
 
 // Name of a coercion target with its indefinite article, used in the
@@ -76,18 +63,18 @@ static StringRef targetName(ConstraintValue::ValueKind Target) {
 // Low-level converters. Each implements one edge of the coercion lattice and
 // is responsible for both producing the destination value and reporting the
 // precise reason a value cannot be converted.
-static Expected<ConstraintValue>
-coerceBooleanToInteger(const ConstraintValue &V, mlir::Value) {
+Expected<ConstraintValue> coerceBooleanToInteger(const ConstraintValue &V,
+                                                 mlir::Value) {
   return integerResult(APInt(1, V.getBoolean()), true);
 }
 
-static Expected<ConstraintValue>
-coerceIntegerToBoolean(const ConstraintValue &V, mlir::Value) {
+Expected<ConstraintValue> coerceIntegerToBoolean(const ConstraintValue &V,
+                                                 mlir::Value) {
   return ConstraintValue::getBoolean(!V.getInteger().isZero());
 }
 
-static Expected<ConstraintValue> coerceValueToInteger(const ConstraintValue &V,
-                                                      mlir::Value Expression) {
+Expected<ConstraintValue> coerceValueToInteger(const ConstraintValue &V,
+                                               mlir::Value Expression) {
   // Constants are treated as signed, so that 'slt' on a negative constant is
   // correct; the unsigned operators still compare the bit pattern.
   if (std::optional<APInt> Integer = getConstantInteger(*V.getValue()))
@@ -96,8 +83,8 @@ static Expected<ConstraintValue> coerceValueToInteger(const ConstraintValue &V,
       Expression, "expected an integer-valued constant operand");
 }
 
-static Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
-                                                    mlir::Value) {
+Expected<ConstraintValue> coerceTypeToString(const ConstraintValue &V,
+                                             mlir::Value) {
   std::string Text;
   raw_string_ostream OS(Text);
   V.getType()->print(OS);
@@ -116,13 +103,13 @@ static std::string valueText(const llvm::Value *Value) {
   return Text;
 }
 
-static Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
-                                                     mlir::Value) {
+Expected<ConstraintValue> coerceValueToString(const ConstraintValue &V,
+                                              mlir::Value) {
   return ConstraintValue::getString(valueText(V.getValue()));
 }
 
-static Expected<ConstraintValue>
-coerceTypeArrayToStringArray(const ConstraintValue &V, mlir::Value) {
+Expected<ConstraintValue> coerceTypeArrayToStringArray(const ConstraintValue &V,
+                                                       mlir::Value) {
   ConstraintValue::StringArrayStorage Strings;
   for (const llvm::Type *Type : V.getTypeArray()) {
     std::string Text;
@@ -133,9 +120,8 @@ coerceTypeArrayToStringArray(const ConstraintValue &V, mlir::Value) {
   return ConstraintValue::getStringArray(std::move(Strings));
 }
 
-static Expected<ConstraintValue>
-coerceValueArrayToStringArray(const ConstraintValue &V,
-                              mlir::Value) {
+Expected<ConstraintValue>
+coerceValueArrayToStringArray(const ConstraintValue &V, mlir::Value) {
   ConstraintValue::StringArrayStorage Strings;
   for (const llvm::Value *Value : V.getValueArray())
     Strings.push_back(valueText(Value));
@@ -157,7 +143,7 @@ bool isStringArrayLike(const ConstraintValue &V) {
 }
 
 bool canCoerceTo(const ConstraintValue &V, ConstraintValue::ValueKind Target) {
-  return V.getKind() == Target || lookupRule(V.getKind(), Target).has_value();
+  return V.getKind() == Target || getCoercion(V.getKind(), Target);
 }
 
 Expected<ConstraintValue> coerce(ConstraintValue V,
@@ -166,17 +152,8 @@ Expected<ConstraintValue> coerce(ConstraintValue V,
   if (V.getKind() == Target)
     return V;
 
-  if (std::optional<CoercionOp> Op = lookupRule(V.getKind(), Target)) {
-    switch (*Op) {
-    case UnknownCoercion:
-      break;
-#define MIR_COERCION(Src, Dst, Op)                                             \
-  case Coerce##Op:                                                             \
-    return coerce##Op(V, Expression);
-#include "metaphir/IR/ConstraintCoercions.def"
-    }
-    llvm_unreachable("unknown coercion operator");
-  }
+  if (CoercionFn Coerce = getCoercion(V.getKind(), Target))
+    return Coerce(V, Expression);
 
   return make_error<ConstraintEvaluationError>(
       Expression,

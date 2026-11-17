@@ -16,6 +16,7 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Exec/KeywordConstantMatch.h"
 #include "metaphir/Exec/TypePattern.h"
 #include "metaphir/IR/Constants.h"
 #include "metaphir/Matching/ConstantInteger.h"
@@ -649,8 +650,8 @@ bool PlanMatcher::Run::step(const Step &S) {
     return I && matchesInstructionID(S.Opcode, *I);
   }
   case Step::CheckFlag:
-    return hasSemanticFlag(instruction_flag::FlagID(S.A), *instruction(S.Src)) ==
-           S.Flag;
+    return hasSemanticFlag(instruction_flag::FlagID(S.A),
+                           *instruction(S.Src)) == S.Flag;
   case Step::CheckOperandCount: {
     size_t Count = operandsOf(*instruction(S.Src)).size();
     return S.Flag ? Count >= unsigned(S.A) : Count == unsigned(S.A);
@@ -691,14 +692,7 @@ bool PlanMatcher::Run::step(const Step &S) {
       return keyword_constant::getKeywordName(ID) ==
              CmpInst::getPredicateName(*Predicate);
     const llvm::Value *V = value(S.Src);
-    switch (ID) {
-#define MIR_MATCHABLE_CONSTANT_KEYWORD(Name, Spelling, LLVMClass)              \
-  case keyword_constant::K_##Name:                                              \
-    return isa<LLVMClass>(V);
-#include "metaphir/IR/KeywordConstants.def"
-    default:
-      return false;
-    }
+    return keyword_constant::matches(ID, *V);
   }
   case Step::CheckGlobal:
     return isGlobalNamed(S.Name, *value(S.Src));

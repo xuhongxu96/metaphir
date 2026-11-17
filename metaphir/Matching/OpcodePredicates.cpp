@@ -1,4 +1,5 @@
 #include "metaphir/Matching/OpcodePredicates.h"
+#include "metaphir/Matching/OpcodeMatchers.inc"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instruction.h"
@@ -8,26 +9,10 @@
 namespace llvm {
 namespace metaphir {
 
-template <unsigned Opcode>
-static bool matchOpcode(const llvm::Instruction &Target) {
-  return Target.getOpcode() == Opcode;
-}
-
-static bool matchBranch(const llvm::Instruction &Target) {
-  return isa<CondBrInst, UncondBrInst>(Target);
-}
-
 bool matchesInstructionID(instruction::InstructionID ID,
                           const llvm::Instruction &Target) {
-  switch (ID) {
-#define MIR_INSTRUCTION_MATCHER_TARGET(Name, TargetMatcher)                    \
-  case instruction::I_##Name:                                                  \
-    return TargetMatcher(Target);
-#include "metaphir/IR/InstructionMatchers.def"
-  case instruction::NumInstructionIDs:
-    break;
-  }
-  llvm_unreachable("invalid instruction matcher ID");
+  const instruction::InstructionTarget &T = instruction::Targets[ID];
+  return T.Check ? T.Check(Target) : Target.getOpcode() == T.Opcode;
 }
 
 bool hasSemanticFlag(instruction_flag::FlagID ID,
@@ -40,7 +25,7 @@ bool hasSemanticFlag(instruction_flag::FlagID ID,
       return GEP->hasNoUnsignedWrap();
     return Target.hasNoUnsignedWrap();
   // A flag the instruction cannot carry is absent. (The supported flags of
-  // each matcher are declared in InstructionMatchers.def.)
+  // each matcher are declared in InstructionMatchers.td.)
   case instruction_flag::F_exact:
     if (const auto *Exact = dyn_cast<PossiblyExactOperator>(&Target))
       return Exact->isExact();

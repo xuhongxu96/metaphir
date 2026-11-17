@@ -1,13 +1,10 @@
 #include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
+#include "metaphir/Exec/ConstraintDispatch.inc"
 #include "metaphir/Exec/ExprEvaluator.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/Operators/AbstractCall.h"
-#include "metaphir/Matching/Operators/Arithmetic.h"
-#include "metaphir/Matching/Operators/CmpPredicates.h"
-#include "metaphir/Matching/Operators/ValuePredicates.h"
-#include "metaphir/Matching/Operators/ValueTracking.h"
 #include "metaphir/Matching/TypeCode.h"
 #include "mlir/IR/SymbolTable.h"
 
@@ -554,18 +551,9 @@ Expected<AbstractValue> AbstractEvaluator::evalCall(mpir_expr::CallOp Call,
     return AbstractValue::unknown();
   };
 
-  switch (Call.getOperatorID()) {
-#define MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)                             \
-  case constraint::O_##ID:                                                     \
-    return Builtin(Op##ID());
-#define MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(ID, Name, Kind, Result, BaseArity) \
-  case constraint::O_##ID:                                                     \
-    return ValueTrack(Op##ID(), BaseArity);
-#include "metaphir/IR/ConstraintOperators.def"
-  default:
-    break;
-  }
-  return AbstractValue::unknown();
+  return visitOperator<Expected<AbstractValue>>(
+      Call.getOperatorID(), Builtin, ValueTrack,
+      []() -> Expected<AbstractValue> { return AbstractValue::unknown(); });
 }
 
 bool IndexQuery::constraintsMayHold(const Variant &V,

@@ -1,29 +1,9 @@
 #include "metaphir/Matching/Operators/Facts.h"
+#include "metaphir/Matching/LLVMValueClasses.h"
 #include "llvm/Analysis/ValueTracking.h"
 
 namespace llvm {
 namespace metaphir {
-
-static constexpr unsigned NumValueClasses = 0
-#define MIR_LLVM_VALUE_CLASS(Class) +1
-#include "metaphir/Matching/LLVMValueClasses.def"
-    ;
-
-StringRef Atom::getName(Predicate P) {
-  static constexpr StringLiteral Names[] = {
-#define MIR_FACT(ID, Name) Name,
-#include "metaphir/Matching/Operators/Facts.def"
-  };
-  return Names[P];
-}
-
-StringRef getMeasureName(Measure M) {
-  static constexpr StringLiteral Names[] = {
-#define MIR_MEASURE(ID, Name, Order) Name,
-#include "metaphir/Matching/Operators/Facts.def"
-  };
-  return Names[size_t(M)];
-}
 
 std::optional<Atom> Atom::literal(int64_t V) {
   if (V < MinLiteral || V > MaxLiteral)

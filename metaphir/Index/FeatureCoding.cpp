@@ -1,5 +1,6 @@
 #include "metaphir/Index/FeatureCoding.h"
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/Matching/LLVMValueClasses.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/VCSRevision.h"
@@ -146,13 +147,13 @@ Expected<FunctionFeatures> readFunctionFeatures(StringRef Bytes) {
 
 SmallVector<std::string, 96> getFeatureSchema() {
   SmallVector<std::string, 96> Schema;
-#define MIR_INSTRUCTION_MATCHER_ID(Name)                                       \
-  Schema.push_back(instruction::getOpcodeName(instruction::I_##Name).str());
-#include "metaphir/IR/InstructionMatchers.def"
+  for (unsigned I = 0; I != instruction::NumInstructionIDs; ++I)
+    Schema.push_back(
+        instruction::getOpcodeName(instruction::InstructionID(I)).str());
   for (unsigned P = 0; P != Atom::NumPredicates; ++P)
     Schema.push_back(("atom:" + Atom::getName(Atom::Predicate(P))).str());
-#define MIR_LLVM_VALUE_CLASS(Class) Schema.push_back("class:" #Class);
-#include "metaphir/Matching/LLVMValueClasses.def"
+  for (unsigned I = 0; I != NumValueClasses; ++I)
+    Schema.push_back(("class:" + getValueClassName(I)).str());
   for (unsigned M = 0; M != unsigned(Measure::NumMeasures); ++M)
     Schema.push_back(("measure:" + getMeasureName(Measure(M))).str());
   Schema.push_back(

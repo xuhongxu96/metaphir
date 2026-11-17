@@ -3,13 +3,11 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SurfacePrinter.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Exec/ConstraintDispatch.inc"
 #include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
-#include "metaphir/Matching/Operators/Arithmetic.h"
-#include "metaphir/Matching/Operators/CmpPredicates.h"
 #include "metaphir/Matching/Operators/OperatorCall.h"
-#include "metaphir/Matching/Operators/ValuePredicates.h"
-#include "metaphir/Matching/Operators/ValueTracking.h"
 #include "metaphir/Matching/ValueTrackContext.h"
 #include "mlir/IR/SymbolTable.h"
 #include "llvm/Analysis/SimplifyQuery.h"
@@ -385,21 +383,15 @@ Expected<ConstraintValue> ExprEvaluator::evalCall(Operation *Op, Frame &F) {
         ConcreteCall{*Operands, Expression, GetModuleUses, &Query});
   };
 
-  switch (Call.getOperatorID()) {
-#define MIR_CONSTRAINT_OPERATOR_ID(ID, Name, Kind)                             \
-  case constraint::O_##ID:                                                     \
-    return Builtin(Op##ID());
-#define MIR_CONSTRAINT_VALUE_TRACK_OPERATOR(ID, Name, Kind, Result, BaseArity) \
-  case constraint::O_##ID:                                                     \
-    return ValueTrack(Op##ID(), BaseArity);
-#include "metaphir/IR/ConstraintOperators.def"
-  default:
-    // Every operator of the table has a case above.
-    // LCOV_EXCL_START
-    return make_error<ConstraintEvaluationError>(
-        Expression, "constraint operator without a descriptor");
-    // LCOV_EXCL_STOP
-  }
+  return visitOperator<Expected<ConstraintValue>>(
+      Call.getOperatorID(), Builtin, ValueTrack,
+      [&]() -> Expected<ConstraintValue> {
+        // Every operator of the table is dispatched.
+        // LCOV_EXCL_START
+        return make_error<ConstraintEvaluationError>(
+            Expression, "constraint operator without a descriptor");
+        // LCOV_EXCL_STOP
+      });
 }
 
 } // namespace metaphir

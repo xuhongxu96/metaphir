@@ -63,16 +63,8 @@ static void printType(raw_ostream &OS, mlir::Value T) {
     return;
   }
   if (auto Prim = dyn_cast<PrimTypeOp>(Def)) {
-    switch (primitive_type::TypeID(Prim.getKind())) {
-#define MIR_TYPE(TypeID, Spelling)                                             \
-  case primitive_type::TypeID:                                                           \
-    OS << #Spelling;                                                           \
+    OS << primitive_type::getName(primitive_type::TypeID(Prim.getKind()));
     return;
-#include "metaphir/IR/Types.def"
-    default:
-      break;
-    }
-    llvm_unreachable("not a primitive type");
   }
   if (auto Ptr = dyn_cast<PtrTypeOp>(Def)) {
     if (Ptr.getElement()) {

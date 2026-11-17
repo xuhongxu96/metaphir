@@ -25,7 +25,7 @@ def Pattern_Dialect : Dialect {
 
 def Mpir_SortType : TypeDef<Pattern_Dialect, "Sort"> {
   let mnemonic = "sort";
-  let summary = "The sort of a pattern value (see Sorts.def)";
+  let summary = "The sort of a pattern value (see Sorts.td)";
   let parameters = (ins "::llvm::metaphir::Sort":$sort);
   let hasCustomAssemblyFormat = 1;
 }
@@ -35,7 +35,7 @@ def Mpir_Term : Type<CPred<"::llvm::isa<::llvm::metaphir::mpir::SortType>($_self
 
 def Mpir_OpcodeAttr : AttrDef<Pattern_Dialect, "Opcode"> {
   let mnemonic = "opcode";
-  let summary = "A built-in instruction matcher (see InstructionMatchers.def)";
+  let summary = "A built-in instruction matcher (see InstructionMatchers.td)";
   let parameters =
       (ins "::llvm::metaphir::instruction::InstructionID":$value);
   let hasCustomAssemblyFormat = 1;

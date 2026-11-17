@@ -1,7 +1,7 @@
 #ifndef METAPHIR_IR_SORT_H
 #define METAPHIR_IR_SORT_H
 
-#include "llvm/ADT/StringRef.h"
+#include "metaphir/IR/Sort.inc"
 #include <optional>
 
 namespace llvm {
@@ -10,22 +10,37 @@ class raw_ostream;
 
 namespace metaphir {
 
-/// The sort of a meta variable or a constraint expression (see Sorts.def).
-enum class Sort {
-#define MIR_SORT(ID, Name, Representation) ID,
-#include "metaphir/IR/Sorts.def"
-};
-
-StringRef getSortName(Sort S);
 raw_ostream &operator<<(raw_ostream &OS, Sort S);
 
+/// The name printed for a sort.
+inline StringRef getSortName(Sort S) { return SortInfos[unsigned(S)].Name; }
+
+/// A sort's keyword in the mpir dialect.
+inline StringRef getSortKeyword(Sort S) {
+  return SortInfos[unsigned(S)].Keyword;
+}
+
+/// The sort of the runtime value that represents S in a constraint.
+inline Sort getRepresentation(Sort S) {
+  return SortInfos[unsigned(S)].Representation;
+}
+
+/// The sort whose keyword is Keyword, if any.
+inline std::optional<Sort> getSortFromKeyword(StringRef Keyword) {
+  for (unsigned I = 0; I != NumSorts; ++I)
+    if (SortInfos[I].Keyword == Keyword)
+      return Sort(I);
+  return std::nullopt;
+}
+
 /// Whether Sub lies below Super in the sort order. Unknown is the top.
-bool isSubsort(Sort Sub, Sort Super);
+inline bool isSubsort(Sort Sub, Sort Super) {
+  return SubsortRows[unsigned(Sub)] >> unsigned(Super) & 1;
+}
+
 /// The greatest lower bound of A and B, or none when they have no common
 /// subsort.
 std::optional<Sort> meetSorts(Sort A, Sort B);
-/// The sort of the runtime value that represents S in a constraint.
-Sort getRepresentation(Sort S);
 /// The sort a meta variable denotes once inference is done: an Operand-only
 /// meta variable denotes a Value.
 inline Sort resolveSort(Sort S) { return S == Sort::Operand ? Sort::Value : S; }

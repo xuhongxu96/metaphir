@@ -1,6 +1,8 @@
 #include "metaphir/Matching/Operators/ValuePredicates.h"
 #include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
+#include "metaphir/Matching/LLVMValueClasses.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
@@ -15,18 +17,8 @@ namespace metaphir {
 
 using namespace detail;
 
-static constexpr StringLiteral ValueClassNames[] = {
-#define MIR_LLVM_VALUE_CLASS(Class) #Class,
-#include "metaphir/Matching/LLVMValueClasses.def"
-};
-
 bool OpIsa::holds(const llvm::Value &V, unsigned ClassIndex) {
-  unsigned Index = 0;
-#define MIR_LLVM_VALUE_CLASS(Class)                                            \
-  if (Index++ == ClassIndex)                                                   \
-    return isa<llvm::Class>(V);
-#include "metaphir/Matching/LLVMValueClasses.def"
-  llvm_unreachable("invalid LLVM value class index");
+  return isValueClass(V, ClassIndex);
 }
 
 Expected<ConstraintValue> OpIsa::concrete(const ConcreteCall &Call) {
@@ -38,22 +30,20 @@ Expected<ConstraintValue> OpIsa::concrete(const ConcreteCall &Call) {
       requireString(Call.Operands[1], Call.Expression);
   if (!ClassName)
     return ClassName.takeError();
-  const StringLiteral *Class = find(ValueClassNames, *ClassName);
-  if (Class == std::end(ValueClassNames))
+  std::optional<unsigned> Class = findValueClass(*ClassName);
+  if (!Class)
     return make_error<ConstraintEvaluationError>(
         Call.Expression,
         Twine("unknown LLVM value class '") + *ClassName + "'");
-  return ConstraintValue::getBoolean(
-      holds(**Value, Class - std::begin(ValueClassNames)));
+  return ConstraintValue::getBoolean(holds(**Value, *Class));
 }
 
 bool OpIsa::isRecorded(unsigned ClassIndex) {
-  StringRef Name = ValueClassNames[ClassIndex];
-  return Name != "Value" && Name != "User" && Name != "Instruction";
+  return isRecordedValueClass(ClassIndex);
 }
 
 void OpIsa::record(const RecordCall &Call) {
-  for (unsigned Index = 0; Index != std::size(ValueClassNames); ++Index)
+  for (unsigned Index = 0; Index != NumValueClasses; ++Index)
     if (isRecorded(Index) && holds(Call.Value, Index))
       Call.Sink.add(Atom::valueClass(Index));
 }
@@ -63,12 +53,11 @@ AbstractValue OpIsa::abstract(const AbstractCall &Call) {
   if (!ClassName.isConcrete() ||
       ClassName.getConcrete().getKind() != ConstraintValue::String)
     return AbstractValue::unknown();
-  const StringLiteral *Class =
-      find(ValueClassNames, ClassName.getConcrete().getString());
-  unsigned Index = Class - std::begin(ValueClassNames);
-  if (Class == std::end(ValueClassNames) || !isRecorded(Index))
+  std::optional<unsigned> Class =
+      findValueClass(ClassName.getConcrete().getString());
+  if (!Class || !isRecorded(*Class))
     return AbstractValue::unknown();
-  return lacksFact(Call, 0, Atom::valueClass(Index));
+  return lacksFact(Call, 0, Atom::valueClass(*Class));
 }
 
 Expected<ConstraintValue> OpOpcode::concrete(const ConcreteCall &Call) {
@@ -81,64 +70,6 @@ Expected<ConstraintValue> OpOpcode::concrete(const ConcreteCall &Call) {
   return make_error<ConstraintEvaluationError>(
       Call.Expression, "expected an instruction operand");
 }
-
-/// The operand as an LLVM value, if it is one.
-static const llvm::Value *valueOperand(const ConcreteCall &Call) {
-  const ConstraintValue &V = Call.Operands[0];
-  return V.getKind() == ConstraintValue::Value ? V.getValue() : nullptr;
-}
-
-/// A predicate on an integer: an LLVM value is tested with Op::holds, which
-/// accepts splats; anything else is coerced to an integer and tested with
-/// MatchInteger, which may not apply (std::nullopt). An operand that is not an
-/// integer does not satisfy it.
-template <class Op, typename IntegerPredicate>
-static ConstraintValue integerPredicate(const ConcreteCall &Call,
-                                        IntegerPredicate MatchInteger) {
-  if (const llvm::Value *V = valueOperand(Call))
-    return ConstraintValue::getBoolean(Op::holds(*V));
-  Expected<APSInt> Operand = requireInteger(Call.Operands[0], Call.Expression);
-  if (!Operand) {
-    consumeError(Operand.takeError());
-    return ConstraintValue::getBoolean(false);
-  }
-  std::optional<bool> Matches = MatchInteger(*Operand);
-  return ConstraintValue::getBoolean(Matches.value_or(false));
-}
-
-/// A predicate that holds only for LLVM values: Op::holds decides it.
-template <class Op>
-static ConstraintValue valuePredicate(const ConcreteCall &Call) {
-  const llvm::Value *V = valueOperand(Call);
-  return ConstraintValue::getBoolean(V && Op::holds(*V));
-}
-
-/// Records Op's fact for the value if Op::holds.
-template <class Op> static void recordIfHolds(const RecordCall &Call) {
-  if (Op::holds(Call.Value))
-    Call.Sink.add(Op::Fact);
-}
-
-// The constant classes of ConstantClasses.def.
-#define NoIntegerTest std::nullopt
-#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)                     \
-  bool Op##ID::holds(const llvm::Value &V) {                                   \
-    return PatternMatch::match(&V, PatternMatch::Matcher());                   \
-  }                                                                            \
-  Expected<ConstraintValue> Op##ID::concrete(const ConcreteCall &Call) {       \
-    return integerPredicate<Op##ID>(                                           \
-        Call, [](const APSInt &V) -> std::optional<bool> {                     \
-          (void)V;                                                             \
-          return IntegerTest;                                                  \
-        });                                                                    \
-  }
-#include "metaphir/IR/ConstantClasses.def"
-#undef NoIntegerTest
-
-#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)                     \
-  void Op##ID::record(const RecordCall &Call) { recordIfHolds<Op##ID>(Call); }
-#define MIR_UNRECORDED_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)
-#include "metaphir/IR/ConstantClasses.def"
 
 bool OpIsAnyIntegralConstant::holds(const llvm::Value &V) {
   return PatternMatch::match(&V, PatternMatch::m_AnyIntegralConstant());
@@ -336,17 +267,11 @@ MIR_ABSTRACT_PREDICATE(IsConstantSplat)
 MIR_ABSTRACT_PREDICATE(HasOneUse)
 MIR_ABSTRACT_PREDICATE(HasOneUser)
 MIR_ABSTRACT_PREDICATE(IsImmConstant)
-#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)                     \
-  MIR_ABSTRACT_PREDICATE(ID)
-#define MIR_UNRECORDED_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)
-#include "metaphir/IR/ConstantClasses.def"
 #undef MIR_ABSTRACT_PREDICATE
 
 void recordValuePredicates(const RecordCall &Call) {
   OpIsa::record(Call);
-#define MIR_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest) Op##ID::record(Call);
-#define MIR_UNRECORDED_CONSTANT_CLASS(ID, Name, Matcher, IntegerTest)
-#include "metaphir/IR/ConstantClasses.def"
+  recordConstantClasses(Call);
   OpIsAnyIntegralConstant::record(Call);
   OpIsForbidPoison::record(Call);
   OpIsConstantSplat::record(Call);

@@ -1,45 +1,37 @@
 #ifndef METAPHIR_IR_META_FLAG_H
 #define METAPHIR_IR_META_FLAG_H
 
-#include "llvm/ADT/StringRef.h"
+#include "metaphir/IR/MetaFlag.inc"
+#include <cassert>
 #include <optional>
 
 namespace llvm {
 namespace metaphir {
 
-/// The built-in metaflags (':c', ':o', ':or', ':not'), from MetaFlags.def,
-/// and what they accept. The others are defined by 'metaflag' definitions.
+/// The built-in metaflags (':c', ':o', ':or', ':not'), and what they accept.
+/// The others are defined by 'metaflag' definitions. Their data is generated
+/// from MetaFlags.td (MetaFlag.inc); this reads it.
 namespace metaflag {
-enum MetaFlagID {
-  UnknownMetaFlag,
-#define MIR_META_FLAG_ID(Name) MF_##Name,
-#include "metaphir/IR/MetaFlags.def"
-};
 
-enum Placement {
-  InstructionPlacement = 1,
-  OperandPlacement = 2,
-  AnyPlacement = InstructionPlacement | OperandPlacement
-};
+inline StringRef getMetaFlagName(MetaFlagID ID) {
+  assert(ID > UnknownMetaFlag && "invalid meta flag ID");
+  return BuiltIns[ID - 1].Name;
+}
 
-enum ArgumentKind { AnyArgument, IntegerArgument, FlagArgument };
+inline MetaFlagID getMetaFlagID(StringRef Name) {
+  for (const BuiltIn &Flag : BuiltIns)
+    if (Flag.Name == Name)
+      return MetaFlagID(&Flag - BuiltIns + 1);
+  return UnknownMetaFlag;
+}
 
-struct Schema {
-  Placement AllowedPlacement;
-  unsigned MinArguments;
-  unsigned MaxArguments;
-  ArgumentKind Arguments;
-  /// Whether the flag may be an argument of another metaflag.
-  bool Nestable;
-};
+inline std::optional<Schema> getSchema(MetaFlagID ID) {
+  if (ID == UnknownMetaFlag)
+    return std::nullopt;
+  return BuiltIns[ID - 1].Accepts;
+}
 
-constexpr unsigned UnlimitedArgs = ~0u;
-
-std::optional<Schema> getSchema(MetaFlagID ID);
-MetaFlagID getMetaFlagID(StringRef Name);
-StringRef getMetaFlagName(MetaFlagID ID);
 } // namespace metaflag
-
 } // namespace metaphir
 } // namespace llvm
 

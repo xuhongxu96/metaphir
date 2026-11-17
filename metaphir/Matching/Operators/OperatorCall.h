@@ -16,7 +16,7 @@ namespace metaphir {
 /// A built-in constraint operator applied to evaluated operands on the IR.
 ///
 /// Every operator is a descriptor struct, Op<ID> for its ID in
-/// ConstraintOperators.def, whose static concrete(const ConcreteCall &)
+/// ConstraintOperators.td, whose static concrete(const ConcreteCall &)
 /// computes its result on the IR. How operands are evaluated is up to the
 /// evaluators (ExprEvaluator, IndexQuery), so the descriptors only apply the
 /// operator.

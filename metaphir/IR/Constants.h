@@ -1,26 +1,28 @@
 #ifndef METAPHIR_IR_CONSTANTS_H
 #define METAPHIR_IR_CONSTANTS_H
 
-#include "llvm/ADT/StringRef.h"
+#include "metaphir/IR/Constants.inc"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
 namespace metaphir {
 
 /// The keyword constants ('null', 'poison', ...) and comparison predicates,
-/// from KeywordConstants.def.
+/// generated from KeywordConstants.td (Constants.inc); this reads it.
 namespace keyword_constant {
-enum KeywordID {
-#define MIR_KEYWORD_CONSTANT(ID, Spelling) K_##ID,
-#include "metaphir/IR/KeywordConstants.def"
-};
 
-StringRef getKeywordName(KeywordID ID);
+/// The spellings of every keyword constant, in the order of KeywordID.
+inline ArrayRef<StringRef> getKeywordNames() { return Spellings; }
+
+inline StringRef getKeywordName(KeywordID ID) { return Spellings[ID]; }
+
 } // namespace keyword_constant
 
-/// How an aggregate constant is delimited: an array ('[...]'), a struct
-/// ('{...}') or a vector ('<...>').
 namespace aggregate_constant {
-enum Delimiter { Square, Brace, Angle };
+
+/// How the mpir dialect spells each kind, in the order of Delimiter.
+inline ArrayRef<StringRef> getNames() { return Names; }
+
 } // namespace aggregate_constant
 
 } // namespace metaphir

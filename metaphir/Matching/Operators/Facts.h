@@ -1,6 +1,7 @@
 #ifndef METAPHIR_MATCHING_OPERATORS_FACTS_H
 #define METAPHIR_MATCHING_OPERATORS_FACTS_H
 
+#include "metaphir/Matching/Operators/Facts.inc"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
@@ -26,18 +27,11 @@ constexpr unsigned ResultSlot = NumOperandSlots;
 /// class.
 class Atom {
 public:
-  enum Predicate : uint8_t {
-#define MIR_FACT(ID, Name) ID,
-#include "metaphir/Matching/Operators/Facts.def"
-    NumPredicates
-  };
+  using Predicate = fact::Predicate;
 
+  static constexpr unsigned NumPredicates = fact::NumPredicates;
   /// The predicates before the value-tracking ones.
-  static constexpr unsigned NumPlainPredicates = 0
-#define MIR_FACT(ID, Name) +1
-#define MIR_VALUE_TRACKING_FACT(ID, Name)
-#include "metaphir/Matching/Operators/Facts.def"
-      ;
+  static constexpr unsigned NumPlainPredicates = fact::NumPlainPredicates;
 
   /// Integer constants are recorded when their value, read signed or
   /// unsigned, is in [MinLiteral, MaxLiteral].
@@ -46,11 +40,11 @@ public:
 
   /* implicit */ constexpr Atom(Predicate P) : Code(PredicateBase + P) {}
 
-  static StringRef getName(Predicate P);
+  static StringRef getName(Predicate P) { return fact::PredicateNames[P]; }
 
   /// An integer constant of value V, if such constants are recorded.
   static std::optional<Atom> literal(int64_t V);
-  /// A value of the ClassIndex-th class of LLVMValueClasses.def.
+  /// A value of the ClassIndex-th class of LLVMValueClasses.td.
   static Atom valueClass(unsigned ClassIndex);
 
   /// An encoding of the atom that fits in 12 bits.
@@ -74,34 +68,13 @@ private:
   uint16_t Code;
 };
 
-/// Numbers recorded for a site: the most, or the least, of the values there.
-enum class Measure : uint8_t {
-#define MIR_MEASURE(ID, Name, Order) ID,
-#include "metaphir/Matching/Operators/Facts.def"
-  NumMeasures
-};
+inline StringRef getMeasureName(Measure M) {
+  return MeasureInfos[size_t(M)].Name;
+}
 
-StringRef getMeasureName(Measure M);
-
-/// Which of its values' numbers a site keeps for a measure (see Facts.def).
-enum class MeasureOrder : uint8_t {
-  /// The most: a larger number satisfies more queries.
-  Most,
-  /// The least: a smaller number satisfies more queries.
-  Least
-};
-
-/// The order of M, as Facts.def declares it for every measure.
+/// The order of M, as Facts.td declares it for every measure.
 inline MeasureOrder getMeasureOrder(Measure M) {
-  switch (M) {
-#define MIR_MEASURE(ID, Name, Order)                                           \
-  case Measure::ID:                                                            \
-    return MeasureOrder::Order;
-#include "metaphir/Matching/Operators/Facts.def"
-  case Measure::NumMeasures:
-    break;
-  }
-  llvm_unreachable("invalid measure");
+  return MeasureInfos[size_t(M)].Order;
 }
 
 /// The number a site keeps for M from two of its values' numbers.

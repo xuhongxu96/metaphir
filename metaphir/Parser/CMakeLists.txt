@@ -11,17 +11,21 @@ add_custom_command(
   COMMENT "Embedding stdlib.mpir into StdLibSource.inc"
 )
 
+metaphir_tablegen(MIRToken.inc -gen-tokens)
+metaphir_tablegen(KeywordTokens.inc -gen-keyword-tokens)
+add_custom_target(MetaphIRParserTableGen DEPENDS
+  "${CMAKE_CURRENT_BINARY_DIR}/MIRToken.inc"
+  "${CMAKE_CURRENT_BINARY_DIR}/KeywordTokens.inc")
+
 add_library(metaphir-lexer
-  MIRKeywords.def
-  MIRTokenKinds.def
-
-  MIRToken.cpp
-  MIRToken.h
-
+  KeywordRange.h
+  KeywordTokens.h
   MIRLexer.cpp
   MIRLexer.h
+  MIRToken.h
 )
 
+add_dependencies(metaphir-lexer MetaphIRParserTableGen)
 target_link_libraries(metaphir-lexer
   PUBLIC
     LLVMSupport

@@ -1,8 +1,17 @@
 # Running match plans on LLVM IR, and index queries on features.
-add_library(metaphir-exec ExprEvaluator.cpp ExprEvaluator.h TypePattern.cpp
+metaphir_tablegen(ConstraintDispatch.inc -gen-constraint-dispatch)
+metaphir_tablegen(KeywordConstantMatch.inc -gen-keyword-constant-matcher)
+metaphir_tablegen(PrimitiveTypeMatch.inc -gen-primitive-type-matcher)
+add_custom_target(MetaphIRExecTableGen DEPENDS
+  "${CMAKE_CURRENT_BINARY_DIR}/ConstraintDispatch.inc"
+  "${CMAKE_CURRENT_BINARY_DIR}/KeywordConstantMatch.inc"
+  "${CMAKE_CURRENT_BINARY_DIR}/PrimitiveTypeMatch.inc")
+
+add_library(metaphir-exec ExprEvaluator.cpp ExprEvaluator.h KeywordConstantMatch.h
+                          PrimitiveTypeMatch.h TypePattern.cpp
                           TypePattern.h IndexQuery.cpp IndexQuery.h
                           PlanMatcher.cpp PlanMatcher.h)
-add_dependencies(metaphir-exec MetaphIRPatternOpsIncGen MetaphIRExprOpsIncGen
+add_dependencies(metaphir-exec MetaphIRExecTableGen MetaphIRPatternOpsIncGen MetaphIRExprOpsIncGen
                  MetaphIRPlanOpsIncGen MetaphIRIndexOpsIncGen)
 target_link_libraries(metaphir-exec PUBLIC metaphir-matching metaphir-index-core
                                            metaphir-surface-printer

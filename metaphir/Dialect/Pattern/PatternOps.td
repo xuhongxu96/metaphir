@@ -175,7 +175,7 @@ def Mpir_MetaIntTypeOp : Mpir_Op<"type.meta_int", [Pure]> {
 }
 
 def Mpir_PrimTypeOp : Mpir_Op<"type.prim", [Pure]> {
-  let summary = "A primitive type (see Types.def)";
+  let summary = "A primitive type (see Types.td)";
   let arguments = (ins I32Attr:$kind);
   let results = (outs Mpir_Term:$result);
   let assemblyFormat = "custom<PrimType>($kind) attr-dict `:` type($result)";

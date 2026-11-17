@@ -25,7 +25,7 @@ namespace metaphir {
 #define MIR_DECLARE_RECORDED_PREDICATE(ID)                                     \
   struct Op##ID {                                                              \
     static constexpr bool ShortCircuits = false;                               \
-    static constexpr Atom::Predicate Fact = Atom::ID;                          \
+    static constexpr fact::Predicate Fact = fact::ID;                          \
     static Expected<ConstraintValue> concrete(const ConcreteCall &Call);       \
     static void record(const RecordCall &Call);                                \
     static AbstractValue abstract(const AbstractCall &Call);                   \

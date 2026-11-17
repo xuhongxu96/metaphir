@@ -79,7 +79,7 @@ def Expr_ReadOp : Expr_Op<"read"> {
 }
 
 def Expr_CallOp : Expr_Op<"call", [AttrSizedOperandSegments]> {
-  let summary = "A built-in operator (see ConstraintOperators.def)";
+  let summary = "A built-in operator (see ConstraintOperators.td)";
   let description = [{
     `op` is the operator's ID and `kind` how it is written (unary, binary or
     call), as Constraint's enums number them. A value-tracking operator is

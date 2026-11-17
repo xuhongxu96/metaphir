@@ -13,6 +13,7 @@
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/IR/PatternSettings.h"
 #include "metaphir/Matching/FeatureRequirement.h"
 #include "metaphir/Matching/Features.h"
 #include "metaphir/Transforms/Lowering.h"
@@ -497,7 +498,8 @@ void Compiler::emitVariant(const Requirement &R) {
         Builder.getDenseBoolArrayAttr(IsValue));
     if (Commutative)
       Typing.setCommutative(true);
-    if (Inst.getTreatIntAsVec().value_or(false))
+    if (Inst.getTreatIntAsVec().value_or(
+            pattern_setting::getDefault(pattern_setting::treatIntAsVec)))
       Typing.setTreatIntAsVec(true);
   }
 

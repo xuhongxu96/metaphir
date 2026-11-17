@@ -4,6 +4,8 @@
 #   build-wasm/emsdk     the Emscripten SDK (unless EMSDK is set)
 #   build-wasm/host      llvm-tblgen and mlir-tblgen, when llvm-project has
 #                        no native build
+#   build-wasm/tblgen    metaphir-tblgen for this machine, which generates
+#                        the language's tables
 #   build-wasm/llvm      LLVM's libraries, built for WebAssembly from
 #                        llvm-project (as scripts/prepare_llvm.sh left it),
 #                        again only when that or their options change
@@ -113,7 +115,7 @@ else
             -DLLVM_INCLUDE_EXAMPLES=OFF \
             "${CCACHE_ARGS[@]}" >/dev/null
         cmake --build "$BUILD_DIR/host" -- -j"$JOBS" llvm-tblgen llvm-min-tblgen \
-            mlir-tblgen
+            mlir-tblgen LLVMTableGen
         NATIVE_BIN="$BUILD_DIR/host/bin"
     fi
 
@@ -133,12 +135,29 @@ if [ ! -x "$NATIVE_BIN/mlir-tblgen" ]; then
     NATIVE_BIN="$BUILD_DIR/host/bin"
 fi
 
+# metaphir-tblgen runs on this machine, against a native build of the same
+# llvm-project: the one that built the table generators, or the native tree.
+echo "[$(date)] Building metaphir-tblgen for this machine..."
+if [ -f "$BUILD_DIR/host/lib/cmake/llvm/LLVMConfig.cmake" ] \
+    && [ "$NATIVE_BIN" = "$BUILD_DIR/host/bin" ]; then
+    NATIVE_LLVM_DIR="$BUILD_DIR/host/lib/cmake/llvm"
+elif [ -f "$BASE_DIR/llvm-project/build/install/lib/cmake/llvm/LLVMConfig.cmake" ]; then
+    NATIVE_LLVM_DIR="$BASE_DIR/llvm-project/build/install/lib/cmake/llvm"
+else
+    NATIVE_LLVM_DIR="$BASE_DIR/llvm-project/build/lib/cmake/llvm"
+fi
+cmake -G Ninja -S "$BASE_DIR/scripts/tblgen-host" -B "$BUILD_DIR/tblgen" \
+    -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="$NATIVE_LLVM_DIR" \
+    "${CCACHE_ARGS[@]}" >/dev/null
+cmake --build "$BUILD_DIR/tblgen" -- -j"$JOBS" metaphir-tblgen
+
 echo "[$(date)] Building MetaphIR for WebAssembly..."
 emcmake cmake -G Ninja -S "$BASE_DIR/web/wasm" -B "$BUILD_DIR/metaphir" \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_DIR="$BUILD_DIR/llvm/lib/cmake/llvm" \
     -DMLIR_DIR="$BUILD_DIR/llvm/lib/cmake/mlir" \
     -DMETAPHIR_MLIR_TABLEGEN="$NATIVE_BIN/mlir-tblgen" \
+    -DMETAPHIR_TABLEGEN="$BUILD_DIR/tblgen/metaphir-tblgen/metaphir-tblgen" \
     "${CCACHE_ARGS[@]}" >/dev/null
 cmake --build "$BUILD_DIR/metaphir" -- -j"$JOBS" metaphir metaphir-match
 

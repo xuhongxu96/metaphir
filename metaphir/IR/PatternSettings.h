@@ -1,24 +1,37 @@
 #ifndef METAPHIR_IR_PATTERNSETTINGS_H
 #define METAPHIR_IR_PATTERNSETTINGS_H
 
-#include "llvm/ADT/StringRef.h"
+#include "metaphir/IR/PatternSettings.inc"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdint>
 
 namespace llvm {
 namespace metaphir {
 
+namespace pattern_setting {
+
+/// Whether a setting is on until a pattern writes it.
+constexpr bool getDefault(Setting Flag) { return DefaultMask & uint64_t(Flag); }
+
+/// The keyword of a setting, for error messages.
+inline StringRef getName(Setting Flag) {
+  for (const SettingKeyword &S : Keywords)
+    if (S.Flag == Flag)
+      return S.Keyword;
+  llvm_unreachable("invalid pattern setting");
+}
+
+} // namespace pattern_setting
+
 // Encapsulates global pattern settings, applied at a `;; <name>(true|false)`
 // directive and active for the instructions that follow it. Stored as an ORed
 // bitmask so more settings can be added later; the Setting enum is generated
-// from PatternSettings.def. Callers query/update through methods rather than
+// from PatternSettings.td. Callers query/update through methods rather than
 // manipulating raw bits.
 class PatternSettings {
 public:
-  enum Setting : uint64_t {
-    None = 0,
-#define MIR_PATTERN_SETTING_ID(Name, Bit, Comment) Name = uint64_t(1) << Bit,
-#include "metaphir/IR/PatternSettings.def"
-  };
+  using Setting = pattern_setting::Setting;
+  static constexpr Setting None = pattern_setting::None;
 
   PatternSettings() = default;
   explicit PatternSettings(uint64_t Mask) : Mask(Mask), Specified(Mask) {}
@@ -45,11 +58,8 @@ public:
     return Result;
   }
 
-  // Map a Setting back to its directive keyword (used in error messages).
-  static StringRef getName(Setting Flag);
-
 private:
-  uint64_t Mask = None;
+  uint64_t Mask = pattern_setting::DefaultMask;
   /// Bits for the settings written explicitly, so an inlined body can override
   /// its use site rather than silently resetting it.
   uint64_t Specified = None;

@@ -12,7 +12,7 @@ namespace metaphir {
 namespace detail {
 
 // Coercion-class predicates. A value belongs to a class when it can be coerced
-// to the corresponding target kind (see IR/ConstraintCoercions.def).
+// to the corresponding target kind (see IR/ConstraintCoercions.td).
 // isNumeric() is additionally gated on a Value actually being a constant
 // integer, since a non-constant Value can never satisfy an integer demand.
 bool isNumeric(const ConstraintValue &V);
@@ -21,7 +21,7 @@ bool isStringArrayLike(const ConstraintValue &V);
 
 // Table-driven coercion dispatch. Converts V into the target kind when an
 // admissible coercion exists, and returns a structured error otherwise. The
-// admissible conversions are listed in IR/ConstraintCoercions.def; each
+// admissible conversions are listed in IR/ConstraintCoercions.td; each
 // destination kind owns its acceptance policy in a dedicated converter.
 bool canCoerceTo(const ConstraintValue &V, ConstraintValue::ValueKind Target);
 Expected<ConstraintValue> coerce(ConstraintValue V,
