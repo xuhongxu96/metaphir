@@ -974,7 +974,7 @@ bool Parser::validateInstruction(instruction::InstructionID ID,
   }
   SmallVector<bool, 16> Seen(16, false);
   for (const POperand &Operand : Ops) {
-    if (Operand.Kind < OperandKind::Predicate)
+    if (!isKeyedOperand(Operand.Kind))
       continue;
     if (Seen[unsigned(Operand.Kind)])
       return Lex.ParseError(Operand.ValLoc, "duplicate keyed operand");

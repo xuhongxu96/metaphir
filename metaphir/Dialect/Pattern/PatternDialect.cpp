@@ -153,6 +153,10 @@ unsigned mpir::getNumOperandValues(OperandKind Kind) {
   }
 }
 
+bool mpir::isKeyedOperand(OperandKind Kind) {
+  return Kind >= OperandKind::Predicate;
+}
+
 bool mpir::isValueOperand(OperandKind Kind) {
   switch (Kind) {
   case OperandKind::TypedValue:

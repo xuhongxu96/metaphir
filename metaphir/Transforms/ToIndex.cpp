@@ -196,8 +196,7 @@ static ShapeRequirement shapeOf(InstOp Node) {
         flagBit(Flag);
   }
   for (const MatcherOperandView &Op : getMatcherOperands(Node)) {
-    if (Op.Kind >= OperandKind::Predicate ||
-        Op.Kind == OperandKind::ValueArray ||
+    if (isKeyedOperand(Op.Kind) || Op.Kind == OperandKind::ValueArray ||
         Op.Kind == OperandKind::TypedValueArray)
       continue;
     bool OfResult =
@@ -479,7 +478,7 @@ void Compiler::emitVariant(const Requirement &R) {
     SmallVector<Attribute, 4> Types;
     SmallVector<bool, 4> IsValue;
     for (const MatcherOperandView &Op : getMatcherOperands(Inst)) {
-      if (Op.Kind >= OperandKind::Predicate)
+      if (isKeyedOperand(Op.Kind))
         continue;
       bool Array = Op.Kind == OperandKind::ValueArray ||
                    Op.Kind == OperandKind::TypedValueArray;

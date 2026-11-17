@@ -254,7 +254,7 @@ void printSurfaceInstruction(raw_ostream &OS, Operation *I) {
     PrintedOperand O{View, OperandFlags
                                ? cast<ArrayAttr>((*OperandFlags)[Index])
                                : ArrayAttr()};
-    (View.Kind >= OperandKind::Predicate ? Keyed : Unkeyed).push_back(O);
+    (isKeyedOperand(View.Kind) ? Keyed : Unkeyed).push_back(O);
   }
   auto KeyedOf = [&](OperandKind Kind) -> const PrintedOperand * {
     for (const PrintedOperand &O : Keyed)
