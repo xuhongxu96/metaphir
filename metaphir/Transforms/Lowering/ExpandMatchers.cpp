@@ -495,6 +495,7 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
 LogicalResult Expander::expand(UseOp Use) {
   auto Matcher = mlir::SymbolTable::lookupNearestSymbolFrom<MatcherOp>(
       Use, Use.getMatcherAttr());
+
   // A named use is prefixed by its name; one without is given a number.
   SmallString<16> AnonymousName;
   StringRef UsePrefix;
@@ -504,16 +505,20 @@ LogicalResult Expander::expand(UseOp Use) {
     ("#" + Twine(NextAnonymousUse++)).toVector(AnonymousName);
     UsePrefix = AnonymousName;
   }
+
   SmallVector<MatcherOperandView, 8> CallerOps = getMatcherOperands(Use);
+
   bool Commutative = Use.isCommutative();
   std::optional<unsigned> OrSelf = Use.getOrSelfIndex();
 
   Builder.setInsertionPoint(Use);
+
   unsigned NumRegions =
       range_size(Matcher.getBody().front().getOps<BranchOp>()) *
       (Commutative ? 2 : 1);
   if (OrSelf)
     ++NumRegions;
+
   mlir::StringAttr ResultName;
   if (std::optional<StringRef> Name = Use.getResultName())
     ResultName = Builder.getStringAttr(*Name);

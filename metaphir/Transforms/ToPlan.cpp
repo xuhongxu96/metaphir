@@ -23,6 +23,7 @@
 #include "mlir/Pass/Pass.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetOperations.h"
+#include "llvm/ADT/SmallString.h"
 
 namespace llvm {
 namespace metaphir {
@@ -35,7 +36,6 @@ using mlir::Operation;
 using mlir::Value;
 using namespace mpir;
 namespace plan = mpir_plan;
-
 
 /// Whether V is a meta variable: an mpir.var or a branch parameter.
 static bool isVariable(Value V) {
@@ -150,11 +150,10 @@ void Compiler::assignSlots() {
       return;
     }
     StringRef Name;
-    std::string OpcodeName;
+    StringRef OpcodeName;
     if (auto Inst = dyn_cast<InstOp>(Op)) {
       Name = Inst.getResultName().value_or("");
-      OpcodeName =
-          ("" + instruction::getOpcodeName(Inst.getOpcode().getValue())).str();
+      OpcodeName = instruction::getOpcodeName(Inst.getOpcode().getValue());
     } else {
       if (auto N =
               Op->getAttrOfType<mlir::StringAttr>(mpir::ResultNameAttrName))
@@ -177,11 +176,13 @@ void Compiler::assignSlots() {
                     .getDefiningOp();
       }
       if (auto Inst = dyn_cast_or_null<InstOp>(Inner))
-        OpcodeName =
-            ("" + instruction::getOpcodeName(Inst.getOpcode().getValue()))
-                .str();
+        OpcodeName = instruction::getOpcodeName(Inst.getOpcode().getValue());
     }
-    std::string Printed = Name.empty() ? OpcodeName : ("%" + Name).str();
+    SmallString<32> Printed;
+    if (Name.empty())
+      Printed = OpcodeName;
+    else
+      ("%" + Name).toVector(Printed);
     S.add(Result, Printed, plan::SlotKind::Instruction, Sort::Instruction, Loc,
           Context);
   });

@@ -396,9 +396,9 @@ LogicalResult Parser::infer(Value M, StringRef Name, Sort Expected, LocTy Loc) {
 }
 
 Value Parser::getMeta(StringRef Name, Sort Expected, LocTy Loc) {
-  std::string Wildcard;
+  SmallString<16> Wildcard;
   if (Name == "_") {
-    Wildcard = ("_$" + Twine(NextWildcard++)).str();
+    ("_$" + Twine(NextWildcard++)).toVector(Wildcard);
     Name = Wildcard;
   }
   auto It = MetaVariables.find(Name);

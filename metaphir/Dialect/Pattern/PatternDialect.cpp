@@ -3,6 +3,7 @@
 #include "metaphir/IR/Type.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/DialectImplementation.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/TypeSwitch.h"
@@ -309,8 +310,8 @@ std::optional<unsigned> UseOp::getOrSelfIndex() {
 //===----------------------------------------------------------------------===//
 
 /// A printable SSA name for a pattern name: letters, digits and '_'.
-static std::string asmName(StringRef Prefix, StringRef Name) {
-  std::string Result = Prefix.str();
+static SmallString<32> asmName(StringRef Prefix, StringRef Name) {
+  SmallString<32> Result = Prefix;
   for (char C : Name)
     Result += llvm::isAlnum(C) ? C : '_';
   return Result;
