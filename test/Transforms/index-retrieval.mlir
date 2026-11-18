@@ -103,8 +103,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <sub> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_r : <Instruction> loc("index-retrieval.mlir":104:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {result_name = "r"} : <Instruction> loc("index-retrieval.mlir":106:1)
-// CHECK:           } attributes {result_name = "r"} : <Instruction>
+  } <result_name = "r"> : <Instruction> loc("index-retrieval.mlir":106:1)
+// CHECK:           } <result_name = "r"> : <Instruction>
   %2 = mpir.type.int 32 : <Type> loc("index-retrieval.mlir":108:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %i_s = mpir.inst <mul> (%2, %1, %2, %y) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-retrieval.mlir":110:1)
@@ -301,8 +301,8 @@ mpir_index.query {
 // CHECK-LABEL:   mpir_index.query {
   mpir_index.variant {
 // CHECK:           mpir_index.variant {
-    mpir_index.has_global "llvm.smax" {derived} loc("index-retrieval.mlir":304:1)
-// CHECK:             mpir_index.has_global "llvm.smax" {derived}
+    mpir_index.has_global "llvm.smax" <derived> loc("index-retrieval.mlir":304:1)
+// CHECK:             mpir_index.has_global "llvm.smax" <derived>
     mpir_index.has_instruction <call> loc("index-retrieval.mlir":306:1)
 // CHECK:             mpir_index.has_instruction <call>
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-retrieval.mlir":308:1)
@@ -337,8 +337,8 @@ mpir_index.query {
 // CHECK:           }
   mpir_index.variant {
 // CHECK:           mpir_index.variant {
-    mpir_index.has_global "llvm.umin" {derived} loc("index-retrieval.mlir":340:1)
-// CHECK:             mpir_index.has_global "llvm.umin" {derived}
+    mpir_index.has_global "llvm.umin" <derived> loc("index-retrieval.mlir":340:1)
+// CHECK:             mpir_index.has_global "llvm.umin" <derived>
     mpir_index.has_instruction <call> loc("index-retrieval.mlir":342:1)
 // CHECK:             mpir_index.has_instruction <call>
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-retrieval.mlir":344:1)

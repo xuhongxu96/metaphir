@@ -87,8 +87,8 @@ mpir.pattern {
 // CHECK:             %[[INST_2:.*]] = mpir.inst <sub> (%[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_r : <Instruction> loc("index-factor.mlir":88:1)
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-  } attributes {result_name = "r"} : <Instruction> loc("index-factor.mlir":90:1)
-// CHECK:           } attributes {result_name = "r"} : <Instruction>
+  } <result_name = "r"> : <Instruction> loc("index-factor.mlir":90:1)
+// CHECK:           } <result_name = "r"> : <Instruction>
   %3 = mpir.type.int 32 : <Type> loc("index-factor.mlir":92:1)
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
   %i_s = mpir.inst <shl> (%3, %2, %3, %y) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("index-factor.mlir":94:1)
@@ -257,8 +257,8 @@ mpir_index.query {
 // CHECK-LABEL:   mpir_index.query {
   mpir_index.variant {
 // CHECK:           mpir_index.variant {
-    mpir_index.has_global "llvm.smax" {derived} loc("index-factor.mlir":260:1)
-// CHECK:             mpir_index.has_global "llvm.smax" {derived}
+    mpir_index.has_global "llvm.smax" <derived> loc("index-factor.mlir":260:1)
+// CHECK:             mpir_index.has_global "llvm.smax" <derived>
     mpir_index.has_instruction <call> loc("index-factor.mlir":262:1)
 // CHECK:             mpir_index.has_instruction <call>
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-factor.mlir":264:1)
@@ -305,8 +305,8 @@ mpir_index.query {
 // CHECK:           }
   mpir_index.variant {
 // CHECK:           mpir_index.variant {
-    mpir_index.has_global "llvm.umin" {derived} loc("index-factor.mlir":308:1)
-// CHECK:             mpir_index.has_global "llvm.umin" {derived}
+    mpir_index.has_global "llvm.umin" <derived> loc("index-factor.mlir":308:1)
+// CHECK:             mpir_index.has_global "llvm.umin" <derived>
     mpir_index.has_instruction <call> loc("index-factor.mlir":310:1)
 // CHECK:             mpir_index.has_instruction <call>
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-factor.mlir":312:1)
@@ -353,8 +353,8 @@ mpir_index.query {
 // CHECK:           }
   mpir_index.variant {
 // CHECK:           mpir_index.variant {
-    mpir_index.has_global "llvm.umax" {derived} loc("index-factor.mlir":356:1)
-// CHECK:             mpir_index.has_global "llvm.umax" {derived}
+    mpir_index.has_global "llvm.umax" <derived> loc("index-factor.mlir":356:1)
+// CHECK:             mpir_index.has_global "llvm.umax" <derived>
     mpir_index.has_instruction <call> loc("index-factor.mlir":358:1)
 // CHECK:             mpir_index.has_instruction <call>
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-factor.mlir":360:1)
@@ -447,8 +447,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <sub> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_r : <Instruction> loc("index-factor.mlir":448:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {result_name = "r"} : <Instruction> loc("index-factor.mlir":450:1)
-// CHECK:           } attributes {result_name = "r"} : <Instruction>
+  } <result_name = "r"> : <Instruction> loc("index-factor.mlir":450:1)
+// CHECK:           } <result_name = "r"> : <Instruction>
 } loc("index-factor.mlir":452:1)
 // CHECK:         }
 mpir_index.query {
@@ -527,8 +527,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <mul> (%[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
     mpir.yield %i_b : <Instruction> loc("index-factor.mlir":528:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {or_self_of = "mul", or_self_region = 0 : i32, result_name = "b"} : <Instruction> loc("index-factor.mlir":530:1)
-// CHECK:           } attributes {or_self_of = "mul", or_self_region = 0 : i32, result_name = "b"} : <Instruction>
+  } <or_self_of = "mul", or_self_region = 0, result_name = "b"> : <Instruction> loc("index-factor.mlir":530:1)
+// CHECK:           } <result_name = "b", or_self_of = "mul", or_self_region = 0> : <Instruction>
   %8 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-factor.mlir":532:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
   %9 = mpir_expr.call call "opcode"(%8) anchor %7 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-factor.mlir":534:1)
@@ -555,8 +555,8 @@ mpir_index.query {
 // CHECK-LABEL:   mpir_index.query {
   mpir_index.variant {
 // CHECK:           mpir_index.variant {
-    mpir_index.has_instruction <shl> {derived} loc("index-factor.mlir":558:1)
-// CHECK:             mpir_index.has_instruction <shl> {derived}
+    mpir_index.has_instruction <shl> <derived> loc("index-factor.mlir":558:1)
+// CHECK:             mpir_index.has_instruction <shl> <derived>
     mpir_index.has_instruction <add> loc("index-factor.mlir":560:1)
 // CHECK:             mpir_index.has_instruction <add>
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-factor.mlir":562:1)
@@ -605,8 +605,8 @@ mpir_index.query {
 // CHECK:           }
   mpir_index.variant {
 // CHECK:           mpir_index.variant {
-    mpir_index.has_instruction <add> {derived} loc("index-factor.mlir":608:1)
-// CHECK:             mpir_index.has_instruction <add> {derived}
+    mpir_index.has_instruction <add> <derived> loc("index-factor.mlir":608:1)
+// CHECK:             mpir_index.has_instruction <add> <derived>
     mpir_index.has_instruction <add> loc("index-factor.mlir":610:1)
 // CHECK:             mpir_index.has_instruction <add>
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-factor.mlir":612:1)

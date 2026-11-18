@@ -10,7 +10,7 @@
 ;; ?id == "llvm.ctlz"
 ; '@llvm.?id' is the intrinsic the constraint names.
 ; CALLEE:      mpir_index.variant {
-; CALLEE-NEXT:   mpir_index.has_global "llvm.ctlz" {derived}
+; CALLEE-NEXT:   mpir_index.has_global "llvm.ctlz" <derived>
 ; CALLEE-NEXT:   mpir_index.has_instruction <call>
 
 ;--- either.mpir
@@ -18,9 +18,9 @@
 ;; intrinsic(?mm) == "llvm.smax" || intrinsic(?mm) == "llvm.umin"
 ; A variant per intrinsic.
 ; EITHER:      mpir_index.variant {
-; EITHER-NEXT:   mpir_index.has_global "llvm.smax" {derived}
+; EITHER-NEXT:   mpir_index.has_global "llvm.smax" <derived>
 ; EITHER:      mpir_index.variant {
-; EITHER-NEXT:   mpir_index.has_global "llvm.umin" {derived}
+; EITHER-NEXT:   mpir_index.has_global "llvm.umin" <derived>
 ; EITHER-NOT:  mpir_index.variant
 
 ;--- opcode.mpir
@@ -30,5 +30,5 @@
 ; OPCODE:      mpir_index.variant <impossible> {
 ; OPCODE-NEXT:   mpir_index.has_instruction <zext>
 ; OPCODE:      mpir_index.variant {
-; OPCODE-NEXT:   mpir_index.has_instruction <sext> {derived}
+; OPCODE-NEXT:   mpir_index.has_instruction <sext> <derived>
 ; OPCODE-NEXT:   mpir_index.has_instruction <sext>

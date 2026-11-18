@@ -57,8 +57,10 @@ def Index_VariantOp : Index_Op<"variant", [HasParent<"QueryOp">, SingleBlock,
 
 def Index_HasInstructionOp : Index_Op<"has_instruction"> {
   let summary = "Some instruction matches the instruction matcher";
-  let arguments = (ins Mpir_OpcodeAttr:$opcode);
-  let assemblyFormat = "$opcode attr-dict";
+  // What the constraints, not the instructions, need: a function without it
+  // may still match the variant's instructions.
+  let arguments = (ins Mpir_OpcodeAttr:$opcode, UnitAttr:$derived);
+  let assemblyFormat = "$opcode prop-dict attr-dict";
 }
 
 def Index_HasEdgeOp : Index_Op<"has_edge"> {
@@ -75,8 +77,9 @@ def Index_HasSiblingOp : Index_Op<"has_sibling"> {
 
 def Index_HasGlobalOp : Index_Op<"has_global"> {
   let summary = "Some instruction has the global (an intrinsic, for 'llvm.*') as an operand";
-  let arguments = (ins StrAttr:$name);
-  let assemblyFormat = "$name attr-dict";
+  // What the constraints, not the instructions, need, as for has_instruction.
+  let arguments = (ins StrAttr:$name, UnitAttr:$derived);
+  let assemblyFormat = "$name prop-dict attr-dict";
 }
 
 //===----------------------------------------------------------------------===//
@@ -155,8 +158,10 @@ def Index_UnknownOp : Index_Op<"unknown", [Pure]> {
 
 def Index_AssumeOp : Index_Op<"assume"> {
   let summary = "A constraint that must not be false on the features";
-  let arguments = (ins Mpir_Term:$condition);
-  let assemblyFormat = "$condition attr-dict `:` type($condition)";
+  // A closed constraint evaluates alike in every match, so it can be checked
+  // on the query alone.
+  let arguments = (ins Mpir_Term:$condition, UnitAttr:$closed);
+  let assemblyFormat = "$condition prop-dict attr-dict `:` type($condition)";
 }
 
 //===----------------------------------------------------------------------===//

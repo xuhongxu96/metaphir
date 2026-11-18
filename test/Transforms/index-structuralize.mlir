@@ -46,7 +46,7 @@ mpir_index.query {
     %4 = mpir_expr.call binary "=="(%1, %2) anchor %3 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":46:1)
     mpir_index.assume %4 : <Boolean> loc("index-structuralize.mlir":47:1)
   } loc("index-structuralize.mlir":48:1)
-// CHECK:             mpir_index.has_global "llvm.ctlz" {derived}
+// CHECK:             mpir_index.has_global "llvm.ctlz" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <call>, 4, 128
@@ -124,8 +124,8 @@ mpir_index.query {
     %11 = mpir_expr.call binary "=="(%8, %9) anchor %10 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":124:1)
     mpir_index.assume %11 : <Boolean> loc("index-structuralize.mlir":125:1)
   } loc("index-structuralize.mlir":126:1)
-// CHECK:             mpir_index.has_global "llvm.smax" {derived}
-// CHECK:             mpir_index.has_global "llvm.smax" {derived}
+// CHECK:             mpir_index.has_global "llvm.smax" <derived>
+// CHECK:             mpir_index.has_global "llvm.smax" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
@@ -218,7 +218,7 @@ mpir_index.query {
     %16 = mpir_expr.call binary "||"(%10, %14) anchor %15 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":218:1)
     mpir_index.assume %16 : <Boolean> loc("index-structuralize.mlir":219:1)
   } loc("index-structuralize.mlir":220:1)
-// CHECK:             mpir_index.has_global "llvm.smax" {derived}
+// CHECK:             mpir_index.has_global "llvm.smax" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
@@ -242,7 +242,7 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_global "llvm.umin" {derived}
+// CHECK:             mpir_index.has_global "llvm.umin" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
@@ -266,7 +266,7 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_global "llvm.umax" {derived}
+// CHECK:             mpir_index.has_global "llvm.umax" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
@@ -333,7 +333,7 @@ mpir_index.query {
     %6 = mpir_expr.call binary "=="(%3, %4) anchor %5 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":333:1)
     mpir_index.assume %6 : <Boolean> loc("index-structuralize.mlir":334:1)
   } loc("index-structuralize.mlir":335:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -462,9 +462,9 @@ mpir_index.query {
     %37 = mpir_expr.call binary "||"(%29, %35) anchor %36 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":462:1)
     mpir_index.assume %37 : <Boolean> loc("index-structuralize.mlir":463:1)
   } loc("index-structuralize.mlir":464:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -510,8 +510,8 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_12]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -557,9 +557,9 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_25]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -605,8 +605,8 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_38]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -860,10 +860,10 @@ mpir_index.query {
     %43 = mpir_expr.call binary "&&"(%35, %41) anchor %42 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":860:1)
     mpir_index.assume %43 : <Boolean> loc("index-structuralize.mlir":861:1)
   } loc("index-structuralize.mlir":862:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1255,8 +1255,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <sub> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_r : <Instruction> loc("index-structuralize.mlir":1256:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {result_name = "r"} : <Instruction> loc("index-structuralize.mlir":1258:1)
-// CHECK:           } attributes {result_name = "r"} : <Instruction>
+  } <result_name = "r"> : <Instruction> loc("index-structuralize.mlir":1258:1)
+// CHECK:           } <result_name = "r"> : <Instruction>
   %2 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize.mlir":1260:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
   %3 = mpir_expr.call call "opcode"(%2) anchor %1 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-structuralize.mlir":1262:1)
@@ -1303,7 +1303,7 @@ mpir_index.query {
     %14 = mpir_expr.call binary "||"(%6, %12) anchor %13 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":1303:1)
     mpir_index.assume %14 : <Boolean> loc("index-structuralize.mlir":1304:1)
   } loc("index-structuralize.mlir":1305:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1325,7 +1325,7 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <shl> {derived}
+// CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1368,7 +1368,7 @@ mpir_index.query {
     %14 = mpir_expr.call binary "||"(%6, %12) anchor %13 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize.mlir":1368:1)
     mpir_index.assume %14 : <Boolean> loc("index-structuralize.mlir":1369:1)
   } loc("index-structuralize.mlir":1370:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <sub>
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1390,7 +1390,7 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_14]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <shl> {derived}
+// CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <sub>
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>

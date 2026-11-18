@@ -20,7 +20,7 @@ static Sort sortOf(mlir::Value V) {
 StringRef getMetaVariableName(mlir::Value V) {
   if (Operation *Def = V.getDefiningOp()) {
     // An mpir.var, or what stands for one elsewhere (a plan's slot).
-    if (auto Name = Def->getAttrOfType<StringAttr>("var_name"))
+    if (auto Name = Def->getAttrOfType<StringAttr>(mpir::VarNameAttrName))
       return Name.getValue();
     return "";
   }
@@ -117,7 +117,7 @@ static void printType(raw_ostream &OS, mlir::Value T) {
 
 void printSurfaceValue(raw_ostream &OS, mlir::Value V) {
   Operation *Def = V.getDefiningOp();
-  if (!Def || Def->hasAttr("var_name")) {
+  if (!Def || Def->hasAttr(mpir::VarNameAttrName)) {
     if (sortOf(V) == Sort::IntrinsicID)
       OS << "@llvm.";
     OS << '?' << getMetaVariableName(V);
@@ -125,7 +125,7 @@ void printSurfaceValue(raw_ostream &OS, mlir::Value V) {
   }
   // An instruction matcher, or what stands for one elsewhere.
   if (!isa<InstOp, UseOp>(Def))
-    if (auto Name = Def->getAttrOfType<StringAttr>("result_name")) {
+    if (auto Name = Def->getAttrOfType<StringAttr>(mpir::ResultNameAttrName)) {
       OS << '%' << Name.getValue();
       return;
     }
@@ -234,23 +234,20 @@ static void printSeparated(raw_ostream &OS, ArrayRef<PrintedOperand> Ops,
 }
 
 void printSurfaceInstruction(raw_ostream &OS, Operation *I) {
+  auto M = cast<MatcherOpInterface>(I);
   auto Inst = dyn_cast<InstOp>(I);
   auto Use = dyn_cast<UseOp>(I);
-  std::optional<StringRef> ResultName =
-      Inst ? Inst.getResultName() : Use.getResultName();
-  mlir::Value Capture = Inst ? Inst.getCapture() : Use.getCapture();
-  std::optional<ArrayAttr> MetaFlags =
-      Inst ? Inst.getMetaflags() : Use.getMetaflags();
-  std::optional<ArrayAttr> OperandFlags =
-      Inst ? Inst.getOperandMetaflags() : Use.getOperandMetaflags();
-  ArrayRef<instruction_flag::FlagID> Flags = Inst ? Inst.getFlags() : Use.getFlags();
-  ArrayRef<FlagMode> Modes = Inst ? Inst.getFlagModes() : Use.getFlagModes();
-  mlir::OperandRange FlagCaptures =
-      Inst ? Inst.getFlagCaptures() : Use.getFlagCaptures();
+  std::optional<StringRef> ResultName = M.getResultName();
+  mlir::Value Capture = M.getCapture();
+  std::optional<ArrayAttr> MetaFlags = M.getMetaflags();
+  std::optional<ArrayAttr> OperandFlags = M.getOperandMetaflags();
+  ArrayRef<instruction_flag::FlagID> Flags = M.getFlags();
+  ArrayRef<FlagMode> Modes = M.getFlagModes();
+  mlir::OperandRange FlagCaptures = M.getFlagCaptures();
 
   SmallVector<PrintedOperand, 8> Unkeyed;
   SmallVector<PrintedOperand, 8> Keyed;
-  for (auto [Index, View] : enumerate(getMatcherOperands(I))) {
+  for (auto [Index, View] : enumerate(getMatcherOperands(M))) {
     PrintedOperand O{View, OperandFlags
                                ? cast<ArrayAttr>((*OperandFlags)[Index])
                                : ArrayAttr()};
@@ -443,7 +440,7 @@ void printSurfaceExpression(raw_ostream &OS, mlir::Value E) {
   if (auto Read = dyn_cast<mpir_expr::ReadOp>(Def)) {
     mlir::Value V = Read.getValue();
     Operation *ValueDef = V.getDefiningOp();
-    if (ValueDef && !ValueDef->hasAttr("var_name"))
+    if (ValueDef && !ValueDef->hasAttr(mpir::VarNameAttrName))
       printSurfaceValue(OS, V);
     else if (StringRef Name = getMetaVariableName(V); !Name.empty())
       OS << '?' << Name;

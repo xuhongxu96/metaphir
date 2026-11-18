@@ -186,17 +186,15 @@ static constexpr unsigned MaxVariants = 256;
 static void addAtoms(mlir::OpBuilder &Builder, mlir::Location Loc,
                      ArrayRef<Atom_> Atoms) {
   for (const Atom_ &A : Atoms) {
-    Operation *Op = A.K == Atom_::Global
-                        ? index::HasGlobalOp::create(
-                              Builder, Loc, Builder.getStringAttr(A.Name))
-                              .getOperation()
-                        : index::HasInstructionOp::create(
-                              Builder, Loc,
-                              mpir::OpcodeAttr::get(Builder.getContext(), A.ID))
-                              .getOperation();
     // What the constraints, not the instructions, need: a function without
     // it may still match the variant's instructions.
-    Op->setAttr("derived", Builder.getUnitAttr());
+    if (A.K == Atom_::Global)
+      index::HasGlobalOp::create(Builder, Loc, Builder.getStringAttr(A.Name),
+                                 /*derived=*/true);
+    else
+      index::HasInstructionOp::create(
+          Builder, Loc, mpir::OpcodeAttr::get(Builder.getContext(), A.ID),
+          /*derived=*/true);
   }
 }
 

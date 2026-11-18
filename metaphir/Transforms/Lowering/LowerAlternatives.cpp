@@ -26,7 +26,7 @@ static void lowerAlternatives(InstOp Inst) {
     return;
   OpBuilder Builder(Inst);
   Location Loc = Inst.getLoc();
-  MatcherParts Parts = MatcherParts::of(MatcherUse(Inst));
+  MatcherParts Parts = MatcherParts::of(Inst);
   Parts.MetaFlags.clear();
   Parts.OperandMetaFlags.clear();
 
@@ -43,7 +43,6 @@ static void lowerAlternatives(InstOp Inst) {
     else if (NumOperands == 2)
       Swapped = {0u, 1u};
   }
-  auto Key = Builder.getNamedAttr("opcode", Inst.getOpcodeAttr());
   auto Build = [&](bool Swap) -> Value {
     MatcherParts P = Parts;
     bool SwappedPredicate = false;
@@ -53,20 +52,16 @@ static void lowerAlternatives(InstOp Inst) {
       instruction::InstructionID ID = Inst.getOpcode().getValue();
       SwappedPredicate = ID == instruction::I_icmp || ID == instruction::I_fcmp;
     }
-    return P
-        .build(Builder, Loc, InstOp::getOperationName(), Key, SwappedPredicate)
-        ->getResult(0);
+    return P.buildInst(Builder, Loc, Inst.getOpcodeAttr(), SwappedPredicate)
+        .getResult();
   };
 
   auto MakeAlt = [&](unsigned NumRegions) {
-    mlir::OperationState State(Loc, AltOp::getOperationName());
-    State.addTypes(Inst.getType());
-    for (unsigned I = 0; I != NumRegions; ++I)
-      State.addRegion();
-    auto Alt = cast<AltOp>(Builder.create(State));
-    if (std::optional<StringRef> Name = Inst.getResultName())
-      Alt->setAttr("result_name", Builder.getStringAttr(*Name));
-    return Alt;
+    mlir::StringAttr Name;
+    if (std::optional<StringRef> N = Inst.getResultName())
+      Name = Builder.getStringAttr(*N);
+    return AltOp::create(Builder, Loc, Inst.getType(), Name, /*commuted=*/false,
+                         mlir::StringAttr(), mlir::IntegerAttr(), NumRegions);
   };
   auto Fill = [&](AltOp Alt, unsigned Index, function_ref<Value()> Body) {
     mlir::Block &Block = Alt->getRegion(Index).emplaceBlock();
@@ -80,7 +75,7 @@ static void lowerAlternatives(InstOp Inst) {
     if (!Swapped)
       return Build(false);
     AltOp Orders = MakeAlt(2);
-    Orders->setAttr("commuted", Builder.getUnitAttr());
+    Orders.setCommuted(true);
     Fill(Orders, 0, [&] { return Build(false); });
     Fill(Orders, 1, [&] { return Build(true); });
     return Orders.getResult();
@@ -102,9 +97,9 @@ static void lowerAlternatives(InstOp Inst) {
         BindOp::create(Builder, Loc, Parts.Capture, Operand);
       return Operand;
     });
-    Alt->setAttr("or_self_of", Builder.getStringAttr(instruction::getOpcodeName(
-                                   Inst.getOpcode().getValue())));
-    Alt->setAttr("or_self_region", Builder.getI32IntegerAttr(0));
+    Alt.setOrSelfOfAttr(Builder.getStringAttr(
+        instruction::getOpcodeName(Inst.getOpcode().getValue())));
+    Alt.setOrSelfRegionAttr(Builder.getI32IntegerAttr(0));
     Result = Alt.getResult();
   } else {
     Result = Itself();

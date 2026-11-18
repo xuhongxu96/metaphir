@@ -220,6 +220,55 @@ def Mpir_FuncTypeOp : Mpir_Op<"type.func", [Pure]> {
 // Instruction matchers
 //===----------------------------------------------------------------------===//
 
+// What mpir.inst and mpir.use have in common, for passes that treat them
+// alike: the operations take the same arguments, so each method is an
+// accessor the op generates.
+def Mpir_MatcherOpInterface : OpInterface<"MatcherOpInterface"> {
+  let cppNamespace = "::llvm::metaphir::mpir";
+  let description = [{
+    An instruction matcher: a built-in one (mpir.inst) or a use of a 'match'
+    matcher (mpir.use).
+  }];
+  let methods = [
+    InterfaceMethod<"The name the result is written with, if any",
+                    "std::optional<::llvm::StringRef>", "getResultName">,
+    InterfaceMethod<"The metaflags written on the instruction",
+                    "std::optional<::mlir::ArrayAttr>", "getMetaflags">,
+    InterfaceMethod<"The metaflags written on each operand",
+                    "std::optional<::mlir::ArrayAttr>", "getOperandMetaflags">,
+    InterfaceMethod<"Sets the metaflags written on the instruction",
+                    "void", "setMetaflagsAttr", (ins "::mlir::ArrayAttr":$attr)>,
+    InterfaceMethod<"Removes the metaflags written on the instruction",
+                    "::mlir::Attribute", "removeMetaflagsAttr">,
+    InterfaceMethod<"Removes the metaflags written on the operands",
+                    "::mlir::Attribute", "removeOperandMetaflagsAttr">,
+    InterfaceMethod<"The semantic flags written",
+                    "::llvm::ArrayRef<::llvm::metaphir::instruction_flag::FlagID>",
+                    "getFlags">,
+    InterfaceMethod<"How each flag is written",
+                    "::llvm::ArrayRef<::llvm::metaphir::mpir::FlagMode>",
+                    "getFlagModes">,
+    InterfaceMethod<"What the captured flags are captured into",
+                    "::mlir::OperandRange", "getFlagCaptures">,
+    InterfaceMethod<"The kind of each matcher operand",
+                    "::llvm::ArrayRef<::llvm::metaphir::mpir::OperandKind>",
+                    "getOperandKinds">,
+    InterfaceMethod<"The treatIntAsVec setting written before the instruction",
+                    "std::optional<bool>", "getTreatIntAsVec">,
+    InterfaceMethod<"What the instruction is captured into, if anything",
+                    "::mlir::Value", "getCapture">,
+    InterfaceMethod<"The block the instruction is in, if one is named",
+                    "::mlir::Value", "getParentBlock">,
+    InterfaceMethod<"The values of the matcher operands, as OperandKind says",
+                    "::mlir::OperandRange", "getOperandValues">,
+    InterfaceMethod<"The instruction as a value", "::mlir::Value", "getResult">,
+    InterfaceMethod<"Whether ':c' is written on the instruction", "bool",
+                    "isCommutative">,
+    InterfaceMethod<"The operand index ':o' names, if ':o' is written",
+                    "std::optional<unsigned>", "getOrSelfIndex">,
+  ];
+}
+
 // What a built-in instruction matcher and a use of a 'match' matcher share:
 // both are written, and stored, the same way.
 class Mpir_MatcherUseBase {
@@ -246,7 +295,7 @@ class Mpir_MatcherUseBase {
       Variadic<Mpir_Term>:$operand_values);
 }
 
-def Mpir_InstOp : Mpir_Op<"inst", [AttrSizedOperandSegments,
+def Mpir_InstOp : Mpir_Op<"inst", [AttrSizedOperandSegments, Mpir_MatcherOpInterface,
     DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>]>,
     Mpir_MatcherUseBase {
   let summary = "A built-in instruction matcher";
@@ -262,7 +311,7 @@ def Mpir_InstOp : Mpir_Op<"inst", [AttrSizedOperandSegments,
   let assemblyFormat = "$opcode (`capture` $capture^)? (`block` $parent_block^)? (`flags` `(` $flag_captures^ `)`)? `(` $operand_values `)` prop-dict attr-dict `:` functional-type(operands, $result)";
 }
 
-def Mpir_UseOp : Mpir_Op<"use", [AttrSizedOperandSegments,
+def Mpir_UseOp : Mpir_Op<"use", [AttrSizedOperandSegments, Mpir_MatcherOpInterface,
     DeclareOpInterfaceMethods<SymbolUserOpInterface>,
     DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>]>,
     Mpir_MatcherUseBase {
@@ -285,11 +334,20 @@ def Mpir_AltOp : Mpir_Op<"alt", [NoTerminator,
     values around them, so the alternatives share everything else the
     pattern matches.
   }];
+  let arguments = (ins
+      // The name of the instruction or use the alternatives stand for.
+      OptionalAttr<StrAttr>:$result_name,
+      // The alternatives are the two operand orders of ':c'.
+      UnitAttr:$commuted,
+      // The alternatives are the matcher with ':o', and its operand: the
+      // matcher's name, and the alternative that matches the operand.
+      OptionalAttr<StrAttr>:$or_self_of,
+      OptionalAttr<I32Attr>:$or_self_region);
   let results = (outs Mpir_Term:$result);
   let regions = (region VariadicRegion<SizedRegion<1>>:$alternatives);
   // The attributes have a keyword: an alternative-less mpir.alt (a use no
   // branch fits) would otherwise print them where its regions go.
-  let assemblyFormat = "$alternatives attr-dict-with-keyword `:` type($result)";
+  let assemblyFormat = "$alternatives prop-dict attr-dict-with-keyword `:` type($result)";
 }
 
 //===----------------------------------------------------------------------===//
@@ -309,8 +367,11 @@ def Mpir_BindOp : Mpir_Op<"bind", []> {
 
 def Mpir_RequireOp : Mpir_Op<"require", []> {
   let summary = "A constraint a match must satisfy";
-  let arguments = (ins Mpir_Term:$condition);
-  let assemblyFormat = "$condition attr-dict `:` type($condition)";
+  let arguments = (ins Mpir_Term:$condition,
+                       // A metaflag stands for the constraint; it is checked
+                       // before the pattern's own.
+                       UnitAttr:$from_metaflag);
+  let assemblyFormat = "$condition prop-dict attr-dict `:` type($condition)";
 }
 
 #endif // METAPHIR_DIALECT_PATTERN_PATTERNOPS_TD

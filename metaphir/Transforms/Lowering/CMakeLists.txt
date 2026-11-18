@@ -10,5 +10,4 @@ target_sources(metaphir-transforms PRIVATE
   LowerAlternatives.h
   Lowering.cpp
   Lowering.h
-  LoweringUtils.cpp
   LoweringUtils.h)

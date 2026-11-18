@@ -2,6 +2,8 @@
 set(LLVM_TARGET_DEFINITIONS PatternOps.td)
 mlir_tablegen(PatternEnums.h.inc -gen-enum-decls)
 mlir_tablegen(PatternEnums.cpp.inc -gen-enum-defs)
+mlir_tablegen(PatternOpInterfaces.h.inc -gen-op-interface-decls)
+mlir_tablegen(PatternOpInterfaces.cpp.inc -gen-op-interface-defs)
 mlir_tablegen(PatternOps.h.inc -gen-op-decls)
 mlir_tablegen(PatternOps.cpp.inc -gen-op-defs)
 mlir_tablegen(PatternOpsDialect.h.inc -gen-dialect-decls -dialect=mpir)

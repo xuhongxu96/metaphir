@@ -121,7 +121,8 @@ public:
         Matcher(Matcher), Branch(Branch), CallerOps(CallerOps),
         UsePrefix(UsePrefix), Alt(Alt), Body(Branch.getBody().front()),
         Yield(*Body.getOps<YieldOp>().begin()),
-        Root(Yield.getValue().getDefiningOp()), CallerLoc(Use.getLoc()) {}
+        Root(cast<MatcherOpInterface>(Yield.getValue().getDefiningOp())),
+        CallerLoc(Use.getLoc()) {}
 
   /// Inlines the branch into the last region of Alt. Returns false if the
   /// branch cannot fit the use.
@@ -156,7 +157,7 @@ private:
   mlir::Block &Body;
   /// The root: what the branch yields.
   YieldOp Yield;
-  MatcherUse Root;
+  MatcherOpInterface Root;
   Location CallerLoc;
 
   mlir::IRMapping Mapping;
@@ -402,9 +403,8 @@ void BranchInliner::inlineMatcher(Operation &Op) {
   std::optional<bool> UseTreatIntAsVec = Use.getTreatIntAsVec();
   // An instruction matcher: renamed after the use, placed in its block,
   // with its settings over the use's.
-  MatcherUse BI(&Op);
-  bool IsRoot = &Op == Root.Op;
-  MatcherParts Parts = MatcherParts::of(BI);
+  bool IsRoot = &Op == Root.getOperation();
+  MatcherParts Parts = MatcherParts::of(cast<MatcherOpInterface>(Op));
   for (MatcherOperandView &O : Parts.Operands) {
     if (O.Type)
       O.Type = Mapping.lookupOrDefault(O.Type);
@@ -417,12 +417,13 @@ void BranchInliner::inlineMatcher(Operation &Op) {
   if (!Parts.TreatIntAsVec)
     Parts.TreatIntAsVec = UseTreatIntAsVec;
   if (IsRoot) {
-    Parts.HasResultName = bool(Use.getResultName());
-    Parts.ResultName = Use.getResultName().value_or("").str();
+    Parts.ResultName.reset();
+    if (std::optional<StringRef> Name = Use.getResultName())
+      Parts.ResultName = Name->str();
     if (Use.getCapture())
       Parts.Capture = Use.getCapture();
-  } else if (Parts.HasResultName) {
-    Parts.ResultName = (UsePrefix + "$" + Parts.ResultName).str();
+  } else if (Parts.ResultName) {
+    Parts.ResultName = (UsePrefix + "$" + *Parts.ResultName).str();
   }
   // Flags: a supported flag on the root takes the use's flag.
   SmallVector<instruction_flag::FlagID, 4> Flags;
@@ -453,15 +454,13 @@ void BranchInliner::inlineMatcher(Operation &Op) {
   Parts.Modes = Modes;
   Parts.FlagCaptures = Captures;
   Location Loc = mlir::CallSiteLoc::get(Op.getLoc(), CallerLoc);
-  Operation *New =
+  Value New =
       isa<InstOp>(Op)
-          ? Parts.build(Builder, Loc, InstOp::getOperationName(),
-                        Builder.getNamedAttr("opcode",
-                                             cast<InstOp>(Op).getOpcodeAttr()))
-          : Parts.build(Builder, Loc, UseOp::getOperationName(),
-                        Builder.getNamedAttr("matcher",
-                                             cast<UseOp>(Op).getMatcherAttr()));
-  Mapping.map(Op.getResult(0), New->getResult(0));
+          ? Parts.buildInst(Builder, Loc, cast<InstOp>(Op).getOpcodeAttr())
+                .getResult()
+          : Parts.buildUse(Builder, Loc, cast<UseOp>(Op).getMatcherAttr())
+                .getResult();
+  Mapping.map(Op.getResult(0), New);
 }
 
 void BranchInliner::finish() {
@@ -508,13 +507,15 @@ LogicalResult Expander::expand(UseOp Use) {
       (Commutative ? 2 : 1);
   if (OrSelf)
     ++NumRegions;
-  mlir::OperationState State(Use.getLoc(), AltOp::getOperationName());
-  State.addTypes(Use.getType());
-  for (unsigned I = 0; I != NumRegions; ++I)
-    State.addRegion();
-  auto Alt = cast<AltOp>(Builder.create(State));
+  mlir::StringAttr ResultName;
   if (std::optional<StringRef> Name = Use.getResultName())
-    Alt->setAttr("result_name", Builder.getStringAttr(*Name));
+    ResultName = Builder.getStringAttr(*Name);
+  mlir::StringAttr OrSelfOf;
+  if (OrSelf)
+    OrSelfOf = Builder.getStringAttr(Use.getMatcher());
+  AltOp Alt = AltOp::create(Builder, Use.getLoc(), Use.getType(), ResultName,
+                            /*commuted=*/false, OrSelfOf,
+                            /*or_self_region=*/mlir::IntegerAttr(), NumRegions);
 
   // The regions are filled in order; one left empty (a branch that does not
   // fit) is removed after.
@@ -526,12 +527,11 @@ LogicalResult Expander::expand(UseOp Use) {
       SmallVector<MatcherOperandView, 8> Ops(CallerOps);
       if (Order == 1)
         std::swap(Ops[0], Ops[1]);
-      mlir::OperationState Scratch(Use.getLoc(), AltOp::getOperationName());
-      Scratch.addTypes(Use.getType());
-      Scratch.addRegion();
       OpBuilder::InsertionGuard Guard(Builder);
       Builder.setInsertionPoint(Alt);
-      auto Temp = cast<AltOp>(Builder.create(Scratch));
+      AltOp Temp = AltOp::create(Builder, Use.getLoc(), Use.getType(),
+                                 mlir::StringAttr(), /*commuted=*/false,
+                                 mlir::StringAttr(), mlir::IntegerAttr(), 1);
       mlir::FailureOr<bool> Fits =
           inlineBranch(Use, Matcher, Branch, Ops, UsePrefix, Temp);
       if (mlir::failed(Fits)) {
@@ -556,17 +556,14 @@ LogicalResult Expander::expand(UseOp Use) {
     if (Value Capture = Use.getCapture())
       BindOp::create(Builder, Use.getLoc(), Capture, Operand);
     YieldOp::create(Builder, Use.getLoc(), Operand);
-    Alt->setAttr("or_self_of", Builder.getStringAttr(Use.getMatcher()));
     Filled.push_back(Index);
   }
   // Drop the regions of branches that cannot fit, keeping the order.
   if (Filled.size() != Alt->getNumRegions()) {
-    mlir::OperationState Compact(Use.getLoc(), AltOp::getOperationName());
-    Compact.addTypes(Use.getType());
-    Compact.addAttributes(Alt->getAttrs());
-    for (unsigned I = 0; I != Filled.size(); ++I)
-      Compact.addRegion();
-    auto New = cast<AltOp>(Builder.create(Compact));
+    AltOp New = AltOp::create(Builder, Use.getLoc(), Use.getType(),
+                              Alt.getResultNameAttr(), Alt.getCommuted(),
+                              Alt.getOrSelfOfAttr(), Alt.getOrSelfRegionAttr(),
+                              Filled.size());
     for (auto [To, From] : enumerate(Filled))
       New->getRegion(To).takeBody(Alt->getRegion(From));
     Alt.erase();
@@ -574,8 +571,8 @@ LogicalResult Expander::expand(UseOp Use) {
   }
   // A use's ':o' has its operand last.
   if (OrSelf)
-    Alt->setAttr("or_self_region",
-                 Builder.getI32IntegerAttr(Alt->getNumRegions() - 1));
+    Alt.setOrSelfRegionAttr(
+        Builder.getI32IntegerAttr(Alt->getNumRegions() - 1));
   Use.getResult().replaceAllUsesWith(Alt.getResult());
   Use.erase();
   return mlir::success();

@@ -57,6 +57,6 @@ mpir.pattern {
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
 // CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r", metaflags = [#mpir.metaflag<"s", [], {{.*}}>], operand_metaflags = {{\[\[}}#mpir.metaflag<"zero", [], {{.*}}>], []]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-// CHECK:           } attributes {result_name = "r"} : <Instruction>
+// CHECK:           } <result_name = "r"> : <Instruction>
 } loc("expand-matchers-surface.mlir":61:1)
 // CHECK:         }

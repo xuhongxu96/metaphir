@@ -36,6 +36,15 @@ static Site siteOf(mlir::ArrayAttr Attr) {
 
 static RetrievalPlan compileRetrieval(mpir_index::RetrieveOp Retrieve);
 
+/// Whether Op is a feature only the constraints need.
+static bool isDerived(mlir::Operation &Op) {
+  if (auto Has = dyn_cast<mpir_index::HasInstructionOp>(Op))
+    return Has.getDerived();
+  if (auto Has = dyn_cast<mpir_index::HasGlobalOp>(Op))
+    return Has.getDerived();
+  return false;
+}
+
 IndexQuery::IndexQuery(mpir_index::QueryOp Query)
     : TypeContext(std::make_unique<LLVMContext>()) {
   ExprEvaluator Concrete;
@@ -50,7 +59,7 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
     // structure's are known.
     SmallVector<Operation *, 2> Derived;
     for (Operation &Op : VariantOp.getBody().front()) {
-      if (Op.hasAttr("derived")) {
+      if (isDerived(Op)) {
         Derived.push_back(&Op);
         continue;
       }
@@ -94,7 +103,7 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
         V.Constraints.push_back(Assume.getCondition());
         // A closed constraint evaluates alike in every match, and rejects
         // it when it is false or fails to evaluate.
-        if (Assume->hasAttr("closed")) {
+        if (Assume.getClosed()) {
           Expected<ConstraintValue> Result = Concrete.evaluate(
               Assume.getCondition(),
               [](unsigned) -> const Binding * { return nullptr; });

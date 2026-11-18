@@ -1,8 +1,8 @@
 #include "metaphir/Exec/ExprEvaluator.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
-#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Exec/ConstraintDispatch.inc"
 #include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/Sort.h"
@@ -31,7 +31,8 @@ static std::string describeVariable(mlir::Value V, StringRef Msg) {
   std::string Str;
   raw_string_ostream OS(Str);
   if (Operation *Def = V.getDefiningOp())
-    if (auto Name = Def->getAttrOfType<mlir::StringAttr>("result_name")) {
+    if (auto Name =
+            Def->getAttrOfType<mlir::StringAttr>(mpir::ResultNameAttrName)) {
       OS << "variable '%" << Name.getValue() << "' " << Msg;
       return Str;
     }

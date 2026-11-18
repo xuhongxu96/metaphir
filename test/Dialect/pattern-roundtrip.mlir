@@ -259,16 +259,16 @@ mpir.pattern {
 // CHECK:           }, {
     mpir.yield %x : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":260:1)
 // CHECK:             mpir.yield %[[VAR_0]] : <Operand>
-  } attributes {or_self_of = "add"} : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":262:1)
-// CHECK:           } attributes {or_self_of = "add"} : <Instruction>
+  } <or_self_of = "add"> : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":262:1)
+// CHECK:           } <or_self_of = "add"> : <Instruction>
   %rx = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":264:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
   %ry = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":266:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
   %same = mpir_expr.apply @same(%rx, %ry) : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":268:1)
 // CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @same(%[[READ_0]], %[[READ_1]]) : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Boolean>
-  mpir.require %same {from_metaflag} : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":270:1)
-// CHECK:           mpir.require %[[APPLY_0]] {from_metaflag} : <Boolean>
+  mpir.require %same <from_metaflag> : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":270:1)
+// CHECK:           mpir.require %[[APPLY_0]] <from_metaflag> : <Boolean>
 } loc("pattern-roundtrip.mlir":272:1)
 // CHECK:         }
 
@@ -277,8 +277,8 @@ mpir.pattern {
 // An alternative-less mpir.alt: what a use no branch fits becomes.
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %none = mpir.alt attributes {result_name = "r"} : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":280:1)
-// CHECK:           %[[ALT_0:.*]] = mpir.alt  attributes {result_name = "r"} : <Instruction>
+  %none = mpir.alt <result_name = "r"> : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":280:1)
+// CHECK:           %[[ALT_0:.*]] = mpir.alt  <result_name = "r"> : <Instruction>
   %bare = mpir.alt : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":282:1)
 // CHECK:           %[[ALT_1:.*]] = mpir.alt  : <Instruction>
 } loc("pattern-roundtrip.mlir":284:1)

@@ -43,8 +43,8 @@ static bool isVariable(Value V) {
   return isa<mlir::BlockArgument>(V) || V.getDefiningOp<VarOp>();
 }
 
-static bool isCommutedAlt(AltOp Alt) { return Alt->hasAttr("commuted"); }
-static bool isOrSelfAlt(AltOp Alt) { return Alt->hasAttr("or_self_of"); }
+static bool isCommutedAlt(AltOp Alt) { return Alt.getCommuted(); }
+static bool isOrSelfAlt(AltOp Alt) { return Alt.getOrSelfOf().has_value(); }
 static bool isMatcherAlt(AltOp Alt) {
   return !isCommutedAlt(Alt) && !isOrSelfAlt(Alt);
 }
@@ -543,18 +543,19 @@ void Compiler::emitVariant(const Requirement &R) {
     auto NameOf = [&](Operation *Op, Value Original) {
       Value Canon = canonical(Original);
       if (Operation *D = Canon.getDefiningOp()) {
-        if (auto Name = D->getAttrOfType<mlir::StringAttr>("result_name")) {
-          Op->setAttr("result_name", Name);
+        if (auto Name =
+                D->getAttrOfType<mlir::StringAttr>(mpir::ResultNameAttrName)) {
+          Op->setAttr(mpir::ResultNameAttrName, Name);
           return;
         }
         if (auto Inst = dyn_cast<InstOp>(D)) {
           if (std::optional<StringRef> N = Inst.getResultName())
-            Op->setAttr("result_name", Builder.getStringAttr(*N));
+            Op->setAttr(mpir::ResultNameAttrName, Builder.getStringAttr(*N));
           return;
         }
       }
       if (auto Var = Original.getDefiningOp<VarOp>())
-        Op->setAttr("var_name", Var.getVarNameAttr());
+        Op->setAttr(mpir::VarNameAttrName, Var.getVarNameAttr());
     };
     if (!Def || isa<VarOp, InstOp, AltOp>(Def)) {
       Value Canon = canonical(E);
@@ -624,9 +625,8 @@ void Compiler::emitVariant(const Requirement &R) {
   // marked.
   for (RequireOp Require : Constraints) {
     Value C = Clone(Require.getCondition());
-    auto Assume = index::AssumeOp::create(Builder, Require.getLoc(), C);
-    if (isClosed(Require.getCondition()))
-      Assume->setAttr("closed", Builder.getUnitAttr());
+    index::AssumeOp::create(Builder, Require.getLoc(), C,
+                            isClosed(Require.getCondition()));
   }
 }
 

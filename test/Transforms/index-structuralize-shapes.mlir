@@ -200,8 +200,8 @@ mpir_index.query {
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
     %3 = mpir_expr.call binary "=="(%0, %1) anchor %2 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-shapes.mlir":201:1)
 // CHECK:             %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[STR_0]], %[[STR_1]]) anchor %[[NODE_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %3 {closed} : <Boolean> loc("index-structuralize-shapes.mlir":203:1)
-// CHECK:             mpir_index.assume %[[CALL_0]] {closed} : <Boolean>
+    mpir_index.assume %3 <closed> : <Boolean> loc("index-structuralize-shapes.mlir":203:1)
+// CHECK:             mpir_index.assume %[[CALL_0]] <closed> : <Boolean>
     %4 = mpir_expr.str "sub" : <String> loc("index-structuralize-shapes.mlir":205:1)
 // CHECK:             %[[STR_2:.*]] = mpir_expr.str "sub" : <String>
     %5 = mpir_expr.str "mul" : <String> loc("index-structuralize-shapes.mlir":207:1)
@@ -210,8 +210,8 @@ mpir_index.query {
 // CHECK:             %[[NODE_1:.*]] = mpir_index.node 0 : <Instruction>
     %7 = mpir_expr.call binary "=="(%4, %5) anchor %6 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-shapes.mlir":211:1)
 // CHECK:             %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[STR_2]], %[[STR_3]]) anchor %[[NODE_1]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir_index.assume %7 {closed} : <Boolean> loc("index-structuralize-shapes.mlir":213:1)
-// CHECK:             mpir_index.assume %[[CALL_1]] {closed} : <Boolean>
+    mpir_index.assume %7 <closed> : <Boolean> loc("index-structuralize-shapes.mlir":213:1)
+// CHECK:             mpir_index.assume %[[CALL_1]] <closed> : <Boolean>
   } loc("index-structuralize-shapes.mlir":215:1)
 // CHECK:           }
 } loc("index-structuralize-shapes.mlir":217:1)
@@ -293,8 +293,8 @@ mpir_index.query {
     %20 = mpir_expr.call binary "=="(%17, %18) anchor %19 : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-shapes.mlir":293:1)
     mpir_index.assume %20 : <Boolean> loc("index-structuralize-shapes.mlir":294:1)
   } loc("index-structuralize-shapes.mlir":295:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>

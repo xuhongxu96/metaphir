@@ -157,19 +157,20 @@ void Compiler::assignSlots() {
       OpcodeName =
           ("" + instruction::getOpcodeName(Inst.getOpcode().getValue())).str();
     } else {
-      if (auto N = Op->getAttrOfType<mlir::StringAttr>("result_name"))
+      if (auto N =
+              Op->getAttrOfType<mlir::StringAttr>(mpir::ResultNameAttrName))
         Name = N.getValue();
       // An unnamed alternative of one instruction matcher (its ':c' orders,
       // or its ':o') is named by its opcode, as the matcher is.
       Operation *Inner = Op;
       while (auto Alt = dyn_cast_or_null<AltOp>(Inner)) {
         if (Alt->getNumRegions() == 0 ||
-            !(Alt->hasAttr("commuted") || Alt->hasAttr("or_self_region")))
+            !(Alt.getCommuted() || Alt.getOrSelfRegion()))
           break;
         unsigned Region = 0;
-        if (auto R = Alt->getAttrOfType<mlir::IntegerAttr>("or_self_region"))
+        if (std::optional<uint32_t> R = Alt.getOrSelfRegion())
           // The region of the matcher itself, not of its operand.
-          Region = R.getInt() == 0 ? 1 : 0;
+          Region = *R == 0 ? 1 : 0;
         if (Region >= Alt->getNumRegions())
           break;
         Inner = (*Alt->getRegion(Region).front().getOps<YieldOp>().begin())
@@ -569,11 +570,11 @@ Value Compiler::cloneExpression(Value E, mlir::IRMapping &Mapping) {
     auto SlotOp = plan::SlotOp::create(Builder, Loc, E.getType(), i32(Slot));
     StringRef Name = cast<mlir::StringAttr>(S.Names[Slot]).getValue();
     if (S.Kinds[Slot] == plan::SlotKind::Instruction)
-      SlotOp->setAttr("result_name",
+      SlotOp->setAttr(mpir::ResultNameAttrName,
                       Builder.getStringAttr(
                           Name.starts_with("%") ? Name.drop_front() : Name));
     else
-      SlotOp->setAttr("var_name", Builder.getStringAttr(Name));
+      SlotOp->setAttr(mpir::VarNameAttrName, Builder.getStringAttr(Name));
     Result = SlotOp;
   } else if (auto Read = dyn_cast<mpir_expr::ReadOp>(Def);
              Read && Read.getValue().getDefiningOp<IntOp>()) {
@@ -608,7 +609,7 @@ void Compiler::check(RequireOp Require) {
   mlir::IRMapping Mapping;
   Value Condition = cloneExpression(Require.getCondition(), Mapping);
   auto Check = plan::CheckOp::create(Builder, Require.getLoc(), Condition);
-  if (Require->hasAttr("from_metaflag"))
+  if (Require.getFromMetaflag())
     Check.setFromMetaflag(true);
 }
 

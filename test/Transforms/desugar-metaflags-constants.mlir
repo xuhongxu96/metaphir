@@ -51,17 +51,17 @@ mpir.pattern {
 // CHECK:           %[[INT_3:.*]] = mpir_expr.int 5 : ui64 : <Integer>
 // CHECK:           %[[INT_4:.*]] = mpir_expr.int 10 : ui64 : <Integer>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "ult"(%[[INT_3]], %[[INT_4]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 // CHECK:           %[[INT_5:.*]] = mpir_expr.int -5 : si64 : <Integer>
 // CHECK:           %[[INT_6:.*]] = mpir_expr.int 10 : ui64 : <Integer>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "ult"(%[[INT_5]], %[[INT_6]]) anchor %[[INST_1]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 // CHECK:           %[[BOOL_0:.*]] = mpir_expr.bool true : <Boolean>
-// CHECK:           mpir.require %[[BOOL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[BOOL_0]] <from_metaflag> : <Boolean>
 // CHECK:           %[[INT_7:.*]] = mpir_expr.int 1 : ui64 : <Integer>
 // CHECK:           %[[INT_8:.*]] = mpir_expr.int 10 : ui64 : <Integer>
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "ult"(%[[INT_7]], %[[INT_8]]) anchor %[[INST_2]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags-constants.mlir":65:1)
 // CHECK:         }
 
@@ -92,6 +92,6 @@ mpir.pattern {
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> capture %[[VAR_1]] (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[INST_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags-constants.mlir":96:1)
 // CHECK:         }

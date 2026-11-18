@@ -41,8 +41,8 @@ mpir.pattern {
 // CHECK:             mpir.require %[[CALL_3]] : <Boolean>
     mpir.yield %i_r : <Instruction> loc("to-index-literals.mlir":42:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } attributes {result_name = "r"} : <Instruction> loc("to-index-literals.mlir":44:1)
-// CHECK:           } attributes {result_name = "r"} : <Instruction>
+  } <result_name = "r"> : <Instruction> loc("to-index-literals.mlir":44:1)
+// CHECK:           } <result_name = "r"> : <Instruction>
   %5 = mpir.type.int 32 : <Type> loc("to-index-literals.mlir":46:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %6 = mpir.int -4 : si3 : <Value> loc("to-index-literals.mlir":48:1)
@@ -77,8 +77,8 @@ mpir.pattern {
 // CHECK:             mpir.require %[[CALL_7]] : <Boolean>
     mpir.yield %i_s : <Instruction> loc("to-index-literals.mlir":78:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {result_name = "s"} : <Instruction> loc("to-index-literals.mlir":80:1)
-// CHECK:           } attributes {result_name = "s"} : <Instruction>
+  } <result_name = "s"> : <Instruction> loc("to-index-literals.mlir":80:1)
+// CHECK:           } <result_name = "s"> : <Instruction>
 } loc("to-index-literals.mlir":82:1)
 // CHECK:         }
 // CHECK-LABEL:   mpir_index.query {
@@ -231,8 +231,8 @@ mpir.pattern {
 // CHECK:             mpir.require %[[READ_0]] : <Boolean>
     mpir.yield %i_r : <Instruction> loc("to-index-literals.mlir":232:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } attributes {result_name = "r"} : <Instruction> loc("to-index-literals.mlir":234:1)
-// CHECK:           } attributes {result_name = "r"} : <Instruction>
+  } <result_name = "r"> : <Instruction> loc("to-index-literals.mlir":234:1)
+// CHECK:           } <result_name = "r"> : <Instruction>
 } loc("to-index-literals.mlir":236:1)
 // CHECK:         }
 // CHECK-LABEL:   mpir_index.query {
@@ -298,8 +298,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <call> (%[[TYPE_0]], %[[GLOBAL_0]], %[[TYPE_2]], %[[INT_0]], %[[TYPE_1]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [type_only, value, typed_value, typed_value], result_name = "m"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_m : <Instruction> loc("to-index-literals.mlir":299:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {commuted, result_name = "m"} : <Instruction> loc("to-index-literals.mlir":301:1)
-// CHECK:           } attributes {commuted, result_name = "m"} : <Instruction>
+  } <commuted, result_name = "m"> : <Instruction> loc("to-index-literals.mlir":301:1)
+// CHECK:           } <result_name = "m", commuted> : <Instruction>
 } loc("to-index-literals.mlir":303:1)
 // CHECK:         }
 // CHECK-LABEL:   mpir_index.query {

@@ -249,37 +249,38 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
       auto Require = RequireOp::create(Builder, Location(Flag.getLoc()), *C);
       // Checked before the pattern's own constraints, as what the flags
       // say a binding is decides whether the others can be evaluated.
-      Require->setAttr("from_metaflag", Builder.getUnitAttr());
+      Require.setFromMetaflag(true);
     }
     return mlir::success();
   };
 
   for (Operation *Op : Matchers) {
-    MatcherUse U(Op);
+    auto U = cast<MatcherOpInterface>(Op);
 
     SmallVector<Attribute, 4> Kept;
     if (std::optional<mlir::ArrayAttr> Flags = U.getMetaflags()) {
-      if (mlir::failed(Desugar(Flags->getValue(), U.result(), U.result())))
+      if (mlir::failed(
+              Desugar(Flags->getValue(), U.getResult(), U.getResult())))
         return mlir::failure();
       for (Attribute A : *Flags)
         if (isStructuralFlag(cast<MetaFlagAttr>(A)))
           Kept.push_back(A);
     }
     if (std::optional<mlir::ArrayAttr> PerOperand = U.getOperandMetaflags()) {
-      SmallVector<MatcherOperandView, 8> Operands = getMatcherOperands(Op);
+      SmallVector<MatcherOperandView, 8> Operands = getMatcherOperands(U);
       for (auto [Index, A] : enumerate(*PerOperand))
         if (mlir::failed(Desugar(cast<mlir::ArrayAttr>(A).getValue(),
                                  Operands[Index].Kind == OperandKind::TypeOnly
                                      ? Value()
                                      : Operands[Index].Val,
-                                 U.result())))
+                                 U.getResult())))
           return mlir::failure();
-      Op->removeAttr("operand_metaflags");
+      U.removeOperandMetaflagsAttr();
     }
     if (Kept.empty())
-      Op->removeAttr("metaflags");
+      U.removeMetaflagsAttr();
     else
-      Op->setAttr("metaflags", Builder.getArrayAttr(Kept));
+      U.setMetaflagsAttr(Builder.getArrayAttr(Kept));
   }
   return mlir::success();
 }

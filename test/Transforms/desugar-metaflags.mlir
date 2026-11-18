@@ -29,7 +29,7 @@ mpir.pattern {
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":33:1)
 // CHECK:         }
 
@@ -60,7 +60,7 @@ mpir.pattern {
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[INST_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":64:1)
 // CHECK:         }
 
@@ -95,7 +95,7 @@ mpir.pattern {
 // CHECK:           %[[INST_1:.*]] = mpir.inst <mul> (%[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[INST_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_0]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":99:1)
 // CHECK:         }
 
@@ -156,11 +156,11 @@ mpir.pattern {
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_3:.*]] = mpir_expr.call call "isPower2"(%[[READ_2]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           %[[CALL_4:.*]] = mpir_expr.call binary "||"(%[[CALL_2]], %[[CALL_3]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_4]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_4]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_3:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_5:.*]] = mpir_expr.call call "isZero"(%[[READ_3]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           %[[CALL_6:.*]] = mpir_expr.call unary "!"(%[[CALL_5]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_6]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_6]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":164:1)
 // CHECK:         }
 
@@ -223,7 +223,7 @@ mpir.pattern {
 // CHECK:           %[[CALL_4:.*]] = mpir_expr.call binary "||"(%[[CALL_2]], %[[CALL_3]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           %[[CALL_5:.*]] = mpir_expr.call unary "!"(%[[CALL_4]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           %[[CALL_6:.*]] = mpir_expr.call binary "||"(%[[CALL_1]], %[[CALL_5]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_6]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_6]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":227:1)
 // CHECK:         }
 
@@ -269,7 +269,7 @@ mpir.pattern {
 // CHECK:           %[[INT_1:.*]] = mpir_expr.int 10 : ui64 : <Integer>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "sle"(%[[READ_1]], %[[INT_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call binary "&&"(%[[CALL_0]], %[[CALL_1]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":273:1)
 // CHECK:         }
 
@@ -318,13 +318,13 @@ mpir.pattern {
 // CHECK:           %[[INST_1:.*]] = mpir.inst <sub> (%[[TYPE_1]], %[[INT_0]], %[[TYPE_1]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b", metaflags = [#mpir.metaflag<"o", [1], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[INST_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "isZero"(%[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[INST_1]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_2]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":328:1)
 // CHECK:         }
 
@@ -356,7 +356,7 @@ mpir.pattern {
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "isKnownNegative"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":360:1)
 // CHECK:         }
 
@@ -443,7 +443,7 @@ mpir.pattern {
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @isAPInt(%[[READ_0]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[APPLY_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[APPLY_0]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":447:1)
 // CHECK:         }
 
@@ -480,7 +480,7 @@ mpir.pattern {
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "opcode"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String>
 // CHECK:           %[[STR_0:.*]] = mpir_expr.str "add" : <String>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[CALL_0]], %[[STR_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":484:1)
 // CHECK:         }
 
@@ -536,13 +536,13 @@ mpir.pattern {
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "isPower2"(%[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "isAllOnes"(%[[READ_2]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":546:1)
 // CHECK:         }
 
@@ -612,7 +612,7 @@ mpir.matcher @addz <supported_flags = [], syntax = binary, arity = 2, param_name
 // CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[VAL_0]], %[[VAL_1]], %[[VAL_0]], %[[VAL_2]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAL_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:             mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:             mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
     mpir.yield %i_ret : <Instruction> loc("desugar-metaflags.mlir":616:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
   } loc("desugar-metaflags.mlir":618:1)
@@ -625,10 +625,10 @@ mpir.matcher @addz <supported_flags = [], syntax = binary, arity = 2, param_name
 // CHECK:             %[[INST_1:.*]] = mpir.inst <sub> (%[[VAL_3]], %[[VAL_4]], %[[VAL_3]], %[[VAL_5]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             %[[READ_1:.*]] = mpir_expr.read %[[INST_1]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[CALL_1:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_1]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:             mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:             mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 // CHECK:             %[[READ_2:.*]] = mpir_expr.read %[[VAL_5]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[CALL_2:.*]] = mpir_expr.call call "isPower2"(%[[READ_2]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:             mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+// CHECK:             mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
     mpir.yield %i_ret : <Instruction> loc("desugar-metaflags.mlir":632:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
   } loc("desugar-metaflags.mlir":634:1)
@@ -647,10 +647,10 @@ mpir.pattern {
 // CHECK:           %[[USE_0:.*]] = mpir.use @addz (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[USE_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_0]]) anchor %[[USE_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "isAllOnes"(%[[READ_1]]) anchor %[[USE_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":654:1)
 // CHECK:         }
 
@@ -730,13 +730,13 @@ mpir.pattern {
 // CHECK:           %[[INST_2:.*]] = mpir.inst <call> (%[[TYPE_3]], %[[GLOBAL_0]], %[[TYPE_4]], %[[INST_1]], %[[VAR_5]], %[[VAR_6]]) <flags = [], flag_modes = [], operand_kinds = [type_only, value, typed_value, typed_value_array], result_name = "f"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<TypeArray>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_3]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "isGuaranteedNotToBeUndef"(%[[READ_1]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[INST_1]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_2]]) anchor %[[INST_2]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":740:1)
 // CHECK:         }
 
@@ -786,14 +786,14 @@ mpir.pattern {
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[READ_0]], %[[INT_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_1:.*]] = mpir_expr.call call "isZero"(%[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 // CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[VAL_0:.*]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_2:.*]] = mpir_expr.call call "isPower2"(%[[READ_2]]) anchor %[[VAL_1:.*]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
   mpir.require %3 : <Boolean> loc("desugar-metaflags.mlir":792:1)
   %4 = mpir.type.int 32 : <Type> loc("desugar-metaflags.mlir":793:1)
   %z = mpir.var "z" : <Operand> loc("desugar-metaflags.mlir":794:1)
   %i_b = mpir.inst <mul> (%4, %i_a, %4, %z) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], operand_metaflags = [[], [#mpir.metaflag<"power2", [], loc("desugar-metaflags.mlir":795:1)>]]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-// CHECK:           mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
 // CHECK:           mpir.require %[[CALL_0]] : <Boolean>
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
 // CHECK:           %[[VAL_0]] = mpir.var "z" : <Operand>

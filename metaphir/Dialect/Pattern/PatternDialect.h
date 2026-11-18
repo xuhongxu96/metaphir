@@ -27,14 +27,6 @@ namespace llvm {
 namespace metaphir {
 namespace mpir {
 
-/// Sets the flags, flag modes and operand kinds of the mpir.inst or mpir.use
-/// that State builds. They are properties rather than attributes, so State's
-/// attributes cannot carry them.
-void setMatcherProperties(mlir::Builder &Builder, mlir::OperationState &State,
-                          ArrayRef<instruction_flag::FlagID> Flags,
-                          ArrayRef<FlagMode> Modes,
-                          ArrayRef<OperandKind> Kinds);
-
 /// How many operand_values an operand of Kind takes.
 unsigned getNumOperandValues(OperandKind Kind);
 /// Whether an operand of Kind is one of the instruction's value operands.
@@ -54,6 +46,8 @@ bool isKeyedOperand(OperandKind Kind);
 
 #define GET_ATTRDEF_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOpsAttrDefs.h.inc"
+
+#include "metaphir/Dialect/Pattern/PatternOpInterfaces.h.inc"
 
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOps.h.inc"
@@ -76,8 +70,41 @@ struct MatcherOperandView {
   mlir::Value Val;
 };
 
+/// The operations of other dialects that stand for a pattern value (a plan's
+/// slot, an index's node) are named by discardable attributes: the result
+/// name of an instruction, or the name of a meta variable. These are the
+/// attributes' names, which the pattern dialect's own operations have too.
+inline constexpr StringLiteral ResultNameAttrName = "result_name";
+inline constexpr StringLiteral VarNameAttrName = "var_name";
+
 /// The matcher operands of Op, an mpir.inst or mpir.use.
-SmallVector<MatcherOperandView, 4> getMatcherOperands(mlir::Operation *Op);
+SmallVector<MatcherOperandView, 4> getMatcherOperands(MatcherOpInterface Op);
+
+/// The pieces of an mpir.inst or mpir.use, for building another.
+struct MatcherParts {
+  std::optional<std::string> ResultName;
+  SmallVector<instruction_flag::FlagID, 4> Flags;
+  SmallVector<FlagMode, 4> Modes;
+  SmallVector<mlir::Value, 2> FlagCaptures;
+  SmallVector<MatcherOperandView, 8> Operands;
+  /// The metaflags written on the instruction, and on each operand (an array
+  /// per operand).
+  SmallVector<mlir::Attribute, 4> MetaFlags;
+  SmallVector<mlir::Attribute, 8> OperandMetaFlags;
+  std::optional<bool> TreatIntAsVec;
+  mlir::Value Capture;
+  mlir::Value ParentBlock;
+
+  /// The parts of Matcher.
+  static MatcherParts of(MatcherOpInterface Matcher);
+
+  /// Builds an mpir.inst of Opcode, or an mpir.use of Matcher, with these
+  /// parts.
+  InstOp buildInst(mlir::OpBuilder &Builder, mlir::Location Loc,
+                   OpcodeAttr Opcode, bool SwappedPredicate = false) const;
+  UseOp buildUse(mlir::OpBuilder &Builder, mlir::Location Loc,
+                 mlir::FlatSymbolRefAttr Matcher) const;
+};
 
 /// The instruction matchers and alternatives of Block (of a lowered pattern,
 /// or of an alternative) that no other matcher uses as an operand: those a

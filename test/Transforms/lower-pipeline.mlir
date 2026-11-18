@@ -59,21 +59,21 @@ mpir.pattern {
 // CHECK:             }, {
 // CHECK:               %[[INST_1:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "u"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:               mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:             } attributes {commuted, result_name = "u"} : <Instruction>
+// CHECK:             } <result_name = "u", commuted> : <Instruction>
 // CHECK:             mpir.yield %[[ALT_1]] : <Instruction>
 // CHECK:           }, {
 // CHECK:             %[[INST_2:.*]] = mpir.inst <sub> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "u"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-// CHECK:           } attributes {result_name = "u"} : <Instruction>
+// CHECK:           } <result_name = "u"> : <Instruction>
 // CHECK:           %[[ALT_2:.*]] = mpir.alt {
   %m = mpir.inst <mul>(%i32, %u, %i32, %x) <result_name = "m", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"o", [], loc("lower-pipeline.mlir":69:1)>]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[ALT_0]] : <Instruction>
 // CHECK:           }, {
 // CHECK:             %[[INST_3:.*]] = mpir.inst <mul> (%[[TYPE_0]], %[[ALT_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "m"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_3]] : <Instruction>
-// CHECK:           } attributes {or_self_of = "mul", or_self_region = 0 : i32, result_name = "m"} : <Instruction>
+// CHECK:           } <result_name = "m", or_self_of = "mul", or_self_region = 0> : <Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[ALT_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+// CHECK:           mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 } loc("lower-pipeline.mlir":78:1)
 // CHECK:         }

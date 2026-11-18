@@ -318,7 +318,7 @@
 ; CHECK:             %[[INST_0:.*]] = mpir.inst <sub> flags(%[[VAR_1]]) (%[[VAL_0]], %[[VAR_2]], %[[VAL_0]], %[[VAL_1]]) <flags = [nsw], flag_modes = [captured], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_0]] : <Instruction>
 ; CHECK:           }
 ; CHECK:         }
@@ -351,10 +351,10 @@
 ; CHECK:             %[[CALL_4:.*]] = mpir_expr.call binary "&&"(%[[CALL_1]], %[[CALL_3]]) anchor %[[INST_2]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 ; CHECK:             %[[READ_4:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_0:.*]] = mpir_expr.apply @isAPInt(%[[READ_4]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_0]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_5:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_1:.*]] = mpir_expr.apply @isAPInt(%[[READ_5]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_1]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_1]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.require %[[CALL_4]] : <Boolean>
 ; CHECK:             mpir.yield %[[INST_2]] : <Instruction>
 ; CHECK:           }
@@ -373,7 +373,7 @@
 ; CHECK:             %[[INST_1:.*]] = mpir.inst <select> (%[[VAL_3]], %[[VAL_4]], %[[VAL_3]], %[[VAL_5]], %[[VAL_3]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_1]] : <Instruction>
 ; CHECK:           }
 ; CHECK:         }
@@ -391,7 +391,7 @@
 ; CHECK:             %[[INST_1:.*]] = mpir.inst <select> (%[[VAL_3]], %[[VAL_4]], %[[VAL_3]], %[[VAR_1]], %[[VAL_3]], %[[VAL_5]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "isAllOnes"(%[[READ_0]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_1]] : <Instruction>
 ; CHECK:           }
 ; CHECK:         }
@@ -409,7 +409,7 @@
 ; CHECK:             %[[INST_1:.*]] = mpir.inst <select> (%[[VAL_3]], %[[VAL_4]], %[[VAL_3]], %[[VAL_5]], %[[VAL_3]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_1]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1, 2], fixed_flag_values = []> {
@@ -423,7 +423,7 @@
 ; CHECK:             %[[INST_3:.*]] = mpir.inst <select> (%[[VAL_9]], %[[VAL_10]], %[[VAL_9]], %[[VAR_2]], %[[VAL_9]], %[[VAL_11]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_1:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_1:.*]] = mpir_expr.call call "isAllOnes"(%[[READ_1]]) anchor %[[INST_3]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_3]] : <Instruction>
 ; CHECK:           }
 ; CHECK:         }
@@ -592,10 +592,10 @@
 ; CHECK:             %[[INST_0:.*]] = mpir.inst <icmp> (%[[KEYWORD_0]], %[[VAL_0]], %[[VAL_1]], %[[VAL_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "isZero"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_1:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_0:.*]] = mpir_expr.apply @isAPInt(%[[READ_1]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_0]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_0]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -605,10 +605,10 @@
 ; CHECK:             %[[INST_1:.*]] = mpir.inst <icmp> (%[[KEYWORD_1]], %[[VAL_2]], %[[VAL_3]], %[[VAL_2]], %[[VAR_2]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_2:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_1:.*]] = mpir_expr.call call "isAllOnes"(%[[READ_2]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_3:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_1:.*]] = mpir_expr.apply @isAPInt(%[[READ_3]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_1]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_1]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_1]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -618,10 +618,10 @@
 ; CHECK:             %[[INST_2:.*]] = mpir.inst <icmp> (%[[KEYWORD_2]], %[[VAL_4]], %[[VAL_5]], %[[VAL_4]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_4:.*]] = mpir_expr.read %[[VAR_3]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_2:.*]] = mpir_expr.call call "isAllOnes"(%[[READ_4]]) anchor %[[INST_2]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_2]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_2]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_5:.*]] = mpir_expr.read %[[VAR_3]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_2:.*]] = mpir_expr.apply @isAPInt(%[[READ_5]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_2]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_2]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_2]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -631,10 +631,10 @@
 ; CHECK:             %[[INST_3:.*]] = mpir.inst <icmp> (%[[KEYWORD_3]], %[[VAL_6]], %[[VAL_7]], %[[VAL_6]], %[[VAR_4]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_6:.*]] = mpir_expr.read %[[VAR_4]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_3:.*]] = mpir_expr.call call "isZero"(%[[READ_6]]) anchor %[[INST_3]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_3]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_3]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_7:.*]] = mpir_expr.read %[[VAR_4]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_3:.*]] = mpir_expr.apply @isAPInt(%[[READ_7]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_3]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_3]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_3]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -644,10 +644,10 @@
 ; CHECK:             %[[INST_4:.*]] = mpir.inst <icmp> (%[[KEYWORD_4]], %[[VAL_8]], %[[VAL_9]], %[[VAL_8]], %[[VAR_5]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_8:.*]] = mpir_expr.read %[[VAR_5]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_4:.*]] = mpir_expr.call call "isMaxSignedValue"(%[[READ_8]]) anchor %[[INST_4]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_4]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_4]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_9:.*]] = mpir_expr.read %[[VAR_5]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_4:.*]] = mpir_expr.apply @isAPInt(%[[READ_9]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_4]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_4]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_4]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -657,10 +657,10 @@
 ; CHECK:             %[[INST_5:.*]] = mpir.inst <icmp> (%[[KEYWORD_5]], %[[VAL_10]], %[[VAL_11]], %[[VAL_10]], %[[VAR_6]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_10:.*]] = mpir_expr.read %[[VAR_6]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_5:.*]] = mpir_expr.call call "isSignMask"(%[[READ_10]]) anchor %[[INST_5]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_5]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_5]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_11:.*]] = mpir_expr.read %[[VAR_6]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_5:.*]] = mpir_expr.apply @isAPInt(%[[READ_11]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_5]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_5]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_5]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -670,10 +670,10 @@
 ; CHECK:             %[[INST_6:.*]] = mpir.inst <icmp> (%[[KEYWORD_6]], %[[VAL_12]], %[[VAL_13]], %[[VAL_12]], %[[VAR_7]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_12:.*]] = mpir_expr.read %[[VAR_7]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_6:.*]] = mpir_expr.call call "isSignMask"(%[[READ_12]]) anchor %[[INST_6]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_6]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_6]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_13:.*]] = mpir_expr.read %[[VAR_7]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_6:.*]] = mpir_expr.apply @isAPInt(%[[READ_13]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_6]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_6]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_6]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -683,10 +683,10 @@
 ; CHECK:             %[[INST_7:.*]] = mpir.inst <icmp> (%[[KEYWORD_7]], %[[VAL_14]], %[[VAL_15]], %[[VAL_14]], %[[VAR_8]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_14:.*]] = mpir_expr.read %[[VAR_8]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_7:.*]] = mpir_expr.call call "isMaxSignedValue"(%[[READ_14]]) anchor %[[INST_7]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_7]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_7]] <from_metaflag> : <Boolean>
 ; CHECK:             %[[READ_15:.*]] = mpir_expr.read %[[VAR_8]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[APPLY_7:.*]] = mpir_expr.apply @isAPInt(%[[READ_15]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[APPLY_7]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[APPLY_7]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_7]] : <Instruction>
 ; CHECK:           }
 ; CHECK:         }
@@ -727,7 +727,7 @@
 ; CHECK:             %[[INST_1:.*]] = mpir.inst <fsub> (%[[VAL_2]], %[[VAR_1]], %[[VAL_2]], %[[VAL_3]]) <flags = [nsz], flag_modes = [negated], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "isNegZeroFP"(%[[READ_0]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_0]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_1]] : <Instruction>
 ; CHECK:           }
 ; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
@@ -736,7 +736,7 @@
 ; CHECK:             %[[INST_2:.*]] = mpir.inst <fsub> (%[[VAL_4]], %[[VAR_2]], %[[VAL_4]], %[[VAL_5]]) <flags = [nsz], flag_modes = [required], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 ; CHECK:             %[[READ_1:.*]] = mpir_expr.read %[[VAR_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 ; CHECK:             %[[CALL_1:.*]] = mpir_expr.call call "isAnyZeroFP"(%[[READ_1]]) anchor %[[INST_2]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-; CHECK:             mpir.require %[[CALL_1]] {from_metaflag} : <Boolean>
+; CHECK:             mpir.require %[[CALL_1]] <from_metaflag> : <Boolean>
 ; CHECK:             mpir.yield %[[INST_2]] : <Instruction>
 ; CHECK:           }
 ; CHECK:         }
@@ -876,7 +876,7 @@
 ; CHECK:           }, {
 ; CHECK:             %[[INST_2:.*]] = mpir.inst <add> (%[[TYPE_1]], %[[VAR_2]], %[[TYPE_1]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "s"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-; CHECK:           } attributes {commuted, result_name = "s"} : <Instruction>
+; CHECK:           } <result_name = "s", commuted> : <Instruction>
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
 ; CHECK:           %[[INT_1:.*]] = mpir_expr.int 1 : ui64 : <Integer>
 ; CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "ugt"(%[[READ_0]], %[[INT_1]]) anchor %[[ALT_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>

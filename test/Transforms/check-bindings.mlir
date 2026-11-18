@@ -21,8 +21,8 @@ mpir.pattern {
 // CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_a : <Instruction> loc("check-bindings.mlir":22:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } attributes {or_self_of = "add", or_self_region = 0 : i32, result_name = "a"} : <Instruction> loc("check-bindings.mlir":24:1)
-// CHECK:           } attributes {or_self_of = "add", or_self_region = 0 : i32, result_name = "a"} : <Instruction>
+  } <or_self_of = "add", or_self_region = 0, result_name = "a"> : <Instruction> loc("check-bindings.mlir":24:1)
+// CHECK:           } <result_name = "a", or_self_of = "add", or_self_region = 0> : <Instruction>
   %2 = mpir.type.int 32 : <Type> loc("check-bindings.mlir":26:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %i_b = mpir.inst <mul> (%2, %1, %2, %y) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("check-bindings.mlir":28:1)
@@ -51,8 +51,8 @@ mpir.pattern {
 // CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_a : <Instruction> loc("check-bindings.mlir":52:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } attributes {or_self_of = "add", or_self_region = 0 : i32, result_name = "a"} : <Instruction> loc("check-bindings.mlir":54:1)
-// CHECK:           } attributes {or_self_of = "add", or_self_region = 0 : i32, result_name = "a"} : <Instruction>
+  } <or_self_of = "add", or_self_region = 0, result_name = "a"> : <Instruction> loc("check-bindings.mlir":54:1)
+// CHECK:           } <result_name = "a", or_self_of = "add", or_self_region = 0> : <Instruction>
   %2 = mpir.type.int 32 : <Type> loc("check-bindings.mlir":56:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %3 = mpir.int 3 : ui2 : <Value> loc("check-bindings.mlir":58:1)
@@ -92,8 +92,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> block %[[VAR_0]] flags(%[[VAR_1]]) (%[[TYPE_0]], %[[VAR_4]], %[[TYPE_0]], %[[VAR_3]]) <flags = [nsw], flag_modes = [captured], operand_kinds = [typed_value, typed_value], result_name = "i"> : (!mpir.sort<BasicBlock>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_i : <Instruction> loc("check-bindings.mlir":93:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {commuted, result_name = "i"} : <Instruction> loc("check-bindings.mlir":95:1)
-// CHECK:           } attributes {commuted, result_name = "i"} : <Instruction>
+  } <commuted, result_name = "i"> : <Instruction> loc("check-bindings.mlir":95:1)
+// CHECK:           } <result_name = "i", commuted> : <Instruction>
   %self = mpir.var "self" : <Instruction> loc("check-bindings.mlir":97:1)
 // CHECK:           %[[VAR_5:.*]] = mpir.var "self" : <Instruction>
   %2 = mpir.type.int 1 : <Type> loc("check-bindings.mlir":99:1)
@@ -128,8 +128,8 @@ mpir.pattern {
 // CHECK:             %[[INST_2:.*]] = mpir.inst <select> capture %[[VAR_5]] block %[[VAR_0]] (%[[TYPE_1]], %[[VAR_6]], %[[TYPE_3]], %[[AGGREGATE_0]], %[[TYPE_7]], %[[VAR_7]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "a"> : (!mpir.sort<Instruction>, !mpir.sort<BasicBlock>, !mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_a : <Instruction> loc("check-bindings.mlir":129:1)
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-  } attributes {or_self_of = "select", or_self_region = 0 : i32, result_name = "a"} : <Instruction> loc("check-bindings.mlir":131:1)
-// CHECK:           } attributes {or_self_of = "select", or_self_region = 0 : i32, result_name = "a"} : <Instruction>
+  } <or_self_of = "select", or_self_region = 0, result_name = "a"> : <Instruction> loc("check-bindings.mlir":131:1)
+// CHECK:           } <result_name = "a", or_self_of = "select", or_self_region = 0> : <Instruction>
   %11 = mpir.type.int 1 : <Type> loc("check-bindings.mlir":133:1)
 // CHECK:           %[[TYPE_8:.*]] = mpir.type.int 1 : <Type>
   %12 = mpir.global "use" : <Value> loc("check-bindings.mlir":135:1)
@@ -174,8 +174,8 @@ mpir.pattern {
 // CHECK:           }, {
     mpir.yield %x : <Operand> loc("check-bindings.mlir":175:1)
 // CHECK:             mpir.yield %[[VAR_0]] : <Operand>
-  } attributes {or_self_of = "twice", or_self_region = 1 : i32, result_name = "d"} : <Instruction> loc("check-bindings.mlir":177:1)
-// CHECK:           } attributes {or_self_of = "twice", or_self_region = 1 : i32, result_name = "d"} : <Instruction>
+  } <or_self_of = "twice", or_self_region = 1, result_name = "d"> : <Instruction> loc("check-bindings.mlir":177:1)
+// CHECK:           } <result_name = "d", or_self_of = "twice", or_self_region = 1> : <Instruction>
   %2 = mpir.type.int 32 : <Type> loc("check-bindings.mlir":179:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %i_e = mpir.inst <mul> (%2, %1, %2, %x) <result_name = "e", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("check-bindings.mlir":181:1)
@@ -206,7 +206,7 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[INT_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_a : <Instruction> loc("check-bindings.mlir":207:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } attributes {commuted, result_name = "a"} : <Instruction> loc("check-bindings.mlir":209:1)
-// CHECK:           } attributes {commuted, result_name = "a"} : <Instruction>
+  } <commuted, result_name = "a"> : <Instruction> loc("check-bindings.mlir":209:1)
+// CHECK:           } <result_name = "a", commuted> : <Instruction>
 } loc("check-bindings.mlir":211:1)
 // CHECK:         }

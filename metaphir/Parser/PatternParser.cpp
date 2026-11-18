@@ -235,10 +235,10 @@ private:
   LogicalResult validateInstruction(instruction::InstructionID ID,
                                     ArrayRef<PMetaFlag> MFlags,
                                     ArrayRef<POperand> Ops);
-  Operation *buildMatcherUse(StringRef OpName, mlir::NamedAttribute Matcher,
-                             StringRef ResultName, ArrayRef<PFlag> Flags,
-                             ArrayRef<PMetaFlag> MFlags, ArrayRef<POperand> Ops,
-                             Value Capture, SMLoc Begin);
+  /// The parts of the instruction matcher just parsed, to build it from.
+  MatcherParts makeMatcherParts(StringRef ResultName, ArrayRef<PFlag> Flags,
+                                ArrayRef<PMetaFlag> MFlags,
+                                ArrayRef<POperand> Ops, Value Capture);
   LogicalResult parseCompositeInstruction(Value &Result, MatcherOp CM,
                                           StringRef OpName,
                                           StringRef ResultName, LocTy Loc);
@@ -510,12 +510,10 @@ LogicalResult Parser::parseModule(bool Library) {
   // match binds its label.
   auto IsUsed = [&](Value Block) {
     for (Operation *I : BodyInstructions) {
-      auto Inst = dyn_cast<InstOp>(I);
-      auto Use = dyn_cast<UseOp>(I);
-      Value Parent = Inst ? Inst.getParentBlock() : Use.getParentBlock();
-      if (Parent == Block)
+      auto M = cast<MatcherOpInterface>(I);
+      if (M.getParentBlock() == Block)
         return true;
-      for (const MatcherOperandView &Op : getMatcherOperands(I))
+      for (const MatcherOperandView &Op : getMatcherOperands(M))
         if (Op.Kind != OperandKind::TypeOnly && Op.Val == Block)
           return true;
     }
@@ -583,13 +581,8 @@ LogicalResult Parser::parseBodyLine(tok::Kind Terminator) {
                            "unexpected token after basic block label");
   }
   if (!BodyInstructions.empty()) {
-    Operation *Last = BodyInstructions.back();
-    auto Inst = dyn_cast<InstOp>(Last);
-    auto Use = dyn_cast<UseOp>(Last);
-    Value Parent = Inst ? Inst.getParentBlock() : Use.getParentBlock();
-    std::optional<StringRef> Name =
-        Inst ? Inst.getResultName() : Use.getResultName();
-    if (Parent == CurrentBlock && !Name)
+    auto Last = cast<MatcherOpInterface>(BodyInstructions.back());
+    if (Last.getParentBlock() == CurrentBlock && !Last.getResultName())
       return error("only the final instruction may omit a result assignment");
   }
   Value I;
@@ -780,73 +773,44 @@ LogicalResult Parser::parseInstructionResult(SmallVectorImpl<char> &Name) {
   return expect(tok::equal, "expected '=' after instruction result");
 }
 
-Operation *Parser::buildMatcherUse(StringRef OpName,
-                                   mlir::NamedAttribute Matcher,
-                                   StringRef ResultName, ArrayRef<PFlag> Flags,
-                                   ArrayRef<PMetaFlag> MFlags,
-                                   ArrayRef<POperand> Ops, Value Capture,
-                                   SMLoc Begin) {
-  mlir::OperationState State(loc(Begin, Lex.getPrevTokEnd()), OpName);
-  State.addAttribute(Matcher.getName(), Matcher.getValue());
+MatcherParts Parser::makeMatcherParts(StringRef ResultName,
+                                      ArrayRef<PFlag> Flags,
+                                      ArrayRef<PMetaFlag> MFlags,
+                                      ArrayRef<POperand> Ops, Value Capture) {
+  MatcherParts Parts;
   if (!ResultName.empty())
-    State.addAttribute("result_name", Builder.getStringAttr(ResultName));
-  SmallVector<instruction_flag::FlagID, 4> FlagIDs;
-  SmallVector<FlagMode, 4> Modes;
-  SmallVector<Value, 2> FlagCaptures;
+    Parts.ResultName = ResultName.str();
   for (const PFlag &F : Flags) {
-    FlagIDs.push_back(F.ID);
-    Modes.push_back(F.Mode);
+    Parts.Flags.push_back(F.ID);
+    Parts.Modes.push_back(F.Mode);
     if (F.Capture)
-      FlagCaptures.push_back(F.Capture);
+      Parts.FlagCaptures.push_back(F.Capture);
   }
-  SmallVector<OperandKind, 8> Kinds;
-  SmallVector<Value, 8> Values;
-  SmallVector<mlir::Attribute, 8> OperandFlags;
-  bool AnyOperandFlags = false;
   for (const POperand &Op : Ops) {
-    Kinds.push_back(Op.Kind);
+    MatcherOperandView View{Op.Kind, {}, {}};
     switch (Op.Kind) {
     case OperandKind::TypedValue:
     case OperandKind::TypedValueArray:
-      Values.push_back(Op.Ty);
-      Values.push_back(Op.Val);
+      View.Type = Op.Ty;
+      View.Val = Op.Val;
       break;
     case OperandKind::TypeOnly:
-      Values.push_back(Op.Ty);
+      View.Type = Op.Ty;
       break;
     default:
-      Values.push_back(Op.Val);
+      View.Val = Op.Val;
       break;
     }
-    OperandFlags.push_back(Builder.getArrayAttr(Op.MetaFlags));
-    AnyOperandFlags |= !Op.MetaFlags.empty();
+    Parts.Operands.push_back(View);
+    Parts.OperandMetaFlags.push_back(Builder.getArrayAttr(Op.MetaFlags));
   }
-  setMatcherProperties(Builder, State, FlagIDs, Modes, Kinds);
-  if (!MFlags.empty()) {
-    SmallVector<mlir::Attribute, 4> Attrs;
-    for (const PMetaFlag &F : MFlags)
-      Attrs.push_back(F.Attr);
-    State.addAttribute("metaflags", Builder.getArrayAttr(Attrs));
-  }
-  if (AnyOperandFlags)
-    State.addAttribute("operand_metaflags", Builder.getArrayAttr(OperandFlags));
+  for (const PMetaFlag &F : MFlags)
+    Parts.MetaFlags.push_back(F.Attr);
   if (Settings.isSpecified(pattern_setting::treatIntAsVec))
-    State.addAttribute(
-        "treat_int_as_vec",
-        Builder.getBoolAttr(Settings.has(pattern_setting::treatIntAsVec)));
-  if (Capture)
-    State.addOperands(Capture);
-  if (CurrentBlock)
-    State.addOperands(CurrentBlock);
-  State.addOperands(FlagCaptures);
-  State.addOperands(Values);
-  State.addAttribute(
-      "operandSegmentSizes",
-      Builder.getDenseI32ArrayAttr({Capture ? 1 : 0, CurrentBlock ? 1 : 0,
-                                    int32_t(FlagCaptures.size()),
-                                    int32_t(Values.size())}));
-  State.addTypes(sortType(Sort::Instruction));
-  return Builder.create(State);
+    Parts.TreatIntAsVec = Settings.has(pattern_setting::treatIntAsVec);
+  Parts.Capture = Capture;
+  Parts.ParentBlock = CurrentBlock;
+  return Parts;
 }
 
 LogicalResult Parser::parseInstruction(Value &Result) {
@@ -888,11 +852,10 @@ LogicalResult Parser::parseInstruction(Value &Result) {
     return failure();
   if (failed(validateInstruction(ID, MFlags, Ops)))
     return failure();
-  Operation *I = buildMatcherUse(
-      InstOp::getOperationName(),
-      Builder.getNamedAttr("opcode", OpcodeAttr::get(Context, ID)), ResultName,
-      Flags, MFlags, Ops, Capture, Loc);
-  Result = I->getResult(0);
+  InstOp I = makeMatcherParts(ResultName, Flags, MFlags, Ops, Capture)
+                 .buildInst(Builder, loc(Loc, Lex.getPrevTokEnd()),
+                            OpcodeAttr::get(Context, ID));
+  Result = I.getResult();
   if (!ResultName.empty()) {
     auto It = MetaVariables.find(ResultName);
     if (It != MetaVariables.end()) {
@@ -935,12 +898,10 @@ LogicalResult Parser::parseCompositeInstruction(Value &Result, MatcherOp CM,
   if (failed(parseArchetypeOperands(Syntax, CM.getArity(), OpName, Ops)) ||
       failed(validateOrSelf(MFlags, Ops)))
     return failure();
-  Operation *I = buildMatcherUse(
-      UseOp::getOperationName(),
-      Builder.getNamedAttr("matcher",
-                           mlir::FlatSymbolRefAttr::get(Context, OpName)),
-      ResultName, Flags, MFlags, Ops, Capture, Loc);
-  Result = I->getResult(0);
+  UseOp I = makeMatcherParts(ResultName, Flags, MFlags, Ops, Capture)
+                .buildUse(Builder, loc(Loc, Lex.getPrevTokEnd()),
+                          mlir::FlatSymbolRefAttr::get(Context, OpName));
+  Result = I.getResult();
   if (!ResultName.empty())
     Instructions[ResultName] = Result;
   return success();
@@ -2396,12 +2357,8 @@ LogicalResult Parser::parseMatchBranch(const MatchHeader &Header,
                           "match branch must contain at least one instruction");
   Operation *Root = nullptr;
   for (Operation *I : BodyInstructions) {
-    auto Inst = dyn_cast<InstOp>(I);
-    auto Use = dyn_cast<UseOp>(I);
-    std::optional<StringRef> Name =
-        Inst ? Inst.getResultName() : Use.getResultName();
     // Results are named once, so there is one '%ret' at most.
-    if (Name == "ret")
+    if (cast<MatcherOpInterface>(I).getResultName() == "ret")
       Root = I;
   }
   if (!Root)

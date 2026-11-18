@@ -21,6 +21,8 @@ using namespace llvm::metaphir::mpir;
 
 #include "metaphir/Dialect/Pattern/PatternEnums.cpp.inc"
 
+#include "metaphir/Dialect/Pattern/PatternOpInterfaces.cpp.inc"
+
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOps.cpp.inc"
 
@@ -94,27 +96,6 @@ unsigned mpir::getNumOperandValues(OperandKind Kind) {
   }
 }
 
-template <typename EnumT>
-static mlir::ArrayAttr getEnumArrayAttr(mlir::Builder &Builder,
-                                        ArrayRef<EnumT> Values) {
-  SmallVector<mlir::Attribute, 8> Attrs;
-  for (EnumT Value : Values)
-    Attrs.push_back(Builder.getI32IntegerAttr(int32_t(Value)));
-  return Builder.getArrayAttr(Attrs);
-}
-
-void mpir::setMatcherProperties(mlir::Builder &Builder,
-                                mlir::OperationState &State,
-                                ArrayRef<instruction_flag::FlagID> Flags,
-                                ArrayRef<FlagMode> Modes,
-                                ArrayRef<OperandKind> Kinds) {
-  State.propertiesAttr = Builder.getDictionaryAttr(
-      {Builder.getNamedAttr("flags", getEnumArrayAttr(Builder, Flags)),
-       Builder.getNamedAttr("flag_modes", getEnumArrayAttr(Builder, Modes)),
-       Builder.getNamedAttr("operand_kinds",
-                            getEnumArrayAttr(Builder, Kinds))});
-}
-
 bool mpir::isKeyedOperand(OperandKind Kind) {
   return Kind >= OperandKind::Predicate;
 }
@@ -131,8 +112,8 @@ bool mpir::isValueOperand(OperandKind Kind) {
   }
 }
 
-template <typename OpT>
-static SmallVector<MatcherOperandView, 4> operandsOf(OpT Op) {
+SmallVector<MatcherOperandView, 4>
+mpir::getMatcherOperands(MatcherOpInterface Op) {
   SmallVector<MatcherOperandView, 4> Result;
   ValueRange Values = Op.getOperandValues();
   unsigned Next = 0;
@@ -156,10 +137,75 @@ static SmallVector<MatcherOperandView, 4> operandsOf(OpT Op) {
   return Result;
 }
 
-SmallVector<MatcherOperandView, 4> mpir::getMatcherOperands(Operation *Op) {
-  if (auto Inst = dyn_cast<InstOp>(Op))
-    return operandsOf(Inst);
-  return operandsOf(cast<UseOp>(Op));
+MatcherParts MatcherParts::of(MatcherOpInterface Matcher) {
+  MatcherParts P;
+  if (std::optional<StringRef> Name = Matcher.getResultName())
+    P.ResultName = Name->str();
+  P.Flags.assign(Matcher.getFlags().begin(), Matcher.getFlags().end());
+  P.Modes.assign(Matcher.getFlagModes().begin(), Matcher.getFlagModes().end());
+  P.FlagCaptures.assign(Matcher.getFlagCaptures().begin(),
+                        Matcher.getFlagCaptures().end());
+  P.Operands = getMatcherOperands(Matcher);
+  if (std::optional<ArrayAttr> Flags = Matcher.getMetaflags())
+    P.MetaFlags.assign(Flags->begin(), Flags->end());
+  if (std::optional<ArrayAttr> Flags = Matcher.getOperandMetaflags())
+    P.OperandMetaFlags.assign(Flags->begin(), Flags->end());
+  P.TreatIntAsVec = Matcher.getTreatIntAsVec();
+  P.Capture = Matcher.getCapture();
+  P.ParentBlock = Matcher.getParentBlock();
+  return P;
+}
+
+namespace {
+/// What building an mpir.inst or mpir.use takes of MatcherParts: its operand
+/// kinds and values, and its optional attributes.
+struct BuildArguments {
+  SmallVector<OperandKind, 8> Kinds;
+  SmallVector<Value, 8> Values;
+  StringAttr ResultName;
+  ArrayAttr MetaFlags;
+  ArrayAttr OperandMetaFlags;
+  BoolAttr TreatIntAsVec;
+
+  BuildArguments(OpBuilder &Builder, const MatcherParts &Parts) {
+    for (const MatcherOperandView &Op : Parts.Operands) {
+      Kinds.push_back(Op.Kind);
+      if (Op.Type)
+        Values.push_back(Op.Type);
+      if (Op.Val)
+        Values.push_back(Op.Val);
+    }
+    if (Parts.ResultName)
+      ResultName = Builder.getStringAttr(*Parts.ResultName);
+    if (!Parts.MetaFlags.empty())
+      MetaFlags = Builder.getArrayAttr(Parts.MetaFlags);
+    if (any_of(Parts.OperandMetaFlags,
+               [](Attribute A) { return !cast<ArrayAttr>(A).empty(); }))
+      OperandMetaFlags = Builder.getArrayAttr(Parts.OperandMetaFlags);
+    if (Parts.TreatIntAsVec)
+      TreatIntAsVec = Builder.getBoolAttr(*Parts.TreatIntAsVec);
+  }
+};
+} // namespace
+
+InstOp MatcherParts::buildInst(OpBuilder &Builder, Location Loc,
+                               OpcodeAttr Opcode, bool SwappedPredicate) const {
+  BuildArguments Args(Builder, *this);
+  return InstOp::create(
+      Builder, Loc, getSortType(Builder.getContext(), Sort::Instruction),
+      Opcode, Args.ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
+      Args.OperandMetaFlags, SwappedPredicate, Args.TreatIntAsVec, Capture,
+      ParentBlock, FlagCaptures, Args.Values);
+}
+
+UseOp MatcherParts::buildUse(OpBuilder &Builder, Location Loc,
+                             FlatSymbolRefAttr Matcher) const {
+  BuildArguments Args(Builder, *this);
+  return UseOp::create(
+      Builder, Loc, getSortType(Builder.getContext(), Sort::Instruction),
+      Matcher, Args.ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
+      Args.OperandMetaFlags, /*swapped_predicate=*/UnitAttr(),
+      Args.TreatIntAsVec, Capture, ParentBlock, FlagCaptures, Args.Values);
 }
 
 SmallVector<Operation *, 4> mpir::getPatternRoots(Block &Block) {

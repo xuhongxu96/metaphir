@@ -72,7 +72,7 @@ mpir_index.query {
     %20 = mpir_expr.call binary "||"(%12, %18) anchor %19 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":72:1)
     mpir_index.assume %20 : <Boolean> loc("index-structuralize-nested.mlir":73:1)
   } loc("index-structuralize-nested.mlir":74:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -100,7 +100,7 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <shl> {derived}
+// CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -211,7 +211,7 @@ mpir_index.query {
     %24 = mpir_expr.call binary "||"(%15, %22) anchor %23 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":211:1)
     mpir_index.assume %24 : <Boolean> loc("index-structuralize-nested.mlir":212:1)
   } loc("index-structuralize-nested.mlir":213:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -243,7 +243,7 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <shl> {derived}
+// CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -355,8 +355,8 @@ mpir_index.query {
     %23 = mpir_expr.call binary "||"(%15, %21) anchor %22 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":355:1)
     mpir_index.assume %23 : <Boolean> loc("index-structuralize-nested.mlir":356:1)
   } loc("index-structuralize-nested.mlir":357:1)
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -387,7 +387,7 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -760,14 +760,14 @@ mpir_index.query {
     %127 = mpir_expr.call binary "||"(%119, %125) anchor %126 : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("index-structuralize-nested.mlir":760:1)
     mpir_index.assume %127 : <Boolean> loc("index-structuralize-nested.mlir":761:1)
   } loc("index-structuralize-nested.mlir":762:1)
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -910,14 +910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_44]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1060,14 +1060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_89]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1210,14 +1210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_134]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1360,14 +1360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_179]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1510,14 +1510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_224]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1660,14 +1660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_269]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1810,14 +1810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_314]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -1960,14 +1960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_359]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -2110,14 +2110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_404]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -2260,14 +2260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_449]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -2410,14 +2410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_494]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -2560,14 +2560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_539]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -2710,14 +2710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_584]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -2860,14 +2860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_629]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -3010,14 +3010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_674]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -3160,14 +3160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_719]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -3310,14 +3310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_764]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -3460,14 +3460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_809]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -3610,14 +3610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_854]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -3760,14 +3760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_899]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -3910,14 +3910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_944]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -4060,14 +4060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_989]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -4210,14 +4210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1034]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -4360,14 +4360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1079]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -4510,14 +4510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1124]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -4660,14 +4660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1169]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -4810,14 +4810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1214]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -4960,14 +4960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1259]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -5110,14 +5110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1304]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -5260,14 +5260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1349]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -5410,14 +5410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1394]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -5560,14 +5560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1439]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -5710,14 +5710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1484]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -5860,14 +5860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1529]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -6010,14 +6010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1574]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -6160,14 +6160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1619]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -6310,14 +6310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1664]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -6460,14 +6460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1709]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -6610,14 +6610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1754]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -6760,14 +6760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1799]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -6910,14 +6910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1844]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -7060,14 +7060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1889]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -7210,14 +7210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1934]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -7360,14 +7360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_1979]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -7510,14 +7510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2024]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -7660,14 +7660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2069]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -7810,14 +7810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2114]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -7960,14 +7960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2159]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -8110,14 +8110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2204]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -8260,14 +8260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2249]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -8410,14 +8410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2294]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -8560,14 +8560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2339]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -8710,14 +8710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2384]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -8860,14 +8860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2429]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -9010,14 +9010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2474]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -9160,14 +9160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2519]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -9310,14 +9310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2564]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -9460,14 +9460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2609]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -9610,14 +9610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2654]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -9760,14 +9760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2699]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -9910,14 +9910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2744]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -10060,14 +10060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2789]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -10210,14 +10210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2834]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -10360,14 +10360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2879]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -10510,14 +10510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2924]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -10660,14 +10660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_2969]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -10810,14 +10810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3014]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -10960,14 +10960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3059]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -11110,14 +11110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3104]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -11260,14 +11260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3149]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -11410,14 +11410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3194]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -11560,14 +11560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3239]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -11710,14 +11710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3284]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -11860,14 +11860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3329]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -12010,14 +12010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3374]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -12160,14 +12160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3419]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -12310,14 +12310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3464]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -12460,14 +12460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3509]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -12610,14 +12610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3554]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -12760,14 +12760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3599]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -12910,14 +12910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3644]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -13060,14 +13060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3689]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -13210,14 +13210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3734]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -13360,14 +13360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3779]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -13510,14 +13510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3824]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -13660,14 +13660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3869]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -13810,14 +13810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3914]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -13960,14 +13960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_3959]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -14110,14 +14110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4004]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -14260,14 +14260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4049]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -14410,14 +14410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4094]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -14560,14 +14560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4139]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -14710,14 +14710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4184]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -14860,14 +14860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4229]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -15010,14 +15010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4274]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -15160,14 +15160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4319]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -15310,14 +15310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4364]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -15460,14 +15460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4409]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -15610,14 +15610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4454]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -15760,14 +15760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4499]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -15910,14 +15910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4544]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -16060,14 +16060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4589]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -16210,14 +16210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4634]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -16360,14 +16360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4679]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -16510,14 +16510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4724]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -16660,14 +16660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4769]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -16810,14 +16810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4814]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -16960,14 +16960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4859]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -17110,14 +17110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4904]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -17260,14 +17260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4949]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -17410,14 +17410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_4994]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -17560,14 +17560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5039]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -17710,14 +17710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5084]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -17860,14 +17860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5129]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -18010,14 +18010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5174]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -18160,14 +18160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5219]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -18310,14 +18310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5264]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -18460,14 +18460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5309]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -18610,14 +18610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5354]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -18760,14 +18760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5399]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -18910,14 +18910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5444]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -19060,14 +19060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5489]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -19210,14 +19210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5534]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -19360,14 +19360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5579]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -19510,14 +19510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5624]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -19660,14 +19660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5669]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -19810,14 +19810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5714]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <add> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <add> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -19960,14 +19960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5759]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -20110,14 +20110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5804]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -20260,14 +20260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5849]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -20410,14 +20410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5894]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -20560,14 +20560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5939]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -20710,14 +20710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_5984]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -20860,14 +20860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6029]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -21010,14 +21010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6074]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -21160,14 +21160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6119]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -21310,14 +21310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6164]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -21460,14 +21460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6209]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -21610,14 +21610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6254]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -21760,14 +21760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6299]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -21910,14 +21910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6344]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -22060,14 +22060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6389]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -22210,14 +22210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6434]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -22360,14 +22360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6479]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -22510,14 +22510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6524]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -22660,14 +22660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6569]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -22810,14 +22810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6614]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -22960,14 +22960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6659]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -23110,14 +23110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6704]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -23260,14 +23260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6749]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -23410,14 +23410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6794]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -23560,14 +23560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6839]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -23710,14 +23710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6884]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -23860,14 +23860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6929]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -24010,14 +24010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_6974]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -24160,14 +24160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7019]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -24310,14 +24310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7064]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -24460,14 +24460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7109]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -24610,14 +24610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7154]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -24760,14 +24760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7199]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -24910,14 +24910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7244]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -25060,14 +25060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7289]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -25210,14 +25210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7334]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -25360,14 +25360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7379]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -25510,14 +25510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7424]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -25660,14 +25660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7469]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -25810,14 +25810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7514]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -25960,14 +25960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7559]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -26110,14 +26110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7604]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -26260,14 +26260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7649]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -26410,14 +26410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7694]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -26560,14 +26560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7739]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -26710,14 +26710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7784]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -26860,14 +26860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7829]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -27010,14 +27010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7874]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -27160,14 +27160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7919]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -27310,14 +27310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_7964]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -27460,14 +27460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8009]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -27610,14 +27610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8054]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -27760,14 +27760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8099]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -27910,14 +27910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8144]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -28060,14 +28060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8189]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -28210,14 +28210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8234]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -28360,14 +28360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8279]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -28510,14 +28510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8324]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -28660,14 +28660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8369]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -28810,14 +28810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8414]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -28960,14 +28960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8459]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -29110,14 +29110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8504]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -29260,14 +29260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8549]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -29410,14 +29410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8594]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -29560,14 +29560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8639]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -29710,14 +29710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8684]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -29860,14 +29860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8729]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -30010,14 +30010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8774]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -30160,14 +30160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8819]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -30310,14 +30310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8864]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -30460,14 +30460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8909]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -30610,14 +30610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8954]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -30760,14 +30760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_8999]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -30910,14 +30910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9044]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -31060,14 +31060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9089]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -31210,14 +31210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9134]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -31360,14 +31360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9179]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -31510,14 +31510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9224]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -31660,14 +31660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9269]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -31810,14 +31810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9314]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -31960,14 +31960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9359]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -32110,14 +32110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9404]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -32260,14 +32260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9449]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -32410,14 +32410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9494]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -32560,14 +32560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9539]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -32710,14 +32710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9584]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -32860,14 +32860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9629]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -33010,14 +33010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9674]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -33160,14 +33160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9719]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -33310,14 +33310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9764]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -33460,14 +33460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9809]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -33610,14 +33610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9854]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -33760,14 +33760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9899]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -33910,14 +33910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9944]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -34060,14 +34060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_9989]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -34210,14 +34210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10034]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -34360,14 +34360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10079]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -34510,14 +34510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10124]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -34660,14 +34660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10169]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -34810,14 +34810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10214]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -34960,14 +34960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10259]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -35110,14 +35110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10304]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -35260,14 +35260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10349]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -35410,14 +35410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10394]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -35560,14 +35560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10439]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -35710,14 +35710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10484]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -35860,14 +35860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10529]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -36010,14 +36010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10574]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -36160,14 +36160,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10619]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -36310,14 +36310,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10664]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -36460,14 +36460,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10709]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -36610,14 +36610,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10754]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -36760,14 +36760,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10799]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -36910,14 +36910,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10844]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -37060,14 +37060,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10889]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -37210,14 +37210,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10934]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -37360,14 +37360,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_10979]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -37510,14 +37510,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11024]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -37660,14 +37660,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11069]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -37810,14 +37810,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11114]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -37960,14 +37960,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11159]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -38110,14 +38110,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11204]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -38260,14 +38260,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11249]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -38410,14 +38410,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11294]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -38560,14 +38560,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11339]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -38710,14 +38710,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11384]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -38860,14 +38860,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11429]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
@@ -39010,14 +39010,14 @@ mpir_index.query {
 // CHECK:             mpir_index.assume %[[CALL_11474]] : <Boolean>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
-// CHECK:             mpir_index.has_instruction <sub> {derived}
-// CHECK:             mpir_index.has_instruction <mul> {derived}
-// CHECK:             mpir_index.has_instruction <shl> {derived}
-// CHECK:             mpir_index.has_instruction <lshr> {derived}
-// CHECK:             mpir_index.has_instruction <ashr> {derived}
-// CHECK:             mpir_index.has_instruction <and> {derived}
-// CHECK:             mpir_index.has_instruction <or> {derived}
-// CHECK:             mpir_index.has_instruction <xor> {derived}
+// CHECK:             mpir_index.has_instruction <sub> <derived>
+// CHECK:             mpir_index.has_instruction <mul> <derived>
+// CHECK:             mpir_index.has_instruction <shl> <derived>
+// CHECK:             mpir_index.has_instruction <lshr> <derived>
+// CHECK:             mpir_index.has_instruction <ashr> <derived>
+// CHECK:             mpir_index.has_instruction <and> <derived>
+// CHECK:             mpir_index.has_instruction <or> <derived>
+// CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>

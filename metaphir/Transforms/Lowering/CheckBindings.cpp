@@ -73,12 +73,11 @@ void Bindings::addValue(Value V) {
     return;
   }
   if (auto Alt = dyn_cast<AltOp>(Def)) {
-    if (Alt->hasAttr("or_self_of") && BoundBy) {
+    if (Alt.getOrSelfOf() && BoundBy) {
       // Matching its operand binds what the second alternative does;
       // matching itself, the first.
       // The alternative in which the matcher matches its operand.
-      unsigned OperandRegion =
-          Alt->getAttrOfType<mlir::IntegerAttr>("or_self_region").getInt();
+      unsigned OperandRegion = *Alt.getOrSelfRegion();
       Bindings Itself;
       for (unsigned R = 0; R != Alt->getNumRegions(); ++R)
         if (R != OperandRegion)
@@ -94,12 +93,12 @@ void Bindings::addValue(Value V) {
   }
   if (!isa<InstOp, UseOp>(Def))
     return;
-  MatcherUse U(Def);
+  auto U = cast<MatcherOpInterface>(Def);
   addVariable(U.getCapture());
   addVariable(U.getParentBlock());
   for (Value Capture : U.getFlagCaptures())
     addVariable(Capture);
-  for (const MatcherOperandView &Op : getMatcherOperands(Def)) {
+  for (const MatcherOperandView &Op : getMatcherOperands(U)) {
     addType(Op.Type);
     if (Op.Val)
       Pending.push_back(Op.Val);
@@ -127,25 +126,24 @@ static LogicalResult checkOrSelfBindings(PatternOp Pattern) {
   // Matchers in alternatives are reached from their alt; those of a region
   // not reached from its yield are roots of their own.
   LogicalResult Result = mlir::success();
-  Pattern.walk(
-      [&](VarOp Var) {
-        StringRef Name = Var.getVarName();
-        if (mlir::failed(Result) || Name.empty() || Name.starts_with("_") ||
-            Always.Variables.contains(Var))
-          return;
-        AltOp OrSelf = BoundBy.lookup(Var);
-        if (!OrSelf)
-          return;
-        Location Loc = getSourceRange(Var.getLoc()).Start.isValid()
-                           ? Var.getLoc()
-                           : OrSelf.getLoc();
-        mlir::emitError(Loc)
-            << "meta variable '?" << Name << "' is not bound when ':o' lets '"
-            << OrSelf->getAttrOfType<mlir::StringAttr>("or_self_of").getValue()
-            << "' match its operand; name it '?_" << Name
-            << "' if it need not be bound";
-        Result = mlir::failure();
-      });
+  Pattern.walk([&](VarOp Var) {
+    StringRef Name = Var.getVarName();
+    if (mlir::failed(Result) || Name.empty() || Name.starts_with("_") ||
+        Always.Variables.contains(Var))
+      return;
+    AltOp OrSelf = BoundBy.lookup(Var);
+    if (!OrSelf)
+      return;
+    Location Loc = getSourceRange(Var.getLoc()).Start.isValid()
+                       ? Var.getLoc()
+                       : OrSelf.getLoc();
+    mlir::emitError(Loc) << "meta variable '?" << Name
+                         << "' is not bound when ':o' lets '"
+                         << *OrSelf.getOrSelfOf()
+                         << "' match its operand; name it '?_" << Name
+                         << "' if it need not be bound";
+    Result = mlir::failure();
+  });
   return Result;
 }
 
