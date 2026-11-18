@@ -78,12 +78,12 @@ private:
   OpBuilder Builder;
   unsigned NextAnonymousUse = 0;
 
-  /// Inlines Branch of the matcher into a new region of Alt, for the use
-  /// with CallerOps. Returns false if the branch cannot fit the use.
-  mlir::FailureOr<bool> inlineBranch(UseOp Use, MatcherOp Matcher,
-                                     BranchOp Branch,
-                                     ArrayRef<MatcherOperandView> CallerOps,
-                                     StringRef UsePrefix, AltOp Alt);
+  /// Inlines Branch of the matcher into a new block of Bodies, for the use
+  /// with CallerOps. The block is null if the branch cannot fit the use.
+  mlir::FailureOr<mlir::Block *>
+  inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
+               ArrayRef<MatcherOperandView> CallerOps, StringRef UsePrefix,
+               mlir::Region &Bodies);
 };
 } // namespace
 
@@ -116,23 +116,23 @@ static void archetypePositions(
 }
 
 namespace {
-/// Inlines one branch of a matcher into a region of an mpir.alt, for one use
-/// of the matcher.
+/// Inlines one branch of a matcher into a block that will be a region of an
+/// mpir.alt, for one use of the matcher.
 class BranchInliner {
 public:
   BranchInliner(OpBuilder &Builder, UseOp Use, MatcherOp Matcher,
                 BranchOp Branch, ArrayRef<MatcherOperandView> CallerOps,
-                StringRef UsePrefix, AltOp Alt)
+                StringRef UsePrefix, mlir::Region &Bodies)
       : Builder(Builder), Context(Builder.getContext()), Use(Use),
         Matcher(Matcher), Branch(Branch), CallerOps(CallerOps),
-        UsePrefix(UsePrefix), Alt(Alt), Body(Branch.getBody().front()),
+        UsePrefix(UsePrefix), Bodies(Bodies), Body(Branch.getBody().front()),
         Yield(*Body.getOps<YieldOp>().begin()),
         Root(cast<MatcherOpInterface>(Yield.getValue().getDefiningOp())),
         CallerLoc(Use.getLoc()) {}
 
-  /// Inlines the branch into the last region of Alt. Returns false if the
+  /// Inlines the branch into a new block of Bodies. The block is null if the
   /// branch cannot fit the use.
-  mlir::FailureOr<bool> run();
+  mlir::FailureOr<mlir::Block *> run();
 
 private:
   /// Binds the branch's type arguments to the types the use passes, and its
@@ -159,7 +159,10 @@ private:
   BranchOp Branch;
   ArrayRef<MatcherOperandView> CallerOps;
   StringRef UsePrefix;
-  AltOp Alt;
+  /// Where the blocks of the mpir.alt to come are built.
+  mlir::Region &Bodies;
+  /// The block the branch is inlined into.
+  mlir::Block *Out = nullptr;
   mlir::Block &Body;
   /// The root: what the branch yields.
   YieldOp Yield;
@@ -181,18 +184,20 @@ private:
 };
 } // namespace
 
-mlir::FailureOr<bool> BranchInliner::run() {
+mlir::FailureOr<mlir::Block *> BranchInliner::run() {
   mlir::FailureOr<bool> Fits = bindTypes();
-  if (mlir::failed(Fits) || !*Fits)
-    return Fits;
+  if (mlir::failed(Fits))
+    return mlir::failure();
+  if (!*Fits)
+    return nullptr;
   OpBuilder::InsertionGuard Guard(Builder);
-  Builder.setInsertionPoint(Alt);
+  Builder.setInsertionPoint(Use);
   if (!bindFlags())
-    return false;
+    return nullptr;
   bindRootAndWidths();
   inlineBody();
   finish();
-  return true;
+  return Out;
 }
 
 mlir::FailureOr<bool> BranchInliner::bindTypes() {
@@ -257,7 +262,7 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
           Width = Int.getWidth();
         if (Width) {
           OpBuilder::InsertionGuard Guard(Builder);
-          Builder.setInsertionPoint(Alt);
+          Builder.setInsertionPoint(Use);
           auto Type =
               mlir::IntegerType::get(Context, 64, mlir::IntegerType::Unsigned);
           Value V = CallerOps[OpIndex].Val;
@@ -371,8 +376,8 @@ void BranchInliner::bindRootAndWidths() {
 }
 
 void BranchInliner::inlineBody() {
-  mlir::Block &Region = Alt->getRegion(Alt->getNumRegions() - 1).emplaceBlock();
-  Builder.setInsertionPointToEnd(&Region);
+  Out = &Bodies.emplaceBlock();
+  Builder.setInsertionPointToEnd(Out);
   for (Operation &Op : Body) {
     if (isa<YieldOp>(Op))
       continue;
@@ -484,11 +489,12 @@ void BranchInliner::finish() {
   YieldOp::create(Builder, CallerLoc, NewRoot);
 }
 
-mlir::FailureOr<bool>
+mlir::FailureOr<mlir::Block *>
 Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
                        ArrayRef<MatcherOperandView> CallerOps,
-                       StringRef UsePrefix, AltOp Alt) {
-  return BranchInliner(Builder, Use, Matcher, Branch, CallerOps, UsePrefix, Alt)
+                       StringRef UsePrefix, mlir::Region &Bodies) {
+  return BranchInliner(Builder, Use, Matcher, Branch, CallerOps, UsePrefix,
+                       Bodies)
       .run();
 }
 
@@ -513,78 +519,46 @@ LogicalResult Expander::expand(UseOp Use) {
 
   Builder.setInsertionPoint(Use);
 
-  unsigned NumRegions =
-      range_size(Matcher.getBody().front().getOps<BranchOp>()) *
-      (Commutative ? 2 : 1);
-  if (OrSelf)
-    ++NumRegions;
-
-  mlir::StringAttr ResultName;
-  if (std::optional<StringRef> Name = Use.getResultName())
-    ResultName = Builder.getStringAttr(*Name);
-  mlir::StringAttr OrSelfOf;
-  if (OrSelf)
-    OrSelfOf = Builder.getStringAttr(Use.getMatcher());
-  AltOp Alt = AltOp::create(Builder, Use.getLoc(), Use.getType(), ResultName,
-                            /*commuted=*/false, OrSelfOf,
-                            /*or_self_region=*/mlir::IntegerAttr(), NumRegions);
-
-  // The regions are filled in order; one left empty (a branch that does not
-  // fit) is removed after.
-  unsigned NextRegion = 0;
-  SmallVector<unsigned, 4> Filled;
-  // inlineBranch fills the last region of a scratch alt; move it into place.
+  // The bodies of the alternatives
+  mlir::Region Bodies;
   for (BranchOp Branch : Matcher.getBody().front().getOps<BranchOp>()) {
     for (unsigned Order = 0; Order != (Commutative ? 2u : 1u); ++Order) {
       SmallVector<MatcherOperandView, 8> Ops(CallerOps);
       if (Order == 1)
         std::swap(Ops[0], Ops[1]);
-      OpBuilder::InsertionGuard Guard(Builder);
-      Builder.setInsertionPoint(Alt);
-      AltOp Temp = AltOp::create(Builder, Use.getLoc(), Use.getType(),
-                                 mlir::StringAttr(), /*commuted=*/false,
-                                 mlir::StringAttr(), mlir::IntegerAttr(), 1);
-      mlir::FailureOr<bool> Fits =
-          inlineBranch(Use, Matcher, Branch, Ops, UsePrefix, Temp);
-      if (mlir::failed(Fits)) {
-        Temp.erase();
+      if (mlir::failed(
+              inlineBranch(Use, Matcher, Branch, Ops, UsePrefix, Bodies)))
         return mlir::failure();
-      }
-      unsigned Index = NextRegion++;
-      if (*Fits) {
-        Alt->getRegion(Index).takeBody(Temp->getRegion(0));
-        Filled.push_back(Index);
-      }
-      Temp.erase();
     }
   }
   if (OrSelf) {
     // ':o(N)' lets the use match its Nth operand in place of the matcher.
-    unsigned Index = NextRegion++;
-    mlir::Block &Region = Alt->getRegion(Index).emplaceBlock();
+    mlir::Block &Body = Bodies.emplaceBlock();
     OpBuilder::InsertionGuard Guard(Builder);
-    Builder.setInsertionPointToEnd(&Region);
+    Builder.setInsertionPointToEnd(&Body);
     Value Operand = CallerOps[*OrSelf].Val;
     if (Value Capture = Use.getCapture())
       BindOp::create(Builder, Use.getLoc(), Capture, Operand);
     YieldOp::create(Builder, Use.getLoc(), Operand);
-    Filled.push_back(Index);
   }
-  // Drop the regions of branches that cannot fit, keeping the order.
-  if (Filled.size() != Alt->getNumRegions()) {
-    AltOp New = AltOp::create(Builder, Use.getLoc(), Use.getType(),
-                              Alt.getResultNameAttr(), Alt.getCommuted(),
-                              Alt.getOrSelfOfAttr(), Alt.getOrSelfRegionAttr(),
-                              Filled.size());
-    for (auto [To, From] : enumerate(Filled))
-      New->getRegion(To).takeBody(Alt->getRegion(From));
-    Alt.erase();
-    Alt = New;
+
+  mlir::StringAttr ResultName;
+  if (std::optional<StringRef> Name = Use.getResultName())
+    ResultName = Builder.getStringAttr(*Name);
+  mlir::StringAttr OrSelfOf;
+  mlir::IntegerAttr OrSelfRegion;
+  if (OrSelf) {
+    OrSelfOf = Builder.getStringAttr(Use.getMatcher());
+    // A use's ':o' has its operand last.
+    OrSelfRegion = Builder.getI32IntegerAttr(range_size(Bodies) - 1);
   }
-  // A use's ':o' has its operand last.
-  if (OrSelf)
-    Alt.setOrSelfRegionAttr(
-        Builder.getI32IntegerAttr(Alt->getNumRegions() - 1));
+  AltOp Alt = AltOp::create(Builder, Use.getLoc(), Use.getType(), ResultName,
+                            /*commuted=*/false, OrSelfOf, OrSelfRegion,
+                            range_size(Bodies));
+  // Each block becomes the body of one alternative region, in order.
+  for (mlir::Region &Alternative : Alt->getRegions())
+    Alternative.getBlocks().splice(Alternative.end(), Bodies.getBlocks(),
+                                   Bodies.begin());
   Use.getResult().replaceAllUsesWith(Alt.getResult());
   Use.erase();
   return mlir::success();
