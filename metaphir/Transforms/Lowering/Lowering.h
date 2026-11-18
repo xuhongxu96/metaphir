@@ -30,11 +30,6 @@ class SourceMgr;
 class raw_ostream;
 namespace metaphir {
 
-/// The instruction matchers and alternatives of Block (of a lowered pattern,
-/// or of an alternative) that no other matcher uses as an operand: those a
-/// match of the block starts from.
-SmallVector<mlir::Operation *, 4> getPatternRoots(mlir::Block &Block);
-
 /// Adds the lowering passes, in order, to PM.
 void buildLoweringPipeline(mlir::OpPassManager &PM);
 

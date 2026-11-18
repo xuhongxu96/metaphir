@@ -1,6 +1,6 @@
 #include "metaphir/Web/WebQuery.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
-#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Exec/CompiledPattern.h"
 #include "metaphir/Index/FeatureCoding.h"
 #include "metaphir/Index/FunctionPack.h"

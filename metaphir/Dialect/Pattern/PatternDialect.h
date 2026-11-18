@@ -27,8 +27,8 @@ namespace llvm {
 namespace metaphir {
 namespace mpir {
 
-/// Sets the flags, flag modes and operand kinds of the mpir.inst or mpir.use that
-/// State builds. They are properties rather than attributes, so State's
+/// Sets the flags, flag modes and operand kinds of the mpir.inst or mpir.use
+/// that State builds. They are properties rather than attributes, so State's
 /// attributes cannot carry them.
 void setMatcherProperties(mlir::Builder &Builder, mlir::OperationState &State,
                           ArrayRef<instruction_flag::FlagID> Flags,
@@ -78,6 +78,11 @@ struct MatcherOperandView {
 
 /// The matcher operands of Op, an mpir.inst or mpir.use.
 SmallVector<MatcherOperandView, 4> getMatcherOperands(mlir::Operation *Op);
+
+/// The instruction matchers and alternatives of Block (of a lowered pattern,
+/// or of an alternative) that no other matcher uses as an operand: those a
+/// match of the block starts from.
+SmallVector<mlir::Operation *, 4> getPatternRoots(mlir::Block &Block);
 
 } // namespace mpir
 } // namespace metaphir

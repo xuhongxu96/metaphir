@@ -1,4 +1,4 @@
-#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Exec/CompiledPattern.h"
 #include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Exec/PlanMatcher.h"

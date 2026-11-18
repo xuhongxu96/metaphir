@@ -162,6 +162,28 @@ SmallVector<MatcherOperandView, 4> mpir::getMatcherOperands(Operation *Op) {
   return operandsOf(cast<UseOp>(Op));
 }
 
+SmallVector<Operation *, 4> mpir::getPatternRoots(Block &Block) {
+  SmallVector<Operation *, 4> Roots;
+  for (Operation &Op : Block) {
+    if (!isa<InstOp, AltOp>(Op))
+      continue;
+    bool Used = any_of(Op.getResult(0).getUses(), [](OpOperand &Use) {
+      Operation *Owner = Use.getOwner();
+      if (isa<YieldOp>(Owner))
+        return true;
+      if (auto Inst = dyn_cast<InstOp>(Owner)) {
+        for (const MatcherOperandView &O : getMatcherOperands(Inst))
+          if (isValueOperand(O.Kind) && O.Val == Use.get())
+            return true;
+      }
+      return false;
+    });
+    if (!Used)
+      Roots.push_back(&Op);
+  }
+  return Roots;
+}
+
 /// Checks what the matcher uses' attributes say about their operands.
 template <typename OpT> static LogicalResult verifyMatcherUse(OpT Op) {
   unsigned Needed = 0;

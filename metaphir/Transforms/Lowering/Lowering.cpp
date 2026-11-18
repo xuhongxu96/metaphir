@@ -22,30 +22,6 @@
 namespace llvm {
 namespace metaphir {
 
-SmallVector<mlir::Operation *, 4> getPatternRoots(mlir::Block &Block) {
-  using namespace mpir;
-  using mlir::Operation;
-  SmallVector<Operation *, 4> Roots;
-  for (Operation &Op : Block) {
-    if (!isa<InstOp, AltOp>(Op))
-      continue;
-    bool Used = any_of(Op.getResult(0).getUses(), [](mlir::OpOperand &Use) {
-      Operation *Owner = Use.getOwner();
-      if (isa<YieldOp>(Owner))
-        return true;
-      if (auto Inst = dyn_cast<InstOp>(Owner)) {
-        for (const MatcherOperandView &O : getMatcherOperands(Inst))
-          if (isValueOperand(O.Kind) && O.Val == Use.get())
-            return true;
-      }
-      return false;
-    });
-    if (!Used)
-      Roots.push_back(&Op);
-  }
-  return Roots;
-}
-
 void buildLoweringPipeline(mlir::OpPassManager &PM) {
   PM.addPass(createDesugarMetaFlagsPass());
   PM.addPass(createExpandMatchersPass());

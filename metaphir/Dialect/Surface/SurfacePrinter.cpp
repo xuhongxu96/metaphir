@@ -1,4 +1,4 @@
-#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/IR/Constants.h"

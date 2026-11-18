@@ -9,7 +9,7 @@
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
-#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/IR/MetaFlag.h"
 #include "metaphir/Transforms/Lowering/LoweringUtils.h"
 #include "mlir/IR/Builders.h"

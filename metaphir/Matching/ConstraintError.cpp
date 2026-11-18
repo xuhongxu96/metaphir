@@ -1,5 +1,5 @@
 #include "metaphir/Matching/ConstraintError.h"
-#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {

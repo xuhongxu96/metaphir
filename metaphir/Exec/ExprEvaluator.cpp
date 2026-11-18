@@ -1,7 +1,7 @@
 #include "metaphir/Exec/ExprEvaluator.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
-#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/Exec/ConstraintDispatch.inc"
 #include "metaphir/IR/Constraint.h"

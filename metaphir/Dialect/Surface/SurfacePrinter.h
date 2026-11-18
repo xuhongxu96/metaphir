@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef METAPHIR_DIALECT_PATTERN_SURFACEPRINTER_H
-#define METAPHIR_DIALECT_PATTERN_SURFACEPRINTER_H
+#ifndef METAPHIR_DIALECT_SURFACE_SURFACEPRINTER_H
+#define METAPHIR_DIALECT_SURFACE_SURFACEPRINTER_H
 
 #include "mlir/IR/Value.h"
 
@@ -39,4 +39,4 @@ StringRef getMetaVariableName(mlir::Value V);
 } // namespace metaphir
 } // namespace llvm
 
-#endif // METAPHIR_DIALECT_PATTERN_SURFACEPRINTER_H
+#endif // METAPHIR_DIALECT_SURFACE_SURFACEPRINTER_H

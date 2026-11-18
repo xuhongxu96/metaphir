@@ -2,7 +2,7 @@
 
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
-#include "metaphir/Dialect/Pattern/SurfacePrinter.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Parser/PatternParser.h"
 #include "mlir/IR/AsmState.h"
 #include "mlir/IR/MLIRContext.h"

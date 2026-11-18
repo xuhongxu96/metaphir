@@ -16,8 +16,8 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/PatternSettings.h"
-#include "metaphir/Transforms/Lowering/Lowering.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/IRMapping.h"
 #include "mlir/Pass/Pass.h"
@@ -272,8 +272,8 @@ void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
     return;
   }
   if (auto Keyword = dyn_cast<KeywordOp>(Def)) {
-    auto Check = plan::CheckConstantOp::create(Builder, Loc, Reg,
-                                               Builder.getI32IntegerAttr(Keyword.getKeyword()));
+    auto Check = plan::CheckConstantOp::create(
+        Builder, Loc, Reg, Builder.getI32IntegerAttr(Keyword.getKeyword()));
     Check.setKeyword(true);
     return;
   }
@@ -283,8 +283,7 @@ void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
   }
   if (auto Aggregate = dyn_cast<AggregateOp>(Def)) {
     mlir::OperandRange Elements = Aggregate.getElements();
-    plan::CheckAggregateOp::create(Builder, Loc, Reg,
-                                   Aggregate.getDelimiter(),
+    plan::CheckAggregateOp::create(Builder, Loc, Reg, Aggregate.getDelimiter(),
                                    i32(Elements.size() / 2));
     for (unsigned I = 0; I + 1 < Elements.size(); I += 2) {
       Value Element =
@@ -386,8 +385,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
             Builder.getBoolAttr(FlagMode(Mode) == FlagMode::Required));
         break;
       case FlagMode::Captured: {
-        Value Present =
-            plan::GetFlagOp::create(Builder, Loc, reg(), Reg, Flag);
+        Value Present = plan::GetFlagOp::create(Builder, Loc, reg(), Reg, Flag);
         bindVariable(Present, Inst.getFlagCaptures()[NextCapture++],
                      /*AsSort=*/false);
         break;
@@ -429,8 +427,8 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
   for (const MatcherOperandView &Op : Operands) {
     if (Op.Kind != OperandKind::Predicate)
       continue;
-    auto Predicate = plan::GetKeyedOp::create(
-        Builder, Loc, reg(), Reg, OperandKind::Predicate);
+    auto Predicate = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg,
+                                              OperandKind::Predicate);
     if (Inst.getSwappedPredicate())
       Predicate.setSwapped(true);
     (void)ID;
@@ -438,8 +436,9 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
       bindVariable(Predicate, Op.Val, /*AsSort=*/false);
     } else {
       auto Keyword = cast<KeywordOp>(Op.Val.getDefiningOp());
-      auto Check = plan::CheckConstantOp::create(Builder, Loc, Predicate,
-                                                 Builder.getI32IntegerAttr(Keyword.getKeyword()));
+      auto Check = plan::CheckConstantOp::create(
+          Builder, Loc, Predicate,
+          Builder.getI32IntegerAttr(Keyword.getKeyword()));
       Check.setKeyword(true);
     }
   }
@@ -617,8 +616,7 @@ plan::MatcherOp Compiler::compile() {
   assignSlots();
   auto Matcher = plan::MatcherOp::create(
       Builder, Pattern.getLoc(), Builder.getArrayAttr({}),
-      ArrayRef<plan::SlotKind>(), ArrayRef<Sort>(),
-      Builder.getArrayAttr({}));
+      ArrayRef<plan::SlotKind>(), ArrayRef<Sort>(), Builder.getArrayAttr({}));
   mlir::Block &Body = Matcher.getBody().emplaceBlock();
   OpBuilder::InsertionGuard Guard(Builder);
   Builder.setInsertionPointToEnd(&Body);
