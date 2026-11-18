@@ -111,6 +111,13 @@ static void printType(raw_ostream &OS, mlir::Value T) {
   OS << "<type>";
 }
 
+std::string surfaceString(mlir::Value V) {
+  std::string Text;
+  raw_string_ostream OS(Text);
+  printSurfaceValue(OS, V);
+  return Text;
+}
+
 void printSurfaceValue(raw_ostream &OS, mlir::Value V) {
   Operation *Def = V.getDefiningOp();
   if (!Def || Def->hasAttr(mpir::VarNameAttrName)) {

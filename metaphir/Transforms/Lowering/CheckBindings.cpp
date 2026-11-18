@@ -7,13 +7,17 @@
 
 #include "metaphir/Transforms/Lowering/CheckBindings.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
-#include "metaphir/Transforms/Lowering/LoweringUtils.h"
+#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "mlir/IR/BuiltinOps.h"
 
 namespace llvm {
 namespace metaphir {
 namespace lowering {
 
+using mlir::Location;
+using mlir::LogicalResult;
+using mlir::Operation;
+using mlir::Value;
 using namespace mpir;
 
 //===----------------------------------------------------------------------===//

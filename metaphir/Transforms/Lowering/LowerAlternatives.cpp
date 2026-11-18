@@ -5,13 +5,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "metaphir/Transforms/Lowering/LowerAlternatives.h"
-#include "metaphir/Transforms/Lowering/LoweringUtils.h"
+#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "mlir/IR/BuiltinOps.h"
 
 namespace llvm {
 namespace metaphir {
 namespace lowering {
 
+using mlir::Location;
+using mlir::OpBuilder;
+using mlir::Value;
 using namespace mpir;
 
 //===----------------------------------------------------------------------===//

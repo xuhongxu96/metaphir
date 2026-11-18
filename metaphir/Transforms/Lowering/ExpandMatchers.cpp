@@ -8,7 +8,7 @@
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
-#include "metaphir/Transforms/Lowering/LoweringUtils.h"
+#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IRMapping.h"
 
@@ -16,6 +16,11 @@ namespace llvm {
 namespace metaphir {
 namespace lowering {
 
+using mlir::Location;
+using mlir::LogicalResult;
+using mlir::OpBuilder;
+using mlir::Operation;
+using mlir::Value;
 using namespace mpir;
 
 //===----------------------------------------------------------------------===//
@@ -222,12 +227,9 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
           Loc = Use.getLoc();
         return mlir::emitError(Loc)
                << "matcher '" << Matcher.getSymName() << "' requires type '"
-               << toString(
-                      [&](raw_ostream &OS) { printSurfaceValue(OS, Declared); })
+               << surfaceString(Declared)
                << "' for a parameter, but this use passes '"
-               << toString(
-                      [&](raw_ostream &OS) { printSurfaceValue(OS, CallerTy); })
-               << "'";
+               << surfaceString(CallerTy) << "'";
       }
       if (!isSameType(Declared, CallerTy))
         return false;

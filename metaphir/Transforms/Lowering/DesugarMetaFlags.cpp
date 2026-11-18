@@ -7,7 +7,7 @@
 #include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
-#include "metaphir/Transforms/Lowering/LoweringUtils.h"
+#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IRMapping.h"
 
@@ -15,6 +15,13 @@ namespace llvm {
 namespace metaphir {
 namespace lowering {
 
+using mlir::Attribute;
+using mlir::Location;
+using mlir::LogicalResult;
+using mlir::OpBuilder;
+using mlir::Operation;
+using mlir::Value;
+using mlir::ValueRange;
 using namespace mpir;
 
 /// A non-negative literal is unsigned and a negative one signed, each at
@@ -198,8 +205,7 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
     }
     return mlir::emitError(ReadLoc)
            << "'?" << getMetaVariableName(Arg) << "' is bound to '"
-           << toString([&](raw_ostream &OS) { printSurfaceValue(OS, Subject); })
-           << "', which a constraint cannot refer to";
+           << surfaceString(Subject) << "', which a constraint cannot refer to";
   }
   return Result;
 }

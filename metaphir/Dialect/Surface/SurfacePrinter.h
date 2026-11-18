@@ -10,6 +10,7 @@
 #define METAPHIR_DIALECT_SURFACE_SURFACEPRINTER_H
 
 #include "mlir/IR/Value.h"
+#include <string>
 
 namespace llvm {
 class raw_ostream;
@@ -31,6 +32,9 @@ void printSurfaceExpression(raw_ostream &OS, mlir::Value Expression);
 
 /// Prints a pattern value: '?x', '%a', '@g', a constant or a type pattern.
 void printSurfaceValue(raw_ostream &OS, mlir::Value V);
+
+/// printSurfaceValue's text, for a diagnostic.
+std::string surfaceString(mlir::Value V);
 
 /// The name of a meta variable: an mpir.var, or a parameter of a definition
 /// or match branch. Empty for anything else.

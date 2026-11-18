@@ -9,5 +9,4 @@ target_sources(metaphir-transforms PRIVATE
   LowerAlternatives.cpp
   LowerAlternatives.h
   Lowering.cpp
-  Lowering.h
-  LoweringUtils.h)
+  Lowering.h)
