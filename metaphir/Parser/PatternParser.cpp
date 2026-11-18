@@ -50,8 +50,6 @@ namespace {
 /// The name under which the embedded standard library is parsed.
 constexpr StringLiteral StdLibName = "stdlib";
 
-Sort sortOf(Value V) { return cast<SortType>(V.getType()).getSort(); }
-
 /// A matcher operand being parsed, as MatcherOperand is.
 struct POperand {
   OperandKind Kind = OperandKind::TypedValue;
@@ -199,7 +197,7 @@ private:
   }
   /// Where V, or the operation defining it, was written.
   SMLoc locOf(Value V) const { return getSourceRange(V.getLoc()).Start; }
-  mpir::SortType sortType(Sort S) { return getSortType(Context, S); }
+  mpir::SortType sortType(Sort S) { return mpir::SortType::get(Context, S); }
 
   // Definitions in the module.
   template <typename OpT> OpT lookup(StringRef Name) {

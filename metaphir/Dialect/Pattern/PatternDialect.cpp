@@ -192,7 +192,7 @@ InstOp MatcherParts::buildInst(OpBuilder &Builder, Location Loc,
                                OpcodeAttr Opcode, bool SwappedPredicate) const {
   BuildArguments Args(Builder, *this);
   return InstOp::create(
-      Builder, Loc, getSortType(Builder.getContext(), Sort::Instruction),
+      Builder, Loc, SortType::get(Builder.getContext(), Sort::Instruction),
       Opcode, Args.ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
       Args.OperandMetaFlags, SwappedPredicate, Args.TreatIntAsVec, Capture,
       ParentBlock, FlagCaptures, Args.Values);
@@ -202,7 +202,7 @@ UseOp MatcherParts::buildUse(OpBuilder &Builder, Location Loc,
                              FlatSymbolRefAttr Matcher) const {
   BuildArguments Args(Builder, *this);
   return UseOp::create(
-      Builder, Loc, getSortType(Builder.getContext(), Sort::Instruction),
+      Builder, Loc, SortType::get(Builder.getContext(), Sort::Instruction),
       Matcher, Args.ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
       Args.OperandMetaFlags, /*swapped_predicate=*/UnitAttr(),
       Args.TreatIntAsVec, Capture, ParentBlock, FlagCaptures, Args.Values);

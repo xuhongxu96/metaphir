@@ -259,7 +259,7 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
               mlir::IntegerType::get(Context, 64, mlir::IntegerType::Unsigned);
           Value V = CallerOps[OpIndex].Val;
           Mapping.map(Arg, IntOp::create(Builder, V ? V.getLoc() : Use.getLoc(),
-                                         sortType(Context, Sort::Value),
+                                         SortType::get(Context, Sort::Value),
                                          mlir::IntegerAttr::get(Type, Width)));
         }
       }
@@ -322,7 +322,7 @@ bool BranchInliner::bindFlags() {
       FlagValue.first = UseCapture;
     } else {
       FlagValue.first = VarOp::create(
-          Builder, Use.getLoc(), sortType(Context, Sort::Boolean),
+          Builder, Use.getLoc(), SortType::get(Context, Sort::Boolean),
           Builder.getStringAttr(
               (OmittedFlagPrefix + UsePrefix + "$" +
                instruction_flag::getName(instruction_flag::FlagID(FlagID)))
@@ -346,7 +346,7 @@ bool BranchInliner::bindFlags() {
         Mapping.map(
             Capture,
             IntOp::create(
-                Builder, Use.getLoc(), sortType(Context, Sort::Value),
+                Builder, Use.getLoc(), SortType::get(Context, Sort::Value),
                 mlir::IntegerAttr::get(Type, APInt(1, *FlagValue.second))));
       }
     }
@@ -468,7 +468,7 @@ void BranchInliner::finish() {
   for (auto [Capture, Value] : FixedFlags) {
     auto Type = mlir::IntegerType::get(Context, 1, mlir::IntegerType::Unsigned);
     mlir::Value Constant =
-        IntOp::create(Builder, CallerLoc, sortType(Context, Sort::Value),
+        IntOp::create(Builder, CallerLoc, SortType::get(Context, Sort::Value),
                       mlir::IntegerAttr::get(Type, APInt(1, Value)));
     BindOp::create(Builder, CallerLoc, Capture, Constant);
   }

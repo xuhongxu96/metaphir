@@ -13,10 +13,6 @@ namespace metaphir {
 
 using namespace mpir;
 
-static Sort sortOf(mlir::Value V) {
-  return cast<SortType>(V.getType()).getSort();
-}
-
 StringRef getMetaVariableName(mlir::Value V) {
   if (Operation *Def = V.getDefiningOp()) {
     // An mpir.var, or what stands for one elsewhere (a plan's slot).

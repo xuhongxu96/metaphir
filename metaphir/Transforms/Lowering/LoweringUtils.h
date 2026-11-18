@@ -26,10 +26,6 @@ using mlir::Value;
 using mlir::ValueRange;
 using namespace mpir;
 
-inline SortType sortType(mlir::MLIRContext *Context, Sort S) {
-  return SortType::get(Context, S);
-}
-
 /// What Print prints to a stream, as a string.
 template <typename T> std::string toString(const T &Print) {
   std::string Result;

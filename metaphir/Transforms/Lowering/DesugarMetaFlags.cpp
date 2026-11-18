@@ -29,7 +29,6 @@ static APSInt normalizeLiteral(const APSInt &Number) {
                       /*isUnsigned=*/true);
 }
 
-static Sort sortOf(Value V) { return cast<SortType>(V.getType()).getSort(); }
 
 //===----------------------------------------------------------------------===//
 // mpir-desugar-metaflags
@@ -83,7 +82,7 @@ mlir::FailureOr<Value> Desugarer::lower(MetaFlagAttr Flag, Value Subject) {
     return error(Flag) << "metaflag ':" << Name
                        << "' has no value to use as its subject";
   mlir::MLIRContext *Context = Builder.getContext();
-  auto BooleanType = sortType(Context, Sort::Boolean);
+  auto BooleanType = SortType::get(Context, Sort::Boolean);
   switch (metaflag::getMetaFlagID(Name)) {
   case metaflag::MF_not: {
     auto Inner = dyn_cast<MetaFlagAttr>(Flag.getArgs()[0]);
@@ -179,13 +178,13 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
           S != Sort::Unknown ? getRepresentation(resolveSort(S)) : sortOf(Read);
       Mapping.map(Read.getResult(),
                   mpir_expr::ReadOp::create(
-                      Builder, ReadLoc, sortType(Context, ReadSort), Subject));
+                      Builder, ReadLoc, SortType::get(Context, ReadSort), Subject));
       continue;
     }
     if (isa<InstOp, UseOp, AltOp>(SubjectDef)) {
       Mapping.map(Read.getResult(),
                   mpir_expr::ReadOp::create(Builder, ReadLoc,
-                                            sortType(Context, Sort::Value),
+                                            SortType::get(Context, Sort::Value),
                                             Subject));
       continue;
     }

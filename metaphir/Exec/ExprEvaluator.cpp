@@ -22,10 +22,6 @@ namespace metaphir {
 using namespace detail;
 using mlir::Operation;
 
-static Sort sortOf(mlir::Value V) {
-  return cast<mpir::SortType>(V.getType()).getSort();
-}
-
 /// The name a variable is read under, in a diagnostic.
 static std::string describeVariable(mlir::Value V, StringRef Msg) {
   std::string Str;
@@ -51,7 +47,7 @@ Expected<ConstraintValue> readBinding(mlir::Value ReadValue,
         Expression,
         describeVariable(Read.getValue(), "has an incompatible binding"));
   };
-  switch (sortOf(Read)) {
+  switch (mpir::sortOf(Read)) {
   case Sort::Integer:
     if (const auto *Integer = std::get_if<APSInt>(&Binding.Data))
       return ConstraintValue::getInteger(*Integer);
@@ -184,7 +180,7 @@ Expected<ConstraintValue> ExprEvaluator::eval(mlir::Value E, Frame &F) {
         evalAll(Array.getElements(), F);
     if (!Elements)
       return Elements.takeError();
-    switch (sortOf(Array)) {
+    switch (mpir::sortOf(Array)) {
     case Sort::TypeArray: {
       Binding::TypeArray Types;
       for (const ConstraintValue &Element : *Elements)

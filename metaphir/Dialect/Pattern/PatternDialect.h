@@ -56,9 +56,9 @@ namespace llvm {
 namespace metaphir {
 namespace mpir {
 
-/// The type of pattern values of sort S.
-inline SortType getSortType(mlir::MLIRContext *Context, Sort S) {
-  return SortType::get(Context, S);
+/// The sort of a pattern value.
+inline Sort sortOf(mlir::Value V) {
+  return cast<SortType>(V.getType()).getSort();
 }
 
 /// One matcher operand of an mpir.inst or mpir.use, with its values.

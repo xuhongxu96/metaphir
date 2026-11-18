@@ -37,16 +37,13 @@ using mlir::Value;
 using namespace mpir;
 namespace index = mpir_index;
 
-static Sort sortOf(Value V) { return cast<SortType>(V.getType()).getSort(); }
 
 static bool isVariable(Value V) {
   return isa<mlir::BlockArgument>(V) || V.getDefiningOp<VarOp>();
 }
 
-static bool isCommutedAlt(AltOp Alt) { return Alt.getCommuted(); }
-static bool isOrSelfAlt(AltOp Alt) { return Alt.getOrSelfOf().has_value(); }
 static bool isMatcherAlt(AltOp Alt) {
-  return !isCommutedAlt(Alt) && !isOrSelfAlt(Alt);
+  return !Alt.getCommuted() && !Alt.getOrSelfOf();
 }
 
 static Value yieldOf(mlir::Region &Region) {
@@ -162,7 +159,7 @@ InstOp Compiler::instructionOf(Value V) {
   auto Alt = dyn_cast_or_null<AltOp>(Def);
   if (!Alt || Alt->getNumRegions() == 0)
     return nullptr;
-  if (isCommutedAlt(Alt))
+  if (Alt.getCommuted())
     return instructionOf(yieldOf(Alt->getRegion(0)));
   if (isMatcherAlt(Alt)) {
     auto It = Choices.find(Alt);
@@ -284,12 +281,12 @@ Requirement Compiler::requirementOf(Value V) {
   auto Alt = dyn_cast_or_null<AltOp>(Def);
   if (!Alt || Alt->getNumRegions() == 0)
     return {};
-  if (isCommutedAlt(Alt)) {
+  if (Alt.getCommuted()) {
     auto Inst = yieldOf(Alt->getRegion(0)).getDefiningOp<InstOp>();
     return Inst ? requirementOfInstruction(Inst, /*Commutative=*/true)
                 : Requirement();
   }
-  if (isOrSelfAlt(Alt)) {
+  if (Alt.getOrSelfOf()) {
     // The target matches either the matcher or its operand, so only what
     // both alternatives need is required.
     Requirement Itself = requirementOf(yieldOf(Alt->getRegion(0)));
@@ -488,7 +485,7 @@ void Compiler::emitVariant(const Requirement &R) {
     }
     bool Commutative = false;
     if (auto Alt = dyn_cast<AltOp>(Inst->getParentOp()))
-      Commutative = isCommutedAlt(Alt);
+      Commutative = Alt.getCommuted();
     auto Typing = index::TypingOp::create(
         Builder, Inst.getLoc(), Inst.getOpcodeAttr(),
         Builder.getI32IntegerAttr(Shape.Present),

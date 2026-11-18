@@ -55,16 +55,12 @@ void ExprDialect::initialize() {
       >();
 }
 
-static mpir::SortType sortType(OpBuilder &Builder, Sort S) {
-  return mpir::SortType::get(Builder.getContext(), S);
-}
-
 void IntOp::build(OpBuilder &Builder, OperationState &State,
                   const llvm::APSInt &Value) {
   auto Type = IntegerType::get(Builder.getContext(), Value.getBitWidth(),
                                Value.isUnsigned() ? IntegerType::Unsigned
                                                   : IntegerType::Signed);
-  build(Builder, State, sortType(Builder, Sort::Integer),
+  build(Builder, State, mpir::SortType::get(Builder.getContext(), Sort::Integer),
         IntegerAttr::get(Type, Value));
 }
 
@@ -74,13 +70,13 @@ llvm::APSInt IntOp::getAPSInt() {
 }
 
 void BoolOp::build(OpBuilder &Builder, OperationState &State, bool Value) {
-  build(Builder, State, sortType(Builder, Sort::Boolean),
+  build(Builder, State, mpir::SortType::get(Builder.getContext(), Sort::Boolean),
         Builder.getBoolAttr(Value));
 }
 
 void StrOp::build(OpBuilder &Builder, OperationState &State,
                   llvm::StringRef Value) {
-  build(Builder, State, sortType(Builder, Sort::String),
+  build(Builder, State, mpir::SortType::get(Builder.getContext(), Sort::String),
         Builder.getStringAttr(Value));
 }
 

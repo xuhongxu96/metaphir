@@ -36,7 +36,6 @@ using mlir::Value;
 using namespace mpir;
 namespace plan = mpir_plan;
 
-static Sort sortOf(Value V) { return cast<SortType>(V.getType()).getSort(); }
 
 /// Whether V is a meta variable: an mpir.var or a branch parameter.
 static bool isVariable(Value V) {
