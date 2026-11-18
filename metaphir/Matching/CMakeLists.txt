@@ -21,21 +21,6 @@ add_library(
   ConstraintError.cpp
   ConstraintError.h
   LLVMValueClasses.h
-  Operators/Arithmetic.cpp
-  Operators/AbstractCall.cpp
-  Operators/AbstractCall.h
-  Operators/Arithmetic.h
-  Operators/CmpPredicates.cpp
-  Operators/CmpPredicates.h
-  Operators/CmpPredicateSupport.h
-  Operators/Facts.cpp
-  Operators/Facts.h
-  Operators/OperatorCall.h
-  Operators/ValuePredicates.cpp
-  Operators/ValuePredicates.h
-  Operators/ValuePredicateSupport.h
-  Operators/ValueTracking.cpp
-  Operators/ValueTracking.h
   ConstraintValue.cpp
   ConstraintValue.h
   ConstantInteger.cpp
@@ -56,6 +41,8 @@ add_library(
   TypeCode.h
   ValueTrackContext.cpp
   ValueTrackContext.h)
+
+add_subdirectory(Operators)
 
 add_dependencies(metaphir-matching MetaphIRMatchingTableGen)
 target_link_libraries(metaphir-matching PUBLIC metaphir-ir metaphir-surface-printer LLVMAnalysis

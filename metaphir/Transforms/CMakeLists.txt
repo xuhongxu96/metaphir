@@ -1,7 +1,14 @@
 # Passes over the mpir dialects.
-add_library(metaphir-transforms Lowering.cpp Lowering.h ToPlan.cpp ToPlan.h
-                               ToIndex.cpp ToIndex.h Structuralize.cpp
-                               Structuralize.h Retrieval.cpp Retrieval.h)
+add_library(metaphir-transforms
+  Retrieval.cpp
+  Retrieval.h
+  Structuralize.cpp
+  Structuralize.h
+  ToIndex.cpp
+  ToIndex.h
+  ToPlan.cpp
+  ToPlan.h)
+add_subdirectory(Lowering)
 add_dependencies(metaphir-transforms MetaphIRPatternOpsIncGen
                  MetaphIRExprOpsIncGen MetaphIRPlanOpsIncGen
                  MetaphIRIndexOpsIncGen)

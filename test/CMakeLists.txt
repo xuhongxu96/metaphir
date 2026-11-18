@@ -16,6 +16,7 @@ set(METAPHIR_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
 configure_file(lit.site.cfg.py.in ${METAPHIR_TEST_DIR}/lit.site.cfg.py @ONLY)
 
 add_subdirectory(Parser)
+add_subdirectory(Transforms)
 add_subdirectory(IR)
 add_subdirectory(Matching)
 add_subdirectory(Exec)

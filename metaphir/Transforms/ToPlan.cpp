@@ -16,7 +16,7 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/PatternSettings.h"
-#include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/Lowering/Lowering.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/IRMapping.h"

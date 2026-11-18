@@ -12,7 +12,7 @@
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/Sort.h"
-#include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/Lowering/Lowering.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/SymbolTable.h"
 #include "llvm/Support/MemoryBuffer.h"

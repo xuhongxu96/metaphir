@@ -4,7 +4,7 @@
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
-#include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/Lowering/Lowering.h"
 #include "metaphir/Transforms/Retrieval.h"
 #include "metaphir/Transforms/Structuralize.h"
 #include "metaphir/Transforms/ToIndex.h"

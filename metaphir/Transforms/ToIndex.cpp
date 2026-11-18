@@ -16,7 +16,7 @@
 #include "metaphir/IR/PatternSettings.h"
 #include "metaphir/Matching/FeatureRequirement.h"
 #include "metaphir/Matching/Features.h"
-#include "metaphir/Transforms/Lowering.h"
+#include "metaphir/Transforms/Lowering/Lowering.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/IRMapping.h"

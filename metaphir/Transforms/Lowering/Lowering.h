@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef METAPHIR_TRANSFORMS_LOWERING_H
-#define METAPHIR_TRANSFORMS_LOWERING_H
+#ifndef METAPHIR_TRANSFORMS_LOWERING_LOWERING_H
+#define METAPHIR_TRANSFORMS_LOWERING_LOWERING_H
 
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/Pass/Pass.h"
@@ -29,11 +29,6 @@ namespace llvm {
 class SourceMgr;
 class raw_ostream;
 namespace metaphir {
-
-std::unique_ptr<mlir::Pass> createDesugarMetaFlagsPass();
-std::unique_ptr<mlir::Pass> createExpandMatchersPass();
-std::unique_ptr<mlir::Pass> createLowerAlternativesPass();
-std::unique_ptr<mlir::Pass> createCheckBindingsPass();
 
 /// The instruction matchers and alternatives of Block (of a lowered pattern,
 /// or of an alternative) that no other matcher uses as an operand: those a
@@ -56,4 +51,4 @@ mlir::LogicalResult lowerPatternModule(mlir::ModuleOp Module,
 } // namespace metaphir
 } // namespace llvm
 
-#endif // METAPHIR_TRANSFORMS_LOWERING_H
+#endif // METAPHIR_TRANSFORMS_LOWERING_LOWERING_H
