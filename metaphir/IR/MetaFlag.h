@@ -31,6 +31,13 @@ inline std::optional<Schema> getSchema(MetaFlagID ID) {
   return BuiltIns[ID - 1].Accepts;
 }
 
+/// Whether the metaflag called Name is structural (':c', ':o'); a defined
+/// metaflag never is.
+inline bool isStructural(StringRef Name) {
+  std::optional<Schema> S = getSchema(getMetaFlagID(Name));
+  return S && S->Structural;
+}
+
 } // namespace metaflag
 } // namespace metaphir
 } // namespace llvm

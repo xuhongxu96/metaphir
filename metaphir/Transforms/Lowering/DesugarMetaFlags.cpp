@@ -76,12 +76,6 @@ private:
 };
 } // namespace
 
-/// Whether Flag is ':c' or ':o', which are structural rather than constraints.
-static bool isStructuralFlag(MetaFlagAttr Flag) {
-  metaflag::MetaFlagID ID = metaflag::getMetaFlagID(Flag.getName());
-  return ID == metaflag::MF_c || ID == metaflag::MF_o;
-}
-
 mlir::FailureOr<Value> Desugarer::lower(MetaFlagAttr Flag, Value Subject) {
   StringRef Name = Flag.getName().getValue();
   Location Loc(Flag.getLoc());
@@ -239,7 +233,7 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
                      Value Anchor) -> LogicalResult {
     for (Attribute A : Flags) {
       auto Flag = cast<MetaFlagAttr>(A);
-      if (isStructuralFlag(Flag))
+      if (metaflag::isStructural(Flag.getName()))
         continue;
       mlir::FailureOr<Value> C = lower(Flag, Subject);
       if (mlir::failed(C))
@@ -263,7 +257,7 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
               Desugar(Flags->getValue(), U.getResult(), U.getResult())))
         return mlir::failure();
       for (Attribute A : *Flags)
-        if (isStructuralFlag(cast<MetaFlagAttr>(A)))
+        if (metaflag::isStructural(cast<MetaFlagAttr>(A).getName()))
           Kept.push_back(A);
     }
     if (std::optional<mlir::ArrayAttr> PerOperand = U.getOperandMetaflags()) {

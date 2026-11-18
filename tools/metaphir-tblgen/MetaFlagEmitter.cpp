@@ -46,6 +46,9 @@ void emitMetaFlags(const RecordKeeper &Records, raw_ostream &OS) {
         "/// What a built-in metaflag accepts.\nstruct Schema {\n"
         "  Placement AllowedPlacement;\n  unsigned MinArguments;\n"
         "  unsigned MaxArguments;\n  ArgumentKind Arguments;\n"
+        "  /// Whether the flag changes how the instruction itself is matched. It is\n"
+        "  /// not lowered to a constraint.\n"
+        "  bool Structural;\n"
         "  /// Whether the flag may be an argument of another metaflag.\n"
         "  bool Nestable;\n};\n\n"
         "/// A built-in metaflag: its name, and what it accepts.\n"
@@ -60,6 +63,7 @@ void emitMetaFlags(const RecordKeeper &Records, raw_ostream &OS) {
            << F->getValueAsInt("MinArguments") << ", "
            << (Max == -1 ? "UnlimitedArgs" : std::to_string(Max)) << ", "
            << F->getValueAsString("Arguments") << ", "
+           << (F->getValueAsBit("Structural") ? "true" : "false") << ", "
            << (F->getValueAsBit("Nestable") ? "true" : "false") << "}}";
       });
   endHeader(OS, "METAPHIR_IR_META_FLAG_INC", {"metaflag"});

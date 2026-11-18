@@ -108,9 +108,9 @@ class Subsort<Sort sub, Sort super> {
   Sort Super = super;
 }
 
-/// A built-in metaflag.
+/// A built-in metaflag. Nestable, unless StructuralMetaFlag.
 class MetaFlag<string name, string placement, int minArgs, int maxArgs,
-               string argumentKind, bit nestable> {
+               string argumentKind> {
   /// The flag's name, as in ':c'.
   string Name = name;
   /// Where the flag may be written: InstructionPlacement, OperandPlacement or
@@ -121,8 +121,21 @@ class MetaFlag<string name, string placement, int minArgs, int maxArgs,
   int MaxArguments = maxArgs;
   /// What the arguments are: AnyArgument, IntegerArgument or FlagArgument.
   string Arguments = argumentKind;
+  /// Whether the flag changes how the instruction itself is matched, rather
+  /// than adding a condition on it. Structural flags are not lowered to
+  /// constraints.
+  bit Structural = 0;
   /// Whether the flag may be an argument of another metaflag.
-  bit Nestable = nestable;
+  bit Nestable = 1;
+}
+
+/// A flag that changes how the instruction itself is matched. It is not
+/// nestable, as it is not a condition that another metaflag could combine.
+class StructuralMetaFlag<string name, string placement, int minArgs,
+                         int maxArgs, string argumentKind>
+    : MetaFlag<name, placement, minArgs, maxArgs, argumentKind> {
+  let Structural = 1;
+  let Nestable = 0;
 }
 
 /// An operator of a constraint expression. The record is named Op<ID>, as the

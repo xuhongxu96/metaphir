@@ -8,10 +8,11 @@
 
 include "metaphir/IR/LanguageBase.td"
 
-// Nestable: whether the flag may appear as an argument of another metaflag.
-// ':c' and ':o' are not: they change how the instruction itself is matched,
-// not a condition on it that another flag could combine.
-def MF_c : MetaFlag<"c", "InstructionPlacement", 0, 0, "AnyArgument", 0>;
-def MF_o : MetaFlag<"o", "InstructionPlacement", 0, 1, "IntegerArgument", 0>;
-def MF_or : MetaFlag<"or", "OperandPlacement", 1, -1, "FlagArgument", 1>;
-def MF_not : MetaFlag<"not", "OperandPlacement", 1, 1, "FlagArgument", 1>;
+// A structural flag (':c', ':o') changes how the instruction itself is matched
+// rather than adding a condition on it, so desugaring keeps it as it is, and
+// another metaflag cannot nest it.
+def MF_c : StructuralMetaFlag<"c", "InstructionPlacement", 0, 0, "AnyArgument">;
+def MF_o
+    : StructuralMetaFlag<"o", "InstructionPlacement", 0, 1, "IntegerArgument">;
+def MF_or : MetaFlag<"or", "OperandPlacement", 1, -1, "FlagArgument">;
+def MF_not : MetaFlag<"not", "OperandPlacement", 1, 1, "FlagArgument">;
