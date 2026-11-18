@@ -54,17 +54,15 @@ protected:
   }
 
   /// Runs Passes, in order, over the module. Their errors are in Errors.
-  mlir::LogicalResult run(std::unique_ptr<mlir::Pass> Pass) {
+  template <typename... PassTs>
+  mlir::LogicalResult run(std::unique_ptr<PassTs>... Passes) {
     mlir::PassManager PM(&Context);
-    PM.addPass(std::move(Pass));
-    return runManager(PM);
-  }
-  mlir::LogicalResult run(std::unique_ptr<mlir::Pass> First,
-                          std::unique_ptr<mlir::Pass> Second) {
-    mlir::PassManager PM(&Context);
-    PM.addPass(std::move(First));
-    PM.addPass(std::move(Second));
-    return runManager(PM);
+    (PM.addPass(std::move(Passes)), ...);
+    mlir::ScopedDiagnosticHandler Handler(&Context, [&](mlir::Diagnostic &D) {
+      Errors += D.str() + "\n";
+      return mlir::success();
+    });
+    return PM.run(*Module);
   }
 
   /// The pattern of the module.
@@ -97,15 +95,6 @@ protected:
   mlir::OwningOpRef<mlir::ModuleOp> Module;
   /// What the passes reported, a line per error.
   std::string Errors;
-
-private:
-  mlir::LogicalResult runManager(mlir::PassManager &PM) {
-    mlir::ScopedDiagnosticHandler Handler(&Context, [&](mlir::Diagnostic &D) {
-      Errors += D.str() + "\n";
-      return mlir::success();
-    });
-    return PM.run(*Module);
-  }
 };
 
 } // namespace test

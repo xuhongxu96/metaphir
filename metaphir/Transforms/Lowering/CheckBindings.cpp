@@ -1,5 +1,4 @@
-//===- CheckBindings.cpp - mpir-check-bindings
-//------------------------------===//
+//===- CheckBindings.cpp - mpir-check-bindings ----------------------------===//
 //
 // See Lowering.h: a named meta variable is bound whichever alternative ':o'
 // takes.
@@ -7,37 +6,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "metaphir/Transforms/Lowering/CheckBindings.h"
-#include "metaphir/Dialect/Expr/ExprDialect.h"
-#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
-#include "metaphir/Dialect/Surface/SurfacePrinter.h"
-#include "metaphir/IR/MetaFlag.h"
 #include "metaphir/Transforms/Lowering/LoweringUtils.h"
-#include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/BuiltinTypes.h"
-#include "mlir/IR/Diagnostics.h"
-#include "mlir/IR/IRMapping.h"
-#include "mlir/IR/SymbolTable.h"
-#include "mlir/Pass/PassManager.h"
-#include "mlir/Pass/PassRegistry.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace metaphir {
 namespace lowering {
 
-using mlir::Attribute;
-using mlir::Location;
-using mlir::LogicalResult;
-using mlir::OpBuilder;
-using mlir::Operation;
-using mlir::Value;
-using mlir::ValueRange;
 using namespace mpir;
 
 //===----------------------------------------------------------------------===//

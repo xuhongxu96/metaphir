@@ -1,5 +1,4 @@
-//===- DesugarMetaFlags.cpp - mpir-desugar-metaflags
-//------------------------===//
+//===- DesugarMetaFlags.cpp - mpir-desugar-metaflags ----------------------===//
 //
 // See Lowering.h: metaflags become constraints (mpir.require).
 //
@@ -7,36 +6,15 @@
 
 #include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
-#include "metaphir/Dialect/Pattern/PatternDialect.h"
-#include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
-#include "metaphir/IR/MetaFlag.h"
 #include "metaphir/Transforms/Lowering/LoweringUtils.h"
-#include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/BuiltinTypes.h"
-#include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/IRMapping.h"
-#include "mlir/IR/SymbolTable.h"
-#include "mlir/Pass/PassManager.h"
-#include "mlir/Pass/PassRegistry.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace metaphir {
 namespace lowering {
 
-using mlir::Attribute;
-using mlir::Location;
-using mlir::LogicalResult;
-using mlir::OpBuilder;
-using mlir::Operation;
-using mlir::Value;
-using mlir::ValueRange;
 using namespace mpir;
 
 /// A non-negative literal is unsigned and a negative one signed, each at
@@ -160,7 +138,6 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
                        << " arguments, got " << Args.size();
   mlir::Block &Body = Def.getBody().front();
   mlir::MLIRContext *Context = Builder.getContext();
-  Location Loc(Flag.getLoc());
 
   // What each parameter is bound to: the subject, then the arguments.
   SmallVector<Value, 4> Bound;
@@ -235,7 +212,6 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
            << toString([&](raw_ostream &OS) { printSurfaceValue(OS, Subject); })
            << "', which a constraint cannot refer to";
   }
-  (void)Loc;
   return Result;
 }
 
@@ -248,35 +224,38 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
       FirstRequire = &Op;
       break;
     }
+
+  if (FirstRequire)
+    Builder.setInsertionPoint(FirstRequire);
+  else
+    Builder.setInsertionPointToEnd(&Block);
+
   SmallVector<Operation *, 16> Matchers;
   for (Operation &Op : Block)
     if (isa<InstOp, UseOp>(Op))
       Matchers.push_back(&Op);
 
+  auto Desugar = [&](ArrayRef<Attribute> Flags, Value Subject,
+                     Value Anchor) -> LogicalResult {
+    for (Attribute A : Flags) {
+      auto Flag = cast<MetaFlagAttr>(A);
+      if (isStructuralFlag(Flag))
+        continue;
+      mlir::FailureOr<Value> C = lower(Flag, Subject);
+      if (mlir::failed(C))
+        return mlir::failure();
+      DenseSet<Operation *> Visited;
+      setDefaultAnchor(*C, Anchor, Visited);
+      auto Require = RequireOp::create(Builder, Location(Flag.getLoc()), *C);
+      // Checked before the pattern's own constraints, as what the flags
+      // say a binding is decides whether the others can be evaluated.
+      Require->setAttr("from_metaflag", Builder.getUnitAttr());
+    }
+    return mlir::success();
+  };
+
   for (Operation *Op : Matchers) {
     MatcherUse U(Op);
-    if (FirstRequire)
-      Builder.setInsertionPoint(FirstRequire);
-    else
-      Builder.setInsertionPointToEnd(&Block);
-    auto Desugar = [&](ArrayRef<Attribute> Flags, Value Subject,
-                       Value Anchor) -> LogicalResult {
-      for (Attribute A : Flags) {
-        auto Flag = cast<MetaFlagAttr>(A);
-        if (isStructuralFlag(Flag))
-          continue;
-        mlir::FailureOr<Value> C = lower(Flag, Subject);
-        if (mlir::failed(C))
-          return mlir::failure();
-        DenseSet<Operation *> Visited;
-        setDefaultAnchor(*C, Anchor, Visited);
-        auto Require = RequireOp::create(Builder, Location(Flag.getLoc()), *C);
-        // Checked before the pattern's own constraints, as what the flags
-        // say a binding is decides whether the others can be evaluated.
-        Require->setAttr("from_metaflag", Builder.getUnitAttr());
-      }
-      return mlir::success();
-    };
 
     Value Subject = U.getCapture() ? U.getCapture() : U.result();
     SmallVector<Attribute, 4> Kept;

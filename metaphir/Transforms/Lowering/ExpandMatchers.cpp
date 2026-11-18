@@ -1,5 +1,4 @@
-//===- ExpandMatchers.cpp - mpir-expand-matchers
-//----------------------------===//
+//===- ExpandMatchers.cpp - mpir-expand-matchers --------------------------===//
 //
 // See Lowering.h: a use of a matcher becomes an mpir.alt of its branches.
 //
@@ -7,36 +6,16 @@
 
 #include "metaphir/Transforms/Lowering/ExpandMatchers.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
-#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
-#include "metaphir/IR/MetaFlag.h"
 #include "metaphir/Transforms/Lowering/LoweringUtils.h"
-#include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/BuiltinTypes.h"
-#include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/IRMapping.h"
-#include "mlir/IR/SymbolTable.h"
-#include "mlir/Pass/PassManager.h"
-#include "mlir/Pass/PassRegistry.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace metaphir {
 namespace lowering {
 
-using mlir::Attribute;
-using mlir::Location;
-using mlir::LogicalResult;
-using mlir::OpBuilder;
-using mlir::Operation;
-using mlir::Value;
-using mlir::ValueRange;
 using namespace mpir;
 
 //===----------------------------------------------------------------------===//
@@ -98,7 +77,6 @@ private:
   mlir::FailureOr<bool> inlineBranch(UseOp Use, MatcherOp Matcher,
                                      BranchOp Branch,
                                      ArrayRef<MatcherOperandView> CallerOps,
-                                     ArrayRef<Attribute> CallerOperandFlags,
                                      StringRef UsePrefix, AltOp Alt);
 };
 } // namespace
@@ -131,13 +109,86 @@ static void archetypePositions(
   }
 }
 
-mlir::FailureOr<bool>
-Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
-                       ArrayRef<MatcherOperandView> CallerOps,
-                       ArrayRef<Attribute> CallerOperandFlags,
-                       StringRef UsePrefix, AltOp Alt) {
-  mlir::MLIRContext *Context = Builder.getContext();
-  mlir::Block &Body = Branch.getBody().front();
+namespace {
+/// Inlines one branch of a matcher into a region of an mpir.alt, for one use
+/// of the matcher.
+class BranchInliner {
+public:
+  BranchInliner(OpBuilder &Builder, UseOp Use, MatcherOp Matcher,
+                BranchOp Branch, ArrayRef<MatcherOperandView> CallerOps,
+                StringRef UsePrefix, AltOp Alt)
+      : Builder(Builder), Context(Builder.getContext()), Use(Use),
+        Matcher(Matcher), Branch(Branch), CallerOps(CallerOps),
+        UsePrefix(UsePrefix), Alt(Alt), Body(Branch.getBody().front()),
+        Yield(*Body.getOps<YieldOp>().begin()),
+        Root(Yield.getValue().getDefiningOp()), CallerLoc(Use.getLoc()) {}
+
+  /// Inlines the branch into the last region of Alt. Returns false if the
+  /// branch cannot fit the use.
+  mlir::FailureOr<bool> run();
+
+private:
+  /// Binds the branch's type arguments to the types the use passes, and its
+  /// value arguments to its operands. Returns false if a type cannot fit.
+  mlir::FailureOr<bool> bindTypes();
+  /// Binds the matcher's supported flags to what the use says of them.
+  /// Returns false if the use and the branch disagree on one.
+  bool bindFlags();
+  /// What the root's capture and the branch's 'i?n' type patterns stand for.
+  void bindRootAndWidths();
+  /// Copies the branch's operations into the new region.
+  void inlineBody();
+  /// Copies an instruction matcher of the branch, renamed after the use, with
+  /// its settings over the use's.
+  void inlineMatcher(Operation &Op);
+  /// Binds what the branch fixes of the flags the use captures, and yields
+  /// the root.
+  void finish();
+
+  OpBuilder &Builder;
+  mlir::MLIRContext *Context;
+  UseOp Use;
+  MatcherOp Matcher;
+  BranchOp Branch;
+  ArrayRef<MatcherOperandView> CallerOps;
+  StringRef UsePrefix;
+  AltOp Alt;
+  mlir::Block &Body;
+  /// The root: what the branch yields.
+  YieldOp Yield;
+  MatcherUse Root;
+  Location CallerLoc;
+
+  mlir::IRMapping Mapping;
+  /// Branch arguments bound to a type, and the width variable an 'i?n'
+  /// parameter's argument also stands for.
+  DenseMap<Value, Value> ArgTypes;
+  /// Flags the branch fixes that the use captures: the capture, and the
+  /// value.
+  SmallVector<std::pair<Value, bool>, 2> FixedFlags;
+  /// What the root's capture of each supported flag stands for: a boolean
+  /// constant or a meta variable.
+  DenseMap<int32_t, std::pair<Value, std::optional<bool>>> FlagValues;
+  /// The branch's 'i?n' type patterns that stand for a type the use passes.
+  DenseMap<Operation *, Value> ReplacedTypes;
+};
+} // namespace
+
+mlir::FailureOr<bool> BranchInliner::run() {
+  mlir::FailureOr<bool> Fits = bindTypes();
+  if (mlir::failed(Fits) || !*Fits)
+    return Fits;
+  OpBuilder::InsertionGuard Guard(Builder);
+  Builder.setInsertionPoint(Alt);
+  if (!bindFlags())
+    return false;
+  bindRootAndWidths();
+  inlineBody();
+  finish();
+  return true;
+}
+
+mlir::FailureOr<bool> BranchInliner::bindTypes() {
   ArrayRef<int32_t> ParamArgs = Branch.getParamArgs();
   auto Signature = cast<SignatureOp>(
       *llvm::find_if(Matcher.getBody().front(),
@@ -150,11 +201,6 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
     for (bool IsType : Matcher.getParamIsType())
       ParamTypes.push_back(IsType ? Signature.getTypes()[NextType++] : Value());
   }
-
-  mlir::IRMapping Mapping;
-  // Branch arguments bound to a type, and the width variable an 'i?n'
-  // parameter's argument also stands for.
-  DenseMap<Value, Value> ArgTypes;
 
   SmallVector<std::pair<unsigned, unsigned>, 8> TypePositions, ValuePositions;
   archetypePositions(instruction::OperandSyntax(Matcher.getSyntax()),
@@ -225,18 +271,14 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
     if (ArgNumber >= 0 && CallerOps[OpIndex].Val)
       Mapping.map(Body.getArgument(ArgNumber), CallerOps[OpIndex].Val);
   }
+  return true;
+}
 
-  // The root: what the branch yields.
-  auto Yield = *Body.getOps<YieldOp>().begin();
-  MatcherUse Root(Yield.getValue().getDefiningOp());
-
+bool BranchInliner::bindFlags() {
   // Bind the matcher's supported flags. For each one, the use either omits
   // it, requires it, negates it, or captures it; a branch may also fix its
   // value. FlagValue is what the root's capture of the flag stands for: a
   // boolean constant or a meta variable.
-  MatcherUse UseView(Use);
-  SmallVector<std::pair<Value, bool>, 2> FixedFlags;
-  DenseMap<int32_t, std::pair<Value, std::optional<bool>>> FlagValues;
   ArrayRef<instruction_flag::FlagID> UseFlags = Use.getFlags();
   ArrayRef<FlagMode> UseModes = Use.getFlagModes();
   SmallVector<Value, 4> UseCaptures;
@@ -248,8 +290,6 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
   }
   ArrayRef<instruction_flag::FlagID> FixedIDs = Branch.getFixedFlags();
   ArrayRef<bool> FixedValues = Branch.getFixedFlagValues();
-  OpBuilder::InsertionGuard Guard(Builder);
-  Builder.setInsertionPoint(Alt);
   for (instruction_flag::FlagID FlagID : Matcher.getSupportedFlags()) {
     const instruction_flag::FlagID *UseFlag = find(UseFlags, FlagID);
     std::optional<unsigned> UseIndex;
@@ -310,24 +350,26 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
       }
     }
   }
+  return true;
+}
 
+void BranchInliner::bindRootAndWidths() {
   // The root's capture is the use's capture, when the use names one.
   if (Root.getCapture() && Use.getCapture())
     Mapping.map(Root.getCapture(), Use.getCapture());
 
   // The branch's 'i?n' type patterns of a type parameter stand for the type
   // the use passes.
-  DenseMap<Operation *, Value> ReplacedTypes;
   for (Operation &Op : Body)
     if (auto MetaInt = dyn_cast<MetaIntTypeOp>(Op))
       if (auto Arg = dyn_cast<mlir::BlockArgument>(MetaInt.getWidth()))
         if (Value Ty = ArgTypes.lookup(Arg))
           ReplacedTypes[&Op] = Ty;
+}
 
+void BranchInliner::inlineBody() {
   mlir::Block &Region = Alt->getRegion(Alt->getNumRegions() - 1).emplaceBlock();
   Builder.setInsertionPointToEnd(&Region);
-  Location CallerLoc = Use.getLoc();
-  std::optional<bool> UseTreatIntAsVec = Use.getTreatIntAsVec();
   for (Operation &Op : Body) {
     if (isa<YieldOp>(Op))
       continue;
@@ -352,69 +394,77 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
       Clone->setLoc(mlir::CallSiteLoc::get(Op.getLoc(), CallerLoc));
       continue;
     }
-    // An instruction matcher: renamed after the use, placed in its block,
-    // with its settings over the use's.
-    MatcherUse BI(&Op);
-    bool IsRoot = &Op == Root.Op;
-    MatcherParts Parts = MatcherParts::of(BI);
-    for (MatcherOperandView &O : Parts.Operands) {
-      if (O.Type)
-        O.Type = Mapping.lookupOrDefault(O.Type);
-      if (O.Val)
-        O.Val = Mapping.lookupOrDefault(O.Val);
-    }
-    if (Parts.Capture)
-      Parts.Capture = Mapping.lookupOrDefault(Parts.Capture);
-    Parts.ParentBlock = Use.getParentBlock();
-    if (!Parts.TreatIntAsVec)
-      Parts.TreatIntAsVec = UseTreatIntAsVec;
-    if (IsRoot) {
-      Parts.HasResultName = bool(Use.getResultName());
-      Parts.ResultName = Use.getResultName().value_or("").str();
-      if (Use.getCapture())
-        Parts.Capture = Use.getCapture();
-    } else if (Parts.HasResultName) {
-      Parts.ResultName = (UsePrefix + "$" + Parts.ResultName).str();
-    }
-    // Flags: a supported flag on the root takes the use's flag.
-    SmallVector<instruction_flag::FlagID, 4> Flags;
-    SmallVector<FlagMode, 4> Modes;
-    SmallVector<Value, 2> Captures;
-    unsigned NextCapture = 0;
-    for (auto [Flag, Mode] : zip(Parts.Flags, Parts.Modes)) {
-      Value Capture = Mode == FlagMode::Captured
-                          ? Parts.FlagCaptures[NextCapture++]
-                          : Value();
-      if (!IsRoot || !is_contained(Matcher.getSupportedFlags(), Flag)) {
-        Flags.push_back(Flag);
-        Modes.push_back(Mode);
-        if (Capture)
-          Captures.push_back(Mapping.lookupOrDefault(Capture));
-        continue;
-      }
-      auto [Var, Constant] = FlagValues.lookup(Flag);
-      Flags.push_back(Flag);
-      if (Var) {
-        Modes.push_back(FlagMode::Captured);
-        Captures.push_back(Var);
-      } else {
-        Modes.push_back(*Constant ? FlagMode::Required : FlagMode::Negated);
-      }
-    }
-    Parts.Flags = Flags;
-    Parts.Modes = Modes;
-    Parts.FlagCaptures = Captures;
-    Location Loc = mlir::CallSiteLoc::get(Op.getLoc(), CallerLoc);
-    Operation *New =
-        isa<InstOp>(Op)
-            ? Parts.build(Builder, Loc, InstOp::getOperationName(),
-                          Builder.getNamedAttr(
-                              "opcode", cast<InstOp>(Op).getOpcodeAttr()))
-            : Parts.build(Builder, Loc, UseOp::getOperationName(),
-                          Builder.getNamedAttr(
-                              "matcher", cast<UseOp>(Op).getMatcherAttr()));
-    Mapping.map(Op.getResult(0), New->getResult(0));
+    inlineMatcher(Op);
   }
+}
+
+void BranchInliner::inlineMatcher(Operation &Op) {
+  std::optional<bool> UseTreatIntAsVec = Use.getTreatIntAsVec();
+  // An instruction matcher: renamed after the use, placed in its block,
+  // with its settings over the use's.
+  MatcherUse BI(&Op);
+  bool IsRoot = &Op == Root.Op;
+  MatcherParts Parts = MatcherParts::of(BI);
+  for (MatcherOperandView &O : Parts.Operands) {
+    if (O.Type)
+      O.Type = Mapping.lookupOrDefault(O.Type);
+    if (O.Val)
+      O.Val = Mapping.lookupOrDefault(O.Val);
+  }
+  if (Parts.Capture)
+    Parts.Capture = Mapping.lookupOrDefault(Parts.Capture);
+  Parts.ParentBlock = Use.getParentBlock();
+  if (!Parts.TreatIntAsVec)
+    Parts.TreatIntAsVec = UseTreatIntAsVec;
+  if (IsRoot) {
+    Parts.HasResultName = bool(Use.getResultName());
+    Parts.ResultName = Use.getResultName().value_or("").str();
+    if (Use.getCapture())
+      Parts.Capture = Use.getCapture();
+  } else if (Parts.HasResultName) {
+    Parts.ResultName = (UsePrefix + "$" + Parts.ResultName).str();
+  }
+  // Flags: a supported flag on the root takes the use's flag.
+  SmallVector<instruction_flag::FlagID, 4> Flags;
+  SmallVector<FlagMode, 4> Modes;
+  SmallVector<Value, 2> Captures;
+  unsigned NextCapture = 0;
+  for (auto [Flag, Mode] : zip(Parts.Flags, Parts.Modes)) {
+    Value Capture = Mode == FlagMode::Captured
+                        ? Parts.FlagCaptures[NextCapture++]
+                        : Value();
+    if (!IsRoot || !is_contained(Matcher.getSupportedFlags(), Flag)) {
+      Flags.push_back(Flag);
+      Modes.push_back(Mode);
+      if (Capture)
+        Captures.push_back(Mapping.lookupOrDefault(Capture));
+      continue;
+    }
+    auto [Var, Constant] = FlagValues.lookup(Flag);
+    Flags.push_back(Flag);
+    if (Var) {
+      Modes.push_back(FlagMode::Captured);
+      Captures.push_back(Var);
+    } else {
+      Modes.push_back(*Constant ? FlagMode::Required : FlagMode::Negated);
+    }
+  }
+  Parts.Flags = Flags;
+  Parts.Modes = Modes;
+  Parts.FlagCaptures = Captures;
+  Location Loc = mlir::CallSiteLoc::get(Op.getLoc(), CallerLoc);
+  Operation *New =
+      isa<InstOp>(Op)
+          ? Parts.build(Builder, Loc, InstOp::getOperationName(),
+                        Builder.getNamedAttr("opcode",
+                                             cast<InstOp>(Op).getOpcodeAttr()))
+          : Parts.build(Builder, Loc, UseOp::getOperationName(),
+                        Builder.getNamedAttr("matcher",
+                                             cast<UseOp>(Op).getMatcherAttr()));
+  Mapping.map(Op.getResult(0), New->getResult(0));
+}
+
+void BranchInliner::finish() {
   // What the branch fixes of the flags the use captures.
   for (auto [Capture, Value] : FixedFlags) {
     auto Type = mlir::IntegerType::get(Context, 1, mlir::IntegerType::Unsigned);
@@ -432,8 +482,14 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
       if (isa<mpir_expr::ReadOp>(Operand.getOwner()))
         Operand.set(Capture);
   YieldOp::create(Builder, CallerLoc, NewRoot);
-  (void)CallerOperandFlags;
-  return true;
+}
+
+mlir::FailureOr<bool>
+Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
+                       ArrayRef<MatcherOperandView> CallerOps,
+                       StringRef UsePrefix, AltOp Alt) {
+  return BranchInliner(Builder, Use, Matcher, Branch, CallerOps, UsePrefix, Alt)
+      .run();
 }
 
 LogicalResult Expander::expand(UseOp Use) {
@@ -447,9 +503,9 @@ LogicalResult Expander::expand(UseOp Use) {
   std::optional<unsigned> OrSelf = Use.getOrSelfIndex();
 
   Builder.setInsertionPoint(Use);
-  unsigned NumRegions = 0;
-  for (BranchOp Branch : Matcher.getBody().front().getOps<BranchOp>())
-    (void)Branch, NumRegions += Commutative ? 2 : 1;
+  unsigned NumRegions =
+      range_size(Matcher.getBody().front().getOps<BranchOp>()) *
+      (Commutative ? 2 : 1);
   if (OrSelf)
     ++NumRegions;
   mlir::OperationState State(Use.getLoc(), AltOp::getOperationName());
@@ -477,7 +533,7 @@ LogicalResult Expander::expand(UseOp Use) {
       Builder.setInsertionPoint(Alt);
       auto Temp = cast<AltOp>(Builder.create(Scratch));
       mlir::FailureOr<bool> Fits =
-          inlineBranch(Use, Matcher, Branch, Ops, {}, UsePrefix, Temp);
+          inlineBranch(Use, Matcher, Branch, Ops, UsePrefix, Temp);
       if (mlir::failed(Fits)) {
         Temp.erase();
         return mlir::failure();

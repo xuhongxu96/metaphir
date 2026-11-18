@@ -1,5 +1,4 @@
-//===- Lowering.cpp - Lower surface patterns
-//--------------------------------===//
+//===- Lowering.cpp - Lower surface patterns ------------------------------===//
 //
 // See Lowering.h. The passes are in a file each; this one has what they have
 // in common as a whole: the pipeline, its registration and the driver.
@@ -7,17 +6,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "metaphir/Transforms/Lowering/Lowering.h"
-#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Transforms/Lowering/CheckBindings.h"
 #include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
 #include "metaphir/Transforms/Lowering/ExpandMatchers.h"
 #include "metaphir/Transforms/Lowering/LowerAlternatives.h"
-#include "mlir/IR/Diagnostics.h"
 #include "mlir/Pass/PassManager.h"
-#include "mlir/Pass/PassRegistry.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace metaphir {
