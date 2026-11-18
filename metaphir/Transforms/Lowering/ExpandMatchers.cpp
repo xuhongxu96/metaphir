@@ -190,13 +190,17 @@ mlir::FailureOr<mlir::Block *> BranchInliner::run() {
     return mlir::failure();
   if (!*Fits)
     return nullptr;
+
   OpBuilder::InsertionGuard Guard(Builder);
   Builder.setInsertionPoint(Use);
+
   if (!bindFlags())
     return nullptr;
+
   bindRootAndWidths();
   inlineBody();
   finish();
+
   return Out;
 }
 
@@ -219,8 +223,8 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
                      Matcher.getArity(), TypePositions, ValuePositions);
   for (auto [ParamIndex, OpIndex] : TypePositions) {
     Value CallerTy = CallerOps[OpIndex].Type;
-    if (!CallerTy)
-      continue;
+    assert(CallerTy && "use without a type at a type position");
+
     int32_t ArgNumber = ParamArgs[ParamIndex];
     if (ArgNumber < 0) {
       // The declaration fixes this type. A use's meta type could only be
@@ -241,7 +245,9 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
         return false;
       continue;
     }
+
     Value Arg = Body.getArgument(ArgNumber);
+
     // A type parameter repeated for several operands must get one type.
     if (Value Bound = ArgTypes.lookup(Arg)) {
       if (!isSameType(Bound, CallerTy) && !isMetaType(Bound) &&
@@ -250,6 +256,7 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
       continue;
     }
     ArgTypes[Arg] = CallerTy;
+
     // The width of an 'i?bits' parameter is also a value, usable in the
     // branch's constraints.
     if (Value Declared = ParamTypes[ParamIndex];
@@ -276,9 +283,12 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
     }
   }
   for (auto [ParamIndex, OpIndex] : ValuePositions) {
+    // An operand parameter is always a named meta variable, so it has an
+    // argument; only a type parameter written as a concrete type has none.
     int32_t ArgNumber = ParamArgs[ParamIndex];
-    if (ArgNumber >= 0 && CallerOps[OpIndex].Val)
-      Mapping.map(Body.getArgument(ArgNumber), CallerOps[OpIndex].Val);
+    assert(ArgNumber >= 0);
+    assert(CallerOps[OpIndex].Val && "use without a value at a value position");
+    Mapping.map(Body.getArgument(ArgNumber), CallerOps[OpIndex].Val);
   }
   return true;
 }
