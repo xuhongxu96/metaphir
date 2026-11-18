@@ -1123,16 +1123,15 @@ mpir.pattern {
   %u_r = mpir.use @outer (%0, %x, %0, %y) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1123:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "_flag$r$nsw" : <Boolean>
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
-// CHECK:             %[[VAR_3:.*]] = mpir.var "_flag$r$nsw" : <Boolean>
 // CHECK:             %[[ALT_1:.*]] = mpir.alt {
-// CHECK:               %[[INST_0:.*]] = mpir.inst <add> flags(%[[VAR_3]]) (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [nsw], flag_modes = [captured], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+// CHECK:               %[[INST_0:.*]] = mpir.inst <add> flags(%[[VAR_2]]) (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [nsw], flag_modes = [captured], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:               mpir.yield %[[INST_0]] : <Instruction>
 // CHECK:             } <result_name = "r"> : <Instruction>
 // CHECK:             mpir.yield %[[ALT_1]] : <Instruction>
 // CHECK:           } <result_name = "r"> : <Instruction>
-  %1 = mpir.type.int 32 : <Type> loc("expand-matchers.mlir":1133:1)
+  %1 = mpir.type.int 32 : <Type> loc("expand-matchers.mlir":1132:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
-  %u_s = mpir.use @outer (%1, %u_r, %1, %y) <result_name = "s", flags = [nsw], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1135:1)
+  %u_s = mpir.use @outer (%1, %u_r, %1, %y) <result_name = "s", flags = [nsw], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1134:1)
 // CHECK:           %[[INT_0:.*]] = mpir.int 1 : ui1 : <Value>
 // CHECK:           %[[ALT_2:.*]] = mpir.alt {
 // CHECK:             %[[INT_1:.*]] = mpir.int 1 : ui1 : <Value>
@@ -1142,7 +1141,7 @@ mpir.pattern {
 // CHECK:             } <result_name = "s"> : <Instruction>
 // CHECK:             mpir.yield %[[ALT_3]] : <Instruction>
 // CHECK:           } <result_name = "s"> : <Instruction>
-} loc("expand-matchers.mlir":1145:1)
+} loc("expand-matchers.mlir":1144:1)
 // CHECK:         }
 
 // -----
@@ -1151,117 +1150,117 @@ mpir.pattern {
 // use's: no branch fits.
 mpir.matcher @pick <supported_flags = [], syntax = nary, arity = 3, param_names = ["", "c", "", "t", "", "f"], param_is_type = [true, false, true, false, true, false]> {
 // CHECK-LABEL:   mpir.matcher @pick <supported_flags = [], syntax = nary, arity = 3, param_names = ["", "c", "", "t", "", "f"], param_is_type = [true, false, true, false, true, false]> {
-  %0 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1154:1)
+  %0 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1153:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 1 : <Type>
-  %1 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1156:1)
+  %1 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1155:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 8 : <Type>
-  %2 = mpir.type.seq array 4 x %1 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1158:1)
+  %2 = mpir.type.seq array 4 x %1 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1157:1)
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.seq array 4 x %[[TYPE_1]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-  %3 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1160:1)
+  %3 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1159:1)
 // CHECK:           %[[TYPE_3:.*]] = mpir.type.int 8 : <Type>
-  %4 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1162:1)
+  %4 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1161:1)
 // CHECK:           %[[TYPE_4:.*]] = mpir.type.int 8 : <Type>
-  %5 = mpir.type.struct{%3, %4} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1164:1)
+  %5 = mpir.type.struct{%3, %4} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1163:1)
 // CHECK:           %[[TYPE_5:.*]] = mpir.type.struct{%[[TYPE_3]], %[[TYPE_4]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
-  mpir.signature %0, %2, %5 : !mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Type> loc("expand-matchers.mlir":1166:1)
+  mpir.signature %0, %2, %5 : !mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Type> loc("expand-matchers.mlir":1165:1)
 // CHECK:           mpir.signature %[[TYPE_0]], %[[TYPE_2]], %[[TYPE_5]] : !mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Type>
   mpir.branch <param_args = [-1, 0, -1, 1, -1, 2], fixed_flags = [], fixed_flag_values = []> {
 // CHECK:           mpir.branch <fixed_flags = [], param_args = [-1, 0, -1, 1, -1, 2], fixed_flag_values = []> {
 // CHECK:           ^bb0(%[[VAL_0:.*]]: !mpir.sort<Boolean>, %[[VAL_1:.*]]: !mpir.sort<Operand>, %[[VAL_2:.*]]: !mpir.sort<Unknown>):
   ^bb0(%arg0: !mpir.sort<Boolean>, %arg1: !mpir.sort<Operand>, %arg2: !mpir.sort<Unknown>):
-    %6 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1172:1)
+    %6 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1171:1)
 // CHECK:             %[[TYPE_6:.*]] = mpir.type.int 1 : <Type>
-    %7 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1174:1)
+    %7 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1173:1)
 // CHECK:             %[[TYPE_7:.*]] = mpir.type.int 8 : <Type>
-    %8 = mpir.type.seq array 4 x %7 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1176:1)
+    %8 = mpir.type.seq array 4 x %7 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1175:1)
 // CHECK:             %[[TYPE_8:.*]] = mpir.type.seq array 4 x %[[TYPE_7]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-    %9 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1178:1)
+    %9 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1177:1)
 // CHECK:             %[[TYPE_9:.*]] = mpir.type.int 8 : <Type>
-    %10 = mpir.type.seq array 4 x %9 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1180:1)
+    %10 = mpir.type.seq array 4 x %9 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1179:1)
 // CHECK:             %[[TYPE_10:.*]] = mpir.type.seq array 4 x %[[TYPE_9]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-    %i_ret = mpir.inst <select> (%6, %arg0, %8, %arg1, %10, %arg1) <result_name = "ret", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1182:1)
+    %i_ret = mpir.inst <select> (%6, %arg0, %8, %arg1, %10, %arg1) <result_name = "ret", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1181:1)
 // CHECK:             %[[INST_0:.*]] = mpir.inst <select> (%[[TYPE_6]], %[[VAL_0]], %[[TYPE_8]], %[[VAL_1]], %[[TYPE_10]], %[[VAL_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1184:1)
+    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1183:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } loc("expand-matchers.mlir":1186:1)
+  } loc("expand-matchers.mlir":1185:1)
 // CHECK:           }
-} loc("expand-matchers.mlir":1188:1)
+} loc("expand-matchers.mlir":1187:1)
 // CHECK:         }
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %0 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1192:1)
+  %0 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1191:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 8 : <Type>
-  %cond = mpir.var "cond" : <Boolean> loc("expand-matchers.mlir":1194:1)
+  %cond = mpir.var "cond" : <Boolean> loc("expand-matchers.mlir":1193:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "cond" : <Boolean>
-  %1 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1196:1)
+  %1 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1195:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 8 : <Type>
-  %2 = mpir.type.seq array 4 x %1 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1198:1)
+  %2 = mpir.type.seq array 4 x %1 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1197:1)
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.seq array 4 x %[[TYPE_1]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-  %a = mpir.var "a" : <Operand> loc("expand-matchers.mlir":1200:1)
+  %a = mpir.var "a" : <Operand> loc("expand-matchers.mlir":1199:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "a" : <Operand>
-  %3 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1202:1)
+  %3 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1201:1)
 // CHECK:           %[[TYPE_3:.*]] = mpir.type.int 8 : <Type>
-  %4 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1204:1)
+  %4 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1203:1)
 // CHECK:           %[[TYPE_4:.*]] = mpir.type.int 8 : <Type>
-  %5 = mpir.type.struct{%3, %4} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1206:1)
+  %5 = mpir.type.struct{%3, %4} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1205:1)
 // CHECK:           %[[TYPE_5:.*]] = mpir.type.struct{%[[TYPE_3]], %[[TYPE_4]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
-  %b = mpir.var "b" : <Operand> loc("expand-matchers.mlir":1208:1)
+  %b = mpir.var "b" : <Operand> loc("expand-matchers.mlir":1207:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "b" : <Operand>
-  %u_r = mpir.use @pick (%0, %cond, %2, %a, %5, %b) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1210:1)
+  %u_r = mpir.use @pick (%0, %cond, %2, %a, %5, %b) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1209:1)
 // CHECK:           %[[ALT_0:.*]] = mpir.alt  <result_name = "r"> : <Instruction>
-  %6 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1212:1)
+  %6 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1211:1)
 // CHECK:           %[[TYPE_6:.*]] = mpir.type.int 1 : <Type>
-  %7 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1214:1)
+  %7 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1213:1)
 // CHECK:           %[[TYPE_7:.*]] = mpir.type.int 8 : <Type>
-  %8 = mpir.type.seq array 8 x %7 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1216:1)
+  %8 = mpir.type.seq array 8 x %7 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1215:1)
 // CHECK:           %[[TYPE_8:.*]] = mpir.type.seq array 8 x %[[TYPE_7]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-  %9 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1218:1)
+  %9 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1217:1)
 // CHECK:           %[[TYPE_9:.*]] = mpir.type.int 8 : <Type>
-  %10 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1220:1)
+  %10 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1219:1)
 // CHECK:           %[[TYPE_10:.*]] = mpir.type.int 8 : <Type>
-  %11 = mpir.type.struct{%9, %10} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1222:1)
+  %11 = mpir.type.struct{%9, %10} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1221:1)
 // CHECK:           %[[TYPE_11:.*]] = mpir.type.struct{%[[TYPE_9]], %[[TYPE_10]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
-  %u_s = mpir.use @pick (%6, %cond, %8, %a, %11, %b) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1224:1)
+  %u_s = mpir.use @pick (%6, %cond, %8, %a, %11, %b) <result_name = "s", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1223:1)
 // CHECK:           %[[ALT_1:.*]] = mpir.alt  <result_name = "s"> : <Instruction>
-  %12 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1226:1)
+  %12 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1225:1)
 // CHECK:           %[[TYPE_12:.*]] = mpir.type.int 1 : <Type>
-  %13 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1228:1)
+  %13 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1227:1)
 // CHECK:           %[[TYPE_13:.*]] = mpir.type.int 8 : <Type>
-  %14 = mpir.type.seq array 4 x %13 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1230:1)
+  %14 = mpir.type.seq array 4 x %13 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1229:1)
 // CHECK:           %[[TYPE_14:.*]] = mpir.type.seq array 4 x %[[TYPE_13]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-  %15 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1232:1)
+  %15 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1231:1)
 // CHECK:           %[[TYPE_15:.*]] = mpir.type.int 8 : <Type>
-  %16 = mpir.type.struct{%15} : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1234:1)
+  %16 = mpir.type.struct{%15} : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1233:1)
 // CHECK:           %[[TYPE_16:.*]] = mpir.type.struct{%[[TYPE_15]]} : (!mpir.sort<Type>) -> !mpir.sort<Type>
-  %u_t = mpir.use @pick (%12, %cond, %14, %a, %16, %b) <result_name = "t", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1236:1)
+  %u_t = mpir.use @pick (%12, %cond, %14, %a, %16, %b) <result_name = "t", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1235:1)
 // CHECK:           %[[ALT_2:.*]] = mpir.alt  <result_name = "t"> : <Instruction>
-  %17 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1238:1)
+  %17 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1237:1)
 // CHECK:           %[[TYPE_17:.*]] = mpir.type.int 1 : <Type>
-  %18 = mpir.type.int 16 : <Type> loc("expand-matchers.mlir":1240:1)
+  %18 = mpir.type.int 16 : <Type> loc("expand-matchers.mlir":1239:1)
 // CHECK:           %[[TYPE_18:.*]] = mpir.type.int 16 : <Type>
-  %19 = mpir.type.seq array 4 x %18 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1242:1)
+  %19 = mpir.type.seq array 4 x %18 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1241:1)
 // CHECK:           %[[TYPE_19:.*]] = mpir.type.seq array 4 x %[[TYPE_18]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-  %20 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1244:1)
+  %20 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1243:1)
 // CHECK:           %[[TYPE_20:.*]] = mpir.type.int 8 : <Type>
-  %21 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1246:1)
+  %21 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1245:1)
 // CHECK:           %[[TYPE_21:.*]] = mpir.type.int 8 : <Type>
-  %22 = mpir.type.struct{%20, %21} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1248:1)
+  %22 = mpir.type.struct{%20, %21} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1247:1)
 // CHECK:           %[[TYPE_22:.*]] = mpir.type.struct{%[[TYPE_20]], %[[TYPE_21]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
-  %u_u = mpir.use @pick (%17, %cond, %19, %a, %22, %b) <result_name = "u", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1250:1)
+  %u_u = mpir.use @pick (%17, %cond, %19, %a, %22, %b) <result_name = "u", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1249:1)
 // CHECK:           %[[ALT_3:.*]] = mpir.alt  <result_name = "u"> : <Instruction>
-  %23 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1252:1)
+  %23 = mpir.type.int 1 : <Type> loc("expand-matchers.mlir":1251:1)
 // CHECK:           %[[TYPE_23:.*]] = mpir.type.int 1 : <Type>
-  %24 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1254:1)
+  %24 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1253:1)
 // CHECK:           %[[TYPE_24:.*]] = mpir.type.int 8 : <Type>
-  %25 = mpir.type.seq array 4 x %24 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1256:1)
+  %25 = mpir.type.seq array 4 x %24 : (!mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1255:1)
 // CHECK:           %[[TYPE_25:.*]] = mpir.type.seq array 4 x %[[TYPE_24]] : (!mpir.sort<Type>) -> !mpir.sort<Type>
-  %26 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1258:1)
+  %26 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1257:1)
 // CHECK:           %[[TYPE_26:.*]] = mpir.type.int 8 : <Type>
-  %27 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1260:1)
+  %27 = mpir.type.int 8 : <Type> loc("expand-matchers.mlir":1259:1)
 // CHECK:           %[[TYPE_27:.*]] = mpir.type.int 8 : <Type>
-  %28 = mpir.type.struct{%26, %27} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1262:1)
+  %28 = mpir.type.struct{%26, %27} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type> loc("expand-matchers.mlir":1261:1)
 // CHECK:           %[[TYPE_28:.*]] = mpir.type.struct{%[[TYPE_26]], %[[TYPE_27]]} : (!mpir.sort<Type>, !mpir.sort<Type>) -> !mpir.sort<Type>
-  %u_v = mpir.use @pick (%23, %cond, %25, %a, %28, %b) <result_name = "v", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1264:1)
+  %u_v = mpir.use @pick (%23, %cond, %25, %a, %28, %b) <result_name = "v", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1263:1)
 // CHECK:           %[[ALT_4:.*]] = mpir.alt {
 // CHECK:             %[[TYPE_29:.*]] = mpir.type.int 1 : <Type>
 // CHECK:             %[[TYPE_30:.*]] = mpir.type.int 8 : <Type>
@@ -1271,7 +1270,7 @@ mpir.pattern {
 // CHECK:             %[[INST_0:.*]] = mpir.inst <select> (%[[TYPE_29]], %[[VAR_0]], %[[TYPE_31]], %[[VAR_1]], %[[TYPE_33]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "v"> : (!mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
 // CHECK:           } <result_name = "v"> : <Instruction>
-} loc("expand-matchers.mlir":1274:1)
+} loc("expand-matchers.mlir":1273:1)
 // CHECK:         }
 
 // -----
@@ -1280,51 +1279,51 @@ mpir.pattern {
 // matcher does not declare, stay as written.
 mpir.matcher @shifted <supported_flags = [exact], syntax = binary, arity = 2, param_names = ["ty", "a", "b"], param_is_type = [true, false, false]> {
 // CHECK-LABEL:   mpir.matcher @shifted <supported_flags = [exact], syntax = binary, arity = 2, param_names = ["ty", "a", "b"], param_is_type = [true, false, false]> {
-  %ty = mpir.var "ty" : <Type> loc("expand-matchers.mlir":1283:1)
+  %ty = mpir.var "ty" : <Type> loc("expand-matchers.mlir":1282:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "ty" : <Type>
-  mpir.signature %ty : !mpir.sort<Type> loc("expand-matchers.mlir":1285:1)
+  mpir.signature %ty : !mpir.sort<Type> loc("expand-matchers.mlir":1284:1)
 // CHECK:           mpir.signature %[[VAR_0]] : !mpir.sort<Type>
   mpir.branch <param_args = [0, 1, 2], fixed_flags = [], fixed_flag_values = []> {
 // CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1, 2], fixed_flag_values = []> {
 // CHECK:           ^bb0(%[[VAL_0:.*]]: !mpir.sort<Type>, %[[VAL_1:.*]]: !mpir.sort<Operand>, %[[VAL_2:.*]]: !mpir.sort<Operand>):
   ^bb0(%arg0: !mpir.sort<Type>, %arg1: !mpir.sort<Operand>, %arg2: !mpir.sort<Operand>):
-    %u = mpir.var "u" : <Boolean> loc("expand-matchers.mlir":1291:1)
+    %u = mpir.var "u" : <Boolean> loc("expand-matchers.mlir":1290:1)
 // CHECK:             %[[VAR_1:.*]] = mpir.var "u" : <Boolean>
-    %i_s = mpir.inst <shl> flags(%u) (%arg0, %arg1, %arg0, %arg2) <result_name = "s", flags = [nsw, nuw], flag_modes = [required, captured], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1293:1)
+    %i_s = mpir.inst <shl> flags(%u) (%arg0, %arg1, %arg0, %arg2) <result_name = "s", flags = [nsw, nuw], flag_modes = [required, captured], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1292:1)
 // CHECK:             %[[INST_0:.*]] = mpir.inst <shl> flags(%[[VAR_1]]) (%[[VAL_0]], %[[VAL_1]], %[[VAL_0]], %[[VAL_2]]) <flags = [nsw, nuw], flag_modes = [required, captured], operand_kinds = [typed_value, typed_value], result_name = "s"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    %e = mpir.var "e" : <Boolean> loc("expand-matchers.mlir":1295:1)
+    %e = mpir.var "e" : <Boolean> loc("expand-matchers.mlir":1294:1)
 // CHECK:             %[[VAR_2:.*]] = mpir.var "e" : <Boolean>
-    %i_ret = mpir.inst <lshr> flags(%e) (%arg0, %i_s, %arg0, %arg2) <result_name = "ret", flags = [exact], flag_modes = [captured], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1297:1)
+    %i_ret = mpir.inst <lshr> flags(%e) (%arg0, %i_s, %arg0, %arg2) <result_name = "ret", flags = [exact], flag_modes = [captured], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1296:1)
 // CHECK:             %[[INST_1:.*]] = mpir.inst <lshr> flags(%[[VAR_2]]) (%[[VAL_0]], %[[INST_0]], %[[VAL_0]], %[[VAL_2]]) <flags = [exact], flag_modes = [captured], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1299:1)
+    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1298:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } loc("expand-matchers.mlir":1301:1)
+  } loc("expand-matchers.mlir":1300:1)
 // CHECK:           }
   mpir.branch <param_args = [0, 1, 2], fixed_flags = [], fixed_flag_values = []> {
 // CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1, 2], fixed_flag_values = []> {
 // CHECK:           ^bb0(%[[VAL_3:.*]]: !mpir.sort<Type>, %[[VAL_4:.*]]: !mpir.sort<Operand>, %[[VAL_5:.*]]: !mpir.sort<Operand>):
   ^bb0(%arg0: !mpir.sort<Type>, %arg1: !mpir.sort<Operand>, %arg2: !mpir.sort<Operand>):
-    %w = mpir.var "w" : <Boolean> loc("expand-matchers.mlir":1307:1)
+    %w = mpir.var "w" : <Boolean> loc("expand-matchers.mlir":1306:1)
 // CHECK:             %[[VAR_3:.*]] = mpir.var "w" : <Boolean>
-    %i_s = mpir.inst <add> flags(%w) (%arg0, %arg1, %arg0, %arg2) <result_name = "s", flags = [nsw], flag_modes = [captured], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1309:1)
+    %i_s = mpir.inst <add> flags(%w) (%arg0, %arg1, %arg0, %arg2) <result_name = "s", flags = [nsw], flag_modes = [captured], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1308:1)
 // CHECK:             %[[INST_2:.*]] = mpir.inst <add> flags(%[[VAR_3]]) (%[[VAL_3]], %[[VAL_4]], %[[VAL_3]], %[[VAL_5]]) <flags = [nsw], flag_modes = [captured], operand_kinds = [typed_value, typed_value], result_name = "s"> : (!mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    %i_ret = mpir.inst <or> (%arg0, %i_s, %arg0, %arg2) <result_name = "ret", flags = [disjoint], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1311:1)
+    %i_ret = mpir.inst <or> (%arg0, %i_s, %arg0, %arg2) <result_name = "ret", flags = [disjoint], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1310:1)
 // CHECK:             %[[INST_3:.*]] = mpir.inst <or> (%[[VAL_3]], %[[INST_2]], %[[VAL_3]], %[[VAL_5]]) <flags = [disjoint], flag_modes = [required], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1313:1)
+    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1312:1)
 // CHECK:             mpir.yield %[[INST_3]] : <Instruction>
-  } loc("expand-matchers.mlir":1315:1)
+  } loc("expand-matchers.mlir":1314:1)
 // CHECK:           }
-} loc("expand-matchers.mlir":1317:1)
+} loc("expand-matchers.mlir":1316:1)
 // CHECK:         }
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %0 = mpir.type.int 32 : <Type> loc("expand-matchers.mlir":1321:1)
+  %0 = mpir.type.int 32 : <Type> loc("expand-matchers.mlir":1320:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : <Operand> loc("expand-matchers.mlir":1323:1)
+  %x = mpir.var "x" : <Operand> loc("expand-matchers.mlir":1322:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : <Operand> loc("expand-matchers.mlir":1325:1)
+  %y = mpir.var "y" : <Operand> loc("expand-matchers.mlir":1324:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
-  %u_r = mpir.use @shifted (%0, %x, %0, %y) <result_name = "r", flags = [exact], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1327:1)
+  %u_r = mpir.use @shifted (%0, %x, %0, %y) <result_name = "r", flags = [exact], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1326:1)
 // CHECK:           %[[INT_0:.*]] = mpir.int 1 : ui1 : <Value>
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
 // CHECK:             %[[VAR_2:.*]] = mpir.var "r$u" : <Boolean>
@@ -1337,7 +1336,7 @@ mpir.pattern {
 // CHECK:             %[[INST_3:.*]] = mpir.inst <or> (%[[TYPE_0]], %[[INST_2]], %[[TYPE_0]], %[[VAR_1]]) <flags = [disjoint], flag_modes = [required], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_3]] : <Instruction>
 // CHECK:           } <result_name = "r"> : <Instruction>
-} loc("expand-matchers.mlir":1340:1)
+} loc("expand-matchers.mlir":1339:1)
 // CHECK:         }
 
 // -----
@@ -1346,40 +1345,40 @@ mpir.pattern {
 // mpir-lower-alternatives.
 mpir.matcher @commuted <supported_flags = [], syntax = binary, arity = 2, param_names = ["ty", "a", "b"], param_is_type = [true, false, false]> {
 // CHECK-LABEL:   mpir.matcher @commuted <supported_flags = [], syntax = binary, arity = 2, param_names = ["ty", "a", "b"], param_is_type = [true, false, false]> {
-  %ty = mpir.var "ty" : <Type> loc("expand-matchers.mlir":1349:1)
+  %ty = mpir.var "ty" : <Type> loc("expand-matchers.mlir":1348:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "ty" : <Type>
-  mpir.signature %ty : !mpir.sort<Type> loc("expand-matchers.mlir":1351:1)
+  mpir.signature %ty : !mpir.sort<Type> loc("expand-matchers.mlir":1350:1)
 // CHECK:           mpir.signature %[[VAR_0]] : !mpir.sort<Type>
   mpir.branch <param_args = [0, 1, 2], fixed_flags = [], fixed_flag_values = []> {
 // CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1, 2], fixed_flag_values = []> {
 // CHECK:           ^bb0(%[[VAL_0:.*]]: !mpir.sort<Type>, %[[VAL_1:.*]]: !mpir.sort<Operand>, %[[VAL_2:.*]]: !mpir.sort<Operand>):
   ^bb0(%arg0: !mpir.sort<Type>, %arg1: !mpir.sort<Operand>, %arg2: !mpir.sort<Operand>):
-    %0 = mpir.int 3 : ui2 : <Value> loc("expand-matchers.mlir":1357:1)
+    %0 = mpir.int 3 : ui2 : <Value> loc("expand-matchers.mlir":1356:1)
 // CHECK:             %[[INT_0:.*]] = mpir.int 3 : ui2 : <Value>
-    %i_m = mpir.inst <mul> (%arg0, %arg1, %arg0, %0) <result_name = "m", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"c", [], loc("expand-matchers.mlir":1359:1)>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+    %i_m = mpir.inst <mul> (%arg0, %arg1, %arg0, %0) <result_name = "m", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"c", [], loc("expand-matchers.mlir":1358:1)>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 // CHECK:             %[[INST_0:.*]] = mpir.inst <mul> (%[[VAL_0]], %[[VAL_1]], %[[VAL_0]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "m", metaflags = [#mpir.metaflag<"c", [], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-    %i_ret = mpir.inst <add> (%arg0, %arg2, %arg0, %i_m) <result_name = "ret", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"o", [1], loc("expand-matchers.mlir":1361:1)>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
+    %i_ret = mpir.inst <add> (%arg0, %arg2, %arg0, %i_m) <result_name = "ret", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"o", [1], loc("expand-matchers.mlir":1360:1)>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> (%[[VAL_0]], %[[VAL_2]], %[[VAL_0]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "ret", metaflags = [#mpir.metaflag<"o", [1], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
-    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1363:1)
+    mpir.yield %i_ret : <Instruction> loc("expand-matchers.mlir":1362:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } loc("expand-matchers.mlir":1365:1)
+  } loc("expand-matchers.mlir":1364:1)
 // CHECK:           }
-} loc("expand-matchers.mlir":1367:1)
+} loc("expand-matchers.mlir":1366:1)
 // CHECK:         }
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %0 = mpir.type.int 32 : <Type> loc("expand-matchers.mlir":1371:1)
+  %0 = mpir.type.int 32 : <Type> loc("expand-matchers.mlir":1370:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : <Operand> loc("expand-matchers.mlir":1373:1)
+  %x = mpir.var "x" : <Operand> loc("expand-matchers.mlir":1372:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : <Operand> loc("expand-matchers.mlir":1375:1)
+  %y = mpir.var "y" : <Operand> loc("expand-matchers.mlir":1374:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
-  %u_r = mpir.use @commuted (%0, %x, %0, %y) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1377:1)
+  %u_r = mpir.use @commuted (%0, %x, %0, %y) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("expand-matchers.mlir":1376:1)
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
 // CHECK:             %[[INT_0:.*]] = mpir.int 3 : ui2 : <Value>
 // CHECK:             %[[INST_0:.*]] = mpir.inst <mul> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r$m", metaflags = [#mpir.metaflag<"c", [], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r", metaflags = [#mpir.metaflag<"o", [1], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
 // CHECK:           } <result_name = "r"> : <Instruction>
-} loc("expand-matchers.mlir":1384:1)
+} loc("expand-matchers.mlir":1383:1)
 // CHECK:         }

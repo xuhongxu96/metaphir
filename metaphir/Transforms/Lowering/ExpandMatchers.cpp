@@ -55,17 +55,6 @@ static bool isSameType(Value A, Value B) {
 // mpir-expand-matchers
 //===----------------------------------------------------------------------===//
 
-/// The fresh variable a use that omits a flag passes for it to the matcher's
-/// root; a use nested in that body then also omits it.
-static constexpr StringLiteral OmittedFlagPrefix = "_flag$";
-
-static bool isWildcardCapture(Value Capture) {
-  if (!Capture)
-    return false;
-  auto Var = Capture.getDefiningOp<VarOp>();
-  return Var && Var.getVarName().starts_with(OmittedFlagPrefix);
-}
-
 namespace {
 class Expander {
 public:
@@ -307,20 +296,17 @@ bool BranchInliner::bindFlags() {
       UseCaptures.push_back(
           Mode == FlagMode::Captured ? Use.getFlagCaptures()[Next++] : Value());
   }
-  ArrayRef<instruction_flag::FlagID> FixedIDs = Branch.getFixedFlags();
-  ArrayRef<bool> FixedValues = Branch.getFixedFlagValues();
+  ArrayRef<instruction_flag::FlagID> FixedFlagIDs = Branch.getFixedFlags();
+  ArrayRef<bool> FixedFlagValues = Branch.getFixedFlagValues();
   for (instruction_flag::FlagID FlagID : Matcher.getSupportedFlags()) {
     const instruction_flag::FlagID *UseFlag = find(UseFlags, FlagID);
     std::optional<unsigned> UseIndex;
     if (UseFlag != UseFlags.end())
       UseIndex = UseFlag - UseFlags.begin();
-    // A flag forwarded from an enclosing use that omitted it is omitted too.
-    if (UseIndex && isWildcardCapture(UseCaptures[*UseIndex]))
-      UseIndex.reset();
     std::optional<bool> Fixed;
-    if (const instruction_flag::FlagID *F = find(FixedIDs, FlagID);
-        F != FixedIDs.end())
-      Fixed = FixedValues[F - FixedIDs.begin()];
+    if (const instruction_flag::FlagID *F = find(FixedFlagIDs, FlagID);
+        F != FixedFlagIDs.end())
+      Fixed = FixedFlagValues[F - FixedFlagIDs.begin()];
 
     std::pair<Value, std::optional<bool>> FlagValue;
     Value UseCapture = UseIndex ? UseCaptures[*UseIndex] : Value();
@@ -339,11 +325,13 @@ bool BranchInliner::bindFlags() {
     } else if (UseIndex) {
       FlagValue.first = UseCapture;
     } else {
+      // The use omits the flag, so the root's capture of it is a fresh
+      // variable. The underscore keeps it out of reported matches.
       FlagValue.first = VarOp::create(
           Builder, Use.getLoc(), SortType::get(Context, Sort::Boolean),
           Builder.getStringAttr(
-              (OmittedFlagPrefix + UsePrefix + "$" +
-               instruction_flag::getName(instruction_flag::FlagID(FlagID)))));
+              "_flag$" + UsePrefix + "$" +
+              instruction_flag::getName(instruction_flag::FlagID(FlagID))));
     }
     FlagValues[FlagID] = FlagValue;
     // The root's capture of the flag stands for FlagValue everywhere in the
