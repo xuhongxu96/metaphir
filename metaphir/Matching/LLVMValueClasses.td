@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "metaphir/IR/LanguageBase.td"
+include "metaphir/Matching/FactBase.td"
 
-def : LLVMValueClass<"Value", 0>;
-def : LLVMValueClass<"User", 0>;
+def : UnrecordedLLVMValueClass<"Value">;
+def : UnrecordedLLVMValueClass<"User">;
 def : LLVMValueClass<"Constant">;
 def : LLVMValueClass<"ConstantInt">;
 def : LLVMValueClass<"ConstantFP">;
@@ -19,7 +19,7 @@ def : LLVMValueClass<"UndefValue">;
 def : LLVMValueClass<"GlobalValue">;
 def : LLVMValueClass<"Function">;
 def : LLVMValueClass<"BasicBlock">;
-def : LLVMValueClass<"Instruction", 0>;
+def : UnrecordedLLVMValueClass<"Instruction">;
 def : LLVMValueClass<"CastInst">;
 def : LLVMValueClass<"TruncInst">;
 def : LLVMValueClass<"ZExtInst">;

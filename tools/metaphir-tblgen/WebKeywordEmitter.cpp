@@ -40,9 +40,9 @@ void emitWebKeywords(const RecordKeeper &Records, raw_ostream &OS) {
       Operators.push_back(Name.str());
   };
   for (const Record *R : getDefinitionsInOrder(Records, "ConstraintOperator"))
-    AddOperator(R->getValueAsString("Name"));
+    AddOperator(R->getValueAsString("Spelling"));
   for (const Record *R : getDefinitionsInOrder(Records, "OperatorAlias"))
-    AddOperator(R->getValueAsString("Name"));
+    AddOperator(R->getValueAsString("Spelling"));
   OS << "{\n";
   emitList(OS, "instructions", Instructions, false);
   emitList(OS, "keywords", Keywords, false);

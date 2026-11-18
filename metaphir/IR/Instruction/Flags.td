@@ -5,7 +5,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "metaphir/IR/LanguageBase.td"
+include "metaphir/IR/Instruction/InstructionBase.td"
 
 def nsw : Flag;
 def nuw : Flag;

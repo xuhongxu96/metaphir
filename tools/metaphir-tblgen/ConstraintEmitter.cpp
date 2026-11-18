@@ -52,7 +52,7 @@ void emitConstraintOperators(const RecordKeeper &Records, raw_ostream &OS) {
   for (const Record *Op : Operators) {
     if (!IDs.insert(Op->getValueAsString("ID")).second)
       PrintFatalError(Op, "the operator ID is defined twice");
-    CheckSpelling(Op, Op->getValueAsString("Name"),
+    CheckSpelling(Op, Op->getValueAsString("Spelling"),
                   Op->getValueAsString("Kind"));
     checkSort(Sorts, Op, Op->getValueAsString("Result"));
     checkSort(Sorts, Op, Op->getValueAsString("RestSort"));
@@ -65,7 +65,7 @@ void emitConstraintOperators(const RecordKeeper &Records, raw_ostream &OS) {
                       "the operator takes fewer arguments than its minimum");
   }
   for (const Record *A : Aliases)
-    CheckSpelling(A, A->getValueAsString("Name"), A->getValueAsString("Kind"));
+    CheckSpelling(A, A->getValueAsString("Spelling"), A->getValueAsString("Kind"));
   for (const Record *C : Coercions) {
     checkSort(Sorts, C, C->getValueAsString("Src"));
     checkSort(Sorts, C, C->getValueAsString("Dst"));
@@ -95,7 +95,7 @@ void emitConstraintOperators(const RecordKeeper &Records, raw_ostream &OS) {
   emitArray<decltype(Operators), OpRef>(
       OS, "StringRef OperatorNames[]", Operators,
       [](raw_ostream &OS, const OpRef &Op) {
-        OS << '"' << Op->getValueAsString("Name") << '"';
+        OS << '"' << Op->getValueAsString("Spelling") << '"';
       });
 
   OS << "/// The sorts of an operator's first arguments; the rest are Rest.\n"
@@ -121,11 +121,11 @@ void emitConstraintOperators(const RecordKeeper &Records, raw_ostream &OS) {
   };
   SmallVector<Spelling, 128> Spellings;
   for (const Record *Op : Operators)
-    Spellings.push_back({Op->getValueAsString("Name"),
+    Spellings.push_back({Op->getValueAsString("Spelling"),
                          Op->getValueAsString("Kind"),
                          Op->getValueAsString("ID")});
   for (const Record *A : Aliases)
-    Spellings.push_back({A->getValueAsString("Name"),
+    Spellings.push_back({A->getValueAsString("Spelling"),
                          A->getValueAsString("Kind"),
                          A->getValueAsDef("Operator")->getValueAsString("ID")});
   OS << "/// A name an operator is written with, and how.\n"

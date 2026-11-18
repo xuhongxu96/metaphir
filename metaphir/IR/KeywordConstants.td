@@ -7,12 +7,40 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "metaphir/IR/LanguageBase.td"
+/// A constant or comparison predicate a pattern spells as a keyword. The
+/// record's name is the enumerator of keyword_constant::KeywordID, after K_.
+class KeywordConstant<string spelling> {
+  string Spelling = spelling;
+  /// The llvm class of the values a matchable constant matches, or empty.
+  string LLVMClass = "";
+}
 
-def Null : MatchableConstant<"null", "ConstantPointerNull">;
-def Poison : MatchableConstant<"poison", "PoisonValue">;
-def Undef : MatchableConstant<"undef", "UndefValue">;
-def ZeroInitializer : MatchableConstant<"zeroinitializer", "ConstantAggregateZero">;
+class MatchableConstant<string spelling> : KeywordConstant<spelling>;
+
+class PredicateKeyword<string spelling> : KeywordConstant<spelling>;
+
+/// How an aggregate constant is delimited: an array ('[...]'), a struct
+/// ('{...}') or a vector ('<...>'). The delimiters' order is persisted: the
+/// mpir dialect's SeqTypeOp numbers its kinds the same way. The record's name
+/// is the enumerator of aggregate_constant::Delimiter.
+class AggregateConstant<string spelling> {
+  string ID = NAME;
+  /// How the mpir dialect spells the kind.
+  string Spelling = spelling;
+}
+
+def Null : MatchableConstant<"null"> {
+  let LLVMClass = "ConstantPointerNull";
+}
+def Poison : MatchableConstant<"poison"> {
+  let LLVMClass = "PoisonValue";
+}
+def Undef : MatchableConstant<"undef"> {
+  let LLVMClass = "UndefValue";
+}
+def ZeroInitializer : MatchableConstant<"zeroinitializer"> {
+  let LLVMClass = "ConstantAggregateZero";
+}
 def False : PredicateKeyword<"false">;
 def True : PredicateKeyword<"true">;
 def OEQ : PredicateKeyword<"oeq">;
@@ -37,6 +65,6 @@ def SLT : PredicateKeyword<"slt">;
 def SLE : PredicateKeyword<"sle">;
 
 // The ways an aggregate constant is delimited.
-def : AggregateConstant<"Square", "array">;
-def : AggregateConstant<"Brace", "struct">;
-def : AggregateConstant<"Angle", "vector">;
+def Square : AggregateConstant<"array">;
+def Brace : AggregateConstant<"struct">;
+def Angle : AggregateConstant<"vector">;

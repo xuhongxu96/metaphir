@@ -52,7 +52,7 @@ void emitKeywordConstants(const RecordKeeper &Records, raw_ostream &OS) {
   emitArray<decltype(Aggregates), const Record *>(
       OS, "StringRef Names[]", Aggregates,
       [](raw_ostream &OS, const Record *const &A) {
-        OS << '"' << A->getValueAsString("Name") << '"';
+        OS << '"' << A->getValueAsString("Spelling") << '"';
       });
   OS << "} // namespace aggregate_constant\n\n";
   endHeader(OS, "METAPHIR_IR_CONSTANTS_INC");

@@ -36,7 +36,7 @@ void emitMetaFlags(const RecordKeeper &Records, raw_ostream &OS) {
   OS << "// The data of the metaflags; metaphir/IR/MetaFlag.h reads it.\n\n"
         "enum MetaFlagID {\n  UnknownMetaFlag,\n";
   for (const Record *F : Flags)
-    OS << "  MF_" << F->getValueAsString("Name") << ",\n";
+    OS << "  MF_" << F->getValueAsString("Spelling") << ",\n";
   OS << "};\n\n"
         "enum Placement {\n  InstructionPlacement = 1,\n"
         "  OperandPlacement = 2,\n"
@@ -58,7 +58,7 @@ void emitMetaFlags(const RecordKeeper &Records, raw_ostream &OS) {
       OS, "BuiltIn BuiltIns[]", Flags,
       [](raw_ostream &OS, const Record *const &F) {
         int64_t Max = F->getValueAsInt("MaxArguments");
-        OS << "{\"" << F->getValueAsString("Name") << "\", {"
+        OS << "{\"" << F->getValueAsString("Spelling") << "\", {"
            << F->getValueAsString("Placement") << ", "
            << F->getValueAsInt("MinArguments") << ", "
            << (Max == -1 ? "UnlimitedArgs" : std::to_string(Max)) << ", "

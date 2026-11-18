@@ -27,7 +27,7 @@ void emitFacts(const RecordKeeper &Records, raw_ostream &OS) {
   for (const Record *C : getDefinitionsInOrder(Records, "ConstantClass"))
     if (C->getValueAsBit("Recorded"))
       Facts.push_back(
-          {C->getValueAsString("ID").str(), C->getValueAsString("Name").str()});
+          {C->getValueAsString("ID").str(), C->getValueAsString("Spelling").str()});
   unsigned NumPlain = Facts.size();
   auto Plain = getDefinitionsInOrder(Records, "Fact");
   for (const Record *F : Plain)

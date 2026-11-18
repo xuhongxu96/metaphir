@@ -11,24 +11,32 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "metaphir/IR/LanguageBase.td"
+include "metaphir/Matching/FactBase.td"
 
-def : Fact<"IsAnyIntegralConstant", "isAnyIntegralConstant">;
-def : Fact<"IsImmConstant", "isImmConstant">;
-def : Fact<"IsForbidPoison", "isForbidPoison">;
-def : Fact<"IsConstantSplat", "isConstantSplat">;
-def : Fact<"HasOneUse", "hasOneUse">;
-def : Fact<"HasOneUser", "hasOneUser">;
+def IsAnyIntegralConstant : Fact<"isAnyIntegralConstant">;
+def IsImmConstant : Fact<"isImmConstant">;
+def IsForbidPoison : Fact<"isForbidPoison">;
+def IsConstantSplat : Fact<"isConstantSplat">;
+def HasOneUse : Fact<"hasOneUse">;
+def HasOneUser : Fact<"hasOneUser">;
 
-def : ValueTrackingFact<"IsKnownNonZero", "isKnownNonZero">;
-def : ValueTrackingFact<"IsKnownNegative", "isKnownNegative">;
-def : ValueTrackingFact<"IsKnownNonNegative", "isKnownNonNegative">;
-def : ValueTrackingFact<"IsKnownPositive", "isKnownPositive">;
-def : ValueTrackingFact<"IsKnownPowerOfTwo", "isKnownPowerOfTwo">;
-def : ValueTrackingFact<"IsKnownPowerOfTwoOrZero", "isKnownPowerOfTwoOrZero">;
-def : ValueTrackingFact<"ValueTrackingSkipped", "valueTrackingSkipped">;
+def IsKnownNonZero : ValueTrackingFact<"isKnownNonZero">;
+def IsKnownNegative : ValueTrackingFact<"isKnownNegative">;
+def IsKnownNonNegative : ValueTrackingFact<"isKnownNonNegative">;
+def IsKnownPositive : ValueTrackingFact<"isKnownPositive">;
+def IsKnownPowerOfTwo : ValueTrackingFact<"isKnownPowerOfTwo">;
+def IsKnownPowerOfTwoOrZero : ValueTrackingFact<"isKnownPowerOfTwoOrZero">;
+def ValueTrackingSkipped : ValueTrackingFact<"valueTrackingSkipped">;
 
-def : Measure<"TrailingZeros", "trailingZeros", "Most">;
-def : Measure<"ActiveBits", "activeBits", "Least">;
-def : Measure<"RangeSignedBits", "rangeSignedBits", "Least">;
-def : Measure<"RangeUnsignedBits", "rangeUnsignedBits", "Least">;
+def TrailingZeros : Measure<"trailingZeros"> {
+  let Order = "Most";
+}
+def ActiveBits : Measure<"activeBits"> {
+  let Order = "Least";
+}
+def RangeSignedBits : Measure<"rangeSignedBits"> {
+  let Order = "Least";
+}
+def RangeUnsignedBits : Measure<"rangeUnsignedBits"> {
+  let Order = "Least";
+}
