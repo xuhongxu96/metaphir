@@ -257,10 +257,9 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
   for (Operation *Op : Matchers) {
     MatcherUse U(Op);
 
-    Value Subject = U.getCapture() ? U.getCapture() : U.result();
     SmallVector<Attribute, 4> Kept;
     if (std::optional<mlir::ArrayAttr> Flags = U.getMetaflags()) {
-      if (mlir::failed(Desugar(Flags->getValue(), Subject, U.result())))
+      if (mlir::failed(Desugar(Flags->getValue(), U.result(), U.result())))
         return mlir::failure();
       for (Attribute A : *Flags)
         if (isStructuralFlag(cast<MetaFlagAttr>(A)))

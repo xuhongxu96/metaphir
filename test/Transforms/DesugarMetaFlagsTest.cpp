@@ -8,6 +8,7 @@
 
 #include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
 #include "TransformTest.h"
+#include "metaphir/Dialect/Expr/ExprDialect.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;
@@ -64,6 +65,18 @@ TEST_F(DesugarMetaFlagsTest, StructuralFlagsStayBesideConstraintFlags) {
   std::optional<mlir::ArrayAttr> Flags = first<mpir::InstOp>().getMetaflags();
   ASSERT_TRUE(Flags);
   EXPECT_EQ(Flags->size(), 2u);
+}
+
+// A captured instruction is the subject of its flags as an uncaptured one is:
+// the constraint reads the instruction, not its capture.
+TEST_F(DesugarMetaFlagsTest, CapturedInstructionIsItsOwnSubject) {
+  ASSERT_TRUE(parse("%r = add:?anch:s i32 ?x, ?y\n"));
+  ASSERT_TRUE(mlir::succeeded(run(createDesugarMetaFlagsPass()))) << Errors;
+  mpir::InstOp Add = first<mpir::InstOp>();
+  ASSERT_TRUE(Add && Add.getCapture());
+  mpir_expr::ReadOp Read = first<mpir_expr::ReadOp>();
+  ASSERT_TRUE(Read);
+  EXPECT_EQ(Read->getOperand(0), Add.getResult());
 }
 
 TEST_F(DesugarMetaFlagsTest, NoFlagsLeavesThePatternAlone) {

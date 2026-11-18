@@ -49,7 +49,7 @@ metaflag:i :ismulop(?i) {
 %r = add:ismulop i32 ?x, ?y
 
 ; An instruction-placement flag takes the instruction as its subject, named
-; through the instruction's capture.
+; by its result.
 ;--- instr.mpir
 metaflag:i :isaddop(?i) {
 	opcode(?i) == "add"
@@ -84,7 +84,7 @@ define i32 @is_add(i32 %x, i32 %y) {
 
 ; FAILS: target 0: @is_add
 ; FAILS-NEXT:   no match
-; FAILS-NEXT:   constraint not satisfied: (== (opcode ?anch) "mul")
+; FAILS-NEXT:   constraint not satisfied: (== (opcode %r) "mul")
 ; FAILS-NOT: {{.}}
 
 ; BOTH: target 0: @is_add

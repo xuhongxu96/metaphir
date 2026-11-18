@@ -1,8 +1,8 @@
 // RUN: %metaphir-opt --split-input-file --mpir-desugar-metaflags %s | FileCheck %s
 // mpir-desugar-metaflags on subjects the parser does not give a defined
 // metaflag: an integer constant is read as a literal, a boolean one where
-// the definition reads a boolean; a captured instruction is read through
-// its capture.
+// the definition reads a boolean; an instruction, captured or not, is read
+// as itself.
 
 mpir.metaflag_def @small <param_names = ["v"], placement = operand> {
 // CHECK-LABEL:   mpir.metaflag_def @small <placement = operand, param_names = ["v"]> {
@@ -67,7 +67,7 @@ mpir.pattern {
 
 // -----
 
-// The capture of an instruction is the subject of the instruction's flags.
+// The instruction is the subject of its flags, whether it is captured or not.
 mpir.metaflag_def @s <param_names = ["v"], placement = instruction|operand> {
 // CHECK-LABEL:   mpir.metaflag_def @s <placement = instruction|operand, param_names = ["v"]> {
 // CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown>):
@@ -90,7 +90,7 @@ mpir.pattern {
 // CHECK:           %[[VAR_1:.*]] = mpir.var "cap" : <Instruction>
   %a = mpir.inst <add> capture %cap (%i32, %x, %i32, %x) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"s", [], loc("desugar-metaflags-constants.mlir":91:1)>]> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> capture %[[VAR_1]] (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-// CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
+// CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[INST_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "hasOneUse"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           mpir.require %[[CALL_0]] {from_metaflag} : <Boolean>
 } loc("desugar-metaflags-constants.mlir":96:1)

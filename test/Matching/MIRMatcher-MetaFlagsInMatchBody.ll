@@ -162,7 +162,7 @@ define i32 @chain(i32 %x, i32 %y) {
 
 ; NONROOT-FAILS: target 0: @chain
 ; NONROOT-FAILS-NEXT:   no match
-; NONROOT-FAILS-NEXT:   constraint not satisfied: (== (opcode ?r$inner) "mul")
+; NONROOT-FAILS-NEXT:   constraint not satisfied: (== (opcode %r$tmp) "mul")
 ; NONROOT-FAILS-NOT: {{.}}
 
 ;--- two-branch.ll
