@@ -6,11 +6,12 @@
 
 #include "metaphir/Transforms/Lowering/ExpandMatchers.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
+#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
-#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IRMapping.h"
+#include "llvm/ADT/SmallString.h"
 
 namespace llvm {
 namespace metaphir {
@@ -327,8 +328,7 @@ bool BranchInliner::bindFlags() {
           Builder, Use.getLoc(), SortType::get(Context, Sort::Boolean),
           Builder.getStringAttr(
               (OmittedFlagPrefix + UsePrefix + "$" +
-               instruction_flag::getName(instruction_flag::FlagID(FlagID)))
-                  .str()));
+               instruction_flag::getName(instruction_flag::FlagID(FlagID)))));
     }
     FlagValues[FlagID] = FlagValue;
     // The root's capture of the flag stands for FlagValue everywhere in the
@@ -385,11 +385,11 @@ void BranchInliner::inlineBody() {
         continue;
       // A local variable gets a fresh copy for this use, named after it.
       StringRef Name = Var.getVarName();
-      std::string Copy =
-          ((Name.starts_with("_") ? "_" : "") + UsePrefix + "$" + Name).str();
       Mapping.map(Var.getResult(),
-                  VarOp::create(Builder, Var.getLoc(), Var.getType(),
-                                Builder.getStringAttr(Copy)));
+                  VarOp::create(
+                      Builder, Var.getLoc(), Var.getType(),
+                      Builder.getStringAttr((Name.starts_with("_") ? "_" : "") +
+                                            UsePrefix + "$" + Name)));
       continue;
     }
     if (!isa<InstOp, UseOp>(Op)) {
@@ -419,13 +419,12 @@ void BranchInliner::inlineMatcher(Operation &Op) {
   if (!Parts.TreatIntAsVec)
     Parts.TreatIntAsVec = UseTreatIntAsVec;
   if (IsRoot) {
-    Parts.ResultName.reset();
-    if (std::optional<StringRef> Name = Use.getResultName())
-      Parts.ResultName = Name->str();
+    Parts.ResultName = Use.getResultNameAttr();
     if (Use.getCapture())
       Parts.Capture = Use.getCapture();
   } else if (Parts.ResultName) {
-    Parts.ResultName = (UsePrefix + "$" + *Parts.ResultName).str();
+    Parts.ResultName =
+        Builder.getStringAttr(UsePrefix + "$" + Parts.ResultName.getValue());
   }
   // Flags: a supported flag on the root takes the use's flag.
   SmallVector<instruction_flag::FlagID, 4> Flags;
@@ -496,9 +495,15 @@ Expander::inlineBranch(UseOp Use, MatcherOp Matcher, BranchOp Branch,
 LogicalResult Expander::expand(UseOp Use) {
   auto Matcher = mlir::SymbolTable::lookupNearestSymbolFrom<MatcherOp>(
       Use, Use.getMatcherAttr());
-  std::string UsePrefix = Use.getResultName()
-                              ? Use.getResultName()->str()
-                              : ("#" + Twine(NextAnonymousUse++)).str();
+  // A named use is prefixed by its name; one without is given a number.
+  SmallString<16> AnonymousName;
+  StringRef UsePrefix;
+  if (std::optional<StringRef> Name = Use.getResultName()) {
+    UsePrefix = *Name;
+  } else {
+    ("#" + Twine(NextAnonymousUse++)).toVector(AnonymousName);
+    UsePrefix = AnonymousName;
+  }
   SmallVector<MatcherOperandView, 8> CallerOps = getMatcherOperands(Use);
   bool Commutative = Use.isCommutative();
   std::optional<unsigned> OrSelf = Use.getOrSelfIndex();

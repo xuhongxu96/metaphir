@@ -82,7 +82,8 @@ SmallVector<MatcherOperandView, 4> getMatcherOperands(MatcherOpInterface Op);
 
 /// The pieces of an mpir.inst or mpir.use, for building another.
 struct MatcherParts {
-  std::optional<std::string> ResultName;
+  /// The name the result is written with, or null.
+  mlir::StringAttr ResultName;
   SmallVector<instruction_flag::FlagID, 4> Flags;
   SmallVector<FlagMode, 4> Modes;
   SmallVector<mlir::Value, 2> FlagCaptures;

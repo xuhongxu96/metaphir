@@ -232,6 +232,8 @@ def Mpir_MatcherOpInterface : OpInterface<"MatcherOpInterface"> {
   let methods = [
     InterfaceMethod<"The name the result is written with, if any",
                     "std::optional<::llvm::StringRef>", "getResultName">,
+    InterfaceMethod<"The attribute holding the name, or null",
+                    "::mlir::StringAttr", "getResultNameAttr">,
     InterfaceMethod<"The metaflags written on the instruction",
                     "std::optional<::mlir::ArrayAttr>", "getMetaflags">,
     InterfaceMethod<"The metaflags written on each operand",

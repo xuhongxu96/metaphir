@@ -777,7 +777,7 @@ MatcherParts Parser::makeMatcherParts(StringRef ResultName,
                                       ArrayRef<POperand> Ops, Value Capture) {
   MatcherParts Parts;
   if (!ResultName.empty())
-    Parts.ResultName = ResultName.str();
+    Parts.ResultName = Builder.getStringAttr(ResultName);
   for (const PFlag &F : Flags) {
     Parts.Flags.push_back(F.ID);
     Parts.Modes.push_back(F.Mode);

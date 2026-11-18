@@ -139,8 +139,7 @@ mpir::getMatcherOperands(MatcherOpInterface Op) {
 
 MatcherParts MatcherParts::of(MatcherOpInterface Matcher) {
   MatcherParts P;
-  if (std::optional<StringRef> Name = Matcher.getResultName())
-    P.ResultName = Name->str();
+  P.ResultName = Matcher.getResultNameAttr();
   P.Flags.assign(Matcher.getFlags().begin(), Matcher.getFlags().end());
   P.Modes.assign(Matcher.getFlagModes().begin(), Matcher.getFlagModes().end());
   P.FlagCaptures.assign(Matcher.getFlagCaptures().begin(),
@@ -162,7 +161,6 @@ namespace {
 struct BuildArguments {
   SmallVector<OperandKind, 8> Kinds;
   SmallVector<Value, 8> Values;
-  StringAttr ResultName;
   ArrayAttr MetaFlags;
   ArrayAttr OperandMetaFlags;
   BoolAttr TreatIntAsVec;
@@ -175,8 +173,6 @@ struct BuildArguments {
       if (Op.Val)
         Values.push_back(Op.Val);
     }
-    if (Parts.ResultName)
-      ResultName = Builder.getStringAttr(*Parts.ResultName);
     if (!Parts.MetaFlags.empty())
       MetaFlags = Builder.getArrayAttr(Parts.MetaFlags);
     if (any_of(Parts.OperandMetaFlags,
@@ -193,7 +189,7 @@ InstOp MatcherParts::buildInst(OpBuilder &Builder, Location Loc,
   BuildArguments Args(Builder, *this);
   return InstOp::create(
       Builder, Loc, SortType::get(Builder.getContext(), Sort::Instruction),
-      Opcode, Args.ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
+      Opcode, ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
       Args.OperandMetaFlags, SwappedPredicate, Args.TreatIntAsVec, Capture,
       ParentBlock, FlagCaptures, Args.Values);
 }
@@ -203,7 +199,7 @@ UseOp MatcherParts::buildUse(OpBuilder &Builder, Location Loc,
   BuildArguments Args(Builder, *this);
   return UseOp::create(
       Builder, Loc, SortType::get(Builder.getContext(), Sort::Instruction),
-      Matcher, Args.ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
+      Matcher, ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
       Args.OperandMetaFlags, /*swapped_predicate=*/UnitAttr(),
       Args.TreatIntAsVec, Capture, ParentBlock, FlagCaptures, Args.Values);
 }
