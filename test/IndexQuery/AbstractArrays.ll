@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; Array literals in constraints are evaluated before the IR is read, for the
 ; index's filter as well as for the matches: each kind of element, indexed by
 ; a constant. A literal indexed out of bounds has no value, and rejects.

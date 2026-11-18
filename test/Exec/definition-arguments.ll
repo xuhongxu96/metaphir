@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; A 'constraint' definition is called with what a match binds: a flag and a
 ; type, each read as the definition's parameter, which its body reads.
 ; RUN: split-file %s %t

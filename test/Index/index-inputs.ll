@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; The files an index covers: the IR and bitcode under a directory, followed
 ; through symbolic links, and nothing else. A path that does not exist is
 ; reported; one outside the index is matched in full, with a warning.

@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; A definition takes the arrays a pattern binds as arguments. A string
 ; cannot be one, and an argument that fails to evaluate fails the match: the
 ; constraint then rejects every match.

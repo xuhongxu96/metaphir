@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; A damaged index is rejected, with what is wrong with it. Each is patched from
 ; a valid index of one module.
 ; RUN: split-file %s %t

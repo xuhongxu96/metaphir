@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; A sequence's count can be a meta variable, which the patterns' uses of it
 ; must agree on; a fixed count must be the one of the value. A function type
 ; is no value's type, and a byte width is no integer's.

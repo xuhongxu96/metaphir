@@ -1329,7 +1329,13 @@ def main() -> int:
                     )
                 updated = update_test(path, lines, comment, kinds, tools)
         except ValueError as error:
-            print(error, file=sys.stderr)
+            # Some errors (a RUN line shlex cannot split) do not say which
+            # test they are about.
+            message = str(error)
+            print(
+                message if message.startswith(str(path)) else f"{path}: {message}",
+                file=sys.stderr,
+            )
             exit_code = 1
             continue
 
