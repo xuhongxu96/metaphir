@@ -23,7 +23,7 @@ MLIR_DEFINE_EXPLICIT_TYPE_ID(llvm::metaphir::SourcePointerTag)
 namespace llvm {
 namespace metaphir {
 
-static Location pointerLoc(MLIRContext *Context, SMLoc Loc, Location Fallback) {
+static Location pointerLoc(SMLoc Loc, Location Fallback) {
   return OpaqueLoc::get(reinterpret_cast<uintptr_t>(Loc.getPointer()),
                         TypeID::get<SourcePointerTag>(), Fallback);
 }
@@ -39,8 +39,8 @@ Location getLocation(MLIRContext *Context, const SourceMgr &SM, SMRange Range) {
   }
   SMLoc End = Range.End.isValid() ? Range.End : Range.Start;
   return FusedLoc::get(Context,
-                       {pointerLoc(Context, Range.Start, Fallback),
-                        pointerLoc(Context, End, Fallback)},
+                       {pointerLoc(Range.Start, Fallback),
+                        pointerLoc(End, Fallback)},
                        StringAttr::get(Context, "mpir.range"));
 }
 

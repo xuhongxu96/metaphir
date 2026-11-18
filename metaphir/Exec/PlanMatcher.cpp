@@ -100,8 +100,7 @@ namespace {
 /// Compiles a plan's operations into steps.
 class ProgramBuilder {
 public:
-  explicit ProgramBuilder(PlanProgram &Program,
-                          std::vector<PlanProgram::Step> &Steps,
+  explicit ProgramBuilder(std::vector<PlanProgram::Step> &Steps,
                           std::vector<std::pair<unsigned, unsigned>> &Regions,
                           TypePatterns &Types)
       : Steps(Steps), Regions(Regions), Types(Types) {}
@@ -297,8 +296,7 @@ std::unique_ptr<PlanProgram> PlanProgram::compile(plan::MatcherOp Matcher) {
     Info.Written = getOutermostSourceRange(cast<mlir::LocationAttr>(Loc)).Start;
     Program->Slots.push_back(std::move(Info));
   }
-  ProgramBuilder Builder(*Program, Program->Steps, Program->Regions,
-                         Program->Types);
+  ProgramBuilder Builder(Program->Steps, Program->Regions, Program->Types);
   Builder.block(Matcher.getBody().front());
   Program->NumRegisters = Builder.NumRegisters;
   return Program;

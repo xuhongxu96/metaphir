@@ -40,10 +40,6 @@ struct Atom_ {
   enum Kind { Instruction, Global } K;
   instruction::InstructionID ID = instruction::InstructionID(0);
   std::string Name;
-
-  bool operator==(const Atom_ &Other) const {
-    return K == Other.K && ID == Other.ID && Name == Other.Name;
-  }
 };
 /// Features a function needs some conjunction of.
 using Disjunction = SmallVector<SmallVector<Atom_, 2>, 2>;

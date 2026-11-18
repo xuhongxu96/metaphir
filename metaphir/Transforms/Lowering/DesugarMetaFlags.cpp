@@ -29,7 +29,6 @@ static APSInt normalizeLiteral(const APSInt &Number) {
                       /*isUnsigned=*/true);
 }
 
-
 //===----------------------------------------------------------------------===//
 // mpir-desugar-metaflags
 //===----------------------------------------------------------------------===//
@@ -111,14 +110,14 @@ mlir::FailureOr<Value> Desugarer::lower(MetaFlagAttr Flag, Value Subject) {
   case metaflag::MF_c:
   case metaflag::MF_o:
     llvm_unreachable("structural flags are not constraints");
-  case metaflag::UnknownMetaFlag:
-    break;
+  case metaflag::UnknownMetaFlag: {
+    auto Def = dyn_cast_or_null<MetaFlagDefOp>(
+        mlir::SymbolTable::lookupSymbolIn(Module, Name));
+    if (!Def)
+      return error(Flag) << "unknown metaflag ':" << Name << "'";
+    return lowerDefined(Flag, Def, Subject);
   }
-  auto Def = dyn_cast_or_null<MetaFlagDefOp>(
-      mlir::SymbolTable::lookupSymbolIn(Module, Name));
-  if (!Def)
-    return error(Flag) << "unknown metaflag ':" << Name << "'";
-  return lowerDefined(Flag, Def, Subject);
+  }
 }
 
 mlir::FailureOr<Value>
@@ -132,18 +131,13 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
   mlir::Block &Body = Def.getBody().front();
   mlir::MLIRContext *Context = Builder.getContext();
 
-  // What each parameter is bound to: the subject, then the arguments.
-  SmallVector<Value, 4> Bound;
-  Bound.push_back(Subject);
-  for (Attribute A : Args) {
-    auto Int = dyn_cast<mlir::IntegerAttr>(A);
-    if (!Int)
+  for (Attribute A : Args)
+    if (!isa<mlir::IntegerAttr>(A))
       return error(Flag) << "metaflag ':" << Name
                          << "' expects integer arguments";
-    Bound.push_back(Value());
-  }
 
-  // Clone the body, reading the parameters as what they are bound to.
+  // Clone the body, reading the subject as it is, and the arguments as
+  // literals.
   mlir::IRMapping Mapping;
   Value Result;
   for (Operation &Op : Body) {
@@ -171,14 +165,16 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
       continue;
     }
     Operation *SubjectDef = Subject.getDefiningOp();
+    // SubjectDef is null for a block argument, which is a meta variable.
     if (!SubjectDef || isa<VarOp>(SubjectDef)) {
       // A meta variable is read as its own sort, once known.
       Sort S = sortOf(Subject);
       Sort ReadSort =
           S != Sort::Unknown ? getRepresentation(resolveSort(S)) : sortOf(Read);
       Mapping.map(Read.getResult(),
-                  mpir_expr::ReadOp::create(
-                      Builder, ReadLoc, SortType::get(Context, ReadSort), Subject));
+                  mpir_expr::ReadOp::create(Builder, ReadLoc,
+                                            SortType::get(Context, ReadSort),
+                                            Subject));
       continue;
     }
     if (isa<InstOp, UseOp, AltOp>(SubjectDef)) {
