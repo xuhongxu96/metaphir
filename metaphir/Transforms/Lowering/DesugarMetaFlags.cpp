@@ -41,15 +41,16 @@ static APSInt normalizeLiteral(const APSInt &Number) {
 //===----------------------------------------------------------------------===//
 
 /// Anchors the value-tracking operators of the expression C that have none at
-/// Anchor, as setDefaultContextInstruction does.
+/// Anchor, a matcher's result, as setDefaultContextInstruction does.
 static void setDefaultAnchor(Value C, Value Anchor,
                              DenseSet<Operation *> &Visited) {
+  assert(Anchor);
   Operation *Def = C.getDefiningOp();
   if (!Def || !isa<mpir_expr::ExprDialect>(Def->getDialect()) ||
       !Visited.insert(Def).second)
     return;
   if (auto Call = dyn_cast<mpir_expr::CallOp>(Def))
-    if (!Call.getAnchor() && Anchor)
+    if (!Call.getAnchor())
       Call.getAnchorMutable().assign(Anchor);
   if (isa<mpir_expr::ReadOp>(Def))
     return;
