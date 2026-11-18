@@ -344,12 +344,12 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
 
 /// With a trusted index, adds the indexed files under Input that may match:
 /// those with candidate functions, and those that do not parse, to report
-/// them. Returns false if Input is not under the index's root.
-static bool collectIndexedFiles(StringRef Input, const IndexUse &Use,
-                                SmallVectorImpl<std::string> &Files) {
+/// them. Fails if Input is not under the index's root.
+static LogicalResult collectIndexedFiles(StringRef Input, const IndexUse &Use,
+                                         SmallVectorImpl<std::string> &Files) {
   std::optional<std::string> Prefix = Use.Index.getRelativePath(Input);
   if (!Prefix)
-    return false;
+    return failure();
   for (size_t I = 0; I != Use.Index.size(); ++I) {
     const IndexEntry &Entry = Use.Index.getEntry(I);
     StringRef Path = Entry.Path;
@@ -366,7 +366,7 @@ static bool collectIndexedFiles(StringRef Input, const IndexUse &Use,
       sys::path::append(File, Path);
     Files.push_back(std::string(File));
   }
-  return true;
+  return success();
 }
 
 /// Matches the pattern against Functions, of the module M of File.
@@ -803,8 +803,9 @@ int main(int Argc, char **Argv) {
 
   SmallVector<std::string, 16> InputFiles;
   for (const std::string &Input : InputPaths)
-    if (!(TrustIndex && collectIndexedFiles(Input, *Use, InputFiles)) &&
-        !collectLLVMIRFiles(Input, InputFiles, errs()))
+    if (!(TrustIndex &&
+          succeeded(collectIndexedFiles(Input, *Use, InputFiles))) &&
+        failed(collectLLVMIRFiles(Input, InputFiles, errs())))
       return 1;
 
   unsigned Threads =

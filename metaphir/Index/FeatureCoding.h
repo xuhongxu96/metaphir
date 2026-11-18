@@ -7,6 +7,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/LogicalResult.h"
 #include <string>
 
 namespace llvm {
@@ -22,19 +23,19 @@ StringRef readString(DataExtractor &Data, DataExtractor::Cursor &C);
 
 /// Writes the instructions, edges and siblings of Features.
 void writeCoarseFeatures(raw_ostream &OS, const FunctionFeatures &Features);
-/// Reads what writeCoarseFeatures wrote. Returns false if the keys are not
-/// valid.
-bool readCoarseFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                        FunctionFeatures &Features);
+/// Reads what writeCoarseFeatures wrote. Fails if the keys are not valid.
+LogicalResult readCoarseFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+                                 FunctionFeatures &Features);
 
 /// Writes the signatures, facts and measures of Features.
 void writeFineFeatures(raw_ostream &OS, const FunctionFeatures &Features);
 /// Reads what writeFineFeatures wrote if NeedsFine, given the coarse
-/// features, asks for it; otherwise skips it. Returns false if the features
-/// are not valid.
-bool readFineFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                      FunctionFeatures &Features,
-                      function_ref<bool(const FunctionFeatures &)> NeedsFine);
+/// features, asks for it; otherwise skips it. Fails if the features are not
+/// valid.
+LogicalResult
+readFineFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+                 FunctionFeatures &Features,
+                 function_ref<bool(const FunctionFeatures &)> NeedsFine);
 
 /// Writes all of a function's features, globals included, on their own.
 void writeFunctionFeatures(raw_ostream &OS, const FunctionFeatures &Features);

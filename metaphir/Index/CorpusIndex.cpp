@@ -27,17 +27,18 @@ namespace metaphir {
 static constexpr StringLiteral Magic = "MPIRIDX";
 static constexpr uint32_t FormatVersion = 8;
 
-bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
-                        raw_ostream &Err) {
+LogicalResult collectLLVMIRFiles(StringRef Input,
+                                 SmallVectorImpl<std::string> &Files,
+                                 raw_ostream &Err) {
   bool IsDirectory = false;
   if (std::error_code EC = sys::fs::is_directory(Input, IsDirectory)) {
     Err << Input << ": " << EC.message() << '\n';
-    return false;
+    return failure();
   }
 
   if (!IsDirectory) {
     Files.push_back(Input.str());
-    return true;
+    return success();
   }
 
   SmallVector<std::string, 16> DirectoryFiles;
@@ -59,12 +60,12 @@ bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
 
   if (EC) {
     Err << Input << ": " << EC.message() << '\n';
-    return false;
+    return failure();
   }
 
   llvm::sort(DirectoryFiles);
   Files.append(DirectoryFiles);
-  return true;
+  return success();
 }
 
 /// Path made absolute and without dots.
@@ -452,11 +453,11 @@ Expected<FunctionFeatures> CorpusIndex::readSummary(
                      /*IsLittleEndian=*/true);
   DataExtractor::Cursor C(SummariesStart + Entry.SummaryOffset);
   FunctionFeatures Summary;
-  bool Valid = readCoarseFeatures(Data, C, Summary);
+  bool Valid = succeeded(readCoarseFeatures(Data, C, Summary));
   uint64_t NumGlobals = Data.getULEB128(C);
   for (uint64_t I = 0; I != NumGlobals && C; ++I)
     Summary.Globals.push_back(Data.getU64(C));
-  Valid = Valid && readFineFeatures(Data, C, Summary, NeedsFine);
+  Valid = Valid && succeeded(readFineFeatures(Data, C, Summary, NeedsFine));
   if (!C || !Valid)
     return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   return Summary;
@@ -475,7 +476,7 @@ Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
   bool Valid = true;
   for (IndexedFunction &Function : Functions) {
     Function.NameHash = Data.getU64(C);
-    Valid &= readCoarseFeatures(Data, C, Function.Features);
+    Valid &= succeeded(readCoarseFeatures(Data, C, Function.Features));
     uint64_t NumGlobals = Data.getULEB128(C);
     uint64_t Position = 0;
     for (uint64_t I = 0; I != NumGlobals && C && Valid; ++I) {
@@ -484,7 +485,8 @@ Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
       if (Valid)
         Function.Features.Globals.push_back(Summary->Globals[Position]);
     }
-    Valid = Valid && readFineFeatures(Data, C, Function.Features, NeedsFine);
+    Valid = Valid &&
+            succeeded(readFineFeatures(Data, C, Function.Features, NeedsFine));
     if (!C || !Valid)
       return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   }

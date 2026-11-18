@@ -4,6 +4,7 @@
 #include "metaphir/Parser/MIRToken.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/Support/LogicalResult.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/SourceMgr.h"
 #include <string>
@@ -47,13 +48,15 @@ public:
   const APSInt &getAPSIntVal() const { return APSIntVal; }
   const APFloat &getAPFloatVal() const { return APFloatVal; }
 
-  // This returns true as a convenience for the parser functions that return
-  // true on error.
-  bool ParseError(LocTy ErrorLoc, const Twine &Msg) {
+  // This returns failure as a convenience for the parser functions that
+  // return a LogicalResult.
+  LogicalResult ParseError(LocTy ErrorLoc, const Twine &Msg) {
     Error(ErrorLoc, Msg, ErrorPriority::Parser);
-    return true;
+    return failure();
   }
-  bool ParseError(const Twine &Msg) { return ParseError(getLoc(), Msg); }
+  LogicalResult ParseError(const Twine &Msg) {
+    return ParseError(getLoc(), Msg);
+  }
 
   void Warning(LocTy WarningLoc, const Twine &Msg) const;
   void Warning(const Twine &Msg) const { return Warning(getLoc(), Msg); }
@@ -129,7 +132,7 @@ private:
 
   int getNextChar();
   void SkipLineComment();
-  bool SkipCComment();
+  LogicalResult SkipCComment();
   tok::Kind ReadString(tok::Kind Kind);
   /// Reads a variable name after its sigil. LLVM-style %/@ names may contain
   /// '-'; meta variable and metaflag names may not, so '?bits-1' is always a

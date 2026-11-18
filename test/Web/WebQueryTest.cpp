@@ -6,8 +6,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/LEB128.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
@@ -53,7 +53,7 @@ protected:
     sys::path::append(IndexFile, "corpus.mpidx");
     std::vector<IndexedModule> Modules;
     SmallVector<std::string, 4> Paths;
-    ASSERT_TRUE(collectLLVMIRFiles(Corpus, Paths, errs()));
+    ASSERT_TRUE(succeeded(collectLLVMIRFiles(Corpus, Paths, errs())));
     for (const std::string &Path : Paths) {
       Expected<IndexedModule> Module =
           CorpusIndex::indexFile(Corpus, sys::path::filename(Path));
@@ -160,9 +160,9 @@ protected:
   /// findCandidates, findFeatures and filterCandidates), reading into Cache
   /// the bytes each asks for, each range's bytes first passed to Patch.
   /// Returns the first error.
-  Error runStages(WebQuery &Query, ByteCache &Cache, unsigned Stages,
-                  function_ref<void(const ByteRange &, std::string &)> Patch =
-                      nullptr) {
+  Error runStages(
+      WebQuery &Query, ByteCache &Cache, unsigned Stages,
+      function_ref<void(const ByteRange &, std::string &)> Patch = nullptr) {
     auto Fetch = [&](ArrayRef<ByteRange> Ranges) {
       for (const ByteRange &Range : Ranges) {
         std::string Bytes = Files[unsigned(Range.File)]
@@ -515,8 +515,7 @@ TEST_F(WebQueryTest, RejectsCorruptFeaturesAndIndexEntries) {
   ASSERT_NE(NotAFrame, nullptr);
   ByteCache Cache;
   std::string Error = errorOf(runStages(
-      *NotAFrame, Cache, 5,
-      [](const ByteRange &Range, std::string &Bytes) {
+      *NotAFrame, Cache, 5, [](const ByteRange &Range, std::string &Bytes) {
         if (Range.File == WebFile::Features)
           Bytes = noise(Bytes.size());
       }));
@@ -527,8 +526,7 @@ TEST_F(WebQueryTest, RejectsCorruptFeaturesAndIndexEntries) {
   ASSERT_NE(NoFeatures, nullptr);
   ByteCache Other;
   Error = errorOf(runStages(
-      *NoFeatures, Other, 5,
-      [&](const ByteRange &Range, std::string &Bytes) {
+      *NoFeatures, Other, 5, [&](const ByteRange &Range, std::string &Bytes) {
         if (Range.File == WebFile::Features) {
           std::string Frame =
               frameOfSize(Web->getHeader().FeatureDictionary, Bytes.size());
@@ -542,13 +540,12 @@ TEST_F(WebQueryTest, RejectsCorruptFeaturesAndIndexEntries) {
   std::unique_ptr<WebQuery> Unordered = Compile();
   ASSERT_NE(Unordered, nullptr);
   ByteCache Entries;
-  Error = errorOf(runStages(
-      *Unordered, Entries, 4,
-      [](const ByteRange &Range, std::string &Bytes) {
-        if (Range.File == WebFile::Index)
-          for (unsigned I = 0; I != 8; ++I)
-            Bytes[I] = '\xff';
-      }));
+  Error = errorOf(runStages(*Unordered, Entries, 4,
+                            [](const ByteRange &Range, std::string &Bytes) {
+                              if (Range.File == WebFile::Index)
+                                for (unsigned I = 0; I != 8; ++I)
+                                  Bytes[I] = '\xff';
+                            }));
   EXPECT_EQ(Error, "function index out of order");
 }
 
@@ -566,9 +563,9 @@ TEST_F(WebQueryTest, RejectsCorruptPackFrames) {
   WebQuery &Q = **Query;
 
   // A pack whose size is past the frame's end.
-  EXPECT_NE(matchError(Q, 0, packFrame(uleb(1000)), 0)
-                .find("a pack past the end"),
-            std::string::npos);
+  EXPECT_NE(
+      matchError(Q, 0, packFrame(uleb(1000)), 0).find("a pack past the end"),
+      std::string::npos);
   // A slot past the frame's packs.
   EXPECT_NE(matchError(Q, 0, packFrame(uleb(0)), 1).find("no pack 1"),
             std::string::npos);
@@ -586,6 +583,5 @@ TEST_F(WebQueryTest, RejectsCorruptPackFrames) {
   // A frame that no dictionary reads.
   EXPECT_NE(matchError(Q, 0, noise(40), 0), "");
 }
-
 
 } // namespace

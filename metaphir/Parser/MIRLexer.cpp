@@ -267,7 +267,7 @@ tok::Kind MIRLexer::LexToken() {
       if (CurPtr[0] != '*')
         return LexUnexpected(CurChar);
       ++CurPtr;
-      if (SkipCComment())
+      if (failed(SkipCComment()))
         return tok::Error;
       continue;
     case '?':
@@ -288,23 +288,22 @@ void MIRLexer::SkipLineComment() {
   }
 }
 
-/// This skips C-style /**/ comments. Returns true if there
-/// was an error.
-bool MIRLexer::SkipCComment() {
+/// This skips C-style /**/ comments. Returns failure if there was an error.
+LogicalResult MIRLexer::SkipCComment() {
   while (true) {
     int CurChar = getNextChar();
     switch (CurChar) {
     case EOF:
       LexError("unterminated comment");
-      return true;
+      return failure();
     case '*':
       // End of the comment?
       CurChar = getNextChar();
       if (CurChar == '/')
-        return false;
+        return success();
       if (CurChar == EOF) {
         LexError("unterminated comment");
-        return true;
+        return failure();
       }
     }
   }

@@ -77,7 +77,7 @@ static cl::opt<unsigned>
 
 static int build(StringRef ToolName) {
   SmallVector<std::string, 16> Files;
-  if (!collectLLVMIRFiles(CorpusDir, Files, errs()))
+  if (failed(collectLLVMIRFiles(CorpusDir, Files, errs())))
     return 1;
 
   std::vector<std::optional<IndexedModule>> Modules(Files.size());

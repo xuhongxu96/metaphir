@@ -4,8 +4,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -77,7 +77,7 @@ protected:
   /// Indexes the corpus, as metaphir-index build does.
   void index() {
     SmallVector<std::string, 4> Paths;
-    ASSERT_TRUE(collectLLVMIRFiles(Corpus, Paths, errs()));
+    ASSERT_TRUE(succeeded(collectLLVMIRFiles(Corpus, Paths, errs())));
     std::vector<IndexedModule> Modules;
     for (const std::string &Path : Paths) {
       Expected<IndexedModule> Module =
@@ -149,7 +149,8 @@ TEST_F(WebPublisherTest, RejectsOutputsThatAreNotDirectories) {
 
 TEST_F(WebPublisherTest, RejectsFilesChangedSinceIndexed) {
   index();
-  rewriteCorpusFile("a.ll", std::string(FunctionF) + std::string(FunctionG) + "\n",
+  rewriteCorpusFile("a.ll",
+                    std::string(FunctionF) + std::string(FunctionG) + "\n",
                     /*KeepStamp=*/false);
   EXPECT_NE(publish(pathIn(Root, "published"))
                 .find("a.ll: changed since indexed; index it again"),

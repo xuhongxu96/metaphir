@@ -9,6 +9,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/LogicalResult.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstdint>
 #include <memory>
@@ -23,9 +24,11 @@ class raw_ostream;
 namespace metaphir {
 
 /// Adds Input, or the .ll and .bc files under it when it is a directory (in
-/// sorted order), to Files. Reports a directory that cannot be read to Err.
-bool collectLLVMIRFiles(StringRef Input, SmallVectorImpl<std::string> &Files,
-                        raw_ostream &Err);
+/// sorted order), to Files. Reports a directory that cannot be read to Err and
+/// fails.
+LogicalResult collectLLVMIRFiles(StringRef Input,
+                                 SmallVectorImpl<std::string> &Files,
+                                 raw_ostream &Err);
 
 /// What tells whether a file changed since it was indexed.
 struct FileStamp {

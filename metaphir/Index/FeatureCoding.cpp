@@ -30,19 +30,20 @@ static void writeSortedKeys(raw_ostream &OS, ArrayRef<T> Keys) {
   }
 }
 
-/// Reads what writeSortedKeys wrote. Returns false if a key does not fit T.
+/// Reads what writeSortedKeys wrote. Fails if a key does not fit T.
 template <typename T>
-static bool readSortedKeys(DataExtractor &Data, DataExtractor::Cursor &C,
-                           SmallVectorImpl<T> &Keys) {
+static LogicalResult readSortedKeys(DataExtractor &Data,
+                                    DataExtractor::Cursor &C,
+                                    SmallVectorImpl<T> &Keys) {
   uint64_t NumKeys = Data.getULEB128(C);
   uint64_t Key = 0;
   for (uint64_t I = 0; I != NumKeys && C; ++I) {
     Key += Data.getULEB128(C);
     if (Key > std::numeric_limits<T>::max())
-      return false;
+      return failure();
     Keys.push_back(Key);
   }
-  return true;
+  return success();
 }
 
 static void writeSignatures(raw_ostream &OS, ArrayRef<Signature> Signatures) {
@@ -58,28 +59,29 @@ static void writeSignatures(raw_ostream &OS, ArrayRef<Signature> Signatures) {
   }
 }
 
-/// Reads what writeSignatures wrote. Returns false if a signature is not
+/// Reads what writeSignatures wrote. Fails if a signature is not
 /// valid.
-static bool readSignatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                           SmallVectorImpl<Signature> &Signatures) {
+static LogicalResult readSignatures(DataExtractor &Data,
+                                    DataExtractor::Cursor &C,
+                                    SmallVectorImpl<Signature> &Signatures) {
   uint64_t NumSignatures = Data.getULEB128(C);
   uint64_t ID = 0;
   for (uint64_t I = 0; I != NumSignatures && C; ++I) {
     ID += Data.getULEB128(C);
     if (ID >= instruction::NumInstructionIDs)
-      return false;
+      return failure();
     Signature Sig;
     Sig.ID = instruction::InstructionID(ID);
     uint64_t Flags = Data.getULEB128(C);
     if (Flags > UINT32_MAX)
-      return false;
+      return failure();
     Sig.Flags = Flags;
     Sig.Result = Data.getULEB128(C);
     for (TypeCode &Operand : Sig.Operands)
       Operand = Data.getULEB128(C);
     Signatures.push_back(Sig);
   }
-  return true;
+  return success();
 }
 
 void writeCoarseFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
@@ -88,11 +90,12 @@ void writeCoarseFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
   writeSortedKeys<uint16_t>(OS, Features.Siblings);
 }
 
-bool readCoarseFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                        FunctionFeatures &Features) {
+LogicalResult readCoarseFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+                                 FunctionFeatures &Features) {
   Features.Instructions = Data.getULEB128(C);
-  return readSortedKeys(Data, C, Features.Edges) &&
-         readSortedKeys(Data, C, Features.Siblings);
+  if (failed(readSortedKeys(Data, C, Features.Edges)))
+    return failure();
+  return readSortedKeys(Data, C, Features.Siblings);
 }
 
 void writeFineFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
@@ -106,23 +109,24 @@ void writeFineFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
   OS << Fine;
 }
 
-bool readFineFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                      FunctionFeatures &Features,
-                      function_ref<bool(const FunctionFeatures &)> NeedsFine) {
+LogicalResult
+readFineFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+                 FunctionFeatures &Features,
+                 function_ref<bool(const FunctionFeatures &)> NeedsFine) {
   uint64_t Size = Data.getULEB128(C);
   uint64_t End = C.tell() + Size;
   Features.Fine = false;
   if (NeedsFine && !NeedsFine(Features)) {
     Data.skip(C, Size);
-    return true;
+    return success();
   }
   Features.Fine = true;
-  if (!readSignatures(Data, C, Features.Signatures) ||
-      !readSortedKeys(Data, C, Features.Facts) ||
-      !readSortedKeys(Data, C, Features.Measures))
-    return false;
+  if (failed(readSignatures(Data, C, Features.Signatures)) ||
+      failed(readSortedKeys(Data, C, Features.Facts)) ||
+      failed(readSortedKeys(Data, C, Features.Measures)))
+    return failure();
   Features.HasValueFacts = Data.getU8(C);
-  return !C || C.tell() == End;
+  return success(!C || C.tell() == End);
 }
 
 void writeFunctionFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
@@ -135,9 +139,9 @@ Expected<FunctionFeatures> readFunctionFeatures(StringRef Bytes) {
   DataExtractor Data(Bytes, /*IsLittleEndian=*/true);
   DataExtractor::Cursor C(0);
   FunctionFeatures Features;
-  bool Valid = readCoarseFeatures(Data, C, Features) &&
-               readSortedKeys(Data, C, Features.Globals) &&
-               readFineFeatures(Data, C, Features, nullptr);
+  bool Valid = succeeded(readCoarseFeatures(Data, C, Features)) &&
+               succeeded(readSortedKeys(Data, C, Features.Globals)) &&
+               succeeded(readFineFeatures(Data, C, Features, nullptr));
   if (!C)
     return createStringError("function features: " + toString(C.takeError()));
   if (!Valid || C.tell() != Bytes.size())
