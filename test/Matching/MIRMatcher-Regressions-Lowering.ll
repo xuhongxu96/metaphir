@@ -9,6 +9,8 @@
 ; RUN: %metaphir-match %t/nested-type.mpir %t/bitcast.ll | FileCheck %s --check-prefix=NESTED-TYPE
 ; RUN: %metaphir-match %t/concrete-width.mpir %t/signum.ll | FileCheck %s --check-prefix=CONCRETE-WIDTH
 ; RUN: %metaphir-match %t/nested-composite.mpir %t/nested-composite.ll | FileCheck %s --check-prefix=NESTED-COMPOSITE
+; RUN: %metaphir-match %t/inner-flag.mpir %t/inner-flag.ll | FileCheck %s --check-prefix=INNER-FLAG
+; RUN: %metaphir-match %t/inner-flag-capture.mpir %t/inner-flag.ll | FileCheck %s --check-prefix=INNER-FLAG-CAPTURE
 ; RUN: not %metaphir-match %t/meta-for-fixed.mpir %t/add.ll 2>&1 | FileCheck %s --check-prefix=META-FOR-FIXED
 ; RUN: not %metaphir-match %t/or-self-unbound.mpir %t/zext.ll 2>&1 | FileCheck %s --check-prefix=OR-SELF-UNBOUND
 ; RUN: %metaphir-match %t/or-self-unnamed.mpir %t/zext.ll | FileCheck %s --check-prefix=OR-SELF-UNNAMED
@@ -169,6 +171,49 @@ define i32 @nested(i32 %a, i32 %b) {
 ; NESTED-COMPOSITE-NEXT:   match 0:
 ; NESTED-COMPOSITE-NEXT:     {?a = %a, ?anch = %r, ?b = %b}
 ; NESTED-COMPOSITE-NOT: {{.}}
+
+; A supported flag the use passes reaches every instruction of the branch
+; that captures it, not only the one the branch yields: the 'add' below is
+; not the root, yet requiring 'nsw' of the use requires it of the 'add'.
+;--- inner-flag.mpir
+match mulnsw [nsw] Binary (?t ?x, ?y) {
+  %s = add nsw:?nsw ?t ?x, ?y
+  %ret = mul ?t %s, 2
+}
+%r = mulnsw:?anch nsw i32 ?a, ?b
+
+;--- inner-flag-capture.mpir
+match mulnsw [nsw] Binary (?t ?x, ?y) {
+  %s = add nsw:?nsw ?t ?x, ?y
+  %ret = mul ?t %s, 2
+}
+%r = mulnsw:?anch nsw:?c i32 ?a, ?b
+
+;--- inner-flag.ll
+define i32 @with_nsw(i32 %a, i32 %b) {
+  %s = add nsw i32 %a, %b
+  %r = mul i32 %s, 2
+  ret i32 %r
+}
+define i32 @without_nsw(i32 %a, i32 %b) {
+  %s = add i32 %a, %b
+  %r = mul i32 %s, 2
+  ret i32 %r
+}
+; INNER-FLAG: target 0: @with_nsw
+; INNER-FLAG-NEXT:   match 0:
+; INNER-FLAG-NEXT:     {?a = %a, ?anch = %r, ?b = %b}
+; INNER-FLAG-NEXT: target 1: @without_nsw
+; INNER-FLAG-NEXT:   no match
+; INNER-FLAG-NOT: {{.}}
+
+; INNER-FLAG-CAPTURE: target 0: @with_nsw
+; INNER-FLAG-CAPTURE-NEXT:   match 0:
+; INNER-FLAG-CAPTURE-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?c = true}
+; INNER-FLAG-CAPTURE-NEXT: target 1: @without_nsw
+; INNER-FLAG-CAPTURE-NEXT:   match 0:
+; INNER-FLAG-CAPTURE-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?c = false}
+; INNER-FLAG-CAPTURE-NOT: {{.}}
 
 ;--- add.ll
 define i32 @add(i32 %a, i32 %b) {

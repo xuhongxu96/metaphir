@@ -129,7 +129,20 @@ private:
   mlir::FailureOr<bool> bindTypes();
   /// Binds the matcher's supported flags to what the use says of them.
   /// Returns false if the use and the branch disagree on one.
+  /// What the captures of a supported flag in the branch stand for: a meta
+  /// variable, or a boolean constant if Var is null.
+  struct FlagValue {
+    Value Var;
+    std::optional<bool> Constant;
+  };
   bool bindFlags();
+  /// The capture the use passes for its flag at UseIndex, or null.
+  Value useCaptureAt(unsigned UseIndex);
+  /// The value of a supported flag, or nothing if the branch fixes it to
+  /// what the use rules out.
+  std::optional<FlagValue> resolveFlag(instruction_flag::FlagID FlagID);
+  /// Maps the captures of the flag in the branch's matchers to its value.
+  void mapCaptures(instruction_flag::FlagID FlagID, const FlagValue &Resolved);
   /// What the root's capture and the branch's 'i?n' type patterns stand for.
   void bindRootAndWidths();
   /// Copies the branch's operations into the new region.
@@ -165,11 +178,8 @@ private:
   /// Flags the branch fixes that the use captures: the capture, and the
   /// value.
   SmallVector<std::pair<Value, bool>, 2> FixedFlags;
-  /// What the root's capture of each supported flag stands for: a boolean
-  /// constant or a meta variable.
-  DenseMap<int32_t, std::pair<Value, std::optional<bool>>> FlagValues;
-  /// The branch's 'i?n' type patterns that stand for a type the use passes.
-  DenseMap<Operation *, Value> ReplacedTypes;
+  /// What the root's capture of each supported flag stands for.
+  DenseMap<int32_t, FlagValue> FlagValues;
 };
 } // namespace
 
@@ -282,79 +292,93 @@ mlir::FailureOr<bool> BranchInliner::bindTypes() {
   return true;
 }
 
-bool BranchInliner::bindFlags() {
-  // Bind the matcher's supported flags. For each one, the use either omits
-  // it, requires it, negates it, or captures it; a branch may also fix its
-  // value. FlagValue is what the root's capture of the flag stands for: a
-  // boolean constant or a meta variable.
-  ArrayRef<instruction_flag::FlagID> UseFlags = Use.getFlags();
-  ArrayRef<FlagMode> UseModes = Use.getFlagModes();
-  SmallVector<Value, 4> UseCaptures;
-  {
-    unsigned Next = 0;
-    for (FlagMode Mode : UseModes)
-      UseCaptures.push_back(
-          Mode == FlagMode::Captured ? Use.getFlagCaptures()[Next++] : Value());
-  }
-  ArrayRef<instruction_flag::FlagID> FixedFlagIDs = Branch.getFixedFlags();
-  ArrayRef<bool> FixedFlagValues = Branch.getFixedFlagValues();
-  for (instruction_flag::FlagID FlagID : Matcher.getSupportedFlags()) {
-    const instruction_flag::FlagID *UseFlag = find(UseFlags, FlagID);
-    std::optional<unsigned> UseIndex;
-    if (UseFlag != UseFlags.end())
-      UseIndex = UseFlag - UseFlags.begin();
-    std::optional<bool> Fixed;
-    if (const instruction_flag::FlagID *F = find(FixedFlagIDs, FlagID);
-        F != FixedFlagIDs.end())
-      Fixed = FixedFlagValues[F - FixedFlagIDs.begin()];
+Value BranchInliner::useCaptureAt(unsigned UseIndex) {
+  ArrayRef<FlagMode> Modes = Use.getFlagModes();
+  if (Modes[UseIndex] != FlagMode::Captured)
+    return Value();
+  return Use
+      .getFlagCaptures()[count(Modes.take_front(UseIndex), FlagMode::Captured)];
+}
 
-    std::pair<Value, std::optional<bool>> FlagValue;
-    Value UseCapture = UseIndex ? UseCaptures[*UseIndex] : Value();
-    if (UseIndex && !UseCapture) {
-      bool Required = UseModes[*UseIndex] != FlagMode::Negated;
-      if (Fixed && *Fixed != Required)
-        return false;
-      FlagValue.second = Required;
-    } else if (Fixed) {
-      if (UseIndex)
-        FixedFlags.push_back({UseCapture, *Fixed});
-      if (UseIndex)
-        FlagValue.first = UseCapture;
-      else
-        FlagValue.second = *Fixed;
-    } else if (UseIndex) {
-      FlagValue.first = UseCapture;
-    } else {
-      // The use omits the flag, so the root's capture of it is a fresh
-      // variable. The underscore keeps it out of reported matches.
-      FlagValue.first = VarOp::create(
+std::optional<BranchInliner::FlagValue>
+BranchInliner::resolveFlag(instruction_flag::FlagID FlagID) {
+  ArrayRef<instruction_flag::FlagID> UseFlags = Use.getFlags();
+  const instruction_flag::FlagID *UseFlag = find(UseFlags, FlagID);
+  std::optional<unsigned> UseIndex;
+  if (UseFlag != UseFlags.end())
+    UseIndex = UseFlag - UseFlags.begin();
+  ArrayRef<instruction_flag::FlagID> FixedFlagIDs = Branch.getFixedFlags();
+  std::optional<bool> FixedValue;
+  if (const instruction_flag::FlagID *F = find(FixedFlagIDs, FlagID);
+      F != FixedFlagIDs.end())
+    FixedValue = Branch.getFixedFlagValues()[F - FixedFlagIDs.begin()];
+
+  Value UseCapture = UseIndex ? useCaptureAt(*UseIndex) : Value();
+  if (UseCapture) {
+    // The use captures the flag; the branch may fix its value.
+    if (FixedValue)
+      FixedFlags.push_back({UseCapture, *FixedValue});
+    return FlagValue{UseCapture, std::nullopt};
+  }
+  if (UseIndex) {
+    // The use requires or negates the flag.
+    bool Required = Use.getFlagModes()[*UseIndex] == FlagMode::Required;
+    if (FixedValue && *FixedValue != Required)
+      return std::nullopt;
+    return FlagValue{Value(), Required};
+  }
+  if (FixedValue)
+    return FlagValue{Value(), *FixedValue};
+  // The use omits the flag, so the root's capture of it is a fresh variable.
+  // The underscore keeps it out of reported matches.
+  return FlagValue{
+      VarOp::create(
           Builder, Use.getLoc(), SortType::get(Context, Sort::Boolean),
           Builder.getStringAttr(
               "_flag$" + UsePrefix + "$" +
-              instruction_flag::getName(instruction_flag::FlagID(FlagID))));
-    }
-    FlagValues[FlagID] = FlagValue;
-    // The root's capture of the flag stands for FlagValue everywhere in the
-    // body.
+              instruction_flag::getName(instruction_flag::FlagID(FlagID)))),
+      std::nullopt};
+}
+
+void BranchInliner::mapCaptures(instruction_flag::FlagID FlagID,
+                                const FlagValue &Resolved) {
+  for (Operation &Op : Body) {
+    auto M = dyn_cast<MatcherOpInterface>(Op);
+    if (!M)
+      continue;
     unsigned Next = 0;
-    for (auto [RootFlag, Mode] : zip(Root.getFlags(), Root.getFlagModes())) {
+    for (auto [Flag, Mode] : zip(M.getFlags(), M.getFlagModes())) {
       if (FlagMode(Mode) != FlagMode::Captured)
         continue;
-      Value Capture = Root.getFlagCaptures()[Next++];
-      if (RootFlag != FlagID)
+      Value Capture = M.getFlagCaptures()[Next++];
+      if (Flag != FlagID || Mapping.contains(Capture))
         continue;
-      if (FlagValue.first) {
-        Mapping.map(Capture, FlagValue.first);
-      } else {
-        auto Type =
-            mlir::IntegerType::get(Context, 1, mlir::IntegerType::Unsigned);
-        Mapping.map(
-            Capture,
-            IntOp::create(
-                Builder, Use.getLoc(), SortType::get(Context, Sort::Value),
-                mlir::IntegerAttr::get(Type, APInt(1, *FlagValue.second))));
+      if (Resolved.Var) {
+        Mapping.map(Capture, Resolved.Var);
+        continue;
       }
+      auto Type =
+          mlir::IntegerType::get(Context, 1, mlir::IntegerType::Unsigned);
+      Mapping.map(
+          Capture,
+          IntOp::create(
+              Builder, Use.getLoc(), SortType::get(Context, Sort::Value),
+              mlir::IntegerAttr::get(Type, APInt(1, *Resolved.Constant))));
     }
+  }
+}
+
+bool BranchInliner::bindFlags() {
+  // Bind the matcher's supported flags. For each one, the use either omits
+  // it, requires it, negates it, or captures it; a branch may also fix its
+  // value. The branch's captures of the flag then stand for the flag's value
+  // everywhere in the body.
+  for (instruction_flag::FlagID FlagID : Matcher.getSupportedFlags()) {
+    std::optional<FlagValue> Resolved = resolveFlag(FlagID);
+    if (!Resolved)
+      return false;
+    FlagValues[FlagID] = *Resolved;
+    mapCaptures(FlagID, *Resolved);
   }
   return true;
 }
@@ -370,7 +394,7 @@ void BranchInliner::bindRootAndWidths() {
     if (auto MetaInt = dyn_cast<MetaIntTypeOp>(Op))
       if (auto Arg = dyn_cast<mlir::BlockArgument>(MetaInt.getWidth()))
         if (Value Ty = ArgTypes.lookup(Arg))
-          ReplacedTypes[&Op] = Ty;
+          Mapping.map(MetaInt.getResult(), Ty);
 }
 
 void BranchInliner::inlineBody() {
@@ -379,13 +403,11 @@ void BranchInliner::inlineBody() {
   for (Operation &Op : Body) {
     if (isa<YieldOp>(Op))
       continue;
-    if (auto It = ReplacedTypes.find(&Op); It != ReplacedTypes.end()) {
-      Mapping.map(Op.getResult(0), It->second);
+    // Already stood for by what the use passes: a bound variable, or a type
+    // pattern replaced by the use's type.
+    if (Op.getNumResults() && Mapping.contains(Op.getResult(0)))
       continue;
-    }
     if (auto Var = dyn_cast<VarOp>(Op)) {
-      if (Mapping.contains(Var.getResult()))
-        continue;
       // A local variable gets a fresh copy for this use, named after it.
       StringRef Name = Var.getVarName();
       Mapping.map(Var.getResult(),
@@ -429,7 +451,7 @@ void BranchInliner::inlineMatcher(Operation &Op) {
     Parts.ResultName =
         Builder.getStringAttr(UsePrefix + "$" + Parts.ResultName.getValue());
   }
-  // Flags: a supported flag on the root takes the use's flag.
+  // Flags: a supported flag the branch captures takes the use's flag.
   SmallVector<instruction_flag::FlagID, 4> Flags;
   SmallVector<FlagMode, 4> Modes;
   SmallVector<Value, 2> Captures;
@@ -438,20 +460,22 @@ void BranchInliner::inlineMatcher(Operation &Op) {
     Value Capture = Mode == FlagMode::Captured
                         ? Parts.FlagCaptures[NextCapture++]
                         : Value();
-    if (!IsRoot || !is_contained(Matcher.getSupportedFlags(), Flag)) {
+    if (Mode != FlagMode::Captured ||
+        !is_contained(Matcher.getSupportedFlags(), Flag)) {
       Flags.push_back(Flag);
       Modes.push_back(Mode);
       if (Capture)
         Captures.push_back(Mapping.lookupOrDefault(Capture));
       continue;
     }
-    auto [Var, Constant] = FlagValues.lookup(Flag);
+    FlagValue Resolved = FlagValues.lookup(Flag);
     Flags.push_back(Flag);
-    if (Var) {
+    if (Resolved.Var) {
       Modes.push_back(FlagMode::Captured);
-      Captures.push_back(Var);
+      Captures.push_back(Resolved.Var);
     } else {
-      Modes.push_back(*Constant ? FlagMode::Required : FlagMode::Negated);
+      Modes.push_back(*Resolved.Constant ? FlagMode::Required
+                                         : FlagMode::Negated);
     }
   }
   Parts.Flags = Flags;
