@@ -17,7 +17,12 @@ class KeywordConstant<string spelling> {
 
 class MatchableConstant<string spelling> : KeywordConstant<spelling>;
 
-class PredicateKeyword<string spelling> : KeywordConstant<spelling>;
+/// A comparison predicate, and the CmpInst::Predicates it spells: one of
+/// fcmp's, one of icmp's, or both ('ugt' is FCMP_UGT and ICMP_UGT).
+class PredicateKeyword<string spelling, list<string> predicates>
+    : KeywordConstant<spelling> {
+  list<string> Predicates = predicates;
+}
 
 /// How an aggregate constant is delimited: an array ('[...]'), a struct
 /// ('{...}') or a vector ('<...>'). The delimiters' order is persisted: the
@@ -41,28 +46,28 @@ def Undef : MatchableConstant<"undef"> {
 def ZeroInitializer : MatchableConstant<"zeroinitializer"> {
   let LLVMClass = "ConstantAggregateZero";
 }
-def False : PredicateKeyword<"false">;
-def True : PredicateKeyword<"true">;
-def OEQ : PredicateKeyword<"oeq">;
-def OGT : PredicateKeyword<"ogt">;
-def OGE : PredicateKeyword<"oge">;
-def OLT : PredicateKeyword<"olt">;
-def OLE : PredicateKeyword<"ole">;
-def ONE : PredicateKeyword<"one">;
-def ORD : PredicateKeyword<"ord">;
-def UEQ : PredicateKeyword<"ueq">;
-def UGT : PredicateKeyword<"ugt">;
-def UGE : PredicateKeyword<"uge">;
-def ULT : PredicateKeyword<"ult">;
-def ULE : PredicateKeyword<"ule">;
-def UNE : PredicateKeyword<"une">;
-def UNO : PredicateKeyword<"uno">;
-def EQ : PredicateKeyword<"eq">;
-def NE : PredicateKeyword<"ne">;
-def SGT : PredicateKeyword<"sgt">;
-def SGE : PredicateKeyword<"sge">;
-def SLT : PredicateKeyword<"slt">;
-def SLE : PredicateKeyword<"sle">;
+def False : PredicateKeyword<"false", ["FCMP_FALSE"]>;
+def True : PredicateKeyword<"true", ["FCMP_TRUE"]>;
+def OEQ : PredicateKeyword<"oeq", ["FCMP_OEQ"]>;
+def OGT : PredicateKeyword<"ogt", ["FCMP_OGT"]>;
+def OGE : PredicateKeyword<"oge", ["FCMP_OGE"]>;
+def OLT : PredicateKeyword<"olt", ["FCMP_OLT"]>;
+def OLE : PredicateKeyword<"ole", ["FCMP_OLE"]>;
+def ONE : PredicateKeyword<"one", ["FCMP_ONE"]>;
+def ORD : PredicateKeyword<"ord", ["FCMP_ORD"]>;
+def UEQ : PredicateKeyword<"ueq", ["FCMP_UEQ"]>;
+def UGT : PredicateKeyword<"ugt", ["FCMP_UGT", "ICMP_UGT"]>;
+def UGE : PredicateKeyword<"uge", ["FCMP_UGE", "ICMP_UGE"]>;
+def ULT : PredicateKeyword<"ult", ["FCMP_ULT", "ICMP_ULT"]>;
+def ULE : PredicateKeyword<"ule", ["FCMP_ULE", "ICMP_ULE"]>;
+def UNE : PredicateKeyword<"une", ["FCMP_UNE"]>;
+def UNO : PredicateKeyword<"uno", ["FCMP_UNO"]>;
+def EQ : PredicateKeyword<"eq", ["ICMP_EQ"]>;
+def NE : PredicateKeyword<"ne", ["ICMP_NE"]>;
+def SGT : PredicateKeyword<"sgt", ["ICMP_SGT"]>;
+def SGE : PredicateKeyword<"sge", ["ICMP_SGE"]>;
+def SLT : PredicateKeyword<"slt", ["ICMP_SLT"]>;
+def SLE : PredicateKeyword<"sle", ["ICMP_SLE"]>;
 
 // The ways an aggregate constant is delimited.
 def Square : AggregateConstant<"array">;

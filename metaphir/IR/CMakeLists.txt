@@ -6,6 +6,7 @@ metaphir_tablegen(Constraint.inc -gen-constraint-operators)
 metaphir_tablegen(Instruction.inc -gen-instructions)
 metaphir_tablegen(MetaFlag.inc -gen-metaflags)
 metaphir_tablegen(PatternSettings.inc -gen-pattern-settings)
+metaphir_tablegen(PredicateKeywords.inc -gen-predicate-keywords)
 metaphir_tablegen(Sort.inc -gen-sorts)
 metaphir_tablegen(Types.inc -gen-primitive-types)
 add_custom_target(MetaphIRIRTableGen DEPENDS
@@ -14,6 +15,7 @@ add_custom_target(MetaphIRIRTableGen DEPENDS
   "${CMAKE_CURRENT_BINARY_DIR}/Instruction.inc"
   "${CMAKE_CURRENT_BINARY_DIR}/MetaFlag.inc"
   "${CMAKE_CURRENT_BINARY_DIR}/PatternSettings.inc"
+  "${CMAKE_CURRENT_BINARY_DIR}/PredicateKeywords.inc"
   "${CMAKE_CURRENT_BINARY_DIR}/Sort.inc"
   "${CMAKE_CURRENT_BINARY_DIR}/Types.inc")
 
@@ -23,6 +25,7 @@ add_library(metaphir-ir
   Instruction.h
   MetaFlag.h
   PatternSettings.h
+  PredicateKeyword.h
   Sort.cpp
   Sort.h
   Type.h

@@ -431,8 +431,6 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
       continue;
     auto Predicate = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg,
                                               OperandKind::Predicate);
-    if (Inst.getSwappedPredicate())
-      Predicate.setSwapped(true);
     (void)ID;
     if (isVariable(Op.Val)) {
       bindVariable(Predicate, Op.Val, /*AsSort=*/false);
@@ -668,7 +666,7 @@ struct ToPlanPass
     return "Compile lowered patterns into match plans";
   }
   void getDependentDialects(mlir::DialectRegistry &Registry) const override {
-    Registry.insert<plan::PlanDialect>();
+    Registry.insert<mpir_expr::ExprDialect, plan::PlanDialect>();
   }
   void runOnOperation() override {
     OpBuilder Builder(&getContext());

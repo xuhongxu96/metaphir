@@ -47,10 +47,16 @@ struct Binding {
   Binding(TypeArray Types) : Data(std::move(Types)) {}
   Binding(ValueArray Values) : Data(std::move(Values)) {}
 
+  /// Integers are the same if their values are; predicates if they are
+  /// spelled the same, so an icmp's 'ult' is an fcmp's.
   bool operator==(const Binding &Other) const {
     if (const auto *Left = std::get_if<APSInt>(&Data))
       if (const auto *Right = std::get_if<APSInt>(&Other.Data))
         return APSInt::isSameValue(*Left, *Right);
+    if (const auto *Left = std::get_if<CmpInst::Predicate>(&Data))
+      if (const auto *Right = std::get_if<CmpInst::Predicate>(&Other.Data))
+        return CmpInst::getPredicateName(*Left) ==
+               CmpInst::getPredicateName(*Right);
     return Data == Other.Data;
   }
   bool operator!=(const Binding &Other) const { return !(*this == Other); }

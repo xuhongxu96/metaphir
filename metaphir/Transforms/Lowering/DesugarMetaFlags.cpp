@@ -290,6 +290,9 @@ struct DesugarMetaFlagsPass
   StringRef getDescription() const override {
     return "Turn metaflags into constraints";
   }
+  void getDependentDialects(mlir::DialectRegistry &Registry) const override {
+    Registry.insert<mpir_expr::ExprDialect>();
+  }
   void runOnOperation() override {
     Desugarer D(getOperation());
     SmallVector<mlir::Block *, 16> Blocks;

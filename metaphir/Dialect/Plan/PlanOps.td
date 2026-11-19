@@ -130,11 +130,9 @@ def Plan_GetFlagOp : Plan_Op<"get_flag", [Pure]> {
 def Plan_GetKeyedOp : Plan_Op<"get_keyed", [Pure]> {
   let summary = "A keyed operand: a predicate, an alignment, an address space";
   let description = [{
-    `kind` is an OperandKind; with `swapped`, a compare's predicate is the
-    one of its operands swapped. An absent inrange bound is no value.
+    `kind` is an OperandKind. An absent inrange bound is no value.
   }];
-  let arguments = (ins Plan_RegType:$instruction, EnumProp<Mpir_OperandKind>:$kind,
-                       UnitAttr:$swapped);
+  let arguments = (ins Plan_RegType:$instruction, EnumProp<Mpir_OperandKind>:$kind);
   let results = (outs Plan_RegType:$result);
   let assemblyFormat = "$instruction `[` $kind `]` prop-dict attr-dict";
 }

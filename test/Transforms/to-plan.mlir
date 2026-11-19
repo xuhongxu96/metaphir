@@ -4145,40 +4145,49 @@ mpir.pattern {
 // -----
 
 // With treatIntAsVec, the types of a cast are compared by their elements;
-// a commuted comparison reads the swapped predicate.
+// a commuted comparison matches a fresh predicate, and '?p' is bound to its
+// swapped one by a let.
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %0 = mpir.type.int 8 : <Type> loc("to-plan.mlir":4151:1)
+  %0 = mpir.type.int 8 : <Type> loc("to-plan.mlir":4152:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 8 : <Type>
-  %x = mpir.var "x" : <Operand> loc("to-plan.mlir":4153:1)
+  %x = mpir.var "x" : <Operand> loc("to-plan.mlir":4154:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
-  %1 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4155:1)
+  %1 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4156:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
-  %i_z = mpir.inst <zext> (%0, %x, %1) <result_name = "z", flags = [], flag_modes = [], operand_kinds = [typed_value, type_only], treat_int_as_vec = true> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4157:1)
+  %i_z = mpir.inst <zext> (%0, %x, %1) <result_name = "z", flags = [], flag_modes = [], operand_kinds = [typed_value, type_only], treat_int_as_vec = true> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4158:1)
 // CHECK:           %[[INST_0:.*]] = mpir.inst <zext> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, type_only], result_name = "z", treat_int_as_vec = true> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
-  %p = mpir.var "p" : <CmpPredicate> loc("to-plan.mlir":4159:1)
+  %p = mpir.var "p" : <CmpPredicate> loc("to-plan.mlir":4160:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "p" : <CmpPredicate>
-  %2 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4161:1)
+  %2 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4162:1)
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
-  %y = mpir.var "y" : <Operand> loc("to-plan.mlir":4163:1)
+  %y = mpir.var "y" : <Operand> loc("to-plan.mlir":4164:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "y" : <Operand>
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
   %3 = mpir.alt {
-    %i_c = mpir.inst <icmp> (%p, %2, %i_z, %2, %y) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], treat_int_as_vec = true> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4167:1)
+    %i_c = mpir.inst <icmp> (%p, %2, %i_z, %2, %y) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], treat_int_as_vec = true> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4168:1)
 // CHECK:             %[[INST_1:.*]] = mpir.inst <icmp> (%[[VAR_1]], %[[TYPE_2]], %[[INST_0]], %[[TYPE_2]], %[[VAR_2]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "c", treat_int_as_vec = true> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    mpir.yield %i_c : <Instruction> loc("to-plan.mlir":4169:1)
+    mpir.yield %i_c : <Instruction> loc("to-plan.mlir":4170:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
   }, {
 // CHECK:           }, {
-    %i_c = mpir.inst <icmp> (%p, %2, %y, %2, %i_z) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], swapped_predicate, treat_int_as_vec = true> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4173:1)
-// CHECK:             %[[INST_2:.*]] = mpir.inst <icmp> (%[[VAR_1]], %[[TYPE_2]], %[[VAR_2]], %[[TYPE_2]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "c", swapped_predicate, treat_int_as_vec = true> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
-    mpir.yield %i_c : <Instruction> loc("to-plan.mlir":4175:1)
+    %q = mpir.var "_swapped$p" : <CmpPredicate> loc("to-plan.mlir":4174:1)
+// CHECK:             %[[VAR_3:.*]] = mpir.var "_swapped$p" : <CmpPredicate>
+    %i_c = mpir.inst <icmp> (%q, %2, %y, %2, %i_z) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], treat_int_as_vec = true> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4176:1)
+// CHECK:             %[[INST_2:.*]] = mpir.inst <icmp> (%[[VAR_3]], %[[TYPE_2]], %[[VAR_2]], %[[TYPE_2]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "c", treat_int_as_vec = true> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
+    %r = mpir_expr.read %q : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String> loc("to-plan.mlir":4178:1)
+// CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAR_3]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+    %s = mpir_expr.call call "swappedPredicate"(%r) : (!mpir.sort<String>) -> !mpir.sort<CmpPredicate> loc("to-plan.mlir":4180:1)
+// CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "swappedPredicate"(%[[READ_0]]) : (!mpir.sort<String>) -> !mpir.sort<CmpPredicate>
+    mpir.let %p, %s : <CmpPredicate>, <CmpPredicate> loc("to-plan.mlir":4182:1)
+// CHECK:             mpir.let %[[VAR_1]], %[[CALL_0]] : <CmpPredicate>, <CmpPredicate>
+    mpir.yield %i_c : <Instruction> loc("to-plan.mlir":4184:1)
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-  } <commuted, result_name = "c"> : <Instruction> loc("to-plan.mlir":4177:1)
+  } <commuted, result_name = "c"> : <Instruction> loc("to-plan.mlir":4186:1)
 // CHECK:           } <result_name = "c", commuted> : <Instruction>
-} loc("to-plan.mlir":4179:1)
+} loc("to-plan.mlir":4188:1)
 // CHECK:         }
-// CHECK-LABEL:   mpir_plan.matcher <slot_kinds = [variable, instruction, variable, variable, instruction], slot_sorts = [Value, Instruction, CmpPredicate, Value, Instruction], slot_names = ["x", "%z", "p", "y", "%c"], slot_locs = [{{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}]> {
+// CHECK-LABEL:   mpir_plan.matcher <slot_kinds = [variable, instruction, variable, variable, instruction, variable], slot_sorts = [Value, Instruction, CmpPredicate, Value, Instruction, CmpPredicate], slot_names = ["x", "%z", "p", "y", "%c", "_swapped$p"], slot_locs = [{{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}]> {
 // CHECK:           %[[FOREACH_INSTRUCTION_0:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.either {
 // CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
@@ -4207,8 +4216,8 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
 // CHECK:             mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
-// CHECK:             %[[GET_KEYED_1:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate] <swapped>
-// CHECK:             mpir_plan.bind %[[GET_KEYED_1]] -> 2
+// CHECK:             %[[GET_KEYED_1:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
+// CHECK:             mpir_plan.bind %[[GET_KEYED_1]] -> 5
 // CHECK:             %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
 // CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0] <treat_int_as_vec>
@@ -4225,6 +4234,13 @@ mpir.pattern {
 // CHECK:             %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
 // CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], [1, 8, 0] <treat_int_as_vec>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_5]] -> 0 <sort = 2>
+// CHECK:             %[[SLOT_0:.*]] = mpir_plan.slot 5 {var_name = "_swapped$p"} : <CmpPredicate>
+// CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+// CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "swappedPredicate"(%[[READ_0]]) : (!mpir.sort<String>) -> !mpir.sort<CmpPredicate>
+// CHECK:             %[[SLOT_1:.*]] = mpir_plan.slot 2 {var_name = "p"} : <CmpPredicate>
+// CHECK:             %[[READ_1:.*]] = mpir_expr.read %[[SLOT_1]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+// CHECK:             %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[READ_1]], %[[CALL_0]]) : (!mpir.sort<String>, !mpir.sort<CmpPredicate>) -> !mpir.sort<Boolean>
+// CHECK:             mpir_plan.let 2, %[[CALL_0]], %[[CALL_1]] : <CmpPredicate>, <Boolean>
 // CHECK:             mpir_plan.yield
 // CHECK:           }
 // CHECK:           mpir_plan.emit
@@ -4236,81 +4252,81 @@ mpir.pattern {
 // width, a flag the use requires, and a constant operand.
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %0 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4239:1)
+  %0 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4255:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : <Operand> loc("to-plan.mlir":4241:1)
+  %x = mpir.var "x" : <Operand> loc("to-plan.mlir":4257:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
-  %1 = mpir.int 3 : ui2 : <Value> loc("to-plan.mlir":4243:1)
+  %1 = mpir.int 3 : ui2 : <Value> loc("to-plan.mlir":4259:1)
 // CHECK:           %[[INT_0:.*]] = mpir.int 3 : ui2 : <Value>
-  %2 = mpir.int 32 : ui64 : <Value> loc("to-plan.mlir":4245:1)
+  %2 = mpir.int 32 : ui64 : <Value> loc("to-plan.mlir":4261:1)
 // CHECK:           %[[INT_1:.*]] = mpir.int 32 : ui64 : <Value>
-  %3 = mpir.int 1 : ui1 : <Value> loc("to-plan.mlir":4247:1)
+  %3 = mpir.int 1 : ui1 : <Value> loc("to-plan.mlir":4263:1)
 // CHECK:           %[[INT_2:.*]] = mpir.int 1 : ui1 : <Value>
   %4 = mpir.alt {
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
-    %i_r = mpir.inst <lshr> (%0, %x, %0, %1) <result_name = "r", flags = [exact], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4251:1)
+    %i_r = mpir.inst <lshr> (%0, %x, %0, %1) <result_name = "r", flags = [exact], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4267:1)
 // CHECK:             %[[INST_0:.*]] = mpir.inst <lshr> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[INT_0]]) <flags = [exact], flag_modes = [required], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-    %10 = mpir_expr.read %2 : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("to-plan.mlir":4253:1)
+    %10 = mpir_expr.read %2 : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("to-plan.mlir":4269:1)
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[INT_1]] : (!mpir.sort<Value>) -> !mpir.sort<Integer>
-    %11 = mpir_expr.int 32 : ui64 : <Integer> loc("to-plan.mlir":4255:1)
+    %11 = mpir_expr.int 32 : ui64 : <Integer> loc("to-plan.mlir":4271:1)
 // CHECK:             %[[INT_3:.*]] = mpir_expr.int 32 : ui64 : <Integer>
-    %12 = mpir_expr.call binary "=="(%10, %11) anchor %i_r : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4257:1)
+    %12 = mpir_expr.call binary "=="(%10, %11) anchor %i_r : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4273:1)
 // CHECK:             %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[READ_0]], %[[INT_3]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %13 = mpir_expr.read %3 : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4259:1)
+    %13 = mpir_expr.read %3 : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4275:1)
 // CHECK:             %[[READ_1:.*]] = mpir_expr.read %[[INT_2]] : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-    %14 = mpir_expr.call binary "&&"(%12, %13) anchor %i_r : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4261:1)
+    %14 = mpir_expr.call binary "&&"(%12, %13) anchor %i_r : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4277:1)
 // CHECK:             %[[CALL_1:.*]] = mpir_expr.call binary "&&"(%[[CALL_0]], %[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %15 = mpir_expr.read %1 : (!mpir.sort<Value>) -> !mpir.sort<Value> loc("to-plan.mlir":4263:1)
+    %15 = mpir_expr.read %1 : (!mpir.sort<Value>) -> !mpir.sort<Value> loc("to-plan.mlir":4279:1)
 // CHECK:             %[[READ_2:.*]] = mpir_expr.read %[[INT_0]] : (!mpir.sort<Value>) -> !mpir.sort<Value>
-    %16 = mpir_expr.int 0 : ui64 : <Integer> loc("to-plan.mlir":4265:1)
+    %16 = mpir_expr.int 0 : ui64 : <Integer> loc("to-plan.mlir":4281:1)
 // CHECK:             %[[INT_4:.*]] = mpir_expr.int 0 : ui64 : <Integer>
-    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_r : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4267:1)
+    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_r : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4283:1)
 // CHECK:             %[[CALL_2:.*]] = mpir_expr.call binary "!="(%[[READ_2]], %[[INT_4]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %18 = mpir_expr.call binary "&&"(%14, %17) anchor %i_r : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4269:1)
+    %18 = mpir_expr.call binary "&&"(%14, %17) anchor %i_r : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4285:1)
 // CHECK:             %[[CALL_3:.*]] = mpir_expr.call binary "&&"(%[[CALL_1]], %[[CALL_2]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir.require %18 : <Boolean> loc("to-plan.mlir":4271:1)
+    mpir.require %18 : <Boolean> loc("to-plan.mlir":4287:1)
 // CHECK:             mpir.require %[[CALL_3]] : <Boolean>
-    mpir.yield %i_r : <Instruction> loc("to-plan.mlir":4273:1)
+    mpir.yield %i_r : <Instruction> loc("to-plan.mlir":4289:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } <result_name = "r"> : <Instruction> loc("to-plan.mlir":4275:1)
+  } <result_name = "r"> : <Instruction> loc("to-plan.mlir":4291:1)
 // CHECK:           } <result_name = "r"> : <Instruction>
-  %5 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4277:1)
+  %5 = mpir.type.int 32 : <Type> loc("to-plan.mlir":4293:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
-  %6 = mpir.int -4 : si3 : <Value> loc("to-plan.mlir":4279:1)
+  %6 = mpir.int -4 : si3 : <Value> loc("to-plan.mlir":4295:1)
 // CHECK:           %[[INT_5:.*]] = mpir.int -4 : si3 : <Value>
-  %7 = mpir.int 32 : ui64 : <Value> loc("to-plan.mlir":4281:1)
+  %7 = mpir.int 32 : ui64 : <Value> loc("to-plan.mlir":4297:1)
 // CHECK:           %[[INT_6:.*]] = mpir.int 32 : ui64 : <Value>
-  %8 = mpir.int 0 : ui1 : <Value> loc("to-plan.mlir":4283:1)
+  %8 = mpir.int 0 : ui1 : <Value> loc("to-plan.mlir":4299:1)
 // CHECK:           %[[INT_7:.*]] = mpir.int 0 : ui1 : <Value>
   %9 = mpir.alt {
 // CHECK:           %[[ALT_1:.*]] = mpir.alt {
-    %i_s = mpir.inst <lshr> (%5, %4, %5, %6) <result_name = "s", flags = [exact], flag_modes = [negated], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4287:1)
+    %i_s = mpir.inst <lshr> (%5, %4, %5, %6) <result_name = "s", flags = [exact], flag_modes = [negated], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("to-plan.mlir":4303:1)
 // CHECK:             %[[INST_1:.*]] = mpir.inst <lshr> (%[[TYPE_1]], %[[ALT_0]], %[[TYPE_1]], %[[INT_5]]) <flags = [exact], flag_modes = [negated], operand_kinds = [typed_value, typed_value], result_name = "s"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-    %10 = mpir_expr.read %7 : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("to-plan.mlir":4289:1)
+    %10 = mpir_expr.read %7 : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("to-plan.mlir":4305:1)
 // CHECK:             %[[READ_3:.*]] = mpir_expr.read %[[INT_6]] : (!mpir.sort<Value>) -> !mpir.sort<Integer>
-    %11 = mpir_expr.int 32 : ui64 : <Integer> loc("to-plan.mlir":4291:1)
+    %11 = mpir_expr.int 32 : ui64 : <Integer> loc("to-plan.mlir":4307:1)
 // CHECK:             %[[INT_8:.*]] = mpir_expr.int 32 : ui64 : <Integer>
-    %12 = mpir_expr.call binary "=="(%10, %11) anchor %i_s : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4293:1)
+    %12 = mpir_expr.call binary "=="(%10, %11) anchor %i_s : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4309:1)
 // CHECK:             %[[CALL_4:.*]] = mpir_expr.call binary "=="(%[[READ_3]], %[[INT_8]]) anchor %[[INST_1]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %13 = mpir_expr.read %8 : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4295:1)
+    %13 = mpir_expr.read %8 : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4311:1)
 // CHECK:             %[[READ_4:.*]] = mpir_expr.read %[[INT_7]] : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-    %14 = mpir_expr.call binary "&&"(%12, %13) anchor %i_s : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4297:1)
+    %14 = mpir_expr.call binary "&&"(%12, %13) anchor %i_s : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4313:1)
 // CHECK:             %[[CALL_5:.*]] = mpir_expr.call binary "&&"(%[[CALL_4]], %[[READ_4]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %15 = mpir_expr.read %6 : (!mpir.sort<Value>) -> !mpir.sort<Value> loc("to-plan.mlir":4299:1)
+    %15 = mpir_expr.read %6 : (!mpir.sort<Value>) -> !mpir.sort<Value> loc("to-plan.mlir":4315:1)
 // CHECK:             %[[READ_5:.*]] = mpir_expr.read %[[INT_5]] : (!mpir.sort<Value>) -> !mpir.sort<Value>
-    %16 = mpir_expr.int 0 : ui64 : <Integer> loc("to-plan.mlir":4301:1)
+    %16 = mpir_expr.int 0 : ui64 : <Integer> loc("to-plan.mlir":4317:1)
 // CHECK:             %[[INT_9:.*]] = mpir_expr.int 0 : ui64 : <Integer>
-    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_s : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4303:1)
+    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_s : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4319:1)
 // CHECK:             %[[CALL_6:.*]] = mpir_expr.call binary "!="(%[[READ_5]], %[[INT_9]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %18 = mpir_expr.call binary "&&"(%14, %17) anchor %i_s : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4305:1)
+    %18 = mpir_expr.call binary "&&"(%14, %17) anchor %i_s : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-plan.mlir":4321:1)
 // CHECK:             %[[CALL_7:.*]] = mpir_expr.call binary "&&"(%[[CALL_5]], %[[CALL_6]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    mpir.require %18 : <Boolean> loc("to-plan.mlir":4307:1)
+    mpir.require %18 : <Boolean> loc("to-plan.mlir":4323:1)
 // CHECK:             mpir.require %[[CALL_7]] : <Boolean>
-    mpir.yield %i_s : <Instruction> loc("to-plan.mlir":4309:1)
+    mpir.yield %i_s : <Instruction> loc("to-plan.mlir":4325:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } <result_name = "s"> : <Instruction> loc("to-plan.mlir":4311:1)
+  } <result_name = "s"> : <Instruction> loc("to-plan.mlir":4327:1)
 // CHECK:           } <result_name = "s"> : <Instruction>
-} loc("to-plan.mlir":4313:1)
+} loc("to-plan.mlir":4329:1)
 // CHECK:         }
 // CHECK-LABEL:   mpir_plan.matcher <slot_kinds = [variable, instruction, instruction], slot_sorts = [Value, Instruction, Instruction], slot_names = ["x", "%r", "%s"], slot_locs = [{{.*}}, {{.*}}, {{.*}}]> {
 // CHECK:           %[[FOREACH_INSTRUCTION_0:.*]] = mpir_plan.foreach_instruction

@@ -125,49 +125,48 @@ mpir.pattern {
 
 // Instruction matchers with all they can have: flags (required, absent,
 // captured), metaflags on the instruction and on operands, a capture, a
-// parent block, keyed and array operands, the settings and the lowered
-// form's swapped predicate.
+// parent block, keyed and array operands and the settings.
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %i32 = mpir.type.int 32 : !mpir.sort<Type> loc("pattern-roundtrip.mlir":132:1)
+  %i32 = mpir.type.int 32 : !mpir.sort<Type> loc("pattern-roundtrip.mlir":131:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":134:1)
+  %x = mpir.var "x" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":133:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":136:1)
+  %y = mpir.var "y" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":135:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
-  %nsw = mpir.var "nsw" : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":138:1)
+  %nsw = mpir.var "nsw" : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":137:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "nsw" : <Boolean>
-  %cap = mpir.var "cap" : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":140:1)
+  %cap = mpir.var "cap" : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":139:1)
 // CHECK:           %[[VAR_3:.*]] = mpir.var "cap" : <Instruction>
-  %blk = mpir.var "blk" : !mpir.sort<BasicBlock> loc("pattern-roundtrip.mlir":142:1)
+  %blk = mpir.var "blk" : !mpir.sort<BasicBlock> loc("pattern-roundtrip.mlir":141:1)
 // CHECK:           %[[VAR_4:.*]] = mpir.var "blk" : <BasicBlock>
-  %add = mpir.inst <add> capture %cap block %blk flags(%nsw) (%i32, %x, %i32, %y) <result_name = "sum", flags = [nsw, nuw], flag_modes = [captured, required], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"c", [], loc("pattern-roundtrip.mlir":144:1)>, #mpir.metaflag<"s", [], loc("pattern-roundtrip.mlir":144:1)>], operand_metaflags = [[#mpir.metaflag<"or", [#mpir.metaflag<"zero", [], loc("pattern-roundtrip.mlir":144:1)>, #mpir.metaflag<"one", [], loc("pattern-roundtrip.mlir":144:1)>], loc("pattern-roundtrip.mlir":144:1)>], []], treat_int_as_vec = true> : (!mpir.sort<Instruction>, !mpir.sort<BasicBlock>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %add = mpir.inst <add> capture %cap block %blk flags(%nsw) (%i32, %x, %i32, %y) <result_name = "sum", flags = [nsw, nuw], flag_modes = [captured, required], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"c", [], loc("pattern-roundtrip.mlir":143:1)>, #mpir.metaflag<"s", [], loc("pattern-roundtrip.mlir":143:1)>], operand_metaflags = [[#mpir.metaflag<"or", [#mpir.metaflag<"zero", [], loc("pattern-roundtrip.mlir":143:1)>, #mpir.metaflag<"one", [], loc("pattern-roundtrip.mlir":143:1)>], loc("pattern-roundtrip.mlir":143:1)>], []], treat_int_as_vec = true> : (!mpir.sort<Instruction>, !mpir.sort<BasicBlock>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> capture %[[VAR_3]] block %[[VAR_4]] flags(%[[VAR_2]]) (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [nsw, nuw], flag_modes = [captured, required], operand_kinds = [typed_value, typed_value], result_name = "sum", metaflags = [#mpir.metaflag<"c", [], {{.*}}>, #mpir.metaflag<"s", [], {{.*}}>], operand_metaflags = {{\[\[}}#mpir.metaflag<"or", [#mpir.metaflag<"zero", [], {{.*}}>, #mpir.metaflag<"one", [], {{.*}}>], {{.*}}>], []], treat_int_as_vec = true> : (!mpir.sort<Instruction>, !mpir.sort<BasicBlock>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %sub = mpir.inst <sub>(%i32, %add, %i32, %x) <result_name = "d", flags = [nuw], flag_modes = [negated], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"o", [1], loc("pattern-roundtrip.mlir":146:1)>]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %sub = mpir.inst <sub>(%i32, %add, %i32, %x) <result_name = "d", flags = [nuw], flag_modes = [negated], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"o", [1], loc("pattern-roundtrip.mlir":145:1)>]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[INST_1:.*]] = mpir.inst <sub> (%[[TYPE_0]], %[[INST_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [nuw], flag_modes = [negated], operand_kinds = [typed_value, typed_value], result_name = "d", metaflags = [#mpir.metaflag<"o", [1], {{.*}}>]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %p = mpir.var "p" : !mpir.sort<CmpPredicate> loc("pattern-roundtrip.mlir":148:1)
+  %p = mpir.var "p" : !mpir.sort<CmpPredicate> loc("pattern-roundtrip.mlir":147:1)
 // CHECK:           %[[VAR_5:.*]] = mpir.var "p" : <CmpPredicate>
-  %cmp = mpir.inst <icmp>(%p, %i32, %x, %i32, %y) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], swapped_predicate> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":150:1)
-// CHECK:           %[[INST_2:.*]] = mpir.inst <icmp> (%[[VAR_5]], %[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], swapped_predicate> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %ptr = mpir.type.ptr : () -> !mpir.sort<Type> loc("pattern-roundtrip.mlir":152:1)
+  %cmp = mpir.inst <icmp>(%p, %i32, %x, %i32, %y) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value]> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":149:1)
+// CHECK:           %[[INST_2:.*]] = mpir.inst <icmp> (%[[VAR_5]], %[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value]> : (!mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  %ptr = mpir.type.ptr : () -> !mpir.sort<Type> loc("pattern-roundtrip.mlir":151:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.ptr : () -> !mpir.sort<Type>
-  %pp = mpir.var "pp" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":154:1)
+  %pp = mpir.var "pp" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":153:1)
 // CHECK:           %[[VAR_6:.*]] = mpir.var "pp" : <Operand>
-  %al = mpir.var "al" : !mpir.sort<Nat> loc("pattern-roundtrip.mlir":156:1)
+  %al = mpir.var "al" : !mpir.sort<Nat> loc("pattern-roundtrip.mlir":155:1)
 // CHECK:           %[[VAR_7:.*]] = mpir.var "al" : <Nat>
-  %load = mpir.inst <load>(%i32, %ptr, %pp, %al) <result_name = "ld", flags = [], flag_modes = [], operand_kinds = [type_only, typed_value, alignment]> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Nat>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":158:1)
+  %load = mpir.inst <load>(%i32, %ptr, %pp, %al) <result_name = "ld", flags = [], flag_modes = [], operand_kinds = [type_only, typed_value, alignment]> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Nat>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":157:1)
 // CHECK:           %[[INST_3:.*]] = mpir.inst <load> (%[[TYPE_0]], %[[TYPE_1]], %[[VAR_6]], %[[VAR_7]]) <flags = [], flag_modes = [], operand_kinds = [type_only, typed_value, alignment], result_name = "ld"> : (!mpir.sort<Type>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Nat>) -> !mpir.sort<Instruction>
-  %f = mpir.var "f" : !mpir.sort<Function> loc("pattern-roundtrip.mlir":160:1)
+  %f = mpir.var "f" : !mpir.sort<Function> loc("pattern-roundtrip.mlir":159:1)
 // CHECK:           %[[VAR_8:.*]] = mpir.var "f" : <Function>
-  %tys = mpir.var "tys" : !mpir.sort<TypeArray> loc("pattern-roundtrip.mlir":162:1)
+  %tys = mpir.var "tys" : !mpir.sort<TypeArray> loc("pattern-roundtrip.mlir":161:1)
 // CHECK:           %[[VAR_9:.*]] = mpir.var "tys" : <TypeArray>
-  %vals = mpir.var "vals" : !mpir.sort<ValueArray> loc("pattern-roundtrip.mlir":164:1)
+  %vals = mpir.var "vals" : !mpir.sort<ValueArray> loc("pattern-roundtrip.mlir":163:1)
 // CHECK:           %[[VAR_10:.*]] = mpir.var "vals" : <ValueArray>
-  %call = mpir.inst <call>(%i32, %f, %tys, %vals) <flags = [], flag_modes = [], operand_kinds = [type_only, value, typed_value_array]> : (!mpir.sort<Type>, !mpir.sort<Function>, !mpir.sort<TypeArray>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":166:1)
+  %call = mpir.inst <call>(%i32, %f, %tys, %vals) <flags = [], flag_modes = [], operand_kinds = [type_only, value, typed_value_array]> : (!mpir.sort<Type>, !mpir.sort<Function>, !mpir.sort<TypeArray>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":165:1)
 // CHECK:           %[[INST_4:.*]] = mpir.inst <call> (%[[TYPE_0]], %[[VAR_8]], %[[VAR_9]], %[[VAR_10]]) <flags = [], flag_modes = [], operand_kinds = [type_only, value, typed_value_array]> : (!mpir.sort<Type>, !mpir.sort<Function>, !mpir.sort<TypeArray>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction>
-  %idx = mpir.inst <extractvalue>(%i32, %x, %vals) <flags = [], flag_modes = [], operand_kinds = [typed_value, value_array]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":168:1)
+  %idx = mpir.inst <extractvalue>(%i32, %x, %vals) <flags = [], flag_modes = [], operand_kinds = [typed_value, value_array]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":167:1)
 // CHECK:           %[[INST_5:.*]] = mpir.inst <extractvalue> (%[[TYPE_0]], %[[VAR_0]], %[[VAR_10]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, value_array]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<ValueArray>) -> !mpir.sort<Instruction>
-} loc("pattern-roundtrip.mlir":170:1)
+} loc("pattern-roundtrip.mlir":169:1)
 // CHECK:         }
 
 // -----
@@ -177,99 +176,99 @@ mpir.pattern {
 // requirements of the lowered form.
 mpir.matcher @addLike <commutative, supported_flags = [nsw, nuw], syntax = binary, arity = 2, param_names = ["ty", "x", "y"], param_is_type = [true, false, false]> {
 // CHECK-LABEL:   mpir.matcher @addLike <supported_flags = [nsw, nuw], syntax = binary, commutative, arity = 2, param_names = ["ty", "x", "y"], param_is_type = [true, false, false]> {
-  %ty = mpir.var "ty" : !mpir.sort<Type> loc("pattern-roundtrip.mlir":180:1)
+  %ty = mpir.var "ty" : !mpir.sort<Type> loc("pattern-roundtrip.mlir":179:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "ty" : <Type>
-  mpir.signature %ty : !mpir.sort<Type> loc("pattern-roundtrip.mlir":182:1)
+  mpir.signature %ty : !mpir.sort<Type> loc("pattern-roundtrip.mlir":181:1)
 // CHECK:           mpir.signature %[[VAR_0]] : !mpir.sort<Type>
   mpir.branch <param_args = [0, 1, 2], fixed_flags = [], fixed_flag_values = []> {
 // CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1, 2], fixed_flag_values = []> {
 // CHECK:           ^bb0(%[[VAL_0:.*]]: !mpir.sort<Type>, %[[VAL_1:.*]]: !mpir.sort<Operand>, %[[VAL_2:.*]]: !mpir.sort<Operand>):
   ^bb0(%t: !mpir.sort<Type>, %a: !mpir.sort<Operand>, %b: !mpir.sort<Operand>):
-    %r = mpir.inst <add>(%t, %a, %t, %b) <result_name = "ret", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":188:1)
+    %r = mpir.inst <add>(%t, %a, %t, %b) <result_name = "ret", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":187:1)
 // CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[VAL_0]], %[[VAL_1]], %[[VAL_0]], %[[VAL_2]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    mpir.yield %r : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":190:1)
+    mpir.yield %r : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":189:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } loc("pattern-roundtrip.mlir":192:1)
+  } loc("pattern-roundtrip.mlir":191:1)
 // CHECK:           }
   mpir.branch <param_args = [0, 1, 2], fixed_flags = [nsw, nuw], fixed_flag_values = [true, false]> {
 // CHECK:           mpir.branch <fixed_flags = [nsw, nuw], param_args = [0, 1, 2], fixed_flag_values = [true, false]> {
 // CHECK:           ^bb0(%[[VAL_3:.*]]: !mpir.sort<Type>, %[[VAL_4:.*]]: !mpir.sort<Operand>, %[[VAL_5:.*]]: !mpir.sort<Operand>):
   ^bb0(%t: !mpir.sort<Type>, %a: !mpir.sort<Operand>, %b: !mpir.sort<Operand>):
-    %r = mpir.inst <or>(%t, %a, %t, %b) <result_name = "ret", flags = [disjoint], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":198:1)
+    %r = mpir.inst <or>(%t, %a, %t, %b) <result_name = "ret", flags = [disjoint], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":197:1)
 // CHECK:             %[[INST_1:.*]] = mpir.inst <or> (%[[VAL_3]], %[[VAL_4]], %[[VAL_3]], %[[VAL_5]]) <flags = [disjoint], flag_modes = [required], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-    mpir.yield %r : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":200:1)
+    mpir.yield %r : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":199:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } loc("pattern-roundtrip.mlir":202:1)
+  } loc("pattern-roundtrip.mlir":201:1)
 // CHECK:           }
-} loc("pattern-roundtrip.mlir":204:1)
+} loc("pattern-roundtrip.mlir":203:1)
 // CHECK:         }
 mpir.matcher @private_one <sym_visibility = "private", supported_flags = [], syntax = nary, arity = 1, param_names = [""], param_is_type = [false]> {
 // CHECK-LABEL:   mpir.matcher @private_one <supported_flags = [], syntax = nary, sym_visibility = "private", arity = 1, param_names = [""], param_is_type = [false]> {
-  mpir.signature loc("pattern-roundtrip.mlir":208:1)
+  mpir.signature loc("pattern-roundtrip.mlir":207:1)
 // CHECK:           mpir.signature
-} loc("pattern-roundtrip.mlir":210:1)
+} loc("pattern-roundtrip.mlir":209:1)
 // CHECK:         }
 mpir.constraint_def @same <param_names = ["a", "b"]> {
 // CHECK-LABEL:   mpir.constraint_def @same <param_names = ["a", "b"]> {
 // CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Unknown>, %[[VAL_1:.*]]: !mpir.sort<Unknown>):
 ^bb0(%a: !mpir.sort<Unknown>, %b: !mpir.sort<Unknown>):
-  %ra = mpir_expr.read %a : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown> loc("pattern-roundtrip.mlir":216:1)
+  %ra = mpir_expr.read %a : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown> loc("pattern-roundtrip.mlir":215:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_0]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
-  %rb = mpir_expr.read %b : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown> loc("pattern-roundtrip.mlir":218:1)
+  %rb = mpir_expr.read %b : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown> loc("pattern-roundtrip.mlir":217:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAL_1]] : (!mpir.sort<Unknown>) -> !mpir.sort<Unknown>
-  %eq = mpir_expr.call binary "=="(%ra, %rb) : (!mpir.sort<Unknown>, !mpir.sort<Unknown>) -> !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":220:1)
+  %eq = mpir_expr.call binary "=="(%ra, %rb) : (!mpir.sort<Unknown>, !mpir.sort<Unknown>) -> !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":219:1)
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[READ_0]], %[[READ_1]]) : (!mpir.sort<Unknown>, !mpir.sort<Unknown>) -> !mpir.sort<Boolean>
-  mpir.yield %eq : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":222:1)
+  mpir.yield %eq : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":221:1)
 // CHECK:           mpir.yield %[[CALL_0]] : <Boolean>
-} loc("pattern-roundtrip.mlir":224:1)
+} loc("pattern-roundtrip.mlir":223:1)
 // CHECK:         }
 mpir.metaflag_def @small <param_names = ["v", "lim"], placement = operand> {
 // CHECK-LABEL:   mpir.metaflag_def @small <placement = operand, param_names = ["v", "lim"]> {
 // CHECK:         ^bb0(%[[VAL_0:.*]]: !mpir.sort<Value>, %[[VAL_1:.*]]: !mpir.sort<Integer>):
 ^bb0(%v: !mpir.sort<Value>, %lim: !mpir.sort<Integer>):
-  %rv = mpir_expr.read %v : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("pattern-roundtrip.mlir":230:1)
+  %rv = mpir_expr.read %v : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("pattern-roundtrip.mlir":229:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAL_0]] : (!mpir.sort<Value>) -> !mpir.sort<Integer>
-  %rl = mpir_expr.read %lim : (!mpir.sort<Integer>) -> !mpir.sort<Integer> loc("pattern-roundtrip.mlir":232:1)
+  %rl = mpir_expr.read %lim : (!mpir.sort<Integer>) -> !mpir.sort<Integer> loc("pattern-roundtrip.mlir":231:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAL_1]] : (!mpir.sort<Integer>) -> !mpir.sort<Integer>
-  %lt = mpir_expr.call call "ult"(%rv, %rl) : (!mpir.sort<Integer>, !mpir.sort<Integer>) -> !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":234:1)
+  %lt = mpir_expr.call call "ult"(%rv, %rl) : (!mpir.sort<Integer>, !mpir.sort<Integer>) -> !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":233:1)
 // CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "ult"(%[[READ_0]], %[[READ_1]]) : (!mpir.sort<Integer>, !mpir.sort<Integer>) -> !mpir.sort<Boolean>
-  mpir.yield %lt : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":236:1)
+  mpir.yield %lt : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":235:1)
 // CHECK:           mpir.yield %[[CALL_0]] : <Boolean>
-} loc("pattern-roundtrip.mlir":238:1)
+} loc("pattern-roundtrip.mlir":237:1)
 // CHECK:         }
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %i32 = mpir.type.int 32 : !mpir.sort<Type> loc("pattern-roundtrip.mlir":242:1)
+  %i32 = mpir.type.int 32 : !mpir.sort<Type> loc("pattern-roundtrip.mlir":241:1)
 // CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
-  %x = mpir.var "x" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":244:1)
+  %x = mpir.var "x" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":243:1)
 // CHECK:           %[[VAR_0:.*]] = mpir.var "x" : <Operand>
-  %y = mpir.var "y" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":246:1)
+  %y = mpir.var "y" : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":245:1)
 // CHECK:           %[[VAR_1:.*]] = mpir.var "y" : <Operand>
-  %use = mpir.use @addLike(%i32, %x, %i32, %y) <result_name = "u", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":248:1)
+  %use = mpir.use @addLike(%i32, %x, %i32, %y) <result_name = "u", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":247:1)
 // CHECK:           %[[USE_0:.*]] = mpir.use @addLike (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "u"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
-  %s = mpir.var "s" : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":250:1)
+  %s = mpir.var "s" : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":249:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "s" : <Instruction>
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
   %alt = mpir.alt {
-    mpir.bind %s, %use : !mpir.sort<Instruction>, !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":254:1)
+    mpir.bind %s, %use : !mpir.sort<Instruction>, !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":253:1)
 // CHECK:             mpir.bind %[[VAR_2]], %[[USE_0]] : <Instruction>, <Instruction>
-    mpir.yield %use : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":256:1)
+    mpir.yield %use : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":255:1)
 // CHECK:             mpir.yield %[[USE_0]] : <Instruction>
   }, {
 // CHECK:           }, {
-    mpir.yield %x : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":260:1)
+    mpir.yield %x : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":259:1)
 // CHECK:             mpir.yield %[[VAR_0]] : <Operand>
-  } <or_self_of = "add"> : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":262:1)
+  } <or_self_of = "add"> : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":261:1)
 // CHECK:           } <or_self_of = "add"> : <Instruction>
-  %rx = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":264:1)
+  %rx = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":263:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %ry = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":266:1)
+  %ry = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":265:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-  %same = mpir_expr.apply @same(%rx, %ry) : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":268:1)
+  %same = mpir_expr.apply @same(%rx, %ry) : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":267:1)
 // CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @same(%[[READ_0]], %[[READ_1]]) : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Boolean>
-  mpir.require %same <from_metaflag> : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":270:1)
+  mpir.require %same <from_metaflag> : !mpir.sort<Boolean> loc("pattern-roundtrip.mlir":269:1)
 // CHECK:           mpir.require %[[APPLY_0]] <from_metaflag> : <Boolean>
-} loc("pattern-roundtrip.mlir":272:1)
+} loc("pattern-roundtrip.mlir":271:1)
 // CHECK:         }
 
 // -----
@@ -277,9 +276,9 @@ mpir.pattern {
 // An alternative-less mpir.alt: what a use no branch fits becomes.
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
-  %none = mpir.alt <result_name = "r"> : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":280:1)
+  %none = mpir.alt <result_name = "r"> : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":279:1)
 // CHECK:           %[[ALT_0:.*]] = mpir.alt  <result_name = "r"> : <Instruction>
-  %bare = mpir.alt : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":282:1)
+  %bare = mpir.alt : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":281:1)
 // CHECK:           %[[ALT_1:.*]] = mpir.alt  : <Instruction>
-} loc("pattern-roundtrip.mlir":284:1)
+} loc("pattern-roundtrip.mlir":283:1)
 // CHECK:         }

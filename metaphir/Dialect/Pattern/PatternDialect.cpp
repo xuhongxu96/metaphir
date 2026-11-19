@@ -186,13 +186,13 @@ struct BuildArguments {
 } // namespace
 
 InstOp MatcherParts::buildInst(OpBuilder &Builder, Location Loc,
-                               OpcodeAttr Opcode, bool SwappedPredicate) const {
+                               OpcodeAttr Opcode) const {
   BuildArguments Args(Builder, *this);
   return InstOp::create(
       Builder, Loc, SortType::get(Builder.getContext(), Sort::Instruction),
       Opcode, ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
-      Args.OperandMetaFlags, SwappedPredicate, Args.TreatIntAsVec, Capture,
-      ParentBlock, FlagCaptures, Args.Values);
+      Args.OperandMetaFlags, Args.TreatIntAsVec, Capture, ParentBlock,
+      FlagCaptures, Args.Values);
 }
 
 UseOp MatcherParts::buildUse(OpBuilder &Builder, Location Loc,
@@ -201,8 +201,8 @@ UseOp MatcherParts::buildUse(OpBuilder &Builder, Location Loc,
   return UseOp::create(
       Builder, Loc, SortType::get(Builder.getContext(), Sort::Instruction),
       Matcher, ResultName, Flags, Modes, Args.Kinds, Args.MetaFlags,
-      Args.OperandMetaFlags, /*swapped_predicate=*/UnitAttr(),
-      Args.TreatIntAsVec, Capture, ParentBlock, FlagCaptures, Args.Values);
+      Args.OperandMetaFlags, Args.TreatIntAsVec, Capture, ParentBlock,
+      FlagCaptures, Args.Values);
 }
 
 SmallVector<Operation *, 4> mpir::getPatternRoots(Block &Block) {

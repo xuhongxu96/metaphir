@@ -287,8 +287,6 @@ class Mpir_MatcherUseBase {
       // operand (an array per operand), as written.
       OptionalAttr<ArrayAttr>:$metaflags,
       OptionalAttr<ArrayAttr>:$operand_metaflags,
-      // Lowered form only: the predicate is matched against the swapped one.
-      UnitAttr:$swapped_predicate,
       // The treatIntAsVec setting, if one was written before the instruction.
       OptionalAttr<BoolAttr>:$treat_int_as_vec,
       Optional<Mpir_Term>:$capture,

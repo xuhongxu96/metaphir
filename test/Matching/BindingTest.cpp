@@ -85,4 +85,12 @@ TEST_F(BindingTest, StreamsTheBinding) {
   EXPECT_EQ(OS.str(), "%x");
 }
 
+TEST_F(BindingTest, PredicatesAreTheSameIfSpelledTheSame) {
+  EXPECT_EQ(Binding(CmpInst::ICMP_ULT), Binding(CmpInst::FCMP_ULT));
+  EXPECT_EQ(Binding(CmpInst::ICMP_EQ), Binding(CmpInst::ICMP_EQ));
+  EXPECT_NE(Binding(CmpInst::ICMP_ULT), Binding(CmpInst::FCMP_UGT));
+  // 'eq' is icmp's only; fcmp's equality is 'oeq' or 'ueq'.
+  EXPECT_NE(Binding(CmpInst::ICMP_EQ), Binding(CmpInst::FCMP_OEQ));
+}
+
 } // namespace

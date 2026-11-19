@@ -4,6 +4,8 @@
 // -gen-keyword-constants: metaphir/IR/Constants.inc, the IDs and spellings.
 // -gen-keyword-constant-matcher: metaphir/Exec/KeywordConstantMatch.inc,
 // which llvm::Values the matchable constants match.
+// -gen-predicate-keywords: metaphir/IR/PredicateKeywords.inc, the
+// CmpInst::Predicates the predicate keywords spell.
 //
 //===----------------------------------------------------------------------===//
 
@@ -75,10 +77,61 @@ void emitKeywordConstantMatcher(const RecordKeeper &Records, raw_ostream &OS) {
             {"keyword_constant"});
 }
 
+void emitPredicateKeywords(const RecordKeeper &Records, raw_ostream &OS) {
+  // Each predicate keyword spells at most one predicate of each compare.
+  auto Predicates = getDefinitionsInOrder(Records, "PredicateKeyword");
+  for (const Record *K : Predicates) {
+    std::vector<StringRef> Spelled = K->getValueAsListOfStrings("Predicates");
+    if (Spelled.empty())
+      PrintFatalError(K, "a predicate keyword spells a predicate");
+    unsigned FCmp =
+        count_if(Spelled, [](StringRef P) { return P.starts_with("FCMP_"); });
+    unsigned ICmp =
+        count_if(Spelled, [](StringRef P) { return P.starts_with("ICMP_"); });
+    if (FCmp > 1 || ICmp > 1 || FCmp + ICmp != Spelled.size())
+      PrintFatalError(K, "a predicate keyword spells at most one FCMP_ and "
+                         "one ICMP_ predicate");
+  }
+
+  beginHeader(OS, Records, "The predicates the predicate keywords spell",
+              "METAPHIR_IR_PREDICATE_KEYWORDS_INC",
+              {"metaphir/IR/Constants.h", "llvm/IR/InstrTypes.h", "optional"},
+              {"keyword_constant"});
+  OS << "/// The keyword that spells P.\n"
+        "inline std::optional<KeywordID>\n"
+        "getPredicateKeyword(llvm::CmpInst::Predicate P) {\n  switch (P) {\n";
+  for (const Record *K : Predicates) {
+    for (StringRef P : K->getValueAsListOfStrings("Predicates"))
+      OS << "  case llvm::CmpInst::" << P << ":\n";
+    OS << "    return K_" << K->getName() << ";\n";
+  }
+  OS << "  default:\n    return std::nullopt;\n  }\n}\n\n"
+        "/// The predicate ID spells in a compare of floating-point values\n"
+        "/// (FloatingPoint) or of integers, if it spells one there.\n"
+        "inline std::optional<llvm::CmpInst::Predicate>\n"
+        "getPredicate(KeywordID ID, bool FloatingPoint) {\n  switch (ID) {\n";
+  for (const Record *K : Predicates) {
+    StringRef FCmp, ICmp;
+    for (StringRef P : K->getValueAsListOfStrings("Predicates"))
+      (P.starts_with("FCMP_") ? FCmp : ICmp) = P;
+    OS << "  case K_" << K->getName() << ":\n";
+    auto Spelled = [&](StringRef P) {
+      return P.empty() ? std::string("std::nullopt")
+                       : ("llvm::CmpInst::" + P).str();
+    };
+    OS << "    if (FloatingPoint)\n      return " << Spelled(FCmp)
+       << ";\n    return " << Spelled(ICmp) << ";\n";
+  }
+  OS << "  default:\n    return std::nullopt;\n  }\n}\n";
+  endHeader(OS, "METAPHIR_IR_PREDICATE_KEYWORDS_INC", {"keyword_constant"});
+}
+
 TableGen::Emitter::Opt X("gen-keyword-constants", emitKeywordConstants,
                          "Generate the keyword constants");
 TableGen::Emitter::Opt Y("gen-keyword-constant-matcher",
                          emitKeywordConstantMatcher,
                          "Generate the matcher of keyword constants");
+TableGen::Emitter::Opt Z("gen-predicate-keywords", emitPredicateKeywords,
+                         "Generate the predicates of the predicate keywords");
 
 } // namespace

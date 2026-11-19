@@ -5,8 +5,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "metaphir/Transforms/Lowering/LowerAlternatives.h"
+#include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
+#include "metaphir/IR/Constraint.h"
+#include "metaphir/IR/PredicateKeyword.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "llvm/IR/InstrTypes.h"
 
 namespace llvm {
 namespace metaphir {
@@ -20,6 +25,66 @@ using namespace mpir;
 //===----------------------------------------------------------------------===//
 // mpir-lower-alternatives
 //===----------------------------------------------------------------------===//
+
+namespace {
+/// The predicate of a compare matched with its operands swapped, when the
+/// pattern names it by a variable: the variable, and the fresh one the
+/// swapped compare matches the instruction's predicate with.
+struct SwappedPredicate {
+  Value Named;
+  Value Matched;
+};
+} // namespace
+
+/// Makes the predicate of Parts, a compare of floating-point values
+/// (FloatingPoint) or of integers, the one of the compare with its operands
+/// swapped: the swapped keyword for one the pattern spells, or a fresh
+/// variable for one it names by a variable, which bindSwappedPredicate binds
+/// it to.
+static std::optional<SwappedPredicate> swapPredicate(OpBuilder &Builder,
+                                                     Location Loc,
+                                                     MatcherParts &Parts,
+                                                     bool FloatingPoint) {
+  for (MatcherOperandView &Op : Parts.Operands) {
+    if (Op.Kind != OperandKind::Predicate)
+      continue;
+    if (auto Keyword = Op.Val.getDefiningOp<KeywordOp>()) {
+      // A keyword the compare cannot have ('icmp oeq') matches nothing,
+      // swapped or not.
+      if (std::optional<CmpInst::Predicate> Predicate =
+              keyword_constant::getPredicate(Keyword.getKeyword(),
+                                             FloatingPoint))
+        Op.Val =
+            KeywordOp::create(Builder, Keyword.getLoc(), Keyword.getType(),
+                              *keyword_constant::getPredicateKeyword(
+                                  CmpInst::getSwappedPredicate(*Predicate)));
+      return std::nullopt;
+    }
+    SwappedPredicate Swapped{
+        Op.Val,
+        VarOp::create(
+            Builder, Loc,
+            SortType::get(Builder.getContext(), Sort::CmpPredicate),
+            Builder.getStringAttr("_swapped$" + getMetaVariableName(Op.Val)))};
+    Op.Val = Swapped.Matched;
+    return Swapped;
+  }
+  return std::nullopt;
+}
+
+/// Binds the variable naming the predicate to the swapped predicate of what
+/// the swapped compare matched: 'let ?pred = swappedPredicate(?matched)'.
+static void bindSwappedPredicate(OpBuilder &Builder, Location Loc,
+                                 const SwappedPredicate &Swapped) {
+  mlir::MLIRContext *Context = Builder.getContext();
+  Value Read = mpir_expr::ReadOp::create(
+      Builder, Loc, SortType::get(Context, Sort::String), Swapped.Matched);
+  Value Predicate = mpir_expr::CallOp::create(
+      Builder, Loc, SortType::get(Context, Sort::CmpPredicate),
+      unsigned(constraint::O_SwappedPredicate), unsigned(constraint::Call),
+      mlir::ValueRange(Read), Value());
+  LetOp::create(Builder, Loc, Swapped.Named, Predicate);
+}
 
 /// Replaces ':c' and ':o' on Inst by mpir.alt.
 static void lowerAlternatives(InstOp Inst) {
@@ -50,17 +115,23 @@ static void lowerAlternatives(InstOp Inst) {
           "commutative instruction with unexpected number of operands");
   }
 
+  // A compare with its operands swapped matches the instruction with the
+  // swapped predicate.
+  instruction::InstructionID ID = Inst.getOpcode().getValue();
+  bool IsCompare = ID == instruction::I_icmp || ID == instruction::I_fcmp;
   auto Build = [&](bool Swap) -> Value {
     MatcherParts P = Parts;
-    bool SwappedPredicate = false;
+    std::optional<SwappedPredicate> Predicate;
     if (Swap) {
       std::swap(P.Operands[ValuePositions[Swapped->first]],
                 P.Operands[ValuePositions[Swapped->second]]);
-      instruction::InstructionID ID = Inst.getOpcode().getValue();
-      SwappedPredicate = ID == instruction::I_icmp || ID == instruction::I_fcmp;
+      if (IsCompare)
+        Predicate = swapPredicate(Builder, Loc, P, ID == instruction::I_fcmp);
     }
-    return P.buildInst(Builder, Loc, Inst.getOpcodeAttr(), SwappedPredicate)
-        .getResult();
+    Value Result = P.buildInst(Builder, Loc, Inst.getOpcodeAttr()).getResult();
+    if (Predicate)
+      bindSwappedPredicate(Builder, Loc, *Predicate);
+    return Result;
   };
 
   auto MakeAlt = [&](unsigned NumRegions) {
@@ -124,6 +195,9 @@ struct LowerAlternativesPass
   StringRef getArgument() const override { return "mpir-lower-alternatives"; }
   StringRef getDescription() const override {
     return "Turn ':c' and ':o' into mpir.alt";
+  }
+  void getDependentDialects(mlir::DialectRegistry &Registry) const override {
+    Registry.insert<mpir_expr::ExprDialect>();
   }
   void runOnOperation() override {
     for (PatternOp Pattern : getOperation().getOps<PatternOp>()) {

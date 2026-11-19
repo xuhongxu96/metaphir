@@ -19,6 +19,7 @@
 #include "metaphir/Exec/KeywordConstantMatch.h"
 #include "metaphir/Exec/TypePattern.h"
 #include "metaphir/IR/Constants.h"
+#include "metaphir/IR/PredicateKeyword.h"
 #include "metaphir/Matching/ConstantInteger.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/OpcodePredicates.h"
@@ -76,8 +77,8 @@ struct PlanProgram::Step {
   int32_t Src = -1;
   int32_t A = 0;
   int32_t B = 0;
-  /// A flag of the step: present, at least, types, of an operand, swapped,
-  /// bound, treat integers as vectors.
+  /// A flag of the step: present, at least, types, of an operand, bound,
+  /// treat integers as vectors.
   bool Flag = false;
   /// Bind: whether to bind by sort, A being the slot and B the sort.
   bool BySort = false;
@@ -200,7 +201,6 @@ void ProgramBuilder::op(mlir::Operation &Op) {
     S.Src = reg(Get.getInstruction());
     S.Dst = reg(Get.getResult());
     S.A = int32_t(Get.getKind());
-    S.Flag = Get.getSwapped();
     return Emit(Step::GetKeyed);
   }
   if (auto Get = dyn_cast<plan::GetElementOp>(Op)) {
@@ -672,8 +672,7 @@ bool PlanMatcher::Run::step(const Step &S) {
     switch (mpir::OperandKind(S.A)) {
     case mpir::OperandKind::Predicate: {
       const auto &Compare = cast<CmpInst>(I);
-      Registers[S.Dst] = Binding(S.Flag ? Compare.getSwappedPredicate()
-                                        : Compare.getPredicate());
+      Registers[S.Dst] = Binding(Compare.getPredicate());
       return true;
     }
     case mpir::OperandKind::Alignment:
@@ -759,8 +758,7 @@ bool PlanMatcher::Run::step(const Step &S) {
     auto ID = keyword_constant::KeywordID(S.A);
     if (const auto *Predicate =
             std::get_if<CmpInst::Predicate>(&Registers[S.Src].Data))
-      return keyword_constant::getKeywordName(ID) ==
-             CmpInst::getPredicateName(*Predicate);
+      return keyword_constant::getPredicateKeyword(*Predicate) == ID;
     const llvm::Value *V = value(S.Src);
     return keyword_constant::matches(ID, *V);
   }

@@ -102,7 +102,7 @@ struct MatcherParts {
   /// Builds an mpir.inst of Opcode, or an mpir.use of Matcher, with these
   /// parts.
   InstOp buildInst(mlir::OpBuilder &Builder, mlir::Location Loc,
-                   OpcodeAttr Opcode, bool SwappedPredicate = false) const;
+                   OpcodeAttr Opcode) const;
   UseOp buildUse(mlir::OpBuilder &Builder, mlir::Location Loc,
                  mlir::FlatSymbolRefAttr Matcher) const;
 };
