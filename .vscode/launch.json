@@ -1,125 +1,89 @@
 {
-    // Debug configurations for lldb-dap (llvm-vs-code-extensions.lldb-dap).
-    // Each builds build/ first (the "build" task in tasks.json) and asks for
-    // its inputs. lldb-dap takes arguments as an array, one entry per argument.
-    // The adapter, its Python path and the data formatters are in the repo
-    // (scripts/build_lldb.sh builds them); VS Code expands ${workspaceFolder}
-    // in launch configurations.
+    // Debug configurations for CodeLLDB (vadimcn.vscode-lldb). Each builds
+    // build/ first (the "build" task in tasks.json) and asks for its inputs.
+    // CodeLLDB takes arguments as an array, one entry per argument. The data
+    // formatters are in the repo (scripts/build_lldb.sh writes them); VS Code
+    // expands ${workspaceFolder} in launch configurations.
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb-dap",
+            "type": "lldb",
             "request": "launch",
-            "debugAdapterExecutable": "${workspaceFolder}/build-lldb/install/bin/lldb-dap",
-            "debugAdapterEnv": {
-                "PATH": "${workspaceFolder}/build-lldb/install/bin:${env:PATH}",
-                "PYTHONPATH": "${workspaceFolder}/build-lldb/install/lib/python3/site-packages"
-            },
-            "initCommands": [
-                // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
-                "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
-                "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
-            ],
             "name": "match",
             "program": "${workspaceFolder}/build/tools/metaphir-match",
             "args": ["${input:matchPattern}", "${input:matchInput}"],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "build"
-        },
-        {
-            "type": "lldb-dap",
-            "request": "launch",
-            "debugAdapterExecutable": "${workspaceFolder}/build-lldb/install/bin/lldb-dap",
-            "debugAdapterEnv": {
-                "PATH": "${workspaceFolder}/build-lldb/install/bin:${env:PATH}",
-                "PYTHONPATH": "${workspaceFolder}/build-lldb/install/lib/python3/site-packages"
-            },
             "initCommands": [
                 // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
                 "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
                 "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
             ],
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "match: current pattern",
             "program": "${workspaceFolder}/build/tools/metaphir-match",
             "args": ["${file}", "${input:irFiles}"],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "build"
-        },
-        {
-            "type": "lldb-dap",
-            "request": "launch",
-            "debugAdapterExecutable": "${workspaceFolder}/build-lldb/install/bin/lldb-dap",
-            "debugAdapterEnv": {
-                "PATH": "${workspaceFolder}/build-lldb/install/bin:${env:PATH}",
-                "PYTHONPATH": "${workspaceFolder}/build-lldb/install/lib/python3/site-packages"
-            },
             "initCommands": [
-                // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
                 "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
                 "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
             ],
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "parse: current pattern",
             "program": "${workspaceFolder}/build/tools/metaphir-parse",
             "args": ["${file}"],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "build",
-            "console": "integratedTerminal"
-        },
-        {
-            "type": "lldb-dap",
-            "request": "launch",
-            "debugAdapterExecutable": "${workspaceFolder}/build-lldb/install/bin/lldb-dap",
-            "debugAdapterEnv": {
-                "PATH": "${workspaceFolder}/build-lldb/install/bin:${env:PATH}",
-                "PYTHONPATH": "${workspaceFolder}/build-lldb/install/lib/python3/site-packages"
-            },
             "initCommands": [
-                // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
                 "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
                 "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
             ],
+            "preLaunchTask": "build",
+            "terminal": "integrated"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "lex: current file",
             "program": "${workspaceFolder}/build/tools/metaphir-lex",
             "args": ["${file}"],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "build"
-        },
-        {
-            "type": "lldb-dap",
-            "request": "launch",
-            "debugAdapterExecutable": "${workspaceFolder}/build-lldb/install/bin/lldb-dap",
-            "debugAdapterEnv": {
-                "PATH": "${workspaceFolder}/build-lldb/install/bin:${env:PATH}",
-                "PYTHONPATH": "${workspaceFolder}/build-lldb/install/lib/python3/site-packages"
-            },
             "initCommands": [
-                // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
                 "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
                 "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
             ],
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "index",
             "program": "${workspaceFolder}/build/tools/metaphir-index",
             "args": ["${input:indexCommand}", "${input:indexOperand}"],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "build"
-        },
-        {
-            "type": "lldb-dap",
-            "request": "launch",
-            "debugAdapterExecutable": "${workspaceFolder}/build-lldb/install/bin/lldb-dap",
-            "debugAdapterEnv": {
-                "PATH": "${workspaceFolder}/build-lldb/install/bin:${env:PATH}",
-                "PYTHONPATH": "${workspaceFolder}/build-lldb/install/lib/python3/site-packages"
-            },
             "initCommands": [
-                // The MLIR formatter comes from build-lldb/formatters: scripts/build_lldb.sh patches a null-value crash in it.
                 "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
                 "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
             ],
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "unit test",
             "program": "${workspaceFolder}/build/test/${input:unitTest}",
             "args": ["--gtest_filter=${input:gtestFilter}"],
             "cwd": "${workspaceFolder}",
+            "initCommands": [
+                "command script import ${workspaceFolder}/build-lldb/formatters/lldbDataFormatters.py",
+                "command script import ${workspaceFolder}/build-lldb/formatters/mlirDataFormatters.py"
+            ],
             "preLaunchTask": "build"
         }
     ],
@@ -165,6 +129,7 @@
                 "IR/metaphir-ir-test",
                 "Matching/metaphir-matching-test",
                 "Parser/metaphir-parser-test",
+                "Transforms/metaphir-transforms-test",
                 "Web/metaphir-web-index-test",
                 "Web/metaphir-web-publish-test",
                 "Web/metaphir-web-test"
