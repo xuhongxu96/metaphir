@@ -17,6 +17,7 @@ def kw_to : Keyword<"to">;
 def kw_match : Keyword<"match">;
 def kw_constraint : Keyword<"constraint">;
 def kw_metaflag : Keyword<"metaflag">;
+def kw_let : Keyword<"let">;
 def kw_Unary : Keyword<"Unary">;
 def kw_Nary : Keyword<"Nary">;
 def kw_Binary : Keyword<"Binary">;

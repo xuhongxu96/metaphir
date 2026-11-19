@@ -45,7 +45,11 @@ static void lowerAlternatives(InstOp Inst) {
       Swapped = {1u, 2u};
     else if (NumOperands == 2)
       Swapped = {0u, 1u};
+    else
+      llvm_unreachable(
+          "commutative instruction with unexpected number of operands");
   }
+
   auto Build = [&](bool Swap) -> Value {
     MatcherParts P = Parts;
     bool SwappedPredicate = false;
@@ -83,6 +87,7 @@ static void lowerAlternatives(InstOp Inst) {
     Fill(Orders, 1, [&] { return Build(true); });
     return Orders.getResult();
   };
+
   Value Result;
   if (OrSelf) {
     // Its operand first, then itself, so matches come in that order.

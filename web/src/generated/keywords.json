@@ -61,6 +61,7 @@
     "match",
     "constraint",
     "metaflag",
+    "let",
     "Unary",
     "Nary",
     "Binary",

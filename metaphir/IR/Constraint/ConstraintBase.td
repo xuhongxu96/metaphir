@@ -82,7 +82,7 @@ class CmpPredicateTest<string spelling> : Operator<spelling> {
 
 /// The predicate a C++ expression of the predicate P gives.
 class CmpPredicateMap<string spelling> : Operator<spelling> {
-  let Result = "String";
+  let Result = "CmpPredicate";
   let Arity = 1;
   let RestSort = "String";
   string Expression;

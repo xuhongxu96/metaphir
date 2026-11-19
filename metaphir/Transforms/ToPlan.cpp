@@ -109,6 +109,7 @@ private:
   /// Clones the expression E into the plan, reading slots.
   Value cloneExpression(Value E, mlir::IRMapping &Mapping);
   void check(RequireOp Require);
+  void let(LetOp Let);
 };
 
 } // namespace
@@ -554,8 +555,12 @@ void Compiler::finishBlock(mlir::Block &Block, ArrayRef<Operation *> Roots) {
     }
     matchMatcher(V, Value(), MatchAnywhere);
   }
-  for (RequireOp Require : Block.getOps<RequireOp>())
-    check(Require);
+  for (Operation &Op : Block) {
+    if (auto Require = dyn_cast<RequireOp>(Op))
+      check(Require);
+    else if (auto Let = dyn_cast<LetOp>(Op))
+      let(Let);
+  }
 }
 
 Value Compiler::cloneExpression(Value E, mlir::IRMapping &Mapping) {
@@ -611,6 +616,28 @@ void Compiler::check(RequireOp Require) {
   auto Check = plan::CheckOp::create(Builder, Require.getLoc(), Condition);
   if (Require.getFromMetaflag())
     Check.setFromMetaflag(true);
+}
+
+void Compiler::let(LetOp Let) {
+  mlir::IRMapping Mapping;
+  Value Variable = Let.getVariable();
+  unsigned Slot = slotOf(Variable);
+  Value Assigned = cloneExpression(Let.getValue(), Mapping);
+  // What the variable has to be if it is bound already: the value.
+  Value Current = cloneExpression(Variable, Mapping);
+  mlir::Location Loc = Let.getLoc();
+  Current = mpir_expr::ReadOp::create(
+      Builder, Loc,
+      SortType::get(Context, getRepresentation(resolveSort(sortOf(Variable)))),
+      Current);
+  Value Args[] = {Current, Assigned};
+  Value Same = mpir_expr::CallOp::create(
+      Builder, Loc, SortType::get(Context, Sort::Boolean),
+      unsigned(constraint::O_Equal), unsigned(constraint::Binary), Args,
+      Value());
+  plan::LetOp::create(Builder, Loc, i32(Slot), Assigned, Same);
+  Bound.Certain.insert(Slot);
+  Bound.Maybe.erase(Slot);
 }
 
 plan::MatcherOp Compiler::compile() {

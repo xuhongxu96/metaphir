@@ -243,7 +243,7 @@ def OpPredicate : Operator<"predicate"> {
 include "metaphir/IR/Constraint/CmpPredicateOperators.td"
 
 def OpFlippedSignednessPredicate : Operator<"flippedSignednessPredicate"> {
-  let Result = "String";
+  let Result = "CmpPredicate";
   let Arity = 1;
   let RestSort = "String";
 }

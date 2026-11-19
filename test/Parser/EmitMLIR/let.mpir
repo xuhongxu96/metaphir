@@ -1,0 +1,43 @@
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | FileCheck %s
+; 'let ?v = expression' as an mpir.let: its variable, then the expression's
+; value, in the body of a pattern and of a matcher's branch.
+%c = icmp:?anch ?pred i32 ?x, ?y
+;; let ?swapped = swappedPredicate(?pred)
+;; ?swapped == "sgt"
+match doubled [] Unary (i?bits ?x) {
+; CHECK-LABEL:   mpir.matcher @doubled <supported_flags = [], syntax = nary, arity = 1, param_names = ["bits", "x"], param_is_type = [true, false]> {
+; CHECK:           %[[VAR_0:.*]] = mpir.var "bits" : <Nat>
+; CHECK:           %[[TYPE_0:.*]] = mpir.type.meta_int %[[VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:           mpir.signature %[[TYPE_0]] : !mpir.sort<Type>
+; CHECK:           mpir.branch <fixed_flags = [], param_args = [0, 1], fixed_flag_values = []> {
+; CHECK:           ^bb0(%[[VAL_0:.*]]: !mpir.sort<Nat> loc(fused<"mpir.range">[{{.*}}, {{.*}}]), %[[VAL_1:.*]]: !mpir.sort<Operand> loc(fused<"mpir.range">[{{.*}}, {{.*}}])):
+  %ret = add i?bits ?x, ?k
+; CHECK:             %[[TYPE_1:.*]] = mpir.type.meta_int %[[VAL_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Type>
+; CHECK:             %[[VAR_1:.*]] = mpir.var "k" : <Operand>
+; CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_1]], %[[VAL_1]], %[[TYPE_1]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "ret"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+  ;; let ?double = ?bits * 2
+; CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[VAL_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
+; CHECK:             %[[INT_0:.*]] = mpir_expr.int 2 : ui64 : <Integer>
+; CHECK:             %[[CALL_0:.*]] = mpir_expr.call binary "*"(%[[READ_0]], %[[INT_0]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Integer>
+; CHECK:             %[[VAR_2:.*]] = mpir.var "double" : <Integer>
+; CHECK:             mpir.let %[[VAR_2]], %[[CALL_0]] : <Integer>, <Integer>
+; CHECK:             mpir.yield %[[INST_0]] : <Instruction>
+; CHECK:           }
+; CHECK:         }
+; CHECK-LABEL:   mpir.pattern {
+; CHECK:           %[[VAR_0:.*]] = mpir.var "anch" : <Instruction>
+; CHECK:           %[[VAR_1:.*]] = mpir.var "pred" : <CmpPredicate>
+; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[VAR_2:.*]] = mpir.var "x" : <Operand>
+; CHECK:           %[[VAR_3:.*]] = mpir.var "y" : <Operand>
+; CHECK:           %[[INST_0:.*]] = mpir.inst <icmp> capture %[[VAR_0]] (%[[VAR_1]], %[[TYPE_0]], %[[VAR_2]], %[[TYPE_0]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "c"> : (!mpir.sort<Instruction>, !mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+; CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "swappedPredicate"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<CmpPredicate>
+; CHECK:           %[[VAR_4:.*]] = mpir.var "swapped" : <CmpPredicate>
+; CHECK:           mpir.let %[[VAR_4]], %[[CALL_0]] : <CmpPredicate>, <CmpPredicate>
+; CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_4]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+; CHECK:           %[[STR_0:.*]] = mpir_expr.str "sgt" : <String>
+; CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[READ_1]], %[[STR_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+; CHECK:           mpir.require %[[CALL_1]] : <Boolean>
+; CHECK:         }
+}

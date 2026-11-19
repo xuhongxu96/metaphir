@@ -198,11 +198,11 @@
 70 isGT result=i1 arity=1..1 call args=String,String,String,String
 71 isLE result=i1 arity=1..1 call args=String,String,String,String
 72 isGE result=i1 arity=1..1 call args=String,String,String,String
-73 swappedPredicate result=String arity=1..1 call args=String,String,String,String
-74 inversePredicate result=String arity=1..1 call args=String,String,String,String
-75 strictPredicate result=String arity=1..1 call args=String,String,String,String
-76 nonStrictPredicate result=String arity=1..1 call args=String,String,String,String
-77 flippedSignednessPredicate result=String arity=1..1 call args=String,String,String,String
+73 swappedPredicate result=CmpPredicate arity=1..1 call args=String,String,String,String
+74 inversePredicate result=CmpPredicate arity=1..1 call args=String,String,String,String
+75 strictPredicate result=CmpPredicate arity=1..1 call args=String,String,String,String
+76 nonStrictPredicate result=CmpPredicate arity=1..1 call args=String,String,String,String
+77 flippedSignednessPredicate result=CmpPredicate arity=1..1 call args=String,String,String,String
 78 countl_zero result=Integer arity=1..2 call args=Integer,Integer,Integer,Integer
 79 countr_zero result=Integer arity=1..2 call args=Integer,Integer,Integer,Integer
 80 countl_one result=Integer arity=1..2 call args=Integer,Integer,Integer,Integer

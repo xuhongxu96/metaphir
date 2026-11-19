@@ -58,7 +58,7 @@ struct Bindings {
 } // namespace
 
 /// The variables matching Region binds: what its matchers bind, and its
-/// mpir.bind.
+/// mpir.bind and mpir.let.
 static void collectRegion(Bindings &Into, mlir::Region &Region);
 
 void Bindings::addValue(Value V) {
@@ -115,6 +115,8 @@ static void collectRegion(Bindings &Into, mlir::Region &Region) {
       Into.Pending.push_back(Yield.getValue());
     else if (auto Bind = dyn_cast<BindOp>(Op))
       Into.addVariable(Bind.getVariable());
+    else if (auto Let = dyn_cast<LetOp>(Op))
+      Into.addVariable(Let.getVariable());
   }
   Into.run();
 }
@@ -126,6 +128,9 @@ static LogicalResult checkOrSelfBindings(PatternOp Pattern) {
   Always.BoundBy = &BoundBy;
   for (Operation *Root : getPatternRoots(Block))
     Always.Pending.push_back(Root->getResult(0));
+  // A 'let' binds its variable whichever alternative matches.
+  for (LetOp Let : Block.getOps<LetOp>())
+    Always.addVariable(Let.getVariable());
   Always.run();
   // Matchers in alternatives are reached from their alt; those of a region
   // not reached from its yield are roots of their own.

@@ -240,6 +240,19 @@ def Plan_CheckOp : Plan_Op<"check"> {
   let assemblyFormat = "$condition prop-dict attr-dict `:` type($condition)";
 }
 
+def Plan_LetOp : Plan_Op<"let"> {
+  let summary = "Binds a slot to an expression, or checks it is the one it has";
+  let description = [{
+    A 'let': the match binds `slot` to the value of `value`, an mpir_expr
+    expression over mpir_plan.slot values, if the slot is not bound yet.
+    Otherwise it must hold that `condition`, which compares the slot with
+    `value`, is true.
+  }];
+  let arguments = (ins I32Attr:$slot, Mpir_Term:$value, Mpir_Term:$condition);
+  let assemblyFormat =
+      "$slot `,` $value `,` $condition attr-dict `:` type($value) `,` type($condition)";
+}
+
 def Plan_SlotOp : Plan_Op<"slot", [Pure]> {
   let summary = "A slot's binding, as an expression reads it";
   let arguments = (ins I32Attr:$slot);

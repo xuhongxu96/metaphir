@@ -482,6 +482,7 @@ static mlir::Value parentBlockOf(Operation *I) {
 void printSurfacePattern(raw_ostream &OS, PatternOp Pattern) {
   SmallVector<Operation *, 16> Instructions;
   SmallVector<RequireOp, 8> Constraints;
+  SmallVector<LetOp, 4> Lets;
   SmallVector<VarOp, 16> Variables;
   if (Pattern)
     for (Operation &Op : Pattern.getBody().front()) {
@@ -489,6 +490,8 @@ void printSurfacePattern(raw_ostream &OS, PatternOp Pattern) {
         Instructions.push_back(&Op);
       else if (auto Require = dyn_cast<RequireOp>(Op))
         Constraints.push_back(Require);
+      else if (auto Let = dyn_cast<LetOp>(Op))
+        Lets.push_back(Let);
       else if (auto Var = dyn_cast<VarOp>(Op))
         Variables.push_back(Var);
     }
@@ -508,6 +511,11 @@ void printSurfacePattern(raw_ostream &OS, PatternOp Pattern) {
   for (RequireOp C : Constraints) {
     OS << "constraint ";
     printSurfaceExpression(OS, C.getCondition());
+    OS << '\n';
+  }
+  for (LetOp Let : Lets) {
+    OS << "let ?" << getMetaVariableName(Let.getVariable()) << " = ";
+    printSurfaceExpression(OS, Let.getValue());
     OS << '\n';
   }
   for (VarOp Var : Variables)

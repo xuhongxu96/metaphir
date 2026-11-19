@@ -128,6 +128,8 @@ private:
   };
 
   unsigned NextWildcard = 0;
+  /// The variables a 'let' of the scopes binds.
+  DenseSet<Value> LetVariables;
   bool InDefinitionBody = false;
 
   /// Saves the naming state and the insertion point, and opens a closed scope
@@ -216,6 +218,8 @@ private:
   LogicalResult parseBodyLine(tok::Kind Terminator);
   LogicalResult parseBlockLabel();
   LogicalResult parsePatternSetting(PatternSettings::Setting Setting);
+  /// Parses 'let ?variable = expression', after the constraint marker.
+  LogicalResult parseLet();
   LogicalResult parseInstruction(Value &Result);
   LogicalResult parseInstructionResult(SmallVectorImpl<char> &Name);
   LogicalResult parseInstructionCapture(Value &Capture);
@@ -549,6 +553,59 @@ void Parser::setDefaultContext(Value C, Value Anchor) {
       setDefaultContext(Operand, Anchor);
 }
 
+/// Whether a match can bind a variable of sort S to what an expression
+/// gives; a string is not what a match binds.
+static bool isBindable(Sort S) {
+  switch (resolveSort(S)) {
+  case Sort::String:
+  case Sort::StringArray:
+  case Sort::BitVector:
+    return false;
+  default:
+    return true;
+  }
+}
+
+LogicalResult Parser::parseLet() {
+  next();
+  if (Lex.getKind() != tok::MetaVar)
+    return error("expected a meta variable after 'let'");
+  LocTy VarLoc = Lex.getLoc();
+  SmallString<16> Name(Lex.getStrVal());
+  if (Name == "_")
+    return Lex.ParseError(VarLoc, "'let' cannot bind '?_'");
+  next();
+  if (failed(expect(tok::equal, "expected '=' after the variable of 'let'")))
+    return failure();
+  // The expression comes first: it refers to what is written before it, not
+  // to the variable it binds.
+  LocTy ExprLoc = Lex.getLoc();
+  Value E;
+  if (failed(parseConstraint(E)))
+    return failure();
+  Value Anchor = BodyInstructions.empty()
+                     ? Value()
+                     : BodyInstructions.back()->getResult(0);
+  setDefaultContext(E, Anchor);
+  // The variable takes the expression's sort, or the meet of that and the
+  // sort it already has.
+  Value Variable = getMeta(Name, sortOf(E), VarLoc);
+  if (!Variable)
+    return failure();
+  Sort VarSort = sortOf(Variable);
+  if (VarSort == Sort::Unknown)
+    return Lex.ParseError(ExprLoc,
+                          "cannot tell the sort of the 'let' expression");
+  if (!isBindable(VarSort))
+    return Lex.ParseError(ExprLoc, Twine("'let' cannot bind ") +
+                                       constraint::describe(VarSort));
+  if (!LetVariables.insert(Variable).second)
+    return Lex.ParseError(VarLoc, "meta variable '?" + Name +
+                                      "' is already bound by a 'let'");
+  LetOp::create(Builder, loc(VarLoc, Lex.getPrevTokEnd()), Variable, E);
+  return success();
+}
+
 LogicalResult Parser::parseBodyLine(tok::Kind Terminator) {
   if (consume(tok::ConstraintMarker)) {
     LocTy Loc = Lex.getLoc();
@@ -558,6 +615,11 @@ LogicalResult Parser::parseBodyLine(tok::Kind Terminator) {
         return failure();
       return expectEndOfLine(Terminator,
                              "unexpected token after pattern setting");
+    }
+    if (Lex.getKind() == tok::kw_let) {
+      if (failed(parseLet()))
+        return failure();
+      return expectEndOfLine(Terminator, "unexpected token after 'let'");
     }
     Value C;
     if (failed(parseConstraint(C)) || failed(requireBooleanConstraint(C)))

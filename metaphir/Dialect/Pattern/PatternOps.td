@@ -367,6 +367,19 @@ def Mpir_BindOp : Mpir_Op<"bind", []> {
   let assemblyFormat = "$variable `,` $value attr-dict `:` type($variable) `,` type($value)";
 }
 
+def Mpir_LetOp : Mpir_Op<"let", []> {
+  let summary = "A constraint that binds a meta variable to an expression";
+  let description = [{
+    'let ?v = expression': the match binds `variable` to the value of
+    `value`, an expression over the variables written before it. A variable
+    the match has not bound yet takes the value; for one it has, the
+    constraint holds if the value is the one it is bound to. A variable is the
+    target of at most one let.
+  }];
+  let arguments = (ins Mpir_Term:$variable, Mpir_Term:$value);
+  let assemblyFormat = "$variable `,` $value attr-dict `:` type($variable) `,` type($value)";
+}
+
 def Mpir_RequireOp : Mpir_Op<"require", []> {
   let summary = "A constraint a match must satisfy";
   let arguments = (ins Mpir_Term:$condition,

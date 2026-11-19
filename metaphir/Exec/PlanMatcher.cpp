@@ -68,6 +68,7 @@ struct PlanProgram::Step {
     Bind,
     BindConstant,
     Check,
+    Let,
     Emit,
   };
   Kind K;
@@ -86,9 +87,11 @@ struct PlanProgram::Step {
   std::optional<APSInt> Integer;
   std::optional<APFloat> Float;
   std::string Name;
-  /// Check: the condition, where it is written, and whether a metaflag says
-  /// it.
+  /// Check and Let: the condition, where it is written, and whether a
+  /// metaflag says it. Let: A is the slot, Assigned the expression to bind it
+  /// to, and Condition what has to hold if it is bound already.
   mlir::Value Condition;
+  mlir::Value Assigned;
   SMRange Written;
   bool FromMetaflag = false;
 };
@@ -279,6 +282,13 @@ void ProgramBuilder::op(mlir::Operation &Op) {
     S.FromMetaflag = Check.getFromMetaflag();
     return Emit(Step::Check);
   }
+  if (auto Let = dyn_cast<plan::LetOp>(Op)) {
+    S.A = Let.getSlot();
+    S.Assigned = Let.getValue();
+    S.Condition = Let.getCondition();
+    S.Written = getSourceRange(Let.getLoc());
+    return Emit(Step::Let);
+  }
   if (isa<plan::EmitOp>(Op))
     return Emit(Step::Emit);
   llvm_unreachable("unknown plan step");
@@ -435,6 +445,68 @@ static std::optional<Binding> bindingBySort(const llvm::Value &Target, Sort S) {
     if (!isa<llvm::BasicBlock>(Target))
       return std::nullopt;
     return Binding(&Target);
+  default:
+    return std::nullopt;
+  }
+}
+
+/// What a variable of sort S is bound to when a constraint expression gives
+/// V, if a match can bind that.
+static std::optional<Binding> toBinding(const ConstraintValue &V, Sort S) {
+  switch (resolveSort(S)) {
+  case Sort::Nat:
+    if (V.getKind() == ConstraintValue::Integer &&
+        !V.getInteger().isNegative())
+      return Binding(APInt(V.getInteger()));
+    return std::nullopt;
+  case Sort::Integer:
+    if (V.getKind() == ConstraintValue::Integer)
+      return Binding(V.getInteger());
+    return std::nullopt;
+  case Sort::Boolean:
+    if (V.getKind() == ConstraintValue::Boolean)
+      return Binding(V.getBoolean());
+    return std::nullopt;
+  case Sort::CmpPredicate: {
+    if (V.getKind() != ConstraintValue::String)
+      return std::nullopt;
+    for (unsigned P = CmpInst::FIRST_ICMP_PREDICATE;
+         P <= CmpInst::LAST_ICMP_PREDICATE; ++P)
+      if (CmpInst::getPredicateName(CmpInst::Predicate(P)) == V.getString())
+        return Binding(CmpInst::Predicate(P));
+    for (unsigned P = CmpInst::FIRST_FCMP_PREDICATE;
+         P <= CmpInst::LAST_FCMP_PREDICATE; ++P)
+      if (CmpInst::getPredicateName(CmpInst::Predicate(P)) == V.getString())
+        return Binding(CmpInst::Predicate(P));
+    return std::nullopt;
+  }
+  case Sort::IntrinsicID: {
+    if (V.getKind() != ConstraintValue::String)
+      return std::nullopt;
+    Intrinsic::ID ID = Intrinsic::lookupIntrinsicID(V.getString());
+    if (ID == Intrinsic::not_intrinsic)
+      return std::nullopt;
+    return Binding(ID);
+  }
+  case Sort::Type:
+    if (V.getKind() == ConstraintValue::Type)
+      return Binding(V.getType());
+    return std::nullopt;
+  case Sort::TypeArray:
+    if (V.getKind() == ConstraintValue::TypeArray)
+      return Binding(V.getTypeArray());
+    return std::nullopt;
+  case Sort::ValueArray:
+    if (V.getKind() == ConstraintValue::ValueArray)
+      return Binding(V.getValueArray());
+    return std::nullopt;
+  case Sort::Value:
+  case Sort::Instruction:
+  case Sort::Function:
+  case Sort::BasicBlock:
+    if (V.getKind() == ConstraintValue::Value)
+      return Binding(V.getValue());
+    return std::nullopt;
   default:
     return std::nullopt;
   }
@@ -731,6 +803,7 @@ bool PlanMatcher::Run::step(const Step &S) {
   case Step::BindConstant:
     return unify(S.A, Binding(S.Flag));
   case Step::Check:
+  case Step::Let:
     Checks.push_back(&S);
     return true;
   case Step::Emit:
@@ -788,15 +861,19 @@ void PlanMatcher::Run::emit() {
           SmallVector<PlanConflict, 1>(Conflicts.begin(), Conflicts.end());
     return;
   }
-  PlanMatch Candidate(P, Slots);
   // Constraints a metaflag says go first, as what they say a binding is
-  // decides whether the others can be evaluated.
+  // decides whether the others can be evaluated. A let comes before the
+  // other constraints, which may read what it binds: it reads only what is
+  // written before it.
   SmallVector<const Step *, 8> Ordered;
   for (const Step *C : Checks)
-    if (C->FromMetaflag)
+    if (C->K == Step::Check && C->FromMetaflag)
       Ordered.push_back(C);
   for (const Step *C : Checks)
-    if (!C->FromMetaflag)
+    if (C->K == Step::Let)
+      Ordered.push_back(C);
+  for (const Step *C : Checks)
+    if (C->K == Step::Check && !C->FromMetaflag)
       Ordered.push_back(C);
   auto Record = [&](const Step &C, std::string Reason) {
     if (!Explaining)
@@ -806,37 +883,55 @@ void PlanMatcher::Run::emit() {
                  R.Written.End == C.Written.End;
         }))
       Rejections.push_back(
-          {C.Condition, C.Written, std::move(Reason), Candidate});
+          {C.Condition, C.Written, std::move(Reason), PlanMatch(P, Slots)});
+  };
+  auto Slot = [&](unsigned Slot) -> const Binding * {
+    return isBound(Slot) ? &Slots[Slot] : nullptr;
+  };
+  auto Message = [](Error E) {
+    std::string Reason = "constraint could not be evaluated";
+    handleAllErrors(
+        std::move(E),
+        [&](const detail::ConstraintEvaluationError &E) { Reason = E.Message; },
+        [&](const ErrorInfoBase &E) { Reason = E.message(); });
+    return Reason;
+  };
+  // Whether the let holds: it binds its variable, or the value is the one the
+  // variable is bound to.
+  auto Holds = [&](const Step &C) -> Expected<bool> {
+    if (C.K != Step::Let || isBound(C.A)) {
+      Expected<ConstraintValue> Result =
+          Evaluator.evaluate(C.Condition, Slot);
+      if (!Result)
+        return Result.takeError();
+      return detail::requireBoolean(*Result, C.Condition);
+    }
+    Expected<ConstraintValue> Result = Evaluator.evaluate(C.Assigned, Slot);
+    if (!Result)
+      return Result.takeError();
+    std::optional<Binding> Target = toBinding(*Result, P.Slots[C.A].VariableSort);
+    if (!Target)
+      return make_error<detail::ConstraintEvaluationError>(
+          C.Assigned, "'" + P.Slots[C.A].Name + "' cannot be bound to this value");
+    return unify(C.A, *Target);
   };
   bool Satisfies = true;
   for (const Step *C : Ordered) {
-    Expected<ConstraintValue> Result =
-        Evaluator.evaluate(C->Condition, [&](unsigned Slot) -> const Binding * {
-          return isBound(Slot) ? &Slots[Slot] : nullptr;
-        });
-    mlir::Value Expression = C->Condition;
-    Expected<bool> Holds = Result ? detail::requireBoolean(*Result, Expression)
-                                  : Expected<bool>(Result.takeError());
-    if (!Holds) {
-      std::string Reason = "constraint could not be evaluated";
-      handleAllErrors(
-          Holds.takeError(),
-          [&](const detail::ConstraintEvaluationError &E) {
-            Reason = E.Message;
-          },
-          [&](const ErrorInfoBase &E) { Reason = E.message(); });
+    Expected<bool> Result = Holds(*C);
+    if (!Result) {
       if (Satisfies)
-        Record(*C, std::move(Reason));
+        Record(*C, Message(Result.takeError()));
       Satisfies = false;
       break;
     }
-    if (!*Holds) {
+    if (!*Result) {
       Record(*C, "");
       Satisfies = false;
       if (!Explaining)
         break;
     }
   }
+  PlanMatch Candidate(P, Slots);
   if (Satisfies &&
       none_of(Matches, [&](const PlanMatch &M) { return M == Candidate; }))
     Matches.push_back(std::move(Candidate));

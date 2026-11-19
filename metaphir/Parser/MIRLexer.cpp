@@ -752,6 +752,8 @@ tok::Kind MIRLexer::LexConstraintToken() {
           return tok::kw_true;
         if (StrVal == "false")
           return tok::kw_false;
+        if (StrVal == "let")
+          return tok::kw_let;
         return tok::lookupPatternSetting(StrVal);
       }
       return LexUnexpected(CurChar);

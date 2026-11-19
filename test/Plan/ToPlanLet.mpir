@@ -1,0 +1,56 @@
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | %metaphir-opt --mpir-lower --mpir-to-plan | FileCheck %s
+; A 'let' compiles to an mpir_plan.let after the matching: the slot, the value
+; it binds, and what has to hold when the slot is bound already, which
+; compares it with the value.
+%c = icmp:?anch ?pred i32 ?x, ?y
+;; let ?swapped = swappedPredicate(?pred)
+;; ?swapped == "sgt"
+
+; CHECK-LABEL:   mpir.pattern {
+; CHECK:           %[[VAR_0:.*]] = mpir.var "anch" : <Instruction>
+; CHECK:           %[[VAR_1:.*]] = mpir.var "pred" : <CmpPredicate>
+; CHECK:           %[[TYPE_0:.*]] = mpir.type.int 32 : <Type>
+; CHECK:           %[[VAR_2:.*]] = mpir.var "x" : <Operand>
+; CHECK:           %[[VAR_3:.*]] = mpir.var "y" : <Operand>
+; CHECK:           %[[INST_0:.*]] = mpir.inst <icmp> capture %[[VAR_0]] (%[[VAR_1]], %[[TYPE_0]], %[[VAR_2]], %[[TYPE_0]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "c"> : (!mpir.sort<Instruction>, !mpir.sort<CmpPredicate>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
+; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+; CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "swappedPredicate"(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<CmpPredicate>
+; CHECK:           %[[VAR_4:.*]] = mpir.var "swapped" : <CmpPredicate>
+; CHECK:           mpir.let %[[VAR_4]], %[[CALL_0]] : <CmpPredicate>, <CmpPredicate>
+; CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_4]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+; CHECK:           %[[STR_0:.*]] = mpir_expr.str "sgt" : <String>
+; CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[READ_1]], %[[STR_0]]) anchor %[[INST_0]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+; CHECK:           mpir.require %[[CALL_1]] : <Boolean>
+; CHECK:         }
+; CHECK-LABEL:   mpir_plan.matcher <slot_kinds = [variable, variable, variable, variable, instruction, variable], slot_sorts = [Instruction, CmpPredicate, Value, Value, Instruction, CmpPredicate], slot_names = ["anch", "pred", "x", "y", "%c", "swapped"], slot_locs = [{{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}]> {
+; CHECK:           %[[FOREACH_INSTRUCTION_0:.*]] = mpir_plan.foreach_instruction
+; CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
+; CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
+; CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 0
+; CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
+; CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
+; CHECK:           mpir_plan.bind %[[GET_KEYED_0]] -> 1
+; CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
+; CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
+; CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+; CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 2 <sort = 2>
+; CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
+; CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
+; CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+; CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 3 <sort = 2>
+; CHECK:           %[[SLOT_0:.*]] = mpir_plan.slot 1 {var_name = "pred"} : <CmpPredicate>
+; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+; CHECK:           %[[SLOT_1:.*]] = mpir_plan.slot 4 {result_name = "c"} : <Instruction>
+; CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "swappedPredicate"(%[[READ_0]]) anchor %[[SLOT_1]] : (!mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<CmpPredicate>
+; CHECK:           %[[SLOT_2:.*]] = mpir_plan.slot 5 {var_name = "swapped"} : <CmpPredicate>
+; CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[SLOT_2]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+; CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[READ_1]], %[[CALL_0]]) : (!mpir.sort<String>, !mpir.sort<CmpPredicate>) -> !mpir.sort<Boolean>
+; CHECK:           mpir_plan.let 5, %[[CALL_0]], %[[CALL_1]] : <CmpPredicate>, <Boolean>
+; CHECK:           %[[SLOT_3:.*]] = mpir_plan.slot 5 {var_name = "swapped"} : <CmpPredicate>
+; CHECK:           %[[READ_2:.*]] = mpir_expr.read %[[SLOT_3]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
+; CHECK:           %[[STR_0:.*]] = mpir_expr.str "sgt" : <String>
+; CHECK:           %[[SLOT_4:.*]] = mpir_plan.slot 4 {result_name = "c"} : <Instruction>
+; CHECK:           %[[CALL_2:.*]] = mpir_expr.call binary "=="(%[[READ_2]], %[[STR_0]]) anchor %[[SLOT_4]] : (!mpir.sort<String>, !mpir.sort<String>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+; CHECK:           mpir_plan.check %[[CALL_2]] : <Boolean>
+; CHECK:           mpir_plan.emit
+; CHECK:         }
