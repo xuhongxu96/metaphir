@@ -4,7 +4,7 @@
 // operand would leave the variable without a value.
 
 // A variable only the instruction binds.
-// CHECK: error: meta variable '?y' is not bound when ':o' lets 'add' match its operand; name it '?_y' if it need not be bound
+// CHECK: error: meta variable '?y' is not bound by every alternative; name it '?_y' if it need not be bound
 mpir.pattern {
   %0 = mpir.type.int 32 : <Type>
   %x = mpir.var "x" : <Operand>
@@ -23,7 +23,7 @@ mpir.pattern {
 // -----
 
 // A flag capture, of a use of a matcher.
-// CHECK: error: meta variable '?wrap' is not bound when ':o' lets 'addish' match its operand; name it '?_wrap' if it need not be bound
+// CHECK: error: meta variable '?wrap' is not bound by every alternative; name it '?_wrap' if it need not be bound
 mpir.pattern {
   %wrap = mpir.var "wrap" : <Boolean>
   %0 = mpir.type.int 32 : <Type>
@@ -43,7 +43,7 @@ mpir.pattern {
 // -----
 
 // A type variable.
-// CHECK: error: meta variable '?wide' is not bound when ':o' lets 'zext' match its operand; name it '?_wide' if it need not be bound
+// CHECK: error: meta variable '?wide' is not bound by every alternative; name it '?_wide' if it need not be bound
 mpir.pattern {
   %0 = mpir.type.int 8 : <Type>
   %x = mpir.var "x" : <Operand>

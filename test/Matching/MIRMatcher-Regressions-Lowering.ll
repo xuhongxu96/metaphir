@@ -14,7 +14,7 @@
 ; RUN: not %metaphir-match %t/meta-for-fixed.mpir %t/add.ll 2>&1 | FileCheck %s --check-prefix=META-FOR-FIXED
 ; RUN: not %metaphir-match %t/or-self-unbound.mpir %t/zext.ll 2>&1 | FileCheck %s --check-prefix=OR-SELF-UNBOUND
 ; RUN: %metaphir-match %t/or-self-unnamed.mpir %t/zext.ll | FileCheck %s --check-prefix=OR-SELF-UNNAMED
-; RUN: not %metaphir-match %t/or-self-nested.mpir %t/zext.ll 2>&1 | FileCheck %s --check-prefix=OR-SELF-NESTED
+; RUN: %metaphir-match %t/or-self-nested.mpir %t/or-self-nested.ll | FileCheck %s --check-prefix=OR-SELF-NESTED
 ; RUN: %metaphir-match %t/use-operand-flag.mpir %t/consts.ll | FileCheck %s --check-prefix=USE-OPERAND-FLAG
 ; RUN: %metaphir-match %t/nested-operand-flag.mpir %t/consts.ll | FileCheck %s --check-prefix=NESTED-OPERAND-FLAG
 
@@ -195,21 +195,23 @@ define i32 @with_nsw(i32 %a, i32 %b) {
   %r = mul i32 %s, 2
   ret i32 %r
 }
+; INNER-FLAG: target 0: @with_nsw
+; INNER-FLAG-NEXT:   match 0:
+; INNER-FLAG-NEXT:     {?a = %a, ?anch = %r, ?b = %b}
+
+; INNER-FLAG-CAPTURE: target 0: @with_nsw
+; INNER-FLAG-CAPTURE-NEXT:   match 0:
+; INNER-FLAG-CAPTURE-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?c = true}
+
 define i32 @without_nsw(i32 %a, i32 %b) {
   %s = add i32 %a, %b
   %r = mul i32 %s, 2
   ret i32 %r
 }
-; INNER-FLAG: target 0: @with_nsw
-; INNER-FLAG-NEXT:   match 0:
-; INNER-FLAG-NEXT:     {?a = %a, ?anch = %r, ?b = %b}
 ; INNER-FLAG-NEXT: target 1: @without_nsw
 ; INNER-FLAG-NEXT:   no match
 ; INNER-FLAG-NOT: {{.}}
 
-; INNER-FLAG-CAPTURE: target 0: @with_nsw
-; INNER-FLAG-CAPTURE-NEXT:   match 0:
-; INNER-FLAG-CAPTURE-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?c = true}
 ; INNER-FLAG-CAPTURE-NEXT: target 1: @without_nsw
 ; INNER-FLAG-CAPTURE-NEXT:   match 0:
 ; INNER-FLAG-CAPTURE-NEXT:     {?a = %a, ?anch = %r, ?b = %b, ?c = false}
@@ -241,11 +243,30 @@ define i32 @add(i32 %a, i32 %b) {
 ;--- or-self-unbound.mpir
 %z = zext:o i?n ?x to i32
 %r = add i32 %z, 1
-; Also those of an operand instruction it would match.
+; Not those of an instruction of the pattern the operand of ':o' is: it is
+; still matched, on its own, when ':o' lets 'add' match its operand '?b'.
 ;--- or-self-nested.mpir
 %y = mul i32 ?c, ?d
 %x = add:o(1) i32 %y, ?b
 %r = sub i32 %x, 1
+;--- or-self-nested.ll
+define i32 @operand(i32 %b, i32 %c) {
+  %m = mul i32 %c, %c
+  %r = sub i32 %b, 1
+  ret i32 %r
+}
+; OR-SELF-NESTED: target 0: @operand
+; OR-SELF-NESTED-NEXT:   match 0:
+; OR-SELF-NESTED-NEXT:     {?b = %b, ?c = %c, ?d = %c}
+
+define i32 @no_mul(i32 %b) {
+  %r = sub i32 %b, 1
+  ret i32 %r
+}
+; OR-SELF-NESTED-NEXT: target 1: @no_mul
+; OR-SELF-NESTED-NEXT:   no match
+; OR-SELF-NESTED-NOT: {{.}}
+
 ; A '_'-prefixed name may be left unbound.
 ;--- or-self-unnamed.mpir
 %z = zext:o i?_n ?x to i32
@@ -308,12 +329,7 @@ define i32 @add_5(i32 %x) {
 ; META-FOR-FIXED-NEXT:                ^
 ; META-FOR-FIXED-NOT: {{.}}
 
-; OR-SELF-UNBOUND: error: meta variable '?n' is not bound when ':o' lets 'zext' match its operand; name it '?_n' if it need not be bound
+; OR-SELF-UNBOUND: error: meta variable '?n' is not bound by every alternative; name it '?_n' if it need not be bound
 ; OR-SELF-UNBOUND-NEXT: %z = zext:o i?n ?x to i32
 ; OR-SELF-UNBOUND-NEXT:             ^
 ; OR-SELF-UNBOUND-NOT: {{.}}
-
-; OR-SELF-NESTED: error: meta variable '?c' is not bound when ':o' lets 'add' match its operand; name it '?_c' if it need not be bound
-; OR-SELF-NESTED-NEXT: %y = mul i32 ?c, ?d
-; OR-SELF-NESTED-NEXT:              ^
-; OR-SELF-NESTED-NOT: {{.}}

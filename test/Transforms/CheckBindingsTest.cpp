@@ -1,14 +1,17 @@
 //===- CheckBindingsTest.cpp - mpir-check-bindings
 //-------------------------===//
 //
-// A named meta variable must be bound whichever alternative ':o' takes: it is
-// an error if only the instruction binds it, as a match of its operand would
-// leave the variable without a value.
+// A named meta variable must be bound whichever alternatives match: it is an
+// error if only the instruction of ':o' binds it, as a match of its operand
+// would leave the variable without a value, or only some branches of a
+// matcher a use matches by.
 //
 //===----------------------------------------------------------------------===//
 
 #include "metaphir/Transforms/Lowering/CheckBindings.h"
 #include "TransformTest.h"
+#include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
+#include "metaphir/Transforms/Lowering/ExpandMatchers.h"
 #include "metaphir/Transforms/Lowering/LowerAlternatives.h"
 
 using namespace llvm;
@@ -24,14 +27,67 @@ protected:
       return mlir::failure();
     return run(createLowerAlternativesPass(), createCheckBindingsPass());
   }
+  /// Expands the matcher uses of Source as well, and checks its bindings.
+  mlir::LogicalResult checkExpanded(StringRef Source) {
+    if (!parse(Source))
+      return mlir::failure();
+    return run(createDesugarMetaFlagsPass(), createExpandMatchersPass(),
+               createLowerAlternativesPass(), createCheckBindingsPass());
+  }
 };
+
+TEST_F(CheckBindingsTest, RejectsAFlagCaptureABranchLeavesUnbound) {
+  // The second branch has no instruction to capture 'nsw' from.
+  EXPECT_TRUE(mlir::failed(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
+  %ret = add nsw:?f ?ty ?x, ?y
+} or {
+  %ret = or ?ty ?x, ?y
+}
+%r = addish nsw:?c i32 ?a, ?b
+)")));
+  EXPECT_NE(Errors.find("meta variable '?c' is not bound by every "
+                        "alternative; name it '?_c' if it need not be bound"),
+            std::string::npos)
+      << Errors;
+}
+
+TEST_F(CheckBindingsTest, AcceptsAFlagCaptureABranchFixes) {
+  EXPECT_TRUE(mlir::succeeded(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
+  %ret = add nsw:?f ?ty ?x, ?y
+} or [nsw = false] {
+  %ret = or ?ty ?x, ?y
+}
+%r = addish nsw:?c i32 ?a, ?b
+)"))) << Errors;
+}
+
+TEST_F(CheckBindingsTest, AcceptsAVariableOfOneBranch) {
+  // '?k' is the second branch's own: nothing outside it reads it.
+  EXPECT_TRUE(mlir::succeeded(checkExpanded(R"(match addish [] Binary (?ty ?x, ?y) {
+  %ret = add ?ty ?x, ?y
+} or {
+  %t = xor ?ty ?x, ?k
+  %ret = or ?ty %t, ?y
+}
+%r = addish i32 ?a, ?b
+)"))) << Errors;
+}
+
+TEST_F(CheckBindingsTest, AcceptsACaptureEveryBranchBinds) {
+  EXPECT_TRUE(mlir::succeeded(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
+  %ret = add nsw:?f ?ty ?x, ?y
+} or {
+  %ret = sub nsw:?g ?ty ?x, ?y
+}
+%r = addish nsw:?c i32 ?a, ?b
+)"))) << Errors;
+}
 
 TEST_F(CheckBindingsTest, RejectsAVariableOnlyTheInstructionBinds) {
   EXPECT_TRUE(
       mlir::failed(check("%a = add:o i32 ?x, ?y\n%b = mul i32 %a, 3\n")));
-  EXPECT_NE(Errors.find("meta variable '?y' is not bound when ':o' lets 'add' "
-                        "match its operand; name it '?_y' if it need not be "
-                        "bound"),
+  EXPECT_NE(Errors.find("meta variable '?y' is not bound by every "
+                        "alternative; name it '?_y' if it need not be bound"),
             std::string::npos)
       << Errors;
 }

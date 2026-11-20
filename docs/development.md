@@ -80,7 +80,7 @@ passes compile it into a match plan and an index query:
 
 | Pass | |
 |---|---|
-| `mpir-lower` | desugars metaflags into constraints, inlines matcher uses as `mpir.alt` (one region per branch), turns `:c` and `:o` into `mpir.alt`, and checks that `:o` leaves no meta variable unbound |
+| `mpir-lower` | desugars metaflags into constraints, inlines matcher uses as `mpir.alt` (one region per branch), turns `:c` and `:o` into `mpir.alt`, and checks that no alternative (`:o`, a matcher branch) leaves a named meta variable unbound |
 | `mpir-to-plan` | compiles a lowered pattern into an `mpir_plan.matcher` |
 | `mpir-to-index` | compiles it into an `mpir_index.query`: a variant per choice of matcher branches |
 | `mpir-index-structuralize` | requires what constraints say of instructions (`opcode(?v) == "mul"`, `intrinsic(?c) == "llvm.ctlz"`, `?id == "llvm.ctlz"` for `@llvm.?id`) as features the posting lists have |

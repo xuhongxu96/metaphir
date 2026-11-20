@@ -10,7 +10,7 @@
 //   mpir-lower-alternatives  ':c' and ':o' on built-in instruction matchers
 //                            become mpir.alt
 //   mpir-check-bindings      a named meta variable is bound whichever
-//                            alternative ':o' takes
+//                            alternatives match (':o', matcher branches)
 //
 // The lowered form has no metaflags, no mpir.use and no ':c' or ':o': every
 // choice a match makes is an mpir.alt.

@@ -1,7 +1,7 @@
 //===- CheckBindings.cpp - mpir-check-bindings ----------------------------===//
 //
-// See Lowering.h: a named meta variable is bound whichever alternative ':o'
-// takes.
+// See Lowering.h: a named meta variable is bound whichever alternatives
+// match: those of ':o', and the branches of a matcher a use matches by.
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,14 +25,16 @@ using namespace mpir;
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// The meta variables matching a value binds.
+/// The meta variables matching a value binds, whichever alternatives match.
 struct Bindings {
   SetVector<Value> Variables;
   SmallVector<Value, 8> Pending;
   DenseSet<Operation *> Visited;
-  /// For an mpir.alt of ':o': the variables matching itself binds, and the
-  /// alternative, to report.
-  DenseMap<Value, AltOp> *BoundBy = nullptr;
+  /// The variables an mpir.alt binds in some alternatives but not all, each
+  /// with the first such alt, to report.
+  DenseMap<Value, AltOp> *Partial;
+
+  explicit Bindings(DenseMap<Value, AltOp> &Into) : Partial(&Into) {}
 
   void addVariable(Value V) {
     if (V && !V.getDefiningOp<IntOp>())
@@ -50,6 +52,7 @@ struct Bindings {
       addType(Operand);
   }
   void addValue(Value V);
+  void addAlternatives(AltOp Alt);
   void run() {
     while (!Pending.empty())
       addValue(Pending.pop_back_val());
@@ -77,22 +80,7 @@ void Bindings::addValue(Value V) {
     return;
   }
   if (auto Alt = dyn_cast<AltOp>(Def)) {
-    if (Alt.getOrSelfOf() && BoundBy) {
-      // Matching its operand binds what the second alternative does;
-      // matching itself, the first.
-      // The alternative in which the matcher matches its operand.
-      unsigned OperandRegion = *Alt.getOrSelfRegion();
-      Bindings Itself;
-      for (unsigned R = 0; R != Alt->getNumRegions(); ++R)
-        if (R != OperandRegion)
-          collectRegion(Itself, Alt->getRegion(R));
-      for (Value Var : Itself.Variables)
-        BoundBy->try_emplace(Var, Alt);
-      collectRegion(*this, Alt->getRegion(OperandRegion));
-      return;
-    }
-    for (mlir::Region &Region : Alt->getRegions())
-      collectRegion(*this, Region);
+    addAlternatives(Alt);
     return;
   }
   if (!isa<InstOp, UseOp>(Def))
@@ -109,6 +97,27 @@ void Bindings::addValue(Value V) {
   }
 }
 
+void Bindings::addAlternatives(AltOp Alt) {
+  // An alternative's bindings are found on their own: a variable is bound by
+  // the alt only if every alternative binds it.
+  SmallVector<Bindings, 2> Regions;
+  for (mlir::Region &Region : Alt->getRegions())
+    collectRegion(Regions.emplace_back(*Partial), Region);
+  for (const Bindings &Region : Regions)
+    for (Value Var : Region.Variables) {
+      // A variable defined in an alternative is read only there.
+      Operation *VarDef = Var.getDefiningOp();
+      if (VarDef && Alt->isProperAncestor(VarDef))
+        continue;
+      if (all_of(Regions, [&](const Bindings &Other) {
+            return Other.Variables.contains(Var);
+          }))
+        addVariable(Var);
+      else
+        Partial->try_emplace(Var, Alt);
+    }
+}
+
 static void collectRegion(Bindings &Into, mlir::Region &Region) {
   for (Operation &Op : Region.front()) {
     if (auto Yield = dyn_cast<YieldOp>(Op))
@@ -121,36 +130,34 @@ static void collectRegion(Bindings &Into, mlir::Region &Region) {
   Into.run();
 }
 
-static LogicalResult checkOrSelfBindings(PatternOp Pattern) {
+static LogicalResult checkBindings(PatternOp Pattern) {
   mlir::Block &Block = Pattern.getBody().front();
-  DenseMap<Value, AltOp> BoundBy;
-  Bindings Always;
-  Always.BoundBy = &BoundBy;
-  for (Operation *Root : getPatternRoots(Block))
-    Always.Pending.push_back(Root->getResult(0));
-  // A 'let' binds its variable whichever alternative matches.
-  for (LetOp Let : Block.getOps<LetOp>())
-    Always.addVariable(Let.getVariable());
+  DenseMap<Value, AltOp> Partial;
+  Bindings Always(Partial);
+  // Every matcher of the pattern itself is matched, also one an alternative
+  // does not reach: it is then searched for on its own. A 'let' binds its
+  // variable whichever alternatives match.
+  for (Operation &Op : Block) {
+    if (isa<InstOp, UseOp, AltOp>(Op))
+      Always.Pending.push_back(Op.getResult(0));
+    else if (auto Let = dyn_cast<LetOp>(Op))
+      Always.addVariable(Let.getVariable());
+  }
   Always.run();
-  // Matchers in alternatives are reached from their alt; those of a region
-  // not reached from its yield are roots of their own.
   LogicalResult Result = mlir::success();
   Pattern.walk([&](VarOp Var) {
     StringRef Name = Var.getVarName();
     if (mlir::failed(Result) || Name.empty() || Name.starts_with("_") ||
         Always.Variables.contains(Var))
       return;
-    AltOp OrSelf = BoundBy.lookup(Var);
-    if (!OrSelf)
+    AltOp Alt = Partial.lookup(Var);
+    if (!Alt)
       return;
-    Location Loc = getSourceRange(Var.getLoc()).Start.isValid()
-                       ? Var.getLoc()
-                       : OrSelf.getLoc();
+    Location Loc = getSourceRange(Var.getLoc()).Start.isValid() ? Var.getLoc()
+                                                                : Alt.getLoc();
     mlir::emitError(Loc) << "meta variable '?" << Name
-                         << "' is not bound when ':o' lets '"
-                         << *OrSelf.getOrSelfOf()
-                         << "' match its operand; name it '?_" << Name
-                         << "' if it need not be bound";
+                         << "' is not bound by every alternative; name it '?_"
+                         << Name << "' if it need not be bound";
     Result = mlir::failure();
   });
   return Result;
@@ -163,11 +170,11 @@ struct CheckBindingsPass
   MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(CheckBindingsPass)
   StringRef getArgument() const override { return "mpir-check-bindings"; }
   StringRef getDescription() const override {
-    return "Check that ':o' leaves no named meta variable unbound";
+    return "Check that every alternative binds the named meta variables";
   }
   void runOnOperation() override {
     for (PatternOp Pattern : getOperation().getOps<PatternOp>())
-      if (mlir::failed(checkOrSelfBindings(Pattern)))
+      if (mlir::failed(checkBindings(Pattern)))
         return signalPassFailure();
   }
 };
