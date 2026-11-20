@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/ToPlan.h"
+#include "metaphir/Transforms/ToPlan/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
@@ -27,6 +27,9 @@
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_TOPLANPASS
+#include "metaphir/Transforms/ToPlan/Passes.h.inc"
 namespace toplan {
 
 using mlir::Attribute;
@@ -657,17 +660,7 @@ plan::MatcherOp Compiler::compile() {
 }
 
 namespace {
-struct ToPlanPass
-    : public mlir::PassWrapper<ToPlanPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToPlanPass)
-  StringRef getArgument() const override { return "mpir-to-plan"; }
-  StringRef getDescription() const override {
-    return "Compile lowered patterns into match plans";
-  }
-  void getDependentDialects(mlir::DialectRegistry &Registry) const override {
-    Registry.insert<mpir_expr::ExprDialect, plan::PlanDialect>();
-  }
+struct ToPlanPass : impl::ToPlanPassBase<ToPlanPass> {
   void runOnOperation() override {
     OpBuilder Builder(&getContext());
     for (PatternOp Pattern :
@@ -680,12 +673,6 @@ struct ToPlanPass
 } // namespace
 
 } // namespace toplan
-
-std::unique_ptr<mlir::Pass> createToPlanPass() {
-  return std::make_unique<toplan::ToPlanPass>();
-}
-
-void registerToPlanPass() { mlir::PassRegistration<toplan::ToPlanPass>(); }
 
 } // namespace metaphir
 } // namespace llvm

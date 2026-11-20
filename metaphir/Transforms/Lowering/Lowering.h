@@ -1,25 +1,16 @@
 //===- Lowering.h - Lower surface patterns ----------------------*- C++ -*-===//
 //
-// The passes that lower the surface form of a pattern (as parsed) to the
-// lowered form the match plan is compiled from:
-//
-//   mpir-desugar-metaflags   metaflags become constraints (mpir.require)
-//   mpir-expand-matchers     a use of a 'match' matcher becomes an mpir.alt of
-//                            its branches, inlined (and both operand orders,
-//                            with ':c')
-//   mpir-lower-alternatives  ':c' and ':o' on built-in instruction matchers
-//                            become mpir.alt
-//   mpir-check-bindings      a named meta variable is bound whichever
-//                            alternatives match (':o', matcher branches)
-//
-// The lowered form has no metaflags, no mpir.use and no ':c' or ':o': every
-// choice a match makes is an mpir.alt.
+// The lowering pipeline ("mpir-lower") and its driver. The passes, in the
+// order it runs them, are declared in Passes.td: surface mpir (metaflags,
+// mpir.use, ':c' and ':o') → lowered mpir, in which every choice a match makes
+// is an mpir.alt.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef METAPHIR_TRANSFORMS_LOWERING_LOWERING_H
 #define METAPHIR_TRANSFORMS_LOWERING_LOWERING_H
 
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Support/LLVM.h"
@@ -33,8 +24,9 @@ namespace metaphir {
 /// Adds the lowering passes, in order, to PM.
 void buildLoweringPipeline(mlir::OpPassManager &PM);
 
-/// Registers the passes and the "mpir-lower" pipeline with mlir-opt.
-void registerLoweringPasses();
+/// Registers the "mpir-lower" pipeline with mlir-opt; registerLoweringPasses()
+/// registers its passes.
+void registerLoweringPipeline();
 
 /// Lowers Module in place. Diagnostics are printed to OS as the parser
 /// prints its own, from the pattern source in SM. Returns failure if

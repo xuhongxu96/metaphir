@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/LowerAlternatives.h"
 #include "TransformTest.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 
 using namespace llvm;
 using namespace llvm::metaphir;

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Retrieval.h"
+#include "metaphir/Transforms/ToIndex/Passes.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Matching/Features.h"
 #include "mlir/IR/Builders.h"
@@ -23,6 +23,10 @@
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_INDEXRETRIEVALPASS
+#define GEN_PASS_DEF_INDEXFACTORPASS
+#include "metaphir/Transforms/ToIndex/Passes.h.inc"
 namespace retrieval {
 
 using mlir::Operation;
@@ -230,29 +234,14 @@ static void factorRetrieval(index::QueryOp Query) {
 }
 
 namespace {
-struct RetrievalPass
-    : public mlir::PassWrapper<RetrievalPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(RetrievalPass)
-  StringRef getArgument() const override { return "mpir-index-retrieval"; }
-  StringRef getDescription() const override {
-    return "Find the functions an index query's variants may match from the "
-           "posting lists";
-  }
+struct IndexRetrievalPass : impl::IndexRetrievalPassBase<IndexRetrievalPass> {
   void runOnOperation() override {
     for (auto Query : getOperation().getOps<index::QueryOp>())
       buildRetrieval(Query);
   }
 };
 
-struct FactorPass
-    : public mlir::PassWrapper<FactorPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(FactorPass)
-  StringRef getArgument() const override { return "mpir-index-factor"; }
-  StringRef getDescription() const override {
-    return "Factor the lists every variant reads out of a retrieval";
-  }
+struct IndexFactorPass : impl::IndexFactorPassBase<IndexFactorPass> {
   void runOnOperation() override {
     for (auto Query : getOperation().getOps<index::QueryOp>())
       factorRetrieval(Query);
@@ -261,17 +250,6 @@ struct FactorPass
 } // namespace
 
 } // namespace retrieval
-
-std::unique_ptr<mlir::Pass> createIndexRetrievalPass() {
-  return std::make_unique<retrieval::RetrievalPass>();
-}
-std::unique_ptr<mlir::Pass> createIndexFactorPass() {
-  return std::make_unique<retrieval::FactorPass>();
-}
-void registerIndexRetrievalPasses() {
-  mlir::PassRegistration<retrieval::RetrievalPass>();
-  mlir::PassRegistration<retrieval::FactorPass>();
-}
 
 } // namespace metaphir
 } // namespace llvm

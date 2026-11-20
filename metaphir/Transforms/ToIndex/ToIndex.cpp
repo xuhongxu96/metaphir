@@ -8,7 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/ToIndex.h"
+#include "metaphir/Transforms/ToIndex/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
@@ -25,6 +25,9 @@
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_TOINDEXPASS
+#include "metaphir/Transforms/ToIndex/Passes.h.inc"
 namespace toindex {
 
 using mlir::Attribute;
@@ -633,17 +636,7 @@ void Compiler::compile() {
 }
 
 namespace {
-struct ToIndexPass
-    : public mlir::PassWrapper<ToIndexPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToIndexPass)
-  StringRef getArgument() const override { return "mpir-to-index"; }
-  StringRef getDescription() const override {
-    return "Compile lowered patterns into index queries";
-  }
-  void getDependentDialects(mlir::DialectRegistry &Registry) const override {
-    Registry.insert<index::IndexDialect>();
-  }
+struct ToIndexPass : impl::ToIndexPassBase<ToIndexPass> {
   void runOnOperation() override {
     OpBuilder Builder(&getContext());
     for (PatternOp Pattern :
@@ -656,12 +649,6 @@ struct ToIndexPass
 } // namespace
 
 } // namespace toindex
-
-std::unique_ptr<mlir::Pass> createToIndexPass() {
-  return std::make_unique<toindex::ToIndexPass>();
-}
-
-void registerToIndexPass() { mlir::PassRegistration<toindex::ToIndexPass>(); }
 
 } // namespace metaphir
 } // namespace llvm

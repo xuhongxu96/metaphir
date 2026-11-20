@@ -1,17 +1,20 @@
 //===- CheckBindings.cpp - mpir-check-bindings ----------------------------===//
 //
-// See Lowering.h: a named meta variable is bound whichever alternatives
+// See Passes.td: a named meta variable is bound whichever alternatives
 // match: those of ':o', and the branches of a matcher a use matches by.
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/CheckBindings.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "mlir/IR/BuiltinOps.h"
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_CHECKBINDINGSPASS
+#include "metaphir/Transforms/Lowering/Passes.h.inc"
 namespace lowering {
 
 using mlir::Location;
@@ -164,14 +167,7 @@ static LogicalResult checkBindings(PatternOp Pattern) {
 }
 
 namespace {
-struct CheckBindingsPass
-    : public mlir::PassWrapper<CheckBindingsPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(CheckBindingsPass)
-  StringRef getArgument() const override { return "mpir-check-bindings"; }
-  StringRef getDescription() const override {
-    return "Check that every alternative binds the named meta variables";
-  }
+struct CheckBindingsPass : impl::CheckBindingsPassBase<CheckBindingsPass> {
   void runOnOperation() override {
     for (PatternOp Pattern : getOperation().getOps<PatternOp>())
       if (mlir::failed(checkBindings(Pattern)))
@@ -181,10 +177,6 @@ struct CheckBindingsPass
 } // namespace
 
 } // namespace lowering
-
-std::unique_ptr<mlir::Pass> createCheckBindingsPass() {
-  return std::make_unique<lowering::CheckBindingsPass>();
-}
 
 } // namespace metaphir
 } // namespace llvm

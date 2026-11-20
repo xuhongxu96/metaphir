@@ -1,10 +1,10 @@
 //===- LowerAlternatives.cpp - mpir-lower-alternatives --------------------===//
 //
-// See Lowering.h: ':c' and ':o' become mpir.alt.
+// See Passes.td: ':c' and ':o' become mpir.alt.
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/LowerAlternatives.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
@@ -15,6 +15,9 @@
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_LOWERALTERNATIVESPASS
+#include "metaphir/Transforms/Lowering/Passes.h.inc"
 namespace lowering {
 
 using mlir::Location;
@@ -188,17 +191,7 @@ static void lowerAlternatives(InstOp Inst) {
 }
 
 namespace {
-struct LowerAlternativesPass
-    : public mlir::PassWrapper<LowerAlternativesPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(LowerAlternativesPass)
-  StringRef getArgument() const override { return "mpir-lower-alternatives"; }
-  StringRef getDescription() const override {
-    return "Turn ':c' and ':o' into mpir.alt";
-  }
-  void getDependentDialects(mlir::DialectRegistry &Registry) const override {
-    Registry.insert<mpir_expr::ExprDialect>();
-  }
+struct LowerAlternativesPass : impl::LowerAlternativesPassBase<LowerAlternativesPass> {
   void runOnOperation() override {
     for (PatternOp Pattern : getOperation().getOps<PatternOp>()) {
       SmallVector<InstOp, 16> Insts;
@@ -214,10 +207,6 @@ struct LowerAlternativesPass
 } // namespace
 
 } // namespace lowering
-
-std::unique_ptr<mlir::Pass> createLowerAlternativesPass() {
-  return std::make_unique<lowering::LowerAlternativesPass>();
-}
 
 } // namespace metaphir
 } // namespace llvm

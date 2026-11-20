@@ -3,10 +3,8 @@
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/Parser/PatternParser.h"
 #include "metaphir/Transforms/Lowering/Lowering.h"
-#include "metaphir/Transforms/Retrieval.h"
-#include "metaphir/Transforms/Structuralize.h"
-#include "metaphir/Transforms/ToIndex.h"
-#include "metaphir/Transforms/ToPlan.h"
+#include "metaphir/Transforms/ToIndex/Passes.h"
+#include "metaphir/Transforms/ToPlan/Passes.h"
 #include "mlir/Pass/PassManager.h"
 
 namespace llvm {

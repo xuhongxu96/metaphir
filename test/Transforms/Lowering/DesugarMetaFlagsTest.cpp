@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
 #include "TransformTest.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 
 using namespace llvm;

@@ -78,14 +78,18 @@ passes compile it into a match plan and an index query:
 | `mpir_plan` | match plans: what to check of which instruction, in order, with choices (`either`) |
 | `mpir_index` | index queries: the features each way a match can go (`variant`) needs, its constraints on them, and the posting lists to read (`retrieve`) |
 
-| Pass | |
-|---|---|
-| `mpir-lower` | desugars metaflags into constraints, inlines matcher uses as `mpir.alt` (one region per branch), turns `:c` and `:o` into `mpir.alt`, and checks that no alternative (`:o`, a matcher branch) leaves a named meta variable unbound |
-| `mpir-to-plan` | compiles a lowered pattern into an `mpir_plan.matcher` |
-| `mpir-to-index` | compiles it into an `mpir_index.query`: a variant per choice of matcher branches |
-| `mpir-index-structuralize` | requires what constraints say of instructions (`opcode(?v) == "mul"`, `intrinsic(?c) == "llvm.ctlz"`, `?id == "llvm.ctlz"` for `@llvm.?id`) as features the posting lists have |
-| `mpir-index-retrieval` | adds the lookup: the union over variants of the intersection of their lists |
-| `mpir-index-factor` | factors a list every variant reads out of the union |
+The passes run in three stages, a directory of `metaphir/Transforms` each,
+with its tests under the same directory of `test/Transforms`:
+
+| Stage | Passes | Reads | Writes |
+|---|---|---|---|
+| `Lowering` | `mpir-desugar-metaflags`, `mpir-expand-matchers`, `mpir-lower-alternatives`, `mpir-check-bindings` (together `mpir-lower`) | surface `mpir`: metaflags, `mpir.use`, `:c` and `:o` | lowered `mpir`: every choice a match makes is an `mpir.alt` |
+| `ToPlan` | `mpir-to-plan` | lowered `mpir` | adds an `mpir_plan.matcher` after each pattern |
+| `ToIndex` | `mpir-to-index`, then `mpir-index-structuralize`, `mpir-index-retrieval`, `mpir-index-factor` | lowered `mpir`; then `mpir_index` | adds an `mpir_index.query` after each pattern; then rewrites it |
+
+Each stage declares its passes in its `Passes.td`: what each reads and writes,
+and the dialects it depends on. [passes.md](passes.md) is generated from them
+(`METAPHIR_UPDATE_GOLDEN=1 ctest -R MetaphIR.pass-docs` rewrites it).
 
 `metaphir-opt` runs any of them on MLIR text, as `mlir-opt` does; it is what
 the pass tests under `test/Transforms` run, on what `metaphir-parse --emit=mlir` prints:

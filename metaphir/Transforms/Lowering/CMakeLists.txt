@@ -1,12 +1,14 @@
-# The passes that lower the surface form of a pattern, a file each.
+# Lowering: surface mpir → lowered mpir, a pass a file.
+set(LLVM_TARGET_DEFINITIONS Passes.td)
+mlir_tablegen(Passes.h.inc -gen-pass-decls -name Lowering)
+mlir_tablegen(Passes.md -gen-pass-doc)
+add_public_tablegen_target(MetaphIRLoweringPassIncGen)
+
 target_sources(metaphir-transforms PRIVATE
   CheckBindings.cpp
-  CheckBindings.h
   DesugarMetaFlags.cpp
-  DesugarMetaFlags.h
   ExpandMatchers.cpp
-  ExpandMatchers.h
   LowerAlternatives.cpp
-  LowerAlternatives.h
   Lowering.cpp
-  Lowering.h)
+  Lowering.h
+  Passes.h)

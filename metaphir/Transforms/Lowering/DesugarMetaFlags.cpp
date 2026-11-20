@@ -1,10 +1,10 @@
 //===- DesugarMetaFlags.cpp - mpir-desugar-metaflags ----------------------===//
 //
-// See Lowering.h: metaflags become constraints (mpir.require).
+// See Passes.td: metaflags become constraints (mpir.require).
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
@@ -13,6 +13,9 @@
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_DESUGARMETAFLAGSPASS
+#include "metaphir/Transforms/Lowering/Passes.h.inc"
 namespace lowering {
 
 using mlir::Attribute;
@@ -282,17 +285,7 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
 }
 
 namespace {
-struct DesugarMetaFlagsPass
-    : public mlir::PassWrapper<DesugarMetaFlagsPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(DesugarMetaFlagsPass)
-  StringRef getArgument() const override { return "mpir-desugar-metaflags"; }
-  StringRef getDescription() const override {
-    return "Turn metaflags into constraints";
-  }
-  void getDependentDialects(mlir::DialectRegistry &Registry) const override {
-    Registry.insert<mpir_expr::ExprDialect>();
-  }
+struct DesugarMetaFlagsPass : impl::DesugarMetaFlagsPassBase<DesugarMetaFlagsPass> {
   void runOnOperation() override {
     Desugarer D(getOperation());
     SmallVector<mlir::Block *, 16> Blocks;
@@ -308,10 +301,6 @@ struct DesugarMetaFlagsPass
 } // namespace
 
 } // namespace lowering
-
-std::unique_ptr<mlir::Pass> createDesugarMetaFlagsPass() {
-  return std::make_unique<lowering::DesugarMetaFlagsPass>();
-}
 
 } // namespace metaphir
 } // namespace llvm

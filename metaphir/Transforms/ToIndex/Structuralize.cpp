@@ -17,7 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Structuralize.h"
+#include "metaphir/Transforms/ToIndex/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Matching/Operators/Facts.h"
@@ -28,6 +28,9 @@
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_INDEXSTRUCTURALIZEPASS
+#include "metaphir/Transforms/ToIndex/Passes.h.inc"
 namespace structuralize {
 
 using mlir::Operation;
@@ -251,14 +254,7 @@ static void structuralize(index::QueryOp Query) {
 }
 
 namespace {
-struct StructuralizePass
-    : public mlir::PassWrapper<StructuralizePass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(StructuralizePass)
-  StringRef getArgument() const override { return "mpir-index-structuralize"; }
-  StringRef getDescription() const override {
-    return "Require what constraints say of instructions as index features";
-  }
+struct IndexStructuralizePass : impl::IndexStructuralizePassBase<IndexStructuralizePass> {
   void runOnOperation() override {
     for (auto Query : getOperation().getOps<index::QueryOp>())
       structuralize(Query);
@@ -267,14 +263,6 @@ struct StructuralizePass
 } // namespace
 
 } // namespace structuralize
-
-std::unique_ptr<mlir::Pass> createIndexStructuralizePass() {
-  return std::make_unique<structuralize::StructuralizePass>();
-}
-
-void registerIndexStructuralizePass() {
-  mlir::PassRegistration<structuralize::StructuralizePass>();
-}
 
 } // namespace metaphir
 } // namespace llvm

@@ -1,10 +1,10 @@
 //===- ExpandMatchers.cpp - mpir-expand-matchers --------------------------===//
 //
-// See Lowering.h: a use of a matcher becomes an mpir.alt of its branches.
+// See Passes.td: a use of a matcher becomes an mpir.alt of its branches.
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/ExpandMatchers.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
@@ -15,6 +15,9 @@
 
 namespace llvm {
 namespace metaphir {
+
+#define GEN_PASS_DEF_EXPANDMATCHERSPASS
+#include "metaphir/Transforms/Lowering/Passes.h.inc"
 namespace lowering {
 
 using mlir::Location;
@@ -587,14 +590,7 @@ LogicalResult Expander::expand(UseOp Use) {
 }
 
 namespace {
-struct ExpandMatchersPass
-    : public mlir::PassWrapper<ExpandMatchersPass,
-                               mlir::OperationPass<mlir::ModuleOp>> {
-  MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ExpandMatchersPass)
-  StringRef getArgument() const override { return "mpir-expand-matchers"; }
-  StringRef getDescription() const override {
-    return "Inline the uses of 'match' matchers as mpir.alt";
-  }
+struct ExpandMatchersPass : impl::ExpandMatchersPassBase<ExpandMatchersPass> {
   void runOnOperation() override {
     Expander E(&getContext());
     for (PatternOp Pattern : getOperation().getOps<PatternOp>()) {
@@ -618,10 +614,6 @@ struct ExpandMatchersPass
 } // namespace
 
 } // namespace lowering
-
-std::unique_ptr<mlir::Pass> createExpandMatchersPass() {
-  return std::make_unique<lowering::ExpandMatchersPass>();
-}
 
 } // namespace metaphir
 } // namespace llvm

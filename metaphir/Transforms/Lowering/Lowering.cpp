@@ -7,10 +7,6 @@
 
 #include "metaphir/Transforms/Lowering/Lowering.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
-#include "metaphir/Transforms/Lowering/CheckBindings.h"
-#include "metaphir/Transforms/Lowering/DesugarMetaFlags.h"
-#include "metaphir/Transforms/Lowering/ExpandMatchers.h"
-#include "metaphir/Transforms/Lowering/LowerAlternatives.h"
 #include "mlir/Pass/PassManager.h"
 #include "llvm/Support/SourceMgr.h"
 
@@ -24,11 +20,7 @@ void buildLoweringPipeline(mlir::OpPassManager &PM) {
   PM.addPass(createCheckBindingsPass());
 }
 
-void registerLoweringPasses() {
-  mlir::registerPass(createDesugarMetaFlagsPass);
-  mlir::registerPass(createExpandMatchersPass);
-  mlir::registerPass(createLowerAlternativesPass);
-  mlir::registerPass(createCheckBindingsPass);
+void registerLoweringPipeline() {
   mlir::PassPipelineRegistration<>("mpir-lower",
                                    "Lower surface patterns to the lowered form",
                                    buildLoweringPipeline);

@@ -38,6 +38,15 @@ add_test(
 set_tests_properties(MetaphIR.lit PROPERTIES ENVIRONMENT
                      "${METAPHIR_TEST_ENVIRONMENT}")
 
+# docs/passes.md is generated from the passes' Passes.td.
+add_test(
+  NAME MetaphIR.pass-docs
+  COMMAND
+    ${CMAKE_COMMAND}
+    "-DSTAGES=Lowering=${PROJECT_BINARY_DIR}/metaphir/Transforms/Lowering/Passes.md;ToPlan=${PROJECT_BINARY_DIR}/metaphir/Transforms/ToPlan/Passes.md;ToIndex=${PROJECT_BINARY_DIR}/metaphir/Transforms/ToIndex/Passes.md"
+    -DDOC=${PROJECT_SOURCE_DIR}/docs/passes.md -P
+    ${PROJECT_SOURCE_DIR}/cmake/PassDocs.cmake)
+
 # Python tests: metaphir-match's differential test and the evaluation
 # scripts' unit tests.
 find_package(Python3 COMPONENTS Interpreter)
