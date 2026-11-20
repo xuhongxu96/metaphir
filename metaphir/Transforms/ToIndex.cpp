@@ -15,7 +15,6 @@
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/PatternSettings.h"
 #include "metaphir/Matching/FeatureRequirement.h"
-#include "metaphir/Matching/Features.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -23,7 +22,6 @@
 #include "mlir/Pass/Pass.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/SetVector.h"
 
 namespace llvm {
 namespace metaphir {
@@ -36,7 +34,6 @@ using mlir::Operation;
 using mlir::Value;
 using namespace mpir;
 namespace index = mpir_index;
-
 
 static bool isVariable(Value V) {
   return isa<mlir::BlockArgument>(V) || V.getDefiningOp<VarOp>();

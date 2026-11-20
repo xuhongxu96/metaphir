@@ -1,11 +1,3 @@
-; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | %metaphir-opt --mpir-lower --mpir-to-plan | FileCheck %s
-; A 'let' compiles to an mpir_plan.let after the matching: the slot, the value
-; it binds, and what has to hold when the slot is bound already, which
-; compares it with the value.
-%c = icmp:?anch ?pred i32 ?x, ?y
-;; let ?swapped = swappedPredicate(?pred)
-;; ?swapped == "sgt"
-
 ; CHECK-LABEL:   mpir.pattern {
 ; CHECK:           %[[VAR_0:.*]] = mpir.var "anch" : <Instruction>
 ; CHECK:           %[[VAR_1:.*]] = mpir.var "pred" : <CmpPredicate>
@@ -54,3 +46,11 @@
 ; CHECK:           mpir_plan.check %[[CALL_2]] : <Boolean>
 ; CHECK:           mpir_plan.emit
 ; CHECK:         }
+; RUN: %metaphir-parse --emit=mlir --mlir-print-debuginfo --no-stdlib %s | %metaphir-opt --mpir-lower --mpir-to-plan | FileCheck %s
+; A 'let' compiles to an mpir_plan.let after the matching: the slot, the value
+; it binds, and what has to hold when the slot is bound already, which
+; compares it with the value.
+%c = icmp:?anch ?pred i32 ?x, ?y
+;; let ?swapped = swappedPredicate(?pred)
+;; ?swapped == "sgt"
+

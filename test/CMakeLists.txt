@@ -50,7 +50,8 @@ if(Python3_FOUND)
       --match $<TARGET_FILE:metaphir-match> --index
       $<TARGET_FILE:metaphir-index> --split-file
       ${METAPHIR_LLVM_UTILS_DIR}/split-file --llvm-as
-      ${METAPHIR_LLVM_UTILS_DIR}/llvm-as ${CMAKE_CURRENT_SOURCE_DIR}/Matching)
+      ${METAPHIR_LLVM_UTILS_DIR}/llvm-as ${CMAKE_CURRENT_SOURCE_DIR}/Matching
+      ${CMAKE_CURRENT_SOURCE_DIR}/Tools)
 
   add_test(
     NAME MetaphIR.eval-scripts

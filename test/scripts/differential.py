@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Checks that metaphir-match's faster modes change nothing.
 
-Every pattern of every lit test under test/Matching is matched against the
-test's IR files in each mode of a group; within a group, the outputs must be
+Every pattern of every lit test with IR (.ll) under the given directories
+(test/Matching and test/Tools) is matched against the test's IR files in each mode of a group; within a group, the outputs must be
 identical. The indexed modes run on the files assembled to bitcode, which is
 loaded lazily. Matching the bitcode published with metaphir-index publish
 (--packs) must find the same matches, but for how metadata is numbered.
@@ -161,13 +161,18 @@ def main() -> int:
     parser.add_argument("--index", required=True, help="metaphir-index")
     parser.add_argument("--split-file", required=True, help="split-file")
     parser.add_argument("--llvm-as", required=True, help="llvm-as")
-    parser.add_argument("tests", type=Path, help="directory of lit tests")
+    parser.add_argument(
+        "tests", type=Path, nargs="+", help="directories of lit tests"
+    )
     args = parser.parse_args()
 
-    tests = sorted(args.tests.glob("MIRMatcher-*.ll"))
-    if not tests:
-        print(f"no tests in {args.tests}", file=sys.stderr)
-        return 1
+    tests = []
+    for directory in args.tests:
+        found = sorted(directory.glob("*.ll"))
+        if not found:
+            print(f"no tests in {directory}", file=sys.stderr)
+            return 1
+        tests += found
     failures = []
     with tempfile.TemporaryDirectory() as work:
         for test in tests:
