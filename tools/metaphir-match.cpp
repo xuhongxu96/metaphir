@@ -254,7 +254,7 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
   if (!Entry->Parsed)
     return LoadAll();
   Stats.Functions += Entry->NumFunctions;
-  // The postings leave out the functions whose coarse features cannot match;
+  // The postings leave out the functions whose posted features cannot match;
   // without them, the module's summary is checked.
   std::optional<ArrayRef<unsigned>> Listed = Use->candidatesOf(*Entry);
   if (Listed && Listed->empty())
@@ -266,10 +266,10 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
     Expected<FunctionFeatures> Summary = Index.readSummary(*Entry, MayMatch);
     if (!Summary)
       return Summary.takeError();
-    if (!Summary->Fine || !MayMatch(*Summary))
+    if (!Summary->HasDetail || !MayMatch(*Summary))
       return nullptr;
   }
-  // The fine features are read only where the coarse ones may match.
+  // The detail features are read only where the posted ones may match.
   unsigned NextOrdinal = 0;
   Expected<std::vector<IndexedFunction>> Indexed =
       Index.readFunctions(*Entry, [&](const FunctionFeatures &Features) {
@@ -282,7 +282,7 @@ loadFunctions(const LoadedPattern &Pattern, const IndexUse *Use, StringRef File,
   // The ordinals, among the module's defined functions, of those to match.
   SmallVector<size_t, 8> Candidates;
   for (auto [Ordinal, Function] : enumerate(*Indexed))
-    if (Function.Features.Fine && MayMatch(Function.Features))
+    if (Function.Features.HasDetail && MayMatch(Function.Features))
       Candidates.push_back(Ordinal);
   if (Candidates.empty())
     return nullptr;
@@ -457,9 +457,10 @@ static void matchFunctions(LoadedPattern &Pattern, StringRef File,
         }
         if (!Conflicts.empty())
           continue;
-        FunctionFeatures Features = Function.Features && Function.Features->Fine
-                                        ? *Function.Features
-                                        : FunctionFeatures::compute(*F);
+        FunctionFeatures Features =
+            Function.Features && Function.Features->HasDetail
+                ? *Function.Features
+                : FunctionFeatures::compute(*F);
         for (const std::string &Reason :
              Pattern.filter().explainNoStructure(Features))
           Out << "  no structural match: " << Reason << '\n';

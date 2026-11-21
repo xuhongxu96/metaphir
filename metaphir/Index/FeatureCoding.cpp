@@ -84,13 +84,13 @@ static LogicalResult readSignatures(DataExtractor &Data,
   return success();
 }
 
-void writeCoarseFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
+void writePostedFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
   encodeULEB128(Features.Instructions, OS);
   writeSortedKeys<uint16_t>(OS, Features.Edges);
   writeSortedKeys<uint16_t>(OS, Features.Siblings);
 }
 
-LogicalResult readCoarseFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+LogicalResult readPostedFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
                                  FunctionFeatures &Features) {
   Features.Instructions = Data.getULEB128(C);
   if (failed(readSortedKeys(Data, C, Features.Edges)))
@@ -98,29 +98,29 @@ LogicalResult readCoarseFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
   return readSortedKeys(Data, C, Features.Siblings);
 }
 
-void writeFineFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
-  std::string Fine;
-  raw_string_ostream FineOS(Fine);
-  writeSignatures(FineOS, Features.Signatures);
-  writeSortedKeys<uint32_t>(FineOS, Features.Facts);
-  writeSortedKeys<uint32_t>(FineOS, Features.Measures);
-  FineOS << char(Features.HasValueFacts);
-  encodeULEB128(Fine.size(), OS);
-  OS << Fine;
+void writeDetailFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
+  std::string Detail;
+  raw_string_ostream DetailOS(Detail);
+  writeSignatures(DetailOS, Features.Signatures);
+  writeSortedKeys<uint32_t>(DetailOS, Features.Facts);
+  writeSortedKeys<uint32_t>(DetailOS, Features.Measures);
+  DetailOS << char(Features.HasValueFacts);
+  encodeULEB128(Detail.size(), OS);
+  OS << Detail;
 }
 
 LogicalResult
-readFineFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                 FunctionFeatures &Features,
-                 function_ref<bool(const FunctionFeatures &)> NeedsFine) {
+readDetailFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+                   FunctionFeatures &Features,
+                   function_ref<bool(const FunctionFeatures &)> NeedsDetail) {
   uint64_t Size = Data.getULEB128(C);
   uint64_t End = C.tell() + Size;
-  Features.Fine = false;
-  if (NeedsFine && !NeedsFine(Features)) {
+  Features.HasDetail = false;
+  if (NeedsDetail && !NeedsDetail(Features)) {
     Data.skip(C, Size);
     return success();
   }
-  Features.Fine = true;
+  Features.HasDetail = true;
   if (failed(readSignatures(Data, C, Features.Signatures)) ||
       failed(readSortedKeys(Data, C, Features.Facts)) ||
       failed(readSortedKeys(Data, C, Features.Measures)))
@@ -130,18 +130,18 @@ readFineFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
 }
 
 void writeFunctionFeatures(raw_ostream &OS, const FunctionFeatures &Features) {
-  writeCoarseFeatures(OS, Features);
+  writePostedFeatures(OS, Features);
   writeSortedKeys<uint64_t>(OS, Features.Globals);
-  writeFineFeatures(OS, Features);
+  writeDetailFeatures(OS, Features);
 }
 
 Expected<FunctionFeatures> readFunctionFeatures(StringRef Bytes) {
   DataExtractor Data(Bytes, /*IsLittleEndian=*/true);
   DataExtractor::Cursor C(0);
   FunctionFeatures Features;
-  bool Valid = succeeded(readCoarseFeatures(Data, C, Features)) &&
+  bool Valid = succeeded(readPostedFeatures(Data, C, Features)) &&
                succeeded(readSortedKeys(Data, C, Features.Globals)) &&
-               succeeded(readFineFeatures(Data, C, Features, nullptr));
+               succeeded(readDetailFeatures(Data, C, Features, nullptr));
   if (!C)
     return createStringError("function features: " + toString(C.takeError()));
   if (!Valid || C.tell() != Bytes.size())

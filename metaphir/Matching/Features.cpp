@@ -124,7 +124,7 @@ void FunctionFeatures::merge(const FunctionFeatures &Other) {
   unionSorted<uint32_t>(Facts, Other.Facts);
   mergeMeasures(Measures, Other.Measures);
   HasValueFacts &= Other.HasValueFacts;
-  Fine &= Other.Fine;
+  HasDetail &= Other.HasDetail;
   unionSorted<uint16_t>(Edges, Other.Edges);
   unionSorted<uint16_t>(Siblings, Other.Siblings);
   unionSorted<uint64_t>(Globals, Other.Globals);

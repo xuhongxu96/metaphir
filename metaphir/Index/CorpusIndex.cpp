@@ -138,31 +138,31 @@ Expected<IndexedModule> CorpusIndex::indexFile(StringRef Root, StringRef Path,
   return Indexed;
 }
 
-// Encoding. Numbers are ULEB128 unless noted. A feature set is its coarse
-// features, which every query reads, then its fine ones, behind their size.
-// The coarse ones are its instruction mask; its edge and sibling keys (each a
+// Encoding. Numbers are ULEB128 unless noted. A feature set is its posted
+// features, which every query reads, then its detail ones, behind their size.
+// The posted ones are its instruction mask; its edge and sibling keys (each a
 // count, then each key as the difference from the one before); and its
 // globals: a module summary lists their hashes (8 bytes each), and a function
 // the positions of its own in its module's list (a count, then differences).
-// The fine ones are its signatures (a count, then for each the difference of
+// The detail ones are its signatures (a count, then for each the difference of
 // its instruction matcher from the one before, its flags, and its result and
 // operand type codes); its fact and measure keys (like the edge keys); and
 // whether it has value facts (a byte).
 
 static void writeSummary(raw_ostream &OS, const FunctionFeatures &Summary) {
-  writeCoarseFeatures(OS, Summary);
+  writePostedFeatures(OS, Summary);
   encodeULEB128(Summary.Globals.size(), OS);
   support::endian::Writer W(OS, llvm::endianness::little);
   for (uint64_t Global : Summary.Globals)
     W.write<uint64_t>(Global);
-  writeFineFeatures(OS, Summary);
+  writeDetailFeatures(OS, Summary);
 }
 
 static void writeFunction(raw_ostream &OS, const IndexedFunction &Function,
                           ArrayRef<uint64_t> ModuleGlobals) {
   support::endian::Writer(OS, llvm::endianness::little)
       .write<uint64_t>(Function.NameHash);
-  writeCoarseFeatures(OS, Function.Features);
+  writePostedFeatures(OS, Function.Features);
   encodeULEB128(Function.Features.Globals.size(), OS);
   uint64_t Previous = 0;
   for (uint64_t Global : Function.Features.Globals) {
@@ -174,7 +174,7 @@ static void writeFunction(raw_ostream &OS, const IndexedFunction &Function,
     encodeULEB128(Position - Previous, OS);
     Previous = Position;
   }
-  writeFineFeatures(OS, Function.Features);
+  writeDetailFeatures(OS, Function.Features);
 }
 
 /// Writes the posting keys and lists of the modules' functions, numbered in
@@ -448,16 +448,16 @@ CorpusIndex::findCandidates(const RetrievalPlan &Plan) const {
 
 Expected<FunctionFeatures> CorpusIndex::readSummary(
     const IndexEntry &Entry,
-    function_ref<bool(const FunctionFeatures &)> NeedsFine) const {
+    function_ref<bool(const FunctionFeatures &)> NeedsDetail) const {
   DataExtractor Data(Buffer->getBuffer().slice(0, FunctionsStart),
                      /*IsLittleEndian=*/true);
   DataExtractor::Cursor C(SummariesStart + Entry.SummaryOffset);
   FunctionFeatures Summary;
-  bool Valid = succeeded(readCoarseFeatures(Data, C, Summary));
+  bool Valid = succeeded(readPostedFeatures(Data, C, Summary));
   uint64_t NumGlobals = Data.getULEB128(C);
   for (uint64_t I = 0; I != NumGlobals && C; ++I)
     Summary.Globals.push_back(Data.getU64(C));
-  Valid = Valid && succeeded(readFineFeatures(Data, C, Summary, NeedsFine));
+  Valid = Valid && succeeded(readDetailFeatures(Data, C, Summary, NeedsDetail));
   if (!C || !Valid)
     return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   return Summary;
@@ -465,7 +465,7 @@ Expected<FunctionFeatures> CorpusIndex::readSummary(
 
 Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
     const IndexEntry &Entry,
-    function_ref<bool(const FunctionFeatures &)> NeedsFine) const {
+    function_ref<bool(const FunctionFeatures &)> NeedsDetail) const {
   Expected<FunctionFeatures> Summary =
       readSummary(Entry, [](const FunctionFeatures &) { return false; });
   if (!Summary)
@@ -476,7 +476,7 @@ Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
   bool Valid = true;
   for (IndexedFunction &Function : Functions) {
     Function.NameHash = Data.getU64(C);
-    Valid &= succeeded(readCoarseFeatures(Data, C, Function.Features));
+    Valid &= succeeded(readPostedFeatures(Data, C, Function.Features));
     uint64_t NumGlobals = Data.getULEB128(C);
     uint64_t Position = 0;
     for (uint64_t I = 0; I != NumGlobals && C && Valid; ++I) {
@@ -485,8 +485,8 @@ Expected<std::vector<IndexedFunction>> CorpusIndex::readFunctions(
       if (Valid)
         Function.Features.Globals.push_back(Summary->Globals[Position]);
     }
-    Valid = Valid &&
-            succeeded(readFineFeatures(Data, C, Function.Features, NeedsFine));
+    Valid = Valid && succeeded(readDetailFeatures(Data, C, Function.Features,
+                                                  NeedsDetail));
     if (!C || !Valid)
       return malformedEntry(Buffer->getBufferIdentifier(), Entry, C);
   }

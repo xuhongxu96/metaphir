@@ -1,7 +1,7 @@
 // RUN: %metaphir-opt --split-input-file --mpir-index-retrieval %s | FileCheck %s
 // mpir-index-retrieval adds the lookup to each query: the union over the
 // possible variants of the intersection of the posting lists of their
-// coarse features (instructions, edges, siblings, globals).
+// posted features (instructions, edges, siblings, globals).
 
 // One variant: the intersection of its lists.
 mpir.pattern {

@@ -59,9 +59,10 @@ public:
   /// Whether the value-tracking facts and measures were recorded; if not,
   /// they are unknown.
   bool HasValueFacts = false;
-  /// Whether the fine features, Signatures, Facts and Measures, are here; an
-  /// index may leave them unread. Without them, only the others are checked.
-  bool Fine = true;
+  /// Whether the detail features, Signatures, Facts and Measures, are here: an
+  /// index reads them only from a function its posting lists find, and may
+  /// leave them unread. Without them, only the posted features are checked.
+  bool HasDetail = true;
   /// Sorted, unique edge keys (see getEdgeKey).
   SmallVector<uint16_t, 8> Edges;
   /// Sorted, unique sibling keys: getEdgeKey(A, B) with A <= B for
@@ -121,7 +122,7 @@ public:
     return Instructions == Other.Instructions &&
            Signatures == Other.Signatures && Facts == Other.Facts &&
            Measures == Other.Measures && HasValueFacts == Other.HasValueFacts &&
-           Fine == Other.Fine && Edges == Other.Edges &&
+           HasDetail == Other.HasDetail && Edges == Other.Edges &&
            Siblings == Other.Siblings && Globals == Other.Globals;
   }
 };

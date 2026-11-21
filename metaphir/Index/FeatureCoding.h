@@ -15,27 +15,27 @@ class raw_ostream;
 namespace metaphir {
 
 // How indexes store features: numbers as ULEB128, sorted keys as their
-// deltas, and the fine features behind their size, so that readers can skip
+// deltas, and the detail features behind their size, so that readers can skip
 // them.
 
 void writeString(raw_ostream &OS, StringRef String);
 StringRef readString(DataExtractor &Data, DataExtractor::Cursor &C);
 
 /// Writes the instructions, edges and siblings of Features.
-void writeCoarseFeatures(raw_ostream &OS, const FunctionFeatures &Features);
-/// Reads what writeCoarseFeatures wrote. Fails if the keys are not valid.
-LogicalResult readCoarseFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+void writePostedFeatures(raw_ostream &OS, const FunctionFeatures &Features);
+/// Reads what writePostedFeatures wrote. Fails if the keys are not valid.
+LogicalResult readPostedFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
                                  FunctionFeatures &Features);
 
 /// Writes the signatures, facts and measures of Features.
-void writeFineFeatures(raw_ostream &OS, const FunctionFeatures &Features);
-/// Reads what writeFineFeatures wrote if NeedsFine, given the coarse
+void writeDetailFeatures(raw_ostream &OS, const FunctionFeatures &Features);
+/// Reads what writeDetailFeatures wrote if NeedsDetail, given the posted
 /// features, asks for it; otherwise skips it. Fails if the features are not
 /// valid.
 LogicalResult
-readFineFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
-                 FunctionFeatures &Features,
-                 function_ref<bool(const FunctionFeatures &)> NeedsFine);
+readDetailFeatures(DataExtractor &Data, DataExtractor::Cursor &C,
+                   FunctionFeatures &Features,
+                   function_ref<bool(const FunctionFeatures &)> NeedsDetail);
 
 /// Writes all of a function's features, globals included, on their own.
 void writeFunctionFeatures(raw_ostream &OS, const FunctionFeatures &Features);

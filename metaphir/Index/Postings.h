@@ -16,7 +16,7 @@ namespace llvm {
 class raw_ostream;
 namespace metaphir {
 
-/// A coarse feature the index lists the functions of: an instruction kind, an
+/// A posted feature the index lists the functions of: an instruction kind, an
 /// edge or sibling key (see FunctionFeatures), or a global's hash.
 struct PostingKey {
   enum KeyKind : uint8_t { Instruction, Edge, Sibling, Global };
@@ -45,7 +45,7 @@ struct PostingRecord {
   void write(raw_ostream &OS) const;
 };
 
-/// The coarse posting keys of a function's features.
+/// The posting keys of a function's features.
 template <typename Callback>
 void forEachPostingKey(const FunctionFeatures &Features, Callback Add) {
   for (uint64_t IDs = Features.Instructions; IDs; IDs &= IDs - 1)

@@ -129,9 +129,9 @@ private:
   Attribute site(Operation *Node, uint8_t Slots);
 
   void numberMatched();
-  void emitCoarseFeatures();
+  void emitPostedFeatures();
   void emitSiblings();
-  void emitFineFeatures();
+  void emitDetailFeatures();
   mlir::ArrayAttr typePattern(Value T);
   void emitTypings();
   void collectSites();
@@ -151,8 +151,8 @@ void VariantEmitter::emit() {
   OpBuilder::InsertionGuard Guard(Builder);
   Builder.setInsertionPointToEnd(&Variant.getBody().emplaceBlock());
   numberMatched();
-  emitCoarseFeatures();
-  emitFineFeatures();
+  emitPostedFeatures();
+  emitDetailFeatures();
   emitTypings();
   collectSites();
   emitConstraints();
@@ -176,7 +176,7 @@ int64_t VariantEmitter::nodeOf(Operation *Op) const {
   return It->second;
 }
 
-void VariantEmitter::emitCoarseFeatures() {
+void VariantEmitter::emitPostedFeatures() {
   for (uint64_t IDs = R.Instructions; IDs; IDs &= IDs - 1)
     index::HasInstructionOp::create(
         Builder, Loc,
@@ -206,7 +206,7 @@ void VariantEmitter::emitSiblings() {
     index::HasSiblingOp::create(Builder, Loc, opcode(A), opcode(B));
 }
 
-void VariantEmitter::emitFineFeatures() {
+void VariantEmitter::emitDetailFeatures() {
   for (const ShapeRequirement &Shape : sortedUnique<ShapeRequirement>(R.Shapes))
     index::HasShapeOp::create(Builder, Loc, opcode(Shape.ID), Shape.Present,
                               Shape.Absent, Shape.Width);

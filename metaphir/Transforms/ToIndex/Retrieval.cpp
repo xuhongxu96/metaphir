@@ -2,7 +2,7 @@
 //
 // mpir-index-retrieval adds to each index query the mpir_index.retrieve that
 // finds the functions its variants may match: the union, over the variants
-// that are possible, of the intersection of the lists of their coarse
+// that are possible, of the intersection of the lists of their posted
 // features (the universe for a variant that has none).
 //
 // mpir-index-factor factors a list common to every operand of a union out:

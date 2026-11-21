@@ -40,7 +40,7 @@ bool FeatureRequirement::isSatisfiedBy(const FunctionFeatures &Features) const {
       return false;
   if (!all_of(Globals, [&](uint64_t Hash) { return Features.hasGlobal(Hash); }))
     return false;
-  if (!Features.Fine)
+  if (!Features.HasDetail)
     return true;
   for (const ShapeRequirement &Shape : Shapes)
     if (!Shape.isSatisfiedBy(Features))

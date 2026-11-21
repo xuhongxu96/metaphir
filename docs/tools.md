@@ -319,7 +319,7 @@ Each operator's IR, recording, and index semantics are documented together in
 With an index, matching takes two steps:
 
 1. `metaphir-index build` stores each function's features and builds posting
-   lists from coarse features (instruction kinds, edges, sibling pairs, and
+   lists from posted features (instruction kinds, edges, sibling pairs, and
    globals) to the functions that contain them.
 2. `metaphir-match --index` intersects the pattern's shortest posting lists
    (for example, `udiv`, `urem`, and `add-udiv`) to find candidates, then

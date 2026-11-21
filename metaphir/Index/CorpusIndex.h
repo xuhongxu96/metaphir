@@ -137,23 +137,23 @@ public:
   /// Where the function numbered Number is.
   FunctionLocation locate(uint32_t Number) const;
 
-  /// The functions whose coarse features Plan finds may match, sorted by
+  /// The functions whose posted features Plan finds may match, sorted by
   /// entry and ordinal; none if Plan reads no list, so that any function may
   /// match.
   Expected<std::optional<std::vector<FunctionLocation>>>
   findCandidates(const RetrievalPlan &Plan) const;
 
   /// Reads the summary of the functions of Entry, an entry of this index.
-  /// Its fine features (see FunctionFeatures::Fine) are read only if
-  /// NeedsFine, when given, asks for them, given the others.
+  /// Its detail features (see FunctionFeatures::HasDetail) are read only if
+  /// NeedsDetail, when given, asks for them, given the others.
   Expected<FunctionFeatures> readSummary(
       const IndexEntry &Entry,
-      function_ref<bool(const FunctionFeatures &)> NeedsFine = nullptr) const;
-  /// Reads the functions of Entry, an entry of this index; their fine
-  /// features as readSummary does, calling NeedsFine for them in order.
+      function_ref<bool(const FunctionFeatures &)> NeedsDetail = nullptr) const;
+  /// Reads the functions of Entry, an entry of this index; their detail
+  /// features as readSummary does, calling NeedsDetail for them in order.
   Expected<std::vector<IndexedFunction>> readFunctions(
       const IndexEntry &Entry,
-      function_ref<bool(const FunctionFeatures &)> NeedsFine = nullptr) const;
+      function_ref<bool(const FunctionFeatures &)> NeedsDetail = nullptr) const;
 
 private:
   std::unique_ptr<MemoryBuffer> Buffer;

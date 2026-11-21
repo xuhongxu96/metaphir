@@ -4,10 +4,11 @@
 // pattern to match it, and how the corpus index finds the functions that
 // have them.
 //
-// A query holds one mpir_index.variant per way a match can go (per branch of
-// each matcher a pattern uses). A variant requires features (instructions,
-// edges, siblings, globals: the posting keys; shapes and facts at sites: the
-// fine features), types the instruction matchers it matches
+// A query holds one mpir_index.variant per way a match can go (per choice of
+// an alternative of each mpir.alt). A variant requires features: posted ones
+// (instructions, edges, siblings, globals), which the corpus index has
+// posting lists of, and detail ones (shapes, facts at sites), which it reads
+// from each function it checks. It types the instruction matchers it matches
 // (mpir_index.typing), and assumes its constraints, which are evaluated on
 // the features with the pattern's values read as the sites they occupy.
 //
@@ -52,7 +53,7 @@ def Index_VariantOp : Index_Op<"variant", [HasParent<"QueryOp">, SingleBlock,
 }
 
 //===----------------------------------------------------------------------===//
-// Coarse features: posting keys
+// Posted features: the posting keys, whose lists find the functions
 //===----------------------------------------------------------------------===//
 
 def Index_HasInstructionOp : Index_Op<"has_instruction"> {
@@ -83,7 +84,7 @@ def Index_HasGlobalOp : Index_Op<"has_global"> {
 }
 
 //===----------------------------------------------------------------------===//
-// Fine features
+// Detail features: read from each function the lists found
 //===----------------------------------------------------------------------===//
 
 def Index_HasShapeOp : Index_Op<"has_shape"> {
@@ -186,7 +187,7 @@ def Index_RetrieveOp : Index_Op<"retrieve", [HasParent<"QueryOp">,
 }
 
 def Index_PostingsOp : Index_Op<"postings", [Pure]> {
-  let summary = "The functions with a coarse feature";
+  let summary = "The functions with a posted feature";
   let description = [{
     `kind` is a PostingKey's kind (0 instruction, 1 edge, 2 sibling, 3
     global) and `key` its value: the instruction matcher, the edge or sibling

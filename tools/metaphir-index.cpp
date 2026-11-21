@@ -207,7 +207,7 @@ static int stats(StringRef ToolName) {
     ++Modules;
     Bytes += Entry.Stamp.Size;
     Functions += Entry.NumFunctions;
-    // As metaphir-match reads them: the fine features only where the coarse
+    // As metaphir-match reads them: the detail features only where the posted
     // ones may match.
     auto MayMatch = [&](const FunctionFeatures &Features) {
       return Query.mayMatch(Features);
@@ -221,13 +221,14 @@ static int stats(StringRef ToolName) {
       return 1;
     }
     // A module that does not parse is matched, to report the error.
-    if (Entry.Parsed && (!Summary->Fine || !Query.mayMatch(*Summary)))
+    if (Entry.Parsed && (!Summary->HasDetail || !Query.mayMatch(*Summary)))
       continue;
     ++MatchedModules;
     MatchedBytes += Entry.Stamp.Size;
     MatchedFunctions +=
         count_if(*ModuleFunctions, [&](const IndexedFunction &Function) {
-          return Function.Features.Fine && Query.mayMatch(Function.Features);
+          return Function.Features.HasDetail &&
+                 Query.mayMatch(Function.Features);
         });
   }
   printShare("modules", MatchedModules, Modules);

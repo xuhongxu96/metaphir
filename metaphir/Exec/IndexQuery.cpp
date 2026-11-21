@@ -602,7 +602,7 @@ bool IndexQuery::mayMatchVariant(unsigned Index,
   const Variant &V = Variants[Index];
   if (V.Impossible || !V.Requirement.isSatisfiedBy(Features))
     return false;
-  if (!Features.Fine)
+  if (!Features.HasDetail)
     return true;
   return any_of(joinSignatures(V, Features), [&](const Row &Types) {
     return constraintsMayHold(V, Features, Types);
@@ -676,7 +676,7 @@ IndexQuery::explainNoStructure(const FunctionFeatures &Features) const {
           Lack = ("it uses no `@" + Name + "`");
           break;
         }
-    if (!Lack && Features.Fine) {
+    if (!Lack && Features.HasDetail) {
       for (const ShapeRequirement &Shape : R.Shapes) {
         if (Shape.isSatisfiedBy(Features))
           continue;
@@ -710,7 +710,7 @@ IndexQuery::explainNoStructure(const FunctionFeatures &Features) const {
     std::string Reason;
     if (Lack)
       Reason = std::move(*Lack);
-    else if (Features.Fine && joinSignatures(V, Features).empty())
+    else if (Features.HasDetail && joinSignatures(V, Features).empty())
       Reason = "it has the instructions the pattern needs, but not of the "
                "types the pattern gives them together";
     else
