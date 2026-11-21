@@ -21,8 +21,8 @@ mpir.pattern {
 // CHECK:           }, {
     mpir.yield %a : !mpir.sort<Instruction> loc("check-bindings-unused.mlir":22:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } <or_self_of = "add", or_self_region = 0, result_name = "a"> : !mpir.sort<Instruction> loc("check-bindings-unused.mlir":24:1)
-// CHECK:           } <result_name = "a", or_self_of = "add", or_self_region = 0> : <Instruction>
+  } <result_name = "a"> : !mpir.sort<Instruction> loc("check-bindings-unused.mlir":24:1)
+// CHECK:           } <result_name = "a"> : <Instruction>
   %b = mpir.inst <mul>(%i32, %alt, %i32, %x) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("check-bindings-unused.mlir":26:1)
 // CHECK:           %[[INST_1:.*]] = mpir.inst <mul> (%[[TYPE_0]], %[[ALT_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
   %r = mpir_expr.read %b : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("check-bindings-unused.mlir":28:1)

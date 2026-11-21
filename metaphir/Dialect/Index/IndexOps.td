@@ -7,7 +7,7 @@
 // A query holds one mpir_index.variant per way a match can go (per branch of
 // each matcher a pattern uses). A variant requires features (instructions,
 // edges, siblings, globals: the posting keys; shapes and facts at sites: the
-// fine features), types the instructions it is sure to match
+// fine features), types the instruction matchers it matches
 // (mpir_index.typing), and assumes its constraints, which are evaluated on
 // the features with the pattern's values read as the sites they occupy.
 //
@@ -109,7 +109,7 @@ def Index_HasFactOp : Index_Op<"has_fact"> {
 //===----------------------------------------------------------------------===//
 
 def Index_TypingOp : Index_Op<"typing"> {
-  let summary = "An instruction the variant is sure to match, to type by its signatures";
+  let summary = "An instruction matcher the variant matches, to type by its signatures";
   let description = [{
     Its flags, as for has_shape; with `commutative`, its operands may be
     swapped. `operand_types[i]` is the type pattern (as mpir_plan.check_type
@@ -144,7 +144,7 @@ def Index_TypeVarOp : Index_Op<"type_var", [Pure]> {
 }
 
 def Index_NodeOp : Index_Op<"node", [Pure]> {
-  let summary = "An instruction matcher the variant is sure to match, as a value-tracking context";
+  let summary = "An instruction matcher the variant matches, as a value-tracking context";
   let arguments = (ins I64Attr:$node);
   let results = (outs Mpir_Term:$result);
   let assemblyFormat = "$node attr-dict `:` type($result)";

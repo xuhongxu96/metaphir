@@ -258,8 +258,8 @@ mpir.pattern {
 // CHECK:           }, {
     mpir.yield %x : !mpir.sort<Operand> loc("pattern-roundtrip.mlir":259:1)
 // CHECK:             mpir.yield %[[VAR_0]] : <Operand>
-  } <or_self_of = "add"> : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":261:1)
-// CHECK:           } <or_self_of = "add"> : <Instruction>
+  } : !mpir.sort<Instruction> loc("pattern-roundtrip.mlir":261:1)
+// CHECK:           } : <Instruction>
   %rx = mpir_expr.read %x : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":263:1)
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
   %ry = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("pattern-roundtrip.mlir":265:1)

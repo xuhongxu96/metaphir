@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/ToPlan/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/PatternSettings.h"
+#include "metaphir/Transforms/ToPlan/Passes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -117,6 +117,29 @@ private:
 
 } // namespace
 
+/// The opcode every instruction matcher Op's alternatives yield has, if they
+/// yield one and agree: an alternative yielding a value from outside it (an
+/// operand in its place) has none to disagree with.
+static std::optional<instruction::InstructionID> sharedOpcode(Operation *Op) {
+  if (auto Inst = dyn_cast<InstOp>(Op))
+    return Inst.getOpcode().getValue();
+  auto Alt = dyn_cast<AltOp>(Op);
+  if (!Alt)
+    return std::nullopt;
+  std::optional<instruction::InstructionID> Shared;
+  for (mlir::Region &Region : Alt->getRegions()) {
+    Operation *Yielded =
+        (*Region.front().getOps<YieldOp>().begin()).getValue().getDefiningOp();
+    if (!Yielded || Yielded->getBlock() != &Region.front())
+      continue;
+    std::optional<instruction::InstructionID> ID = sharedOpcode(Yielded);
+    if (!ID || (Shared && *Shared != *ID))
+      return std::nullopt;
+    Shared = ID;
+  }
+  return Shared;
+}
+
 void Compiler::assignSlots() {
   // Instruction matchers and alternatives, and the meta variables, in the
   // order they are written. A matcher an alternative yields is matched for
@@ -135,8 +158,8 @@ void Compiler::assignSlots() {
     Value Outer = Result;
     while (true) {
       AltOp Yielding;
-      // Only an alternative's own matcher: one ':o' yields in its place is
-      // not the alternative's.
+      // Only an alternative's own matcher: a value from outside it that it
+      // yields (an operand in its place) is not the alternative's.
       for (Operation *User : Outer.getUsers())
         if (auto Yield = dyn_cast<YieldOp>(User))
           if (auto Alt = dyn_cast<AltOp>(Yield->getParentOp()))
@@ -162,25 +185,10 @@ void Compiler::assignSlots() {
       if (auto N =
               Op->getAttrOfType<mlir::StringAttr>(mpir::ResultNameAttrName))
         Name = N.getValue();
-      // An unnamed alternative of one instruction matcher (its ':c' orders,
-      // or its ':o') is named by its opcode, as the matcher is.
-      Operation *Inner = Op;
-      while (auto Alt = dyn_cast_or_null<AltOp>(Inner)) {
-        if (Alt->getNumRegions() == 0 ||
-            !(Alt.getCommuted() || Alt.getOrSelfRegion()))
-          break;
-        unsigned Region = 0;
-        if (std::optional<uint32_t> R = Alt.getOrSelfRegion())
-          // The region of the matcher itself, not of its operand.
-          Region = *R == 0 ? 1 : 0;
-        if (Region >= Alt->getNumRegions())
-          break;
-        Inner = (*Alt->getRegion(Region).front().getOps<YieldOp>().begin())
-                    .getValue()
-                    .getDefiningOp();
-      }
-      if (auto Inst = dyn_cast_or_null<InstOp>(Inner))
-        OpcodeName = instruction::getOpcodeName(Inst.getOpcode().getValue());
+      // An unnamed alt whose alternatives match instructions of one opcode
+      // (the operand orders of one, or one or its operand) is named by it.
+      if (std::optional<instruction::InstructionID> ID = sharedOpcode(Op))
+        OpcodeName = instruction::getOpcodeName(*ID);
     }
     SmallString<32> Printed;
     if (Name.empty())

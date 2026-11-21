@@ -527,8 +527,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <mul> (%[[TYPE_1]], %[[INST_0]], %[[TYPE_1]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
     mpir.yield %i_b : <Instruction> loc("index-factor.mlir":528:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } <or_self_of = "mul", or_self_region = 0, result_name = "b"> : <Instruction> loc("index-factor.mlir":530:1)
-// CHECK:           } <result_name = "b", or_self_of = "mul", or_self_region = 0> : <Instruction>
+  } <result_name = "b"> : <Instruction> loc("index-factor.mlir":530:1)
+// CHECK:           } <result_name = "b"> : <Instruction>
   %8 = mpir_expr.read %y : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-factor.mlir":532:1)
 // CHECK:           %[[READ_1:.*]] = mpir_expr.read %[[VAR_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
   %9 = mpir_expr.call call "opcode"(%8) anchor %7 : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<String> loc("index-factor.mlir":534:1)

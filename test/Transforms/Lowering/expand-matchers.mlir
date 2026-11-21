@@ -928,7 +928,7 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             mpir.bind %[[VAR_0]], %[[VAR_1]] : <Instruction>, <Operand>
 // CHECK:             mpir.yield %[[VAR_1]] : <Operand>
-// CHECK:           } <result_name = "r", or_self_of = "addOrSub", or_self_region = 2> : <Instruction>
+// CHECK:           } <result_name = "r"> : <Instruction>
   %2 = mpir.type.int 32 : <Type> loc("expand-matchers.mlir":932:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %3 = mpir.int 1 : ui1 : <Value> loc("expand-matchers.mlir":934:1)
@@ -942,7 +942,7 @@ mpir.pattern {
 // CHECK:             mpir.yield %[[INST_3]] : <Instruction>
 // CHECK:           }, {
 // CHECK:             mpir.yield %[[ALT_0]] : <Instruction>
-// CHECK:           } <result_name = "s", or_self_of = "addOrSub", or_self_region = 2> : <Instruction>
+// CHECK:           } <result_name = "s"> : <Instruction>
 } loc("expand-matchers.mlir":946:1)
 // CHECK:         }
 

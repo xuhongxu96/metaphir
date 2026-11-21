@@ -1808,8 +1808,8 @@ mpir.pattern {
 // CHECK:             mpir.bind %[[VAR_4]], %[[ALT_0]] : <Instruction>, <Instruction>
     mpir.yield %1 : <Instruction> loc("to-plan.mlir":1809:1)
 // CHECK:             mpir.yield %[[ALT_0]] : <Instruction>
-  } <or_self_of = "negate", or_self_region = 1, result_name = "b"> : <Instruction> loc("to-plan.mlir":1811:1)
-// CHECK:           } <result_name = "b", or_self_of = "negate", or_self_region = 1> : <Instruction>
+  } <result_name = "b"> : <Instruction> loc("to-plan.mlir":1811:1)
+// CHECK:           } <result_name = "b"> : <Instruction>
   %4 = mpir.type.int 32 : <Type> loc("to-plan.mlir":1813:1)
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
   %5 = mpir.type.int 64 : <Type> loc("to-plan.mlir":1815:1)
@@ -2272,8 +2272,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_a : <Instruction> loc("to-plan.mlir":2273:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } <commuted, result_name = "a"> : <Instruction> loc("to-plan.mlir":2275:1)
-// CHECK:           } <result_name = "a", commuted> : <Instruction>
+  } <result_name = "a"> : <Instruction> loc("to-plan.mlir":2275:1)
+// CHECK:           } <result_name = "a"> : <Instruction>
   %2 = mpir.type.int 32 : <Type> loc("to-plan.mlir":2277:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %3 = mpir.int 3 : ui2 : <Value> loc("to-plan.mlir":2279:1)
@@ -2288,8 +2288,8 @@ mpir.pattern {
 // CHECK:             %[[INST_2:.*]] = mpir.inst <mul> (%[[TYPE_1]], %[[ALT_0]], %[[TYPE_1]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
     mpir.yield %i_b : <Instruction> loc("to-plan.mlir":2289:1)
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-  } <or_self_of = "mul", or_self_region = 0, result_name = "b"> : <Instruction> loc("to-plan.mlir":2291:1)
-// CHECK:           } <result_name = "b", or_self_of = "mul", or_self_region = 0> : <Instruction>
+  } <result_name = "b"> : <Instruction> loc("to-plan.mlir":2291:1)
+// CHECK:           } <result_name = "b"> : <Instruction>
   %5 = mpir.type.int 32 : <Type> loc("to-plan.mlir":2293:1)
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
   %6 = mpir.int 0 : ui1 : <Value> loc("to-plan.mlir":2295:1)
@@ -2304,8 +2304,8 @@ mpir.pattern {
 // CHECK:             %[[INST_3:.*]] = mpir.inst <sub> (%[[TYPE_2]], %[[INT_1]], %[[TYPE_2]], %[[ALT_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "c"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
     mpir.yield %i_c : <Instruction> loc("to-plan.mlir":2305:1)
 // CHECK:             mpir.yield %[[INST_3]] : <Instruction>
-  } <or_self_of = "sub", or_self_region = 0, result_name = "c"> : <Instruction> loc("to-plan.mlir":2307:1)
-// CHECK:           } <result_name = "c", or_self_of = "sub", or_self_region = 0> : <Instruction>
+  } <result_name = "c"> : <Instruction> loc("to-plan.mlir":2307:1)
+// CHECK:           } <result_name = "c"> : <Instruction>
   %8 = mpir.type.int 32 : <Type> loc("to-plan.mlir":2309:1)
 // CHECK:           %[[TYPE_3:.*]] = mpir.type.int 32 : <Type>
   %z = mpir.var "z" : <Operand> loc("to-plan.mlir":2311:1)
@@ -3539,8 +3539,8 @@ mpir.pattern {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[INT_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_a : <Instruction> loc("to-plan.mlir":3540:1)
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-  } <commuted, result_name = "a"> : <Instruction> loc("to-plan.mlir":3542:1)
-// CHECK:           } <result_name = "a", commuted> : <Instruction>
+  } <result_name = "a"> : <Instruction> loc("to-plan.mlir":3542:1)
+// CHECK:           } <result_name = "a"> : <Instruction>
   %3 = mpir.type.int 32 : <Type> loc("to-plan.mlir":3544:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %y = mpir.var "y" : <Operand> loc("to-plan.mlir":3546:1)
@@ -3555,8 +3555,8 @@ mpir.pattern {
 // CHECK:             %[[INST_2:.*]] = mpir.inst <mul> (%[[TYPE_1]], %[[ALT_0]], %[[TYPE_1]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
     mpir.yield %i_b : <Instruction> loc("to-plan.mlir":3556:1)
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-  } <or_self_of = "mul", or_self_region = 0, result_name = "b"> : <Instruction> loc("to-plan.mlir":3558:1)
-// CHECK:           } <result_name = "b", or_self_of = "mul", or_self_region = 0> : <Instruction>
+  } <result_name = "b"> : <Instruction> loc("to-plan.mlir":3558:1)
+// CHECK:           } <result_name = "b"> : <Instruction>
   %5 = mpir.type.int 32 : <Type> loc("to-plan.mlir":3560:1)
 // CHECK:           %[[TYPE_2:.*]] = mpir.type.int 32 : <Type>
   %i_c = mpir.inst <sub> (%5, %4, %5, %y) <result_name = "c", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction> loc("to-plan.mlir":3562:1)
@@ -4114,8 +4114,8 @@ mpir.pattern {
 // CHECK:           %[[ALT_1:.*]] = mpir.alt {
     mpir.yield %i_s : <Instruction> loc("to-plan.mlir":4115:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-  } <or_self_of = "pick", or_self_region = 0> : <Instruction> loc("to-plan.mlir":4117:1)
-// CHECK:           } <or_self_of = "pick", or_self_region = 0> : <Instruction>
+  } : <Instruction> loc("to-plan.mlir":4117:1)
+// CHECK:           } : <Instruction>
 } loc("to-plan.mlir":4119:1)
 // CHECK:         }
 // CHECK-LABEL:   mpir_plan.matcher <slot_kinds = [variable, variable, variable, instruction, instruction, instruction], slot_sorts = [Boolean, Value, Value, Instruction, Instruction, Instruction], slot_names = ["cond", "a", "b", "%r", "%s", ""], slot_locs = [{{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}]> {
@@ -4183,8 +4183,8 @@ mpir.pattern {
 // CHECK:             mpir.let %[[VAR_1]], %[[CALL_0]] : <CmpPredicate>, <CmpPredicate>
     mpir.yield %i_c : <Instruction> loc("to-plan.mlir":4184:1)
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-  } <commuted, result_name = "c"> : <Instruction> loc("to-plan.mlir":4186:1)
-// CHECK:           } <result_name = "c", commuted> : <Instruction>
+  } <result_name = "c"> : <Instruction> loc("to-plan.mlir":4186:1)
+// CHECK:           } <result_name = "c"> : <Instruction>
 } loc("to-plan.mlir":4188:1)
 // CHECK:         }
 // CHECK-LABEL:   mpir_plan.matcher <slot_kinds = [variable, instruction, variable, variable, instruction, variable], slot_sorts = [Value, Instruction, CmpPredicate, Value, Instruction, CmpPredicate], slot_names = ["x", "%z", "p", "y", "%c", "_swapped$p"], slot_locs = [{{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}, {{.*}}]> {

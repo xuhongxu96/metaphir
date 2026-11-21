@@ -93,4 +93,5 @@ _Compile lowered patterns into index queries_
 
 - Reads: lowered `mpir`.
 - Writes: an `mpir_index.query` after each `mpir.pattern`: a variant per
-  choice of matcher branches, with the features a function needs for it.
+  choice of an alternative of each `mpir.alt` it reaches, with the
+  features a function needs for it.

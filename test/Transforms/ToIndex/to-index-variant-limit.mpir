@@ -1,0 +1,45 @@
+; An index query has at most 64 variants: past that, an mpir.alt requires
+; only what all its alternatives need. Each ':c' here is an alt both of whose
+; alternatives reach the one before it, 2^40 variants enumerated in full.
+; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | %metaphir-opt --mpir-lower --mpir-to-index | grep -c mpir_index.variant | FileCheck %s
+; CHECK: {{^}}64{{$}}
+%v0 = add:c i32 ?x, ?y0
+%v1 = add:c i32 %v0, ?y1
+%v2 = add:c i32 %v1, ?y2
+%v3 = add:c i32 %v2, ?y3
+%v4 = add:c i32 %v3, ?y4
+%v5 = add:c i32 %v4, ?y5
+%v6 = add:c i32 %v5, ?y6
+%v7 = add:c i32 %v6, ?y7
+%v8 = add:c i32 %v7, ?y8
+%v9 = add:c i32 %v8, ?y9
+%v10 = add:c i32 %v9, ?y10
+%v11 = add:c i32 %v10, ?y11
+%v12 = add:c i32 %v11, ?y12
+%v13 = add:c i32 %v12, ?y13
+%v14 = add:c i32 %v13, ?y14
+%v15 = add:c i32 %v14, ?y15
+%v16 = add:c i32 %v15, ?y16
+%v17 = add:c i32 %v16, ?y17
+%v18 = add:c i32 %v17, ?y18
+%v19 = add:c i32 %v18, ?y19
+%v20 = add:c i32 %v19, ?y20
+%v21 = add:c i32 %v20, ?y21
+%v22 = add:c i32 %v21, ?y22
+%v23 = add:c i32 %v22, ?y23
+%v24 = add:c i32 %v23, ?y24
+%v25 = add:c i32 %v24, ?y25
+%v26 = add:c i32 %v25, ?y26
+%v27 = add:c i32 %v26, ?y27
+%v28 = add:c i32 %v27, ?y28
+%v29 = add:c i32 %v28, ?y29
+%v30 = add:c i32 %v29, ?y30
+%v31 = add:c i32 %v30, ?y31
+%v32 = add:c i32 %v31, ?y32
+%v33 = add:c i32 %v32, ?y33
+%v34 = add:c i32 %v33, ?y34
+%v35 = add:c i32 %v34, ?y35
+%v36 = add:c i32 %v35, ?y36
+%v37 = add:c i32 %v36, ?y37
+%v38 = add:c i32 %v37, ?y38
+%v39 = add:c i32 %v38, ?y39

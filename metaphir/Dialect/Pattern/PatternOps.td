@@ -336,13 +336,7 @@ def Mpir_AltOp : Mpir_Op<"alt", [NoTerminator,
   }];
   let arguments = (ins
       // The name of the instruction or use the alternatives stand for.
-      OptionalAttr<StrAttr>:$result_name,
-      // The alternatives are the two operand orders of ':c'.
-      UnitAttr:$commuted,
-      // The alternatives are the matcher with ':o', and its operand: the
-      // matcher's name, and the alternative that matches the operand.
-      OptionalAttr<StrAttr>:$or_self_of,
-      OptionalAttr<I32Attr>:$or_self_region);
+      OptionalAttr<StrAttr>:$result_name);
   let results = (outs Mpir_Term:$result);
   let regions = (region VariadicRegion<SizedRegion<1>>:$alternatives);
   // The attributes have a keyword: an alternative-less mpir.alt (a use no

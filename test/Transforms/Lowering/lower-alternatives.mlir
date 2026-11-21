@@ -19,7 +19,7 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[INT_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:           } <result_name = "a", commuted> : <Instruction>
+// CHECK:           } <result_name = "a"> : <Instruction>
 } loc("lower-alternatives.mlir":23:1)
 // CHECK:         }
 
@@ -44,7 +44,7 @@ mpir.pattern {
 // CHECK:             %[[KEYWORD_1:.*]] = mpir.keyword ugt : <Value>
 // CHECK:             %[[INST_1:.*]] = mpir.inst <icmp> (%[[KEYWORD_1]], %[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [predicate, typed_value, typed_value], result_name = "c"> : (!mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:           } <result_name = "c", commuted> : <Instruction>
+// CHECK:           } <result_name = "c"> : <Instruction>
   %p = mpir.var "p" : <CmpPredicate> loc("lower-alternatives.mlir":48:1)
 // CHECK:           %[[VAR_2:.*]] = mpir.var "p" : <CmpPredicate>
   %2 = mpir.type.prim float : <Type> loc("lower-alternatives.mlir":50:1)
@@ -64,7 +64,7 @@ mpir.pattern {
 // CHECK:             %[[CALL_0:.*]] = mpir_expr.call call "swappedPredicate"(%[[READ_0]]) : (!mpir.sort<String>) -> !mpir.sort<CmpPredicate>
 // CHECK:             mpir.let %[[VAR_2]], %[[CALL_0]] : <CmpPredicate>, <CmpPredicate>
 // CHECK:             mpir.yield %[[INST_3]] : <Instruction>
-// CHECK:           } <result_name = "d", commuted> : <Instruction>
+// CHECK:           } <result_name = "d"> : <Instruction>
 } loc("lower-alternatives.mlir":68:1)
 // CHECK:         }
 
@@ -92,7 +92,7 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <call> (%[[TYPE_0]], %[[GLOBAL_0]], %[[TYPE_2]], %[[INT_0]], %[[TYPE_1]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [type_only, value, typed_value, typed_value], result_name = "m"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:           } <result_name = "m", commuted> : <Instruction>
+// CHECK:           } <result_name = "m"> : <Instruction>
 } loc("lower-alternatives.mlir":96:1)
 // CHECK:         }
 
@@ -114,7 +114,7 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-// CHECK:           } <result_name = "a", or_self_of = "add", or_self_region = 0> : <Instruction>
+// CHECK:           } <result_name = "a"> : <Instruction>
   %2 = mpir.type.int 32 : <Type> loc("lower-alternatives.mlir":118:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %i_b = mpir.inst <mul> (%2, %i_a, %2, %i_a) <result_name = "b", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction> loc("lower-alternatives.mlir":120:1)
@@ -149,7 +149,7 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             %[[INST_0:.*]] = mpir.inst <select> capture %[[VAR_0]] (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_1]], %[[VAR_2]], %[[TYPE_2]], %[[VAR_3]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "s"> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
-// CHECK:           } <result_name = "s", or_self_of = "select", or_self_region = 0> : <Instruction>
+// CHECK:           } <result_name = "s"> : <Instruction>
   %ext = mpir.var "ext" : <Instruction> loc("lower-alternatives.mlir":153:1)
 // CHECK:           %[[VAR_4:.*]] = mpir.var "ext" : <Instruction>
   %3 = mpir.type.int 8 : <Type> loc("lower-alternatives.mlir":155:1)
@@ -165,7 +165,7 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <zext> capture %[[VAR_4]] (%[[TYPE_3]], %[[VAR_5]], %[[TYPE_4]]) <flags = [nneg], flag_modes = [required], operand_kinds = [typed_value, type_only], result_name = "z"> : (!mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:           } <result_name = "z", or_self_of = "zext", or_self_region = 0> : <Instruction>
+// CHECK:           } <result_name = "z"> : <Instruction>
 } loc("lower-alternatives.mlir":169:1)
 // CHECK:         }
 
@@ -190,9 +190,9 @@ mpir.pattern {
 // CHECK:             }, {
 // CHECK:               %[[INST_1:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[INT_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
 // CHECK:               mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:             } <result_name = "a", commuted> : <Instruction>
+// CHECK:             } <result_name = "a"> : <Instruction>
 // CHECK:             mpir.yield %[[ALT_1]] : <Instruction>
-// CHECK:           } <result_name = "a", or_self_of = "add", or_self_region = 0> : <Instruction>
+// CHECK:           } <result_name = "a"> : <Instruction>
 } loc("lower-alternatives.mlir":196:1)
 // CHECK:         }
 
@@ -219,7 +219,7 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             %[[INST_1:.*]] = mpir.inst <add> block %[[VAR_0]] flags(%[[VAR_1]]) (%[[TYPE_0]], %[[INT_0]], %[[TYPE_0]], %[[VAR_2]]) <flags = [nsw, nuw], flag_modes = [required, captured], operand_kinds = [typed_value, typed_value], treat_int_as_vec = true> : (!mpir.sort<BasicBlock>, !mpir.sort<Boolean>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:           } <commuted> : <Instruction>
+// CHECK:           } : <Instruction>
 } loc("lower-alternatives.mlir":223:1)
 // CHECK:         }
 
@@ -245,14 +245,14 @@ mpir.pattern {
 // CHECK:             }, {
 // CHECK:               %[[INST_1:.*]] = mpir.inst <mul> (%[[TYPE_0]], %[[INT_0]], %[[TYPE_0]], %[[VAR_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r$m"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:               mpir.yield %[[INST_1]] : <Instruction>
-// CHECK:             } <result_name = "r$m", commuted> : <Instruction>
+// CHECK:             } <result_name = "r$m"> : <Instruction>
 // CHECK:             %[[ALT_2:.*]] = mpir.alt {
     %i_r = mpir.inst <add> (%0, %y, %0, %i_r_m) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], metaflags = [#mpir.metaflag<"o", [1], loc("lower-alternatives.mlir":250:1)>]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 // CHECK:               mpir.yield %[[ALT_1]] : <Instruction>
 // CHECK:             }, {
 // CHECK:               %[[INST_2:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_1]], %[[TYPE_0]], %[[ALT_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 // CHECK:               mpir.yield %[[INST_2]] : <Instruction>
-// CHECK:             } <result_name = "r", or_self_of = "add", or_self_region = 0> : <Instruction>
+// CHECK:             } <result_name = "r"> : <Instruction>
     mpir.yield %i_r : <Instruction> loc("lower-alternatives.mlir":256:1)
 // CHECK:             mpir.yield %[[ALT_2]] : <Instruction>
   }, {

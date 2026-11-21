@@ -18,6 +18,6 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             %[[INST_2:.*]] = mpir.inst <mul> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "b"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 // CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-// CHECK:           } <result_name = "b", commuted> : <Instruction>
+// CHECK:           } <result_name = "b"> : <Instruction>
 } loc("lower-alternatives-surface.mlir":22:1)
 // CHECK:         }

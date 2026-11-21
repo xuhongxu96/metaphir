@@ -4,12 +4,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/PredicateKeyword.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "llvm/IR/InstrTypes.h"
 
@@ -141,8 +141,7 @@ static void lowerAlternatives(InstOp Inst) {
     mlir::StringAttr Name;
     if (std::optional<StringRef> N = Inst.getResultName())
       Name = Builder.getStringAttr(*N);
-    return AltOp::create(Builder, Loc, Inst.getType(), Name, /*commuted=*/false,
-                         mlir::StringAttr(), mlir::IntegerAttr(), NumRegions);
+    return AltOp::create(Builder, Loc, Inst.getType(), Name, NumRegions);
   };
   auto Fill = [&](AltOp Alt, unsigned Index, function_ref<Value()> Body) {
     mlir::Block &Block = Alt->getRegion(Index).emplaceBlock();
@@ -156,7 +155,6 @@ static void lowerAlternatives(InstOp Inst) {
     if (!Swapped)
       return Build(false);
     AltOp Orders = MakeAlt(2);
-    Orders.setCommuted(true);
     Fill(Orders, 0, [&] { return Build(false); });
     Fill(Orders, 1, [&] { return Build(true); });
     return Orders.getResult();
@@ -179,9 +177,6 @@ static void lowerAlternatives(InstOp Inst) {
         BindOp::create(Builder, Loc, Parts.Capture, Operand);
       return Operand;
     });
-    Alt.setOrSelfOfAttr(Builder.getStringAttr(
-        instruction::getOpcodeName(Inst.getOpcode().getValue())));
-    Alt.setOrSelfRegionAttr(Builder.getI32IntegerAttr(0));
     Result = Alt.getResult();
   } else {
     Result = Itself();
@@ -191,7 +186,8 @@ static void lowerAlternatives(InstOp Inst) {
 }
 
 namespace {
-struct LowerAlternativesPass : impl::LowerAlternativesPassBase<LowerAlternativesPass> {
+struct LowerAlternativesPass
+    : impl::LowerAlternativesPassBase<LowerAlternativesPass> {
   void runOnOperation() override {
     for (PatternOp Pattern : getOperation().getOps<PatternOp>()) {
       SmallVector<InstOp, 16> Insts;

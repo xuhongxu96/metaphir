@@ -2,7 +2,7 @@
 //
 // An mpir_index.query compiled for checking functions' features: for each
 // of its variants (ways a match can go), a function may match the variant
-// if it has the variant's features, its certain instructions can be typed
+// if it has the variant's features, the instructions it matches can be typed
 // by the function's signatures, and no constraint is false on the
 // features.
 //

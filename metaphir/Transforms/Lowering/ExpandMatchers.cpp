@@ -4,11 +4,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IRMapping.h"
 #include "llvm/ADT/SmallString.h"
@@ -570,15 +570,7 @@ LogicalResult Expander::expand(UseOp Use) {
   mlir::StringAttr ResultName;
   if (std::optional<StringRef> Name = Use.getResultName())
     ResultName = Builder.getStringAttr(*Name);
-  mlir::StringAttr OrSelfOf;
-  mlir::IntegerAttr OrSelfRegion;
-  if (OrSelf) {
-    OrSelfOf = Builder.getStringAttr(Use.getMatcher());
-    // A use's ':o' has its operand last.
-    OrSelfRegion = Builder.getI32IntegerAttr(range_size(Bodies) - 1);
-  }
   AltOp Alt = AltOp::create(Builder, Use.getLoc(), Use.getType(), ResultName,
-                            /*commuted=*/false, OrSelfOf, OrSelfRegion,
                             range_size(Bodies));
   // Each block becomes the body of one alternative region, in order.
   for (mlir::Region &Alternative : Alt->getRegions())

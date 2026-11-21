@@ -35,7 +35,8 @@ protected:
 
 TEST_F(CheckBindingsTest, RejectsAFlagCaptureABranchLeavesUnbound) {
   // The second branch has no instruction to capture 'nsw' from.
-  EXPECT_TRUE(mlir::failed(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
+  EXPECT_TRUE(
+      mlir::failed(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
   %ret = add nsw:?f ?ty ?x, ?y
 } or {
   %ret = or ?ty ?x, ?y
@@ -49,7 +50,8 @@ TEST_F(CheckBindingsTest, RejectsAFlagCaptureABranchLeavesUnbound) {
 }
 
 TEST_F(CheckBindingsTest, AcceptsAFlagCaptureABranchFixes) {
-  EXPECT_TRUE(mlir::succeeded(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
+  EXPECT_TRUE(
+      mlir::succeeded(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
   %ret = add nsw:?f ?ty ?x, ?y
 } or [nsw = false] {
   %ret = or ?ty ?x, ?y
@@ -60,7 +62,8 @@ TEST_F(CheckBindingsTest, AcceptsAFlagCaptureABranchFixes) {
 
 TEST_F(CheckBindingsTest, AcceptsAVariableOfOneBranch) {
   // '?k' is the second branch's own: nothing outside it reads it.
-  EXPECT_TRUE(mlir::succeeded(checkExpanded(R"(match addish [] Binary (?ty ?x, ?y) {
+  EXPECT_TRUE(
+      mlir::succeeded(checkExpanded(R"(match addish [] Binary (?ty ?x, ?y) {
   %ret = add ?ty ?x, ?y
 } or {
   %t = xor ?ty ?x, ?k
@@ -71,7 +74,8 @@ TEST_F(CheckBindingsTest, AcceptsAVariableOfOneBranch) {
 }
 
 TEST_F(CheckBindingsTest, AcceptsACaptureEveryBranchBinds) {
-  EXPECT_TRUE(mlir::succeeded(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
+  EXPECT_TRUE(
+      mlir::succeeded(checkExpanded(R"(match addish [nsw] Binary (?ty ?x, ?y) {
   %ret = add nsw:?f ?ty ?x, ?y
 } or {
   %ret = sub nsw:?g ?ty ?x, ?y
@@ -114,6 +118,16 @@ TEST_F(CheckBindingsTest, DoesNotChangeThePattern) {
   ASSERT_TRUE(mlir::succeeded(run(createCheckBindingsPass()))) << Errors;
   EXPECT_EQ(count<mpir::AltOp>(), Alts);
   EXPECT_EQ(count<mpir::InstOp>(), Insts);
+}
+
+TEST_F(CheckBindingsTest, ChecksNestedAlternativesOnce) {
+  // Each ':c' is an alt whose alternatives both reach the one before it: an
+  // alt walked once per alternative around it would be walked 2^40 times.
+  std::string Source = "%v0 = add:c i32 ?x, ?y0\n";
+  for (unsigned I = 1; I != 40; ++I)
+    Source += "%v" + std::to_string(I) + " = add:c i32 %v" +
+              std::to_string(I - 1) + ", ?y" + std::to_string(I) + "\n";
+  EXPECT_TRUE(mlir::succeeded(check(Source))) << Errors;
 }
 
 } // namespace

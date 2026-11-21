@@ -6,6 +6,8 @@ add_public_tablegen_target(MetaphIRToIndexPassIncGen)
 
 target_sources(metaphir-transforms PRIVATE
   Passes.h
+  Requirement.cpp
+  Requirement.h
   Retrieval.cpp
   Structuralize.cpp
   ToIndex.cpp)

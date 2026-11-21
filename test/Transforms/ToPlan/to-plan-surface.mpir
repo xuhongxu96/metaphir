@@ -876,7 +876,7 @@
 ; CHECK:           }, {
 ; CHECK:             %[[INST_2:.*]] = mpir.inst <add> (%[[TYPE_1]], %[[VAR_2]], %[[TYPE_1]], %[[INST_0]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "s"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Instruction>) -> !mpir.sort<Instruction>
 ; CHECK:             mpir.yield %[[INST_2]] : <Instruction>
-; CHECK:           } <result_name = "s", commuted> : <Instruction>
+; CHECK:           } <result_name = "s"> : <Instruction>
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
 ; CHECK:           %[[INT_1:.*]] = mpir_expr.int 1 : ui64 : <Integer>
 ; CHECK:           %[[CALL_0:.*]] = mpir_expr.call call "ugt"(%[[READ_0]], %[[INT_1]]) anchor %[[ALT_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>

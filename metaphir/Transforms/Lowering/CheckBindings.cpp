@@ -5,9 +5,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/Passes.h"
-#include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/Dialect/Pattern/SourceLocation.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "mlir/IR/BuiltinOps.h"
 
 namespace llvm {
@@ -28,16 +28,25 @@ using namespace mpir;
 //===----------------------------------------------------------------------===//
 
 namespace {
+/// What the walks of a pattern share.
+struct AltBindings {
+  /// The variables each mpir.alt binds whichever alternative matches: an
+  /// alt reached again, from another alternative around it, is not walked
+  /// again.
+  DenseMap<Operation *, SetVector<Value>> Bound;
+  /// The variables an mpir.alt binds in some alternatives but not all, each
+  /// with the first such alt, to report.
+  DenseMap<Value, AltOp> Partial;
+};
+
 /// The meta variables matching a value binds, whichever alternatives match.
 struct Bindings {
   SetVector<Value> Variables;
   SmallVector<Value, 8> Pending;
   DenseSet<Operation *> Visited;
-  /// The variables an mpir.alt binds in some alternatives but not all, each
-  /// with the first such alt, to report.
-  DenseMap<Value, AltOp> *Partial;
+  AltBindings *Alts;
 
-  explicit Bindings(DenseMap<Value, AltOp> &Into) : Partial(&Into) {}
+  explicit Bindings(AltBindings &Alts) : Alts(&Alts) {}
 
   void addVariable(Value V) {
     if (V && !V.getDefiningOp<IntOp>())
@@ -101,24 +110,31 @@ void Bindings::addValue(Value V) {
 }
 
 void Bindings::addAlternatives(AltOp Alt) {
-  // An alternative's bindings are found on their own: a variable is bound by
-  // the alt only if every alternative binds it.
-  SmallVector<Bindings, 2> Regions;
-  for (mlir::Region &Region : Alt->getRegions())
-    collectRegion(Regions.emplace_back(*Partial), Region);
-  for (const Bindings &Region : Regions)
-    for (Value Var : Region.Variables) {
-      // A variable defined in an alternative is read only there.
-      Operation *VarDef = Var.getDefiningOp();
-      if (VarDef && Alt->isProperAncestor(VarDef))
-        continue;
-      if (all_of(Regions, [&](const Bindings &Other) {
-            return Other.Variables.contains(Var);
-          }))
-        addVariable(Var);
-      else
-        Partial->try_emplace(Var, Alt);
-    }
+  auto Known = Alts->Bound.find(Alt);
+  if (Known == Alts->Bound.end()) {
+    // An alternative's bindings are found on their own: a variable is bound
+    // by the alt only if every alternative binds it.
+    SmallVector<Bindings, 2> Regions;
+    for (mlir::Region &Region : Alt->getRegions())
+      collectRegion(Regions.emplace_back(*Alts), Region);
+    SetVector<Value> Bound;
+    for (const Bindings &Region : Regions)
+      for (Value Var : Region.Variables) {
+        // A variable defined in an alternative is read only there.
+        Operation *VarDef = Var.getDefiningOp();
+        if (VarDef && Alt->isProperAncestor(VarDef))
+          continue;
+        if (all_of(Regions, [&](const Bindings &Other) {
+              return Other.Variables.contains(Var);
+            }))
+          Bound.insert(Var);
+        else
+          Alts->Partial.try_emplace(Var, Alt);
+      }
+    Known = Alts->Bound.try_emplace(Alt, std::move(Bound)).first;
+  }
+  for (Value Var : Known->second)
+    addVariable(Var);
 }
 
 static void collectRegion(Bindings &Into, mlir::Region &Region) {
@@ -135,8 +151,8 @@ static void collectRegion(Bindings &Into, mlir::Region &Region) {
 
 static LogicalResult checkBindings(PatternOp Pattern) {
   mlir::Block &Block = Pattern.getBody().front();
-  DenseMap<Value, AltOp> Partial;
-  Bindings Always(Partial);
+  AltBindings Alts;
+  Bindings Always(Alts);
   // Every matcher of the pattern itself is matched, also one an alternative
   // does not reach: it is then searched for on its own. A 'let' binds its
   // variable whichever alternatives match.
@@ -153,7 +169,7 @@ static LogicalResult checkBindings(PatternOp Pattern) {
     if (mlir::failed(Result) || Name.empty() || Name.starts_with("_") ||
         Always.Variables.contains(Var))
       return;
-    AltOp Alt = Partial.lookup(Var);
+    AltOp Alt = Alts.Partial.lookup(Var);
     if (!Alt)
       return;
     Location Loc = getSourceRange(Var.getLoc()).Start.isValid() ? Var.getLoc()

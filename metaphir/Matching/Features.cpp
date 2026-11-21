@@ -25,8 +25,6 @@ static_assert(NumInstructionIDs <= 64,
 static constexpr unsigned NumFlagIDs = instruction_flag::NumFlagIDs;
 static_assert(NumFlagIDs <= 32, "flags must fit in a 32-bit mask");
 
-static uint32_t flagBit(unsigned Flag) { return uint32_t(1) << Flag; }
-
 /// The flags of I that instruction matcher ID supports.
 static uint32_t supportedFlags(instruction::InstructionID ID,
                                const llvm::Instruction &I) {
@@ -35,7 +33,7 @@ static uint32_t supportedFlags(instruction::InstructionID ID,
   for (unsigned Flag = 0; Flag != NumFlagIDs; ++Flag)
     if (Supported >> Flag & 1 &&
         hasSemanticFlag(instruction_flag::FlagID(Flag), I))
-      Flags |= flagBit(Flag);
+      Flags |= uint32_t(1) << Flag;
   return Flags;
 }
 
