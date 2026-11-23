@@ -323,6 +323,7 @@ void VariantEmitter::collectSites() {
     auto It = SitesOf.find(canonical(Inst.getResult()));
     if (It == SitesOf.end())
       return;
+    // Copy before `SitesOf` is modified
     SmallVector<Attribute, 2> Of = It->second;
     SitesOf[Capture] = std::move(Of);
   });
@@ -414,6 +415,7 @@ Value VariantEmitter::readingOfCall(mpir_expr::CallOp Call) {
 
 void VariantEmitter::name(Operation *Reading, Value Original) {
   // Named as the instruction or alternative it is, else as its variable.
+  // Only for readability.
   if (Operation *D = canonical(Original).getDefiningOp()) {
     if (auto Name =
             D->getAttrOfType<mlir::StringAttr>(mpir::ResultNameAttrName)) {

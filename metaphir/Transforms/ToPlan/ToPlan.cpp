@@ -579,7 +579,8 @@ Value Compiler::cloneExpression(Value E, mlir::IRMapping &Mapping) {
   Location Loc = E.getLoc();
   Value Result;
   if (!Def || isa<VarOp, InstOp, AltOp>(Def)) {
-    // A pattern value: its slot.
+    // A pattern value: its slot, named as the value, which the errors of
+    // evaluating the constraint name it by.
     unsigned Slot = slotOf(E);
     auto SlotOp = plan::SlotOp::create(Builder, Loc, E.getType(), i32(Slot));
     StringRef Name = cast<mlir::StringAttr>(S.Names[Slot]).getValue();
