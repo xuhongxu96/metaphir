@@ -228,17 +228,17 @@ static void structuralize(index::QueryOp Query) {
       addAtoms(Builder, Variant.getLoc(), Split.front());
       continue;
     }
-    // A copy of the variant per disjunct, the variant itself the last.
+    // A copy of the variant per disjunct but the last, which the variant
+    // takes: each copy is taken before the variant gets atoms of its own.
     NumVariants += Split.size() - 1;
-    for (auto [Index, Atoms] : enumerate(Split)) {
-      index::VariantOp Target = Variant;
-      if (Index + 1 != Split.size()) {
-        Builder.setInsertionPoint(Variant);
-        Target = cast<index::VariantOp>(Builder.clone(*Variant));
-      }
-      Builder.setInsertionPointToStart(&Target.getBody().front());
+    for (ArrayRef<Atom_> Atoms : ArrayRef(Split).drop_back()) {
+      Builder.setInsertionPoint(Variant);
+      auto Copy = cast<index::VariantOp>(Builder.clone(*Variant));
+      Builder.setInsertionPointToStart(&Copy.getBody().front());
       addAtoms(Builder, Variant.getLoc(), Atoms);
     }
+    Builder.setInsertionPointToStart(&Body);
+    addAtoms(Builder, Variant.getLoc(), Split.back());
   }
 }
 
