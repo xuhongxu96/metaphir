@@ -2,6 +2,7 @@
 #define METAPHIR_MATCHING_OPERATORS_ABSTRACTCALL_H
 
 #include "metaphir/IR/Instruction.h"
+#include "metaphir/IR/Site.h"
 #include "metaphir/Matching/ConstraintError.h"
 #include "metaphir/Matching/ConstraintValue.h"
 #include "metaphir/Matching/Operators/Facts.h"
@@ -15,24 +16,6 @@ namespace llvm {
 namespace metaphir {
 
 class FunctionFeatures;
-
-/// A place a pattern value certainly occupies in every match: an operand, in
-/// one of Slots, of the instruction Node matches, or (Slots holding
-/// ResultSlot) that instruction itself.
-struct Site {
-  /// The pattern instruction (an index query's mpir_index.node number), and
-  /// the built-in matcher it is.
-  int64_t Node = -1;
-  instruction::InstructionID ID = instruction::InstructionID(0);
-  /// Bit S is set for slot S; with ':c', operands can be in either of two.
-  uint8_t Slots = 0;
-
-  auto tie() const { return std::make_tuple(Node, ID, Slots); }
-  bool operator<(const Site &Other) const { return tie() < Other.tie(); }
-  bool operator==(const Site &Other) const { return tie() == Other.tie(); }
-};
-
-using Sites = SmallVector<Site, 2>;
 
 /// What a constraint expression is on a function's features: a value it
 /// certainly has (a literal, or a type bound during index matching), the

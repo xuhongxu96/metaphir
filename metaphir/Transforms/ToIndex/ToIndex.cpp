@@ -297,10 +297,9 @@ void VariantEmitter::emitTypings() {
 }
 
 Attribute VariantEmitter::site(Operation *Node, uint8_t Slots) {
-  return Builder.getArrayAttr(
-      {Builder.getI64IntegerAttr(nodeOf(Node)),
-       Builder.getI64IntegerAttr(cast<InstOp>(Node).getOpcode().getValue()),
-       Builder.getI64IntegerAttr(Slots)});
+  return index::encodeSite(
+      Builder.getContext(),
+      {nodeOf(Node), cast<InstOp>(Node).getOpcode().getValue(), Slots});
 }
 
 void VariantEmitter::collectSites() {

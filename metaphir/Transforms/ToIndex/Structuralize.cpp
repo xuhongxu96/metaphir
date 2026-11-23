@@ -17,10 +17,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/ToIndex/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Matching/Operators/Facts.h"
+#include "metaphir/Transforms/ToIndex/Passes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IRMapping.h"
@@ -69,18 +69,11 @@ static index::SitesOp sitesRead(Value E) {
 
 /// Whether some site of Sites is the given slot of a call.
 static bool atCallSlot(index::SitesOp Sites, unsigned SlotBits) {
-  for (mlir::Attribute A : Sites.getSites()) {
-    auto Site = cast<mlir::ArrayAttr>(A);
-    auto Int = [&](unsigned I) {
-      return cast<mlir::IntegerAttr>(Site[I]).getInt();
-    };
-    if (Int(1) == instruction::I_call && Int(2) == int64_t(SlotBits))
-      return true;
-  }
-  return false;
+  return any_of(Sites.getSites(), [&](mlir::Attribute A) {
+    Site S = index::decodeSite(A);
+    return S.ID == instruction::I_call && S.Slots == SlotBits;
+  });
 }
-
-static std::optional<Disjunction> derive(Value C);
 
 /// What an equality of E and the string Literal needs.
 static std::optional<Disjunction> deriveEquality(Value E, StringRef Literal) {
@@ -106,12 +99,9 @@ static std::optional<Disjunction> deriveEquality(Value E, StringRef Literal) {
     // A value an instruction matcher matches as itself is of its kind: the
     // constraint holds only if that is the kind it names.
     for (mlir::Attribute A : Sites.getSites()) {
-      auto Site = cast<mlir::ArrayAttr>(A);
-      auto Kind =
-          instruction::InstructionID(cast<mlir::IntegerAttr>(Site[1]).getInt());
-      if (cast<mlir::IntegerAttr>(Site[2]).getInt() ==
-              int64_t(1u << ResultSlot) &&
-          matcherOf(instruction::getOpcodeName(Kind)) == Kind && ID != Kind)
+      Site S = index::decodeSite(A);
+      if (S.Slots == 1u << ResultSlot &&
+          matcherOf(instruction::getOpcodeName(S.ID)) == S.ID && ID != S.ID)
         return Disjunction();
     }
     if (ID)
@@ -199,9 +189,8 @@ static void addAtoms(mlir::OpBuilder &Builder, mlir::Location Loc,
 
 static void structuralize(index::QueryOp Query) {
   mlir::OpBuilder Builder(Query.getContext());
-  unsigned NumVariants = 0;
-  for (auto V : Query.getBody().front().getOps<index::VariantOp>())
-    (void)V, ++NumVariants;
+  size_t NumVariants =
+      llvm::range_size(Query.getBody().front().getOps<index::VariantOp>());
   for (auto Variant : llvm::make_early_inc_range(
            Query.getBody().front().getOps<index::VariantOp>())) {
     // What every match needs, and the disjunctions that split the variant.
@@ -254,7 +243,8 @@ static void structuralize(index::QueryOp Query) {
 }
 
 namespace {
-struct IndexStructuralizePass : impl::IndexStructuralizePassBase<IndexStructuralizePass> {
+struct IndexStructuralizePass
+    : impl::IndexStructuralizePassBase<IndexStructuralizePass> {
   void runOnOperation() override {
     for (auto Query : getOperation().getOps<index::QueryOp>())
       structuralize(Query);

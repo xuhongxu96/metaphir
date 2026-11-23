@@ -8,6 +8,7 @@
 #define METAPHIR_DIALECT_INDEX_INDEXDIALECT_H
 
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/IR/Site.h"
 #include "mlir/Bytecode/BytecodeOpInterface.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/OpDefinition.h"
@@ -20,5 +21,17 @@
 
 #define GET_OP_CLASSES
 #include "metaphir/Dialect/Index/IndexOps.h.inc"
+
+namespace llvm {
+namespace metaphir {
+namespace mpir_index {
+
+/// An mpir_index.sites element: [node, opcode, slots].
+mlir::ArrayAttr encodeSite(mlir::MLIRContext *Context, const Site &S);
+Site decodeSite(mlir::Attribute A);
+
+} // namespace mpir_index
+} // namespace metaphir
+} // namespace llvm
 
 #endif // METAPHIR_DIALECT_INDEX_INDEXDIALECT_H

@@ -26,6 +26,7 @@ add_library(metaphir-ir
   MetaFlag.h
   PatternSettings.h
   PredicateKeyword.h
+  Site.h
   Sort.cpp
   Sort.h
   Type.h

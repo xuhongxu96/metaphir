@@ -25,3 +25,19 @@ void IndexDialect::initialize() {
 #include "metaphir/Dialect/Index/IndexOps.cpp.inc"
       >();
 }
+
+ArrayAttr llvm::metaphir::mpir_index::encodeSite(MLIRContext *Context,
+                                                 const Site &S) {
+  Builder B(Context);
+  return B.getArrayAttr({B.getI64IntegerAttr(S.Node), B.getI64IntegerAttr(S.ID),
+                         B.getI64IntegerAttr(S.Slots)});
+}
+
+llvm::metaphir::Site llvm::metaphir::mpir_index::decodeSite(Attribute A) {
+  auto Site = cast<ArrayAttr>(A);
+  auto Element = [&](unsigned I) {
+    return cast<IntegerAttr>(Site[I]).getInt();
+  };
+  return {Element(0), llvm::metaphir::instruction::InstructionID(Element(1)),
+          uint8_t(Element(2))};
+}

@@ -25,14 +25,6 @@ struct IndexQuery::Typing {
   SmallVector<bool, 4> IsValue;
 };
 
-/// The site an mpir_index.sites element is: [node, opcode, slots].
-static Site siteOf(mlir::ArrayAttr Attr) {
-  auto Int = [&](unsigned I) {
-    return cast<mlir::IntegerAttr>(Attr[I]).getInt();
-  };
-  return Site{Int(0), instruction::InstructionID(Int(1)), uint8_t(Int(2))};
-}
-
 static RetrievalPlan compileRetrieval(mpir_index::RetrieveOp Retrieve);
 
 /// Whether Op is a feature only the constraints need.
@@ -362,7 +354,7 @@ Expected<AbstractValue> AbstractEvaluator::eval(mlir::Value E, Frame &F) {
     if (auto Sites = V.getDefiningOp<mpir_index::SitesOp>()) {
       ::llvm::metaphir::Sites Of;
       for (mlir::Attribute A : Sites.getSites())
-        Of.push_back(siteOf(cast<mlir::ArrayAttr>(A)));
+        Of.push_back(mpir_index::decodeSite(A));
       return AbstractValue::sites(std::move(Of));
     }
     if (auto Var = V.getDefiningOp<mpir_index::TypeVarOp>()) {
