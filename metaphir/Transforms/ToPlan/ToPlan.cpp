@@ -23,6 +23,7 @@
 #include "mlir/Pass/Pass.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetOperations.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallString.h"
 
 namespace llvm {
@@ -94,25 +95,25 @@ private:
   void assignSlots();
   unsigned slotOf(Value V) const { return S.Of.lookup(V); }
 
-  /// Matches V against what Reg holds.
-  void matchValue(Value V, Value Reg, bool TreatIntAsVec);
-  void matchInstruction(InstOp Inst, Value Reg);
-  void matchAlternatives(AltOp Alt, Value Reg);
+  mlir::ArrayAttr typePattern(Value T);
+  void bindVariable(Value Reg, Value Var, bool AsSort);
   /// Matches the matcher V, an instruction or alternative, against Reg: by
   /// its binding if bound, or else in full (and at run time when only some
   /// paths bind it).
   void matchMatcher(Value V, Value Reg, function_ref<void()> Full);
-  /// Matches the matchers of Block that the path has not bound, each against
-  /// every instruction, and then checks Block's constraints.
-  void finishBlock(mlir::Block &Block, ArrayRef<Operation *> Roots);
-  void bindVariable(Value Reg, Value Var, bool AsSort);
-
-  mlir::ArrayAttr typePattern(Value T);
+  void matchInstruction(InstOp Inst, Value Reg);
+  void matchAlternatives(AltOp Alt, Value Reg);
+  /// Matches V against what Reg holds.
+  void matchValue(Value V, Value Reg, bool TreatIntAsVec);
 
   /// Clones the expression E into the plan, reading slots.
   Value cloneExpression(Value E, mlir::IRMapping &Mapping);
   void check(RequireOp Require);
   void let(LetOp Let);
+
+  /// Matches the matchers of Block that the path has not bound, each against
+  /// every instruction, and then checks Block's constraints.
+  void finishBlock(mlir::Block &Block, ArrayRef<Operation *> Roots);
 };
 
 } // namespace
@@ -140,10 +141,18 @@ static std::optional<instruction::InstructionID> sharedOpcode(Operation *Op) {
   return Shared;
 }
 
+/// Numbers every value a match binds before anything is compiled, because the
+/// plan refers to a binding only by its slot number (mpir_plan.bind writes a
+/// slot and a check reads one). Records each slot's name, kind, sort and
+/// location to print the match and report errors.
+///
+/// Gives each meta variable, instruction matcher and alternative a slot, in
+/// the order they are written (a pre-order walk). A matcher that an
+/// alternative yields shares the alternative's slot instead, because
+/// whichever alternative matches, the instruction it matches is the
+/// alternative's match. With nested alternatives, it shares the outermost
+/// one's slot, which the walk has already numbered.
 void Compiler::assignSlots() {
-  // Instruction matchers and alternatives, and the meta variables, in the
-  // order they are written. A matcher an alternative yields is matched for
-  // it, and shares its slot.
   Pattern.walk<mlir::WalkOrder::PreOrder>([&](Operation *Op) {
     Location Loc = Op->getLoc();
     if (auto Var = dyn_cast<VarOp>(Op)) {
@@ -154,12 +163,14 @@ void Compiler::assignSlots() {
     if (!isa<InstOp, AltOp>(Op))
       return;
     Value Result = Op->getResult(0);
-    // The alternative this one is yielded by, outermost first.
+    // Climb from this matcher to the outermost alternative that yields it,
+    // one yielding alternative at a time.
     Value Outer = Result;
     while (true) {
       AltOp Yielding;
-      // Only an alternative's own matcher: a value from outside it that it
-      // yields (an operand in its place) is not the alternative's.
+      // Only a matcher defined in the alternative's own region counts. A
+      // value from outside that the alternative yields (an operand matched
+      // in the instruction's place) has a slot of its own.
       for (Operation *User : Outer.getUsers())
         if (auto Yield = dyn_cast<YieldOp>(User))
           if (auto Alt = dyn_cast<AltOp>(Yield->getParentOp()))
@@ -171,11 +182,12 @@ void Compiler::assignSlots() {
       Outer = Yielding.getResult();
     }
     if (Outer != Result) {
-      // A yielded matcher of an alternative of an alternative: the
-      // outermost's slot, assigned when it was walked.
+      // Share the outermost alternative's slot, as this matcher is yielded.
       S.Of[Result] = S.Of.lookup(Outer);
       return;
     }
+    // Give it a slot of its own, and name the slot for printing by the
+    // pattern's '%name', or by its opcode if the pattern leaves it unnamed.
     StringRef Name;
     StringRef OpcodeName;
     if (auto Inst = dyn_cast<InstOp>(Op)) {
@@ -198,8 +210,6 @@ void Compiler::assignSlots() {
     S.add(Result, Printed, plan::SlotKind::Instruction, Sort::Instruction, Loc,
           Context);
   });
-  // Branch parameters left in the lowered pattern (unbound ones) are
-  // variables too.
 }
 
 mlir::ArrayAttr Compiler::typePattern(Value T) {
@@ -256,56 +266,6 @@ void Compiler::bindVariable(Value Reg, Value Var, bool AsSort) {
     Bind.setSort(int32_t(resolveSort(sortOf(Var))));
   Bound.Certain.insert(Slot);
   Bound.Maybe.erase(Slot);
-}
-
-void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
-  Operation *Def = V.getDefiningOp();
-  Location Loc = V.getLoc();
-  if (isVariable(V)) {
-    bindVariable(Reg, V, /*AsSort=*/true);
-    return;
-  }
-  if (auto Inst = dyn_cast<InstOp>(Def)) {
-    matchMatcher(V, Reg, [&] { matchInstruction(Inst, Reg); });
-    return;
-  }
-  if (auto Alt = dyn_cast<AltOp>(Def)) {
-    matchMatcher(V, Reg, [&] { matchAlternatives(Alt, Reg); });
-    return;
-  }
-  if (auto Int = dyn_cast<IntOp>(Def)) {
-    auto Check =
-        plan::CheckConstantOp::create(Builder, Loc, Reg, Int.getValueAttr());
-    if (TreatIntAsVec)
-      Check.setTreatIntAsVec(true);
-    return;
-  }
-  if (auto Float = dyn_cast<FloatOp>(Def)) {
-    plan::CheckConstantOp::create(Builder, Loc, Reg, Float.getValue());
-    return;
-  }
-  if (auto Keyword = dyn_cast<KeywordOp>(Def)) {
-    auto Check = plan::CheckConstantOp::create(
-        Builder, Loc, Reg, Builder.getI32IntegerAttr(Keyword.getKeyword()));
-    Check.setKeyword(true);
-    return;
-  }
-  if (auto Global = dyn_cast<GlobalOp>(Def)) {
-    plan::CheckConstantOp::create(Builder, Loc, Reg, Global.getNameAttr());
-    return;
-  }
-  if (auto Aggregate = dyn_cast<AggregateOp>(Def)) {
-    mlir::OperandRange Elements = Aggregate.getElements();
-    plan::CheckAggregateOp::create(Builder, Loc, Reg, Aggregate.getDelimiter(),
-                                   i32(Elements.size() / 2));
-    for (unsigned I = 0; I + 1 < Elements.size(); I += 2) {
-      Value Element =
-          plan::GetElementOp::create(Builder, Loc, reg(), Reg, i32(I / 2));
-      matchValue(Elements[I + 1], Element, /*TreatIntAsVec=*/false);
-    }
-    return;
-  }
-  llvm_unreachable("not a pattern value");
 }
 
 void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
@@ -542,34 +502,54 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
   Bound = std::move(*Joined);
 }
 
-void Compiler::finishBlock(mlir::Block &Block, ArrayRef<Operation *> Roots) {
-  // Roots first, then any matcher the path left unbound: a block's
-  // instructions all match.
-  SmallVector<Operation *, 8> Order(Roots.begin(), Roots.end());
-  for (Operation &Op : Block)
-    if (isa<InstOp, AltOp>(Op) && !is_contained(Order, &Op))
-      Order.push_back(&Op);
-  for (Operation *Op : Order) {
-    Value V = Op->getResult(0);
-    if (Bound.Certain.contains(slotOf(V)))
-      continue;
-    Location Loc = Op->getLoc();
-    auto MatchAnywhere = [&] {
-      Value Each = plan::ForeachInstructionOp::create(Builder, Loc, reg());
-      matchValue(V, Each, /*TreatIntAsVec=*/false);
-    };
-    if (!Bound.Maybe.contains(slotOf(V))) {
-      MatchAnywhere();
-      continue;
+void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
+  Operation *Def = V.getDefiningOp();
+  Location Loc = V.getLoc();
+  if (isVariable(V)) {
+    bindVariable(Reg, V, /*AsSort=*/true);
+    return;
+  }
+  if (auto Inst = dyn_cast<InstOp>(Def)) {
+    matchMatcher(V, Reg, [&] { matchInstruction(Inst, Reg); });
+    return;
+  }
+  if (auto Alt = dyn_cast<AltOp>(Def)) {
+    matchMatcher(V, Reg, [&] { matchAlternatives(Alt, Reg); });
+    return;
+  }
+  if (auto Int = dyn_cast<IntOp>(Def)) {
+    auto Check =
+        plan::CheckConstantOp::create(Builder, Loc, Reg, Int.getValueAttr());
+    if (TreatIntAsVec)
+      Check.setTreatIntAsVec(true);
+    return;
+  }
+  if (auto Float = dyn_cast<FloatOp>(Def)) {
+    plan::CheckConstantOp::create(Builder, Loc, Reg, Float.getValue());
+    return;
+  }
+  if (auto Keyword = dyn_cast<KeywordOp>(Def)) {
+    auto Check = plan::CheckConstantOp::create(
+        Builder, Loc, Reg, Builder.getI32IntegerAttr(Keyword.getKeyword()));
+    Check.setKeyword(true);
+    return;
+  }
+  if (auto Global = dyn_cast<GlobalOp>(Def)) {
+    plan::CheckConstantOp::create(Builder, Loc, Reg, Global.getNameAttr());
+    return;
+  }
+  if (auto Aggregate = dyn_cast<AggregateOp>(Def)) {
+    mlir::OperandRange Elements = Aggregate.getElements();
+    plan::CheckAggregateOp::create(Builder, Loc, Reg, Aggregate.getDelimiter(),
+                                   i32(Elements.size() / 2));
+    for (unsigned I = 0; I + 1 < Elements.size(); I += 2) {
+      Value Element =
+          plan::GetElementOp::create(Builder, Loc, reg(), Reg, i32(I / 2));
+      matchValue(Elements[I + 1], Element, /*TreatIntAsVec=*/false);
     }
-    matchMatcher(V, Value(), MatchAnywhere);
+    return;
   }
-  for (Operation &Op : Block) {
-    if (auto Require = dyn_cast<RequireOp>(Op))
-      check(Require);
-    else if (auto Let = dyn_cast<LetOp>(Op))
-      let(Let);
-  }
+  llvm_unreachable("not a pattern value");
 }
 
 Value Compiler::cloneExpression(Value E, mlir::IRMapping &Mapping) {
@@ -648,6 +628,36 @@ void Compiler::let(LetOp Let) {
   plan::LetOp::create(Builder, Loc, i32(Slot), Assigned, Same);
   Bound.Certain.insert(Slot);
   Bound.Maybe.erase(Slot);
+}
+
+void Compiler::finishBlock(mlir::Block &Block, ArrayRef<Operation *> Roots) {
+  // Roots first, then any matcher the path left unbound: a block's
+  // instructions all match.
+  SmallSetVector<Operation *, 8> Order(Roots.begin(), Roots.end());
+  for (Operation &Op : Block)
+    if (isa<InstOp, AltOp>(Op))
+      Order.insert(&Op);
+  for (Operation *Op : Order) {
+    Value V = Op->getResult(0);
+    if (Bound.Certain.contains(slotOf(V)))
+      continue;
+    Location Loc = Op->getLoc();
+    auto MatchAnywhere = [&] {
+      Value Each = plan::ForeachInstructionOp::create(Builder, Loc, reg());
+      matchValue(V, Each, /*TreatIntAsVec=*/false);
+    };
+    if (!Bound.Maybe.contains(slotOf(V))) {
+      MatchAnywhere();
+      continue;
+    }
+    matchMatcher(V, Value(), MatchAnywhere);
+  }
+  for (Operation &Op : Block) {
+    if (auto Require = dyn_cast<RequireOp>(Op))
+      check(Require);
+    else if (auto Let = dyn_cast<LetOp>(Op))
+      let(Let);
+  }
 }
 
 plan::MatcherOp Compiler::compile() {
