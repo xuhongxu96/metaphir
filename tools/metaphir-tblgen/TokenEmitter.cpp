@@ -14,6 +14,7 @@
 
 #include "Emit.h"
 #include "Records.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 
@@ -105,18 +106,17 @@ void emitTokens(const RecordKeeper &Records, raw_ostream &OS) {
 
   // The lexer's accessor for a token's value, for the tokens that have one.
   SmallVector<const Record *, 16> Valued;
-  SmallVector<std::string, 8> Values;
+  SmallSetVector<StringRef, 8> Values;
   for (const Record *T : Tokens) {
-    std::string Value = T->getValueAsString("Value").str();
+    StringRef Value = T->getValueAsString("Value");
     if (Value.empty())
       continue;
     Valued.push_back(T);
-    if (!is_contained(Values, Value))
-      Values.push_back(Value);
+    Values.insert(Value);
   }
   OS << "/// Which of the lexer's value accessors holds a token's value.\n"
         "enum class ValueKind {\n  None,\n";
-  for (const std::string &Value : Values)
+  for (StringRef Value : Values)
     OS << "  " << Value << ",\n";
   OS << "};\n\nstruct TokenValue {\n  Kind Token;\n  ValueKind Value;\n};\n\n";
   emitArray<decltype(Valued), const Record *>(

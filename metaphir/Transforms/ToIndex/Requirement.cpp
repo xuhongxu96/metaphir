@@ -94,7 +94,7 @@ BuildResult RequirementBuilder::build(mlir::Block &Block) {
   Met.clear();
   Walk All;
   visitBlock(Block, All);
-  return {Undecided, std::move(All.R), std::move(Constraints)};
+  return {Undecided, std::move(All.R), Constraints.takeVector()};
 }
 
 void RequirementBuilder::visitInstruction(InstOp Node, Walk &Into) {
@@ -181,7 +181,8 @@ const Requirement &RequirementBuilder::requirementOfAlternatives(AltOp Alt) {
     else
       R.intersect(Each.R);
   }
-  Constraints.truncate(NumConstraints);
+  while (Constraints.size() > NumConstraints)
+    Constraints.pop_back();
   return Met.try_emplace(Alt, std::move(R)).first->second;
 }
 
@@ -196,8 +197,7 @@ void RequirementBuilder::visitBlock(mlir::Block &Block, Walk &Into) {
   for (Operation *Root : getPatternRoots(Block))
     visit(Root->getResult(0), Into);
   for (RequireOp Require : Block.getOps<RequireOp>())
-    if (!is_contained(Constraints, Require))
-      Constraints.push_back(Require);
+    Constraints.insert(Require);
 }
 
 } // namespace toindex

@@ -12,12 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/ToIndex/Passes.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Matching/Features.h"
+#include "metaphir/Transforms/ToIndex/Passes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/Pass/Pass.h"
+#include "llvm/ADT/SetVector.h"
 #include <map>
 #include <tuple>
 
@@ -180,12 +181,10 @@ static void deduplicate(mlir::Block &Block) {
       continue;
     // Repeated operands, in order.
     if (isa<index::UnionOp, index::IntersectOp>(Op)) {
-      SmallVector<Value, 4> Unique;
-      for (Value V : Op.getOperands())
-        if (!is_contained(Unique, V))
-          Unique.push_back(V);
+      SmallSetVector<Value, 4> Unique(Op.getOperands().begin(),
+                                      Op.getOperands().end());
       if (Unique.size() != Op.getNumOperands())
-        Op.setOperands(Unique);
+        Op.setOperands(Unique.getArrayRef());
       if (Unique.size() == 1) {
         Op.getResult(0).replaceAllUsesWith(Unique.front());
         Op.erase();

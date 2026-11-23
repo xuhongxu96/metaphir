@@ -8,6 +8,7 @@
 
 #include "Records.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TableGen/TableGenBackend.h"
 
@@ -16,7 +17,7 @@ using namespace metaphir_tblgen;
 
 namespace {
 
-void emitList(raw_ostream &OS, StringRef Name, ArrayRef<std::string> Items,
+void emitList(raw_ostream &OS, StringRef Name, ArrayRef<StringRef> Items,
               bool Last) {
   OS << "  \"" << Name << "\": [\n";
   for (auto [Index, Item] : enumerate(Items))
@@ -26,27 +27,23 @@ void emitList(raw_ostream &OS, StringRef Name, ArrayRef<std::string> Items,
 }
 
 void emitWebKeywords(const RecordKeeper &Records, raw_ostream &OS) {
-  SmallVector<std::string, 64> Instructions, Keywords;
+  SmallVector<StringRef, 64> Instructions, Keywords;
   for (const Record *R : getDefinitionsInOrder(Records, "InstructionMatcher"))
-    Instructions.push_back(R->getName().str());
+    Instructions.push_back(R->getName());
   for (const Record *R : getDefinitionsInOrder(Records, "Keyword"))
-    Keywords.push_back(R->getValueAsString("Spelling").str());
+    Keywords.push_back(R->getValueAsString("Spelling"));
   for (const Record *R : getDefinitionsInOrder(Records, "KeywordConstant"))
-    Keywords.push_back(R->getValueAsString("Spelling").str());
+    Keywords.push_back(R->getValueAsString("Spelling"));
   // Every spelling of a built-in constraint operator, once.
-  SmallVector<std::string, 128> Operators;
-  auto AddOperator = [&](StringRef Name) {
-    if (!is_contained(Operators, Name))
-      Operators.push_back(Name.str());
-  };
+  SetVector<StringRef> Operators;
   for (const Record *R : getDefinitionsInOrder(Records, "ConstraintOperator"))
-    AddOperator(R->getValueAsString("Spelling"));
+    Operators.insert(R->getValueAsString("Spelling"));
   for (const Record *R : getDefinitionsInOrder(Records, "OperatorAlias"))
-    AddOperator(R->getValueAsString("Spelling"));
+    Operators.insert(R->getValueAsString("Spelling"));
   OS << "{\n";
   emitList(OS, "instructions", Instructions, false);
   emitList(OS, "keywords", Keywords, false);
-  emitList(OS, "operators", Operators, true);
+  emitList(OS, "operators", Operators.getArrayRef(), true);
   OS << "}\n";
 }
 

@@ -25,6 +25,7 @@
 #include "mlir/Pass/Pass.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/SetVector.h"
 
 namespace llvm {
 namespace metaphir {
@@ -118,7 +119,7 @@ private:
   /// Type variables, numbered for the typings and constraints.
   MapVector<Value, unsigned> TypeVars;
   /// The sites each pattern value occupies.
-  MapVector<Value, SmallVector<Attribute, 2>> SitesOf;
+  MapVector<Value, SmallSetVector<Attribute, 2>> SitesOf;
   /// The constraint expressions emitted for the pattern's.
   DenseMap<Value, Value> Readings;
 
@@ -305,13 +306,10 @@ Attribute VariantEmitter::site(Operation *Node, uint8_t Positions) {
 void VariantEmitter::collectSites() {
   // Where the pattern's values are operands and, for an instruction matched
   // as itself, its result.
-  for (auto [V, Node, Positions] : R.OperandSites) {
-    Attribute S = site(Node, Positions);
-    if (!is_contained(SitesOf[V], S))
-      SitesOf[V].push_back(S);
-  }
+  for (auto [V, Node, Positions] : R.OperandSites)
+    SitesOf[V].insert(site(Node, Positions));
   for (InstOp Inst : OrderedMatched)
-    SitesOf[canonical(Inst.getResult())].push_back(
+    SitesOf[canonical(Inst.getResult())].insert(
         site(Inst, uint8_t(1u << ResultPosition)));
   // A capture is at its instruction's sites, whether or not the variant
   // matches the instruction.
@@ -323,7 +321,7 @@ void VariantEmitter::collectSites() {
     if (It == SitesOf.end())
       return;
     // Copy before `SitesOf` is modified
-    SmallVector<Attribute, 2> Of = It->second;
+    SmallSetVector<Attribute, 2> Of = It->second;
     SitesOf[Capture] = std::move(Of);
   });
 }
@@ -367,8 +365,9 @@ Value VariantEmitter::readingOfValue(Value E) {
   Operation *Reading;
   auto It = SitesOf.find(canonical(E));
   if (It != SitesOf.end())
-    Reading = index::SitesOp::create(Builder, L, E.getType(),
-                                     Builder.getArrayAttr(It->second));
+    Reading =
+        index::SitesOp::create(Builder, L, E.getType(),
+                               Builder.getArrayAttr(It->second.getArrayRef()));
   else if (TypeVars.count(E))
     Reading =
         index::TypeVarOp::create(Builder, L, E.getType(), TypeVars.lookup(E));

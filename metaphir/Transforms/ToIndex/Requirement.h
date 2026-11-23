@@ -14,6 +14,7 @@
 #include "metaphir/Matching/Operators/Facts.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include <string>
 
@@ -150,7 +151,7 @@ public:
 
 private:
   mpir::AltOp Undecided;
-  SmallVector<mpir::RequireOp, 8> Constraints;
+  SmallSetVector<mpir::RequireOp, 8> Constraints;
   /// What every alternative of each mpir.alt past MaxVariants needs.
   DenseMap<mlir::Operation *, Requirement> Met;
 
