@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; A value two instructions share is walked once: each of these 64 levels uses
 ; the level below twice, which counted per path would be 2^64 instructions.
 ; RUN: %metaphir-parse --emit=mlir --no-stdlib %s | %metaphir-opt --mpir-lower --mpir-to-index | FileCheck %s

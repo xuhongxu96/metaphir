@@ -47,6 +47,7 @@ TOOL_ERROR_HEAD_RE = re.compile(
     r"^\s*(?:\S*/)?(?:metaphir-[a-z0-9]+|opt):\s*\S+:\d+:\d+:\s*(?:error:)"
 )
 LABEL_RE = re.compile(r"^\s*\?[^\s:]+:\s*$")
+LET_RE = re.compile(r"^\s*;;\s*let\b")
 MATCH_TARGET_RE = re.compile(r"^target [0-9]+: @(?P<name>[-a-zA-Z$._0-9]+)$")
 LLVM_FUNCTION_RE = re.compile(r"^\s*define\b.*@(?P<name>[-a-zA-Z$._0-9]+)\s*\(")
 
@@ -616,20 +617,24 @@ def gen_parser_checks(
                 and clean_lines[i].strip()
                 and not clean_lines[i].lstrip().startswith((";", "#", "//"))
             ]
-            constraint_lines = [
+            setting_lines = [
                 i
                 for i in range(start, end)
                 if i not in decl_lines and clean_lines[i].lstrip().startswith(";;")
             ]
+            # A ';; let' prints as a 'let' line, after all the constraints.
+            let_lines = [i for i in setting_lines if LET_RE.match(clean_lines[i])]
+            constraint_lines = [i for i in setting_lines if i not in let_lines]
             pattern_output = [ln for ln in run.output if ln.startswith("pattern ")]
             constraint_output = [
                 ln for ln in run.output if ln.startswith("constraint ")
             ]
+            let_output = [ln for ln in run.output if ln.startswith("let ")]
             meta_output = [ln for ln in run.output if ln.startswith("meta ")]
             instruction_output = [
                 ln
                 for ln in run.output
-                if not ln.startswith(("pattern ", "constraint ", "meta "))
+                if not ln.startswith(("pattern ", "constraint ", "let ", "meta "))
             ]
             # A block label is printed before its block's first instruction;
             # one with none, which a branch refers to, is not printed.
@@ -644,16 +649,20 @@ def gen_parser_checks(
                 raise ValueError(f"{path}: cannot map parser instructions to input")
             if len(constraint_output) != len(constraint_lines):
                 raise ValueError(f"{path}: cannot map parser constraints to input")
+            if len(let_output) != len(let_lines):
+                raise ValueError(f"{path}: cannot map parser lets to input")
             if not instruction_lines:
                 raise ValueError(f"{path}: parser test has no instruction input")
+            # The lets and meta variables, printed last, are checked after the
+            # last line they can come from.
             trailing_target = (
-                constraint_lines[-1] if constraint_lines else instruction_lines[-1]
+                setting_lines[-1] if setting_lines else instruction_lines[-1]
             )
             placed = (
                 [(instruction_lines[0], line) for line in pattern_output]
                 + list(zip(instruction_lines, instruction_output, strict=True))
                 + list(zip(constraint_lines, constraint_output, strict=True))
-                + [(trailing_target, line) for line in meta_output]
+                + [(trailing_target, line) for line in let_output + meta_output]
             )
             targets = [t for t, _ in placed]
             run_output = [ln for _, ln in placed]
@@ -1265,6 +1274,149 @@ def update_test(
     )
 
 
+# ---------------------------------------------------------------------------
+# Tests of what any RUN pipeline gives FileCheck
+#
+# A test whose FileCheck reads a file a RUN line wrote, or what another
+# command (grep, diff) made of a tool's output, is run as lit runs it, with
+# each FileCheck replaced by a capture of its input. Each capture's lines are
+# checked in order, under the FileCheck's prefix, where that prefix's
+# directives were (or at the end of the file).
+# ---------------------------------------------------------------------------
+
+FILECHECK_RE = re.compile(r"\bFileCheck\b(?P<args>[^|&;]*)")
+INPUT_REDIRECT_RE = re.compile(r"(?<![0-9&])<\s*(?P<file>\S+)")
+
+
+def pipeline_stages(command: str) -> list[str]:
+    """The stages of command's first pipeline, split at unquoted pipes."""
+    stages: list[str] = []
+    rest = command
+    while True:
+        stage = first_pipeline_stage(rest)
+        stages.append(stage)
+        if len(stage) >= len(rest.strip()):
+            return stages
+        rest = rest.strip()[len(stage) :].lstrip()[1:]
+
+
+def checks_tool_output(command: str) -> bool:
+    """Whether command is a tool pipeline the tool-specific generators read:
+    tools piped into one FileCheck that reads its standard input."""
+    stages = pipeline_stages(command)
+    *tools, last = stages
+    return (
+        last.startswith("FileCheck")
+        and not INPUT_REDIRECT_RE.search(last)
+        and bool(tools)
+        and all(
+            re.match(r"^(not\s+)?%metaphir-[a-z]+\b", stage)
+            and not re.search(r"(?<![0-9&])>", stage)
+            for stage in tools
+        )
+    )
+
+
+def needs_pipeline_run(lines: list[str]) -> bool:
+    """Whether a FileCheck of the test reads anything but what tools pipe to
+    it: a file, or another command's output."""
+    for line in lines:
+        if not (match := RUN_RE.match(line)):
+            continue
+        command = match["command"]
+        if "FileCheck" in command and not checks_tool_output(command):
+            return True
+    return False
+
+
+def tool_path(name: str) -> str:
+    return shlex.quote(str(REPO_ROOT / "build" / "tools" / name))
+
+
+def run_pipeline_captures(
+    path: Path, lines: list[str], temporary: Path
+) -> list[tuple[str, list[str]]]:
+    """Runs the RUN lines with each FileCheck replaced by a capture of its
+    input: each FileCheck's prefix, and the lines it would have read."""
+    # The commands run in the temporary directory, as lit's do in theirs.
+    path = path.resolve()
+    test_temp = temporary / "t"
+    captures: list[tuple[str, Path]] = []
+
+    def capture(match: re.Match[str]) -> str:
+        args = match["args"]
+        target = temporary / f"capture{len(captures)}"
+        captures.append((get_check_prefix(args), target))
+        redirect = INPUT_REDIRECT_RE.search(args)
+        source = f"< {redirect['file']}" if redirect else ""
+        return f"cat {source} > {shlex.quote(str(target))} "
+
+    for line in lines:
+        if not (match := RUN_RE.match(line)):
+            continue
+        command = re.sub(
+            r"%(metaphir-[a-z]+)", lambda m: tool_path(m[1]), match["command"]
+        )
+        command = FILECHECK_RE.sub(capture, command)
+        command = substitute_shell_vars(command, path, test_temp)
+        proc = subprocess.run(
+            ["bash", "-o", "pipefail", "-c", command],
+            cwd=str(temporary),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise ValueError(
+                f"{path}: RUN line failed: {match['command']}\n{proc.stderr.rstrip()}"
+            )
+
+    prefixes = [prefix for prefix, _ in captures]
+    if len(set(prefixes)) != len(prefixes):
+        raise ValueError(f"{path}: two FileChecks share a prefix")
+    result: list[tuple[str, list[str]]] = []
+    for prefix, target in captures:
+        output = [
+            sanitize_pointers(line).replace(str(test_temp), "{{.*}}")
+            for line in target.read_text().splitlines()
+        ]
+        if not any(line.strip() for line in output):
+            raise ValueError(f"{path}: the {prefix} FileCheck reads nothing")
+        result.append((prefix, output))
+    return result
+
+
+def update_pipeline_test(path: Path, lines: list[str], comment: str) -> str:
+    with tempfile.TemporaryDirectory() as temporary:
+        captures = run_pipeline_captures(path, lines, Path(temporary))
+    prefixes = {prefix for prefix, _ in captures}
+    lines = strip_inter_check_blanks(lines)
+    # Each prefix's checks go where its first directive was.
+    kept: list[str] = []
+    places: dict[str, int] = {}
+    for line in lines:
+        prefix = directive_prefix(line) if CHECK_RE.match(line) else None
+        if prefix in prefixes:
+            places.setdefault(prefix, len(kept))
+            continue
+        kept.append(line)
+    while kept and not kept[-1].strip():
+        kept.pop()
+    blocks: dict[int, list[str]] = collections.defaultdict(list)
+    for prefix, output in captures:
+        directives = format_directives(
+            [line for line in output if line.strip()], prefix, comment
+        )
+        directives.append(end_directive(prefix, comment))
+        blocks[places.get(prefix, len(kept))].append("\n".join(directives))
+    for place in sorted(blocks, reverse=True):
+        block = "\n\n".join(blocks[place]).split("\n")
+        if place == len(kept):
+            block = [""] + block
+        kept[place:place] = block
+    return "\n".join(separate_check_blocks(kept)) + "\n"
+
+
 def main() -> int:
     args = parse_args()
     # The LLVM tools that RUN lines use (split-file, FileCheck, not).
@@ -1285,7 +1437,9 @@ def main() -> int:
             kinds, comment = test_kinds(lines, path)
             if not kinds:
                 continue
-            if surface_runs(lines):
+            if needs_pipeline_run(lines):
+                updated = update_pipeline_test(path, lines, comment)
+            elif surface_runs(lines):
                 surface_tools = {
                     "metaphir-parse": find_tool(
                         "metaphir-parse", args.metaphir_parse, "METAPHIR_PARSE"

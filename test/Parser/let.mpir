@@ -5,22 +5,35 @@
 ; The pattern's summary lists a 'let' after its constraints.
 ;--- let.mpir
 %c = icmp:?anch ?pred i32 ?x, ?y
+; CHECK: pattern instructions=1 constraints=1
+; CHECK-NEXT: %c = icmp:?anch ?pred i32 ?x, ?y
+
 ;; let ?swapped = swappedPredicate(?pred)
 ;; ?swapped == "sgt"
-
-; CHECK: pattern instructions=1 constraints=1
-; CHECK: constraint (== ?swapped "sgt")
+; CHECK-NEXT: constraint (== ?swapped "sgt")
 ; CHECK-NEXT: let ?swapped = (swappedPredicate ?pred)
-; CHECK: meta ?swapped type=CmpPredicate
+; CHECK-NEXT: meta ?anch type=Instruction
+; CHECK-NEXT: meta ?pred type=CmpPredicate
+; CHECK-NEXT: meta ?x type=Value
+; CHECK-NEXT: meta ?y type=Value
+; CHECK-NEXT: meta ?swapped type=CmpPredicate
+; CHECK-NOT: {{.}}
 
 ; The variable has the sort of the expression, and a 'let' of a variable
 ; written before keeps the sort it has, met with the expression's.
 ;--- lets.mpir
 %r = add:?anch i?bits ?x, ?y
+; LETS: pattern instructions=1 constraints=0
+; LETS-NEXT: %r = add:?anch i?bits ?x, ?y
+
 ;; let ?double = ?bits * 2
 ;; let ?same = ?x == ?y
-
-; LETS: let ?double = (* ?bits 2)
+; LETS-NEXT: let ?double = (* ?bits 2)
 ; LETS-NEXT: let ?same = (== ?x ?y)
-; LETS: meta ?double type=Integer
-; LETS: meta ?same type=i1
+; LETS-NEXT: meta ?anch type=Instruction
+; LETS-NEXT: meta ?bits type=Nat
+; LETS-NEXT: meta ?x type=Value
+; LETS-NEXT: meta ?y type=Value
+; LETS-NEXT: meta ?double type=Integer
+; LETS-NEXT: meta ?same type=i1
+; LETS-NOT: {{.}}

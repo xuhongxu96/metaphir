@@ -24,6 +24,8 @@ define i1 @gt(i32 %a, i32 %b) {
   ret i1 %c
 }
 
-; BUILD: {{.}}
-; MATCH: compares{{.*}}@lt
-; MATCH-NOT: @gt
+; BUILD: indexed 1 files
+; BUILD-NOT: {{.}}
+
+; MATCH: {{.*}}/corpus/compares.bc	@lt	{?anch = %c, ?pred = slt, ?swapped = sgt, ?x = %a, ?y = %b}
+; MATCH-NOT: {{.}}

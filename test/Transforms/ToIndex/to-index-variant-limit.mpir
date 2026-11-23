@@ -1,3 +1,4 @@
+; NOTE: CHECK lines are written by hand; update_test_check.py skips this file.
 ; An index query has at most 64 variants: past that, an mpir.alt requires
 ; only what all its alternatives need. Each ':c' here is an alt both of whose
 ; alternatives reach the one before it, 2^40 variants enumerated in full.

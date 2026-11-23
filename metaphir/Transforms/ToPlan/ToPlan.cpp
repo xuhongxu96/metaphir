@@ -73,6 +73,27 @@ struct BoundState {
   DenseSet<unsigned> Certain;
   /// Bound on some paths that join here.
   DenseSet<unsigned> Maybe;
+
+  void bind(unsigned Slot) {
+    Certain.insert(Slot);
+    Maybe.erase(Slot);
+  }
+
+  /// What is known bound where paths A and B join: certainly what both bound
+  /// certainly, maybe whatever else either bound.
+  static BoundState join(const BoundState &A, const BoundState &B) {
+    BoundState Joined;
+    for (unsigned Slot : A.Certain)
+      (B.Certain.contains(Slot) ? Joined.Certain : Joined.Maybe).insert(Slot);
+    for (unsigned Slot : B.Certain)
+      if (!A.Certain.contains(Slot))
+        Joined.Maybe.insert(Slot);
+    set_union(Joined.Maybe, A.Maybe);
+    set_union(Joined.Maybe, B.Maybe);
+    for (unsigned Slot : Joined.Certain)
+      Joined.Maybe.erase(Slot);
+    return Joined;
+  }
 };
 
 class Compiler {
@@ -96,7 +117,8 @@ private:
   unsigned slotOf(Value V) const { return S.Of.lookup(V); }
 
   mlir::ArrayAttr typePattern(Value T);
-  void bindVariable(Value Reg, Value Var, bool AsSort);
+  /// Binds the slot of V, a meta variable or matcher, to what Reg holds.
+  void bind(Value Reg, Value V, bool AsSort);
   /// Matches the matcher V, an instruction or alternative, against Reg: by
   /// its binding if bound, or else in full (and at run time when only some
   /// paths bind it).
@@ -258,14 +280,13 @@ mlir::ArrayAttr Compiler::typePattern(Value T) {
   return Builder.getArrayAttr(Parts);
 }
 
-void Compiler::bindVariable(Value Reg, Value Var, bool AsSort) {
-  unsigned Slot = slotOf(Var);
-  auto Bind = plan::BindOp::create(Builder, Var.getLoc(), Reg, i32(Slot),
+void Compiler::bind(Value Reg, Value V, bool AsSort) {
+  unsigned Slot = slotOf(V);
+  auto Bind = plan::BindOp::create(Builder, V.getLoc(), Reg, i32(Slot),
                                    mlir::IntegerAttr());
   if (AsSort)
-    Bind.setSort(int32_t(resolveSort(sortOf(Var))));
-  Bound.Certain.insert(Slot);
-  Bound.Maybe.erase(Slot);
+    Bind.setSort(int32_t(resolveSort(sortOf(V))));
+  Bound.bind(Slot);
 }
 
 void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
@@ -294,44 +315,33 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
     plan::YieldOp::create(Builder, Loc, mlir::ValueRange());
   }
   BoundState First = Bound;
-  First.Certain.insert(Slot);
+  First.bind(Slot);
   Bound = Before;
   {
     OpBuilder::InsertionGuard Guard(Builder);
     Builder.setInsertionPointToEnd(&Either->getRegion(1).emplaceBlock());
     plan::CheckBoundOp::create(Builder, Loc, i32(Slot),
                                Builder.getBoolAttr(false));
+    // Record that the check leaves it unbound here, so that a Full that
+    // matches V again matches it in full instead of checking again.
+    Bound.Maybe.erase(Slot);
     Full();
     plan::YieldOp::create(Builder, Loc, mlir::ValueRange());
   }
   // Bound either way now; what else each path bound may differ.
-  BoundState Joined;
-  for (unsigned Slot : First.Certain)
-    (Bound.Certain.contains(Slot) ? Joined.Certain : Joined.Maybe).insert(Slot);
-  for (unsigned Slot : Bound.Certain)
-    if (!First.Certain.contains(Slot))
-      Joined.Maybe.insert(Slot);
-  set_union(Joined.Maybe, First.Maybe);
-  set_union(Joined.Maybe, Bound.Maybe);
-  for (unsigned Slot : Joined.Certain)
-    Joined.Maybe.erase(Slot);
-  Bound = std::move(Joined);
+  Bound = BoundState::join(First, Bound);
 }
 
 void Compiler::matchInstruction(InstOp Inst, Value Reg) {
   Location Loc = Inst.getLoc();
   bool TreatIntAsVec = Inst.getTreatIntAsVec().value_or(
       pattern_setting::getDefault(pattern_setting::treatIntAsVec));
-  instruction::InstructionID ID = Inst.getOpcode().getValue();
   plan::CheckOpcodeOp::create(Builder, Loc, Reg, Inst.getOpcodeAttr());
-  unsigned Slot = slotOf(Inst.getResult());
-  plan::BindOp::create(Builder, Loc, Reg, i32(Slot), mlir::IntegerAttr());
-  Bound.Certain.insert(Slot);
-  Bound.Maybe.erase(Slot);
+  bind(Reg, Inst.getResult(), /*AsSort=*/false);
 
   if (Value Block = Inst.getParentBlock()) {
     Value Parent = plan::GetParentBlockOp::create(Builder, Loc, reg(), Reg);
-    bindVariable(Parent, Block, /*AsSort=*/false);
+    bind(Parent, Block, /*AsSort=*/false);
   }
   SmallVector<MatcherOperandView, 8> Operands = getMatcherOperands(Inst);
   // Type-only operands are matched against the result's type (or an
@@ -359,8 +369,8 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
         break;
       case FlagMode::Captured: {
         Value Present = plan::GetFlagOp::create(Builder, Loc, reg(), Reg, Flag);
-        bindVariable(Present, Inst.getFlagCaptures()[NextCapture++],
-                     /*AsSort=*/false);
+        bind(Present, Inst.getFlagCaptures()[NextCapture++],
+             /*AsSort=*/false);
         break;
       }
       }
@@ -375,7 +385,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
         continue;
       Value Keyed = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg, Kind);
       if (isVariable(Op.Val))
-        bindVariable(Keyed, Op.Val, /*AsSort=*/false);
+        bind(Keyed, Op.Val, /*AsSort=*/false);
       else
         plan::CheckConstantOp::create(
             Builder, Loc, Keyed,
@@ -383,7 +393,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     }
   }
   if (Value Capture = Inst.getCapture())
-    bindVariable(Reg, Capture, /*AsSort=*/false);
+    bind(Reg, Capture, /*AsSort=*/false);
 
   SmallVector<const MatcherOperandView *, 8> Values;
   for (const MatcherOperandView &Op : Operands)
@@ -402,9 +412,8 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
       continue;
     auto Predicate = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg,
                                               OperandKind::Predicate);
-    (void)ID;
     if (isVariable(Op.Val)) {
-      bindVariable(Predicate, Op.Val, /*AsSort=*/false);
+      bind(Predicate, Op.Val, /*AsSort=*/false);
     } else {
       auto Keyword = cast<KeywordOp>(Op.Val.getDefiningOp());
       auto Check = plan::CheckConstantOp::create(
@@ -419,12 +428,12 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
         Op->Kind == OperandKind::TypedValueArray) {
       Value Array = plan::GetOperandsFromOp::create(Builder, OpLoc, reg(), Reg,
                                                     i32(Index));
-      bindVariable(Array, Op->Val, /*AsSort=*/false);
+      bind(Array, Op->Val, /*AsSort=*/false);
       if (Op->Kind == OperandKind::TypedValueArray) {
         auto Types = plan::GetOperandsFromOp::create(Builder, OpLoc, reg(), Reg,
                                                      i32(Index));
         Types.setTypes(true);
-        bindVariable(Types, Op->Type, /*AsSort=*/false);
+        bind(Types, Op->Type, /*AsSort=*/false);
       }
       continue;
     }
@@ -466,38 +475,22 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
     matchValue(Yielded, Reg, /*TreatIntAsVec=*/false);
     // A value matched in place of the alternative is the alternative's
     // binding too.
-    if (slotOf(Yielded) != Slot || !S.Of.count(Yielded)) {
-      plan::BindOp::create(Builder, Loc, Reg, i32(Slot), mlir::IntegerAttr());
-      Bound.Certain.insert(Slot);
-    }
+    if (slotOf(Yielded) != Slot || !S.Of.count(Yielded))
+      bind(Reg, Alt.getResult(), /*AsSort=*/false);
     for (BindOp Bind : Block.getOps<BindOp>()) {
       if (auto Int = Bind.getValue().getDefiningOp<IntOp>()) {
         plan::BindConstantOp::create(
             Builder, Bind.getLoc(), i32(slotOf(Bind.getVariable())),
             Builder.getBoolAttr(!Int.getValue().isZero()));
-        Bound.Certain.insert(slotOf(Bind.getVariable()));
+        Bound.bind(slotOf(Bind.getVariable()));
         continue;
       }
-      bindVariable(Reg, Bind.getVariable(), /*AsSort=*/false);
+      bind(Reg, Bind.getVariable(), /*AsSort=*/false);
     }
     SmallVector<Operation *, 4> Roots = getPatternRoots(Block);
     finishBlock(Block, Roots);
     plan::YieldOp::create(Builder, Loc, mlir::ValueRange());
-    if (!Joined) {
-      Joined = Bound;
-      continue;
-    }
-    BoundState Next;
-    for (unsigned S : Joined->Certain)
-      (Bound.Certain.contains(S) ? Next.Certain : Next.Maybe).insert(S);
-    for (unsigned S : Bound.Certain)
-      if (!Joined->Certain.contains(S))
-        Next.Maybe.insert(S);
-    set_union(Next.Maybe, Joined->Maybe);
-    set_union(Next.Maybe, Bound.Maybe);
-    for (unsigned S : Next.Certain)
-      Next.Maybe.erase(S);
-    Joined = std::move(Next);
+    Joined = Joined ? BoundState::join(*Joined, Bound) : Bound;
   }
   Bound = std::move(*Joined);
 }
@@ -506,7 +499,7 @@ void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
   Operation *Def = V.getDefiningOp();
   Location Loc = V.getLoc();
   if (isVariable(V)) {
-    bindVariable(Reg, V, /*AsSort=*/true);
+    bind(Reg, V, /*AsSort=*/true);
     return;
   }
   if (auto Inst = dyn_cast<InstOp>(Def)) {
@@ -626,8 +619,7 @@ void Compiler::let(LetOp Let) {
       unsigned(constraint::O_Equal), unsigned(constraint::Binary), Args,
       Value());
   plan::LetOp::create(Builder, Loc, i32(Slot), Assigned, Same);
-  Bound.Certain.insert(Slot);
-  Bound.Maybe.erase(Slot);
+  Bound.bind(Slot);
 }
 
 void Compiler::finishBlock(mlir::Block &Block, ArrayRef<Operation *> Roots) {
@@ -642,15 +634,12 @@ void Compiler::finishBlock(mlir::Block &Block, ArrayRef<Operation *> Roots) {
     if (Bound.Certain.contains(slotOf(V)))
       continue;
     Location Loc = Op->getLoc();
-    auto MatchAnywhere = [&] {
+    // Match it against every instruction, wherever the path has not bound
+    // it.
+    matchMatcher(V, Value(), [&] {
       Value Each = plan::ForeachInstructionOp::create(Builder, Loc, reg());
       matchValue(V, Each, /*TreatIntAsVec=*/false);
-    };
-    if (!Bound.Maybe.contains(slotOf(V))) {
-      MatchAnywhere();
-      continue;
-    }
-    matchMatcher(V, Value(), MatchAnywhere);
+    });
   }
   for (Operation &Op : Block) {
     if (auto Require = dyn_cast<RequireOp>(Op))
