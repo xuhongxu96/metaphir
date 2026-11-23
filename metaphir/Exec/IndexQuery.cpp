@@ -18,7 +18,6 @@ struct IndexQuery::Typing {
   instruction::InstructionID ID;
   uint32_t Present = 0;
   uint32_t Absent = 0;
-  bool Commutative = false;
   bool TreatIntAsVec = false;
   /// Per unkeyed operand: its type pattern, if any, and whether it is a
   /// value operand.
@@ -87,7 +86,6 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
         Each.ID = T.getOpcode().getValue();
         Each.Present = T.getPresent();
         Each.Absent = T.getAbsent();
-        Each.Commutative = T.getCommutative();
         Each.TreatIntAsVec = T.getTreatIntAsVec();
         for (auto [Pattern, IsValue] :
              zip(T.getOperandTypes(), T.getValueOperand())) {
@@ -211,53 +209,39 @@ IndexQuery::joinSignatures(const Variant &V,
          It != Features.Signatures.end() && It->ID == T.ID; ++It) {
       if ((It->Flags & T.Present) != T.Present || (It->Flags & T.Absent) != 0)
         continue;
-      for (bool Swapped : {false, true}) {
-        if (Swapped && !T.Commutative)
-          break;
-        unsigned NumOperands = count(T.IsValue, true);
-        SmallVector<unsigned, 4> Positions;
-        for (unsigned P = 0; P != NumOperands; ++P)
-          Positions.push_back(P);
-        if (Swapped) {
-          if (T.ID == instruction::I_call && NumOperands == 3)
-            std::swap(Positions[1], Positions[2]);
-          else if (NumOperands == 2)
-            std::swap(Positions[0], Positions[1]);
+      Row R(NumVars);
+      auto Unify = [&](unsigned Slot, const Binding &B) {
+        if (Slot >= R.size())
+          R.resize(Slot + 1);
+        if (Unbound(R[Slot])) {
+          R[Slot] = B;
+          return true;
         }
-        Row R(NumVars);
-        auto Unify = [&](unsigned Slot, const Binding &B) {
-          if (Slot >= R.size())
-            R.resize(Slot + 1);
-          if (Unbound(R[Slot])) {
-            R[Slot] = B;
-            return true;
-          }
-          return R[Slot] == B;
-        };
-        bool Fits = true;
-        unsigned Index = 0;
-        for (auto [Pattern, IsValue] : zip(T.Patterns, T.IsValue)) {
-          TypeCode Code = NoType;
-          if (IsValue) {
-            unsigned Position = Positions[Index++];
-            if (!Pattern || Position >= NumOperandSlots)
-              continue;
-            Code = It->Operands[Position];
-          } else if (T.ID != instruction::I_alloca &&
-                     T.ID != instruction::I_getelementptr) {
-            Code = It->Result;
-          }
-          const llvm::Type *Target = decodeType(Code, *TypeContext);
-          if (!Pattern || !Target)
+        return R[Slot] == B;
+      };
+      bool Fits = true;
+      unsigned Position = 0;
+      for (auto [Pattern, IsValue] : zip(T.Patterns, T.IsValue)) {
+        TypeCode Code = NoType;
+        if (IsValue) {
+          unsigned Operand = Position++;
+          if (!Pattern || Operand >= NumOperandSlots)
             continue;
-          if (!Types.match(*Pattern, *Target, T.TreatIntAsVec, Unify)) {
-            Fits = false;
-            break;
-          }
+          Code = It->Operands[Operand];
+        } else if (T.ID != instruction::I_alloca &&
+                   T.ID != instruction::I_getelementptr) {
+          Code = It->Result;
         }
-        if (Fits && !is_contained(Rows, R))
-          Rows.push_back(std::move(R));
+        const llvm::Type *Target = decodeType(Code, *TypeContext);
+        if (!Pattern || !Target)
+          continue;
+        if (!Types.match(*Pattern, *Target, T.TreatIntAsVec, Unify)) {
+          Fits = false;
+          break;
+        }
       }
+      if (Fits && !is_contained(Rows, R))
+        Rows.push_back(std::move(R));
     }
     return Rows;
   };

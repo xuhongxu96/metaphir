@@ -19,8 +19,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_fact 0, <add>, 2, 129
     mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], []], value_operand = [true, false]> loc("index-roundtrip.mlir":20:1)
 // CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], []], value_operand = [true, false]>
-    mpir_index.typing <add> <present = 1, absent = 0, commutative, treat_int_as_vec, operand_types = [[0, 0]], value_operand = [true]> loc("index-roundtrip.mlir":22:1)
-// CHECK:             mpir_index.typing <add> <present = 1, absent = 0, commutative, treat_int_as_vec, operand_types = {{\[\[}}0, 0]], value_operand = [true]>
+    mpir_index.typing <add> <present = 1, absent = 0, treat_int_as_vec, operand_types = [[0, 0]], value_operand = [true]> loc("index-roundtrip.mlir":22:1)
+// CHECK:             mpir_index.typing <add> <present = 1, absent = 0, treat_int_as_vec, operand_types = {{\[\[}}0, 0]], value_operand = [true]>
     %s = mpir_index.sites [[0, 1, 1], [1, 13, 3]] {var_name = "x"} : !mpir.sort<Operand> loc("index-roundtrip.mlir":24:1)
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 1], [1, 13, 3]] {var_name = "x"} : <Operand>
     %t = mpir_index.type_var 0 : !mpir.sort<Type> loc("index-roundtrip.mlir":26:1)

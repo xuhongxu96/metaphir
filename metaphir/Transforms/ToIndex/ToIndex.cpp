@@ -210,7 +210,10 @@ void VariantEmitter::emitDetailFeatures() {
   for (const ShapeRequirement &Shape : sortedUnique<ShapeRequirement>(R.Shapes))
     index::HasShapeOp::create(Builder, Loc, opcode(Shape.ID), Shape.Present,
                               Shape.Absent, Shape.Width);
-  // A fact an alt past MaxVariants needs may be needed around it too.
+
+  // Emit each fact once. R.SiteFacts can repeat one: an alt past MaxVariants
+  // is walked on its own, so an instruction reached both inside and outside
+  // it records its facts in both walks.
   DenseSet<std::tuple<Operation *, uint8_t, uint16_t>> Facts;
   for (auto [Node, Slots, A] : R.SiteFacts)
     if (Facts.insert({Node, Slots, A.getCode()}).second)
@@ -286,8 +289,7 @@ void VariantEmitter::emitTypings() {
         Builder, Inst.getLoc(), Inst.getOpcodeAttr(),
         Builder.getI32IntegerAttr(Shape.Present),
         Builder.getI32IntegerAttr(Shape.Absent), mlir::UnitAttr(),
-        mlir::UnitAttr(), Builder.getArrayAttr(Types),
-        Builder.getDenseBoolArrayAttr(IsValue));
+        Builder.getArrayAttr(Types), Builder.getDenseBoolArrayAttr(IsValue));
     if (Inst.getTreatIntAsVec().value_or(
             pattern_setting::getDefault(pattern_setting::treatIntAsVec)))
       Typing.setTreatIntAsVec(true);

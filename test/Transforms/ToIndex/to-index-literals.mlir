@@ -330,8 +330,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
     mpir_index.has_fact 0, <call>, 6, 135 loc("to-index-literals.mlir":331:1)
 // CHECK:             mpir_index.has_fact 0, <call>, 6, 135
-    mpir_index.typing <call> <present = 0, absent = 0, commutative, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]> loc("to-index-literals.mlir":333:1)
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, commutative, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
+    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]> loc("to-index-literals.mlir":333:1)
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
   } loc("to-index-literals.mlir":335:1)
 // CHECK:           }
 } loc("to-index-literals.mlir":337:1)
