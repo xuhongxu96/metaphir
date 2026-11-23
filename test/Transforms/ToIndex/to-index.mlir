@@ -350,9 +350,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_fact 2, <call>, 4, 128
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 8, 0]], value_operand = [false, true, true, true]>
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0], [], [2, 0, 0], [1, 1, 0]], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}2, 4, 0], [], [2, 4, 0], [1, 1, 0]], value_operand = [false, true, true, true]>
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}7, 1, [1, 32, 0], [1, 32, 0]], [], [1, 32, 0]], value_operand = [false, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}3, 1], [], []], value_operand = [false, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}3, 10], [], []], value_operand = [false, true, true]>
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], []], value_operand = [false, true, true, true]>
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}0, 5], [], [0, 6]], value_operand = [false, true, true]>
 // CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0]], value_operand = [false, true, true]>
@@ -501,7 +501,7 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <bitcast>, 0, 0, 64
 // CHECK:             mpir_index.typing <trunc> <present = 2, absent = 0, operand_types = {{\[\[}}1, 64, 0], [1, 32, 0]], value_operand = [true, false]>
 // CHECK:             mpir_index.typing <zext> <present = 256, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [2, 0, 0]], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [2, 3, 0]], value_operand = [true, false]>
 // CHECK:             mpir_index.typing <fptrunc> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [0, 2]], value_operand = [true, false]>
 // CHECK:             mpir_index.typing <fpext> <present = 0, absent = 0, operand_types = {{\[\[}}0, 2], [0, 3]], value_operand = [true, false]>
 // CHECK:             mpir_index.typing <fptoui> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [1, 32, 0]], value_operand = [true, false]>
@@ -2655,8 +2655,8 @@ mpir.pattern {
 // CHECK:             mpir_index.has_instruction <freeze>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}1, 8, 1]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}2, 1, 1]], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}2, 4, 0]], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}2, 7, 1]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 0]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 1]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 2]], value_operand = [true]>
@@ -2665,14 +2665,14 @@ mpir.pattern {
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}4, -1, 1]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}4, 3, 1]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 0, 4, -1, [1, 8, 0]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 0, 0, 2, [2, 0, 0]]], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 0, 0, 26, [2, 4, 0]]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 2, -1, [0, 2]]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 2, 4, -1, [1, 32, 0]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 0, 3, [2, 0, 0]]], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 0, 33, [2, 4, 0]]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}6, 0, [1, 32, 0], [4, -1, 1]]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}6, 1, [1, 8, 0], [5, 0, 2, -1, [1, 16, 0]]]], value_operand = [true]>
 // CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}6, 0]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}3, 4]], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}3, 42]], value_operand = [true]>
 // CHECK:           }
 // CHECK:         }
 

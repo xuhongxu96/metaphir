@@ -112,9 +112,10 @@ def Index_HasFactOp : Index_Op<"has_fact"> {
 def Index_TypingOp : Index_Op<"typing"> {
   let summary = "An instruction matcher the variant matches, to type by its signatures";
   let description = [{
-    Its flags, as for has_shape. `operand_types[i]` is the type pattern (as
-    mpir_plan.check_type encodes it, with type variables numbered by
-    mpir_index.type_var) of the i-th unkeyed operand, or an empty array;
+    Its flags, as for has_shape. `operand_types[i]` is the type pattern (see
+    Pattern/Bindings.h, its type variables numbered by their slots, as
+    mpir_index.type_var reads them) of the i-th unkeyed operand, or an empty
+    array;
     `value_operand[i]` whether that operand is one of the instruction's value
     operands.
   }];

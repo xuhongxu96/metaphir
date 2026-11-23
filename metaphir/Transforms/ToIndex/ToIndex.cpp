@@ -12,8 +12,8 @@
 
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
+#include "metaphir/Dialect/Pattern/Bindings.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
-#include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/PatternSettings.h"
 #include "metaphir/Matching/FeatureRequirement.h"
 #include "metaphir/Transforms/ToIndex/Passes.h"
@@ -47,13 +47,15 @@ namespace {
 class Compiler {
 public:
   Compiler(PatternOp Pattern, OpBuilder &Builder)
-      : Pattern(Pattern), Builder(Builder) {}
+      : Pattern(Pattern), Builder(Builder), Slots(assignSlots(Pattern)) {}
 
   void compile();
 
 private:
   PatternOp Pattern;
   OpBuilder &Builder;
+  /// The slots the pattern's plan binds, which number its type variables.
+  SlotAssignment Slots;
   /// What the variant needs under its choices.
   RequirementBuilder Requirements;
 
@@ -92,10 +94,11 @@ namespace {
 class VariantEmitter {
 public:
   VariantEmitter(PatternOp Pattern, OpBuilder &Builder,
-                 const BuildResult &Built, const AltChoices &Choices)
+                 const BuildResult &Built, const AltChoices &Choices,
+                 const SlotAssignment &Slots)
       : Pattern(Pattern), Builder(Builder), Context(Builder.getContext()),
         Loc(Pattern.getLoc()), R(Built.Needs), Constraints(Built.Constraints),
-        Choices(Choices) {}
+        Choices(Choices), Slots(Slots) {}
 
   void emit();
 
@@ -108,6 +111,8 @@ private:
   ArrayRef<RequireOp> Constraints;
   /// The alternative each mpir.alt takes in the variant.
   const AltChoices &Choices;
+  /// The plan's slots, which number the type variables.
+  const SlotAssignment &Slots;
 
   /// The instruction matchers the variant matches, each once, in pattern
   /// order, which numbers them. Node numbers are only compared for equality,
@@ -116,8 +121,8 @@ private:
   SmallVector<InstOp, 8> OrderedMatched;
   /// The node number of each: its position in OrderedMatched.
   DenseMap<Operation *, int64_t> Nodes;
-  /// Type variables, numbered for the typings and constraints.
-  MapVector<Value, unsigned> TypeVars;
+  /// The type variables the typings bind.
+  DenseSet<Value> TypeVars;
   /// The sites each pattern value occupies.
   MapVector<Value, SmallSetVector<Attribute, 2>> SitesOf;
   /// The constraint expressions emitted for the pattern's.
@@ -224,51 +229,10 @@ void VariantEmitter::emitDetailFeatures() {
 }
 
 mlir::ArrayAttr VariantEmitter::typePattern(Value T) {
-  SmallVector<Attribute, 8> Parts;
-  auto Int = [&](int64_t V) { Parts.push_back(Builder.getI64IntegerAttr(V)); };
-  auto Var = [&](Value V) {
-    auto [It, Inserted] = TypeVars.try_emplace(V, TypeVars.size());
-    return It->second;
-  };
-  Operation *Def = T.getDefiningOp();
-  if (!Def || isa<VarOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::Variable));
-    Int(Var(T));
-  } else if (auto Prim = dyn_cast<PrimTypeOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::Primitive));
-    Int(Prim.getKind());
-  } else if (auto IntTy = dyn_cast<IntTypeOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::Integer));
-    Int(IntTy.getWidth());
-    Int(IntTy.getByte());
-  } else if (auto Meta = dyn_cast<MetaIntTypeOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::MetaInteger));
-    Int(Var(Meta.getWidth()));
-    Int(Meta.getByte());
-  } else if (auto Ptr = dyn_cast<PtrTypeOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::Pointer));
-    std::optional<uint32_t> Space = Ptr.getAddressSpace();
-    Int(Space ? int64_t(*Space) : -1);
-    Int(!Ptr.getElement());
-  } else if (auto Seq = dyn_cast<SeqTypeOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::Sequence));
-    Int(int64_t(Seq.getKind()));
-    Int(Seq.getCount());
-    Int(Seq.getCountVar() ? int64_t(Var(Seq.getCountVar())) : -1);
-    Parts.push_back(typePattern(Seq.getElement()));
-  } else if (auto Struct = dyn_cast<StructTypeOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::Struct));
-    Int(Struct.getPacked());
-    for (Value E : Struct.getElements())
-      Parts.push_back(typePattern(E));
-  } else if (auto Func = dyn_cast<FuncTypeOp>(Def)) {
-    Int(int64_t(mpir_plan::TypePatternKind::Function));
-    Int(Func.getVarArg());
-    Parts.push_back(typePattern(Func.getReturnType()));
-    for (Value P : Func.getParams())
-      Parts.push_back(typePattern(P));
-  }
-  return Builder.getArrayAttr(Parts);
+  SmallVector<Value, 2> Variables;
+  mlir::ArrayAttr Encoded = encodeTypePattern(Builder, T, Slots, &Variables);
+  TypeVars.insert_range(Variables);
+  return Encoded;
 }
 
 void VariantEmitter::emitTypings() {
@@ -370,7 +334,7 @@ Value VariantEmitter::readingOfValue(Value E) {
                                Builder.getArrayAttr(It->second.getArrayRef()));
   else if (TypeVars.count(E))
     Reading =
-        index::TypeVarOp::create(Builder, L, E.getType(), TypeVars.lookup(E));
+        index::TypeVarOp::create(Builder, L, E.getType(), Slots.Of.lookup(E));
   else
     Reading = index::UnknownOp::create(Builder, L, E.getType());
   name(Reading, E);
@@ -434,7 +398,7 @@ void Compiler::enumerate() {
   BuildResult Built = Requirements.build(Pattern.getBody().front());
   if (Built.Undecided)
     return enumerateAlternatives(Built.Undecided);
-  VariantEmitter(Pattern, Builder, Built, Requirements.Choices).emit();
+  VariantEmitter(Pattern, Builder, Built, Requirements.Choices, Slots).emit();
 }
 
 void Compiler::enumerateAlternatives(AltOp Alt) {

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "metaphir/Dialect/Expr/ExprDialect.h"
+#include "metaphir/Dialect/Pattern/Bindings.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/PatternSettings.h"
@@ -48,23 +49,20 @@ static bool isVariable(Value V) {
 
 namespace {
 
-/// The slots of a plan.
+/// The slots of a plan, and what the plan records of each.
 struct Slots {
+  SlotAssignment Assigned;
   SmallVector<Attribute, 16> Names;
   SmallVector<plan::SlotKind, 16> Kinds;
   SmallVector<Sort, 16> Sorts;
   SmallVector<Attribute, 16> Locs;
-  DenseMap<Value, unsigned> Of;
 
-  unsigned add(Value V, StringRef Name, plan::SlotKind Kind, Sort S,
-               Location Loc, mlir::MLIRContext *Context) {
-    unsigned Slot = Names.size();
+  void describe(StringRef Name, plan::SlotKind Kind, Sort S, Location Loc,
+                mlir::MLIRContext *Context) {
     Names.push_back(mlir::StringAttr::get(Context, Name));
     Kinds.push_back(Kind);
     Sorts.push_back(S);
     Locs.push_back(Loc);
-    Of[V] = Slot;
-    return Slot;
   }
 };
 
@@ -114,11 +112,13 @@ private:
   mlir::IntegerAttr i32(int64_t V) { return Builder.getI32IntegerAttr(V); }
 
   void assignSlots();
-  unsigned slotOf(Value V) const { return S.Of.lookup(V); }
+  unsigned slotOf(Value V) const { return S.Assigned.Of.lookup(V); }
 
   mlir::ArrayAttr typePattern(Value T);
-  /// Binds the slot of V, a meta variable or matcher, to what Reg holds.
-  void bind(Value Reg, Value V, bool AsSort);
+  /// Binds the slot of V, a meta variable or matcher, to what Reg holds:
+  /// BySort, read as V's sort reads IR values (failing the path if it
+  /// cannot be), else as it is.
+  void bind(Value Reg, Value V, bool BySort);
   /// Matches the matcher V, an instruction or alternative, against Reg: by
   /// its binding if bound, or else in full (and at run time when only some
   /// paths bind it).
@@ -163,53 +163,21 @@ static std::optional<instruction::InstructionID> sharedOpcode(Operation *Op) {
   return Shared;
 }
 
-/// Numbers every value a match binds before anything is compiled, because the
-/// plan refers to a binding only by its slot number (mpir_plan.bind writes a
-/// slot and a check reads one). Records each slot's name, kind, sort and
-/// location to print the match and report errors.
-///
-/// Gives each meta variable, instruction matcher and alternative a slot, in
-/// the order they are written (a pre-order walk). A matcher that an
-/// alternative yields shares the alternative's slot instead, because
-/// whichever alternative matches, the instruction it matches is the
-/// alternative's match. With nested alternatives, it shares the outermost
-/// one's slot, which the walk has already numbered.
+/// Numbers every value a match binds before anything is compiled (see
+/// plan::assignSlots), and records each slot's name, kind, sort and location
+/// to print the match and report errors.
 void Compiler::assignSlots() {
-  Pattern.walk<mlir::WalkOrder::PreOrder>([&](Operation *Op) {
+  S.Assigned = mpir::assignSlots(Pattern);
+  for (Value V : S.Assigned.Values) {
+    Operation *Op = V.getDefiningOp();
     Location Loc = Op->getLoc();
     if (auto Var = dyn_cast<VarOp>(Op)) {
-      S.add(Var, Var.getVarName(), plan::SlotKind::Variable,
-            resolveSort(sortOf(Var)), Loc, Context);
-      return;
+      S.describe(Var.getVarName(), plan::SlotKind::Variable,
+                 resolveSort(sortOf(Var)), Loc, Context);
+      continue;
     }
-    if (!isa<InstOp, AltOp>(Op))
-      return;
-    Value Result = Op->getResult(0);
-    // Climb from this matcher to the outermost alternative that yields it,
-    // one yielding alternative at a time.
-    Value Outer = Result;
-    while (true) {
-      AltOp Yielding;
-      // Only a matcher defined in the alternative's own region counts. A
-      // value from outside that the alternative yields (an operand matched
-      // in the instruction's place) has a slot of its own.
-      for (Operation *User : Outer.getUsers())
-        if (auto Yield = dyn_cast<YieldOp>(User))
-          if (auto Alt = dyn_cast<AltOp>(Yield->getParentOp()))
-            if (Outer.getDefiningOp() &&
-                Outer.getDefiningOp()->getBlock() == Yield->getBlock())
-              Yielding = Alt;
-      if (!Yielding)
-        break;
-      Outer = Yielding.getResult();
-    }
-    if (Outer != Result) {
-      // Share the outermost alternative's slot, as this matcher is yielded.
-      S.Of[Result] = S.Of.lookup(Outer);
-      return;
-    }
-    // Give it a slot of its own, and name the slot for printing by the
-    // pattern's '%name', or by its opcode if the pattern leaves it unnamed.
+    // Name the slot for printing by the pattern's '%name', or by its opcode
+    // if the pattern leaves it unnamed.
     StringRef Name;
     StringRef OpcodeName;
     if (auto Inst = dyn_cast<InstOp>(Op)) {
@@ -229,62 +197,20 @@ void Compiler::assignSlots() {
       Printed = OpcodeName;
     else
       ("%" + Name).toVector(Printed);
-    S.add(Result, Printed, plan::SlotKind::Instruction, Sort::Instruction, Loc,
-          Context);
-  });
+    S.describe(Printed, plan::SlotKind::Instruction, Sort::Instruction, Loc,
+               Context);
+  }
 }
 
 mlir::ArrayAttr Compiler::typePattern(Value T) {
-  SmallVector<Attribute, 8> Parts;
-  auto Int = [&](int64_t V) { Parts.push_back(Builder.getI64IntegerAttr(V)); };
-  Operation *Def = T.getDefiningOp();
-  if (!Def || isa<VarOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::Variable));
-    Int(slotOf(T));
-  } else if (auto Prim = dyn_cast<PrimTypeOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::Primitive));
-    Int(Prim.getKind());
-  } else if (auto IntTy = dyn_cast<IntTypeOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::Integer));
-    Int(IntTy.getWidth());
-    Int(IntTy.getByte());
-  } else if (auto Meta = dyn_cast<MetaIntTypeOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::MetaInteger));
-    Int(slotOf(Meta.getWidth()));
-    Int(Meta.getByte());
-  } else if (auto Ptr = dyn_cast<PtrTypeOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::Pointer));
-    std::optional<uint32_t> Space = Ptr.getAddressSpace();
-    Int(Space ? int64_t(*Space) : -1);
-    Int(!Ptr.getElement());
-  } else if (auto Seq = dyn_cast<SeqTypeOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::Sequence));
-    Int(int64_t(Seq.getKind()));
-    Int(Seq.getCount());
-    Int(Seq.getCountVar() ? int64_t(slotOf(Seq.getCountVar())) : -1);
-    Parts.push_back(typePattern(Seq.getElement()));
-  } else if (auto Struct = dyn_cast<StructTypeOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::Struct));
-    Int(Struct.getPacked());
-    for (Value E : Struct.getElements())
-      Parts.push_back(typePattern(E));
-  } else if (auto Func = dyn_cast<FuncTypeOp>(Def)) {
-    Int(int64_t(plan::TypePatternKind::Function));
-    Int(Func.getVarArg());
-    Parts.push_back(typePattern(Func.getReturnType()));
-    for (Value P : Func.getParams())
-      Parts.push_back(typePattern(P));
-  } else {
-    llvm_unreachable("not a type pattern");
-  }
-  return Builder.getArrayAttr(Parts);
+  return mpir::encodeTypePattern(Builder, T, S.Assigned);
 }
 
-void Compiler::bind(Value Reg, Value V, bool AsSort) {
+void Compiler::bind(Value Reg, Value V, bool BySort) {
   unsigned Slot = slotOf(V);
   auto Bind = plan::BindOp::create(Builder, V.getLoc(), Reg, i32(Slot),
                                    mlir::IntegerAttr());
-  if (AsSort)
+  if (BySort)
     Bind.setSort(int32_t(resolveSort(sortOf(V))));
   Bound.bind(Slot);
 }
@@ -337,11 +263,11 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
   bool TreatIntAsVec = Inst.getTreatIntAsVec().value_or(
       pattern_setting::getDefault(pattern_setting::treatIntAsVec));
   plan::CheckOpcodeOp::create(Builder, Loc, Reg, Inst.getOpcodeAttr());
-  bind(Reg, Inst.getResult(), /*AsSort=*/false);
+  bind(Reg, Inst.getResult(), /*BySort=*/false);
 
   if (Value Block = Inst.getParentBlock()) {
     Value Parent = plan::GetParentBlockOp::create(Builder, Loc, reg(), Reg);
-    bind(Parent, Block, /*AsSort=*/false);
+    bind(Parent, Block, /*BySort=*/false);
   }
   SmallVector<MatcherOperandView, 8> Operands = getMatcherOperands(Inst);
   // Type-only operands are matched against the result's type (or an
@@ -360,7 +286,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
   {
     unsigned NextCapture = 0;
     for (auto [Flag, Mode] : zip(Inst.getFlags(), Inst.getFlagModes())) {
-      switch (FlagMode(Mode)) {
+      switch (Mode) {
       case FlagMode::Required:
       case FlagMode::Negated:
         plan::CheckFlagOp::create(
@@ -370,7 +296,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
       case FlagMode::Captured: {
         Value Present = plan::GetFlagOp::create(Builder, Loc, reg(), Reg, Flag);
         bind(Present, Inst.getFlagCaptures()[NextCapture++],
-             /*AsSort=*/false);
+             /*BySort=*/false);
         break;
       }
       }
@@ -385,7 +311,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
         continue;
       Value Keyed = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg, Kind);
       if (isVariable(Op.Val))
-        bind(Keyed, Op.Val, /*AsSort=*/false);
+        bind(Keyed, Op.Val, /*BySort=*/false);
       else
         plan::CheckConstantOp::create(
             Builder, Loc, Keyed,
@@ -393,7 +319,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     }
   }
   if (Value Capture = Inst.getCapture())
-    bind(Reg, Capture, /*AsSort=*/false);
+    bind(Reg, Capture, /*BySort=*/false);
 
   SmallVector<const MatcherOperandView *, 8> Values;
   for (const MatcherOperandView &Op : Operands)
@@ -413,7 +339,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     auto Predicate = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg,
                                               OperandKind::Predicate);
     if (isVariable(Op.Val)) {
-      bind(Predicate, Op.Val, /*AsSort=*/false);
+      bind(Predicate, Op.Val, /*BySort=*/false);
     } else {
       auto Keyword = cast<KeywordOp>(Op.Val.getDefiningOp());
       auto Check = plan::CheckConstantOp::create(
@@ -428,12 +354,12 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
         Op->Kind == OperandKind::TypedValueArray) {
       Value Array = plan::GetOperandsFromOp::create(Builder, OpLoc, reg(), Reg,
                                                     i32(Index));
-      bind(Array, Op->Val, /*AsSort=*/false);
+      bind(Array, Op->Val, /*BySort=*/false);
       if (Op->Kind == OperandKind::TypedValueArray) {
         auto Types = plan::GetOperandsFromOp::create(Builder, OpLoc, reg(), Reg,
                                                      i32(Index));
         Types.setTypes(true);
-        bind(Types, Op->Type, /*AsSort=*/false);
+        bind(Types, Op->Type, /*BySort=*/false);
       }
       continue;
     }
@@ -475,8 +401,8 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
     matchValue(Yielded, Reg, /*TreatIntAsVec=*/false);
     // A value matched in place of the alternative is the alternative's
     // binding too.
-    if (slotOf(Yielded) != Slot || !S.Of.count(Yielded))
-      bind(Reg, Alt.getResult(), /*AsSort=*/false);
+    if (slotOf(Yielded) != Slot || !S.Assigned.Of.count(Yielded))
+      bind(Reg, Alt.getResult(), /*BySort=*/false);
     for (BindOp Bind : Block.getOps<BindOp>()) {
       if (auto Int = Bind.getValue().getDefiningOp<IntOp>()) {
         plan::BindConstantOp::create(
@@ -485,7 +411,7 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
         Bound.bind(slotOf(Bind.getVariable()));
         continue;
       }
-      bind(Reg, Bind.getVariable(), /*AsSort=*/false);
+      bind(Reg, Bind.getVariable(), /*BySort=*/false);
     }
     SmallVector<Operation *, 4> Roots = getPatternRoots(Block);
     finishBlock(Block, Roots);
@@ -499,7 +425,7 @@ void Compiler::matchValue(Value V, Value Reg, bool TreatIntAsVec) {
   Operation *Def = V.getDefiningOp();
   Location Loc = V.getLoc();
   if (isVariable(V)) {
-    bind(Reg, V, /*AsSort=*/true);
+    bind(Reg, V, /*BySort=*/true);
     return;
   }
   if (auto Inst = dyn_cast<InstOp>(Def)) {

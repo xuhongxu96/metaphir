@@ -2,18 +2,7 @@
 //
 // Match plans (see PlanOps.td).
 //
-// A type pattern of mpir_plan.check_type is an ArrayAttr whose first element
-// is its TypePatternKind, then:
-//
-//   Primitive      Type::TypeID
-//   Integer        width, byte (0 or 1)
-//   MetaInteger    slot of the width, byte
-//   Variable       slot
-//   Pointer        address space (-1 for any), opaque (0 or 1)
-//   Sequence       kind (0 array, 1 vector, 2 scalable vector), count,
-//                  slot of the count (-1 if the count is fixed), element
-//   Struct         packed, elements...
-//   Function       variadic, return type, parameters...
+// Its slots and type patterns are the pattern's (see Pattern/Bindings.h).
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,25 +16,6 @@
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
 #include "metaphir/Dialect/Plan/PlanEnums.h.inc"
-
-namespace llvm {
-namespace metaphir {
-namespace mpir_plan {
-
-enum class TypePatternKind : int64_t {
-  Primitive = 0,
-  Integer = 1,
-  MetaInteger = 2,
-  Variable = 3,
-  Pointer = 4,
-  Sequence = 5,
-  Struct = 6,
-  Function = 7,
-};
-
-} // namespace mpir_plan
-} // namespace metaphir
-} // namespace llvm
 
 #include "metaphir/Dialect/Plan/PlanOpsDialect.h.inc"
 

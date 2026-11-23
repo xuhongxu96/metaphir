@@ -1,14 +1,14 @@
 //===- TypePattern.h - Type patterns of plans and index queries -*- C++ -*-===//
 //
 // The type patterns mpir_plan.check_type and mpir_index.typing encode (see
-// PlanDialect.h), decoded into trees, and matched against LLVM types.
+// Pattern/Bindings.h), decoded into trees, and matched against LLVM types.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef METAPHIR_EXEC_TYPEPATTERN_H
 #define METAPHIR_EXEC_TYPEPATTERN_H
 
-#include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Dialect/Pattern/Bindings.h"
 #include "metaphir/Matching/Binding.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -21,7 +21,7 @@ namespace metaphir {
 class TypePatterns {
 public:
   struct Node {
-    mpir_plan::TypePatternKind Kind;
+    mpir::TypePatternKind Kind;
     int64_t A = 0, B = 0, C = 0;
     SmallVector<unsigned, 2> Children;
   };

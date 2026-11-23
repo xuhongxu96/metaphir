@@ -14,7 +14,8 @@ mlir_tablegen(PatternOpsAttrDefs.h.inc -gen-attrdef-decls -attrdefs-dialect=mpir
 mlir_tablegen(PatternOpsAttrDefs.cpp.inc -gen-attrdef-defs -attrdefs-dialect=mpir)
 add_public_tablegen_target(MetaphIRPatternOpsIncGen)
 
-add_library(metaphir-dialect-pattern NamedEnum.cpp NamedEnum.h PatternDialect.cpp
+add_library(metaphir-dialect-pattern Bindings.cpp Bindings.h NamedEnum.cpp
+                                     NamedEnum.h PatternDialect.cpp
                                      PatternDialect.h
                                      SourceLocation.cpp SourceLocation.h)
 
