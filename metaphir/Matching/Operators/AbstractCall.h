@@ -68,7 +68,7 @@ struct AbstractCall {
   int64_t Context = -1;
 };
 
-/// False if some site of V lacks fact A in all its slots, where the index
+/// False if some site of V lacks fact A in all its positions, where the index
 /// records it; otherwise unknown. V is Operands[OperandIndex], and a value
 /// that is not a site list is unknown.
 AbstractValue lacksFact(const AbstractCall &Call, unsigned OperandIndex,
@@ -80,7 +80,7 @@ AbstractValue lacksValueFact(const AbstractCall &Call, unsigned OperandIndex,
                              Atom A);
 
 /// False if some site of Operands[OperandIndex], of the context instruction,
-/// has measure M outside Bound in all its slots: above it for a least
+/// has measure M outside Bound in all its positions: above it for a least
 /// measure, below it for a most one. Otherwise unknown.
 AbstractValue exceedsMeasure(const AbstractCall &Call, unsigned OperandIndex,
                              Measure M, unsigned Bound);

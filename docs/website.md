@@ -114,7 +114,7 @@ thinlto-prelink`, `--corpus before-ic1`); each keeps its own builds and config e
 - each function's features, compressed with zstd and a trained dictionary;
 - one pack per function, with stubs for its globals and module-level constant
   uses. Up to eight consecutive packs share a zstd frame and trained
-  dictionary. `functions.idx` maps each pack to its frame and slot.
+  dictionary. `functions.idx` maps each pack to its frame and its index in it.
 
 `web/scripts/publish.py` uploads them to **`builds/<corpus>/<build>/`** in the
 bucket, uploading `manifest.json` last, and upserts that corpus in

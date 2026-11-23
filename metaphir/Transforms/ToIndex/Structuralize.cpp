@@ -67,11 +67,11 @@ static index::SitesOp sitesRead(Value E) {
               : index::SitesOp();
 }
 
-/// Whether some site of Sites is the given slot of a call.
-static bool atCallSlot(index::SitesOp Sites, unsigned SlotBits) {
+/// Whether some site of Sites is at the given positions of a call.
+static bool atCallPosition(index::SitesOp Sites, unsigned Positions) {
   return any_of(Sites.getSites(), [&](mlir::Attribute A) {
     Site S = index::decodeSite(A);
-    return S.ID == instruction::I_call && S.Slots == SlotBits;
+    return S.ID == instruction::I_call && S.Positions == Positions;
   });
 }
 
@@ -80,7 +80,7 @@ static std::optional<Disjunction> deriveEquality(Value E, StringRef Literal) {
   // '@llvm.?id' read as its intrinsic's name.
   if (index::SitesOp Sites = sitesRead(E))
     if (cast<mpir::SortType>(E.getType()).getSort() == Sort::String &&
-        atCallSlot(Sites, 1u << 0))
+        atCallPosition(Sites, 1u << 0))
       return Disjunction{{{Atom_::Global, {}, Literal.str()}}};
   auto Call = E.getDefiningOp<mpir_expr::CallOp>();
   if (!Call || Call.getArgs().size() != 1)
@@ -91,7 +91,7 @@ static std::optional<Disjunction> deriveEquality(Value E, StringRef Literal) {
   switch (Call.getOperatorID()) {
   case constraint::O_Intrinsic:
     // Only a call can call an intrinsic.
-    if (atCallSlot(Sites, 1u << ResultSlot))
+    if (atCallPosition(Sites, 1u << ResultPosition))
       return Disjunction{{{Atom_::Global, {}, Literal.str()}}};
     return std::nullopt;
   case constraint::O_Opcode: {
@@ -100,7 +100,7 @@ static std::optional<Disjunction> deriveEquality(Value E, StringRef Literal) {
     // constraint holds only if that is the kind it names.
     for (mlir::Attribute A : Sites.getSites()) {
       Site S = index::decodeSite(A);
-      if (S.Slots == 1u << ResultSlot &&
+      if (S.Positions == 1u << ResultPosition &&
           matcherOf(instruction::getOpcodeName(S.ID)) == S.ID && ID != S.ID)
         return Disjunction();
     }

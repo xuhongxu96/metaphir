@@ -2912,8 +2912,8 @@ mpir.pattern {
 
 // -----
 
-// ':c' is one variant: its operands' sites are either slot. ':o' requires
-// only what both its alternatives do.
+// ':c' and ':o' are each a variant per alternative: an order of the
+// operands, and the instruction or its operand.
 mpir.pattern {
 // CHECK-LABEL:   mpir.pattern {
   %0 = mpir.type.int 32 : <Type> loc("to-index.mlir":2919:1)

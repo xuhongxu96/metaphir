@@ -38,8 +38,8 @@ struct Requirement {
   /// The globals the pattern names, which the function refers to
   /// (mpir_index.has_global).
   SmallVector<std::string, 2> Globals;
-  /// (node, slots, atom): some slot of the matched instruction node holds a
-  /// value with the fact, such as the literal written there
+  /// (node, positions, atom): some position of the matched instruction node
+  /// holds a value with the fact, such as the literal written there
   /// (mpir_index.has_fact).
   SmallVector<std::tuple<mlir::Operation *, uint8_t, Atom>, 2> SiteFacts;
   /// (value, opcode): an instruction of the opcode uses the pattern value.
@@ -47,8 +47,8 @@ struct Requirement {
   /// variables and matchers count: a constant written once can match
   /// different constants (a scalar and a splat).
   SmallVector<std::pair<mlir::Value, instruction::InstructionID>, 4> Uses;
-  /// (value, node, slots): the pattern value is an operand of the matched
-  /// instruction node in these slots; with the results of the matched
+  /// (value, node, positions): the pattern value is an operand of the matched
+  /// instruction node at these positions; with the results of the matched
   /// instructions, what constraints read it as (mpir_index.sites).
   SmallVector<std::tuple<mlir::Value, mlir::Operation *, uint8_t>, 4>
       OperandSites;

@@ -669,7 +669,7 @@ static int matchPacks(StringRef ToolName) {
       Error E = [&]() -> Error {
         if (Own) {
           PackLocation Pack = (*Query)->getPackLocation(Matchable[I]);
-          return (*Own)->match(Matchable[I], *Cache.get(Pack.Frame), Pack.Slot,
+          return (*Own)->match(Matchable[I], *Cache.get(Pack.Frame), Pack.Index,
                                Out, PrintInstructions);
         }
         Failed = true;

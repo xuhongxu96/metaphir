@@ -54,11 +54,11 @@ class WorkerSession implements Coordinator, Matcher {
     this.call<void>("add", file, offset, bytes);
   matchable = () => this.call<Matchable[]>("matchable");
   numCandidates = () => this.call<number>("numCandidates");
-  match = (fn: number, frame: Uint8Array, slot: number) =>
-    this.call<MatchResult>("match", fn, frame, slot);
+  match = (fn: number, frame: Uint8Array, index: number) =>
+    this.call<MatchResult>("match", fn, frame, index);
   moduleOf = (fn: number) => this.call<string>("moduleOf", fn);
-  printFunction = (frame: Uint8Array, slot: number) =>
-    this.call<PrintedFunction | { error: string }>("printFunction", frame, slot);
+  printFunction = (frame: Uint8Array, index: number) =>
+    this.call<PrintedFunction | { error: string }>("printFunction", frame, index);
 }
 
 /**

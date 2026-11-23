@@ -71,7 +71,7 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
       } else if (auto Has = dyn_cast<mpir_index::HasFactOp>(Op)) {
         R.SiteFacts.push_back(
             {Site{int64_t(Has.getNode()), Has.getOpcode().getValue(),
-                  uint8_t(Has.getSlots())},
+                  uint8_t(Has.getPositions())},
              Atom::fromCode(Has.getAtom())});
       } else if (auto T = dyn_cast<mpir_index::TypingOp>(Op)) {
         Typing Each;
@@ -217,7 +217,7 @@ IndexQuery::joinSignatures(const Variant &V,
         TypeCode Code = NoType;
         if (IsValue) {
           unsigned Operand = Position++;
-          if (!Pattern || Operand >= NumOperandSlots)
+          if (!Pattern || Operand >= NumOperandPositions)
             continue;
           Code = It->Operands[Operand];
         } else if (T.ID != instruction::I_alloca &&
@@ -611,8 +611,8 @@ static std::string article(instruction::InstructionID ID) {
 
 static bool hasSiteFact(const FunctionFeatures &Features, const Site &S,
                         Atom A) {
-  for (unsigned Slots = S.Slots; Slots; Slots &= Slots - 1)
-    if (Features.hasFact(S.ID, llvm::countr_zero(Slots), A))
+  for (unsigned Positions = S.Positions; Positions; Positions &= Positions - 1)
+    if (Features.hasFact(S.ID, llvm::countr_zero(Positions), A))
       return true;
   return false;
 }

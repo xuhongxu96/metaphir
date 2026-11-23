@@ -148,7 +148,7 @@ protected:
         return R;
       bool Structural = false;
       Error E = (*Query)->match(
-          Function, *Frame, Pack.Slot, OS, PrintInstructions,
+          Function, *Frame, Pack.Index, OS, PrintInstructions,
           ReportRejecting ? &R.Rejecting : nullptr, &Structural);
       R.Structural += Structural;
       EXPECT_FALSE(static_cast<bool>(E)) << toString(std::move(E));
@@ -241,10 +241,10 @@ protected:
 
   /// The error matching Function from Frame with Query, or "" if there is none.
   static std::string matchError(WebQuery &Query, uint32_t Function,
-                                StringRef Frame, unsigned Slot) {
+                                StringRef Frame, unsigned PackIndex) {
     std::string Matches;
     raw_string_ostream OS(Matches);
-    return toString(Query.match(Function, Frame, Slot, OS));
+    return toString(Query.match(Function, Frame, PackIndex, OS));
   }
 };
 
@@ -293,14 +293,14 @@ TEST_F(WebQueryTest, MatchesWhatTheCorpusHas) {
         Entries.data() + Function * WebIndexEntrySize + 8));
   };
   EXPECT_EQ(Location(40).Frame, Location(41).Frame);
-  EXPECT_EQ(Location(41).Slot, Location(40).Slot + 1);
-  EXPECT_LT(Location(47).Slot, PublishOptions().PacksPerFrame);
+  EXPECT_EQ(Location(41).Index, Location(40).Index + 1);
+  EXPECT_LT(Location(47).Index, PublishOptions().PacksPerFrame);
 
   // The function's IR can be shown, and so can its frame's other packs'.
   auto Print = [&](uint32_t Function) {
     PackLocation Pack = Location(Function);
     return WebQuery::printFunction(
-        *Web, Packs.slice(Pack.Frame.Offset, Pack.Frame.getEnd()), Pack.Slot);
+        *Web, Packs.slice(Pack.Frame.Offset, Pack.Frame.getEnd()), Pack.Index);
   };
   Expected<PrintedFunction> Neighbor = Print(41);
   ASSERT_TRUE(static_cast<bool>(Neighbor)) << toString(Neighbor.takeError());
@@ -566,7 +566,7 @@ TEST_F(WebQueryTest, RejectsCorruptPackFrames) {
   EXPECT_NE(
       matchError(Q, 0, packFrame(uleb(1000)), 0).find("a pack past the end"),
       std::string::npos);
-  // A slot past the frame's packs.
+  // An index past the frame's packs.
   EXPECT_NE(matchError(Q, 0, packFrame(uleb(0)), 1).find("no pack 1"),
             std::string::npos);
   // An empty pack, which is no function pack.

@@ -16,11 +16,11 @@ namespace metaphir {
 
 // What a corpus index records about the values at a site: an instruction
 // kind (a built-in instruction matcher) and one of its matcher operand
-// positions (a slot; the last slot covers the rest), or its result. A fact is
+// positions (the last covers the rest), or its result. A fact is
 // recorded for a site when some instruction of the function has it there.
 
-constexpr unsigned NumOperandSlots = 3;
-constexpr unsigned ResultSlot = NumOperandSlots;
+constexpr unsigned NumOperandPositions = 3;
+constexpr unsigned ResultPosition = NumOperandPositions;
 
 /// A fact about the values at a site: a predicate holds for one of them, it
 /// is an integer constant of some small value, or it is of some LLVM value
@@ -96,13 +96,13 @@ public:
 
 /// A value at a site, for the operators to record facts about.
 struct RecordCall {
-  RecordCall(const llvm::Value &Value, unsigned Slot, FactSink &Sink,
+  RecordCall(const llvm::Value &Value, unsigned Position, FactSink &Sink,
              const SimplifyQuery *Query = nullptr)
-      : Value(Value), Slot(Slot), Sink(Sink), Query(Query) {}
+      : Value(Value), Position(Position), Sink(Sink), Query(Query) {}
 
   const llvm::Value &Value;
-  /// An operand slot, or ResultSlot.
-  unsigned Slot;
+  /// An operand position, or ResultPosition.
+  unsigned Position;
   FactSink &Sink;
   /// Value tracking anchored at the site's instruction, when recording its
   /// facts.

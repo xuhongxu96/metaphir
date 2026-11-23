@@ -130,9 +130,9 @@ TEST_F(WebPublisherTest, RejectsPacksPerFrameOutOfRange) {
   None.PacksPerFrame = 0;
   EXPECT_EQ(publish(Output, None),
             "packs per frame must be from 1 to " +
-                std::to_string(1u << PackLocation::SlotBits));
+                std::to_string(1u << PackLocation::IndexBits));
   PublishOptions Many = options();
-  Many.PacksPerFrame = 1u << PackLocation::SlotBits;
+  Many.PacksPerFrame = 1u << PackLocation::IndexBits;
   Many.PacksPerFrame += 1;
   EXPECT_NE(publish(Output, Many), "");
 }

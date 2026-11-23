@@ -16,9 +16,9 @@ export interface Session {
   filterCandidates(): StageResult;
   numCandidates(): number;
   matchable(): Matchable[];
-  match(fn: number, frame: Uint8Array, slot: number): MatchResult;
+  match(fn: number, frame: Uint8Array, index: number): MatchResult;
   moduleOf(fn: number): string;
-  printFunction(frame: Uint8Array, slot: number): PrintedFunction | { error: string };
+  printFunction(frame: Uint8Array, index: number): PrintedFunction | { error: string };
   delete(): void;
 }
 

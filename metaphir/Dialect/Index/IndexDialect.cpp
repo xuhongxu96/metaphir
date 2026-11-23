@@ -30,7 +30,7 @@ ArrayAttr llvm::metaphir::mpir_index::encodeSite(MLIRContext *Context,
                                                  const Site &S) {
   Builder B(Context);
   return B.getArrayAttr({B.getI64IntegerAttr(S.Node), B.getI64IntegerAttr(S.ID),
-                         B.getI64IntegerAttr(S.Slots)});
+                         B.getI64IntegerAttr(S.Positions)});
 }
 
 llvm::metaphir::Site llvm::metaphir::mpir_index::decodeSite(Attribute A) {

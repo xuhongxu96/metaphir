@@ -62,23 +62,23 @@ struct ByteRange {
 /// of the frame's packs it is.
 struct PackLocation {
   ByteRange Frame;
-  unsigned Slot = 0;
+  unsigned Index = 0;
 
   /// The word of functions.idx that holds it: the frame's offset, its size
-  /// and the slot, in the bits below. None of them may be larger.
-  static constexpr unsigned OffsetBits = 36, SizeBits = 24, SlotBits = 4;
-  static bool fits(uint64_t Offset, uint64_t Size, unsigned Slot) {
+  /// and the pack's index, in the bits below. None of them may be larger.
+  static constexpr unsigned OffsetBits = 36, SizeBits = 24, IndexBits = 4;
+  static bool fits(uint64_t Offset, uint64_t Size, unsigned PackIndex) {
     return Offset >> OffsetBits == 0 && Size >> SizeBits == 0 &&
-           Slot >> SlotBits == 0;
+           PackIndex >> IndexBits == 0;
   }
-  static uint64_t encode(uint64_t Offset, uint64_t Size, unsigned Slot) {
-    return Offset << (SizeBits + SlotBits) | Size << SlotBits | Slot;
+  static uint64_t encode(uint64_t Offset, uint64_t Size, unsigned PackIndex) {
+    return Offset << (SizeBits + IndexBits) | Size << IndexBits | PackIndex;
   }
   static PackLocation decode(uint64_t Word) {
-    uint64_t Size = Word >> SlotBits & ((uint64_t(1) << SizeBits) - 1);
+    uint64_t Size = Word >> IndexBits & ((uint64_t(1) << SizeBits) - 1);
     return PackLocation{
-        ByteRange{WebFile::Packs, Word >> (SizeBits + SlotBits), Size},
-        unsigned(Word & ((1u << SlotBits) - 1))};
+        ByteRange{WebFile::Packs, Word >> (SizeBits + IndexBits), Size},
+        unsigned(Word & ((1u << IndexBits) - 1))};
   }
 };
 

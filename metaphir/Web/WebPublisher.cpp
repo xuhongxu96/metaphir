@@ -118,7 +118,7 @@ static Expected<EncodedModule> encodeModule(const CorpusIndex &Index,
 }
 
 /// A module's packs, grouped to be compressed together: each frame's packs,
-/// each after its size; and for each pack, its frame and slot in it.
+/// each after its size; and for each pack, its frame and its index in it.
 struct PackFrames {
   std::vector<std::string> Frames;
   std::vector<std::pair<size_t, unsigned>> Of;
@@ -130,13 +130,13 @@ static PackFrames groupPacks(ArrayRef<std::string> Packs,
   for (size_t I = 0; I != Packs.size();) {
     std::string Frame;
     raw_string_ostream OS(Frame);
-    unsigned Slot = 0;
+    unsigned PackIndex = 0;
     do {
       encodeULEB128(Packs[I].size(), OS);
       OS << Packs[I];
-      Grouped.Of.emplace_back(Grouped.Frames.size(), Slot++);
+      Grouped.Of.emplace_back(Grouped.Frames.size(), PackIndex++);
       ++I;
-    } while (I != Packs.size() && Slot != Options.PacksPerFrame &&
+    } while (I != Packs.size() && PackIndex != Options.PacksPerFrame &&
              Frame.size() + Packs[I].size() <= Options.MaxFrameInput);
     Grouped.Frames.push_back(std::move(Frame));
   }
@@ -220,9 +220,9 @@ static Error writeFile(StringRef Directory, StringRef Name, StringRef Bytes) {
 Error publishCorpus(const CorpusIndex &Index, StringRef Output,
                     const PublishOptions &Options) {
   if (Options.PacksPerFrame == 0 ||
-      Options.PacksPerFrame > (1u << PackLocation::SlotBits))
+      Options.PacksPerFrame > (1u << PackLocation::IndexBits))
     return createStringError("packs per frame must be from 1 to " +
-                             Twine(1u << PackLocation::SlotBits));
+                             Twine(1u << PackLocation::IndexBits));
   if (std::error_code EC = sys::fs::create_directories(Output))
     return createFileError(Output, EC);
   parallel::strategy = hardware_concurrency(Options.Jobs);
@@ -380,12 +380,12 @@ Error publishCorpus(const CorpusIndex &Index, StringRef Output,
         if (!Features)
           return Features.takeError();
         // LCOV_EXCL_STOP
-        auto [Frame, Slot] = Work.Grouped.Of[Feature];
+        auto [Frame, PackIndex] = Work.Grouped.Of[Feature];
         uint64_t Size = (*Work.Results[NumFeatures + Frame])->size();
-        if (!PackLocation::fits(FrameOffsets[Frame], Size, Slot))
+        if (!PackLocation::fits(FrameOffsets[Frame], Size, PackIndex))
           return createStringError(Indexed.Path +
                                    ": the packs are too large to publish");
-        WriteEntry(PackLocation::encode(FrameOffsets[Frame], Size, Slot));
+        WriteEntry(PackLocation::encode(FrameOffsets[Frame], Size, PackIndex));
         FeaturesOS.stream() << *Features;
         FeaturesSize += Features->size();
       }

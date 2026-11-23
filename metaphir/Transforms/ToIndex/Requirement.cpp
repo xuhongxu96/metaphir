@@ -116,25 +116,25 @@ void RequirementBuilder::visitInstruction(InstOp Node, Walk &Into) {
   bool UsesOperands = ID != instruction::I_phi &&
                       ID != instruction::I_extractvalue &&
                       ID != instruction::I_insertvalue;
-  auto SlotBit = [](unsigned P) {
-    return uint8_t(1) << std::min(P, NumOperandSlots - 1);
+  auto PositionBit = [](unsigned P) {
+    return uint8_t(1) << std::min(P, NumOperandPositions - 1);
   };
   for (auto [Position, Op] : llvm::enumerate(Values)) {
     if (Op.Kind == OperandKind::ValueArray ||
         Op.Kind == OperandKind::TypedValueArray || !Op.Val)
       continue;
     visit(Op.Val, Into);
-    uint8_t Slots = SlotBit(Position);
+    uint8_t Positions = PositionBit(Position);
     Operation *Def = Op.Val.getDefiningOp();
     bool IsMatcher = isa_and_nonnull<InstOp, AltOp>(Def);
     if (isVariable(Op.Val) || IsMatcher)
-      R.OperandSites.push_back({canonical(Op.Val), Node, Slots});
+      R.OperandSites.push_back({canonical(Op.Val), Node, Positions});
     if (auto Int = dyn_cast_or_null<IntOp>(Def)) {
       mlir::IntegerAttr Value = Int.getValueAttr();
       APSInt Number(Value.getValue(), Value.getType().isUnsignedInteger());
       if (std::optional<int64_t> V = Number.tryExtValue())
         if (std::optional<Atom> Literal = Atom::literal(*V))
-          R.SiteFacts.push_back({Node, Slots, *Literal});
+          R.SiteFacts.push_back({Node, Positions, *Literal});
     }
     if (UsesOperands && (isVariable(Op.Val) || IsMatcher))
       R.Uses.push_back({canonical(Op.Val), ID});

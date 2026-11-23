@@ -41,10 +41,10 @@ export type MatchResult =
   | { error: string };
 
 /** A function whose features may match: the frame of packs its pack is
- * in, and its slot in the frame. */
+ * in, and its index in the frame. */
 export interface Matchable extends ByteRange {
   function: number;
-  slot: number;
+  index: number;
 }
 
 /** The session that runs the stages. */
@@ -59,7 +59,7 @@ export interface Coordinator {
 /** A session that matches functions, one at a time. */
 export interface Matcher {
   compile(pattern: string, name: string): Promise<StageResult>;
-  match(fn: number, frame: Uint8Array, slot: number): Promise<MatchResult>;
+  match(fn: number, frame: Uint8Array, index: number): Promise<MatchResult>;
 }
 
 export type StageName =
@@ -197,7 +197,7 @@ export async function runQuery(
   events.onStage?.("matching");
 
   // Each matcher takes the next function once it is done with its last.
-  const queue: { fn: number; frame: Uint8Array; slot: number }[] = [];
+  const queue: { fn: number; frame: Uint8Array; index: number }[] = [];
   let reading = true;
   let waiting: (() => void)[] = [];
   const wakeAll = () => {
@@ -215,7 +215,7 @@ export async function runQuery(
         await new Promise<void>((resolve) => waiting.push(resolve));
         continue;
       }
-      const result = await matcher.match(next.fn, next.frame, next.slot);
+      const result = await matcher.match(next.fn, next.frame, next.index);
       if ("error" in result) {
         events.onSkipped?.(next.fn, result.error);
         continue;
@@ -251,7 +251,7 @@ export async function runQuery(
     )
       await fetcher.fetchRanges(toRead.slice(start, start + PACK_BATCH), (range, frame) => {
         for (const m of frames.get(range.offset)!.of)
-          queue.push({ fn: m.function, frame, slot: m.slot });
+          queue.push({ fn: m.function, frame, index: m.index });
         wakeAll();
       });
   } finally {

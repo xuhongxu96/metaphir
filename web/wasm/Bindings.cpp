@@ -105,7 +105,7 @@ public:
   }
 
   /// The functions whose features may match, each with where its pack is:
-  /// the frame it is in, and its slot in the frame.
+  /// the frame it is in, and its index in the frame.
   val matchable() const {
     val Array = val::array();
     for (uint32_t Function :
@@ -113,17 +113,17 @@ public:
       PackLocation Pack = Query->getPackLocation(Function);
       val Entry = rangeValue(Pack.Frame);
       Entry.set("function", Function);
-      Entry.set("slot", Pack.Slot);
+      Entry.set("index", Pack.Index);
       Array.call<void>("push", Entry);
     }
     return Array;
   }
 
-  /// The matches of Function, whose pack is the one at Slot of Frame, one
+  /// The matches of Function, whose pack is the one at PackIndex of Frame, one
   /// per line, with the
   /// instructions each matched; and if it has none, the constraints that
   /// rejected its structural matches; and whether it has any.
-  val match(uint32_t Function, const std::string &Frame, unsigned Slot) {
+  val match(uint32_t Function, const std::string &Frame, unsigned PackIndex) {
     if (!Query)
       return noQuery();
     std::string Lines;
@@ -131,7 +131,7 @@ public:
     std::vector<RejectingConstraint> Rejecting;
     bool Structural = false;
     if (Error E =
-            Query->match(Function, Frame, Slot, OS,
+            Query->match(Function, Frame, PackIndex, OS,
                          /*PrintInstructions=*/true, &Rejecting, &Structural))
       return errorValue(std::move(E));
     val Result = val::object();
@@ -158,13 +158,13 @@ public:
     return Index ? Index->getModuleOf(Function).Path : "";
   }
 
-  /// The IR of the function whose pack is the one at Slot of Frame, and the
-  /// line of each of its instructions.
-  val printFunction(const std::string &Frame, unsigned Slot) const {
+  /// The IR of the function whose pack is the one at PackIndex of Frame, and
+  /// the line of each of its instructions.
+  val printFunction(const std::string &Frame, unsigned PackIndex) const {
     if (!Index)
       return noIndex();
     Expected<PrintedFunction> Printed =
-        WebQuery::printFunction(*Index, Frame, Slot);
+        WebQuery::printFunction(*Index, Frame, PackIndex);
     if (!Printed)
       return errorValue(Printed.takeError());
     val Lines = val::array();

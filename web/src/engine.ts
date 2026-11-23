@@ -294,7 +294,7 @@ export class PublishedCorpus {
       const pack = packs.get(fn)!;
       let frame: Uint8Array | undefined;
       await fetcher.fetchRanges([pack], (_, bytes) => (frame = bytes));
-      const printed = await pool.coordinator.printFunction(frame!, pack.slot);
+      const printed = await pool.coordinator.printFunction(frame!, pack.index);
       if ("error" in printed) throw new Error(printed.error);
       return { text: printed.ir, lines: printed.lines };
     };

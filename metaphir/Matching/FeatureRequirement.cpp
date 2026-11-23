@@ -19,11 +19,11 @@ bool ShapeRequirement::isSatisfiedBy(const FunctionFeatures &Features) const {
   return false;
 }
 
-/// Whether some slot of S has fact A.
+/// Whether some position of S has fact A.
 static bool hasSiteFact(const FunctionFeatures &Features, const Site &S,
                         Atom A) {
-  for (unsigned Slots = S.Slots; Slots; Slots &= Slots - 1)
-    if (Features.hasFact(S.ID, llvm::countr_zero(Slots), A))
+  for (unsigned Positions = S.Positions; Positions; Positions &= Positions - 1)
+    if (Features.hasFact(S.ID, llvm::countr_zero(Positions), A))
       return true;
   return false;
 }

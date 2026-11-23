@@ -5,11 +5,11 @@
 namespace llvm {
 namespace metaphir {
 
-/// Whether some slot of the site satisfies Holds.
+/// Whether some position of the site satisfies Holds.
 template <typename Predicate>
-static bool anySlot(const Site &S, Predicate Holds) {
-  for (unsigned Slots = S.Slots; Slots; Slots &= Slots - 1)
-    if (Holds(S.ID, unsigned(llvm::countr_zero(Slots))))
+static bool anyPosition(const Site &S, Predicate Holds) {
+  for (unsigned Positions = S.Positions; Positions; Positions &= Positions - 1)
+    if (Holds(S.ID, unsigned(llvm::countr_zero(Positions))))
       return true;
   return false;
 }
@@ -20,8 +20,8 @@ AbstractValue lacksFact(const AbstractCall &Call, unsigned OperandIndex,
   if (!V.isSites())
     return AbstractValue::unknown();
   for (const Site &S : V.getSites())
-    if (!anySlot(S, [&](instruction::InstructionID ID, unsigned Slot) {
-          return Call.Features.hasFact(ID, Slot, A);
+    if (!anyPosition(S, [&](instruction::InstructionID ID, unsigned Position) {
+          return Call.Features.hasFact(ID, Position, A);
         }))
       return AbstractValue::concrete(ConstraintValue::getBoolean(false));
   return AbstractValue::unknown();
@@ -41,10 +41,10 @@ contextSites(const AbstractCall &Call, unsigned OperandIndex) {
   return Anchored;
 }
 
-/// Whether value tracking was skipped for some value in the slot.
+/// Whether value tracking was skipped for some value at the position.
 static bool skipped(const AbstractCall &Call, instruction::InstructionID ID,
-                    unsigned Slot) {
-  return Call.Features.hasFact(ID, Slot, fact::ValueTrackingSkipped);
+                    unsigned Position) {
+  return Call.Features.hasFact(ID, Position, fact::ValueTrackingSkipped);
 }
 
 AbstractValue lacksValueFact(const AbstractCall &Call, unsigned OperandIndex,
@@ -54,8 +54,9 @@ AbstractValue lacksValueFact(const AbstractCall &Call, unsigned OperandIndex,
   if (!Anchored)
     return AbstractValue::unknown();
   for (const Site &S : *Anchored)
-    if (!anySlot(S, [&](instruction::InstructionID ID, unsigned Slot) {
-          return skipped(Call, ID, Slot) || Call.Features.hasFact(ID, Slot, A);
+    if (!anyPosition(S, [&](instruction::InstructionID ID, unsigned Position) {
+          return skipped(Call, ID, Position) ||
+                 Call.Features.hasFact(ID, Position, A);
         }))
       return AbstractValue::concrete(ConstraintValue::getBoolean(false));
   return AbstractValue::unknown();
@@ -79,11 +80,11 @@ AbstractValue exceedsMeasure(const AbstractCall &Call, unsigned OperandIndex,
     llvm_unreachable("invalid measure order");
   };
   for (const Site &S : *Anchored)
-    if (!anySlot(S, [&](instruction::InstructionID ID, unsigned Slot) {
-          if (skipped(Call, ID, Slot))
+    if (!anyPosition(S, [&](instruction::InstructionID ID, unsigned Position) {
+          if (skipped(Call, ID, Position))
             return true;
           std::optional<unsigned> Recorded =
-              Call.Features.getMeasure(ID, Slot, M);
+              Call.Features.getMeasure(ID, Position, M);
           return Recorded && Within(*Recorded);
         }))
       return AbstractValue::concrete(ConstraintValue::getBoolean(false));

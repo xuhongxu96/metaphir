@@ -99,10 +99,10 @@ def Index_HasShapeOp : Index_Op<"has_shape"> {
 }
 
 def Index_HasFactOp : Index_Op<"has_fact"> {
-  let summary = "Some slot of a site has a fact (see Facts.h)";
-  let arguments = (ins I64Attr:$node, Mpir_OpcodeAttr:$opcode, I32Attr:$slots,
+  let summary = "Some position of a site has a fact (see Facts.h)";
+  let arguments = (ins I64Attr:$node, Mpir_OpcodeAttr:$opcode, I32Attr:$positions,
                        I32Attr:$atom);
-  let assemblyFormat = "$node `,` $opcode `,` $slots `,` $atom attr-dict";
+  let assemblyFormat = "$node `,` $opcode `,` $positions `,` $atom attr-dict";
 }
 
 //===----------------------------------------------------------------------===//
@@ -127,9 +127,9 @@ def Index_TypingOp : Index_Op<"typing"> {
 def Index_SitesOp : Index_Op<"sites", [Pure]> {
   let summary = "A pattern value as the sites it occupies in every match";
   let description = [{
-    Each site is [node, opcode, slots]: the instruction matcher numbered node
-    (of the variant's typings and facts), and the slots (operand slots, or
-    ResultSlot for the instruction itself) the value is in.
+    Each site is [node, opcode, positions]: the instruction matcher numbered
+    node (of the variant's typings and facts), and the positions (operand
+    positions, or ResultPosition for the instruction itself) the value is at.
   }];
   let arguments = (ins ArrayAttr:$sites);
   let results = (outs Mpir_Term:$result);

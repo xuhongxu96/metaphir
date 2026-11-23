@@ -51,7 +51,7 @@ struct FeatureRequirement {
   SmallVector<uint16_t, 2> Siblings;
   /// Sorted and unique.
   SmallVector<uint64_t, 2> Globals;
-  /// Sorted and unique: facts some slot of a site has, such as an integer
+  /// Sorted and unique: facts some position of a site has, such as an integer
   /// constant the pattern names there.
   SmallVector<std::pair<Site, Atom>, 2> SiteFacts;
 

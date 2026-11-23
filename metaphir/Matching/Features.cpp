@@ -81,16 +81,16 @@ bool FunctionFeatures::hasGlobal(uint64_t Hash) const {
   return std::binary_search(Globals.begin(), Globals.end(), Hash);
 }
 
-bool FunctionFeatures::hasFact(instruction::InstructionID ID, unsigned Slot,
+bool FunctionFeatures::hasFact(instruction::InstructionID ID, unsigned Position,
                                Atom A) const {
   return std::binary_search(Facts.begin(), Facts.end(),
-                            getFactKey(ID, Slot, A));
+                            getFactKey(ID, Position, A));
 }
 
 std::optional<unsigned>
-FunctionFeatures::getMeasure(instruction::InstructionID ID, unsigned Slot,
+FunctionFeatures::getMeasure(instruction::InstructionID ID, unsigned Position,
                              Measure M) const {
-  uint32_t Key = getMeasureKey(ID, Slot, M, 0);
+  uint32_t Key = getMeasureKey(ID, Position, M, 0);
   auto It = llvm::lower_bound(Measures, Key);
   if (It == Measures.end() || (*It & ~0xffu) != Key)
     return std::nullopt;
@@ -138,23 +138,23 @@ public:
            DenseMap<uint32_t, unsigned> &MeasureValues)
       : Features(Features), MeasureValues(MeasureValues) {}
 
-  /// Sets the sites to Slot of each instruction matcher in IDs.
-  void setSites(uint64_t IDs, unsigned Slot) {
+  /// Sets the sites to Position of each instruction matcher in IDs.
+  void setSites(uint64_t IDs, unsigned Position) {
     this->IDs = IDs;
-    this->Slot = Slot;
+    this->Position = Position;
   }
 
   void add(Atom A) override {
     for (uint64_t Each = IDs; Each; Each &= Each - 1)
       Features.Facts.push_back(FunctionFeatures::getFactKey(
-          instruction::InstructionID(llvm::countr_zero(Each)), Slot, A));
+          instruction::InstructionID(llvm::countr_zero(Each)), Position, A));
   }
 
   void measure(Measure M, unsigned Value) override {
     Value = std::min(Value, MaxMeasure);
     for (uint64_t Each = IDs; Each; Each &= Each - 1) {
       uint32_t Key = FunctionFeatures::getMeasureKey(
-          instruction::InstructionID(llvm::countr_zero(Each)), Slot, M, 0);
+          instruction::InstructionID(llvm::countr_zero(Each)), Position, M, 0);
       auto [It, Inserted] = MeasureValues.try_emplace(Key, Value);
       if (!Inserted)
         It->second = mergeMeasure(M, It->second, Value);
@@ -165,7 +165,7 @@ private:
   FunctionFeatures &Features;
   DenseMap<uint32_t, unsigned> &MeasureValues;
   uint64_t IDs = 0;
-  unsigned Slot = 0;
+  unsigned Position = 0;
 };
 } // namespace
 
@@ -181,13 +181,13 @@ FunctionFeatures FunctionFeatures::compute(const Function &F,
     Analysis.emplace();
   unsigned ValueFactsLeft = Options.ValueFactsBudget;
   auto Record = [&](const llvm::Value &V, const llvm::Instruction &I,
-                    unsigned Slot) {
+                    unsigned Position) {
     std::optional<SimplifyQuery> Query;
     if (Analysis && ValueFactsLeft) {
       --ValueFactsLeft;
       Query.emplace(Analysis->getQuery(&I));
     }
-    RecordCall Call(V, Slot, Sink, Query ? &*Query : nullptr);
+    RecordCall Call(V, Position, Sink, Query ? &*Query : nullptr);
     OpEqual::record(Call);
     recordValuePredicates(Call);
     if (Query)
@@ -207,14 +207,16 @@ FunctionFeatures FunctionFeatures::compute(const Function &F,
       collectMatcherOperands(I, MatcherOperands);
       Signature Sig;
       Sig.Result = encodeType(*I.getType());
-      for (auto [Slot, Operand] : enumerate(MatcherOperands)) {
-        if (Slot < NumOperandSlots)
-          Sig.Operands[Slot] = encodeType(*Operand->getType());
-        Sink.setSites(Mask, std::min<unsigned>(Slot, NumOperandSlots - 1));
-        Record(*Operand, I, std::min<unsigned>(Slot, NumOperandSlots - 1));
+      for (auto [Position, Operand] : enumerate(MatcherOperands)) {
+        if (Position < NumOperandPositions)
+          Sig.Operands[Position] = encodeType(*Operand->getType());
+        Sink.setSites(Mask,
+                      std::min<unsigned>(Position, NumOperandPositions - 1));
+        Record(*Operand, I,
+               std::min<unsigned>(Position, NumOperandPositions - 1));
       }
-      Sink.setSites(Mask, ResultSlot);
-      Record(I, I, ResultSlot);
+      Sink.setSites(Mask, ResultPosition);
+      Record(I, I, ResultPosition);
       for (uint64_t IDs = Mask; IDs; IDs &= IDs - 1) {
         Sig.ID = instruction::InstructionID(llvm::countr_zero(IDs));
         Sig.Flags = supportedFlags(Sig.ID, I);

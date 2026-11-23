@@ -127,7 +127,7 @@ function direct(session: Session): Coordinator & Matcher {
     add: async (file, offset, bytes) => session.add(file, offset, bytes),
     matchable: async () => session.matchable(),
     numCandidates: async () => session.numCandidates(),
-    match: async (fn, frame, slot) => session.match(fn, frame, slot),
+    match: async (fn, frame, index) => session.match(fn, frame, index),
   };
 }
 
@@ -169,7 +169,7 @@ test("finds each instruction's line in printed IR", async () => {
   const packs = readFileSync(join(work, "published", "packs.bin"));
   const functions = index.length / 16 - 1;
   for (let fn = 0; fn < functions; fn++) {
-    // Where its pack is: the frame's offset, size and the slot in it (see
+    // Where its pack is: the frame's offset, size and the pack's index in it (see
     // PackLocation).
     const word = index.readBigUInt64LE(fn * 16 + 8);
     const start = Number(word >> 28n);

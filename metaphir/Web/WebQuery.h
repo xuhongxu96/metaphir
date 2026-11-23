@@ -99,11 +99,11 @@ public:
   /// Where the pack of a matchable function is.
   PackLocation getPackLocation(uint32_t Function) const;
 
-  /// The function whose pack is the one at Slot of Frame, printed.
+  /// The function whose pack is the one at PackIndex of Frame, printed.
   static Expected<PrintedFunction>
-  printFunction(const WebIndex &Index, StringRef Frame, unsigned Slot);
+  printFunction(const WebIndex &Index, StringRef Frame, unsigned PackIndex);
 
-  /// Matches the function numbered Function, whose pack is the one at Slot
+  /// Matches the function numbered Function, whose pack is the one at PackIndex
   /// of Frame, and
   /// prints its matches to Out, one per line: the module, @function and
   /// bindings, and with PrintInstructions the instructions matched (see
@@ -112,7 +112,7 @@ public:
   /// adds the constraints that rejected them, as metaphir-match prints.
   /// HadStructuralMatch tells whether the function had any structural
   /// match, whether or not one satisfied the constraints.
-  Error match(uint32_t Function, StringRef Frame, unsigned Slot,
+  Error match(uint32_t Function, StringRef Frame, unsigned PackIndex,
               raw_ostream &Out, bool PrintInstructions = false,
               std::vector<RejectingConstraint> *Rejecting = nullptr,
               bool *HadStructuralMatch = nullptr);

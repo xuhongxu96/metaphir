@@ -25,7 +25,7 @@ struct Signature {
   instruction::InstructionID ID = instruction::InstructionID(0);
   uint32_t Flags = 0;
   TypeCode Result = NoType;
-  std::array<TypeCode, NumOperandSlots> Operands = {NoType, NoType, NoType};
+  std::array<TypeCode, NumOperandPositions> Operands = {NoType, NoType, NoType};
 
   auto tie() const { return std::make_tuple(ID, Flags, Result, Operands); }
   bool operator<(const Signature &Other) const { return tie() < Other.tie(); }
@@ -72,18 +72,18 @@ public:
   SmallVector<uint64_t, 4> Globals;
 
   /// The key of fact A at a site.
-  static uint32_t getFactKey(instruction::InstructionID ID, unsigned Slot,
+  static uint32_t getFactKey(instruction::InstructionID ID, unsigned Position,
                              Atom A) {
-    return uint32_t(ID) << 14 | Slot << 12 | A.getCode();
+    return uint32_t(ID) << 14 | Position << 12 | A.getCode();
   }
   /// The key of measure M at a site, with its value. The measure takes four
   /// bits and the value eight.
-  static uint32_t getMeasureKey(instruction::InstructionID ID, unsigned Slot,
-                                Measure M, unsigned Value) {
+  static uint32_t getMeasureKey(instruction::InstructionID ID,
+                                unsigned Position, Measure M, unsigned Value) {
     static_assert(unsigned(Measure::NumMeasures) <= 16,
                   "a measure key has four bits for the measure");
     static_assert(MaxMeasure <= 0xff, "a measure key has eight value bits");
-    return uint32_t(ID) << 14 | Slot << 12 | uint32_t(M) << 8 |
+    return uint32_t(ID) << 14 | Position << 12 | uint32_t(M) << 8 |
            std::min(Value, MaxMeasure);
   }
   /// The measure of a key from getMeasureKey.
@@ -110,10 +110,10 @@ public:
   bool mayHaveEdge(instruction::InstructionID User,
                    instruction::InstructionID Operand) const;
   bool hasGlobal(uint64_t Hash) const;
-  bool hasFact(instruction::InstructionID ID, unsigned Slot, Atom A) const;
+  bool hasFact(instruction::InstructionID ID, unsigned Position, Atom A) const;
   /// The value of measure M at a site, if recorded.
   std::optional<unsigned> getMeasure(instruction::InstructionID ID,
-                                     unsigned Slot, Measure M) const;
+                                     unsigned Position, Measure M) const;
 
   /// Adds Other's features, e.g. to summarize a module by its functions.
   void merge(const FunctionFeatures &Other);

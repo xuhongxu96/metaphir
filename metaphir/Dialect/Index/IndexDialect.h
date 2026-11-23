@@ -26,7 +26,7 @@ namespace llvm {
 namespace metaphir {
 namespace mpir_index {
 
-/// An mpir_index.sites element: [node, opcode, slots].
+/// An mpir_index.sites element: [node, opcode, positions].
 mlir::ArrayAttr encodeSite(mlir::MLIRContext *Context, const Site &S);
 Site decodeSite(mlir::Attribute A);
 

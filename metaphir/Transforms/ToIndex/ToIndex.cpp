@@ -126,7 +126,7 @@ private:
     return OpcodeAttr::get(Context, ID);
   }
   int64_t nodeOf(Operation *Op) const;
-  Attribute site(Operation *Node, uint8_t Slots);
+  Attribute site(Operation *Node, uint8_t Positions);
 
   void numberMatched();
   void emitPostedFeatures();
@@ -215,10 +215,10 @@ void VariantEmitter::emitDetailFeatures() {
   // is walked on its own, so an instruction reached both inside and outside
   // it records its facts in both walks.
   DenseSet<std::tuple<Operation *, uint8_t, uint16_t>> Facts;
-  for (auto [Node, Slots, A] : R.SiteFacts)
-    if (Facts.insert({Node, Slots, A.getCode()}).second)
+  for (auto [Node, Positions, A] : R.SiteFacts)
+    if (Facts.insert({Node, Positions, A.getCode()}).second)
       index::HasFactOp::create(Builder, Loc, nodeOf(Node),
-                               cast<InstOp>(Node).getOpcodeAttr(), Slots,
+                               cast<InstOp>(Node).getOpcodeAttr(), Positions,
                                A.getCode());
 }
 
@@ -296,23 +296,23 @@ void VariantEmitter::emitTypings() {
   }
 }
 
-Attribute VariantEmitter::site(Operation *Node, uint8_t Slots) {
+Attribute VariantEmitter::site(Operation *Node, uint8_t Positions) {
   return index::encodeSite(
       Builder.getContext(),
-      {nodeOf(Node), cast<InstOp>(Node).getOpcode().getValue(), Slots});
+      {nodeOf(Node), cast<InstOp>(Node).getOpcode().getValue(), Positions});
 }
 
 void VariantEmitter::collectSites() {
   // Where the pattern's values are operands and, for an instruction matched
   // as itself, its result.
-  for (auto [V, Node, Slots] : R.OperandSites) {
-    Attribute S = site(Node, Slots);
+  for (auto [V, Node, Positions] : R.OperandSites) {
+    Attribute S = site(Node, Positions);
     if (!is_contained(SitesOf[V], S))
       SitesOf[V].push_back(S);
   }
   for (InstOp Inst : OrderedMatched)
     SitesOf[canonical(Inst.getResult())].push_back(
-        site(Inst, uint8_t(1u << ResultSlot)));
+        site(Inst, uint8_t(1u << ResultPosition)));
   // A capture is at its instruction's sites, whether or not the variant
   // matches the instruction.
   Pattern.walk([&](InstOp Inst) {

@@ -251,9 +251,9 @@ private:
 };
 } // namespace
 
-/// The function whose pack is the one at Slot of Frame, read into Context.
+/// The function whose pack is the one at PackIndex of Frame, read into Context.
 static Expected<std::unique_ptr<UnpackedFunction>>
-unpack(const WebIndex &Index, StringRef Frame, unsigned Slot,
+unpack(const WebIndex &Index, StringRef Frame, unsigned PackIndex,
        LLVMContext &Context) {
   Expected<std::string> Bytes = Index.getPackDictionary().decompress(Frame);
   if (!Bytes)
@@ -262,14 +262,14 @@ unpack(const WebIndex &Index, StringRef Frame, unsigned Slot,
   DataExtractor Data(*Bytes, /*IsLittleEndian=*/true);
   DataExtractor::Cursor C(0);
   StringRef Packed;
-  for (unsigned I = 0; I <= Slot && C; ++I) {
+  for (unsigned I = 0; I <= PackIndex && C; ++I) {
     uint64_t Size = Data.getULEB128(C);
     if (C && Size > Bytes->size() - C.tell())
       return createStringError("pack frame: a pack past the end");
     Packed = Data.getBytes(C, Size);
   }
   if (!C)
-    return createStringError("pack frame: no pack " + Twine(Slot) + ": " +
+    return createStringError("pack frame: no pack " + Twine(PackIndex) + ": " +
                              toString(C.takeError()));
   Expected<FunctionPack> Pack = FunctionPack::decode(Packed);
   if (!Pack)
@@ -277,11 +277,12 @@ unpack(const WebIndex &Index, StringRef Frame, unsigned Slot,
   return UnpackedFunction::read(*Pack, Context);
 }
 
-Expected<PrintedFunction>
-WebQuery::printFunction(const WebIndex &Index, StringRef Frame, unsigned Slot) {
+Expected<PrintedFunction> WebQuery::printFunction(const WebIndex &Index,
+                                                  StringRef Frame,
+                                                  unsigned PackIndex) {
   LLVMContext Context;
   Expected<std::unique_ptr<UnpackedFunction>> Unpacked =
-      unpack(Index, Frame, Slot, Context);
+      unpack(Index, Frame, PackIndex, Context);
   if (!Unpacked)
     return Unpacked.takeError();
   PrintedFunction Printed;
@@ -295,7 +296,7 @@ ArrayRef<PatternNote> WebQuery::getWarnings() const {
   return Pattern->Warnings;
 }
 
-Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned Slot,
+Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned PackIndex,
                       raw_ostream &Out, bool PrintInstructions,
                       std::vector<RejectingConstraint> *Rejecting,
                       bool *HadStructuralMatch) {
@@ -307,7 +308,7 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned Slot,
   };
   LLVMContext Context;
   Expected<std::unique_ptr<UnpackedFunction>> Unpacked =
-      unpack(Index, Frame, Slot, Context);
+      unpack(Index, Frame, PackIndex, Context);
   if (!Unpacked)
     return Located(Unpacked.takeError());
   const llvm::Function &F = (*Unpacked)->getFunction();

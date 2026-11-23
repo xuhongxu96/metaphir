@@ -18,9 +18,9 @@ const range = (offset: number): ByteRange => ({ file: "packs.bin", offset, size:
 export class FakeCorpus {
   /** The stages run, in order. */
   readonly stages: StageName[] = [];
-  /** The functions matched, in order, and the slots they were matched at. */
+  /** The functions matched, in order, and the indices they were matched at. */
   readonly matched: number[] = [];
-  readonly slots: number[] = [];
+  readonly indices: number[] = [];
   /** The frames read, by offset. */
   readonly read: number[] = [];
   readonly stats = { requests: 0, bytes: 0, throttled: 0 };
@@ -45,7 +45,7 @@ export class FakeCorpus {
         Array.from({ length: this.functions }, (_, fn) => ({
           ...range(Math.floor(fn / this.perFrame)),
           function: fn,
-          slot: fn % this.perFrame,
+          index: fn % this.perFrame,
         })),
       numCandidates: async () => this.functions,
     };
@@ -54,9 +54,9 @@ export class FakeCorpus {
   matcher(): Matcher {
     return {
       compile: async () => ({ ranges: [] }),
-      match: async (fn: number, _: Uint8Array, slot: number): Promise<MatchResult> => {
+      match: async (fn: number, _: Uint8Array, index: number): Promise<MatchResult> => {
         this.matched.push(fn);
-        this.slots[fn] = slot;
+        this.indices[fn] = index;
         return { lines: `m.bc\t@f${fn}\t{}\n` };
       },
     };
