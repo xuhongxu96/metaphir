@@ -302,21 +302,18 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
       }
     }
   }
-  // Keyed integer operands, in the order of their kinds.
-  for (OperandKind Kind :
-       {OperandKind::Alignment, OperandKind::AddressSpace,
-        OperandKind::InRangeLower, OperandKind::InRangeUpper}) {
-    for (const MatcherOperandView &Op : Operands) {
-      if (Op.Kind != Kind)
-        continue;
-      Value Keyed = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg, Kind);
-      if (isVariable(Op.Val))
-        bind(Keyed, Op.Val, /*BySort=*/false);
-      else
-        plan::CheckConstantOp::create(
-            Builder, Loc, Keyed,
-            cast<IntOp>(Op.Val.getDefiningOp()).getValueAttr());
-    }
+  // Keyed integer operands (every keyed one but the predicate, matched after
+  // the operand count), in the order they are written.
+  for (const MatcherOperandView &Op : Operands) {
+    if (!isKeyedOperand(Op.Kind) || Op.Kind == OperandKind::Predicate)
+      continue;
+    Value Got = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg, Op.Kind);
+    if (isVariable(Op.Val))
+      bind(Got, Op.Val, /*BySort=*/false);
+    else
+      plan::CheckConstantOp::create(
+          Builder, Loc, Got,
+          cast<IntOp>(Op.Val.getDefiningOp()).getValueAttr());
   }
   if (Value Capture = Inst.getCapture())
     bind(Reg, Capture, /*BySort=*/false);
