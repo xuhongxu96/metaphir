@@ -11,7 +11,6 @@
 #ifndef METAPHIR_EXEC_INDEXQUERY_H
 #define METAPHIR_EXEC_INDEXQUERY_H
 
-#include "metaphir/Exec/TypePattern.h"
 #include "metaphir/Index/Retrieval.h"
 #include "metaphir/Matching/FeatureRequirement.h"
 #include "mlir/IR/Value.h"
@@ -89,7 +88,6 @@ private:
 
   std::vector<Variant> Variants;
   std::optional<RetrievalPlan> Retrieval;
-  TypePatterns Types;
   /// Where the types of signatures are decoded; queries are therefore not
   /// thread-safe.
   std::unique_ptr<LLVMContext> TypeContext;

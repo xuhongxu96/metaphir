@@ -4,6 +4,7 @@
 #include "metaphir/Exec/ConcreteEvaluator.h"
 #include "metaphir/Exec/ConstraintDispatch.inc"
 #include "metaphir/Exec/ExprEvaluator.h"
+#include "metaphir/Exec/TypePattern.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/Operators/AbstractCall.h"
 #include "metaphir/Matching/TypeCode.h"
@@ -20,9 +21,9 @@ struct IndexQuery::Typing {
   uint32_t Present = 0;
   uint32_t Absent = 0;
   bool TreatIntAsVec = false;
-  /// Per unkeyed operand: its type pattern, if any, and whether it is a
-  /// value operand.
-  SmallVector<std::optional<unsigned>, 4> Patterns;
+  /// Per unkeyed operand: its type pattern (null if it has none), and
+  /// whether it is a value operand.
+  SmallVector<mpir::TypePatternAttr, 4> Patterns;
   SmallVector<bool, 4> IsValue;
 };
 
@@ -82,9 +83,7 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
         Each.TreatIntAsVec = T.getTreatIntAsVec();
         for (auto [Pattern, IsValue] :
              zip(T.getOperandTypes(), T.getValueOperand())) {
-          auto Typed = dyn_cast<mpir::TypePatternAttr>(Pattern);
-          Each.Patterns.push_back(Typed ? std::optional(Types.add(Typed))
-                                        : std::nullopt);
+          Each.Patterns.push_back(dyn_cast<mpir::TypePatternAttr>(Pattern));
           Each.IsValue.push_back(IsValue);
         }
         V.Typings.push_back(std::move(Each));
@@ -228,7 +227,7 @@ IndexQuery::joinSignatures(const Variant &V,
         const llvm::Type *Target = decodeType(Code, *TypeContext);
         if (!Pattern || !Target)
           continue;
-        if (!Types.match(*Pattern, *Target, T.TreatIntAsVec, Unify)) {
+        if (!matchTypePattern(Pattern, *Target, T.TreatIntAsVec, Unify)) {
           Fits = false;
           break;
         }

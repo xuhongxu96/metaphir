@@ -6,10 +6,8 @@
 namespace llvm {
 namespace metaphir {
 
-/// Whether Pattern matches Target, binding its variables with Unify.
-static bool matchPattern(mpir::TypePatternAttr Pattern,
-                         const llvm::Type &Target, bool TreatIntAsVec,
-                         TypePatterns::UnifyFn Unify) {
+bool matchTypePattern(mpir::TypePatternAttr Pattern, const llvm::Type &Target,
+                      bool TreatIntAsVec, UnifyFn Unify) {
   // With TreatIntAsVec, an integer pattern also matches a vector's element.
   auto Scalar = [&]() -> const llvm::Type & {
     if (TreatIntAsVec)
@@ -74,7 +72,8 @@ static bool matchPattern(mpir::TypePatternAttr Pattern,
         } else if (*Seq.getCount() != Count) {
           return false;
         }
-        return matchPattern(Seq.getElement(), *Element, TreatIntAsVec, Unify);
+        return matchTypePattern(Seq.getElement(), *Element, TreatIntAsVec,
+                                Unify);
       })
       .Case([&](mpir::StructTypePatternAttr Struct) {
         const auto *Literal = dyn_cast<llvm::StructType>(&Target);
@@ -84,7 +83,7 @@ static bool matchPattern(mpir::TypePatternAttr Pattern,
           return false;
         for (auto [Element, Of] :
              zip(Struct.getElements(), Literal->elements()))
-          if (!matchPattern(Element, *Of, TreatIntAsVec, Unify))
+          if (!matchTypePattern(Element, *Of, TreatIntAsVec, Unify))
             return false;
         return true;
       })
@@ -92,11 +91,6 @@ static bool matchPattern(mpir::TypePatternAttr Pattern,
         // Targets are the types of values, and no value has a function type.
         return false;
       });
-}
-
-bool TypePatterns::match(unsigned Index, const llvm::Type &Target,
-                         bool TreatIntAsVec, UnifyFn Unify) const {
-  return matchPattern(Patterns[Index], Target, TreatIntAsVec, Unify);
 }
 
 } // namespace metaphir

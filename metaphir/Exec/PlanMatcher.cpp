@@ -88,6 +88,8 @@ struct PlanProgram::Step {
   std::optional<APSInt> Integer;
   std::optional<APFloat> Float;
   std::string Name;
+  /// CheckType: the pattern.
+  mpir::TypePatternAttr Type;
   /// Check and Let: the condition, where it is written, and whether a
   /// metaflag says it. Let: A is the slot, Assigned the expression to bind it
   /// to, and Condition what has to hold if it is bound already.
@@ -105,9 +107,8 @@ namespace {
 class ProgramBuilder {
 public:
   explicit ProgramBuilder(std::vector<PlanProgram::Step> &Steps,
-                          std::vector<std::pair<unsigned, unsigned>> &Regions,
-                          TypePatterns &Types)
-      : Steps(Steps), Regions(Regions), Types(Types) {}
+                          std::vector<std::pair<unsigned, unsigned>> &Regions)
+      : Steps(Steps), Regions(Regions) {}
 
   void block(mlir::Block &Block);
   unsigned NumRegisters = 0;
@@ -115,7 +116,6 @@ public:
 private:
   std::vector<PlanProgram::Step> &Steps;
   std::vector<std::pair<unsigned, unsigned>> &Regions;
-  TypePatterns &Types;
   DenseMap<mlir::Value, int32_t> Registers;
 
   int32_t reg(mlir::Value V) {
@@ -124,14 +124,9 @@ private:
       ++NumRegisters;
     return It->second;
   }
-  unsigned typeNode(mpir::TypePatternAttr Pattern);
   void op(mlir::Operation &Op);
 };
 } // namespace
-
-unsigned ProgramBuilder::typeNode(mpir::TypePatternAttr Pattern) {
-  return Types.add(Pattern);
-}
 
 void ProgramBuilder::block(mlir::Block &Block) {
   for (mlir::Operation &Op : Block)
@@ -227,7 +222,7 @@ void ProgramBuilder::op(mlir::Operation &Op) {
   }
   if (auto Check = dyn_cast<plan::CheckTypeOp>(Op)) {
     S.Src = reg(Check.getIrType());
-    S.A = typeNode(Check.getPattern());
+    S.Type = Check.getPattern();
     S.Flag = Check.getTreatIntAsVec();
     return Emit(Step::CheckType);
   }
@@ -307,7 +302,7 @@ std::unique_ptr<PlanProgram> PlanProgram::compile(plan::MatcherOp Matcher) {
     Info.Written = getOutermostSourceRange(cast<mlir::LocationAttr>(Loc)).Start;
     Program->Slots.push_back(std::move(Info));
   }
-  ProgramBuilder Builder(Program->Steps, Program->Regions, Program->Types);
+  ProgramBuilder Builder(Program->Steps, Program->Regions);
   Builder.block(Matcher.getBody().front());
   Program->NumRegisters = Builder.NumRegisters;
   return Program;
@@ -597,16 +592,17 @@ private:
     return It->second;
   }
 
-  bool matchType(unsigned Node, const llvm::Type &Target, bool TreatIntAsVec);
+  bool matchType(mpir::TypePatternAttr Pattern, const llvm::Type &Target,
+                 bool TreatIntAsVec);
   bool step(const Step &S);
   void exec(unsigned PC, unsigned End);
   void emit();
 };
 
-bool PlanMatcher::Run::matchType(unsigned Index, const llvm::Type &Target,
-                                 bool TreatIntAsVec) {
-  return P.Types.match(
-      Index, Target, TreatIntAsVec,
+bool PlanMatcher::Run::matchType(mpir::TypePatternAttr Pattern,
+                                 const llvm::Type &Target, bool TreatIntAsVec) {
+  return matchTypePattern(
+      Pattern, Target, TreatIntAsVec,
       [&](unsigned Slot, const Binding &B) { return unify(Slot, B); });
 }
 
@@ -726,8 +722,9 @@ bool PlanMatcher::Run::step(const Step &S) {
     return S.Flag ? Count >= unsigned(S.A) : Count == unsigned(S.A);
   }
   case Step::CheckType:
-    return matchType(
-        S.A, **std::get_if<const llvm::Type *>(&Registers[S.Src].Data), S.Flag);
+    return matchType(S.Type,
+                     **std::get_if<const llvm::Type *>(&Registers[S.Src].Data),
+                     S.Flag);
   case Step::CheckInteger: {
     const Binding &R = Registers[S.Src];
     if (const auto *Keyed = std::get_if<APSInt>(&R.Data))

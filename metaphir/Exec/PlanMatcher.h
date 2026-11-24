@@ -11,7 +11,6 @@
 #define METAPHIR_EXEC_PLANMATCHER_H
 
 #include "metaphir/Exec/ConcreteEvaluator.h"
-#include "metaphir/Exec/TypePattern.h"
 #include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/Binding.h"
 #include "mlir/IR/Location.h"
@@ -69,7 +68,6 @@ private:
   std::vector<Step> Steps;
   /// The alternatives of each either: where each begins and ends.
   std::vector<std::pair<unsigned, unsigned>> Regions;
-  TypePatterns Types;
   unsigned NumRegisters = 0;
 };
 
