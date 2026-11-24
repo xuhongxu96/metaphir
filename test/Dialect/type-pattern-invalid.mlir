@@ -4,7 +4,7 @@
 mpir_plan.matcher <slot_names = [], slot_kinds = [], slot_sorts = [], slot_locs = []> {
   %i = mpir_plan.foreach_instruction
   %t = mpir_plan.get_type %i
-  // expected-error @+1 {{expected a type pattern}}
+  // expected-error @+1 {{invalid kind of attribute specified}}
   mpir_plan.check_type %t, #mpir.tp_seq<vector, 4, 8 : i32>
 }
 
@@ -13,7 +13,7 @@ mpir_plan.matcher <slot_names = [], slot_kinds = [], slot_sorts = [], slot_locs 
 mpir_plan.matcher <slot_names = [], slot_kinds = [], slot_sorts = [], slot_locs = []> {
   %i = mpir_plan.foreach_instruction
   %t = mpir_plan.get_type %i
-  // expected-error @+1 {{unknown sequence kind 'list'}}
+  // expected-error @+1 {{expected one of [array, vector, scalable] for a kind of sequence type, got: list}}
   mpir_plan.check_type %t, #mpir.tp_seq<list, 4, #mpir.tp_int<8>>
 }
 

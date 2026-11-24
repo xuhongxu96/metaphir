@@ -166,8 +166,8 @@ class Mpir_TypePattern<string name, string mnemonicName>
   let mnemonic = mnemonicName;
 }
 
-def Mpir_TypePatternParam
-    : AttrParameter<"::llvm::metaphir::mpir::TypePatternAttr", "a type pattern">;
+defvar Mpir_TypePatternCpp = "::llvm::metaphir::mpir::TypePatternAttr";
+def Mpir_TypePatternParam : AttrParameter<Mpir_TypePatternCpp, "a type pattern">;
 def Mpir_PrimTypeParam
     : AttrParameter<"::llvm::metaphir::primitive_type::TypeID",
                     "a primitive type"> {
@@ -223,7 +223,7 @@ def Mpir_PtrTypePattern : Mpir_TypePattern<"Ptr", "tp_ptr"> {
     an element, matches no LLVM type.
   }];
   let parameters = (ins OptionalParameter<"std::optional<unsigned>">:$address_space,
-                        OptionalParameter<"::llvm::metaphir::mpir::TypePatternAttr">:$element);
+                        OptionalParameter<Mpir_TypePatternCpp>:$element);
   let hasCustomAssemblyFormat = 1;
 }
 
@@ -243,14 +243,14 @@ def Mpir_SeqTypePattern : Mpir_TypePattern<"Seq", "tp_seq"> {
 def Mpir_StructTypePattern : Mpir_TypePattern<"Struct", "tp_struct"> {
   let summary = "A literal struct type: '{T, U}', '<{T, U}>'";
   let parameters = (ins "bool":$packed,
-                        OptionalArrayRefParameter<"::llvm::metaphir::mpir::TypePatternAttr">:$elements);
+                        OptionalArrayRefParameter<Mpir_TypePatternCpp>:$elements);
   let hasCustomAssemblyFormat = 1;
 }
 
 def Mpir_FuncTypePattern : Mpir_TypePattern<"Func", "tp_func"> {
   let summary = "A function type: 'T (U, ...)'";
   let parameters = (ins Mpir_TypePatternParam:$return_type,
-                        OptionalArrayRefParameter<"::llvm::metaphir::mpir::TypePatternAttr">:$params,
+                        OptionalArrayRefParameter<Mpir_TypePatternCpp>:$params,
                         "bool":$var_arg);
   let hasCustomAssemblyFormat = 1;
 }
