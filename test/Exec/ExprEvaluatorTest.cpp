@@ -146,6 +146,21 @@ protected:
     return Operator;
   }
 
+  /// Define the 'constraint' Name of one Integer parameter, yielding what
+  /// Body builds from a read of the parameter.
+  void define(StringRef Name, function_ref<Value(Value Parameter)> Body) {
+    mlir::OpBuilder::InsertionGuard Guard(Builder);
+    auto Def = mpir::ConstraintDefOp::create(
+        Builder, loc(), Builder.getStringAttr(Name), mlir::StringAttr(),
+        Builder.getStrArrayAttr({"x"}));
+    mlir::Block &Block = Def.getBody().emplaceBlock();
+    Value Parameter = Block.addArgument(sortType(Sort::Integer), loc());
+    Builder.setInsertionPointToEnd(&Block);
+    Value Result = Body(mpir_expr::ReadOp::create(
+        Builder, loc(), sortType(Sort::Integer), Parameter));
+    mpir::YieldOp::create(Builder, loc(), Result);
+  }
+
   Expected<ConstraintValue> evaluateResult(Value E) {
     return Evaluator.evaluate(E, [&](unsigned Slot) -> const Binding * {
       return std::holds_alternative<std::monostate>(Slots[Slot].Data)
@@ -937,6 +952,38 @@ TEST_F(ExprEvaluatorTest, ReadsUnknownSortBindingsAsTheyAre) {
                 .size(),
             1u);
   EXPECT_FALSE(bool(readUnknown(Binding())));
+}
+
+TEST_F(ExprEvaluatorTest, BindsDefinitionParametersToArguments) {
+  define("isOne", [&](Value X) { return binary("==", X, integer(1)); });
+
+  EXPECT_TRUE(evaluateBoolean(call("isOne", integer(1))));
+  EXPECT_FALSE(evaluateBoolean(call("isOne", integer(2))));
+}
+
+TEST_F(ExprEvaluatorTest, RejectsDefinitionCallsNestedTooDeeply) {
+  define("loop", [&](Value X) { return call("loop", X); });
+
+  Expected<ConstraintValue> Result = evaluateResult(call("loop", integer(1)));
+  ASSERT_FALSE(Result);
+  EXPECT_EQ(toString(Result.takeError()),
+            "cannot evaluate constraint '(loop ?x)': user-defined constraints "
+            "are nested too deeply");
+}
+
+TEST_F(ExprEvaluatorTest, HidesTheCallersSlotsFromADefinition) {
+  // A definition reads only its parameters: it is outside the plan whose
+  // slots its caller reads.
+  Var Bits = var("bits", Sort::Nat);
+  bind(Bits, APInt(16, 1));
+  define("readsBits",
+         [&](Value X) { return binary("==", read(Bits, Sort::Integer), X); });
+
+  Expected<ConstraintValue> Result =
+      evaluateResult(call("readsBits", integer(1)));
+  ASSERT_FALSE(Result);
+  EXPECT_NE(toString(Result.takeError()).find("is not instantiated"),
+            std::string::npos);
 }
 
 TEST_F(ExprEvaluatorTest, ReportsOperatorsWithoutDescriptors) {

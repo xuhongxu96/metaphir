@@ -15,7 +15,6 @@
 #include "metaphir/Matching/UseOracle.h"
 #include "mlir/IR/Value.h"
 #include "mlir/IR/ValueRange.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/Support/Error.h"
 #include <memory>
@@ -62,7 +61,6 @@ private:
 
   std::unique_ptr<detail::ValueTrackContext> Analysis;
   UseOracle *Uses = nullptr;
-  unsigned CallDepth = 0;
   static constexpr unsigned MaxCallDepth = 256;
 };
 

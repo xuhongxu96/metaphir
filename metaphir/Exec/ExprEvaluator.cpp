@@ -9,6 +9,7 @@
 #include "metaphir/Matching/Operators/OperatorCall.h"
 #include "metaphir/Matching/ValueTrackContext.h"
 #include "mlir/IR/SymbolTable.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/SimplifyQuery.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instruction.h"
@@ -114,11 +115,17 @@ Expected<ConstraintValue> readBinding(mlir::Value ReadValue,
   return Incompatible();
 }
 
-/// A constraint definition's call: the definition's parameters, bound to its
-/// arguments.
+/// Resolve the reads of the body being evaluated: the slots of the plan
+/// expression evaluate starts with, or the arguments one call passes a
+/// constraint definition, which is outside the plan and sees no slots.
 struct ExprEvaluator::Frame {
+  /// Null in a definition's frame.
   SlotLookup Slots;
-  DenseMap<mlir::Value, Binding> Parameters;
+  /// The argument each of a definition's parameters (its body's block
+  /// arguments) is bound to.
+  DenseMap<mlir::Value, Binding> Arguments;
+  /// How many definition calls the frame is nested in.
+  unsigned Depth = 0;
 };
 
 ExprEvaluator::ExprEvaluator()
@@ -141,9 +148,9 @@ Expected<ConstraintValue> ExprEvaluator::evaluate(mlir::Value E,
 
 const Binding *ExprEvaluator::lookup(mlir::Value V, Frame &F) {
   if (auto Slot = V.getDefiningOp<mpir_plan::SlotOp>())
-    return F.Slots(Slot.getSlot());
-  auto It = F.Parameters.find(V);
-  return It == F.Parameters.end() ? nullptr : &It->second;
+    return F.Slots ? F.Slots(Slot.getSlot()) : nullptr;
+  auto It = F.Arguments.find(V);
+  return It == F.Arguments.end() ? nullptr : &It->second;
 }
 
 Expected<SmallVector<ConstraintValue, 2>>
@@ -255,48 +262,45 @@ Expected<ConstraintValue> ExprEvaluator::evalApply(Operation *Op, Frame &F) {
   if (!Def)
     return make_error<ConstraintEvaluationError>(
         Expression, Twine("unknown operator '") + Apply.getCallee() + "'");
-  if (CallDepth == MaxCallDepth)
+  if (F.Depth == MaxCallDepth)
     return make_error<ConstraintEvaluationError>(
         Expression, "user-defined constraints are nested too deeply");
   mlir::Block &Body = Def.getBody().front();
-  Frame Callee{F.Slots, {}};
+  Frame Callee{SlotLookup(), {}, F.Depth + 1};
   for (auto [Index, Arg] : enumerate(Apply.getArgs())) {
     Expected<ConstraintValue> Value = eval(Arg, F);
     if (!Value)
       return Value.takeError();
-    std::optional<Binding> Parameter;
+    std::optional<Binding> Argument;
     switch (Value->getKind()) {
     case ConstraintValue::Integer:
-      Parameter = Binding(Value->getInteger());
+      Argument = Binding(Value->getInteger());
       break;
     case ConstraintValue::Boolean:
-      Parameter = Binding(Value->getBoolean());
+      Argument = Binding(Value->getBoolean());
       break;
     case ConstraintValue::Type:
-      Parameter = Binding(Value->getType());
+      Argument = Binding(Value->getType());
       break;
     case ConstraintValue::Value:
-      Parameter = Binding(Value->getValue());
+      Argument = Binding(Value->getValue());
       break;
     case ConstraintValue::TypeArray:
-      Parameter = Binding(Value->getTypeArray());
+      Argument = Binding(Value->getTypeArray());
       break;
     case ConstraintValue::ValueArray:
-      Parameter = Binding(Value->getValueArray());
+      Argument = Binding(Value->getValueArray());
       break;
     default:
       break;
     }
-    if (!Parameter)
+    if (!Argument)
       return make_error<ConstraintEvaluationError>(
           Expression, "unsupported argument type for user-defined constraint");
-    Callee.Parameters[Body.getArgument(Index)] = std::move(*Parameter);
+    Callee.Arguments[Body.getArgument(Index)] = std::move(*Argument);
   }
   mlir::Value Result = (*Body.getOps<mpir::YieldOp>().begin()).getValue();
-  ++CallDepth;
-  Expected<ConstraintValue> Value = eval(Result, Callee);
-  --CallDepth;
-  return Value;
+  return eval(Result, Callee);
 }
 
 Expected<ConstraintValue> ExprEvaluator::evalCall(Operation *Op, Frame &F) {
