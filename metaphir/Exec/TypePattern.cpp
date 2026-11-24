@@ -9,12 +9,10 @@ namespace metaphir {
 bool matchTypePattern(mpir::TypePatternAttr Pattern, const llvm::Type &Target,
                       bool TreatIntAsVec, UnifyFn Unify) {
   // With TreatIntAsVec, an integer pattern also matches a vector's element.
-  auto Scalar = [&]() -> const llvm::Type & {
-    if (TreatIntAsVec)
-      if (const auto *Vector = dyn_cast<llvm::VectorType>(&Target))
-        return *Vector->getElementType();
-    return Target;
-  };
+  const llvm::Type *Scalar = &Target;
+  if (TreatIntAsVec)
+    if (const auto *Vector = dyn_cast<llvm::VectorType>(&Target))
+      Scalar = Vector->getElementType();
   return TypeSwitch<mpir::TypePatternAttr, bool>(Pattern)
       .Case([&](mpir::VarTypePatternAttr Var) {
         return Unify(Var.getSlot(), Binding(&Target));
@@ -23,24 +21,20 @@ bool matchTypePattern(mpir::TypePatternAttr Pattern, const llvm::Type &Target,
         return primitive_type::matches(Prim.getKind(), Target);
       })
       .Case([&](mpir::IntTypePatternAttr Int) {
-        return Target.isIntegerTy(Int.getWidth()) ||
-               Scalar().isIntegerTy(Int.getWidth());
+        return Scalar->isIntegerTy(Int.getWidth());
       })
       .Case([&](mpir::ByteTypePatternAttr Byte) {
-        return Target.isByteTy(Byte.getWidth()) ||
-               Scalar().isByteTy(Byte.getWidth());
+        return Scalar->isByteTy(Byte.getWidth());
       })
       .Case([&](mpir::IntWidthTypePatternAttr Int) {
-        const llvm::Type &Element = Scalar();
-        return Element.isIntegerTy() &&
+        return Scalar->isIntegerTy() &&
                Unify(Int.getWidthSlot(),
-                     Binding(APInt(64, Element.getIntegerBitWidth())));
+                     Binding(APInt(64, Scalar->getIntegerBitWidth())));
       })
       .Case([&](mpir::ByteWidthTypePatternAttr Byte) {
-        const llvm::Type &Element = Scalar();
-        return Element.isByteTy() &&
+        return Scalar->isByteTy() &&
                Unify(Byte.getWidthSlot(),
-                     Binding(APInt(64, Element.getByteBitWidth())));
+                     Binding(APInt(64, Scalar->getByteBitWidth())));
       })
       .Case([&](mpir::PtrTypePatternAttr Ptr) {
         // No LLVM type is a typed pointer.
