@@ -209,8 +209,7 @@ struct PrintedOperand {
 static void printOperand(raw_ostream &OS, const PrintedOperand &O,
                          bool WithoutType = false) {
   const MatcherOperandView &V = O.View;
-  if (V.Kind == OperandKind::ValueArray ||
-      V.Kind == OperandKind::TypedValueArray) {
+  if (isArrayOperand(V.Kind)) {
     OS << "...";
     if (V.Type) {
       OS << '?' << getMetaVariableName(V.Type) << ' ';

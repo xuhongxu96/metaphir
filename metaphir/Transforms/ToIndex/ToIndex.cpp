@@ -145,7 +145,6 @@ private:
 
   Value reading(Value E);
   Value readingOfValue(Value E);
-  Value readingOfLiteral(mpir_expr::ReadOp Read, IntOp Literal);
   Value readingOfCall(mpir_expr::CallOp Call);
   void name(Operation *Reading, Value Original);
 };
@@ -244,8 +243,7 @@ void VariantEmitter::emitTypings() {
     for (const MatcherOperandView &Op : getMatcherOperands(Inst)) {
       if (isKeyedOperand(Op.Kind))
         continue;
-      bool Array = Op.Kind == OperandKind::ValueArray ||
-                   Op.Kind == OperandKind::TypedValueArray;
+      bool Array = isArrayOperand(Op.Kind);
       Types.push_back(Op.Type && !Array ? Attribute(typePattern(Op.Type))
                                         : Builder.getArrayAttr({}));
       IsValue.push_back(isValueOperand(Op.Kind));
@@ -307,12 +305,13 @@ Value VariantEmitter::reading(Value E) {
   Value Result;
   if (!Def || isa<VarOp, InstOp, AltOp>(Def)) {
     Result = readingOfValue(E);
-  } else if (auto Read = dyn_cast<mpir_expr::ReadOp>(Def);
-             Read && Read.getValue().getDefiningOp<IntOp>()) {
-    Result = readingOfLiteral(Read, Read.getValue().getDefiningOp<IntOp>());
   } else if (auto Call = dyn_cast<mpir_expr::CallOp>(Def)) {
     Result = readingOfCall(Call);
   } else {
+    // An expression never reaches an mpir.int: ExpandMatchers folds each
+    // read of one (a parameter a use binds to a constant) into a literal.
+    assert(!isa<IntOp>(Def) &&
+           "mpir_expr.read of an mpir.int not folded by ExpandMatchers");
     mlir::IRMapping Mapping;
     for (Value Operand : Def->getOperands())
       Mapping.map(Operand, reading(Operand));
@@ -339,23 +338,6 @@ Value VariantEmitter::readingOfValue(Value E) {
     Reading = index::UnknownOp::create(Builder, L, E.getType());
   name(Reading, E);
   return Reading->getResult(0);
-}
-
-Value VariantEmitter::readingOfLiteral(mpir_expr::ReadOp Read, IntOp Literal) {
-  Location L = Read.getLoc();
-  mlir::IntegerAttr Value = Literal.getValueAttr();
-  APSInt Number(Value.getValue(), Value.getType().isUnsignedInteger());
-  if (sortOf(Read) == Sort::Boolean && Number.getBitWidth() == 1)
-    return mpir_expr::BoolOp::create(Builder, L, !Number.isZero());
-  bool Negative = Number.isSigned() && Number.isNegative();
-  return mpir_expr::IntOp::create(
-      Builder, L,
-      Negative
-          ? APSInt(
-                Number.sextOrTrunc(std::max(64u, Number.getSignificantBits())),
-                false)
-          : APSInt(Number.zextOrTrunc(std::max(64u, Number.getActiveBits())),
-                   true));
 }
 
 Value VariantEmitter::readingOfCall(mpir_expr::CallOp Call) {

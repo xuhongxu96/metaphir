@@ -97,6 +97,11 @@ unsigned mpir::getNumOperandValues(OperandKind Kind) {
   }
 }
 
+bool mpir::isArrayOperand(OperandKind Kind) {
+  return Kind == OperandKind::ValueArray ||
+         Kind == OperandKind::TypedValueArray;
+}
+
 bool mpir::isKeyedOperand(OperandKind Kind) {
   return Kind >= OperandKind::Predicate;
 }

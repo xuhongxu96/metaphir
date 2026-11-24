@@ -4,10 +4,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Transforms/Lowering/Passes.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
-#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
+#include "metaphir/Transforms/Lowering/Passes.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IRMapping.h"
 
@@ -26,18 +26,6 @@ using mlir::Operation;
 using mlir::Value;
 using mlir::ValueRange;
 using namespace mpir;
-
-/// A non-negative literal is unsigned and a negative one signed, each at
-/// least 64 bits wide, as constraint literals are.
-static APSInt normalizeLiteral(const APSInt &Number) {
-  bool Negative = Number.isSigned() && Number.isNegative();
-  return Negative
-             ? APSInt(Number.sextOrTrunc(
-                          std::max(64u, Number.getSignificantBits())),
-                      /*isUnsigned=*/false)
-             : APSInt(Number.zextOrTrunc(std::max(64u, Number.getActiveBits())),
-                      /*isUnsigned=*/true);
-}
 
 //===----------------------------------------------------------------------===//
 // mpir-desugar-metaflags
@@ -168,7 +156,7 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
     if (Index > 0) {
       // An integer argument, as a literal.
       int64_t Number = cast<mlir::IntegerAttr>(Args[Index - 1]).getInt();
-      APSInt Literal = normalizeLiteral(
+      APSInt Literal = mpir_expr::normalizeLiteral(
           APSInt(APInt(64, uint64_t(Number), /*isSigned=*/true),
                  /*isUnsigned=*/false));
       Mapping.map(Read.getResult(),
@@ -196,15 +184,8 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
       continue;
     }
     if (auto Int = dyn_cast<IntOp>(SubjectDef)) {
-      mlir::IntegerAttr Value = Int.getValueAttr();
-      APSInt Number(Value.getValue(), Value.getType().isUnsignedInteger());
-      if (sortOf(Read) == Sort::Boolean && Number.getBitWidth() == 1)
-        Mapping.map(Read.getResult(), mpir_expr::BoolOp::create(
-                                          Builder, ReadLoc, !Number.isZero()));
-      else
-        Mapping.map(Read.getResult(),
-                    mpir_expr::IntOp::create(Builder, ReadLoc,
-                                             normalizeLiteral(Number)));
+      Mapping.map(Read.getResult(), mpir_expr::createLiteral(
+                                        Builder, ReadLoc, Int, sortOf(Read)));
       continue;
     }
     return mlir::emitError(ReadLoc)
@@ -285,7 +266,8 @@ LogicalResult Desugarer::desugarBlock(mlir::Block &Block) {
 }
 
 namespace {
-struct DesugarMetaFlagsPass : impl::DesugarMetaFlagsPassBase<DesugarMetaFlagsPass> {
+struct DesugarMetaFlagsPass
+    : impl::DesugarMetaFlagsPassBase<DesugarMetaFlagsPass> {
   void runOnOperation() override {
     Desugarer D(getOperation());
     SmallVector<mlir::Block *, 16> Blocks;

@@ -60,10 +60,7 @@ struct POperand {
   SMLoc ValLoc;
 
   bool isValueOperand() const { return mpir::isValueOperand(Kind); }
-  bool isArray() const {
-    return Kind == OperandKind::ValueArray ||
-           Kind == OperandKind::TypedValueArray;
-  }
+  bool isArray() const { return mpir::isArrayOperand(Kind); }
 };
 
 /// A semantic flag written on an instruction matcher.

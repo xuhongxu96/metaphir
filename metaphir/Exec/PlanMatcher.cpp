@@ -66,6 +66,7 @@ struct PlanProgram::Step {
     CheckGlobal,
     CheckAggregate,
     CheckBound,
+    Fail,
     Bind,
     BindConstant,
     Check,
@@ -262,6 +263,8 @@ void ProgramBuilder::op(mlir::Operation &Op) {
     S.Flag = Check.getBound();
     return Emit(Step::CheckBound);
   }
+  if (isa<plan::FailOp>(Op))
+    return Emit(Step::Fail);
   if (auto Bind = dyn_cast<plan::BindOp>(Op)) {
     S.Src = reg(Bind.getValue());
     S.A = Bind.getSlot();
@@ -455,8 +458,7 @@ static std::optional<Binding> bindingBySort(const llvm::Value &Target, Sort S) {
 static std::optional<Binding> toBinding(const ConstraintValue &V, Sort S) {
   switch (resolveSort(S)) {
   case Sort::Nat:
-    if (V.getKind() == ConstraintValue::Integer &&
-        !V.getInteger().isNegative())
+    if (V.getKind() == ConstraintValue::Integer && !V.getInteger().isNegative())
       return Binding(APInt(V.getInteger()));
     return std::nullopt;
   case Sort::Integer:
@@ -791,6 +793,8 @@ bool PlanMatcher::Run::step(const Step &S) {
   }
   case Step::CheckBound:
     return isBound(S.A) == S.Flag;
+  case Step::Fail:
+    return false;
   case Step::Bind: {
     if (!S.BySort)
       return unify(S.A, Registers[S.Src]);
@@ -898,8 +902,7 @@ void PlanMatcher::Run::emit() {
   // variable is bound to.
   auto Holds = [&](const Step &C) -> Expected<bool> {
     if (C.K != Step::Let || isBound(C.A)) {
-      Expected<ConstraintValue> Result =
-          Evaluator.evaluate(C.Condition, Slot);
+      Expected<ConstraintValue> Result = Evaluator.evaluate(C.Condition, Slot);
       if (!Result)
         return Result.takeError();
       return detail::requireBoolean(*Result, C.Condition);
@@ -907,10 +910,12 @@ void PlanMatcher::Run::emit() {
     Expected<ConstraintValue> Result = Evaluator.evaluate(C.Assigned, Slot);
     if (!Result)
       return Result.takeError();
-    std::optional<Binding> Target = toBinding(*Result, P.Slots[C.A].VariableSort);
+    std::optional<Binding> Target =
+        toBinding(*Result, P.Slots[C.A].VariableSort);
     if (!Target)
       return make_error<detail::ConstraintEvaluationError>(
-          C.Assigned, "'" + P.Slots[C.A].Name + "' cannot be bound to this value");
+          C.Assigned,
+          "'" + P.Slots[C.A].Name + "' cannot be bound to this value");
     return unify(C.A, *Target);
   };
   bool Satisfies = true;

@@ -19,22 +19,22 @@ mpir.pattern {
 // CHECK:           %[[ALT_0:.*]] = mpir.alt {
     %i_r = mpir.inst <lshr> (%0, %x, %0, %1) <result_name = "r", flags = [exact], flag_modes = [required], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("to-index-literals.mlir":20:1)
 // CHECK:             %[[INST_0:.*]] = mpir.inst <lshr> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[INT_0]]) <flags = [exact], flag_modes = [required], operand_kinds = [typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-    %10 = mpir_expr.read %2 : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("to-index-literals.mlir":22:1)
-// CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[INT_1]] : (!mpir.sort<Value>) -> !mpir.sort<Integer>
-    %11 = mpir_expr.int 32 : ui64 : <Integer> loc("to-index-literals.mlir":24:1)
+    %10 = mpir_expr.int 32 : ui64 : <Integer> loc("to-index-literals.mlir":22:1)
 // CHECK:             %[[INT_3:.*]] = mpir_expr.int 32 : ui64 : <Integer>
+    %11 = mpir_expr.int 32 : ui64 : <Integer> loc("to-index-literals.mlir":24:1)
+// CHECK:             %[[INT_4:.*]] = mpir_expr.int 32 : ui64 : <Integer>
     %12 = mpir_expr.call binary "=="(%10, %11) anchor %i_r : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":26:1)
-// CHECK:             %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[READ_0]], %[[INT_3]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %13 = mpir_expr.read %3 : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":28:1)
-// CHECK:             %[[READ_1:.*]] = mpir_expr.read %[[INT_2]] : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
+// CHECK:             %[[CALL_0:.*]] = mpir_expr.call binary "=="(%[[INT_3]], %[[INT_4]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+    %13 = mpir_expr.bool true : <Boolean> loc("to-index-literals.mlir":28:1)
+// CHECK:             %[[BOOL_0:.*]] = mpir_expr.bool true : <Boolean>
     %14 = mpir_expr.call binary "&&"(%12, %13) anchor %i_r : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":30:1)
-// CHECK:             %[[CALL_1:.*]] = mpir_expr.call binary "&&"(%[[CALL_0]], %[[READ_1]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %15 = mpir_expr.read %1 : (!mpir.sort<Value>) -> !mpir.sort<Value> loc("to-index-literals.mlir":32:1)
-// CHECK:             %[[READ_2:.*]] = mpir_expr.read %[[INT_0]] : (!mpir.sort<Value>) -> !mpir.sort<Value>
+// CHECK:             %[[CALL_1:.*]] = mpir_expr.call binary "&&"(%[[CALL_0]], %[[BOOL_0]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+    %15 = mpir_expr.int 3 : ui64 : <Integer> loc("to-index-literals.mlir":32:1)
+// CHECK:             %[[INT_5:.*]] = mpir_expr.int 3 : ui64 : <Integer>
     %16 = mpir_expr.int 0 : ui64 : <Integer> loc("to-index-literals.mlir":34:1)
-// CHECK:             %[[INT_4:.*]] = mpir_expr.int 0 : ui64 : <Integer>
-    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_r : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":36:1)
-// CHECK:             %[[CALL_2:.*]] = mpir_expr.call binary "!="(%[[READ_2]], %[[INT_4]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+// CHECK:             %[[INT_6:.*]] = mpir_expr.int 0 : ui64 : <Integer>
+    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_r : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":36:1)
+// CHECK:             %[[CALL_2:.*]] = mpir_expr.call binary "!="(%[[INT_5]], %[[INT_6]]) anchor %[[INST_0]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
     %18 = mpir_expr.call binary "&&"(%14, %17) anchor %i_r : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":38:1)
 // CHECK:             %[[CALL_3:.*]] = mpir_expr.call binary "&&"(%[[CALL_1]], %[[CALL_2]]) anchor %[[INST_0]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
     mpir.require %18 : <Boolean> loc("to-index-literals.mlir":40:1)
@@ -46,31 +46,31 @@ mpir.pattern {
   %5 = mpir.type.int 32 : <Type> loc("to-index-literals.mlir":46:1)
 // CHECK:           %[[TYPE_1:.*]] = mpir.type.int 32 : <Type>
   %6 = mpir.int -4 : si3 : <Value> loc("to-index-literals.mlir":48:1)
-// CHECK:           %[[INT_5:.*]] = mpir.int -4 : si3 : <Value>
+// CHECK:           %[[INT_7:.*]] = mpir.int -4 : si3 : <Value>
   %7 = mpir.int 32 : ui64 : <Value> loc("to-index-literals.mlir":50:1)
-// CHECK:           %[[INT_6:.*]] = mpir.int 32 : ui64 : <Value>
+// CHECK:           %[[INT_8:.*]] = mpir.int 32 : ui64 : <Value>
   %8 = mpir.int 0 : ui1 : <Value> loc("to-index-literals.mlir":52:1)
-// CHECK:           %[[INT_7:.*]] = mpir.int 0 : ui1 : <Value>
+// CHECK:           %[[INT_9:.*]] = mpir.int 0 : ui1 : <Value>
   %9 = mpir.alt {
 // CHECK:           %[[ALT_1:.*]] = mpir.alt {
     %i_s = mpir.inst <lshr> (%5, %4, %5, %6) <result_name = "s", flags = [exact], flag_modes = [negated], operand_kinds = [typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("to-index-literals.mlir":56:1)
-// CHECK:             %[[INST_1:.*]] = mpir.inst <lshr> (%[[TYPE_1]], %[[ALT_0]], %[[TYPE_1]], %[[INT_5]]) <flags = [exact], flag_modes = [negated], operand_kinds = [typed_value, typed_value], result_name = "s"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-    %10 = mpir_expr.read %7 : (!mpir.sort<Value>) -> !mpir.sort<Integer> loc("to-index-literals.mlir":58:1)
-// CHECK:             %[[READ_3:.*]] = mpir_expr.read %[[INT_6]] : (!mpir.sort<Value>) -> !mpir.sort<Integer>
+// CHECK:             %[[INST_1:.*]] = mpir.inst <lshr> (%[[TYPE_1]], %[[ALT_0]], %[[TYPE_1]], %[[INT_7]]) <flags = [exact], flag_modes = [negated], operand_kinds = [typed_value, typed_value], result_name = "s"> : (!mpir.sort<Type>, !mpir.sort<Instruction>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
+    %10 = mpir_expr.int 32 : ui64 : <Integer> loc("to-index-literals.mlir":58:1)
+// CHECK:             %[[INT_10:.*]] = mpir_expr.int 32 : ui64 : <Integer>
     %11 = mpir_expr.int 32 : ui64 : <Integer> loc("to-index-literals.mlir":60:1)
-// CHECK:             %[[INT_8:.*]] = mpir_expr.int 32 : ui64 : <Integer>
+// CHECK:             %[[INT_11:.*]] = mpir_expr.int 32 : ui64 : <Integer>
     %12 = mpir_expr.call binary "=="(%10, %11) anchor %i_s : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":62:1)
-// CHECK:             %[[CALL_4:.*]] = mpir_expr.call binary "=="(%[[READ_3]], %[[INT_8]]) anchor %[[INST_1]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %13 = mpir_expr.read %8 : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":64:1)
-// CHECK:             %[[READ_4:.*]] = mpir_expr.read %[[INT_7]] : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
+// CHECK:             %[[CALL_4:.*]] = mpir_expr.call binary "=="(%[[INT_10]], %[[INT_11]]) anchor %[[INST_1]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+    %13 = mpir_expr.bool false : <Boolean> loc("to-index-literals.mlir":64:1)
+// CHECK:             %[[BOOL_1:.*]] = mpir_expr.bool false : <Boolean>
     %14 = mpir_expr.call binary "&&"(%12, %13) anchor %i_s : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":66:1)
-// CHECK:             %[[CALL_5:.*]] = mpir_expr.call binary "&&"(%[[CALL_4]], %[[READ_4]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-    %15 = mpir_expr.read %6 : (!mpir.sort<Value>) -> !mpir.sort<Value> loc("to-index-literals.mlir":68:1)
-// CHECK:             %[[READ_5:.*]] = mpir_expr.read %[[INT_5]] : (!mpir.sort<Value>) -> !mpir.sort<Value>
+// CHECK:             %[[CALL_5:.*]] = mpir_expr.call binary "&&"(%[[CALL_4]], %[[BOOL_1]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+    %15 = mpir_expr.int -4 : si64 : <Integer> loc("to-index-literals.mlir":68:1)
+// CHECK:             %[[INT_12:.*]] = mpir_expr.int -4 : si64 : <Integer>
     %16 = mpir_expr.int 0 : ui64 : <Integer> loc("to-index-literals.mlir":70:1)
-// CHECK:             %[[INT_9:.*]] = mpir_expr.int 0 : ui64 : <Integer>
-    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_s : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":72:1)
-// CHECK:             %[[CALL_6:.*]] = mpir_expr.call binary "!="(%[[READ_5]], %[[INT_9]]) anchor %[[INST_1]] : (!mpir.sort<Value>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+// CHECK:             %[[INT_13:.*]] = mpir_expr.int 0 : ui64 : <Integer>
+    %17 = mpir_expr.call binary "!="(%15, %16) anchor %i_s : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":72:1)
+// CHECK:             %[[CALL_6:.*]] = mpir_expr.call binary "!="(%[[INT_12]], %[[INT_13]]) anchor %[[INST_1]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
     %18 = mpir_expr.call binary "&&"(%14, %17) anchor %i_s : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":74:1)
 // CHECK:             %[[CALL_7:.*]] = mpir_expr.call binary "&&"(%[[CALL_5]], %[[CALL_6]]) anchor %[[INST_1]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
     mpir.require %18 : <Boolean> loc("to-index-literals.mlir":76:1)
@@ -104,7 +104,7 @@ mpir.pattern {
 // CHECK:             %[[CALL_2:.*]] = mpir_expr.call binary "!="(%[[INT_2]], %[[INT_3]]) anchor %[[NODE_2]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:             %[[NODE_3:.*]] = mpir_index.node 1 : <Instruction>
 // CHECK:             %[[CALL_3:.*]] = mpir_expr.call binary "&&"(%[[CALL_1]], %[[CALL_2]]) anchor %[[NODE_3]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:             mpir_index.assume %[[CALL_3]] : <Boolean>
+// CHECK:             mpir_index.assume %[[CALL_3]] <closed> : <Boolean>
 // CHECK:             %[[INT_4:.*]] = mpir_expr.int 32 : ui64 : <Integer>
 // CHECK:             %[[INT_5:.*]] = mpir_expr.int 32 : ui64 : <Integer>
 // CHECK:             %[[NODE_4:.*]] = mpir_index.node 0 : <Instruction>
@@ -118,7 +118,7 @@ mpir.pattern {
 // CHECK:             %[[CALL_6:.*]] = mpir_expr.call binary "!="(%[[INT_6]], %[[INT_7]]) anchor %[[NODE_6]] : (!mpir.sort<Integer>, !mpir.sort<Integer>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:             %[[NODE_7:.*]] = mpir_index.node 0 : <Instruction>
 // CHECK:             %[[CALL_7:.*]] = mpir_expr.call binary "&&"(%[[CALL_5]], %[[CALL_6]]) anchor %[[NODE_7]] : (!mpir.sort<Boolean>, !mpir.sort<Boolean>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
-// CHECK:             mpir_index.assume %[[CALL_7]] : <Boolean>
+// CHECK:             mpir_index.assume %[[CALL_7]] <closed> : <Boolean>
 // CHECK:           }
 // CHECK:         }
 mpir_index.query {
@@ -225,10 +225,10 @@ mpir.pattern {
 // CHECK:             %[[INT_2:.*]] = mpir.int 2 : ui2 : <Value>
     %i_r = mpir.inst <select> (%3, %1, %4, %5, %6, %7) <result_name = "r", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value]> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction> loc("to-index-literals.mlir":226:1)
 // CHECK:             %[[INST_0:.*]] = mpir.inst <select> (%[[TYPE_1]], %[[INT_0]], %[[TYPE_2]], %[[INT_1]], %[[TYPE_3]], %[[INT_2]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value, typed_value], result_name = "r"> : (!mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>, !mpir.sort<Type>, !mpir.sort<Value>) -> !mpir.sort<Instruction>
-    %8 = mpir_expr.read %1 : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("to-index-literals.mlir":228:1)
-// CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[INT_0]] : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
+    %8 = mpir_expr.bool true : <Boolean> loc("to-index-literals.mlir":228:1)
+// CHECK:             %[[BOOL_0:.*]] = mpir_expr.bool true : <Boolean>
     mpir.require %8 : <Boolean> loc("to-index-literals.mlir":230:1)
-// CHECK:             mpir.require %[[READ_0]] : <Boolean>
+// CHECK:             mpir.require %[[BOOL_0]] : <Boolean>
     mpir.yield %i_r : <Instruction> loc("to-index-literals.mlir":232:1)
 // CHECK:             mpir.yield %[[INST_0]] : <Instruction>
   } <result_name = "r"> : <Instruction> loc("to-index-literals.mlir":234:1)
@@ -243,7 +243,7 @@ mpir.pattern {
 // CHECK:             mpir_index.has_fact 0, <select>, 4, 130
 // CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 32, 0], [1, 32, 0]], value_operand = [true, true, true]>
 // CHECK:             %[[BOOL_0:.*]] = mpir_expr.bool true : <Boolean>
-// CHECK:             mpir_index.assume %[[BOOL_0]] : <Boolean>
+// CHECK:             mpir_index.assume %[[BOOL_0]] <closed> : <Boolean>
 // CHECK:           }
 // CHECK:         }
 mpir_index.query {

@@ -201,6 +201,11 @@ def Plan_CheckAggregateOp : Plan_Op<"check_aggregate"> {
   let assemblyFormat = "$value `,` $delimiter `,` $count attr-dict";
 }
 
+def Plan_FailOp : Plan_Op<"fail"> {
+  let summary = "Ends the path: nothing matches along it";
+  let assemblyFormat = "attr-dict";
+}
+
 def Plan_CheckBoundOp : Plan_Op<"check_bound"> {
   let summary = "The slot is bound, or is not";
   let arguments = (ins I32Attr:$slot, BoolAttr:$bound);

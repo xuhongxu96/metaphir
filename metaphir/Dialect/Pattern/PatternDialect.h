@@ -31,6 +31,9 @@ namespace mpir {
 unsigned getNumOperandValues(OperandKind Kind);
 /// Whether an operand of Kind is one of the instruction's value operands.
 bool isValueOperand(OperandKind Kind);
+/// Whether an operand of Kind is an array of the remaining operands
+/// ('...?values', or '...?types ?values').
+bool isArrayOperand(OperandKind Kind);
 /// Whether an operand of Kind is a keyed operand (a predicate, an alignment,
 /// an address space, an inrange bound): written as 'key value', at most once.
 bool isKeyedOperand(OperandKind Kind);

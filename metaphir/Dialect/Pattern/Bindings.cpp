@@ -65,7 +65,7 @@ ArrayAttr mpir::encodeTypePattern(Builder &Builder, Value T,
     Parts.push_back(encodeTypePattern(Builder, Of, Slots, Variables));
   };
   Operation *Def = T.getDefiningOp();
-  if (!Def || isa<VarOp>(Def)) {
+  if (isa<VarOp>(Def)) {
     Kind(TypePatternKind::Variable);
     Int(VariableNumber(T));
   } else if (auto Prim = dyn_cast<PrimTypeOp>(Def)) {

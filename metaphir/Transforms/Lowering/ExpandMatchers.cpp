@@ -11,6 +11,7 @@
 #include "metaphir/Transforms/Lowering/Passes.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/IRMapping.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallString.h"
 
 namespace llvm {
@@ -582,6 +583,30 @@ LogicalResult Expander::expand(UseOp Use) {
 }
 
 namespace {
+/// Reads the constants that uses pass for parameters as literals: a branch's
+/// constraint reading such a parameter reads that number, so the backends
+/// see no read of a constant.
+static void foldConstantReads(PatternOp Pattern) {
+  SmallVector<std::pair<mpir_expr::ReadOp, IntOp>, 4> Reads;
+  Pattern.walk([&](mpir_expr::ReadOp Read) {
+    if (auto Constant = Read.getValue().getDefiningOp<IntOp>())
+      Reads.emplace_back(Read, Constant);
+  });
+  OpBuilder Builder(Pattern.getContext());
+  SmallSetVector<IntOp, 4> Constants;
+  for (auto [Read, Constant] : Reads) {
+    Builder.setInsertionPoint(Read);
+    Read.replaceAllUsesWith(mpir_expr::createLiteral(Builder, Read.getLoc(),
+                                                     Constant, sortOf(Read)));
+    Read.erase();
+    Constants.insert(Constant);
+  }
+  // A constant only read is gone with its reads.
+  for (IntOp Constant : Constants)
+    if (Constant->use_empty())
+      Constant.erase();
+}
+
 struct ExpandMatchersPass : impl::ExpandMatchersPassBase<ExpandMatchersPass> {
   void runOnOperation() override {
     Expander E(&getContext());
@@ -600,6 +625,7 @@ struct ExpandMatchersPass : impl::ExpandMatchersPassBase<ExpandMatchersPass> {
         if (mlir::failed(E.expand(First)))
           return signalPassFailure();
       }
+      foldConstantReads(Pattern);
     }
   }
 };

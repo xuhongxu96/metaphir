@@ -120,8 +120,7 @@ void RequirementBuilder::visitInstruction(InstOp Node, Walk &Into) {
     return uint8_t(1) << std::min(P, NumOperandPositions - 1);
   };
   for (auto [Position, Op] : llvm::enumerate(Values)) {
-    if (Op.Kind == OperandKind::ValueArray ||
-        Op.Kind == OperandKind::TypedValueArray || !Op.Val)
+    if (isArrayOperand(Op.Kind) || !Op.Val)
       continue;
     visit(Op.Val, Into);
     uint8_t Positions = PositionBit(Position);

@@ -42,10 +42,9 @@ using mlir::Value;
 using namespace mpir;
 namespace plan = mpir_plan;
 
-/// Whether V is a meta variable: an mpir.var or a branch parameter.
-static bool isVariable(Value V) {
-  return isa<mlir::BlockArgument>(V) || V.getDefiningOp<VarOp>();
-}
+/// Whether V is a meta variable. Lowering leaves no branch parameter: each
+/// is what its use passes.
+static bool isVariable(Value V) { return V.getDefiningOp<VarOp>(); }
 
 namespace {
 
@@ -56,10 +55,14 @@ struct Slots {
   SmallVector<plan::SlotKind, 16> Kinds;
   SmallVector<Sort, 16> Sorts;
   SmallVector<Attribute, 16> Locs;
+  /// The name a constraint reads each slot by: a variable's name, or an
+  /// instruction's ('r' for '%r'), unlike Names, which are as printed.
+  SmallVector<std::string, 16> ReadNames;
 
-  void describe(StringRef Name, plan::SlotKind Kind, Sort S, Location Loc,
-                mlir::MLIRContext *Context) {
+  void describe(StringRef Name, StringRef ReadName, plan::SlotKind Kind, Sort S,
+                Location Loc, mlir::MLIRContext *Context) {
     Names.push_back(mlir::StringAttr::get(Context, Name));
+    ReadNames.push_back(ReadName.str());
     Kinds.push_back(Kind);
     Sorts.push_back(S);
     Locs.push_back(Loc);
@@ -112,7 +115,11 @@ private:
   mlir::IntegerAttr i32(int64_t V) { return Builder.getI32IntegerAttr(V); }
 
   void assignSlots();
-  unsigned slotOf(Value V) const { return S.Assigned.Of.lookup(V); }
+  unsigned slotOf(Value V) const {
+    auto It = S.Assigned.Of.find(V);
+    assert(It != S.Assigned.Of.end() && "a value a match binds has a slot");
+    return It->second;
+  }
 
   mlir::ArrayAttr typePattern(Value T);
   /// Binds the slot of V, a meta variable or matcher, to what Reg holds:
@@ -123,6 +130,17 @@ private:
   /// its binding if bound, or else in full (and at run time when only some
   /// paths bind it).
   void matchMatcher(Value V, Value Reg, function_ref<void()> Full);
+  /// Checks that Type, the type of what is matched, is of the type pattern
+  /// Pattern.
+  void checkType(Location Loc, Value Type, Value Pattern, bool TreatIntAsVec);
+  /// What matchInstruction checks and binds of Reg, the instruction Inst
+  /// matches: its flags, its keyed integer operands, and its operand count,
+  /// predicate and operands.
+  void matchFlags(InstOp Inst, Value Reg);
+  void matchKeyedIntegers(ArrayRef<MatcherOperandView> Operands, Value Reg,
+                          Location Loc);
+  void matchOperands(ArrayRef<MatcherOperandView> Operands, Value Reg,
+                     Location Loc, bool TreatIntAsVec);
   void matchInstruction(InstOp Inst, Value Reg);
   void matchAlternatives(AltOp Alt, Value Reg);
   /// Matches V against what Reg holds.
@@ -172,7 +190,7 @@ void Compiler::assignSlots() {
     Operation *Op = V.getDefiningOp();
     Location Loc = Op->getLoc();
     if (auto Var = dyn_cast<VarOp>(Op)) {
-      S.describe(Var.getVarName(), plan::SlotKind::Variable,
+      S.describe(Var.getVarName(), Var.getVarName(), plan::SlotKind::Variable,
                  resolveSort(sortOf(Var)), Loc, Context);
       continue;
     }
@@ -197,8 +215,8 @@ void Compiler::assignSlots() {
       Printed = OpcodeName;
     else
       ("%" + Name).toVector(Printed);
-    S.describe(Printed, plan::SlotKind::Instruction, Sort::Instruction, Loc,
-               Context);
+    S.describe(Printed, Name.empty() ? OpcodeName : Name,
+               plan::SlotKind::Instruction, Sort::Instruction, Loc, Context);
   }
 }
 
@@ -258,52 +276,39 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
   Bound = BoundState::join(First, Bound);
 }
 
-void Compiler::matchInstruction(InstOp Inst, Value Reg) {
-  Location Loc = Inst.getLoc();
-  bool TreatIntAsVec = Inst.getTreatIntAsVec().value_or(
-      pattern_setting::getDefault(pattern_setting::treatIntAsVec));
-  plan::CheckOpcodeOp::create(Builder, Loc, Reg, Inst.getOpcodeAttr());
-  bind(Reg, Inst.getResult(), /*BySort=*/false);
+void Compiler::checkType(Location Loc, Value Type, Value Pattern,
+                         bool TreatIntAsVec) {
+  auto Check =
+      plan::CheckTypeOp::create(Builder, Loc, Type, typePattern(Pattern));
+  if (TreatIntAsVec)
+    Check.setTreatIntAsVec(true);
+}
 
-  if (Value Block = Inst.getParentBlock()) {
-    Value Parent = plan::GetParentBlockOp::create(Builder, Loc, reg(), Reg);
-    bind(Parent, Block, /*BySort=*/false);
-  }
-  SmallVector<MatcherOperandView, 8> Operands = getMatcherOperands(Inst);
-  // Type-only operands are matched against the result's type (or an
-  // alloca's or getelementptr's).
-  for (const MatcherOperandView &Op : Operands) {
-    if (Op.Kind != OperandKind::TypeOnly)
-      continue;
-    auto Type = plan::GetTypeOp::create(Builder, Loc, reg(), Reg);
-    Type.setOperandOf(true);
-    auto Check =
-        plan::CheckTypeOp::create(Builder, Loc, Type, typePattern(Op.Type));
-    if (TreatIntAsVec)
-      Check.setTreatIntAsVec(true);
-  }
+void Compiler::matchFlags(InstOp Inst, Value Reg) {
   // A flag the matcher does not write matches either way.
-  {
-    unsigned NextCapture = 0;
-    for (auto [Flag, Mode] : zip(Inst.getFlags(), Inst.getFlagModes())) {
-      switch (Mode) {
-      case FlagMode::Required:
-      case FlagMode::Negated:
-        plan::CheckFlagOp::create(
-            Builder, Loc, Reg, Flag,
-            Builder.getBoolAttr(FlagMode(Mode) == FlagMode::Required));
-        break;
-      case FlagMode::Captured: {
-        Value Present = plan::GetFlagOp::create(Builder, Loc, reg(), Reg, Flag);
-        bind(Present, Inst.getFlagCaptures()[NextCapture++],
-             /*BySort=*/false);
-        break;
-      }
-      }
+  Location Loc = Inst.getLoc();
+  unsigned NextCapture = 0;
+  for (auto [Flag, Mode] : zip(Inst.getFlags(), Inst.getFlagModes())) {
+    switch (Mode) {
+    case FlagMode::Required:
+    case FlagMode::Negated:
+      plan::CheckFlagOp::create(
+          Builder, Loc, Reg, Flag,
+          Builder.getBoolAttr(FlagMode(Mode) == FlagMode::Required));
+      break;
+    case FlagMode::Captured: {
+      Value Present = plan::GetFlagOp::create(Builder, Loc, reg(), Reg, Flag);
+      bind(Present, Inst.getFlagCaptures()[NextCapture++], /*BySort=*/false);
+      break;
+    }
     }
   }
-  // Keyed integer operands (every keyed one but the predicate, matched after
-  // the operand count), in the order they are written.
+}
+
+void Compiler::matchKeyedIntegers(ArrayRef<MatcherOperandView> Operands,
+                                  Value Reg, Location Loc) {
+  // Every keyed operand but the predicate (see matchOperands), in the order
+  // they are written.
   for (const MatcherOperandView &Op : Operands) {
     if (!isKeyedOperand(Op.Kind) || Op.Kind == OperandKind::Predicate)
       continue;
@@ -315,16 +320,15 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
           Builder, Loc, Got,
           cast<IntOp>(Op.Val.getDefiningOp()).getValueAttr());
   }
-  if (Value Capture = Inst.getCapture())
-    bind(Reg, Capture, /*BySort=*/false);
+}
 
+void Compiler::matchOperands(ArrayRef<MatcherOperandView> Operands, Value Reg,
+                             Location Loc, bool TreatIntAsVec) {
   SmallVector<const MatcherOperandView *, 8> Values;
   for (const MatcherOperandView &Op : Operands)
     if (isValueOperand(Op.Kind))
       Values.push_back(&Op);
-  bool HasArray =
-      !Values.empty() && (Values.back()->Kind == OperandKind::ValueArray ||
-                          Values.back()->Kind == OperandKind::TypedValueArray);
+  bool HasArray = !Values.empty() && isArrayOperand(Values.back()->Kind);
   auto Count = plan::CheckOperandCountOp::create(
       Builder, Loc, Reg, i32(HasArray ? Values.size() - 1 : Values.size()));
   if (HasArray)
@@ -347,8 +351,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
   }
   for (auto [Index, Op] : enumerate(Values)) {
     Location OpLoc = Op->Val ? Op->Val.getLoc() : Loc;
-    if (Op->Kind == OperandKind::ValueArray ||
-        Op->Kind == OperandKind::TypedValueArray) {
+    if (isArrayOperand(Op->Kind)) {
       Value Array = plan::GetOperandsFromOp::create(Builder, OpLoc, reg(), Reg,
                                                     i32(Index));
       bind(Array, Op->Val, /*BySort=*/false);
@@ -362,15 +365,37 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     }
     Value Operand =
         plan::GetOperandOp::create(Builder, OpLoc, reg(), Reg, i32(Index));
-    if (Op->Type) {
-      Value Type = plan::GetTypeOp::create(Builder, OpLoc, reg(), Operand);
-      auto Check = plan::CheckTypeOp::create(Builder, OpLoc, Type,
-                                             typePattern(Op->Type));
-      if (TreatIntAsVec)
-        Check.setTreatIntAsVec(true);
-    }
+    if (Op->Type)
+      checkType(OpLoc, plan::GetTypeOp::create(Builder, OpLoc, reg(), Operand),
+                Op->Type, TreatIntAsVec);
     matchValue(Op->Val, Operand, TreatIntAsVec);
   }
+}
+
+void Compiler::matchInstruction(InstOp Inst, Value Reg) {
+  Location Loc = Inst.getLoc();
+  bool TreatIntAsVec = Inst.getTreatIntAsVec().value_or(
+      pattern_setting::getDefault(pattern_setting::treatIntAsVec));
+  plan::CheckOpcodeOp::create(Builder, Loc, Reg, Inst.getOpcodeAttr());
+  bind(Reg, Inst.getResult(), /*BySort=*/false);
+  if (Value Block = Inst.getParentBlock())
+    bind(plan::GetParentBlockOp::create(Builder, Loc, reg(), Reg), Block,
+         /*BySort=*/false);
+  SmallVector<MatcherOperandView, 8> Operands = getMatcherOperands(Inst);
+  // Type-only operands are matched against the result's type (or an
+  // alloca's or getelementptr's).
+  for (const MatcherOperandView &Op : Operands) {
+    if (Op.Kind != OperandKind::TypeOnly)
+      continue;
+    auto Type = plan::GetTypeOp::create(Builder, Loc, reg(), Reg);
+    Type.setOperandOf(true);
+    checkType(Loc, Type, Op.Type, TreatIntAsVec);
+  }
+  matchFlags(Inst, Reg);
+  matchKeyedIntegers(Operands, Reg, Loc);
+  if (Value Capture = Inst.getCapture())
+    bind(Reg, Capture, /*BySort=*/false);
+  matchOperands(Operands, Reg, Loc, TreatIntAsVec);
 }
 
 void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
@@ -378,10 +403,7 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
   unsigned Slot = slotOf(Alt.getResult());
   if (Alt->getNumRegions() == 0) {
     // No branch fits: nothing matches.
-    plan::CheckBoundOp::create(Builder, Loc, i32(Slot),
-                               Builder.getBoolAttr(true));
-    plan::CheckBoundOp::create(Builder, Loc, i32(Slot),
-                               Builder.getBoolAttr(false));
+    plan::FailOp::create(Builder, Loc);
     return;
   }
   auto Either = plan::EitherOp::create(Builder, Loc, mlir::TypeRange(),
@@ -396,9 +418,10 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
     auto Yield = *Block.getOps<YieldOp>().begin();
     Value Yielded = Yield.getValue();
     matchValue(Yielded, Reg, /*TreatIntAsVec=*/false);
-    // A value matched in place of the alternative is the alternative's
-    // binding too.
-    if (slotOf(Yielded) != Slot || !S.Assigned.Of.count(Yielded))
+    // A value matched in place of the alternative (an operand, which has no
+    // slot or one of its own) is the alternative's binding too.
+    auto YieldedSlot = S.Assigned.Of.find(Yielded);
+    if (YieldedSlot == S.Assigned.Of.end() || YieldedSlot->second != Slot)
       bind(Reg, Alt.getResult(), /*BySort=*/false);
     for (BindOp Bind : Block.getOps<BindOp>()) {
       if (auto Int = Bind.getValue().getDefiningOp<IntOp>()) {
@@ -474,40 +497,21 @@ Value Compiler::cloneExpression(Value E, mlir::IRMapping &Mapping) {
   Operation *Def = E.getDefiningOp();
   Location Loc = E.getLoc();
   Value Result;
-  if (!Def || isa<VarOp, InstOp, AltOp>(Def)) {
+  if (isa<VarOp, InstOp, AltOp>(Def)) {
     // A pattern value: its slot, named as the value, which the errors of
     // evaluating the constraint name it by.
     unsigned Slot = slotOf(E);
     auto SlotOp = plan::SlotOp::create(Builder, Loc, E.getType(), i32(Slot));
-    StringRef Name = cast<mlir::StringAttr>(S.Names[Slot]).getValue();
-    if (S.Kinds[Slot] == plan::SlotKind::Instruction)
-      SlotOp->setAttr(mpir::ResultNameAttrName,
-                      Builder.getStringAttr(
-                          Name.starts_with("%") ? Name.drop_front() : Name));
-    else
-      SlotOp->setAttr(mpir::VarNameAttrName, Builder.getStringAttr(Name));
+    SlotOp->setAttr(S.Kinds[Slot] == plan::SlotKind::Instruction
+                        ? mpir::ResultNameAttrName
+                        : mpir::VarNameAttrName,
+                    Builder.getStringAttr(S.ReadNames[Slot]));
     Result = SlotOp;
-  } else if (auto Read = dyn_cast<mpir_expr::ReadOp>(Def);
-             Read && Read.getValue().getDefiningOp<IntOp>()) {
-    // A parameter a matcher's use binds to a constant reads as that
-    // number, as a boolean if read as one.
-    mlir::IntegerAttr Value =
-        Read.getValue().getDefiningOp<IntOp>().getValueAttr();
-    APSInt Number(Value.getValue(), Value.getType().isUnsignedInteger());
-    if (sortOf(Read) == Sort::Boolean && Number.getBitWidth() == 1)
-      Result = mpir_expr::BoolOp::create(Builder, Loc, !Number.isZero());
-    else {
-      bool Negative = Number.isSigned() && Number.isNegative();
-      APSInt Literal =
-          Negative ? APSInt(Number.sextOrTrunc(
-                                std::max(64u, Number.getSignificantBits())),
-                            false)
-                   : APSInt(Number.zextOrTrunc(
-                                std::max(64u, Number.getActiveBits())),
-                            true);
-      Result = mpir_expr::IntOp::create(Builder, Loc, Literal);
-    }
   } else {
+    // An expression never reaches an mpir.int: ExpandMatchers folds each
+    // read of one (a parameter a use binds to a constant) into a literal.
+    assert(!isa<IntOp>(Def) &&
+           "mpir_expr.read of an mpir.int not folded by ExpandMatchers");
     for (Value Operand : Def->getOperands())
       cloneExpression(Operand, Mapping);
     Result = Builder.clone(*Def, Mapping)->getResult(0);

@@ -60,7 +60,8 @@ void IntOp::build(OpBuilder &Builder, OperationState &State,
   auto Type = IntegerType::get(Builder.getContext(), Value.getBitWidth(),
                                Value.isUnsigned() ? IntegerType::Unsigned
                                                   : IntegerType::Signed);
-  build(Builder, State, mpir::SortType::get(Builder.getContext(), Sort::Integer),
+  build(Builder, State,
+        mpir::SortType::get(Builder.getContext(), Sort::Integer),
         IntegerAttr::get(Type, Value));
 }
 
@@ -69,8 +70,29 @@ llvm::APSInt IntOp::getAPSInt() {
   return llvm::APSInt(Value.getValue(), Value.getType().isUnsignedInteger());
 }
 
+llvm::APSInt mpir_expr::normalizeLiteral(const llvm::APSInt &Number) {
+  bool Negative = Number.isSigned() && Number.isNegative();
+  return Negative
+             ? llvm::APSInt(Number.sextOrTrunc(
+                                std::max(64u, Number.getSignificantBits())),
+                            /*isUnsigned=*/false)
+             : llvm::APSInt(
+                   Number.zextOrTrunc(std::max(64u, Number.getActiveBits())),
+                   /*isUnsigned=*/true);
+}
+
+Value mpir_expr::createLiteral(OpBuilder &Builder, Location Loc,
+                               mpir::IntOp Constant, Sort ReadAs) {
+  IntegerAttr Attr = Constant.getValueAttr();
+  llvm::APSInt Number(Attr.getValue(), Attr.getType().isUnsignedInteger());
+  if (ReadAs == Sort::Boolean && Number.getBitWidth() == 1)
+    return BoolOp::create(Builder, Loc, !Number.isZero());
+  return IntOp::create(Builder, Loc, normalizeLiteral(Number));
+}
+
 void BoolOp::build(OpBuilder &Builder, OperationState &State, bool Value) {
-  build(Builder, State, mpir::SortType::get(Builder.getContext(), Sort::Boolean),
+  build(Builder, State,
+        mpir::SortType::get(Builder.getContext(), Sort::Boolean),
         Builder.getBoolAttr(Value));
 }
 
