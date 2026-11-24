@@ -1,7 +1,6 @@
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
-#include "metaphir/Exec/ExprEvaluator.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"

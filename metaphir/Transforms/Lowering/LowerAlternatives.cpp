@@ -7,7 +7,6 @@
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
-#include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/PredicateKeyword.h"
 #include "metaphir/Transforms/Lowering/Passes.h"
 #include "mlir/IR/BuiltinOps.h"

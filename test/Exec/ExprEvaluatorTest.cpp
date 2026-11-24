@@ -11,7 +11,6 @@
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/IR/Constraint.h"
-#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/Binding.h"
 #include "metaphir/Matching/UseOracle.h"
 #include "metaphir/Matching/ValueTrackContext.h"

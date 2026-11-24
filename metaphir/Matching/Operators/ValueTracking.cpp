@@ -1,6 +1,4 @@
 #include "metaphir/Matching/Operators/ValueTracking.h"
-#include "metaphir/IR/Constraint.h"
-#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "llvm/Analysis/SimplifyQuery.h"
 #include "llvm/Analysis/ValueTracking.h"

@@ -1,5 +1,4 @@
 #include "metaphir/Index/CorpusIndex.h"
-#include "metaphir/IR/Instruction.h"
 #include "metaphir/Index/FeatureCoding.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -16,9 +15,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/VCSRevision.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/xxhash.h"
-#include <algorithm>
-#include <limits>
 #include <map>
 
 namespace llvm {

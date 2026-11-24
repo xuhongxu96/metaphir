@@ -19,7 +19,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/xxhash.h"
 #include <zdict.h>
 #include <zstd.h>
 

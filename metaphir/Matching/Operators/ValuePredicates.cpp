@@ -1,6 +1,4 @@
 #include "metaphir/Matching/Operators/ValuePredicates.h"
-#include "metaphir/IR/Constraint.h"
-#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/LLVMValueClasses.h"
 #include "llvm/IR/Constants.h"
@@ -10,7 +8,6 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <iterator>
 
 namespace llvm {
 namespace metaphir {

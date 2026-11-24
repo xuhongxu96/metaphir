@@ -17,6 +17,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/TableGen/Error.h"
 
 using namespace llvm;
 using namespace metaphir_tblgen;

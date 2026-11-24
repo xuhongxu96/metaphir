@@ -1,6 +1,5 @@
 #include "metaphir/Matching/Features.h"
 #include "metaphir/Exec/CompiledPattern.h"
-#include "metaphir/IR/Instruction.h"
 #include "test/TestUtils.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"

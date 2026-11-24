@@ -10,6 +10,7 @@
 #include "Records.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Format.h"
+#include "llvm/TableGen/Error.h"
 #include <array>
 
 using namespace llvm;

@@ -10,7 +10,6 @@
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/MetaFlag.h"
 #include "metaphir/IR/PatternSettings.h"
-#include "metaphir/IR/Sort.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

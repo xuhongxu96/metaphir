@@ -1,6 +1,5 @@
 #include "metaphir/Matching/Operators/Arithmetic.h"
 #include "metaphir/IR/Constraint.h"
-#include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstantInteger.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "llvm/IR/DerivedTypes.h"

@@ -6,12 +6,10 @@
 #include "metaphir/Matching/ValueTrackContext.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/xxhash.h"
 #include <algorithm>
 #include <iterator>
 

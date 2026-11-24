@@ -4,7 +4,6 @@
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Exec/ConstraintDispatch.inc"
-#include "metaphir/IR/Constraint.h"
 #include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/Operators/OperatorCall.h"

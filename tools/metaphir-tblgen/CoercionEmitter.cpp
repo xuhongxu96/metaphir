@@ -9,6 +9,7 @@
 #include "Emit.h"
 #include "Records.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/TableGen/Error.h"
 
 using namespace llvm;
 using namespace metaphir_tblgen;

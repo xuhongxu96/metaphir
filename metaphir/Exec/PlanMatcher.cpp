@@ -18,7 +18,6 @@
 #include "metaphir/Dialect/Plan/PlanDialect.h"
 #include "metaphir/Exec/KeywordConstantMatch.h"
 #include "metaphir/Exec/TypePattern.h"
-#include "metaphir/IR/Constants.h"
 #include "metaphir/IR/PredicateKeyword.h"
 #include "metaphir/Matching/ConstantInteger.h"
 #include "metaphir/Matching/ConstraintCoercion.h"

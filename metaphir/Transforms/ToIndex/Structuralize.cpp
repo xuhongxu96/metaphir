@@ -23,7 +23,6 @@
 #include "metaphir/Transforms/ToIndex/Passes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/IRMapping.h"
 #include "mlir/Pass/Pass.h"
 
 namespace llvm {

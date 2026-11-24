@@ -1,12 +1,9 @@
 #include "metaphir/Index/Postings.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <iterator>
 
 namespace llvm {
 namespace metaphir {

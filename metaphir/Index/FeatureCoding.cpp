@@ -1,7 +1,6 @@
 #include "metaphir/Index/FeatureCoding.h"
 #include "metaphir/IR/Instruction.h"
 #include "metaphir/Matching/LLVMValueClasses.h"
-#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/VCSRevision.h"
 #include "llvm/Support/raw_ostream.h"

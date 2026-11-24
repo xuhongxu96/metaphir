@@ -4,7 +4,6 @@
 #include "metaphir/Web/WebIndex.h"
 #include "metaphir/Web/WebPublisher.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/LEB128.h"
