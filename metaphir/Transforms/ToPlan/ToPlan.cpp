@@ -129,7 +129,6 @@ private:
     return *Slot;
   }
 
-  mpir::TypePatternAttr typePattern(Value T);
   /// Binds the slot of V, a meta variable or matcher, to what Reg holds:
   /// BySort, read as V's sort reads IR values (failing the path if it
   /// cannot be), else as it is.
@@ -228,10 +227,6 @@ void Compiler::assignSlots() {
   }
 }
 
-mpir::TypePatternAttr Compiler::typePattern(Value T) {
-  return mpir::encodeTypePattern(T, S.Assigned);
-}
-
 void Compiler::bind(Value Reg, Value V, bool BySort) {
   unsigned Slot = slotOf(V);
   auto Bind = plan::BindOp::create(Builder, V.getLoc(), Reg, i32(Slot),
@@ -283,8 +278,8 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
 
 void Compiler::checkType(Location Loc, Value Type, Value Pattern,
                          bool TreatIntAsVec) {
-  auto Check =
-      plan::CheckTypeOp::create(Builder, Loc, Type, typePattern(Pattern));
+  auto Check = plan::CheckTypeOp::create(
+      Builder, Loc, Type, mpir::encodeTypePattern(Pattern, S.Assigned));
   if (TreatIntAsVec)
     Check.setTreatIntAsVec(true);
 }

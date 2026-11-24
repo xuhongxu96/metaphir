@@ -592,19 +592,10 @@ private:
     return It->second;
   }
 
-  bool matchType(mpir::TypePatternAttr Pattern, const llvm::Type &Target,
-                 bool TreatIntAsVec);
   bool step(const Step &S);
   void exec(unsigned PC, unsigned End);
   void emit();
 };
-
-bool PlanMatcher::Run::matchType(mpir::TypePatternAttr Pattern,
-                                 const llvm::Type &Target, bool TreatIntAsVec) {
-  return matchTypePattern(
-      Pattern, Target, TreatIntAsVec,
-      [&](unsigned Slot, const Binding &B) { return unify(Slot, B); });
-}
 
 /// Whether Target is the global Name names: 'llvm.*' an intrinsic by its
 /// base name, anything else the global of the name.
@@ -722,9 +713,10 @@ bool PlanMatcher::Run::step(const Step &S) {
     return S.Flag ? Count >= unsigned(S.A) : Count == unsigned(S.A);
   }
   case Step::CheckType:
-    return matchType(S.Type,
-                     **std::get_if<const llvm::Type *>(&Registers[S.Src].Data),
-                     S.Flag);
+    return matchTypePattern(
+        S.Type, **std::get_if<const llvm::Type *>(&Registers[S.Src].Data),
+        S.Flag,
+        [&](unsigned Slot, const Binding &B) { return unify(Slot, B); });
   case Step::CheckInteger: {
     const Binding &R = Registers[S.Src];
     if (const auto *Keyed = std::get_if<APSInt>(&R.Data))
