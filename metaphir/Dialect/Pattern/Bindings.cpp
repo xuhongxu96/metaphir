@@ -49,60 +49,61 @@ SlotAssignment mpir::assignSlots(PatternOp Pattern) {
   return Slots;
 }
 
-ArrayAttr mpir::encodeTypePattern(Builder &Builder, Value T,
-                                  const SlotAssignment &Slots,
-                                  SmallVectorImpl<Value> *Variables) {
-  auto VariableNumber = [&](Value V) {
+TypePatternAttr mpir::encodeTypePattern(Value T, const SlotAssignment &Slots,
+                                        SmallVectorImpl<Value> *Variables) {
+  MLIRContext *Context = T.getContext();
+  auto Slot = [&](Value V) {
     assert(Slots.Of.count(V) && "a type variable without a slot");
     if (Variables)
       Variables->push_back(V);
-    return int64_t(Slots.Of.lookup(V));
+    return Slots.Of.lookup(V);
   };
-  SmallVector<Attribute, 8> Parts;
-  auto Int = [&](int64_t V) { Parts.push_back(Builder.getI64IntegerAttr(V)); };
-  auto Kind = [&](TypePatternKind K) { Int(int64_t(K)); };
   auto Nested = [&](Value Of) {
-    Parts.push_back(encodeTypePattern(Builder, Of, Slots, Variables));
+    return encodeTypePattern(Of, Slots, Variables);
+  };
+  auto AllNested = [&](mlir::ValueRange Of) {
+    return llvm::map_to_vector(Of, Nested);
   };
   Operation *Def = T.getDefiningOp();
-  if (isa<VarOp>(Def)) {
-    Kind(TypePatternKind::Variable);
-    Int(VariableNumber(T));
-  } else if (auto Prim = dyn_cast<PrimTypeOp>(Def)) {
-    Kind(TypePatternKind::Primitive);
-    Int(Prim.getKind());
-  } else if (auto IntTy = dyn_cast<IntTypeOp>(Def)) {
-    Kind(TypePatternKind::Integer);
-    Int(IntTy.getWidth());
-    Int(IntTy.getByte());
-  } else if (auto Meta = dyn_cast<MetaIntTypeOp>(Def)) {
-    Kind(TypePatternKind::MetaInteger);
-    Int(VariableNumber(Meta.getWidth()));
-    Int(Meta.getByte());
-  } else if (auto Ptr = dyn_cast<PtrTypeOp>(Def)) {
-    Kind(TypePatternKind::Pointer);
-    std::optional<uint32_t> Space = Ptr.getAddressSpace();
-    Int(Space ? int64_t(*Space) : -1);
-    Int(!Ptr.getElement());
-  } else if (auto Seq = dyn_cast<SeqTypeOp>(Def)) {
-    Kind(TypePatternKind::Sequence);
-    Int(int64_t(Seq.getKind()));
-    Int(Seq.getCount());
-    Int(Seq.getCountVar() ? VariableNumber(Seq.getCountVar()) : -1);
-    Nested(Seq.getElement());
-  } else if (auto Struct = dyn_cast<StructTypeOp>(Def)) {
-    Kind(TypePatternKind::Struct);
-    Int(Struct.getPacked());
-    for (Value E : Struct.getElements())
-      Nested(E);
-  } else if (auto Func = dyn_cast<FuncTypeOp>(Def)) {
-    Kind(TypePatternKind::Function);
-    Int(Func.getVarArg());
-    Nested(Func.getReturnType());
-    for (Value P : Func.getParams())
-      Nested(P);
-  } else {
-    llvm_unreachable("not a type pattern");
+  if (isa<VarOp>(Def))
+    return VarTypePatternAttr::get(Context, Slot(T));
+  if (auto Prim = dyn_cast<PrimTypeOp>(Def))
+    return PrimTypePatternAttr::get(Context, Prim.getKind());
+  if (auto IntTy = dyn_cast<IntTypeOp>(Def))
+    return IntTy.getByte() ? TypePatternAttr(ByteTypePatternAttr::get(
+                                 Context, IntTy.getWidth()))
+                           : IntTypePatternAttr::get(Context, IntTy.getWidth());
+  if (auto Meta = dyn_cast<MetaIntTypeOp>(Def)) {
+    unsigned Width = Slot(Meta.getWidth());
+    return Meta.getByte()
+               ? TypePatternAttr(ByteWidthTypePatternAttr::get(Context, Width))
+               : IntWidthTypePatternAttr::get(Context, Width);
   }
-  return Builder.getArrayAttr(Parts);
+  if (auto Ptr = dyn_cast<PtrTypeOp>(Def)) {
+    std::optional<unsigned> Space;
+    if (std::optional<uint32_t> Written = Ptr.getAddressSpace())
+      Space = *Written;
+    return PtrTypePatternAttr::get(Context, Space,
+                                   Ptr.getElement() ? Nested(Ptr.getElement())
+                                                    : TypePatternAttr());
+  }
+  if (auto Seq = dyn_cast<SeqTypeOp>(Def)) {
+    std::optional<uint64_t> Count;
+    std::optional<unsigned> CountSlot;
+    if (Seq.getCountVar())
+      CountSlot = Slot(Seq.getCountVar());
+    else
+      Count = Seq.getCount();
+    return SeqTypePatternAttr::get(Context, Seq.getKind(), Count, CountSlot,
+                                   Nested(Seq.getElement()));
+  }
+  if (auto Struct = dyn_cast<StructTypeOp>(Def))
+    return StructTypePatternAttr::get(Context, Struct.getPacked(),
+                                      AllNested(Struct.getElements()));
+  if (auto Func = dyn_cast<FuncTypeOp>(Def)) {
+    TypePatternAttr Return = Nested(Func.getReturnType());
+    return FuncTypePatternAttr::get(
+        Context, Return, AllNested(Func.getParams()), Func.getVarArg());
+  }
+  llvm_unreachable("not a type pattern");
 }

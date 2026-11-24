@@ -48,7 +48,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":49:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":50:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":51:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize-nested.mlir":51:1)
     %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize-nested.mlir":52:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":53:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":54:1)
@@ -75,7 +75,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -103,7 +103,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_2:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_3:.*]] = mpir_expr.read %[[SITES_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7:.*]] = mpir_index.node 0 : <Instruction>
@@ -183,7 +183,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":184:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":185:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":186:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize-nested.mlir":186:1)
     %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize-nested.mlir":187:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":188:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":189:1)
@@ -214,7 +214,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -246,7 +246,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_3:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3:.*]] = mpir_expr.read %[[SITES_3]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8:.*]] = mpir_index.node 0 : <Instruction>
@@ -328,7 +328,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":329:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":330:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":331:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize-nested.mlir":331:1)
     %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize-nested.mlir":332:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":333:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":334:1)
@@ -359,7 +359,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -390,7 +390,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_2:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_3:.*]] = mpir_expr.read %[[SITES_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8:.*]] = mpir_index.node 0 : <Instruction>
@@ -621,7 +621,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize-nested.mlir":622:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize-nested.mlir":623:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize-nested.mlir":624:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize-nested.mlir":624:1)
     %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize-nested.mlir":625:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize-nested.mlir":626:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize-nested.mlir":627:1)
@@ -770,7 +770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -920,7 +920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_2:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_18:.*]] = mpir_expr.read %[[SITES_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_45:.*]] = mpir_index.node 0 : <Instruction>
@@ -1070,7 +1070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_4:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_36:.*]] = mpir_expr.read %[[SITES_4]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_90:.*]] = mpir_index.node 0 : <Instruction>
@@ -1220,7 +1220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_6:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_54:.*]] = mpir_expr.read %[[SITES_6]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_135:.*]] = mpir_index.node 0 : <Instruction>
@@ -1370,7 +1370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_8:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_72:.*]] = mpir_expr.read %[[SITES_8]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_180:.*]] = mpir_index.node 0 : <Instruction>
@@ -1520,7 +1520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_10:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_90:.*]] = mpir_expr.read %[[SITES_10]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_225:.*]] = mpir_index.node 0 : <Instruction>
@@ -1670,7 +1670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_12:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_108:.*]] = mpir_expr.read %[[SITES_12]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_270:.*]] = mpir_index.node 0 : <Instruction>
@@ -1820,7 +1820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_14:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_126:.*]] = mpir_expr.read %[[SITES_14]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_315:.*]] = mpir_index.node 0 : <Instruction>
@@ -1970,7 +1970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_16:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_144:.*]] = mpir_expr.read %[[SITES_16]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_360:.*]] = mpir_index.node 0 : <Instruction>
@@ -2120,7 +2120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_18:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_162:.*]] = mpir_expr.read %[[SITES_18]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_405:.*]] = mpir_index.node 0 : <Instruction>
@@ -2270,7 +2270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_20:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_180:.*]] = mpir_expr.read %[[SITES_20]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_450:.*]] = mpir_index.node 0 : <Instruction>
@@ -2420,7 +2420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_22:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_198:.*]] = mpir_expr.read %[[SITES_22]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_495:.*]] = mpir_index.node 0 : <Instruction>
@@ -2570,7 +2570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_24:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_216:.*]] = mpir_expr.read %[[SITES_24]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_540:.*]] = mpir_index.node 0 : <Instruction>
@@ -2720,7 +2720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_26:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_234:.*]] = mpir_expr.read %[[SITES_26]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_585:.*]] = mpir_index.node 0 : <Instruction>
@@ -2870,7 +2870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_28:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_252:.*]] = mpir_expr.read %[[SITES_28]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_630:.*]] = mpir_index.node 0 : <Instruction>
@@ -3020,7 +3020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_30:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_270:.*]] = mpir_expr.read %[[SITES_30]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_675:.*]] = mpir_index.node 0 : <Instruction>
@@ -3170,7 +3170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_32:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_288:.*]] = mpir_expr.read %[[SITES_32]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_720:.*]] = mpir_index.node 0 : <Instruction>
@@ -3320,7 +3320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_34:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_306:.*]] = mpir_expr.read %[[SITES_34]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_765:.*]] = mpir_index.node 0 : <Instruction>
@@ -3470,7 +3470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_36:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_324:.*]] = mpir_expr.read %[[SITES_36]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_810:.*]] = mpir_index.node 0 : <Instruction>
@@ -3620,7 +3620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_38:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_342:.*]] = mpir_expr.read %[[SITES_38]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_855:.*]] = mpir_index.node 0 : <Instruction>
@@ -3770,7 +3770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_40:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_360:.*]] = mpir_expr.read %[[SITES_40]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_900:.*]] = mpir_index.node 0 : <Instruction>
@@ -3920,7 +3920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_42:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_378:.*]] = mpir_expr.read %[[SITES_42]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_945:.*]] = mpir_index.node 0 : <Instruction>
@@ -4070,7 +4070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_44:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_396:.*]] = mpir_expr.read %[[SITES_44]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_990:.*]] = mpir_index.node 0 : <Instruction>
@@ -4220,7 +4220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_46:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_414:.*]] = mpir_expr.read %[[SITES_46]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1035:.*]] = mpir_index.node 0 : <Instruction>
@@ -4370,7 +4370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_48:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_432:.*]] = mpir_expr.read %[[SITES_48]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1080:.*]] = mpir_index.node 0 : <Instruction>
@@ -4520,7 +4520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_50:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_450:.*]] = mpir_expr.read %[[SITES_50]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1125:.*]] = mpir_index.node 0 : <Instruction>
@@ -4670,7 +4670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_52:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_468:.*]] = mpir_expr.read %[[SITES_52]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1170:.*]] = mpir_index.node 0 : <Instruction>
@@ -4820,7 +4820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_54:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_486:.*]] = mpir_expr.read %[[SITES_54]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1215:.*]] = mpir_index.node 0 : <Instruction>
@@ -4970,7 +4970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_56:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_504:.*]] = mpir_expr.read %[[SITES_56]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1260:.*]] = mpir_index.node 0 : <Instruction>
@@ -5120,7 +5120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_58:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_522:.*]] = mpir_expr.read %[[SITES_58]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1305:.*]] = mpir_index.node 0 : <Instruction>
@@ -5270,7 +5270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_60:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_540:.*]] = mpir_expr.read %[[SITES_60]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1350:.*]] = mpir_index.node 0 : <Instruction>
@@ -5420,7 +5420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_62:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_558:.*]] = mpir_expr.read %[[SITES_62]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1395:.*]] = mpir_index.node 0 : <Instruction>
@@ -5570,7 +5570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_64:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_576:.*]] = mpir_expr.read %[[SITES_64]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1440:.*]] = mpir_index.node 0 : <Instruction>
@@ -5720,7 +5720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_66:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_594:.*]] = mpir_expr.read %[[SITES_66]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1485:.*]] = mpir_index.node 0 : <Instruction>
@@ -5870,7 +5870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_68:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_612:.*]] = mpir_expr.read %[[SITES_68]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1530:.*]] = mpir_index.node 0 : <Instruction>
@@ -6020,7 +6020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_70:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_630:.*]] = mpir_expr.read %[[SITES_70]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1575:.*]] = mpir_index.node 0 : <Instruction>
@@ -6170,7 +6170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_72:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_648:.*]] = mpir_expr.read %[[SITES_72]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1620:.*]] = mpir_index.node 0 : <Instruction>
@@ -6320,7 +6320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_74:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_666:.*]] = mpir_expr.read %[[SITES_74]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1665:.*]] = mpir_index.node 0 : <Instruction>
@@ -6470,7 +6470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_76:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_684:.*]] = mpir_expr.read %[[SITES_76]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1710:.*]] = mpir_index.node 0 : <Instruction>
@@ -6620,7 +6620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_78:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_702:.*]] = mpir_expr.read %[[SITES_78]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1755:.*]] = mpir_index.node 0 : <Instruction>
@@ -6770,7 +6770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_80:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_720:.*]] = mpir_expr.read %[[SITES_80]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1800:.*]] = mpir_index.node 0 : <Instruction>
@@ -6920,7 +6920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_82:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_738:.*]] = mpir_expr.read %[[SITES_82]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1845:.*]] = mpir_index.node 0 : <Instruction>
@@ -7070,7 +7070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_84:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_756:.*]] = mpir_expr.read %[[SITES_84]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1890:.*]] = mpir_index.node 0 : <Instruction>
@@ -7220,7 +7220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_86:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_774:.*]] = mpir_expr.read %[[SITES_86]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1935:.*]] = mpir_index.node 0 : <Instruction>
@@ -7370,7 +7370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_88:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_792:.*]] = mpir_expr.read %[[SITES_88]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_1980:.*]] = mpir_index.node 0 : <Instruction>
@@ -7520,7 +7520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_90:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_810:.*]] = mpir_expr.read %[[SITES_90]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2025:.*]] = mpir_index.node 0 : <Instruction>
@@ -7670,7 +7670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_92:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_828:.*]] = mpir_expr.read %[[SITES_92]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2070:.*]] = mpir_index.node 0 : <Instruction>
@@ -7820,7 +7820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_94:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_846:.*]] = mpir_expr.read %[[SITES_94]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2115:.*]] = mpir_index.node 0 : <Instruction>
@@ -7970,7 +7970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_96:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_864:.*]] = mpir_expr.read %[[SITES_96]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2160:.*]] = mpir_index.node 0 : <Instruction>
@@ -8120,7 +8120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_98:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_882:.*]] = mpir_expr.read %[[SITES_98]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2205:.*]] = mpir_index.node 0 : <Instruction>
@@ -8270,7 +8270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_100:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_900:.*]] = mpir_expr.read %[[SITES_100]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2250:.*]] = mpir_index.node 0 : <Instruction>
@@ -8420,7 +8420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_102:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_918:.*]] = mpir_expr.read %[[SITES_102]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2295:.*]] = mpir_index.node 0 : <Instruction>
@@ -8570,7 +8570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_104:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_936:.*]] = mpir_expr.read %[[SITES_104]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2340:.*]] = mpir_index.node 0 : <Instruction>
@@ -8720,7 +8720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_106:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_954:.*]] = mpir_expr.read %[[SITES_106]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2385:.*]] = mpir_index.node 0 : <Instruction>
@@ -8870,7 +8870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_108:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_972:.*]] = mpir_expr.read %[[SITES_108]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2430:.*]] = mpir_index.node 0 : <Instruction>
@@ -9020,7 +9020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_110:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_990:.*]] = mpir_expr.read %[[SITES_110]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2475:.*]] = mpir_index.node 0 : <Instruction>
@@ -9170,7 +9170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_112:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1008:.*]] = mpir_expr.read %[[SITES_112]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2520:.*]] = mpir_index.node 0 : <Instruction>
@@ -9320,7 +9320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_114:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1026:.*]] = mpir_expr.read %[[SITES_114]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2565:.*]] = mpir_index.node 0 : <Instruction>
@@ -9470,7 +9470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_116:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1044:.*]] = mpir_expr.read %[[SITES_116]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2610:.*]] = mpir_index.node 0 : <Instruction>
@@ -9620,7 +9620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_118:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1062:.*]] = mpir_expr.read %[[SITES_118]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2655:.*]] = mpir_index.node 0 : <Instruction>
@@ -9770,7 +9770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_120:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1080:.*]] = mpir_expr.read %[[SITES_120]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2700:.*]] = mpir_index.node 0 : <Instruction>
@@ -9920,7 +9920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_122:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1098:.*]] = mpir_expr.read %[[SITES_122]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2745:.*]] = mpir_index.node 0 : <Instruction>
@@ -10070,7 +10070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_124:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1116:.*]] = mpir_expr.read %[[SITES_124]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2790:.*]] = mpir_index.node 0 : <Instruction>
@@ -10220,7 +10220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_126:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1134:.*]] = mpir_expr.read %[[SITES_126]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2835:.*]] = mpir_index.node 0 : <Instruction>
@@ -10370,7 +10370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_128:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1152:.*]] = mpir_expr.read %[[SITES_128]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2880:.*]] = mpir_index.node 0 : <Instruction>
@@ -10520,7 +10520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_130:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1170:.*]] = mpir_expr.read %[[SITES_130]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2925:.*]] = mpir_index.node 0 : <Instruction>
@@ -10670,7 +10670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_132:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1188:.*]] = mpir_expr.read %[[SITES_132]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2970:.*]] = mpir_index.node 0 : <Instruction>
@@ -10820,7 +10820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_134:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1206:.*]] = mpir_expr.read %[[SITES_134]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3015:.*]] = mpir_index.node 0 : <Instruction>
@@ -10970,7 +10970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_136:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1224:.*]] = mpir_expr.read %[[SITES_136]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3060:.*]] = mpir_index.node 0 : <Instruction>
@@ -11120,7 +11120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_138:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1242:.*]] = mpir_expr.read %[[SITES_138]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3105:.*]] = mpir_index.node 0 : <Instruction>
@@ -11270,7 +11270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_140:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1260:.*]] = mpir_expr.read %[[SITES_140]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3150:.*]] = mpir_index.node 0 : <Instruction>
@@ -11420,7 +11420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_142:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1278:.*]] = mpir_expr.read %[[SITES_142]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3195:.*]] = mpir_index.node 0 : <Instruction>
@@ -11570,7 +11570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_144:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1296:.*]] = mpir_expr.read %[[SITES_144]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3240:.*]] = mpir_index.node 0 : <Instruction>
@@ -11720,7 +11720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_146:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1314:.*]] = mpir_expr.read %[[SITES_146]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3285:.*]] = mpir_index.node 0 : <Instruction>
@@ -11870,7 +11870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_148:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1332:.*]] = mpir_expr.read %[[SITES_148]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3330:.*]] = mpir_index.node 0 : <Instruction>
@@ -12020,7 +12020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_150:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1350:.*]] = mpir_expr.read %[[SITES_150]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3375:.*]] = mpir_index.node 0 : <Instruction>
@@ -12170,7 +12170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_152:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1368:.*]] = mpir_expr.read %[[SITES_152]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3420:.*]] = mpir_index.node 0 : <Instruction>
@@ -12320,7 +12320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_154:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1386:.*]] = mpir_expr.read %[[SITES_154]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3465:.*]] = mpir_index.node 0 : <Instruction>
@@ -12470,7 +12470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_156:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1404:.*]] = mpir_expr.read %[[SITES_156]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3510:.*]] = mpir_index.node 0 : <Instruction>
@@ -12620,7 +12620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_158:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1422:.*]] = mpir_expr.read %[[SITES_158]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3555:.*]] = mpir_index.node 0 : <Instruction>
@@ -12770,7 +12770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_160:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1440:.*]] = mpir_expr.read %[[SITES_160]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3600:.*]] = mpir_index.node 0 : <Instruction>
@@ -12920,7 +12920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_162:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1458:.*]] = mpir_expr.read %[[SITES_162]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3645:.*]] = mpir_index.node 0 : <Instruction>
@@ -13070,7 +13070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_164:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1476:.*]] = mpir_expr.read %[[SITES_164]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3690:.*]] = mpir_index.node 0 : <Instruction>
@@ -13220,7 +13220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_166:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1494:.*]] = mpir_expr.read %[[SITES_166]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3735:.*]] = mpir_index.node 0 : <Instruction>
@@ -13370,7 +13370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_168:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1512:.*]] = mpir_expr.read %[[SITES_168]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3780:.*]] = mpir_index.node 0 : <Instruction>
@@ -13520,7 +13520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_170:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1530:.*]] = mpir_expr.read %[[SITES_170]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3825:.*]] = mpir_index.node 0 : <Instruction>
@@ -13670,7 +13670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_172:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1548:.*]] = mpir_expr.read %[[SITES_172]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3870:.*]] = mpir_index.node 0 : <Instruction>
@@ -13820,7 +13820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_174:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1566:.*]] = mpir_expr.read %[[SITES_174]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3915:.*]] = mpir_index.node 0 : <Instruction>
@@ -13970,7 +13970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_176:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1584:.*]] = mpir_expr.read %[[SITES_176]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_3960:.*]] = mpir_index.node 0 : <Instruction>
@@ -14120,7 +14120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_178:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1602:.*]] = mpir_expr.read %[[SITES_178]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4005:.*]] = mpir_index.node 0 : <Instruction>
@@ -14270,7 +14270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_180:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1620:.*]] = mpir_expr.read %[[SITES_180]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4050:.*]] = mpir_index.node 0 : <Instruction>
@@ -14420,7 +14420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_182:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1638:.*]] = mpir_expr.read %[[SITES_182]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4095:.*]] = mpir_index.node 0 : <Instruction>
@@ -14570,7 +14570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_184:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1656:.*]] = mpir_expr.read %[[SITES_184]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4140:.*]] = mpir_index.node 0 : <Instruction>
@@ -14720,7 +14720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_186:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1674:.*]] = mpir_expr.read %[[SITES_186]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4185:.*]] = mpir_index.node 0 : <Instruction>
@@ -14870,7 +14870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_188:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1692:.*]] = mpir_expr.read %[[SITES_188]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4230:.*]] = mpir_index.node 0 : <Instruction>
@@ -15020,7 +15020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_190:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1710:.*]] = mpir_expr.read %[[SITES_190]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4275:.*]] = mpir_index.node 0 : <Instruction>
@@ -15170,7 +15170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_192:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1728:.*]] = mpir_expr.read %[[SITES_192]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4320:.*]] = mpir_index.node 0 : <Instruction>
@@ -15320,7 +15320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_194:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1746:.*]] = mpir_expr.read %[[SITES_194]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4365:.*]] = mpir_index.node 0 : <Instruction>
@@ -15470,7 +15470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_196:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1764:.*]] = mpir_expr.read %[[SITES_196]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4410:.*]] = mpir_index.node 0 : <Instruction>
@@ -15620,7 +15620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_198:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1782:.*]] = mpir_expr.read %[[SITES_198]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4455:.*]] = mpir_index.node 0 : <Instruction>
@@ -15770,7 +15770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_200:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1800:.*]] = mpir_expr.read %[[SITES_200]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4500:.*]] = mpir_index.node 0 : <Instruction>
@@ -15920,7 +15920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_202:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1818:.*]] = mpir_expr.read %[[SITES_202]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4545:.*]] = mpir_index.node 0 : <Instruction>
@@ -16070,7 +16070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_204:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1836:.*]] = mpir_expr.read %[[SITES_204]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4590:.*]] = mpir_index.node 0 : <Instruction>
@@ -16220,7 +16220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_206:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1854:.*]] = mpir_expr.read %[[SITES_206]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4635:.*]] = mpir_index.node 0 : <Instruction>
@@ -16370,7 +16370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_208:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1872:.*]] = mpir_expr.read %[[SITES_208]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4680:.*]] = mpir_index.node 0 : <Instruction>
@@ -16520,7 +16520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_210:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1890:.*]] = mpir_expr.read %[[SITES_210]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4725:.*]] = mpir_index.node 0 : <Instruction>
@@ -16670,7 +16670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_212:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1908:.*]] = mpir_expr.read %[[SITES_212]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4770:.*]] = mpir_index.node 0 : <Instruction>
@@ -16820,7 +16820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_214:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1926:.*]] = mpir_expr.read %[[SITES_214]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4815:.*]] = mpir_index.node 0 : <Instruction>
@@ -16970,7 +16970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_216:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1944:.*]] = mpir_expr.read %[[SITES_216]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4860:.*]] = mpir_index.node 0 : <Instruction>
@@ -17120,7 +17120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_218:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1962:.*]] = mpir_expr.read %[[SITES_218]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4905:.*]] = mpir_index.node 0 : <Instruction>
@@ -17270,7 +17270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_220:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1980:.*]] = mpir_expr.read %[[SITES_220]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4950:.*]] = mpir_index.node 0 : <Instruction>
@@ -17420,7 +17420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_222:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_1998:.*]] = mpir_expr.read %[[SITES_222]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_4995:.*]] = mpir_index.node 0 : <Instruction>
@@ -17570,7 +17570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_224:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2016:.*]] = mpir_expr.read %[[SITES_224]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5040:.*]] = mpir_index.node 0 : <Instruction>
@@ -17720,7 +17720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_226:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2034:.*]] = mpir_expr.read %[[SITES_226]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5085:.*]] = mpir_index.node 0 : <Instruction>
@@ -17870,7 +17870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_228:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2052:.*]] = mpir_expr.read %[[SITES_228]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5130:.*]] = mpir_index.node 0 : <Instruction>
@@ -18020,7 +18020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_230:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2070:.*]] = mpir_expr.read %[[SITES_230]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5175:.*]] = mpir_index.node 0 : <Instruction>
@@ -18170,7 +18170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_232:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2088:.*]] = mpir_expr.read %[[SITES_232]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5220:.*]] = mpir_index.node 0 : <Instruction>
@@ -18320,7 +18320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_234:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2106:.*]] = mpir_expr.read %[[SITES_234]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5265:.*]] = mpir_index.node 0 : <Instruction>
@@ -18470,7 +18470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_236:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2124:.*]] = mpir_expr.read %[[SITES_236]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5310:.*]] = mpir_index.node 0 : <Instruction>
@@ -18620,7 +18620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_238:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2142:.*]] = mpir_expr.read %[[SITES_238]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5355:.*]] = mpir_index.node 0 : <Instruction>
@@ -18770,7 +18770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_240:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2160:.*]] = mpir_expr.read %[[SITES_240]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5400:.*]] = mpir_index.node 0 : <Instruction>
@@ -18920,7 +18920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_242:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2178:.*]] = mpir_expr.read %[[SITES_242]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5445:.*]] = mpir_index.node 0 : <Instruction>
@@ -19070,7 +19070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_244:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2196:.*]] = mpir_expr.read %[[SITES_244]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5490:.*]] = mpir_index.node 0 : <Instruction>
@@ -19220,7 +19220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_246:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2214:.*]] = mpir_expr.read %[[SITES_246]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5535:.*]] = mpir_index.node 0 : <Instruction>
@@ -19370,7 +19370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_248:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2232:.*]] = mpir_expr.read %[[SITES_248]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5580:.*]] = mpir_index.node 0 : <Instruction>
@@ -19520,7 +19520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_250:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2250:.*]] = mpir_expr.read %[[SITES_250]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5625:.*]] = mpir_index.node 0 : <Instruction>
@@ -19670,7 +19670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_252:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2268:.*]] = mpir_expr.read %[[SITES_252]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5670:.*]] = mpir_index.node 0 : <Instruction>
@@ -19820,7 +19820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_254:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2286:.*]] = mpir_expr.read %[[SITES_254]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5715:.*]] = mpir_index.node 0 : <Instruction>
@@ -19970,7 +19970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_256:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2304:.*]] = mpir_expr.read %[[SITES_256]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5760:.*]] = mpir_index.node 0 : <Instruction>
@@ -20120,7 +20120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_258:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2322:.*]] = mpir_expr.read %[[SITES_258]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5805:.*]] = mpir_index.node 0 : <Instruction>
@@ -20270,7 +20270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_260:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2340:.*]] = mpir_expr.read %[[SITES_260]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5850:.*]] = mpir_index.node 0 : <Instruction>
@@ -20420,7 +20420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_262:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2358:.*]] = mpir_expr.read %[[SITES_262]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5895:.*]] = mpir_index.node 0 : <Instruction>
@@ -20570,7 +20570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_264:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2376:.*]] = mpir_expr.read %[[SITES_264]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5940:.*]] = mpir_index.node 0 : <Instruction>
@@ -20720,7 +20720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_266:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2394:.*]] = mpir_expr.read %[[SITES_266]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5985:.*]] = mpir_index.node 0 : <Instruction>
@@ -20870,7 +20870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_268:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2412:.*]] = mpir_expr.read %[[SITES_268]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6030:.*]] = mpir_index.node 0 : <Instruction>
@@ -21020,7 +21020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_270:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2430:.*]] = mpir_expr.read %[[SITES_270]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6075:.*]] = mpir_index.node 0 : <Instruction>
@@ -21170,7 +21170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_272:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2448:.*]] = mpir_expr.read %[[SITES_272]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6120:.*]] = mpir_index.node 0 : <Instruction>
@@ -21320,7 +21320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_274:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2466:.*]] = mpir_expr.read %[[SITES_274]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6165:.*]] = mpir_index.node 0 : <Instruction>
@@ -21470,7 +21470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_276:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2484:.*]] = mpir_expr.read %[[SITES_276]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6210:.*]] = mpir_index.node 0 : <Instruction>
@@ -21620,7 +21620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_278:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2502:.*]] = mpir_expr.read %[[SITES_278]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6255:.*]] = mpir_index.node 0 : <Instruction>
@@ -21770,7 +21770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_280:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2520:.*]] = mpir_expr.read %[[SITES_280]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6300:.*]] = mpir_index.node 0 : <Instruction>
@@ -21920,7 +21920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_282:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2538:.*]] = mpir_expr.read %[[SITES_282]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6345:.*]] = mpir_index.node 0 : <Instruction>
@@ -22070,7 +22070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_284:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2556:.*]] = mpir_expr.read %[[SITES_284]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6390:.*]] = mpir_index.node 0 : <Instruction>
@@ -22220,7 +22220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_286:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2574:.*]] = mpir_expr.read %[[SITES_286]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6435:.*]] = mpir_index.node 0 : <Instruction>
@@ -22370,7 +22370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_288:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2592:.*]] = mpir_expr.read %[[SITES_288]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6480:.*]] = mpir_index.node 0 : <Instruction>
@@ -22520,7 +22520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_290:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2610:.*]] = mpir_expr.read %[[SITES_290]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6525:.*]] = mpir_index.node 0 : <Instruction>
@@ -22670,7 +22670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_292:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2628:.*]] = mpir_expr.read %[[SITES_292]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6570:.*]] = mpir_index.node 0 : <Instruction>
@@ -22820,7 +22820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_294:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2646:.*]] = mpir_expr.read %[[SITES_294]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6615:.*]] = mpir_index.node 0 : <Instruction>
@@ -22970,7 +22970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_296:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2664:.*]] = mpir_expr.read %[[SITES_296]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6660:.*]] = mpir_index.node 0 : <Instruction>
@@ -23120,7 +23120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_298:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2682:.*]] = mpir_expr.read %[[SITES_298]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6705:.*]] = mpir_index.node 0 : <Instruction>
@@ -23270,7 +23270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_300:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2700:.*]] = mpir_expr.read %[[SITES_300]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6750:.*]] = mpir_index.node 0 : <Instruction>
@@ -23420,7 +23420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_302:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2718:.*]] = mpir_expr.read %[[SITES_302]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6795:.*]] = mpir_index.node 0 : <Instruction>
@@ -23570,7 +23570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_304:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2736:.*]] = mpir_expr.read %[[SITES_304]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6840:.*]] = mpir_index.node 0 : <Instruction>
@@ -23720,7 +23720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_306:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2754:.*]] = mpir_expr.read %[[SITES_306]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6885:.*]] = mpir_index.node 0 : <Instruction>
@@ -23870,7 +23870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_308:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2772:.*]] = mpir_expr.read %[[SITES_308]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6930:.*]] = mpir_index.node 0 : <Instruction>
@@ -24020,7 +24020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_310:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2790:.*]] = mpir_expr.read %[[SITES_310]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_6975:.*]] = mpir_index.node 0 : <Instruction>
@@ -24170,7 +24170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_312:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2808:.*]] = mpir_expr.read %[[SITES_312]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7020:.*]] = mpir_index.node 0 : <Instruction>
@@ -24320,7 +24320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_314:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2826:.*]] = mpir_expr.read %[[SITES_314]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7065:.*]] = mpir_index.node 0 : <Instruction>
@@ -24470,7 +24470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_316:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2844:.*]] = mpir_expr.read %[[SITES_316]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7110:.*]] = mpir_index.node 0 : <Instruction>
@@ -24620,7 +24620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_318:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2862:.*]] = mpir_expr.read %[[SITES_318]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7155:.*]] = mpir_index.node 0 : <Instruction>
@@ -24770,7 +24770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_320:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2880:.*]] = mpir_expr.read %[[SITES_320]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7200:.*]] = mpir_index.node 0 : <Instruction>
@@ -24920,7 +24920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_322:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2898:.*]] = mpir_expr.read %[[SITES_322]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7245:.*]] = mpir_index.node 0 : <Instruction>
@@ -25070,7 +25070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_324:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2916:.*]] = mpir_expr.read %[[SITES_324]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7290:.*]] = mpir_index.node 0 : <Instruction>
@@ -25220,7 +25220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_326:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2934:.*]] = mpir_expr.read %[[SITES_326]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7335:.*]] = mpir_index.node 0 : <Instruction>
@@ -25370,7 +25370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_328:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2952:.*]] = mpir_expr.read %[[SITES_328]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7380:.*]] = mpir_index.node 0 : <Instruction>
@@ -25520,7 +25520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_330:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2970:.*]] = mpir_expr.read %[[SITES_330]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7425:.*]] = mpir_index.node 0 : <Instruction>
@@ -25670,7 +25670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_332:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2988:.*]] = mpir_expr.read %[[SITES_332]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7470:.*]] = mpir_index.node 0 : <Instruction>
@@ -25820,7 +25820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_334:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3006:.*]] = mpir_expr.read %[[SITES_334]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7515:.*]] = mpir_index.node 0 : <Instruction>
@@ -25970,7 +25970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_336:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3024:.*]] = mpir_expr.read %[[SITES_336]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7560:.*]] = mpir_index.node 0 : <Instruction>
@@ -26120,7 +26120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_338:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3042:.*]] = mpir_expr.read %[[SITES_338]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7605:.*]] = mpir_index.node 0 : <Instruction>
@@ -26270,7 +26270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_340:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3060:.*]] = mpir_expr.read %[[SITES_340]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7650:.*]] = mpir_index.node 0 : <Instruction>
@@ -26420,7 +26420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_342:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3078:.*]] = mpir_expr.read %[[SITES_342]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7695:.*]] = mpir_index.node 0 : <Instruction>
@@ -26570,7 +26570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_344:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3096:.*]] = mpir_expr.read %[[SITES_344]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7740:.*]] = mpir_index.node 0 : <Instruction>
@@ -26720,7 +26720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_346:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3114:.*]] = mpir_expr.read %[[SITES_346]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7785:.*]] = mpir_index.node 0 : <Instruction>
@@ -26870,7 +26870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_348:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3132:.*]] = mpir_expr.read %[[SITES_348]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7830:.*]] = mpir_index.node 0 : <Instruction>
@@ -27020,7 +27020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_350:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3150:.*]] = mpir_expr.read %[[SITES_350]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7875:.*]] = mpir_index.node 0 : <Instruction>
@@ -27170,7 +27170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_352:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3168:.*]] = mpir_expr.read %[[SITES_352]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7920:.*]] = mpir_index.node 0 : <Instruction>
@@ -27320,7 +27320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_354:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3186:.*]] = mpir_expr.read %[[SITES_354]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_7965:.*]] = mpir_index.node 0 : <Instruction>
@@ -27470,7 +27470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_356:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3204:.*]] = mpir_expr.read %[[SITES_356]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8010:.*]] = mpir_index.node 0 : <Instruction>
@@ -27620,7 +27620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_358:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3222:.*]] = mpir_expr.read %[[SITES_358]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8055:.*]] = mpir_index.node 0 : <Instruction>
@@ -27770,7 +27770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_360:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3240:.*]] = mpir_expr.read %[[SITES_360]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8100:.*]] = mpir_index.node 0 : <Instruction>
@@ -27920,7 +27920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_362:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3258:.*]] = mpir_expr.read %[[SITES_362]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8145:.*]] = mpir_index.node 0 : <Instruction>
@@ -28070,7 +28070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_364:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3276:.*]] = mpir_expr.read %[[SITES_364]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8190:.*]] = mpir_index.node 0 : <Instruction>
@@ -28220,7 +28220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_366:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3294:.*]] = mpir_expr.read %[[SITES_366]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8235:.*]] = mpir_index.node 0 : <Instruction>
@@ -28370,7 +28370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_368:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3312:.*]] = mpir_expr.read %[[SITES_368]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8280:.*]] = mpir_index.node 0 : <Instruction>
@@ -28520,7 +28520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_370:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3330:.*]] = mpir_expr.read %[[SITES_370]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8325:.*]] = mpir_index.node 0 : <Instruction>
@@ -28670,7 +28670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_372:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3348:.*]] = mpir_expr.read %[[SITES_372]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8370:.*]] = mpir_index.node 0 : <Instruction>
@@ -28820,7 +28820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_374:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3366:.*]] = mpir_expr.read %[[SITES_374]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8415:.*]] = mpir_index.node 0 : <Instruction>
@@ -28970,7 +28970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_376:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3384:.*]] = mpir_expr.read %[[SITES_376]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8460:.*]] = mpir_index.node 0 : <Instruction>
@@ -29120,7 +29120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_378:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3402:.*]] = mpir_expr.read %[[SITES_378]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8505:.*]] = mpir_index.node 0 : <Instruction>
@@ -29270,7 +29270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_380:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3420:.*]] = mpir_expr.read %[[SITES_380]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8550:.*]] = mpir_index.node 0 : <Instruction>
@@ -29420,7 +29420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_382:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3438:.*]] = mpir_expr.read %[[SITES_382]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8595:.*]] = mpir_index.node 0 : <Instruction>
@@ -29570,7 +29570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_384:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3456:.*]] = mpir_expr.read %[[SITES_384]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8640:.*]] = mpir_index.node 0 : <Instruction>
@@ -29720,7 +29720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_386:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3474:.*]] = mpir_expr.read %[[SITES_386]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8685:.*]] = mpir_index.node 0 : <Instruction>
@@ -29870,7 +29870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_388:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3492:.*]] = mpir_expr.read %[[SITES_388]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8730:.*]] = mpir_index.node 0 : <Instruction>
@@ -30020,7 +30020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_390:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3510:.*]] = mpir_expr.read %[[SITES_390]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8775:.*]] = mpir_index.node 0 : <Instruction>
@@ -30170,7 +30170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_392:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3528:.*]] = mpir_expr.read %[[SITES_392]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8820:.*]] = mpir_index.node 0 : <Instruction>
@@ -30320,7 +30320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_394:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3546:.*]] = mpir_expr.read %[[SITES_394]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8865:.*]] = mpir_index.node 0 : <Instruction>
@@ -30470,7 +30470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_396:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3564:.*]] = mpir_expr.read %[[SITES_396]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8910:.*]] = mpir_index.node 0 : <Instruction>
@@ -30620,7 +30620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_398:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3582:.*]] = mpir_expr.read %[[SITES_398]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_8955:.*]] = mpir_index.node 0 : <Instruction>
@@ -30770,7 +30770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_400:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3600:.*]] = mpir_expr.read %[[SITES_400]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9000:.*]] = mpir_index.node 0 : <Instruction>
@@ -30920,7 +30920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_402:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3618:.*]] = mpir_expr.read %[[SITES_402]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9045:.*]] = mpir_index.node 0 : <Instruction>
@@ -31070,7 +31070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_404:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3636:.*]] = mpir_expr.read %[[SITES_404]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9090:.*]] = mpir_index.node 0 : <Instruction>
@@ -31220,7 +31220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_406:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3654:.*]] = mpir_expr.read %[[SITES_406]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9135:.*]] = mpir_index.node 0 : <Instruction>
@@ -31370,7 +31370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_408:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3672:.*]] = mpir_expr.read %[[SITES_408]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9180:.*]] = mpir_index.node 0 : <Instruction>
@@ -31520,7 +31520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_410:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3690:.*]] = mpir_expr.read %[[SITES_410]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9225:.*]] = mpir_index.node 0 : <Instruction>
@@ -31670,7 +31670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_412:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3708:.*]] = mpir_expr.read %[[SITES_412]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9270:.*]] = mpir_index.node 0 : <Instruction>
@@ -31820,7 +31820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_414:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3726:.*]] = mpir_expr.read %[[SITES_414]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9315:.*]] = mpir_index.node 0 : <Instruction>
@@ -31970,7 +31970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_416:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3744:.*]] = mpir_expr.read %[[SITES_416]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9360:.*]] = mpir_index.node 0 : <Instruction>
@@ -32120,7 +32120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_418:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3762:.*]] = mpir_expr.read %[[SITES_418]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9405:.*]] = mpir_index.node 0 : <Instruction>
@@ -32270,7 +32270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_420:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3780:.*]] = mpir_expr.read %[[SITES_420]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9450:.*]] = mpir_index.node 0 : <Instruction>
@@ -32420,7 +32420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_422:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3798:.*]] = mpir_expr.read %[[SITES_422]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9495:.*]] = mpir_index.node 0 : <Instruction>
@@ -32570,7 +32570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_424:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3816:.*]] = mpir_expr.read %[[SITES_424]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9540:.*]] = mpir_index.node 0 : <Instruction>
@@ -32720,7 +32720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_426:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3834:.*]] = mpir_expr.read %[[SITES_426]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9585:.*]] = mpir_index.node 0 : <Instruction>
@@ -32870,7 +32870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_428:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3852:.*]] = mpir_expr.read %[[SITES_428]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9630:.*]] = mpir_index.node 0 : <Instruction>
@@ -33020,7 +33020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_430:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3870:.*]] = mpir_expr.read %[[SITES_430]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9675:.*]] = mpir_index.node 0 : <Instruction>
@@ -33170,7 +33170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_432:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3888:.*]] = mpir_expr.read %[[SITES_432]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9720:.*]] = mpir_index.node 0 : <Instruction>
@@ -33320,7 +33320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_434:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3906:.*]] = mpir_expr.read %[[SITES_434]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9765:.*]] = mpir_index.node 0 : <Instruction>
@@ -33470,7 +33470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_436:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3924:.*]] = mpir_expr.read %[[SITES_436]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9810:.*]] = mpir_index.node 0 : <Instruction>
@@ -33620,7 +33620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_438:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3942:.*]] = mpir_expr.read %[[SITES_438]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9855:.*]] = mpir_index.node 0 : <Instruction>
@@ -33770,7 +33770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_440:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3960:.*]] = mpir_expr.read %[[SITES_440]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9900:.*]] = mpir_index.node 0 : <Instruction>
@@ -33920,7 +33920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_442:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3978:.*]] = mpir_expr.read %[[SITES_442]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9945:.*]] = mpir_index.node 0 : <Instruction>
@@ -34070,7 +34070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_444:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_3996:.*]] = mpir_expr.read %[[SITES_444]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_9990:.*]] = mpir_index.node 0 : <Instruction>
@@ -34220,7 +34220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_446:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4014:.*]] = mpir_expr.read %[[SITES_446]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10035:.*]] = mpir_index.node 0 : <Instruction>
@@ -34370,7 +34370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_448:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4032:.*]] = mpir_expr.read %[[SITES_448]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10080:.*]] = mpir_index.node 0 : <Instruction>
@@ -34520,7 +34520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_450:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4050:.*]] = mpir_expr.read %[[SITES_450]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10125:.*]] = mpir_index.node 0 : <Instruction>
@@ -34670,7 +34670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_452:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4068:.*]] = mpir_expr.read %[[SITES_452]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10170:.*]] = mpir_index.node 0 : <Instruction>
@@ -34820,7 +34820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_454:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4086:.*]] = mpir_expr.read %[[SITES_454]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10215:.*]] = mpir_index.node 0 : <Instruction>
@@ -34970,7 +34970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_456:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4104:.*]] = mpir_expr.read %[[SITES_456]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10260:.*]] = mpir_index.node 0 : <Instruction>
@@ -35120,7 +35120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_458:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4122:.*]] = mpir_expr.read %[[SITES_458]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10305:.*]] = mpir_index.node 0 : <Instruction>
@@ -35270,7 +35270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_460:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4140:.*]] = mpir_expr.read %[[SITES_460]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10350:.*]] = mpir_index.node 0 : <Instruction>
@@ -35420,7 +35420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_462:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4158:.*]] = mpir_expr.read %[[SITES_462]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10395:.*]] = mpir_index.node 0 : <Instruction>
@@ -35570,7 +35570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_464:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4176:.*]] = mpir_expr.read %[[SITES_464]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10440:.*]] = mpir_index.node 0 : <Instruction>
@@ -35720,7 +35720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_466:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4194:.*]] = mpir_expr.read %[[SITES_466]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10485:.*]] = mpir_index.node 0 : <Instruction>
@@ -35870,7 +35870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_468:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4212:.*]] = mpir_expr.read %[[SITES_468]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10530:.*]] = mpir_index.node 0 : <Instruction>
@@ -36020,7 +36020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_470:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4230:.*]] = mpir_expr.read %[[SITES_470]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10575:.*]] = mpir_index.node 0 : <Instruction>
@@ -36170,7 +36170,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_472:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4248:.*]] = mpir_expr.read %[[SITES_472]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10620:.*]] = mpir_index.node 0 : <Instruction>
@@ -36320,7 +36320,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_474:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4266:.*]] = mpir_expr.read %[[SITES_474]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10665:.*]] = mpir_index.node 0 : <Instruction>
@@ -36470,7 +36470,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_476:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4284:.*]] = mpir_expr.read %[[SITES_476]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10710:.*]] = mpir_index.node 0 : <Instruction>
@@ -36620,7 +36620,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_478:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4302:.*]] = mpir_expr.read %[[SITES_478]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10755:.*]] = mpir_index.node 0 : <Instruction>
@@ -36770,7 +36770,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_480:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4320:.*]] = mpir_expr.read %[[SITES_480]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10800:.*]] = mpir_index.node 0 : <Instruction>
@@ -36920,7 +36920,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_482:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4338:.*]] = mpir_expr.read %[[SITES_482]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10845:.*]] = mpir_index.node 0 : <Instruction>
@@ -37070,7 +37070,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_484:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4356:.*]] = mpir_expr.read %[[SITES_484]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10890:.*]] = mpir_index.node 0 : <Instruction>
@@ -37220,7 +37220,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_486:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4374:.*]] = mpir_expr.read %[[SITES_486]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10935:.*]] = mpir_index.node 0 : <Instruction>
@@ -37370,7 +37370,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_488:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4392:.*]] = mpir_expr.read %[[SITES_488]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10980:.*]] = mpir_index.node 0 : <Instruction>
@@ -37520,7 +37520,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_490:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4410:.*]] = mpir_expr.read %[[SITES_490]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11025:.*]] = mpir_index.node 0 : <Instruction>
@@ -37670,7 +37670,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_492:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4428:.*]] = mpir_expr.read %[[SITES_492]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11070:.*]] = mpir_index.node 0 : <Instruction>
@@ -37820,7 +37820,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_494:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4446:.*]] = mpir_expr.read %[[SITES_494]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11115:.*]] = mpir_index.node 0 : <Instruction>
@@ -37970,7 +37970,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_496:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4464:.*]] = mpir_expr.read %[[SITES_496]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11160:.*]] = mpir_index.node 0 : <Instruction>
@@ -38120,7 +38120,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_498:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4482:.*]] = mpir_expr.read %[[SITES_498]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11205:.*]] = mpir_index.node 0 : <Instruction>
@@ -38270,7 +38270,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_500:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4500:.*]] = mpir_expr.read %[[SITES_500]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11250:.*]] = mpir_index.node 0 : <Instruction>
@@ -38420,7 +38420,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_502:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4518:.*]] = mpir_expr.read %[[SITES_502]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11295:.*]] = mpir_index.node 0 : <Instruction>
@@ -38570,7 +38570,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_504:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4536:.*]] = mpir_expr.read %[[SITES_504]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11340:.*]] = mpir_index.node 0 : <Instruction>
@@ -38720,7 +38720,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_506:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4554:.*]] = mpir_expr.read %[[SITES_506]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11385:.*]] = mpir_index.node 0 : <Instruction>
@@ -38870,7 +38870,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <or> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_508:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4572:.*]] = mpir_expr.read %[[SITES_508]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11430:.*]] = mpir_index.node 0 : <Instruction>
@@ -39020,7 +39020,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_510:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4590:.*]] = mpir_expr.read %[[SITES_510]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_11475:.*]] = mpir_index.node 0 : <Instruction>

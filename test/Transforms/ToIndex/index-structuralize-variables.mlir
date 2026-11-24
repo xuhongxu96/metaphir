@@ -36,8 +36,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_fact 0, <select>, 2, 129
     mpir_index.has_fact 0, <select>, 4, 130 loc("index-structuralize-variables.mlir":37:1)
 // CHECK:             mpir_index.has_fact 0, <select>, 4, 130
-    mpir_index.typing <select> <present = 0, absent = 0, operand_types = [[1, 1, 0], [1, 32, 0], [1, 32, 0]], value_operand = [true, true, true]> loc("index-structuralize-variables.mlir":39:1)
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 32, 0], [1, 32, 0]], value_operand = [true, true, true]>
+    mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true, true]> loc("index-structuralize-variables.mlir":39:1)
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true, true]>
     %0 = mpir_index.sites [[0, 46, 1]] {var_name = "c"} : <Boolean> loc("index-structuralize-variables.mlir":41:1)
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 46, 1]] {var_name = "c"} : <Boolean>
     %1 = mpir_expr.read %0 : (!mpir.sort<Boolean>) -> !mpir.sort<Boolean> loc("index-structuralize-variables.mlir":43:1)
@@ -82,8 +82,8 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize-variables.mlir":83:1)
 // CHECK:             mpir_index.has_instruction <add>
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[2, 0, 0], [2, 0, 0]], value_operand = [true, true]> loc("index-structuralize-variables.mlir":85:1)
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0], [2, 0, 0]], value_operand = [true, true]>
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<0>, #mpir.tp_int_width<0>], value_operand = [true, true]> loc("index-structuralize-variables.mlir":85:1)
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<0>, #mpir.tp_int_width<0>], value_operand = [true, true]>
     %0 = mpir_index.type_var 0 {var_name = "n"} : <Nat> loc("index-structuralize-variables.mlir":87:1)
 // CHECK:             %[[TYPE_VAR_0:.*]] = mpir_index.type_var 0 {var_name = "n"} : <Nat>
     %1 = mpir_expr.read %0 : (!mpir.sort<Nat>) -> !mpir.sort<Integer> loc("index-structuralize-variables.mlir":89:1)

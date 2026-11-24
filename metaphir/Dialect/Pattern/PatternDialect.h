@@ -47,6 +47,8 @@ bool isKeyedOperand(OperandKind Kind);
 #define GET_TYPEDEF_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOpsTypes.h.inc"
 
+#include "metaphir/Dialect/Pattern/PatternAttrInterfaces.h.inc"
+
 #define GET_ATTRDEF_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOpsAttrDefs.h.inc"
 

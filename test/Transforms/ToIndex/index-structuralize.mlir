@@ -38,7 +38,7 @@ mpir_index.query {
     mpir_index.has_instruction <call> loc("index-structuralize.mlir":38:1)
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-structuralize.mlir":39:1)
     mpir_index.has_fact 0, <call>, 4, 128 loc("index-structuralize.mlir":40:1)
-    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 1, 0]], value_operand = [false, true, true, true]> loc("index-structuralize.mlir":41:1)
+    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<1>], value_operand = [false, true, true, true]> loc("index-structuralize.mlir":41:1)
     %0 = mpir_index.sites [[0, 48, 1]] {var_name = "id"} : <IntrinsicID> loc("index-structuralize.mlir":42:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String> loc("index-structuralize.mlir":43:1)
     %2 = mpir_expr.str "llvm.ctlz" : <String> loc("index-structuralize.mlir":44:1)
@@ -50,7 +50,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <call>, 4, 128
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 1, 0]], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<1>], value_operand = [false, true, true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 48, 1]] {var_name = "id"} : <IntrinsicID>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String>
 // CHECK:             %[[STR_0:.*]] = mpir_expr.str "llvm.ctlz" : <String>
@@ -108,7 +108,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <call> loc("index-structuralize.mlir":109:1)
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-structuralize.mlir":110:1)
-    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]> loc("index-structuralize.mlir":111:1)
+    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]> loc("index-structuralize.mlir":111:1)
     %0 = mpir_expr.str "llvm.smax" : <String> loc("index-structuralize.mlir":112:1)
     %1 = mpir_index.sites [[0, 48, 1]] {var_name = "id"} : <IntrinsicID> loc("index-structuralize.mlir":113:1)
     %2 = mpir_expr.read %1 : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String> loc("index-structuralize.mlir":114:1)
@@ -128,7 +128,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_global "llvm.smax" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]>
 // CHECK:             %[[STR_0:.*]] = mpir_expr.str "llvm.smax" : <String>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 48, 1]] {var_name = "id"} : <IntrinsicID>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String>
@@ -198,7 +198,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <call> loc("index-structuralize.mlir":199:1)
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-structuralize.mlir":200:1)
-    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]> loc("index-structuralize.mlir":201:1)
+    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]> loc("index-structuralize.mlir":201:1)
     %0 = mpir_index.sites [[0, 48, 1]] {var_name = "id"} : <IntrinsicID> loc("index-structuralize.mlir":202:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String> loc("index-structuralize.mlir":203:1)
     %2 = mpir_expr.str "llvm.smax" : <String> loc("index-structuralize.mlir":204:1)
@@ -221,7 +221,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_global "llvm.smax" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 48, 1]] {var_name = "id"} : <IntrinsicID>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String>
 // CHECK:             %[[STR_0:.*]] = mpir_expr.str "llvm.smax" : <String>
@@ -245,7 +245,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_global "llvm.umin" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]>
 // CHECK:             %[[SITES_1:.*]] = mpir_index.sites {{\[\[}}0, 48, 1]] {var_name = "id"} : <IntrinsicID>
 // CHECK:             %[[READ_3:.*]] = mpir_expr.read %[[SITES_1]] : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String>
 // CHECK:             %[[STR_3:.*]] = mpir_expr.str "llvm.smax" : <String>
@@ -269,7 +269,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_global "llvm.umax" <derived>
 // CHECK:             mpir_index.has_instruction <call>
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]>
 // CHECK:             %[[SITES_2:.*]] = mpir_index.sites {{\[\[}}0, 48, 1]] {var_name = "id"} : <IntrinsicID>
 // CHECK:             %[[READ_6:.*]] = mpir_expr.read %[[SITES_2]] : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String>
 // CHECK:             %[[STR_6:.*]] = mpir_expr.str "llvm.smax" : <String>
@@ -323,7 +323,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize.mlir":324:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize.mlir":325:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":326:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":326:1)
     %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize.mlir":327:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize.mlir":328:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize.mlir":329:1)
@@ -336,7 +336,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -420,7 +420,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize.mlir":421:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize.mlir":422:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":423:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":423:1)
     %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize.mlir":424:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize.mlir":425:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize.mlir":426:1)
@@ -467,7 +467,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -514,7 +514,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_2:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_5:.*]] = mpir_expr.read %[[SITES_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_13:.*]] = mpir_index.node 0 : <Instruction>
@@ -562,7 +562,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_4:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_10:.*]] = mpir_expr.read %[[SITES_4]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_26:.*]] = mpir_index.node 0 : <Instruction>
@@ -609,7 +609,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <xor> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_6:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_15:.*]] = mpir_expr.read %[[SITES_6]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_39:.*]] = mpir_index.node 0 : <Instruction>
@@ -702,10 +702,10 @@ mpir_index.query {
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
     mpir_index.has_shape <mul>, 0, 0, 32 loc("index-structuralize.mlir":703:1)
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":705:1)
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":707:1)
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":705:1)
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":707:1)
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
     %0 = mpir_index.sites [[1, 5, 1], [0, 1, 8]] {var_name = "self"} : <Instruction> loc("index-structuralize.mlir":709:1)
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}1, 5, 1], [0, 1, 8]] {var_name = "self"} : <Instruction>
     %1 = mpir_expr.read %0 : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("index-structuralize.mlir":711:1)
@@ -811,7 +811,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize.mlir":812:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize.mlir":813:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":814:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":814:1)
     %0 = mpir_index.sites [[0, 1, 8]] {var_name = "self"} : <Instruction> loc("index-structuralize.mlir":815:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("index-structuralize.mlir":816:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize.mlir":817:1)
@@ -866,7 +866,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {var_name = "self"} : <Instruction>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -963,8 +963,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <add>
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize.mlir":964:1)
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":966:1)
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":966:1)
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
     %0 = mpir_index.sites [[0, 1, 8]] {var_name = "self"} : <Instruction> loc("index-structuralize.mlir":968:1)
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {var_name = "self"} : <Instruction>
     %1 = mpir_expr.read %0 : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("index-structuralize.mlir":970:1)
@@ -1107,8 +1107,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <add>
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize.mlir":1108:1)
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":1110:1)
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":1110:1)
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
     %0 = mpir_index.sites [[0, 1, 1]] {var_name = "x"} : <Operand> loc("index-structuralize.mlir":1112:1)
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 1]] {var_name = "x"} : <Operand>
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize.mlir":1114:1)
@@ -1285,7 +1285,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <add> loc("index-structuralize.mlir":1286:1)
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-structuralize.mlir":1287:1)
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":1288:1)
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":1288:1)
     %0 = mpir_index.sites [[0, 1, 2]] {var_name = "y"} : <Operand> loc("index-structuralize.mlir":1289:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize.mlir":1290:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize.mlir":1291:1)
@@ -1306,7 +1306,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -1328,7 +1328,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_1:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_2:.*]] = mpir_expr.read %[[SITES_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_5:.*]] = mpir_index.node 0 : <Instruction>
@@ -1350,7 +1350,7 @@ mpir_index.query {
 // CHECK:           mpir_index.variant {
     mpir_index.has_instruction <sub> loc("index-structuralize.mlir":1351:1)
     mpir_index.has_shape <sub>, 0, 0, 32 loc("index-structuralize.mlir":1352:1)
-    mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-structuralize.mlir":1353:1)
+    mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-structuralize.mlir":1353:1)
     %0 = mpir_index.sites [[0, 3, 2]] {var_name = "y"} : <Operand> loc("index-structuralize.mlir":1354:1)
     %1 = mpir_expr.read %0 : (!mpir.sort<Operand>) -> !mpir.sort<Value> loc("index-structuralize.mlir":1355:1)
     %2 = mpir_index.node 0 : <Instruction> loc("index-structuralize.mlir":1356:1)
@@ -1371,7 +1371,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <mul> <derived>
 // CHECK:             mpir_index.has_instruction <sub>
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_2:.*]] = mpir_index.sites {{\[\[}}0, 3, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_4:.*]] = mpir_expr.read %[[SITES_2]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_10:.*]] = mpir_index.node 0 : <Instruction>
@@ -1393,7 +1393,7 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <shl> <derived>
 // CHECK:             mpir_index.has_instruction <sub>
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_3:.*]] = mpir_index.sites {{\[\[}}0, 3, 2]] {var_name = "y"} : <Operand>
 // CHECK:             %[[READ_6:.*]] = mpir_expr.read %[[SITES_3]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_15:.*]] = mpir_index.node 0 : <Instruction>

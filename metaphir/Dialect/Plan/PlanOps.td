@@ -169,11 +169,10 @@ def Plan_CheckOperandCountOp : Plan_Op<"check_operand_count"> {
 def Plan_CheckTypeOp : Plan_Op<"check_type"> {
   let summary = "The type matches a type pattern, binding its variables";
   let description = [{
-    `pattern` encodes the type pattern (see PlanDialect.h), whose variables
-    are slots. With `treat_int_as_vec`, an integer type pattern also matches
-    a vector of such integers.
+    `pattern`'s variables are slots. With `treat_int_as_vec`, an integer type
+    pattern also matches a vector of such integers.
   }];
-  let arguments = (ins Plan_RegType:$ir_type, ArrayAttr:$pattern,
+  let arguments = (ins Plan_RegType:$ir_type, Mpir_TypePatternAttr:$pattern,
                        UnitAttr:$treat_int_as_vec);
   let assemblyFormat = "$ir_type `,` $pattern prop-dict attr-dict";
 }

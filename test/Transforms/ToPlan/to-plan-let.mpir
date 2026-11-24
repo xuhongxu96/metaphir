@@ -24,11 +24,11 @@
 ; CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 ; CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 ; CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-; CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+; CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 ; CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 2 <sort = 2>
 ; CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 ; CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-; CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+; CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 ; CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 3 <sort = 2>
 ; CHECK:           %[[SLOT_0:.*]] = mpir_plan.slot 1 {var_name = "pred"} : <CmpPredicate>
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>

@@ -123,7 +123,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <or>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 17
 // CHECK:           %[[GET_FLAG_0:.*]] = mpir_plan.get_flag %[[GET_OPERAND_0]][disjoint]
@@ -131,26 +131,26 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_1]], <and>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 15
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_1]], 2
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_2]], <ashr>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 14
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_3]], <lshr>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 13
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_3]][exact] is true
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_3]], 2
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_3]][0]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_4]], <shl>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 12
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_4]][nsw] is true
@@ -158,19 +158,19 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_4]], 2
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][0]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_5]], <srem>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 11
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_5]], 2
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_5]][0]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_6]], <urem>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 10
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_6]], 2
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_7]], <sdiv>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 9
 // CHECK:           %[[GET_FLAG_1:.*]] = mpir_plan.get_flag %[[GET_OPERAND_7]][exact]
@@ -178,21 +178,21 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_7]], 2
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][0]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_8]], <udiv>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_8]] -> 7
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_8]][exact] is true
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_8]], 2
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[GET_OPERAND_8]][0]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_9]], <mul>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 6
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 5
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_9]], 2
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[GET_OPERAND_9]][0]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_10]], <sub>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 4
 // CHECK:           %[[GET_FLAG_2:.*]] = mpir_plan.get_flag %[[GET_OPERAND_10]][nuw]
@@ -200,7 +200,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_10]], 2
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[GET_OPERAND_10]][0]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_11]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 2
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_11]][nsw] is true
@@ -208,59 +208,59 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_11]], 2
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_11]][0]
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_12]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[GET_OPERAND_11]][1]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_13]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[GET_OPERAND_10]][1]
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_14]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_14]], 1 : ui1
 // CHECK:           %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[GET_OPERAND_9]][1]
 // CHECK:           %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_15]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[GET_OPERAND_8]][1]
 // CHECK:           %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_16]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_16]], 2 : ui2
 // CHECK:           %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][1]
 // CHECK:           %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_17]], -3 : si3
 // CHECK:           %[[GET_OPERAND_18:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][1]
 // CHECK:           %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[GET_OPERAND_18]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_18]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_19:.*]] = mpir_plan.get_operand %[[GET_OPERAND_5]][1]
 // CHECK:           %[[GET_TYPE_19:.*]] = mpir_plan.get_type %[[GET_OPERAND_19]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_19]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_20:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][1]
 // CHECK:           %[[GET_TYPE_20:.*]] = mpir_plan.get_type %[[GET_OPERAND_20]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_20]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_20]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_20]], 1 : ui1
 // CHECK:           %[[GET_OPERAND_21:.*]] = mpir_plan.get_operand %[[GET_OPERAND_3]][1]
 // CHECK:           %[[GET_TYPE_21:.*]] = mpir_plan.get_type %[[GET_OPERAND_21]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_21]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_21]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_21]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_22:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:           %[[GET_TYPE_22:.*]] = mpir_plan.get_type %[[GET_OPERAND_22]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_22]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_22]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_22]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_23:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][1]
 // CHECK:           %[[GET_TYPE_23:.*]] = mpir_plan.get_type %[[GET_OPERAND_23]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_23]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_23]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_23]], 255 : ui8
 // CHECK:           %[[GET_OPERAND_24:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_24:.*]] = mpir_plan.get_type %[[GET_OPERAND_24]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_24]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_24]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_24]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_25:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_25:.*]] = mpir_plan.get_type %[[GET_OPERAND_25]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_25]], -1 : si1
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <fneg>
@@ -268,20 +268,20 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 1
 // CHECK:           %[[GET_OPERAND_26:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_26:.*]] = mpir_plan.get_type %[[GET_OPERAND_26]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_26]], <frem>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_26]] -> 24
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_26]], 2
 // CHECK:           %[[GET_OPERAND_27:.*]] = mpir_plan.get_operand %[[GET_OPERAND_26]][0]
 // CHECK:           %[[GET_TYPE_27:.*]] = mpir_plan.get_type %[[GET_OPERAND_27]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_27]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_27]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_27]], <fdiv>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_27]] -> 23
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_27]][nnan] is false
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_27]], 2
 // CHECK:           %[[GET_OPERAND_28:.*]] = mpir_plan.get_operand %[[GET_OPERAND_27]][0]
 // CHECK:           %[[GET_TYPE_28:.*]] = mpir_plan.get_type %[[GET_OPERAND_28]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_28]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_28]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_28]], <fmul>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_28]] -> 22
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_28]][nsz] is true
@@ -292,14 +292,14 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_28]], 2
 // CHECK:           %[[GET_OPERAND_29:.*]] = mpir_plan.get_operand %[[GET_OPERAND_28]][0]
 // CHECK:           %[[GET_TYPE_29:.*]] = mpir_plan.get_type %[[GET_OPERAND_29]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_29]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_29]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_29]], <fsub>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_29]] -> 21
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_29]][fast] is true
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_29]], 2
 // CHECK:           %[[GET_OPERAND_30:.*]] = mpir_plan.get_operand %[[GET_OPERAND_29]][0]
 // CHECK:           %[[GET_TYPE_30:.*]] = mpir_plan.get_type %[[GET_OPERAND_30]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_30]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_30]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_30]], <fadd>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_30]] -> 20
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_30]][nnan] is true
@@ -307,27 +307,27 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_30]], 2
 // CHECK:           %[[GET_OPERAND_31:.*]] = mpir_plan.get_operand %[[GET_OPERAND_30]][0]
 // CHECK:           %[[GET_TYPE_31:.*]] = mpir_plan.get_type %[[GET_OPERAND_31]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_31]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_31]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_31]] -> 19 <sort = 2>
 // CHECK:           %[[GET_OPERAND_32:.*]] = mpir_plan.get_operand %[[GET_OPERAND_30]][1]
 // CHECK:           %[[GET_TYPE_32:.*]] = mpir_plan.get_type %[[GET_OPERAND_32]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_32]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_32]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_32]], 1.000000e+00 : f64
 // CHECK:           %[[GET_OPERAND_33:.*]] = mpir_plan.get_operand %[[GET_OPERAND_29]][1]
 // CHECK:           %[[GET_TYPE_33:.*]] = mpir_plan.get_type %[[GET_OPERAND_33]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_33]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_33]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_33]] -> 19 <sort = 2>
 // CHECK:           %[[GET_OPERAND_34:.*]] = mpir_plan.get_operand %[[GET_OPERAND_28]][1]
 // CHECK:           %[[GET_TYPE_34:.*]] = mpir_plan.get_type %[[GET_OPERAND_34]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_34]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_34]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_34]] -> 21
 // CHECK:           %[[GET_OPERAND_35:.*]] = mpir_plan.get_operand %[[GET_OPERAND_27]][1]
 // CHECK:           %[[GET_TYPE_35:.*]] = mpir_plan.get_type %[[GET_OPERAND_35]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_35]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_35]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_35]], 2.500000e+00 : f64
 // CHECK:           %[[GET_OPERAND_36:.*]] = mpir_plan.get_operand %[[GET_OPERAND_26]][1]
 // CHECK:           %[[GET_TYPE_36:.*]] = mpir_plan.get_type %[[GET_OPERAND_36]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_36]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_36]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_36]] -> 19 <sort = 2>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -448,65 +448,65 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <call>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 3
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_0]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 3
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_0]], "llvm.umax.i32"
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_1]], <call>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 2
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_1]], 3
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_2]], "callee"
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][2]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 8, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<8>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][2]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_5]], 1 : ui1
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <call>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_1]] -> 7
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_1]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [2, 4, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int_width<4>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 3
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 5 <sort = 11>
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][1]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [2, 4, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int_width<4>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 6 <sort = 2>
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][2]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_8]], 0 : ui1
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <call>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_2]] -> 9
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_2]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [7, 1, [1, 32, 0], [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_func<#mpir.tp_int<32>, [#mpir.tp_int<32>], var_arg>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 2
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 8 <sort = 4>
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][1]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 2
 // CHECK:           %[[FOREACH_INSTRUCTION_3:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_3]], <call>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_3]] -> 14
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_3]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [3, 10]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_var<10>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_3]], 1 <at_least>
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][0]
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 11 <sort = 11>
@@ -518,47 +518,47 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_4]], <call>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_4]] -> 19
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_4]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [0, 5]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_prim<void>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_4]], 2
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_12]], "take"
 // CHECK:           %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][1]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [0, 6]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_prim<label>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_13]] -> 18 <sort = 5>
 // CHECK:           %[[FOREACH_INSTRUCTION_5:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_5]], <call>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_5]] -> 20
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_5]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_5]], 2
 // CHECK:           %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_14]], "0"
 // CHECK:           %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][1]
 // CHECK:           %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_15]] -> 2
 // CHECK:           %[[FOREACH_INSTRUCTION_6:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_6]], <call>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_6]] -> 21
 // CHECK:           %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_6]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], [0, 5]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_prim<void>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_6]], 2
 // CHECK:           %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_6]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_16]], "sink"
 // CHECK:           %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_6]][1]
 // CHECK:           %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_17]], <call>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_17]] -> 17
 // CHECK:           %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_17]], 2 <at_least>
 // CHECK:           %[[GET_OPERAND_18:.*]] = mpir_plan.get_operand %[[GET_OPERAND_17]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_18]], "first"
 // CHECK:           %[[GET_OPERAND_19:.*]] = mpir_plan.get_operand %[[GET_OPERAND_17]][1]
 // CHECK:           %[[GET_TYPE_19:.*]] = mpir_plan.get_type %[[GET_OPERAND_19]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_19]] -> 2
 // CHECK:           %[[GET_OPERANDS_FROM_2:.*]] = mpir_plan.get_operands_from %[[GET_OPERAND_17]][2 :]
 // CHECK:           mpir_plan.bind %[[GET_OPERANDS_FROM_2]] -> 16
@@ -673,122 +673,122 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <zext>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 2
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_0]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_flag %[[FOREACH_INSTRUCTION_0]][nneg] is true
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 1
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <trunc>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 1
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_0]][nuw] is true
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 1
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <sext>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_1]] -> 4
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_1]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [2, 3, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int_width<3>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 1
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 1
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <uitofp>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_2]] -> 10
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_2]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [0, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_prim<half>
 // CHECK:           mpir_plan.check_flag %[[FOREACH_INSTRUCTION_2]][nneg] is true
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 1
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_3]], <fptoui>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 8
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_3]], 1
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_3]][0]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_4]], <fpext>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 7
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_4]], 1
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][0]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_5]], <fptrunc>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 6
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_5]], 1
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_5]][0]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 5 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_3:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_3]], <sitofp>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_3]] -> 11
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_3]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [0, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_prim<bfloat>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_3]], 1
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][0]
 // CHECK:           %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_7]], <fptosi>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 9
 // CHECK:           %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_7]], 1
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][0]
 // CHECK:           %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_8]] -> 7
 // CHECK:           %[[FOREACH_INSTRUCTION_4:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_4]], <ptrtoaddr>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_4]] -> 14
 // CHECK:           %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_4]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_4]], 1
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][0]
 // CHECK:           %[[GET_TYPE_19:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], #mpir.tp_ptr
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 12 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_5:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_5]], <inttoptr>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_5]] -> 15
 // CHECK:           %[[GET_TYPE_20:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_5]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_20]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_20]], #mpir.tp_ptr
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_5]], 1
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][0]
 // CHECK:           %[[GET_TYPE_21:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_21]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_21]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_10]], <ptrtoint>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 13
 // CHECK:           %[[GET_TYPE_22:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_22]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_22]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_10]], 1
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[GET_OPERAND_10]][0]
 // CHECK:           %[[GET_TYPE_23:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_23]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_23]], #mpir.tp_ptr
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 12 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_6:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_6]], <bitcast>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_6]] -> 17
 // CHECK:           %[[GET_TYPE_24:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_6]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_24]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_24]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_6]], 1
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_6]][0]
 // CHECK:           %[[GET_TYPE_25:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], [5, 1, 2, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_12]] -> 16 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_7:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_7]], <freeze>
@@ -796,7 +796,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_7]], 1
 // CHECK:           %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_7]][0]
 // CHECK:           %[[GET_TYPE_26:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_13]] -> 1
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -901,11 +901,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 2 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <icmp>
@@ -915,11 +915,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 2
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 2 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <fcmp>
@@ -929,11 +929,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 2
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 9 <sort = 2>
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][1]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 10 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_3:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_3]], <select>
@@ -941,7 +941,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_3]], 3
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][0]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_6]], <icmp>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 1
 // CHECK:           %[[GET_KEYED_3:.*]] = mpir_plan.get_keyed %[[GET_OPERAND_6]][predicate]
@@ -949,19 +949,19 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_6]], 2
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][1]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_8]], 0 : ui1
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][1]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][2]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 2 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_4:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_4]], <select>
@@ -970,7 +970,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_4]], 3
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][0]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_11]], <fcmp>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 7
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_11]][nnan] is true
@@ -979,19 +979,19 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_11]], 2
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_11]][0]
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_12]] -> 6 <sort = 2>
 // CHECK:           %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[GET_OPERAND_11]][1]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_13]], 0.000000e+00 : f64
 // CHECK:           %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][1]
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_14]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_14]] -> 6 <sort = 2>
 // CHECK:           %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][2]
 // CHECK:           %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_15]], 1.000000e+00 : f64
 // CHECK:           %[[FOREACH_INSTRUCTION_5:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_5]], <select>
@@ -999,15 +999,15 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_5]], 3
 // CHECK:           %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][0]
 // CHECK:           %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_16]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], [5, 1, 2, -1, [1, 1, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_seq<vector, 2, #mpir.tp_int<1>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_16]] -> 14 <sort = 2>
 // CHECK:           %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][1]
 // CHECK:           %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], [5, 1, 2, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_17]] -> 15 <sort = 2>
 // CHECK:           %[[GET_OPERAND_18:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][2]
 // CHECK:           %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[GET_OPERAND_18]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], [5, 1, 2, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_18]], 3 : i32 <keyword>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -1179,21 +1179,21 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 1
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_2]], 0 : ui1
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_3]], -1 : si1
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <add>
@@ -1201,11 +1201,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 2
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 128, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<128>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 3 <sort = 2>
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][1]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 128, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<128>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_5]], 170141183460469231731687303715884105727 : ui127
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <add>
@@ -1213,21 +1213,21 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 2
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_6]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 6
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_6]], 2
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 5 <sort = 7>
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][1]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_8]], 1 : ui1
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][1]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_9]], 0 : ui1
 // CHECK:           %[[FOREACH_INSTRUCTION_3:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_3]], <fadd>
@@ -1235,21 +1235,21 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_3]], 2
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][0]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_10]], <fadd>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 9
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_10]], 2
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[GET_OPERAND_10]][0]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 8 <sort = 2>
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_10]][1]
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_12]], 1.500000e-03 : f64
 // CHECK:           %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][1]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_13]], 0x7FF0000000000000 : f64
 // CHECK:           %[[FOREACH_INSTRUCTION_4:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_4]], <select>
@@ -1257,15 +1257,15 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_4]], 3
 // CHECK:           %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][0]
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_14]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_14]] -> 11 <sort = 7>
 // CHECK:           %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][1]
 // CHECK:           %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_ptr
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_15]], 0 : i32 <keyword>
 // CHECK:           %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][2]
 // CHECK:           %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_16]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_ptr
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_16]], "global"
 // CHECK:           %[[FOREACH_INSTRUCTION_5:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_5]], <select>
@@ -1273,15 +1273,15 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_5]], 3
 // CHECK:           %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][0]
 // CHECK:           %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_17]] -> 11 <sort = 7>
 // CHECK:           %[[GET_OPERAND_18:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][1]
 // CHECK:           %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[GET_OPERAND_18]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_18]], 1 : i32 <keyword>
 // CHECK:           %[[GET_OPERAND_19:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][2]
 // CHECK:           %[[GET_TYPE_19:.*]] = mpir_plan.get_type %[[GET_OPERAND_19]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_19]], 2 : i32 <keyword>
 // CHECK:           %[[FOREACH_INSTRUCTION_6:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_6]], <select>
@@ -1289,15 +1289,15 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_6]], 3
 // CHECK:           %[[GET_OPERAND_20:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_6]][0]
 // CHECK:           %[[GET_TYPE_20:.*]] = mpir_plan.get_type %[[GET_OPERAND_20]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_20]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_20]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_20]] -> 11 <sort = 7>
 // CHECK:           %[[GET_OPERAND_21:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_6]][1]
 // CHECK:           %[[GET_TYPE_21:.*]] = mpir_plan.get_type %[[GET_OPERAND_21]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_21]], [5, 1, 2, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_21]], #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_21]], 3 : i32 <keyword>
 // CHECK:           %[[GET_OPERAND_22:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_6]][2]
 // CHECK:           %[[GET_TYPE_22:.*]] = mpir_plan.get_type %[[GET_OPERAND_22]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_22]], [5, 1, 2, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_22]], #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.check_aggregate %[[GET_OPERAND_22]], vector, 2
 // CHECK:           %[[GET_ELEMENT_0:.*]] = mpir_plan.get_element %[[GET_OPERAND_22]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_ELEMENT_0]], 1 : ui1
@@ -1309,11 +1309,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_7]], 3
 // CHECK:           %[[GET_OPERAND_23:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_7]][0]
 // CHECK:           %[[GET_TYPE_23:.*]] = mpir_plan.get_type %[[GET_OPERAND_23]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_23]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_23]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_23]] -> 11 <sort = 7>
 // CHECK:           %[[GET_OPERAND_24:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_7]][1]
 // CHECK:           %[[GET_TYPE_24:.*]] = mpir_plan.get_type %[[GET_OPERAND_24]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_24]], [5, 0, 2, -1, [1, 8, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_24]], #mpir.tp_seq<array, 2, #mpir.tp_int<8>>
 // CHECK:           mpir_plan.check_aggregate %[[GET_OPERAND_24]], array, 2
 // CHECK:           %[[GET_ELEMENT_2:.*]] = mpir_plan.get_element %[[GET_OPERAND_24]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_ELEMENT_2]], 1 : ui1
@@ -1321,7 +1321,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_constant %[[GET_ELEMENT_3]], 2 : ui2
 // CHECK:           %[[GET_OPERAND_25:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_7]][2]
 // CHECK:           %[[GET_TYPE_25:.*]] = mpir_plan.get_type %[[GET_OPERAND_25]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], [5, 0, 2, -1, [1, 8, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], #mpir.tp_seq<array, 2, #mpir.tp_int<8>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_25]] -> 15 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_8:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_8]], <select>
@@ -1329,11 +1329,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_8]], 3
 // CHECK:           %[[GET_OPERAND_26:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_8]][0]
 // CHECK:           %[[GET_TYPE_26:.*]] = mpir_plan.get_type %[[GET_OPERAND_26]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_26]] -> 11 <sort = 7>
 // CHECK:           %[[GET_OPERAND_27:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_8]][1]
 // CHECK:           %[[GET_TYPE_27:.*]] = mpir_plan.get_type %[[GET_OPERAND_27]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_27]], [6, 0, [1, 32, 0], [1, 8, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_27]], #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_int<8>]>
 // CHECK:           mpir_plan.check_aggregate %[[GET_OPERAND_27]], struct, 2
 // CHECK:           %[[GET_ELEMENT_4:.*]] = mpir_plan.get_element %[[GET_OPERAND_27]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_ELEMENT_4]], 1 : ui1
@@ -1341,7 +1341,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_constant %[[GET_ELEMENT_5]], 2 : ui2
 // CHECK:           %[[GET_OPERAND_28:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_8]][2]
 // CHECK:           %[[GET_TYPE_28:.*]] = mpir_plan.get_type %[[GET_OPERAND_28]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_28]], [6, 0, [1, 32, 0], [1, 8, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_28]], #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_int<8>]>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_28]] -> 17 <sort = 2>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -1524,21 +1524,21 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [2, 0, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int_width<0>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 3
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [2, 0, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int_width<0>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [2, 0, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int_width<0>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 2 <sort = 2>
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [2, 0, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int_width<0>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_3]], 0 : ui1
 // CHECK:           %[[SLOT_0:.*]] = mpir_plan.slot 0 {var_name = "n"} : <Nat>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
@@ -1678,7 +1678,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 3
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <icmp>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 2
 // CHECK:           %[[GET_PARENT_BLOCK_1:.*]] = mpir_plan.get_parent_block %[[GET_OPERAND_0]]
@@ -1688,19 +1688,19 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_2]], 10 : ui4
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [0, 6]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_prim<label>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 3 <sort = 5>
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][2]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [0, 6]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_prim<label>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 4 <sort = 5>
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <br>
@@ -1710,7 +1710,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 1
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [0, 6]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_prim<label>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 4 <sort = 5>
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <ret>
@@ -1720,7 +1720,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 1
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_6]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 8
 // CHECK:           %[[GET_PARENT_BLOCK_4:.*]] = mpir_plan.get_parent_block %[[GET_OPERAND_6]]
@@ -1728,7 +1728,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_6]], 2
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_7]], <phi>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 7
 // CHECK:           %[[GET_PARENT_BLOCK_5:.*]] = mpir_plan.get_parent_block %[[GET_OPERAND_7]]
@@ -1736,19 +1736,19 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_7]], 4
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][0]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_8]], 0 : ui1
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][1]
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 0 <sort = 5>
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][2]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 6 <sort = 2>
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][3]
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 3 <sort = 5>
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][1]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_12]], 1 : ui1
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -1860,20 +1860,20 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 3
 // CHECK:             %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], [1, 1, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<1>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_0]] -> 10 <sort = 7>
 // CHECK:             %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], [1, 64, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<64>
 // CHECK:             mpir_plan.either {
 // CHECK:               mpir_plan.check_opcode %[[GET_OPERAND_1]], <zext>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_1]] -> 9
 // CHECK:               %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]] <operand_of>
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_2]], [1, 64, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<64>
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_1]], 1
 // CHECK:               %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:               %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.either {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_2]], <sub>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_2]] -> 7
@@ -1881,22 +1881,22 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:                 %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:                 %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.check_constant %[[GET_OPERAND_3]], 0 : ui1
 // CHECK:                 %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:                 %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.either {
 // CHECK:                   mpir_plan.check_opcode %[[GET_OPERAND_4]], <add>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_4]] -> 4
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_4]], 2
 // CHECK:                   %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][0]
 // CHECK:                   %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_5]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][1]
 // CHECK:                   %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_6]] -> 2 <sort = 2>
 // CHECK:                 }, {
 // CHECK:                   mpir_plan.check_opcode %[[GET_OPERAND_4]], <or>
@@ -1904,11 +1904,11 @@ mpir.pattern {
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_4]], 2
 // CHECK:                   %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][0]
 // CHECK:                   %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_7]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][1]
 // CHECK:                   %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_8]] -> 2 <sort = 2>
 // CHECK:                   mpir_plan.bind_constant false -> 0
 // CHECK:                 }
@@ -1919,11 +1919,11 @@ mpir.pattern {
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:                   %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:                   %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_9]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:                   %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_11]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_10]] -> 2 <sort = 2>
 // CHECK:                 }, {
 // CHECK:                   mpir_plan.check_opcode %[[GET_OPERAND_2]], <or>
@@ -1931,11 +1931,11 @@ mpir.pattern {
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:                   %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:                   %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_12]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_11]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:                   %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_13]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_12]] -> 2 <sort = 2>
 // CHECK:                   mpir_plan.bind_constant false -> 0
 // CHECK:                 }
@@ -1946,11 +1946,11 @@ mpir.pattern {
 // CHECK:               mpir_plan.check_opcode %[[GET_OPERAND_1]], <sext>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_1]] -> 9
 // CHECK:               %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]] <operand_of>
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_14]], [1, 64, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_int<64>
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_1]], 1
 // CHECK:               %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:               %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_15]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.either {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_13]], <sub>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_13]] -> 7
@@ -1958,22 +1958,22 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_13]], 2
 // CHECK:                 %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[GET_OPERAND_13]][0]
 // CHECK:                 %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_14]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_16]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.check_constant %[[GET_OPERAND_14]], 0 : ui1
 // CHECK:                 %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[GET_OPERAND_13]][1]
 // CHECK:                 %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_17]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.either {
 // CHECK:                   mpir_plan.check_opcode %[[GET_OPERAND_15]], <add>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_15]] -> 4
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_15]], 2
 // CHECK:                   %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[GET_OPERAND_15]][0]
 // CHECK:                   %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[GET_OPERAND_16]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_18]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_16]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[GET_OPERAND_15]][1]
 // CHECK:                   %[[GET_TYPE_19:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_19]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_19]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_17]] -> 2 <sort = 2>
 // CHECK:                 }, {
 // CHECK:                   mpir_plan.check_opcode %[[GET_OPERAND_15]], <or>
@@ -1981,11 +1981,11 @@ mpir.pattern {
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_15]], 2
 // CHECK:                   %[[GET_OPERAND_18:.*]] = mpir_plan.get_operand %[[GET_OPERAND_15]][0]
 // CHECK:                   %[[GET_TYPE_20:.*]] = mpir_plan.get_type %[[GET_OPERAND_18]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_20]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_20]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_18]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_19:.*]] = mpir_plan.get_operand %[[GET_OPERAND_15]][1]
 // CHECK:                   %[[GET_TYPE_21:.*]] = mpir_plan.get_type %[[GET_OPERAND_19]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_21]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_21]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_19]] -> 2 <sort = 2>
 // CHECK:                   mpir_plan.bind_constant false -> 0
 // CHECK:                 }
@@ -1996,11 +1996,11 @@ mpir.pattern {
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_13]], 2
 // CHECK:                   %[[GET_OPERAND_20:.*]] = mpir_plan.get_operand %[[GET_OPERAND_13]][0]
 // CHECK:                   %[[GET_TYPE_22:.*]] = mpir_plan.get_type %[[GET_OPERAND_20]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_22]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_22]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_20]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_21:.*]] = mpir_plan.get_operand %[[GET_OPERAND_13]][1]
 // CHECK:                   %[[GET_TYPE_23:.*]] = mpir_plan.get_type %[[GET_OPERAND_21]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_23]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_23]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_21]] -> 2 <sort = 2>
 // CHECK:                 }, {
 // CHECK:                   mpir_plan.check_opcode %[[GET_OPERAND_13]], <or>
@@ -2008,11 +2008,11 @@ mpir.pattern {
 // CHECK:                   mpir_plan.check_operand_count %[[GET_OPERAND_13]], 2
 // CHECK:                   %[[GET_OPERAND_22:.*]] = mpir_plan.get_operand %[[GET_OPERAND_13]][0]
 // CHECK:                   %[[GET_TYPE_24:.*]] = mpir_plan.get_type %[[GET_OPERAND_22]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_24]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_24]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_22]] -> 1 <sort = 2>
 // CHECK:                   %[[GET_OPERAND_23:.*]] = mpir_plan.get_operand %[[GET_OPERAND_13]][1]
 // CHECK:                   %[[GET_TYPE_25:.*]] = mpir_plan.get_type %[[GET_OPERAND_23]]
-// CHECK:                   mpir_plan.check_type %[[GET_TYPE_25]], [1, 32, 0]
+// CHECK:                   mpir_plan.check_type %[[GET_TYPE_25]], #mpir.tp_int<32>
 // CHECK:                   mpir_plan.bind %[[GET_OPERAND_23]] -> 2 <sort = 2>
 // CHECK:                   mpir_plan.bind_constant false -> 0
 // CHECK:                 }
@@ -2022,7 +2022,7 @@ mpir.pattern {
 // CHECK:             }
 // CHECK:             %[[GET_OPERAND_24:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][2]
 // CHECK:             %[[GET_TYPE_26:.*]] = mpir_plan.get_type %[[GET_OPERAND_24]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_26]], [1, 64, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_26]], #mpir.tp_int<64>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_24]], 0 : ui1
 // CHECK:           }
 // CHECK:           mpir_plan.emit
@@ -2126,7 +2126,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <alloca>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 3
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_0]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<64>
 // CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][address_space]
 // CHECK:           mpir_plan.check_constant %[[GET_KEYED_0]], 5 : ui3
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 0
@@ -2134,11 +2134,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <load>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_1]] -> 7
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_1]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 1
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [4, 1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_ptr<addrspace = 1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 6 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <store>
@@ -2148,22 +2148,22 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_1]], <load>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 5
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_1]][volatile] is true
 // CHECK:           %[[GET_KEYED_2:.*]] = mpir_plan.get_keyed %[[GET_OPERAND_1]][alignment]
 // CHECK:           mpir_plan.bind %[[GET_KEYED_2]] -> 4
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_1]], 1
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_ptr
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_2]], <alloca>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 2
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:           %[[GET_FLAG_0:.*]] = mpir_plan.get_flag %[[GET_OPERAND_2]][inalloca]
 // CHECK:           mpir_plan.bind %[[GET_FLAG_0]] -> 0
 // CHECK:           %[[GET_KEYED_3:.*]] = mpir_plan.get_keyed %[[GET_OPERAND_2]][alignment]
@@ -2171,11 +2171,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_2]], 1
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 1 <sort = 6>
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][1]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_ptr
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 2
 // CHECK:           %[[FOREACH_INSTRUCTION_3:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_3]], <store>
@@ -2185,17 +2185,17 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_3]], 2
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][0]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 10 <sort = 2>
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][1]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_ptr
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 11 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_4:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_4]], <getelementptr>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_4]] -> 16
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_4]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [5, 0, 4, -1, [1, 8, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_seq<array, 4, #mpir.tp_int<8>>
 // CHECK:           %[[GET_FLAG_2:.*]] = mpir_plan.get_flag %[[FOREACH_INSTRUCTION_4]][inbounds]
 // CHECK:           mpir_plan.bind %[[GET_FLAG_2]] -> 13
 // CHECK:           mpir_plan.check_flag %[[FOREACH_INSTRUCTION_4]][nusw] is true
@@ -2204,29 +2204,29 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_4]], 3
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][0]
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_ptr
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 2
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][1]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_8]], 0 : ui1
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][2]
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 15 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_5:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_5]], <getelementptr>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_5]] -> 17
 // CHECK:           %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_5]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], [1, 8, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_int<8>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_5]], 2
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][0]
 // CHECK:           %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_ptr
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 11 <sort = 2>
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][1]
 // CHECK:           %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_11]], 4 : ui3
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -2400,19 +2400,19 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <and>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 8
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_1]], <xor>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 6
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_1]], 2
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.either {
 // CHECK:             mpir_plan.either {
 // CHECK:               mpir_plan.either {
@@ -2421,11 +2421,11 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:                 %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:                 %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_3]] -> 0 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:                 %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_4]] -> 1 <sort = 2>
 // CHECK:               }, {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_2]], <add>
@@ -2433,11 +2433,11 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:                 %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:                 %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_5]] -> 1 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:                 %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_6]] -> 0 <sort = 2>
 // CHECK:               }
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_2]] -> 3
@@ -2447,18 +2447,18 @@ mpir.pattern {
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:               %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:               %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.either {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_7]], <add>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_7]] -> 2
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_7]], 2
 // CHECK:                 %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][0]
 // CHECK:                 %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_8]] -> 0 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][1]
 // CHECK:                 %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_9]] -> 1 <sort = 2>
 // CHECK:               }, {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_7]], <add>
@@ -2466,16 +2466,16 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_7]], 2
 // CHECK:                 %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][0]
 // CHECK:                 %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_10]] -> 1 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][1]
 // CHECK:                 %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_11]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_11]] -> 0 <sort = 2>
 // CHECK:               }
 // CHECK:               %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:               %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_12]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.check_constant %[[GET_OPERAND_12]], 3 : ui2
 // CHECK:             }
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_2]] -> 4
@@ -2485,11 +2485,11 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:             %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:             %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_13]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_13]], 0 : ui1
 // CHECK:             %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:             %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_14]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_14]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.either {
 // CHECK:               mpir_plan.either {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_14]], <add>
@@ -2497,11 +2497,11 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_14]], 2
 // CHECK:                 %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[GET_OPERAND_14]][0]
 // CHECK:                 %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_15]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_15]] -> 0 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[GET_OPERAND_14]][1]
 // CHECK:                 %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_16]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_16]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_16]] -> 1 <sort = 2>
 // CHECK:               }, {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_14]], <add>
@@ -2509,11 +2509,11 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_14]], 2
 // CHECK:                 %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[GET_OPERAND_14]][0]
 // CHECK:                 %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_17]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_17]] -> 1 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_18:.*]] = mpir_plan.get_operand %[[GET_OPERAND_14]][1]
 // CHECK:                 %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[GET_OPERAND_18]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_18]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_18]] -> 0 <sort = 2>
 // CHECK:               }
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_14]] -> 3
@@ -2523,18 +2523,18 @@ mpir.pattern {
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_14]], 2
 // CHECK:               %[[GET_OPERAND_19:.*]] = mpir_plan.get_operand %[[GET_OPERAND_14]][0]
 // CHECK:               %[[GET_TYPE_19:.*]] = mpir_plan.get_type %[[GET_OPERAND_19]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_19]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_19]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.either {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_19]], <add>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_19]] -> 2
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_19]], 2
 // CHECK:                 %[[GET_OPERAND_20:.*]] = mpir_plan.get_operand %[[GET_OPERAND_19]][0]
 // CHECK:                 %[[GET_TYPE_20:.*]] = mpir_plan.get_type %[[GET_OPERAND_20]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_20]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_20]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_20]] -> 0 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_21:.*]] = mpir_plan.get_operand %[[GET_OPERAND_19]][1]
 // CHECK:                 %[[GET_TYPE_21:.*]] = mpir_plan.get_type %[[GET_OPERAND_21]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_21]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_21]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_21]] -> 1 <sort = 2>
 // CHECK:               }, {
 // CHECK:                 mpir_plan.check_opcode %[[GET_OPERAND_19]], <add>
@@ -2542,30 +2542,30 @@ mpir.pattern {
 // CHECK:                 mpir_plan.check_operand_count %[[GET_OPERAND_19]], 2
 // CHECK:                 %[[GET_OPERAND_22:.*]] = mpir_plan.get_operand %[[GET_OPERAND_19]][0]
 // CHECK:                 %[[GET_TYPE_22:.*]] = mpir_plan.get_type %[[GET_OPERAND_22]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_22]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_22]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_22]] -> 1 <sort = 2>
 // CHECK:                 %[[GET_OPERAND_23:.*]] = mpir_plan.get_operand %[[GET_OPERAND_19]][1]
 // CHECK:                 %[[GET_TYPE_23:.*]] = mpir_plan.get_type %[[GET_OPERAND_23]]
-// CHECK:                 mpir_plan.check_type %[[GET_TYPE_23]], [1, 32, 0]
+// CHECK:                 mpir_plan.check_type %[[GET_TYPE_23]], #mpir.tp_int<32>
 // CHECK:                 mpir_plan.bind %[[GET_OPERAND_23]] -> 0 <sort = 2>
 // CHECK:               }
 // CHECK:               %[[GET_OPERAND_24:.*]] = mpir_plan.get_operand %[[GET_OPERAND_14]][1]
 // CHECK:               %[[GET_TYPE_24:.*]] = mpir_plan.get_type %[[GET_OPERAND_24]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_24]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_24]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.check_constant %[[GET_OPERAND_24]], 3 : ui2
 // CHECK:             }
 // CHECK:           }
 // CHECK:           %[[GET_OPERAND_25:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][1]
 // CHECK:           %[[GET_TYPE_25:.*]] = mpir_plan.get_type %[[GET_OPERAND_25]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_25]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_25]] -> 5 <sort = 2>
 // CHECK:           %[[GET_OPERAND_26:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_26:.*]] = mpir_plan.get_type %[[GET_OPERAND_26]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_26]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_26]] -> 7 <sort = 2>
 // CHECK:           %[[GET_OPERAND_27:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_27:.*]] = mpir_plan.get_type %[[GET_OPERAND_27]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_27]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_27]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_27]] -> 9 <sort = 2>
 // CHECK:           %[[SLOT_0:.*]] = mpir_plan.slot 2 {result_name = "a"} : <Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
@@ -2672,21 +2672,21 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <load>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 6
 // CHECK:           %[[GET_PARENT_BLOCK_0:.*]] = mpir_plan.get_parent_block %[[GET_OPERAND_0]]
 // CHECK:           mpir_plan.bind %[[GET_PARENT_BLOCK_0]] -> 4
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 1
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [4, -1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_ptr<element = #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 5 <sort = 2>
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_2]], <mul>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 3
 // CHECK:           %[[GET_PARENT_BLOCK_1:.*]] = mpir_plan.get_parent_block %[[GET_OPERAND_2]]
@@ -2694,7 +2694,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_3]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 2
 // CHECK:           %[[GET_PARENT_BLOCK_2:.*]] = mpir_plan.get_parent_block %[[GET_OPERAND_3]]
@@ -2702,21 +2702,21 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_3]], 2
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_3]][0]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_3]][1]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_5]], 1 : ui1
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 2
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <ret>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_1]] -> 8
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[FOREACH_INSTRUCTION_1]] <operand_of>
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [0, 5]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_prim<void>
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 0
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -2760,37 +2760,37 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 1
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <mul>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 5
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_1]], <sub>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 3
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_1]], 2
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_2]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 1
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_4]], 1 : ui1 <treat_int_as_vec>
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][1]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 2 <sort = 2>
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 4 <sort = 2>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -2959,7 +2959,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 1
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 1, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<1>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 0 <sort = 7>
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <freeze>
@@ -2967,7 +2967,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 1
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 8, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_byte<8>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 2 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <freeze>
@@ -2975,7 +2975,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 1
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [2, 4, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int_width<4>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 5 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_3:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_3]], <freeze>
@@ -2983,7 +2983,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_3]], 1
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][0]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [2, 7, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_byte_width<7>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 8 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_4:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_4]], <freeze>
@@ -2991,7 +2991,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_4]], 1
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][0]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [0, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_prim<half>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 10 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_5:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_5]], <freeze>
@@ -2999,7 +2999,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_5]], 1
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_5]][0]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [0, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_prim<bfloat>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 12 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_6:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_6]], <freeze>
@@ -3007,7 +3007,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_6]], 1
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_6]][0]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 14 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_7:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_7]], <freeze>
@@ -3015,7 +3015,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_7]], 1
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_7]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [0, 3]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_prim<double>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_7]] -> 16 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_8:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_8]], <freeze>
@@ -3023,7 +3023,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_8]], 1
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_8]][0]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [0, 4]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_prim<fp128>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_8]] -> 18 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_9:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_9]], <freeze>
@@ -3031,7 +3031,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_9]], 1
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_9]][0]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [4, -1, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_ptr
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_9]] -> 20 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_10:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_10]], <freeze>
@@ -3039,7 +3039,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_10]], 1
 // CHECK:           %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_10]][0]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [4, 3, 1]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_ptr<addrspace = 3>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_10]] -> 22 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_11:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_11]], <freeze>
@@ -3047,7 +3047,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_11]], 1
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_11]][0]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [5, 0, 4, -1, [1, 8, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_seq<array, 4, #mpir.tp_int<8>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 24 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_12:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_12]], <freeze>
@@ -3055,7 +3055,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_12]], 1
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_12]][0]
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [5, 0, 0, 26, [2, 4, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_seq<array, count_slot = 26, #mpir.tp_int_width<4>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_12]] -> 27 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_13:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_13]], <freeze>
@@ -3063,7 +3063,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_13]], 1
 // CHECK:           %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_13]][0]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [5, 1, 2, -1, [0, 2]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_seq<vector, 2, #mpir.tp_prim<float>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_13]] -> 29 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_14:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_14]], <freeze>
@@ -3071,7 +3071,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_14]], 1
 // CHECK:           %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_14]][0]
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_14]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [5, 2, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_14]] -> 31 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_15:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_15]], <freeze>
@@ -3079,7 +3079,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_15]], 1
 // CHECK:           %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_15]][0]
 // CHECK:           %[[GET_TYPE_15:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], [5, 1, 0, 33, [2, 4, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_15]], #mpir.tp_seq<vector, count_slot = 33, #mpir.tp_int_width<4>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_15]] -> 34 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_16:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_16]], <freeze>
@@ -3087,7 +3087,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_16]], 1
 // CHECK:           %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_16]][0]
 // CHECK:           %[[GET_TYPE_16:.*]] = mpir_plan.get_type %[[GET_OPERAND_16]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], [6, 0, [1, 32, 0], [4, -1, 1]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_16]], #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_ptr]>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_16]] -> 36 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_17:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_17]], <freeze>
@@ -3095,7 +3095,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_17]], 1
 // CHECK:           %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_17]][0]
 // CHECK:           %[[GET_TYPE_17:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], [6, 1, [1, 8, 0], [5, 0, 2, -1, [1, 16, 0]]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_17]], #mpir.tp_struct<packed, [#mpir.tp_int<8>, #mpir.tp_seq<array, 2, #mpir.tp_int<16>>]>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_17]] -> 38 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_18:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_18]], <freeze>
@@ -3103,7 +3103,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_18]], 1
 // CHECK:           %[[GET_OPERAND_18:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_18]][0]
 // CHECK:           %[[GET_TYPE_18:.*]] = mpir_plan.get_type %[[GET_OPERAND_18]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], [6, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_18]], #mpir.tp_struct<[]>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_18]] -> 40 <sort = 2>
 // CHECK:           %[[FOREACH_INSTRUCTION_19:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_19]], <freeze>
@@ -3111,7 +3111,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_19]], 1
 // CHECK:           %[[GET_OPERAND_19:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_19]][0]
 // CHECK:           %[[GET_TYPE_19:.*]] = mpir_plan.get_type %[[GET_OPERAND_19]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], [3, 42]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_19]], #mpir.tp_var<42>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_19]] -> 43 <sort = 2>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -3253,39 +3253,39 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 3
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [5, 1, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_seq<vector, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <insertelement>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 3
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 3
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [5, 1, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_seq<vector, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_2]], <extractelement>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 2
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_2]], 2
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][0]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [5, 1, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_seq<vector, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_2]][1]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 1 <sort = 6>
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][2]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 64, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<64>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_5]], 0 : ui1
 // CHECK:           %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [5, 1, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_seq<vector, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_6]], 1 : i32 <keyword>
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][2]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [5, 1, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_seq<vector, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.check_aggregate %[[GET_OPERAND_7]], vector, 4
 // CHECK:           %[[GET_ELEMENT_0:.*]] = mpir_plan.get_element %[[GET_OPERAND_7]][0]
 // CHECK:           mpir_plan.check_constant %[[GET_ELEMENT_0]], 0 : ui1
@@ -3301,7 +3301,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 3
 // CHECK:           %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], [6, 0, [1, 32, 0], [6, 0, [1, 8, 0], [1, 16, 0]]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_struct<[#mpir.tp_int<8>, #mpir.tp_int<16>]>]>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_8]] -> 5 <sort = 2>
 // CHECK:           %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][1]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_9]], 1 : ui1
@@ -3313,7 +3313,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 1 <at_least>
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], [6, 0, [1, 32, 0], [0, 2]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_prim<float>]>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 7 <sort = 2>
 // CHECK:           %[[GET_OPERANDS_FROM_0:.*]] = mpir_plan.get_operands_from %[[FOREACH_INSTRUCTION_2]][1 :]
 // CHECK:           mpir_plan.bind %[[GET_OPERANDS_FROM_0]] -> 8
@@ -3323,11 +3323,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_3]], 3
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][0]
 // CHECK:           %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], [6, 0, [1, 32, 0], [0, 2]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_prim<float>]>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_12]] -> 7 <sort = 2>
 // CHECK:           %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][1]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [0, 2]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_prim<float>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_13]], 1.000000e+00 : f64
 // CHECK:           %[[GET_OPERAND_14:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_3]][2]
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_14]], 1 : ui1
@@ -3337,15 +3337,15 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_4]], 3
 // CHECK:           %[[GET_OPERAND_15:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][0]
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_15]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [5, 2, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_15]] -> 11 <sort = 2>
 // CHECK:           %[[GET_OPERAND_16:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][1]
 // CHECK:           %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_16]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], [5, 2, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_16]] -> 12 <sort = 2>
 // CHECK:           %[[GET_OPERAND_17:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_4]][2]
 // CHECK:           %[[GET_TYPE_14:.*]] = mpir_plan.get_type %[[GET_OPERAND_17]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], [5, 2, 4, -1, [1, 32, 0]]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_14]], #mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_17]], 3 : i32 <keyword>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -3378,11 +3378,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_1]], 1 : ui1
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <mul>
@@ -3390,11 +3390,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 2
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_constant %[[GET_OPERAND_3]], 2 : ui2
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -3429,31 +3429,31 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_0]], <mul>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 3
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_1]], <add>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 2
 // CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_1]], 2
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_2]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][1]
 // CHECK:           %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_3]] -> 1 <sort = 2>
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_4]] -> 2
 // CHECK:           %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_5]] -> 2
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -3478,11 +3478,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -3541,7 +3541,7 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.either {
 // CHECK:             mpir_plan.either {
 // CHECK:               mpir_plan.check_opcode %[[GET_OPERAND_0]], <add>
@@ -3549,11 +3549,11 @@ mpir.pattern {
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:               %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:               %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:               %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:               %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.check_constant %[[GET_OPERAND_2]], 1 : ui1
 // CHECK:             }, {
 // CHECK:               mpir_plan.check_opcode %[[GET_OPERAND_0]], <add>
@@ -3561,11 +3561,11 @@ mpir.pattern {
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:               %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:               %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.check_constant %[[GET_OPERAND_3]], 1 : ui1
 // CHECK:               %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:               %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_4]] -> 0 <sort = 2>
 // CHECK:             }
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_0]] -> 3
@@ -3575,18 +3575,18 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:             %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:             %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.either {
 // CHECK:               mpir_plan.check_opcode %[[GET_OPERAND_5]], <add>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_5]] -> 1
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_5]], 2
 // CHECK:               %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_5]][0]
 // CHECK:               %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_6]] -> 0 <sort = 2>
 // CHECK:               %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_5]][1]
 // CHECK:               %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.check_constant %[[GET_OPERAND_7]], 1 : ui1
 // CHECK:             }, {
 // CHECK:               mpir_plan.check_opcode %[[GET_OPERAND_5]], <add>
@@ -3594,21 +3594,21 @@ mpir.pattern {
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_5]], 2
 // CHECK:               %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_5]][0]
 // CHECK:               %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.check_constant %[[GET_OPERAND_8]], 1 : ui1
 // CHECK:               %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[GET_OPERAND_5]][1]
 // CHECK:               %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_9]] -> 0 <sort = 2>
 // CHECK:             }
 // CHECK:             %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:             %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_10]] -> 2 <sort = 2>
 // CHECK:           }
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 2 <sort = 2>
 // CHECK:           mpir_plan.emit
 // CHECK:         }
@@ -3674,11 +3674,11 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_0]] -> 1 <sort = 2>
 // CHECK:             %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_1]] -> 2 <sort = 2>
 // CHECK:           }, {
 // CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <ashr>
@@ -3686,11 +3686,11 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_2]] -> 1 <sort = 2>
 // CHECK:             %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_3]] -> 2 <sort = 2>
 // CHECK:             mpir_plan.bind_constant false -> 0
 // CHECK:             %[[SLOT_0:.*]] = mpir_plan.slot 1 {var_name = "x"} : <Operand>
@@ -3753,11 +3753,11 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 0 <sort = 2>
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_1]] -> 1 <sort = 2>
 // CHECK:           %[[SLOT_0:.*]] = mpir_plan.slot 2 {result_name = "a"} : <Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
@@ -3828,38 +3828,38 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.either {
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_0]], <add>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_0]] -> 4
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:             %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:             %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_1]], <shl>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_1]] -> 1
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_1]], 2
 // CHECK:             %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][0]
 // CHECK:             %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_2]] -> 0 <sort = 2>
 // CHECK:             %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[GET_OPERAND_1]][1]
 // CHECK:             %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_3]], 1 : ui1
 // CHECK:             %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:             %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_4]], <lshr>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_4]] -> 3
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_4]], 2
 // CHECK:             %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][0]
 // CHECK:             %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_5]] -> 2 <sort = 2>
 // CHECK:             %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][1]
 // CHECK:             %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_6]], 1 : ui1
 // CHECK:           }, {
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_0]], <sub>
@@ -3867,26 +3867,26 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:             %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:             %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_7]], <shl>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_7]] -> 1
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_7]], 2
 // CHECK:             %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][0]
 // CHECK:             %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_8]] -> 0 <sort = 2>
 // CHECK:             %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[GET_OPERAND_7]][1]
 // CHECK:             %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_9]], 1 : ui1
 // CHECK:             %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:             %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_10]] -> 1
 // CHECK:           }
 // CHECK:           %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:           %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], [1, 32, 0]
+// CHECK:           mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_int<32>
 // CHECK:           mpir_plan.either {
 // CHECK:             mpir_plan.check_bound 3 is true
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_11]] -> 3
@@ -3897,11 +3897,11 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_11]], 2
 // CHECK:             %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_11]][0]
 // CHECK:             %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_12]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_12]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_12]] -> 2 <sort = 2>
 // CHECK:             %[[GET_OPERAND_13:.*]] = mpir_plan.get_operand %[[GET_OPERAND_11]][1]
 // CHECK:             %[[GET_TYPE_13:.*]] = mpir_plan.get_type %[[GET_OPERAND_13]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_13]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_13]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_13]], 1 : ui1
 // CHECK:           }
 // CHECK:           mpir_plan.emit
@@ -3956,31 +3956,31 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_0]], <shl>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_0]] -> 1
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:             %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:             %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:             %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:             %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_2]], 1 : ui1
 // CHECK:             %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_3]], <lshr>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_3]] -> 3
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_3]], 2
 // CHECK:             %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[GET_OPERAND_3]][0]
 // CHECK:             %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_4]] -> 2 <sort = 2>
 // CHECK:             %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_3]][1]
 // CHECK:             %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_5]], 1 : ui1
 // CHECK:           }, {
 // CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <sub>
@@ -3988,21 +3988,21 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_6:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_6]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_6]], <shl>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_6]] -> 1
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_6]], 2
 // CHECK:             %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][0]
 // CHECK:             %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_7]] -> 0 <sort = 2>
 // CHECK:             %[[GET_OPERAND_8:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][1]
 // CHECK:             %[[GET_TYPE_8:.*]] = mpir_plan.get_type %[[GET_OPERAND_8]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_8]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_8]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_8]], 1 : ui1
 // CHECK:             %[[GET_OPERAND_9:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_9:.*]] = mpir_plan.get_type %[[GET_OPERAND_9]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_9]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_9]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_9]] -> 1
 // CHECK:           }
 // CHECK:           mpir_plan.either {
@@ -4015,11 +4015,11 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 2
 // CHECK:             %[[GET_OPERAND_10:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:             %[[GET_TYPE_10:.*]] = mpir_plan.get_type %[[GET_OPERAND_10]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_10]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_10]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_10]] -> 2 <sort = 2>
 // CHECK:             %[[GET_OPERAND_11:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][1]
 // CHECK:             %[[GET_TYPE_11:.*]] = mpir_plan.get_type %[[GET_OPERAND_11]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_11]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_11]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_11]], 1 : ui1
 // CHECK:           }
 // CHECK:           mpir_plan.emit
@@ -4073,11 +4073,11 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.fail
 // CHECK:             %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_1]], 1 : ui1
 // CHECK:             mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 5
 // CHECK:           }
@@ -4141,19 +4141,19 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_0]], <zext>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_0]] -> 1
 // CHECK:             %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]] <operand_of>
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_0]], 1
 // CHECK:             %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:             %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], [1, 8, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<8> <treat_int_as_vec>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:             %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_2]] -> 3 <sort = 2>
 // CHECK:           }, {
 // CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
@@ -4163,19 +4163,19 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_3]] -> 3 <sort = 2>
 // CHECK:             %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_5:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_5]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:             mpir_plan.check_opcode %[[GET_OPERAND_4]], <zext>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_4]] -> 1
 // CHECK:             %[[GET_TYPE_6:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]] <operand_of>
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_6]], [1, 32, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_6]], #mpir.tp_int<32> <treat_int_as_vec>
 // CHECK:             mpir_plan.check_operand_count %[[GET_OPERAND_4]], 1
 // CHECK:             %[[GET_OPERAND_5:.*]] = mpir_plan.get_operand %[[GET_OPERAND_4]][0]
 // CHECK:             %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_5]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], [1, 8, 0] <treat_int_as_vec>
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], #mpir.tp_int<8> <treat_int_as_vec>
 // CHECK:             mpir_plan.bind %[[GET_OPERAND_5]] -> 0 <sort = 2>
 // CHECK:             %[[SLOT_0:.*]] = mpir_plan.slot 5 {var_name = "_swapped$p"} : <CmpPredicate>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<CmpPredicate>) -> !mpir.sort<String>
@@ -4279,7 +4279,7 @@ mpir.pattern {
 // CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.either {
 // CHECK:               mpir_plan.check_opcode %[[GET_OPERAND_0]], <lshr>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_0]] -> 1
@@ -4287,11 +4287,11 @@ mpir.pattern {
 // CHECK:               mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:               %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:               %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_1]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.bind %[[GET_OPERAND_1]] -> 0 <sort = 2>
 // CHECK:               %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][1]
 // CHECK:               %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
-// CHECK:               mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
+// CHECK:               mpir_plan.check_type %[[GET_TYPE_2]], #mpir.tp_int<32>
 // CHECK:               mpir_plan.check_constant %[[GET_OPERAND_2]], 3 : ui2
 // CHECK:               %[[INT_0:.*]] = mpir_expr.int 32 : ui64 : <Integer>
 // CHECK:               %[[INT_1:.*]] = mpir_expr.int 32 : ui64 : <Integer>
@@ -4307,7 +4307,7 @@ mpir.pattern {
 // CHECK:             }
 // CHECK:             %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][1]
 // CHECK:             %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
-// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], [1, 32, 0]
+// CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], #mpir.tp_int<32>
 // CHECK:             mpir_plan.check_constant %[[GET_OPERAND_3]], -4 : si3
 // CHECK:             %[[INT_4:.*]] = mpir_expr.int 32 : ui64 : <Integer>
 // CHECK:             %[[INT_5:.*]] = mpir_expr.int 32 : ui64 : <Integer>

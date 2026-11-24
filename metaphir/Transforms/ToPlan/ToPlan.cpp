@@ -129,7 +129,7 @@ private:
     return *Slot;
   }
 
-  mlir::ArrayAttr typePattern(Value T);
+  mpir::TypePatternAttr typePattern(Value T);
   /// Binds the slot of V, a meta variable or matcher, to what Reg holds:
   /// BySort, read as V's sort reads IR values (failing the path if it
   /// cannot be), else as it is.
@@ -228,8 +228,8 @@ void Compiler::assignSlots() {
   }
 }
 
-mlir::ArrayAttr Compiler::typePattern(Value T) {
-  return mpir::encodeTypePattern(Builder, T, S.Assigned);
+mpir::TypePatternAttr Compiler::typePattern(Value T) {
+  return mpir::encodeTypePattern(T, S.Assigned);
 }
 
 void Compiler::bind(Value Reg, Value V, bool BySort) {

@@ -147,4 +147,112 @@ def Mpir_MetaFlagAttr : AttrDef<Pattern_Dialect, "MetaFlag"> {
   let assemblyFormat = "`<` $name `,` $args `,` $loc `>`";
 }
 
+//===----------------------------------------------------------------------===//
+// Type patterns
+//===----------------------------------------------------------------------===//
+
+def Mpir_TypePatternAttr : AttrInterface<"TypePatternAttr"> {
+  let cppNamespace = "::llvm::metaphir::mpir";
+  let description = [{
+    A type pattern of a lowered pattern, as mpir_plan.check_type and
+    mpir_index.typing match it against an LLVM type: each kind of pattern
+    type is an attribute, and its meta variables are numbered by their slots
+    (see Bindings.h).
+  }];
+}
+
+class Mpir_TypePattern<string name, string mnemonicName>
+    : AttrDef<Pattern_Dialect, name # "TypePattern", [Mpir_TypePatternAttr]> {
+  let mnemonic = mnemonicName;
+}
+
+def Mpir_TypePatternParam
+    : AttrParameter<"::llvm::metaphir::mpir::TypePatternAttr", "a type pattern">;
+def Mpir_PrimTypeParam
+    : AttrParameter<"::llvm::metaphir::primitive_type::TypeID",
+                    "a primitive type"> {
+  let parser = [{
+    ::llvm::metaphir::mpir::parseEnumerator<
+        ::llvm::metaphir::primitive_type::TypeID>($_parser)
+  }];
+  let printer = "::llvm::metaphir::mpir::printEnumerator($_printer, $_self)";
+}
+
+def Mpir_VarTypePattern : Mpir_TypePattern<"Var", "tp_var"> {
+  let summary = "A type variable: '?t'";
+  let parameters = (ins "unsigned":$slot);
+  let assemblyFormat = "`<` $slot `>`";
+}
+
+def Mpir_PrimTypePattern : Mpir_TypePattern<"Prim", "tp_prim"> {
+  let summary = "A primitive type (see Types.td)";
+  let parameters = (ins Mpir_PrimTypeParam:$kind);
+  let assemblyFormat = "`<` $kind `>`";
+  let genVerifyDecl = 1;
+}
+
+def Mpir_IntTypePattern : Mpir_TypePattern<"Int", "tp_int"> {
+  let summary = "An integer type: 'i32'";
+  let parameters = (ins "unsigned":$width);
+  let assemblyFormat = "`<` $width `>`";
+}
+
+def Mpir_ByteTypePattern : Mpir_TypePattern<"Byte", "tp_byte"> {
+  let summary = "A byte type: 'b8'";
+  let parameters = (ins "unsigned":$width);
+  let assemblyFormat = "`<` $width `>`";
+}
+
+def Mpir_IntWidthTypePattern : Mpir_TypePattern<"IntWidth", "tp_int_width"> {
+  let summary = "An integer type of a width variable: 'i?n'";
+  let parameters = (ins "unsigned":$width_slot);
+  let assemblyFormat = "`<` $width_slot `>`";
+}
+
+def Mpir_ByteWidthTypePattern
+    : Mpir_TypePattern<"ByteWidth", "tp_byte_width"> {
+  let summary = "A byte type of a width variable: 'b?n'";
+  let parameters = (ins "unsigned":$width_slot);
+  let assemblyFormat = "`<` $width_slot `>`";
+}
+
+def Mpir_PtrTypePattern : Mpir_TypePattern<"Ptr", "tp_ptr"> {
+  let summary = "'ptr', 'ptr addrspace(N)', or a typed pointer 'T*'";
+  let description = [{
+    Without an address space, a pointer of any. A typed pointer, which has
+    an element, matches no LLVM type.
+  }];
+  let parameters = (ins OptionalParameter<"std::optional<unsigned>">:$address_space,
+                        OptionalParameter<"::llvm::metaphir::mpir::TypePatternAttr">:$element);
+  let hasCustomAssemblyFormat = 1;
+}
+
+def Mpir_SeqTypePattern : Mpir_TypePattern<"Seq", "tp_seq"> {
+  let summary = "An array or vector type: '[4 x T]', '<?n x T>'";
+  let description = [{
+    Its element count is either `count` or the count variable `count_slot`.
+  }];
+  let parameters = (ins EnumParameter<Mpir_SeqKind>:$kind,
+                        OptionalParameter<"std::optional<uint64_t>">:$count,
+                        OptionalParameter<"std::optional<unsigned>">:$count_slot,
+                        Mpir_TypePatternParam:$element);
+  let hasCustomAssemblyFormat = 1;
+  let genVerifyDecl = 1;
+}
+
+def Mpir_StructTypePattern : Mpir_TypePattern<"Struct", "tp_struct"> {
+  let summary = "A literal struct type: '{T, U}', '<{T, U}>'";
+  let parameters = (ins "bool":$packed,
+                        OptionalArrayRefParameter<"::llvm::metaphir::mpir::TypePatternAttr">:$elements);
+  let hasCustomAssemblyFormat = 1;
+}
+
+def Mpir_FuncTypePattern : Mpir_TypePattern<"Func", "tp_func"> {
+  let summary = "A function type: 'T (U, ...)'";
+  let parameters = (ins Mpir_TypePatternParam:$return_type,
+                        OptionalArrayRefParameter<"::llvm::metaphir::mpir::TypePatternAttr">:$params,
+                        "bool":$var_arg);
+  let hasCustomAssemblyFormat = 1;
+}
+
 #endif // METAPHIR_DIALECT_PATTERN_PATTERNBASE_TD

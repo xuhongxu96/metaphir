@@ -8,18 +8,9 @@
 // and a check reads one), and an index query numbers its type variables by
 // the same slots, so a variable is one number in both.
 //
-// A type pattern, of mpir_plan.check_type or mpir_index.typing, is an
-// ArrayAttr whose first element is its TypePatternKind, then:
-//
-//   Primitive      Type::TypeID
-//   Integer        width, byte (0 or 1)
-//   MetaInteger    slot of the width, byte
-//   Variable       slot
-//   Pointer        address space (-1 for any), opaque (0 or 1)
-//   Sequence       kind (0 array, 1 vector, 2 scalable vector), count,
-//                  slot of the count (-1 if the count is fixed), element
-//   Struct         packed, elements...
-//   Function       variadic, return type, parameters...
+// A type pattern, of mpir_plan.check_type or mpir_index.typing, is a
+// TypePatternAttr (PatternBase.td) whose variables are numbered by their
+// slots.
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,17 +25,6 @@
 namespace llvm {
 namespace metaphir {
 namespace mpir {
-
-enum class TypePatternKind : int64_t {
-  Primitive = 0,
-  Integer = 1,
-  MetaInteger = 2,
-  Variable = 3,
-  Pointer = 4,
-  Sequence = 5,
-  Struct = 6,
-  Function = 7,
-};
 
 /// The slots of a lowered pattern's bindings: one per meta variable,
 /// instruction matcher and alternative, numbered in the order they are
@@ -62,11 +42,10 @@ struct SlotAssignment {
 
 SlotAssignment assignSlots(mpir::PatternOp Pattern);
 
-/// The type pattern of the pattern type T (see above), numbering each
-/// meta variable in it by its slot, and appending each to Variables if given.
-mlir::ArrayAttr
-encodeTypePattern(mlir::Builder &Builder, mlir::Value T,
-                  const SlotAssignment &Slots,
+/// The type pattern of the pattern type T, numbering each meta variable in it
+/// by its slot, and appending each to Variables if given.
+TypePatternAttr
+encodeTypePattern(mlir::Value T, const SlotAssignment &Slots,
                   SmallVectorImpl<mlir::Value> *Variables = nullptr);
 
 } // namespace mpir

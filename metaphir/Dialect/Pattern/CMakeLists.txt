@@ -1,4 +1,8 @@
 # The mpir dialect: patterns as written, and as lowered.
+set(LLVM_TARGET_DEFINITIONS PatternBase.td)
+mlir_tablegen(PatternAttrInterfaces.h.inc -gen-attr-interface-decls)
+mlir_tablegen(PatternAttrInterfaces.cpp.inc -gen-attr-interface-defs)
+
 set(LLVM_TARGET_DEFINITIONS PatternOps.td)
 mlir_tablegen(PatternEnums.h.inc -gen-enum-decls)
 mlir_tablegen(PatternEnums.cpp.inc -gen-enum-defs)

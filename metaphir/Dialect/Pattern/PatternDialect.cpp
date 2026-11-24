@@ -17,6 +17,8 @@ using namespace llvm::metaphir::mpir;
 #define GET_TYPEDEF_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOpsTypes.cpp.inc"
 
+#include "metaphir/Dialect/Pattern/PatternAttrInterfaces.cpp.inc"
+
 #define GET_ATTRDEF_CLASSES
 #include "metaphir/Dialect/Pattern/PatternOpsAttrDefs.cpp.inc"
 
@@ -81,6 +83,189 @@ Attribute OpcodeAttr::parse(AsmParser &Parser, mlir::Type) {
 
 void OpcodeAttr::print(AsmPrinter &Printer) const {
   Printer << "<" << instruction::getOpcodeName(getValue()) << ">";
+}
+
+//===----------------------------------------------------------------------===//
+// Type patterns
+//===----------------------------------------------------------------------===//
+
+/// Parses a type pattern attribute.
+static ParseResult parseTypePattern(AsmParser &Parser,
+                                    TypePatternAttr &Pattern) {
+  SMLoc Loc = Parser.getCurrentLocation();
+  Attribute Attr;
+  if (Parser.parseAttribute(Attr))
+    return failure();
+  Pattern = dyn_cast<TypePatternAttr>(Attr);
+  if (!Pattern)
+    return Parser.emitError(Loc, "expected a type pattern");
+  return success();
+}
+
+/// Parses '[' type-pattern (',' type-pattern)* ']'.
+static ParseResult parseTypePatterns(AsmParser &Parser,
+                                     SmallVectorImpl<TypePatternAttr> &List) {
+  return Parser.parseCommaSeparatedList(AsmParser::Delimiter::Square, [&] {
+    TypePatternAttr Each;
+    if (parseTypePattern(Parser, Each))
+      return failure();
+    List.push_back(Each);
+    return success();
+  });
+}
+
+static void printTypePatterns(AsmPrinter &Printer,
+                              ArrayRef<TypePatternAttr> List) {
+  Printer << '[';
+  llvm::interleaveComma(List, Printer);
+  Printer << ']';
+}
+
+LogicalResult
+PrimTypePatternAttr::verify(function_ref<InFlightDiagnostic()> EmitError,
+                            primitive_type::TypeID Kind) {
+  if (!isEnumerator(Kind))
+    return EmitError() << "invalid primitive type " << unsigned(Kind);
+  return success();
+}
+
+// #mpir.tp_ptr, #mpir.tp_ptr<element = #mpir.tp_int<32>, addrspace = 1>
+Attribute PtrTypePatternAttr::parse(AsmParser &Parser, mlir::Type) {
+  std::optional<unsigned> AddressSpace;
+  TypePatternAttr Element;
+  if (succeeded(Parser.parseOptionalLess())) {
+    if (succeeded(Parser.parseOptionalKeyword("element")))
+      if (Parser.parseEqual() || parseTypePattern(Parser, Element))
+        return {};
+    if (!Element || succeeded(Parser.parseOptionalComma())) {
+      unsigned Space;
+      if (Parser.parseKeyword("addrspace") || Parser.parseEqual() ||
+          Parser.parseInteger(Space))
+        return {};
+      AddressSpace = Space;
+    }
+    if (Parser.parseGreater())
+      return {};
+  }
+  return PtrTypePatternAttr::get(Parser.getContext(), AddressSpace, Element);
+}
+
+void PtrTypePatternAttr::print(AsmPrinter &Printer) const {
+  if (!getElement() && !getAddressSpace())
+    return;
+  Printer << '<';
+  if (getElement())
+    Printer << "element = " << getElement();
+  if (getElement() && getAddressSpace())
+    Printer << ", ";
+  if (getAddressSpace())
+    Printer << "addrspace = " << *getAddressSpace();
+  Printer << '>';
+}
+
+LogicalResult
+SeqTypePatternAttr::verify(function_ref<InFlightDiagnostic()> EmitError,
+                           SeqKind Kind, std::optional<uint64_t> Count,
+                           std::optional<unsigned> CountSlot,
+                           TypePatternAttr Element) {
+  if (Count.has_value() == CountSlot.has_value())
+    return EmitError() << "expected either a count or a count variable";
+  if (!Element)
+    return EmitError() << "expected an element type pattern";
+  return success();
+}
+
+// #mpir.tp_seq<vector, 4, #mpir.tp_int<8>>,
+// #mpir.tp_seq<array, count_slot = 2, #mpir.tp_var<3>>
+Attribute SeqTypePatternAttr::parse(AsmParser &Parser, mlir::Type) {
+  SMLoc Loc = Parser.getCurrentLocation();
+  StringRef KindName;
+  if (Parser.parseLess() || Parser.parseKeyword(&KindName) ||
+      Parser.parseComma())
+    return {};
+  std::optional<SeqKind> Kind = symbolizeSeqKind(KindName);
+  if (!Kind) {
+    Parser.emitError(Loc, "unknown sequence kind '") << KindName << "'";
+    return {};
+  }
+  std::optional<uint64_t> Count;
+  std::optional<unsigned> CountSlot;
+  if (succeeded(Parser.parseOptionalKeyword("count_slot"))) {
+    unsigned Slot;
+    if (Parser.parseEqual() || Parser.parseInteger(Slot))
+      return {};
+    CountSlot = Slot;
+  } else {
+    uint64_t N;
+    if (Parser.parseInteger(N))
+      return {};
+    Count = N;
+  }
+  TypePatternAttr Element;
+  if (Parser.parseComma() || parseTypePattern(Parser, Element) ||
+      Parser.parseGreater())
+    return {};
+  return Parser.getChecked<SeqTypePatternAttr>(Loc, Parser.getContext(), *Kind,
+                                               Count, CountSlot, Element);
+}
+
+void SeqTypePatternAttr::print(AsmPrinter &Printer) const {
+  Printer << '<' << stringifySeqKind(getKind()) << ", ";
+  if (getCountSlot())
+    Printer << "count_slot = " << *getCountSlot();
+  else
+    Printer << *getCount();
+  Printer << ", " << getElement() << '>';
+}
+
+// #mpir.tp_struct<[#mpir.tp_int<32>]>, #mpir.tp_struct<packed, []>
+Attribute StructTypePatternAttr::parse(AsmParser &Parser, mlir::Type) {
+  bool Packed = false;
+  SmallVector<TypePatternAttr> Elements;
+  if (Parser.parseLess())
+    return {};
+  if (succeeded(Parser.parseOptionalKeyword("packed"))) {
+    Packed = true;
+    if (Parser.parseComma())
+      return {};
+  }
+  if (parseTypePatterns(Parser, Elements) || Parser.parseGreater())
+    return {};
+  return StructTypePatternAttr::get(Parser.getContext(), Packed, Elements);
+}
+
+void StructTypePatternAttr::print(AsmPrinter &Printer) const {
+  Printer << '<';
+  if (getPacked())
+    Printer << "packed, ";
+  printTypePatterns(Printer, getElements());
+  Printer << '>';
+}
+
+// #mpir.tp_func<#mpir.tp_int<32>, [#mpir.tp_var<1>], var_arg>
+Attribute FuncTypePatternAttr::parse(AsmParser &Parser, mlir::Type) {
+  TypePatternAttr Return;
+  SmallVector<TypePatternAttr> Params;
+  if (Parser.parseLess() || parseTypePattern(Parser, Return) ||
+      Parser.parseComma() || parseTypePatterns(Parser, Params))
+    return {};
+  bool VarArg = false;
+  if (succeeded(Parser.parseOptionalComma())) {
+    if (Parser.parseKeyword("var_arg"))
+      return {};
+    VarArg = true;
+  }
+  if (Parser.parseGreater())
+    return {};
+  return FuncTypePatternAttr::get(Parser.getContext(), Return, Params, VarArg);
+}
+
+void FuncTypePatternAttr::print(AsmPrinter &Printer) const {
+  Printer << '<' << getReturnType() << ", ";
+  printTypePatterns(Printer, getParams());
+  if (getVarArg())
+    Printer << ", var_arg";
+  Printer << '>';
 }
 
 //===----------------------------------------------------------------------===//

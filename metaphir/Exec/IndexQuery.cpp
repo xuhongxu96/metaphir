@@ -82,9 +82,9 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
         Each.TreatIntAsVec = T.getTreatIntAsVec();
         for (auto [Pattern, IsValue] :
              zip(T.getOperandTypes(), T.getValueOperand())) {
-          auto Array = cast<mlir::ArrayAttr>(Pattern);
-          Each.Patterns.push_back(
-              Array.empty() ? std::nullopt : std::optional(Types.add(Array)));
+          auto Typed = dyn_cast<mpir::TypePatternAttr>(Pattern);
+          Each.Patterns.push_back(Typed ? std::optional(Types.add(Typed))
+                                        : std::nullopt);
           Each.IsValue.push_back(IsValue);
         }
         V.Typings.push_back(std::move(Each));

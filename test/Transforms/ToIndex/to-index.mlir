@@ -202,25 +202,25 @@ mpir.pattern {
 // CHECK:             mpir_index.has_fact 4, <sdiv>, 2, 125
 // CHECK:             mpir_index.has_fact 7, <shl>, 2, 129
 // CHECK:             mpir_index.has_fact 12, <xor>, 2, 127
-// CHECK:             mpir_index.typing <add> <present = 1, absent = 2, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <udiv> <present = 4, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sdiv> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <urem> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <srem> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <shl> <present = 3, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <lshr> <present = 4, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <ashr> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fadd> <present = 6144, absent = 0, operand_types = {{\[\[}}0, 2], [0, 2]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fsub> <present = 1024, absent = 0, operand_types = {{\[\[}}0, 2], [0, 2]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fmul> <present = 253952, absent = 0, operand_types = {{\[\[}}0, 2], [0, 2]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fdiv> <present = 0, absent = 2048, operand_types = {{\[\[}}0, 2], [0, 2]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <frem> <present = 0, absent = 0, operand_types = {{\[\[}}0, 2], [0, 2]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fneg> <present = 0, absent = 0, operand_types = {{\[\[}}0, 2]], value_operand = [true]>
+// CHECK:             mpir_index.typing <add> <present = 1, absent = 2, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <udiv> <present = 4, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sdiv> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <urem> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <srem> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <shl> <present = 3, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <lshr> <present = 4, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <ashr> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fadd> <present = 6144, absent = 0, operand_types = [#mpir.tp_prim<float>, #mpir.tp_prim<float>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fsub> <present = 1024, absent = 0, operand_types = [#mpir.tp_prim<float>, #mpir.tp_prim<float>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fmul> <present = 253952, absent = 0, operand_types = [#mpir.tp_prim<float>, #mpir.tp_prim<float>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fdiv> <present = 0, absent = 2048, operand_types = [#mpir.tp_prim<float>, #mpir.tp_prim<float>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <frem> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<float>, #mpir.tp_prim<float>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fneg> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<float>], value_operand = [true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -348,15 +348,15 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 1, <call>, 4, 129
 // CHECK:             mpir_index.has_fact 2, <call>, 4, 128
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 8, 0]], value_operand = [false, true, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}2, 4, 0], [], [2, 4, 0], [1, 1, 0]], value_operand = [false, true, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}7, 1, [1, 32, 0], [1, 32, 0]], [], [1, 32, 0]], value_operand = [false, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}3, 10], [], []], value_operand = [false, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], []], value_operand = [false, true, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}0, 5], [], [0, 6]], value_operand = [false, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0]], value_operand = [false, true, true]>
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}0, 5], [], [1, 32, 0]], value_operand = [false, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<8>], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<4>, unit, #mpir.tp_int_width<4>, #mpir.tp_int<1>], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_func<#mpir.tp_int<32>, [#mpir.tp_int<32>], var_arg>, unit, #mpir.tp_int<32>], value_operand = [false, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_var<10>, unit, unit], value_operand = [false, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, unit], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<void>, unit, #mpir.tp_prim<label>], value_operand = [false, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>], value_operand = [false, true, true]>
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<void>, unit, #mpir.tp_int<32>], value_operand = [false, true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -499,20 +499,20 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <ptrtoint>, 0, 0, 64
 // CHECK:             mpir_index.has_shape <ptrtoaddr>, 0, 0, 64
 // CHECK:             mpir_index.has_shape <bitcast>, 0, 0, 64
-// CHECK:             mpir_index.typing <trunc> <present = 2, absent = 0, operand_types = {{\[\[}}1, 64, 0], [1, 32, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <zext> <present = 256, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [2, 3, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <fptrunc> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [0, 2]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <fpext> <present = 0, absent = 0, operand_types = {{\[\[}}0, 2], [0, 3]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <fptoui> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [1, 32, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <fptosi> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [1, 32, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <uitofp> <present = 256, absent = 0, operand_types = {{\[\[}}1, 32, 0], [0, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <sitofp> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [0, 1]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <ptrtoint> <present = 0, absent = 0, operand_types = {{\[\[}}4, -1, 1], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <ptrtoaddr> <present = 0, absent = 0, operand_types = {{\[\[}}4, -1, 1], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <inttoptr> <present = 0, absent = 0, operand_types = {{\[\[}}1, 64, 0], [4, -1, 1]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <bitcast> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 2, -1, [1, 32, 0]], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0]], value_operand = [true]>
+// CHECK:             mpir_index.typing <trunc> <present = 2, absent = 0, operand_types = [#mpir.tp_int<64>, #mpir.tp_int<32>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <zext> <present = 256, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int_width<3>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <fptrunc> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<double>, #mpir.tp_prim<float>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <fpext> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<float>, #mpir.tp_prim<double>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <fptoui> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<double>, #mpir.tp_int<32>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <fptosi> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<double>, #mpir.tp_int<32>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <uitofp> <present = 256, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_prim<half>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <sitofp> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_prim<bfloat>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <ptrtoint> <present = 0, absent = 0, operand_types = [#mpir.tp_ptr, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <ptrtoaddr> <present = 0, absent = 0, operand_types = [#mpir.tp_ptr, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <inttoptr> <present = 0, absent = 0, operand_types = [#mpir.tp_int<64>, #mpir.tp_ptr], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <bitcast> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<vector, 2, #mpir.tp_int<32>>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>], value_operand = [true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -619,14 +619,14 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <fcmp>, 2048, 0, 0
 // CHECK:             mpir_index.has_shape <select>, 2048, 0, 0
 // CHECK:             mpir_index.has_fact 0, <icmp>, 2, 128
-// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <icmp> <present = 512, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fcmp> <present = 2048, absent = 0, operand_types = {{\[\[}}0, 2], [0, 2]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fcmp> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [0, 3]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 32, 0], [1, 32, 0]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <select> <present = 2048, absent = 0, operand_types = {{\[\[}}1, 1, 0], [0, 2], [0, 2]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 2, -1, [1, 1, 0]], [5, 1, 2, -1, [1, 32, 0]], [5, 1, 2, -1, [1, 32, 0]]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <icmp> <present = 512, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fcmp> <present = 2048, absent = 0, operand_types = [#mpir.tp_prim<float>, #mpir.tp_prim<float>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fcmp> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<double>, #mpir.tp_prim<double>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <select> <present = 2048, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_prim<float>, #mpir.tp_prim<float>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<vector, 2, #mpir.tp_int<1>>, #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>, #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -805,18 +805,18 @@ mpir.pattern {
 // CHECK:             mpir_index.has_fact 1, <add>, 2, 127
 // CHECK:             mpir_index.has_fact 3, <add>, 2, 129
 // CHECK:             mpir_index.has_fact 4, <add>, 2, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 128, 0], [1, 128, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 1, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 1, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fadd> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [0, 3]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <fadd> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3], [0, 3]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [4, -1, 1], [4, -1, 1]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 32, 0], [1, 32, 0]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [5, 1, 2, -1, [1, 32, 0]], [5, 1, 2, -1, [1, 32, 0]]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [5, 0, 2, -1, [1, 8, 0]], [5, 0, 2, -1, [1, 8, 0]]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [6, 0, [1, 32, 0], [1, 8, 0]], [6, 0, [1, 32, 0], [1, 8, 0]]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<128>, #mpir.tp_int<128>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<1>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<1>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fadd> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<double>, #mpir.tp_prim<double>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <fadd> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<double>, #mpir.tp_prim<double>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_ptr, #mpir.tp_ptr], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>, #mpir.tp_seq<vector, 2, #mpir.tp_int<32>>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_seq<array, 2, #mpir.tp_int<8>>, #mpir.tp_seq<array, 2, #mpir.tp_int<8>>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_int<8>]>, #mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_int<8>]>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -994,8 +994,8 @@ mpir.pattern {
 // CHECK:             mpir_index.has_instruction <icmp>
 // CHECK:             mpir_index.has_edge <icmp> -> <add>
 // CHECK:             mpir_index.has_fact 1, <icmp>, 2, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0], [2, 0, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0], [2, 0, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<0>, #mpir.tp_int_width<0>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<0>, #mpir.tp_int_width<0>], value_operand = [true, true]>
 // CHECK:             %[[TYPE_VAR_0:.*]] = mpir_index.type_var 0 {var_name = "n"} : <Nat>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[TYPE_VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
 // CHECK:             %[[INT_0:.*]] = mpir_expr.int 32 : ui64 : <Integer>
@@ -1150,12 +1150,12 @@ mpir.pattern {
 // CHECK:             mpir_index.has_fact 0, <icmp>, 2, 138
 // CHECK:             mpir_index.has_fact 2, <phi>, 1, 128
 // CHECK:             mpir_index.has_fact 3, <add>, 2, 129
-// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <br> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [0, 6], [0, 6]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <phi> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], []], value_operand = [true, true, true, true]>
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <br> <present = 0, absent = 0, operand_types = {{\[\[}}0, 6]], value_operand = [true]>
-// CHECK:             mpir_index.typing <ret> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0]], value_operand = [true]>
+// CHECK:             mpir_index.typing <icmp> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <br> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_prim<label>, #mpir.tp_prim<label>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <phi> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, unit], value_operand = [true, true, true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <br> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<label>], value_operand = [true]>
+// CHECK:             mpir_index.typing <ret> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>], value_operand = [true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -1272,10 +1272,10 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <zext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 1, <sub>, 1, 128
 // CHECK:             mpir_index.has_fact 3, <select>, 4, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <sub>
@@ -1290,10 +1290,10 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <zext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 1, <sub>, 1, 128
 // CHECK:             mpir_index.has_fact 3, <select>, 4, 128
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -1304,9 +1304,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <zext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 2, <select>, 4, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <or>
@@ -1317,9 +1317,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <zext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 2, <select>, 4, 128
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <zext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -1334,10 +1334,10 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <sext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 1, <sub>, 1, 128
 // CHECK:             mpir_index.has_fact 3, <select>, 4, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <sub>
@@ -1352,10 +1352,10 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <sext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 1, <sub>, 1, 128
 // CHECK:             mpir_index.has_fact 3, <select>, 4, 128
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -1366,9 +1366,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <sext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 2, <select>, 4, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <or>
@@ -1379,9 +1379,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <sext>, 0, 0, 64
 // CHECK:             mpir_index.has_fact 2, <select>, 4, 128
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 64, 0]], value_operand = [true, false]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [1, 64, 0], [1, 64, 0]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sext> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, false]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -1496,14 +1496,14 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <getelementptr>, 128, 0, 0
 // CHECK:             mpir_index.has_fact 6, <getelementptr>, 2, 128
 // CHECK:             mpir_index.has_fact 7, <getelementptr>, 2, 132
-// CHECK:             mpir_index.typing <alloca> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [false, true]>
-// CHECK:             mpir_index.typing <alloca> <present = 0, absent = 0, operand_types = {{\[\[}}1, 64, 0]], value_operand = [false]>
-// CHECK:             mpir_index.typing <load> <present = 32, absent = 0, operand_types = {{\[\[}}1, 32, 0], [4, -1, 1]], value_operand = [false, true]>
-// CHECK:             mpir_index.typing <load> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [4, 1, 1]], value_operand = [false, true]>
-// CHECK:             mpir_index.typing <store> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [4, -1, 1]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <store> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [4, -1, 1]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <getelementptr> <present = 128, absent = 0, operand_types = {{\[\[}}5, 0, 4, -1, [1, 8, 0]], [4, -1, 1], [1, 64, 0], [1, 64, 0]], value_operand = [false, true, true, true]>
-// CHECK:             mpir_index.typing <getelementptr> <present = 0, absent = 0, operand_types = {{\[\[}}1, 8, 0], [4, -1, 1], [1, 64, 0]], value_operand = [false, true, true]>
+// CHECK:             mpir_index.typing <alloca> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true]>
+// CHECK:             mpir_index.typing <alloca> <present = 0, absent = 0, operand_types = [#mpir.tp_int<64>], value_operand = [false]>
+// CHECK:             mpir_index.typing <load> <present = 32, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_ptr], value_operand = [false, true]>
+// CHECK:             mpir_index.typing <load> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_ptr<addrspace = 1>], value_operand = [false, true]>
+// CHECK:             mpir_index.typing <store> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_ptr], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <store> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_ptr], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <getelementptr> <present = 128, absent = 0, operand_types = [#mpir.tp_seq<array, 4, #mpir.tp_int<8>>, #mpir.tp_ptr, #mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [false, true, true, true]>
+// CHECK:             mpir_index.typing <getelementptr> <present = 0, absent = 0, operand_types = [#mpir.tp_int<8>, #mpir.tp_ptr, #mpir.tp_int<64>], value_operand = [false, true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -1682,10 +1682,10 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <and>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -1765,10 +1765,10 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <and>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_7:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_11:.*]] = mpir_expr.read %[[SITES_7]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_18:.*]] = mpir_index.node 0 : <Instruction>
@@ -1852,11 +1852,11 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 1, <mul>, 2, 131
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_14:.*]] = mpir_index.sites {{\[\[}}1, 5, 1], [0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_22:.*]] = mpir_expr.read %[[SITES_14]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_36:.*]] = mpir_index.node 0 : <Instruction>
@@ -1940,11 +1940,11 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 1, <mul>, 2, 131
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_21:.*]] = mpir_index.sites {{\[\[}}1, 5, 1], [0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_33:.*]] = mpir_expr.read %[[SITES_21]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_54:.*]] = mpir_index.node 0 : <Instruction>
@@ -2028,11 +2028,11 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 1, <sub>, 1, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_28:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_44:.*]] = mpir_expr.read %[[SITES_28]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_72:.*]] = mpir_index.node 0 : <Instruction>
@@ -2116,11 +2116,11 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <or>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 1, <sub>, 1, 128
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_35:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_55:.*]] = mpir_expr.read %[[SITES_35]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_90:.*]] = mpir_index.node 0 : <Instruction>
@@ -2208,12 +2208,12 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 2, <sub>, 1, 128
 // CHECK:             mpir_index.has_fact 1, <mul>, 2, 131
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_42:.*]] = mpir_index.sites {{\[\[}}1, 5, 1], [0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_66:.*]] = mpir_expr.read %[[SITES_42]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_108:.*]] = mpir_index.node 0 : <Instruction>
@@ -2301,12 +2301,12 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <xor>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 2, <sub>, 1, 128
 // CHECK:             mpir_index.has_fact 1, <mul>, 2, 131
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <xor> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <and> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <or> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_49:.*]] = mpir_index.sites {{\[\[}}1, 5, 1], [0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_77:.*]] = mpir_expr.read %[[SITES_49]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_126:.*]] = mpir_index.node 0 : <Instruction>
@@ -2433,11 +2433,11 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <load>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <add>, 2, 129
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <load> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [4, -1, 0]], value_operand = [false, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <ret> <present = 0, absent = 0, operand_types = {{\[\[}}0, 5]], value_operand = [false]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <load> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_ptr<element = #mpir.tp_int<32>>], value_operand = [false, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <ret> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<void>], value_operand = [false]>
 // CHECK:           }
 // CHECK:         }
 
@@ -2486,10 +2486,10 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <add>, 2, 129
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, treat_int_as_vec, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <ret> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0]], value_operand = [true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, treat_int_as_vec, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <ret> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>], value_operand = [true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -2653,26 +2653,26 @@ mpir.pattern {
 // CHECK-LABEL:   mpir_index.query {
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <freeze>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}1, 8, 1]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}2, 4, 0]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}2, 7, 1]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 0]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 1]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 2]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 3]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}0, 4]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}4, -1, 1]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}4, 3, 1]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 0, 4, -1, [1, 8, 0]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 0, 0, 26, [2, 4, 0]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 2, -1, [0, 2]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 2, 4, -1, [1, 32, 0]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 0, 33, [2, 4, 0]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}6, 0, [1, 32, 0], [4, -1, 1]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}6, 1, [1, 8, 0], [5, 0, 2, -1, [1, 16, 0]]]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}6, 0]], value_operand = [true]>
-// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = {{\[\[}}3, 42]], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_byte<8>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<4>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_byte_width<7>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<half>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<bfloat>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<float>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<double>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_prim<fp128>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_ptr], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_ptr<addrspace = 3>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<array, 4, #mpir.tp_int<8>>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<array, count_slot = 26, #mpir.tp_int_width<4>>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<vector, 2, #mpir.tp_prim<float>>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<vector, count_slot = 33, #mpir.tp_int_width<4>>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_ptr]>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_struct<packed, [#mpir.tp_int<8>, #mpir.tp_seq<array, 2, #mpir.tp_int<16>>]>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_struct<[]>], value_operand = [true]>
+// CHECK:             mpir_index.typing <freeze> <present = 0, absent = 0, operand_types = [#mpir.tp_var<42>], value_operand = [true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -2820,13 +2820,13 @@ mpir.pattern {
 // CHECK:             mpir_index.has_fact 3, <extractvalue>, 2, 129
 // CHECK:             mpir_index.has_fact 3, <extractvalue>, 4, 128
 // CHECK:             mpir_index.has_fact 5, <insertvalue>, 4, 129
-// CHECK:             mpir_index.typing <extractelement> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 4, -1, [1, 32, 0]], [1, 64, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <insertelement> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 4, -1, [1, 32, 0]], [1, 32, 0], [1, 64, 0]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <shufflevector> <present = 0, absent = 0, operand_types = {{\[\[}}5, 1, 4, -1, [1, 32, 0]], [5, 1, 4, -1, [1, 32, 0]], [5, 1, 4, -1, [1, 32, 0]]], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <extractvalue> <present = 0, absent = 0, operand_types = {{\[\[}}6, 0, [1, 32, 0], [6, 0, [1, 8, 0], [1, 16, 0]]], [], []], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <extractvalue> <present = 0, absent = 0, operand_types = {{\[\[}}6, 0, [1, 32, 0], [0, 2]], []], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <insertvalue> <present = 0, absent = 0, operand_types = {{\[\[}}6, 0, [1, 32, 0], [0, 2]], [0, 2], []], value_operand = [true, true, true]>
-// CHECK:             mpir_index.typing <shufflevector> <present = 0, absent = 0, operand_types = {{\[\[}}5, 2, 4, -1, [1, 32, 0]], [5, 2, 4, -1, [1, 32, 0]], [5, 2, 4, -1, [1, 32, 0]]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <extractelement> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<vector, 4, #mpir.tp_int<32>>, #mpir.tp_int<64>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <insertelement> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<vector, 4, #mpir.tp_int<32>>, #mpir.tp_int<32>, #mpir.tp_int<64>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <shufflevector> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<vector, 4, #mpir.tp_int<32>>, #mpir.tp_seq<vector, 4, #mpir.tp_int<32>>, #mpir.tp_seq<vector, 4, #mpir.tp_int<32>>], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <extractvalue> <present = 0, absent = 0, operand_types = [#mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_struct<[#mpir.tp_int<8>, #mpir.tp_int<16>]>]>, unit, unit], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <extractvalue> <present = 0, absent = 0, operand_types = [#mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_prim<float>]>, unit], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <insertvalue> <present = 0, absent = 0, operand_types = [#mpir.tp_struct<[#mpir.tp_int<32>, #mpir.tp_prim<float>]>, #mpir.tp_prim<float>, unit], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <shufflevector> <present = 0, absent = 0, operand_types = [#mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>, #mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>, #mpir.tp_seq<scalable, 4, #mpir.tp_int<32>>], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -2878,8 +2878,8 @@ mpir.pattern {
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_edge <add> -> <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -2888,8 +2888,8 @@ mpir.pattern {
 // CHECK:             mpir_index.has_sibling <add>, <sub>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -2898,15 +2898,15 @@ mpir.pattern {
 // CHECK:             mpir_index.has_sibling <add>, <sub>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <sub>
 // CHECK:             mpir_index.has_edge <sub> -> <sub>
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -2966,8 +2966,8 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <add>, 2, 129
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -2976,8 +2976,8 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <add>, 1, 129
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -2990,9 +2990,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <add>, 2, 129
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
@@ -3005,9 +3005,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <add>, 1, 129
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -3045,9 +3045,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -3097,9 +3097,9 @@ mpir.pattern {
 // CHECK:             mpir_index.has_shape <lshr>, 4, 0, 64
 // CHECK:             mpir_index.has_fact 0, <add>, 2, 133
 // CHECK:             mpir_index.has_fact 1, <lshr>, 2, 131
-// CHECK:             mpir_index.typing <add> <present = 1, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <lshr> <present = 4, absent = 0, operand_types = {{\[\[}}1, 64, 0], [1, 64, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = {{\[\[}}1, 1, 0], [4, -1, 1], [4, -1, 1]], value_operand = [true, true, true]>
+// CHECK:             mpir_index.typing <add> <present = 1, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <lshr> <present = 4, absent = 0, operand_types = [#mpir.tp_int<64>, #mpir.tp_int<64>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <select> <present = 0, absent = 0, operand_types = [#mpir.tp_int<1>, #mpir.tp_ptr, #mpir.tp_ptr], value_operand = [true, true, true]>
 // CHECK:           }
 // CHECK:         }
 
@@ -3152,7 +3152,7 @@ mpir.pattern {
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 2]] {var_name = "c"} : <Operand>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -3228,7 +3228,7 @@ mpir.pattern {
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <mul>
 // CHECK:             mpir_index.has_fact 0, <mul>, 2, 131
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0], [2, 0, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<0>, #mpir.tp_int_width<0>], value_operand = [true, true]>
 // CHECK:             %[[TYPE_VAR_0:.*]] = mpir_index.type_var 0 {var_name = "n"} : <Nat>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[TYPE_VAR_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
 // CHECK:             %[[INT_0:.*]] = mpir_expr.int 32 : ui64 : <Integer>
@@ -3246,8 +3246,8 @@ mpir.pattern {
 // CHECK:             mpir_index.has_instruction <mul>
 // CHECK:             mpir_index.has_edge <mul> -> <add>
 // CHECK:             mpir_index.has_fact 1, <mul>, 2, 131
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0], [2, 0, 0]], value_operand = [true, true]>
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}2, 0, 0], [2, 0, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<0>, #mpir.tp_int_width<0>], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int_width<0>, #mpir.tp_int_width<0>], value_operand = [true, true]>
 // CHECK:             %[[TYPE_VAR_1:.*]] = mpir_index.type_var 0 {var_name = "n"} : <Nat>
 // CHECK:             %[[READ_2:.*]] = mpir_expr.read %[[TYPE_VAR_1]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>
 // CHECK:             %[[INT_1:.*]] = mpir_expr.int 32 : ui64 : <Integer>
@@ -3313,7 +3313,7 @@ mpir.pattern {
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {result_name = "a"} : <Instruction>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[SITES_0]] : (!mpir.sort<Instruction>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_0:.*]] = mpir_index.node 0 : <Instruction>
@@ -3386,7 +3386,7 @@ mpir.pattern {
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <lshr>
 // CHECK:             mpir_index.has_shape <lshr>, 0, 0, 32
-// CHECK:             mpir_index.typing <lshr> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <lshr> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[UNKNOWN_0:.*]] = mpir_index.unknown {var_name = "ex"} : <Boolean>
 // CHECK:             %[[READ_0:.*]] = mpir_expr.read %[[UNKNOWN_0]] : (!mpir.sort<Boolean>) -> !mpir.sort<Boolean>
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 14, 2]] {var_name = "y"} : <Operand>
@@ -3401,7 +3401,7 @@ mpir.pattern {
 // CHECK:           mpir_index.variant {
 // CHECK:             mpir_index.has_instruction <ashr>
 // CHECK:             mpir_index.has_shape <ashr>, 0, 0, 32
-// CHECK:             mpir_index.typing <ashr> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <ashr> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:             %[[SITES_1:.*]] = mpir_index.sites {{\[\[}}0, 15, 1]] {var_name = "x"} : <Operand>
 // CHECK:             %[[READ_2:.*]] = mpir_expr.read %[[SITES_1]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
 // CHECK:             %[[NODE_2:.*]] = mpir_index.node 0 : <Instruction>
@@ -3452,6 +3452,6 @@ mpir.pattern {
 // CHECK:             mpir_index.has_instruction <add>
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
 // CHECK:             mpir_index.has_fact 0, <add>, 2, 129
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
 // CHECK:           }
 // CHECK:         }

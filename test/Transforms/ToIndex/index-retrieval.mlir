@@ -58,12 +58,12 @@ mpir_index.query {
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
     mpir_index.has_fact 2, <call>, 4, 128 loc("index-retrieval.mlir":59:1)
 // CHECK:             mpir_index.has_fact 2, <call>, 4, 128
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-retrieval.mlir":61:1)
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-retrieval.mlir":63:1)
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 1, 0]], value_operand = [false, true, true, true]> loc("index-retrieval.mlir":65:1)
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 1, 0]], value_operand = [false, true, true, true]>
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-retrieval.mlir":61:1)
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-retrieval.mlir":63:1)
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<1>], value_operand = [false, true, true, true]> loc("index-retrieval.mlir":65:1)
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<1>], value_operand = [false, true, true, true]>
   } loc("index-retrieval.mlir":67:1)
 // CHECK:           }
 // CHECK:           mpir_index.retrieve {
@@ -127,10 +127,10 @@ mpir_index.query {
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
     mpir_index.has_shape <mul>, 0, 0, 32 loc("index-retrieval.mlir":128:1)
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-retrieval.mlir":130:1)
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-retrieval.mlir":132:1)
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-retrieval.mlir":130:1)
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-retrieval.mlir":132:1)
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
   } loc("index-retrieval.mlir":134:1)
 // CHECK:           }
   mpir_index.variant {
@@ -147,10 +147,10 @@ mpir_index.query {
 // CHECK:             mpir_index.has_shape <sub>, 0, 0, 32
     mpir_index.has_shape <mul>, 0, 0, 32 loc("index-retrieval.mlir":148:1)
 // CHECK:             mpir_index.has_shape <mul>, 0, 0, 32
-    mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-retrieval.mlir":150:1)
-// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
-    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-retrieval.mlir":152:1)
-// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+    mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-retrieval.mlir":150:1)
+// CHECK:             mpir_index.typing <sub> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
+    mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-retrieval.mlir":152:1)
+// CHECK:             mpir_index.typing <mul> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
   } loc("index-retrieval.mlir":154:1)
 // CHECK:           }
 // CHECK:           mpir_index.retrieve {
@@ -215,8 +215,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <add>
     mpir_index.has_shape <add>, 0, 0, 32 loc("index-retrieval.mlir":216:1)
 // CHECK:             mpir_index.has_shape <add>, 0, 0, 32
-    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [[1, 32, 0], [1, 32, 0]], value_operand = [true, true]> loc("index-retrieval.mlir":218:1)
-// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [1, 32, 0]], value_operand = [true, true]>
+    mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]> loc("index-retrieval.mlir":218:1)
+// CHECK:             mpir_index.typing <add> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [true, true]>
     %0 = mpir_index.sites [[0, 1, 8]] {var_name = "self"} : <Instruction> loc("index-retrieval.mlir":220:1)
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 1, 8]] {var_name = "self"} : <Instruction>
     %1 = mpir_expr.read %0 : (!mpir.sort<Instruction>) -> !mpir.sort<Value> loc("index-retrieval.mlir":222:1)
@@ -307,8 +307,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <call>
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-retrieval.mlir":308:1)
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
-    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]> loc("index-retrieval.mlir":310:1)
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
+    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]> loc("index-retrieval.mlir":310:1)
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]>
     %0 = mpir_index.sites [[0, 48, 1]] {var_name = "id"} : <IntrinsicID> loc("index-retrieval.mlir":312:1)
 // CHECK:             %[[SITES_0:.*]] = mpir_index.sites {{\[\[}}0, 48, 1]] {var_name = "id"} : <IntrinsicID>
     %1 = mpir_expr.read %0 : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String> loc("index-retrieval.mlir":314:1)
@@ -343,8 +343,8 @@ mpir_index.query {
 // CHECK:             mpir_index.has_instruction <call>
     mpir_index.has_shape <call>, 0, 0, 32 loc("index-retrieval.mlir":344:1)
 // CHECK:             mpir_index.has_shape <call>, 0, 0, 32
-    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [[1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]> loc("index-retrieval.mlir":346:1)
-// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = {{\[\[}}1, 32, 0], [], [1, 32, 0], [1, 32, 0]], value_operand = [false, true, true, true]>
+    mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]> loc("index-retrieval.mlir":346:1)
+// CHECK:             mpir_index.typing <call> <present = 0, absent = 0, operand_types = [#mpir.tp_int<32>, unit, #mpir.tp_int<32>, #mpir.tp_int<32>], value_operand = [false, true, true, true]>
     %0 = mpir_index.sites [[0, 48, 1]] {var_name = "id"} : <IntrinsicID> loc("index-retrieval.mlir":348:1)
 // CHECK:             %[[SITES_1:.*]] = mpir_index.sites {{\[\[}}0, 48, 1]] {var_name = "id"} : <IntrinsicID>
     %1 = mpir_expr.read %0 : (!mpir.sort<IntrinsicID>) -> !mpir.sort<String> loc("index-retrieval.mlir":350:1)

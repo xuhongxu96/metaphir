@@ -138,7 +138,7 @@ private:
   void emitPostedFeatures();
   void emitSiblings();
   void emitDetailFeatures();
-  mlir::ArrayAttr typePattern(Value T);
+  TypePatternAttr typePattern(Value T);
   void emitTypings();
   void collectSites();
   void emitConstraints();
@@ -229,9 +229,9 @@ void VariantEmitter::emitDetailFeatures() {
                                A.getCode());
 }
 
-mlir::ArrayAttr VariantEmitter::typePattern(Value T) {
+TypePatternAttr VariantEmitter::typePattern(Value T) {
   SmallVector<Value, 2> Variables;
-  mlir::ArrayAttr Encoded = encodeTypePattern(Builder, T, Slots, &Variables);
+  TypePatternAttr Encoded = encodeTypePattern(T, Slots, &Variables);
   TypeVars.insert_range(Variables);
   return Encoded;
 }
@@ -247,7 +247,7 @@ void VariantEmitter::emitTypings() {
         continue;
       bool Array = isArrayOperand(Op.Kind);
       Types.push_back(Op.Type && !Array ? Attribute(typePattern(Op.Type))
-                                        : Builder.getArrayAttr({}));
+                                        : Builder.getUnitAttr());
       IsValue.push_back(isValueOperand(Op.Kind));
     }
     auto Typing = index::TypingOp::create(

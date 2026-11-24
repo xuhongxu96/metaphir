@@ -112,15 +112,16 @@ def Index_HasFactOp : Index_Op<"has_fact"> {
 def Index_TypingOp : Index_Op<"typing"> {
   let summary = "An instruction matcher the variant matches, to type by its signatures";
   let description = [{
-    Its flags, as for has_shape. `operand_types[i]` is the type pattern (see
-    Pattern/Bindings.h, its type variables numbered by their slots, as
-    mpir_index.type_var reads them) of the i-th unkeyed operand, or an empty
-    array;
+    Its flags, as for has_shape. `operand_types[i]` is the type pattern (its
+    type variables numbered by their slots, as mpir_index.type_var reads
+    them) of the i-th unkeyed operand, or `unit` if it has none;
     `value_operand[i]` whether that operand is one of the instruction's value
     operands.
   }];
   let arguments = (ins Mpir_OpcodeAttr:$opcode, I32Attr:$present,
-                       I32Attr:$absent, UnitAttr:$treat_int_as_vec, ArrayAttr:$operand_types,
+                       I32Attr:$absent, UnitAttr:$treat_int_as_vec,
+                       TypedArrayAttrBase<AnyAttrOf<[Mpir_TypePatternAttr, UnitAttr]>,
+                                          "type patterns or unit">:$operand_types,
                        DenseBoolArrayAttr:$value_operand);
   let assemblyFormat = "$opcode prop-dict attr-dict";
 }

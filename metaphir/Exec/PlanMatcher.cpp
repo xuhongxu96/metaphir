@@ -124,12 +124,12 @@ private:
       ++NumRegisters;
     return It->second;
   }
-  unsigned typeNode(mlir::ArrayAttr Pattern);
+  unsigned typeNode(mpir::TypePatternAttr Pattern);
   void op(mlir::Operation &Op);
 };
 } // namespace
 
-unsigned ProgramBuilder::typeNode(mlir::ArrayAttr Pattern) {
+unsigned ProgramBuilder::typeNode(mpir::TypePatternAttr Pattern) {
   return Types.add(Pattern);
 }
 
