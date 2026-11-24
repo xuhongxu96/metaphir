@@ -115,10 +115,18 @@ private:
   mlir::IntegerAttr i32(int64_t V) { return Builder.getI32IntegerAttr(V); }
 
   void assignSlots();
-  unsigned slotOf(Value V) const {
+  /// The slot of V, if it has one.
+  std::optional<unsigned> findSlot(Value V) const {
     auto It = S.Assigned.Of.find(V);
-    assert(It != S.Assigned.Of.end() && "a value a match binds has a slot");
+    if (It == S.Assigned.Of.end())
+      return std::nullopt;
     return It->second;
+  }
+  /// The slot of V, a value a match binds.
+  unsigned slotOf(Value V) const {
+    std::optional<unsigned> Slot = findSlot(V);
+    assert(Slot && "a value a match binds has a slot");
+    return *Slot;
   }
 
   mlir::ArrayAttr typePattern(Value T);
@@ -245,8 +253,7 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
     return;
   }
   // Bound on some paths only: by its binding where it is bound.
-  auto Either =
-      plan::EitherOp::create(Builder, Loc, mlir::TypeRange(), /*count=*/2);
+  auto Either = plan::EitherOp::create(Builder, Loc, /*count=*/2);
   BoundState Before = Bound;
   {
     OpBuilder::InsertionGuard Guard(Builder);
@@ -256,7 +263,6 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
     // Compared with what is there; after the roots, nothing is.
     if (Reg)
       plan::BindOp::create(Builder, Loc, Reg, i32(Slot), mlir::IntegerAttr());
-    plan::YieldOp::create(Builder, Loc, mlir::ValueRange());
   }
   BoundState First = Bound;
   First.bind(Slot);
@@ -270,7 +276,6 @@ void Compiler::matchMatcher(Value V, Value Reg, function_ref<void()> Full) {
     // matches V again matches it in full instead of checking again.
     Bound.Maybe.erase(Slot);
     Full();
-    plan::YieldOp::create(Builder, Loc, mlir::ValueRange());
   }
   // Bound either way now; what else each path bound may differ.
   Bound = BoundState::join(First, Bound);
@@ -395,8 +400,7 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
     plan::FailOp::create(Builder, Loc);
     return;
   }
-  auto Either = plan::EitherOp::create(Builder, Loc, mlir::TypeRange(),
-                                       Alt->getNumRegions());
+  auto Either = plan::EitherOp::create(Builder, Loc, Alt->getNumRegions());
   BoundState Before = Bound;
   std::optional<BoundState> Joined;
   for (auto [Index, Region] : enumerate(Alt->getRegions())) {
@@ -409,8 +413,7 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
     matchValue(Yielded, Reg, /*TreatIntAsVec=*/false);
     // A value matched in place of the alternative (an operand, which has no
     // slot or one of its own) is the alternative's binding too.
-    auto YieldedSlot = S.Assigned.Of.find(Yielded);
-    if (YieldedSlot == S.Assigned.Of.end() || YieldedSlot->second != Slot)
+    if (findSlot(Yielded) != Slot)
       bind(Reg, Alt.getResult(), /*BySort=*/false);
     for (BindOp Bind : Block.getOps<BindOp>()) {
       if (auto Int = Bind.getValue().getDefiningOp<IntOp>()) {
@@ -424,7 +427,6 @@ void Compiler::matchAlternatives(AltOp Alt, Value Reg) {
     }
     SmallVector<Operation *, 4> Roots = getPatternRoots(Block);
     finishBlock(Block, Roots);
-    plan::YieldOp::create(Builder, Loc, mlir::ValueRange());
     Joined = Joined ? BoundState::join(*Joined, Bound) : Bound;
   }
   Bound = std::move(*Joined);

@@ -59,12 +59,6 @@ def Plan_MatcherOp : Plan_Op<"matcher", [IsolatedFromAbove, SingleBlock,
   let assemblyFormat = "prop-dict attr-dict-with-keyword $body";
 }
 
-def Plan_YieldOp : Plan_Op<"yield", [Terminator]> {
-  let summary = "Ends an alternative of mpir_plan.either with its results";
-  let arguments = (ins Variadic<Plan_RegType>:$values);
-  let assemblyFormat = "($values^ `:` type($values))? attr-dict";
-}
-
 //===----------------------------------------------------------------------===//
 // Choices
 //===----------------------------------------------------------------------===//
@@ -75,11 +69,15 @@ def Plan_ForeachInstructionOp : Plan_Op<"foreach_instruction"> {
   let assemblyFormat = "attr-dict";
 }
 
-def Plan_EitherOp : Plan_Op<"either", [RecursiveMemoryEffects]> {
+def Plan_EitherOp : Plan_Op<"either", [RecursiveMemoryEffects, SingleBlock,
+                                       NoTerminator]> {
   let summary = "Each alternative, in turn, then the rest of the path";
-  let results = (outs Variadic<Plan_RegType>:$results);
+  let description = [{
+    An alternative passes what it matches on through slots: a register it
+    defines is not used after it.
+  }];
   let regions = (region VariadicRegion<SizedRegion<1>>:$alternatives);
-  let assemblyFormat = "$alternatives attr-dict (`:` type($results)^)?";
+  let assemblyFormat = "$alternatives attr-dict";
 }
 
 //===----------------------------------------------------------------------===//

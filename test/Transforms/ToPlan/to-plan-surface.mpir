@@ -906,7 +906,6 @@
 ; CHECK:             %[[GET_TYPE_3:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
 ; CHECK:             mpir_plan.check_type %[[GET_TYPE_3]], [2, 0, 0]
 ; CHECK:             mpir_plan.bind %[[GET_OPERAND_3]] -> 3 <sort = 2>
-; CHECK:             mpir_plan.yield
 ; CHECK:           }, {
 ; CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <add>
 ; CHECK:             mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
@@ -929,7 +928,6 @@
 ; CHECK:             %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
 ; CHECK:             mpir_plan.check_type %[[GET_TYPE_7]], [2, 0, 0]
 ; CHECK:             mpir_plan.check_constant %[[GET_OPERAND_7]], 2 : ui2
-; CHECK:             mpir_plan.yield
 ; CHECK:           }
 ; CHECK:           %[[SLOT_0:.*]] = mpir_plan.slot 0 {var_name = "n"} : <Nat>
 ; CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[SLOT_0]] : (!mpir.sort<Nat>) -> !mpir.sort<Integer>

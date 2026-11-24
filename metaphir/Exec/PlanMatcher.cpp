@@ -146,8 +146,7 @@ void ProgramBuilder::op(mlir::Operation &Op) {
     S.K = K;
     Steps.push_back(std::move(S));
   };
-  if (isa<plan::YieldOp, plan::SlotOp>(Op) ||
-      isa<mpir_expr::ExprDialect>(Op.getDialect()))
+  if (isa<plan::SlotOp>(Op) || isa<mpir_expr::ExprDialect>(Op.getDialect()))
     return;
   if (auto Each = dyn_cast<plan::ForeachInstructionOp>(Op)) {
     S.Dst = reg(Each.getResult());
