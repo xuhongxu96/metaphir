@@ -18,10 +18,10 @@
 ; CHECK:           %[[FOREACH_INSTRUCTION_0:.*]] = mpir_plan.foreach_instruction
 ; CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
 ; CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
-; CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 0
-; CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 ; CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
 ; CHECK:           mpir_plan.bind %[[GET_KEYED_0]] -> 1
+; CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 0
+; CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 ; CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 ; CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
 ; CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]

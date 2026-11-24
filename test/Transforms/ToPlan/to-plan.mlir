@@ -896,9 +896,9 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 3
 // CHECK:           mpir_plan.check_flag %[[FOREACH_INSTRUCTION_0]][samesign] is true
-// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
 // CHECK:           mpir_plan.check_constant %[[GET_KEYED_0]], 16 : i32 <keyword>
+// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0]
@@ -910,9 +910,9 @@ mpir.pattern {
 // CHECK:           %[[FOREACH_INSTRUCTION_1:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_1]], <icmp>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_1]] -> 5
-// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 2
 // CHECK:           %[[GET_KEYED_1:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_1]][predicate]
 // CHECK:           mpir_plan.bind %[[GET_KEYED_1]] -> 4
+// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_1]], 2
 // CHECK:           %[[GET_OPERAND_2:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_1]][0]
 // CHECK:           %[[GET_TYPE_2:.*]] = mpir_plan.get_type %[[GET_OPERAND_2]]
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_2]], [1, 32, 0]
@@ -924,9 +924,9 @@ mpir.pattern {
 // CHECK:           %[[FOREACH_INSTRUCTION_2:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_2]], <fcmp>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_2]] -> 11
-// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 2
 // CHECK:           %[[GET_KEYED_2:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_2]][predicate]
 // CHECK:           mpir_plan.bind %[[GET_KEYED_2]] -> 8
+// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_2]], 2
 // CHECK:           %[[GET_OPERAND_4:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_2]][0]
 // CHECK:           %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_4]]
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_4]], [0, 3]
@@ -944,9 +944,9 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_6]], [1, 1, 0]
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_6]], <icmp>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_6]] -> 1
-// CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_6]], 2
 // CHECK:           %[[GET_KEYED_3:.*]] = mpir_plan.get_keyed %[[GET_OPERAND_6]][predicate]
 // CHECK:           mpir_plan.check_constant %[[GET_KEYED_3]], 20 : i32 <keyword>
+// CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_6]], 2
 // CHECK:           %[[GET_OPERAND_7:.*]] = mpir_plan.get_operand %[[GET_OPERAND_6]][0]
 // CHECK:           %[[GET_TYPE_7:.*]] = mpir_plan.get_type %[[GET_OPERAND_7]]
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_7]], [1, 32, 0]
@@ -974,9 +974,9 @@ mpir.pattern {
 // CHECK:           mpir_plan.check_opcode %[[GET_OPERAND_11]], <fcmp>
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_11]] -> 7
 // CHECK:           mpir_plan.check_flag %[[GET_OPERAND_11]][nnan] is true
-// CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_11]], 2
 // CHECK:           %[[GET_KEYED_4:.*]] = mpir_plan.get_keyed %[[GET_OPERAND_11]][predicate]
 // CHECK:           mpir_plan.check_constant %[[GET_KEYED_4]], 9 : i32 <keyword>
+// CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_11]], 2
 // CHECK:           %[[GET_OPERAND_12:.*]] = mpir_plan.get_operand %[[GET_OPERAND_11]][0]
 // CHECK:           %[[GET_TYPE_12:.*]] = mpir_plan.get_type %[[GET_OPERAND_12]]
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_12]], [0, 2]
@@ -1518,10 +1518,10 @@ mpir.pattern {
 // CHECK:           %[[FOREACH_INSTRUCTION_0:.*]] = mpir_plan.foreach_instruction
 // CHECK:           mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
 // CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 6
-// CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
-// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
 // CHECK:           mpir_plan.bind %[[GET_KEYED_0]] -> 5
+// CHECK:           mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
+// CHECK:           mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:           %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:           %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_0]], [2, 0, 0]
@@ -1683,9 +1683,9 @@ mpir.pattern {
 // CHECK:           mpir_plan.bind %[[GET_OPERAND_0]] -> 2
 // CHECK:           %[[GET_PARENT_BLOCK_1:.*]] = mpir_plan.get_parent_block %[[GET_OPERAND_0]]
 // CHECK:           mpir_plan.bind %[[GET_PARENT_BLOCK_1]] -> 0
-// CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[GET_OPERAND_0]][predicate]
 // CHECK:           mpir_plan.check_constant %[[GET_KEYED_0]], 16 : i32 <keyword>
+// CHECK:           mpir_plan.check_operand_count %[[GET_OPERAND_0]], 2
 // CHECK:           %[[GET_OPERAND_1:.*]] = mpir_plan.get_operand %[[GET_OPERAND_0]][0]
 // CHECK:           %[[GET_TYPE_1:.*]] = mpir_plan.get_type %[[GET_OPERAND_1]]
 // CHECK:           mpir_plan.check_type %[[GET_TYPE_1]], [1, 32, 0]
@@ -4182,9 +4182,9 @@ mpir.pattern {
 // CHECK:           mpir_plan.either {
 // CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
 // CHECK:             mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
-// CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_KEYED_0:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
 // CHECK:             mpir_plan.bind %[[GET_KEYED_0]] -> 2
+// CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_0:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_0:.*]] = mpir_plan.get_type %[[GET_OPERAND_0]]
 // CHECK:             mpir_plan.check_type %[[GET_TYPE_0]], [1, 32, 0] <treat_int_as_vec>
@@ -4205,9 +4205,9 @@ mpir.pattern {
 // CHECK:           }, {
 // CHECK:             mpir_plan.check_opcode %[[FOREACH_INSTRUCTION_0]], <icmp>
 // CHECK:             mpir_plan.bind %[[FOREACH_INSTRUCTION_0]] -> 4
-// CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_KEYED_1:.*]] = mpir_plan.get_keyed %[[FOREACH_INSTRUCTION_0]][predicate]
 // CHECK:             mpir_plan.bind %[[GET_KEYED_1]] -> 5
+// CHECK:             mpir_plan.check_operand_count %[[FOREACH_INSTRUCTION_0]], 2
 // CHECK:             %[[GET_OPERAND_3:.*]] = mpir_plan.get_operand %[[FOREACH_INSTRUCTION_0]][0]
 // CHECK:             %[[GET_TYPE_4:.*]] = mpir_plan.get_type %[[GET_OPERAND_3]]
 // CHECK:             mpir_plan.check_type %[[GET_TYPE_4]], [1, 32, 0] <treat_int_as_vec>

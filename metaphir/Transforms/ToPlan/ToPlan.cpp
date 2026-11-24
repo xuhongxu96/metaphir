@@ -134,10 +134,10 @@ private:
   /// Pattern.
   void checkType(Location Loc, Value Type, Value Pattern, bool TreatIntAsVec);
   /// What matchInstruction checks and binds of Reg, the instruction Inst
-  /// matches: its flags, its keyed integer operands, and its operand count,
-  /// predicate and operands.
+  /// matches: its flags, its keyed operands, and its operand count and
+  /// operands.
   void matchFlags(InstOp Inst, Value Reg);
-  void matchKeyedIntegers(ArrayRef<MatcherOperandView> Operands, Value Reg,
+  void matchKeyedOperands(ArrayRef<MatcherOperandView> Operands, Value Reg,
                           Location Loc);
   void matchOperands(ArrayRef<MatcherOperandView> Operands, Value Reg,
                      Location Loc, bool TreatIntAsVec);
@@ -305,20 +305,25 @@ void Compiler::matchFlags(InstOp Inst, Value Reg) {
   }
 }
 
-void Compiler::matchKeyedIntegers(ArrayRef<MatcherOperandView> Operands,
+void Compiler::matchKeyedOperands(ArrayRef<MatcherOperandView> Operands,
                                   Value Reg, Location Loc) {
-  // Every keyed operand but the predicate (see matchOperands), in the order
-  // they are written.
+  // In the order they are written; each is an integer, or a compare's
+  // predicate, a keyword.
   for (const MatcherOperandView &Op : Operands) {
-    if (!isKeyedOperand(Op.Kind) || Op.Kind == OperandKind::Predicate)
+    if (!isKeyedOperand(Op.Kind))
       continue;
     Value Got = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg, Op.Kind);
-    if (isVariable(Op.Val))
+    if (isVariable(Op.Val)) {
       bind(Got, Op.Val, /*BySort=*/false);
-    else
+    } else if (auto Keyword = Op.Val.getDefiningOp<KeywordOp>()) {
+      auto Check = plan::CheckConstantOp::create(
+          Builder, Loc, Got, Builder.getI32IntegerAttr(Keyword.getKeyword()));
+      Check.setKeyword(true);
+    } else {
       plan::CheckConstantOp::create(
           Builder, Loc, Got,
           cast<IntOp>(Op.Val.getDefiningOp()).getValueAttr());
+    }
   }
 }
 
@@ -333,22 +338,6 @@ void Compiler::matchOperands(ArrayRef<MatcherOperandView> Operands, Value Reg,
       Builder, Loc, Reg, i32(HasArray ? Values.size() - 1 : Values.size()));
   if (HasArray)
     Count.setAtLeast(true);
-  // A compare's predicate, of its operands in the order they are matched.
-  for (const MatcherOperandView &Op : Operands) {
-    if (Op.Kind != OperandKind::Predicate)
-      continue;
-    auto Predicate = plan::GetKeyedOp::create(Builder, Loc, reg(), Reg,
-                                              OperandKind::Predicate);
-    if (isVariable(Op.Val)) {
-      bind(Predicate, Op.Val, /*BySort=*/false);
-    } else {
-      auto Keyword = cast<KeywordOp>(Op.Val.getDefiningOp());
-      auto Check = plan::CheckConstantOp::create(
-          Builder, Loc, Predicate,
-          Builder.getI32IntegerAttr(Keyword.getKeyword()));
-      Check.setKeyword(true);
-    }
-  }
   for (auto [Index, Op] : enumerate(Values)) {
     Location OpLoc = Op->Val ? Op->Val.getLoc() : Loc;
     if (isArrayOperand(Op->Kind)) {
@@ -392,7 +381,7 @@ void Compiler::matchInstruction(InstOp Inst, Value Reg) {
     checkType(Loc, Type, Op.Type, TreatIntAsVec);
   }
   matchFlags(Inst, Reg);
-  matchKeyedIntegers(Operands, Reg, Loc);
+  matchKeyedOperands(Operands, Reg, Loc);
   if (Value Capture = Inst.getCapture())
     bind(Reg, Capture, /*BySort=*/false);
   matchOperands(Operands, Reg, Loc, TreatIntAsVec);
