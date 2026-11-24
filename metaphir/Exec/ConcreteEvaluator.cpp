@@ -9,26 +9,11 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace metaphir {
 
 using namespace detail;
-using mlir::Operation;
-
-std::string detail::describeVariable(mlir::Value V, StringRef Msg) {
-  std::string Str;
-  raw_string_ostream OS(Str);
-  if (Operation *Def = V.getDefiningOp())
-    if (auto Name =
-            Def->getAttrOfType<mlir::StringAttr>(mpir::ResultNameAttrName)) {
-      OS << "variable '%" << Name.getValue() << "' " << Msg;
-      return Str;
-    }
-  OS << "meta variable '?" << getMetaVariableName(V) << "' " << Msg;
-  return Str;
-}
 
 /// What a variable bound to Binding is when read as Read reads it: as
 /// detail::bindingValue reads it.

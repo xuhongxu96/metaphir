@@ -15,6 +15,7 @@
 
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
+#include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Exec/ConstraintDispatch.inc"
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/ConstraintError.h"
@@ -27,11 +28,6 @@
 
 namespace llvm {
 namespace metaphir {
-
-namespace detail {
-/// Say Msg of the variable V, under the name it is read by.
-std::string describeVariable(mlir::Value V, StringRef Msg);
-} // namespace detail
 
 /// Evaluates mpir_expr in Domain, which provides:
 ///
@@ -112,7 +108,7 @@ private:
     // parameters.
     if (F.Depth != 0)
       return make_error<detail::ConstraintEvaluationError>(
-          Read.getResult(), detail::describeVariable(V, "is not instantiated"));
+          Read.getResult(), describeVariable(V, "is not instantiated"));
     return D.read(Read);
   }
 

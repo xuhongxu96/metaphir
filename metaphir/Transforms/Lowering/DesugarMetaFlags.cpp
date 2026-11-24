@@ -195,7 +195,7 @@ Desugarer::lowerDefined(MetaFlagAttr Flag, MetaFlagDefOp Def, Value Subject) {
       continue;
     }
     return mlir::emitError(ReadLoc)
-           << "'?" << getMetaVariableName(Arg) << "' is bound to '"
+           << "'" << surfaceString(Arg) << "' is bound to '"
            << surfaceString(Subject) << "', which a constraint cannot refer to";
   }
   return Result;

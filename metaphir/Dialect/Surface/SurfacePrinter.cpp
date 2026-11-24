@@ -118,6 +118,14 @@ std::string surfaceString(mlir::Value V) {
   return Text;
 }
 
+std::string describeVariable(mlir::Value V, StringRef Msg) {
+  Operation *Def = V.getDefiningOp();
+  bool IsMeta = !Def || Def->hasAttr(mpir::VarNameAttrName);
+  return (Twine(IsMeta ? "meta variable '" : "variable '") + surfaceString(V) +
+          "' " + Msg)
+      .str();
+}
+
 void printSurfaceValue(raw_ostream &OS, mlir::Value V) {
   Operation *Def = V.getDefiningOp();
   if (!Def || Def->hasAttr(mpir::VarNameAttrName)) {

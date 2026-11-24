@@ -36,6 +36,10 @@ void printSurfaceValue(raw_ostream &OS, mlir::Value V);
 /// printSurfaceValue's text, for a diagnostic.
 std::string surfaceString(mlir::Value V);
 
+/// Say Msg of the pattern value V, as "meta variable '?x' Msg" or
+/// "variable '%a' Msg", for a diagnostic.
+std::string describeVariable(mlir::Value V, StringRef Msg);
+
 /// The name of a meta variable: an mpir.var, or a parameter of a definition
 /// or match branch. Empty for anything else.
 StringRef getMetaVariableName(mlir::Value V);
