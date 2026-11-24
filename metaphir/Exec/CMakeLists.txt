@@ -7,7 +7,8 @@ add_custom_target(MetaphIRExecTableGen DEPENDS
   "${CMAKE_CURRENT_BINARY_DIR}/KeywordConstantMatch.inc"
   "${CMAKE_CURRENT_BINARY_DIR}/PrimitiveTypeMatch.inc")
 
-add_library(metaphir-exec ExprEvaluator.cpp ExprEvaluator.h KeywordConstantMatch.h
+add_library(metaphir-exec ConcreteEvaluator.cpp ConcreteEvaluator.h ExprEvaluator.h
+                          KeywordConstantMatch.h
                           PrimitiveTypeMatch.h TypePattern.cpp
                           TypePattern.h IndexQuery.cpp IndexQuery.h
                           PlanMatcher.cpp PlanMatcher.h)

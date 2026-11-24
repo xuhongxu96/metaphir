@@ -145,7 +145,9 @@ private:
 
   Value reading(Value E);
   Value readingOfValue(Value E);
+  Value readingOfAnchor(Value Original, Location L);
   Value readingOfCall(mpir_expr::CallOp Call);
+  Value readingOfApply(mpir_expr::ApplyOp Apply);
   void name(Operation *Reading, Value Original);
 };
 
@@ -307,6 +309,8 @@ Value VariantEmitter::reading(Value E) {
     Result = readingOfValue(E);
   } else if (auto Call = dyn_cast<mpir_expr::CallOp>(Def)) {
     Result = readingOfCall(Call);
+  } else if (auto Apply = dyn_cast<mpir_expr::ApplyOp>(Def)) {
+    Result = readingOfApply(Apply);
   } else {
     // An expression never reaches an mpir.int: ExpandMatchers folds each
     // read of one (a parameter a use binds to a constant) into a literal.
@@ -340,21 +344,34 @@ Value VariantEmitter::readingOfValue(Value E) {
   return Reading->getResult(0);
 }
 
+Value VariantEmitter::readingOfAnchor(Value Original, Location L) {
+  // A value-tracking operator is anchored only at an instruction the variant
+  // matches.
+  if (Original)
+    if (InstOp Inst = instructionOf(canonical(Original), Choices))
+      if (Nodes.count(Inst))
+        return index::NodeOp::create(Builder, L, Original.getType(),
+                                     nodeOf(Inst));
+  return Value();
+}
+
 Value VariantEmitter::readingOfCall(mpir_expr::CallOp Call) {
   SmallVector<Value, 4> Args;
   for (Value A : Call.getArgs())
     Args.push_back(reading(A));
-  // A value-tracking operator is anchored only at an instruction the variant
-  // matches.
-  Value Anchor;
-  if (Value Original = Call.getAnchor())
-    if (InstOp Inst = instructionOf(canonical(Original), Choices))
-      if (Nodes.count(Inst))
-        Anchor = index::NodeOp::create(Builder, Call.getLoc(),
-                                       Original.getType(), nodeOf(Inst));
+  Value Anchor = readingOfAnchor(Call.getAnchor(), Call.getLoc());
   return mpir_expr::CallOp::create(Builder, Call.getLoc(), Call.getType(),
                                    Call.getOpAttr(), Call.getKindAttr(), Args,
                                    Anchor);
+}
+
+Value VariantEmitter::readingOfApply(mpir_expr::ApplyOp Apply) {
+  SmallVector<Value, 4> Args;
+  for (Value A : Apply.getArgs())
+    Args.push_back(reading(A));
+  Value Anchor = readingOfAnchor(Apply.getAnchor(), Apply.getLoc());
+  return mpir_expr::ApplyOp::create(Builder, Apply.getLoc(), Apply.getType(),
+                                    Apply.getCalleeAttr(), Args, Anchor);
 }
 
 void VariantEmitter::name(Operation *Reading, Value Original) {

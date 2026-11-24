@@ -1,7 +1,7 @@
 // RUN: %metaphir-opt %s | %metaphir-opt | FileCheck %s
 // The mpir_expr dialect's operations print as they parse: literals, arrays
 // and their elements, reads of pattern values, built-in operators of each
-// kind (with and without an anchor), and calls of definitions.
+// kind and calls of definitions, each with and without an anchor.
 
 mpir.constraint_def @isOne <param_names = ["v"]> {
 // CHECK-LABEL:   mpir.constraint_def @isOne <param_names = ["v"]> {
@@ -65,27 +65,31 @@ mpir.pattern {
 // CHECK:           %[[CALL_7:.*]] = mpir_expr.call call "isKnownNonZero"(%[[READ_0]], %[[READ_1]]) : (!mpir.sort<Value>, !mpir.sort<Value>) -> !mpir.sort<Boolean>
   %one = mpir_expr.apply @isOne(%rx) : (!mpir.sort<Value>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":66:1)
 // CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @isOne(%[[READ_0]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
-  %all = mpir_expr.call binary "&&"(%or, %one) : (!mpir.sort<Boolean>, !mpir.sort<Boolean>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":68:1)
+  %oneAt = mpir_expr.apply @isOne(%rx) anchor %i : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":68:1)
+// CHECK:           %[[APPLY_1:.*]] = mpir_expr.apply @isOne(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
+  mpir.require %oneAt : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":70:1)
+// CHECK:           mpir.require %[[APPLY_1]] : <Boolean>
+  %all = mpir_expr.call binary "&&"(%or, %one) : (!mpir.sort<Boolean>, !mpir.sort<Boolean>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":72:1)
 // CHECK:           %[[CALL_8:.*]] = mpir_expr.call binary "&&"(%[[CALL_4]], %[[APPLY_0]]) : (!mpir.sort<Boolean>, !mpir.sort<Boolean>) -> !mpir.sort<Boolean>
-  mpir.require %all : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":70:1)
+  mpir.require %all : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":74:1)
 // CHECK:           mpir.require %[[CALL_8]] : <Boolean>
-  mpir.require %zero : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":72:1)
+  mpir.require %zero : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":76:1)
 // CHECK:           mpir.require %[[CALL_6]] : <Boolean>
-  mpir.require %ctx : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":74:1)
+  mpir.require %ctx : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":78:1)
 // CHECK:           mpir.require %[[CALL_7]] : <Boolean>
-  mpir.require %ult : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":76:1)
+  mpir.require %ult : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":80:1)
 // CHECK:           mpir.require %[[CALL_5]] : <Boolean>
-  %eqs = mpir_expr.call binary "=="(%el, %s) : (!mpir.sort<String>, !mpir.sort<String>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":78:1)
+  %eqs = mpir_expr.call binary "=="(%el, %s) : (!mpir.sort<String>, !mpir.sort<String>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":82:1)
 // CHECK:           %[[CALL_9:.*]] = mpir_expr.call binary "=="(%[[INDEX_0]], %[[STR_0]]) : (!mpir.sort<String>, !mpir.sort<String>) -> !mpir.sort<Boolean>
-  mpir.require %eqs : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":80:1)
+  mpir.require %eqs : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":84:1)
 // CHECK:           mpir.require %[[CALL_9]] : <Boolean>
-  %m = mpir_expr.call binary "=="(%minus, %sub) : (!mpir.sort<Integer>, !mpir.sort<Integer>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":82:1)
+  %m = mpir_expr.call binary "=="(%minus, %sub) : (!mpir.sort<Integer>, !mpir.sort<Integer>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":86:1)
 // CHECK:           %[[CALL_10:.*]] = mpir_expr.call binary "=="(%[[CALL_1]], %[[CALL_2]]) : (!mpir.sort<Integer>, !mpir.sort<Integer>) -> !mpir.sort<Boolean>
-  mpir.require %m : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":84:1)
+  mpir.require %m : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":88:1)
 // CHECK:           mpir.require %[[CALL_10]] : <Boolean>
-  %n = mpir_expr.call binary "=="(%none, %arr) : (!mpir.sort<StringArray>, !mpir.sort<StringArray>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":86:1)
+  %n = mpir_expr.call binary "=="(%none, %arr) : (!mpir.sort<StringArray>, !mpir.sort<StringArray>) -> !mpir.sort<Boolean> loc("expr-roundtrip.mlir":90:1)
 // CHECK:           %[[CALL_11:.*]] = mpir_expr.call binary "=="(%[[ARRAY_1]], %[[ARRAY_0]]) : (!mpir.sort<StringArray>, !mpir.sort<StringArray>) -> !mpir.sort<Boolean>
-  mpir.require %n : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":88:1)
+  mpir.require %n : !mpir.sort<Boolean> loc("expr-roundtrip.mlir":92:1)
 // CHECK:           mpir.require %[[CALL_11]] : <Boolean>
-} loc("expr-roundtrip.mlir":90:1)
+} loc("expr-roundtrip.mlir":94:1)
 // CHECK:         }

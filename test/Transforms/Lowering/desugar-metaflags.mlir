@@ -442,7 +442,7 @@ mpir.pattern {
   %i_a = mpir.inst <add> (%0, %x, %0, %y) <result_name = "a", flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], operand_metaflags = [[#mpir.metaflag<"apInt", [], loc("desugar-metaflags.mlir":442:1)>], []]> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[INST_0:.*]] = mpir.inst <add> (%[[TYPE_0]], %[[VAR_0]], %[[TYPE_0]], %[[VAR_1]]) <flags = [], flag_modes = [], operand_kinds = [typed_value, typed_value], result_name = "a"> : (!mpir.sort<Type>, !mpir.sort<Operand>, !mpir.sort<Type>, !mpir.sort<Operand>) -> !mpir.sort<Instruction>
 // CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[VAR_0]] : (!mpir.sort<Operand>) -> !mpir.sort<Value>
-// CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @isAPInt(%[[READ_0]]) : (!mpir.sort<Value>) -> !mpir.sort<Boolean>
+// CHECK:           %[[APPLY_0:.*]] = mpir_expr.apply @isAPInt(%[[READ_0]]) anchor %[[INST_0]] : (!mpir.sort<Value>, !mpir.sort<Instruction>) -> !mpir.sort<Boolean>
 // CHECK:           mpir.require %[[APPLY_0]] <from_metaflag> : <Boolean>
 } loc("desugar-metaflags.mlir":447:1)
 // CHECK:         }

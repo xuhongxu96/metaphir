@@ -1,4 +1,5 @@
-//===- ExprEvaluatorTest.cpp - Evaluating mpir_expr on the IR ----------===//
+//===- ConcreteEvaluatorTest.cpp - Evaluating mpir_expr on the IR
+//-----------===//
 //
 // The constraint operators' semantics, as the evaluator of the mpir_expr
 // dialect computes them on what a match bound: expressions are built as
@@ -6,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Exec/ExprEvaluator.h"
+#include "metaphir/Exec/ConcreteEvaluator.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
@@ -41,7 +42,7 @@ using Value = mlir::Value;
 
 /// Builds expressions of the mpir_expr dialect, and evaluates them on the
 /// bindings of their slots.
-class ExprEvaluatorTest : public testing::Test {
+class ConcreteEvaluatorTest : public testing::Test {
 protected:
   /// A meta variable or an instruction matcher, a slot of the bindings.
   struct Var {
@@ -50,7 +51,7 @@ protected:
     bool IsInstruction = false;
   };
 
-  ExprEvaluatorTest()
+  ConcreteEvaluatorTest()
       : Builder(&Context),
         PlanModule(mlir::ModuleOp::create(mlir::UnknownLoc::get(&Context))) {
     Context.loadDialect<mpir::PatternDialect, mpir_expr::ExprDialect,
@@ -61,7 +62,7 @@ protected:
   mlir::MLIRContext Context;
   mlir::OpBuilder Builder;
   mlir::OwningOpRef<mlir::ModuleOp> PlanModule;
-  ExprEvaluator Evaluator;
+  ConcreteEvaluator Evaluator;
   std::vector<Binding> Slots;
 
   mlir::Location loc() { return Builder.getUnknownLoc(); }
@@ -112,7 +113,7 @@ protected:
       return mpir_expr::ApplyOp::create(
           Builder, loc(), sortType(Sort::Boolean),
           mlir::FlatSymbolRefAttr::get(&Context, Name),
-          SmallVector<Value, 4>(Arguments));
+          SmallVector<Value, 4>(Arguments), /*anchor=*/Value());
     return mpir_expr::CallOp::create(
         Builder, loc(), sortType(constraint::getOperatorSchema(ID)->Result),
         unsigned(ID), unsigned(Kind), SmallVector<Value, 4>(Arguments),
@@ -175,7 +176,7 @@ protected:
   bool evaluateBoolean(Value E) { return evaluate(E).getBoolean(); }
 };
 
-TEST_F(ExprEvaluatorTest, EvaluatesLiteralsAndVariables) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesLiteralsAndVariables) {
   Var Bits = var("bits", Sort::Nat);
   Var Flag = var("flag", Sort::Boolean);
   Value BitsExpression = read(Bits, Sort::Integer);
@@ -189,7 +190,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesLiteralsAndVariables) {
   EXPECT_TRUE(evaluateBoolean(FlagExpression));
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesArithmeticOperators) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesArithmeticOperators) {
   EXPECT_EQ(evaluateInteger(binary("+", integer(7), integer(5))), 12);
   EXPECT_EQ(evaluateInteger(binary("-", integer(7), integer(12))), -5);
   EXPECT_EQ(evaluateInteger(binary("*", integer(-3), integer(4))), -12);
@@ -202,7 +203,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesArithmeticOperators) {
   EXPECT_EQ(evaluateInteger(call("ashr", integer(-16), integer(2))), -4);
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesWideIntegersExactly) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesWideIntegersExactly) {
   APSInt Max64(APInt::getMaxValue(64), /*isUnsigned=*/true);
   Value Wide = integer(Max64);
   EXPECT_EQ(evaluate(Wide).getInteger(), Max64);
@@ -223,7 +224,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesWideIntegersExactly) {
             -128);
 }
 
-TEST_F(ExprEvaluatorTest, ReadsBitWidthResultsAsLLVMDoes) {
+TEST_F(ConcreteEvaluatorTest, ReadsBitWidthResultsAsLLVMDoes) {
   auto withWidth = [&](StringRef Name, int64_t L, int64_t R, int64_t W) {
     return operation(constraint::Call, Name,
                      {integer(L), integer(R), integer(W)});
@@ -247,7 +248,7 @@ TEST_F(ExprEvaluatorTest, ReadsBitWidthResultsAsLLVMDoes) {
   EXPECT_FALSE(evaluateBoolean(withWidth("eq", 1, 257, 16)));
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesBooleanAndEqualityOperators) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesBooleanAndEqualityOperators) {
   EXPECT_TRUE(evaluateBoolean(binary("||", boolean(false), boolean(true))));
   EXPECT_FALSE(evaluateBoolean(binary("&&", boolean(true), boolean(false))));
   EXPECT_TRUE(evaluateBoolean(unary("!", boolean(false))));
@@ -259,7 +260,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesBooleanAndEqualityOperators) {
   EXPECT_TRUE(evaluateBoolean(binary("==", boolean(true), integer(1))));
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesSignedAndUnsignedComparisons) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesSignedAndUnsignedComparisons) {
   EXPECT_TRUE(evaluateBoolean(call("slt", integer(-1), integer(1))));
   EXPECT_TRUE(evaluateBoolean(call("sle", integer(1), integer(1))));
   EXPECT_TRUE(evaluateBoolean(call("sgt", integer(2), integer(-1))));
@@ -270,13 +271,13 @@ TEST_F(ExprEvaluatorTest, EvaluatesSignedAndUnsignedComparisons) {
   EXPECT_TRUE(evaluateBoolean(call("uge", integer(3), integer(3))));
 }
 
-TEST_F(ExprEvaluatorTest, ShortCircuitsLogicalOperators) {
+TEST_F(ConcreteEvaluatorTest, ShortCircuitsLogicalOperators) {
   Value Unknown = operation(constraint::Call, "unknown", {integer(1)});
   EXPECT_TRUE(evaluateBoolean(binary("||", boolean(true), Unknown)));
   EXPECT_FALSE(evaluateBoolean(binary("&&", boolean(false), Unknown)));
 }
 
-TEST_F(ExprEvaluatorTest, AccessesTypeAndValueArrays) {
+TEST_F(ConcreteEvaluatorTest, AccessesTypeAndValueArrays) {
   LLVMContext LLVMContext;
   llvm::Type *I8 = llvm::Type::getInt8Ty(LLVMContext);
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
@@ -326,7 +327,7 @@ TEST_F(ExprEvaluatorTest, AccessesTypeAndValueArrays) {
             "i32");
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesIsaPredicates) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesIsaPredicates) {
   LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   auto Add = std::unique_ptr<BinaryOperator>(BinaryOperator::CreateAdd(
@@ -358,7 +359,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesIsaPredicates) {
             "unknown LLVM value class 'ImaginaryValue'");
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesUsePredicates) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesUsePredicates) {
   LLVMContext LLVMContext;
   SMDiagnostic Error;
   std::unique_ptr<Module> M = parseAssemblyString(
@@ -401,7 +402,7 @@ public:
   SmallVector<const llvm::Value *, 2> Asked;
 };
 
-TEST_F(ExprEvaluatorTest, AsksUseOracleAboutConstants) {
+TEST_F(ConcreteEvaluatorTest, AsksUseOracleAboutConstants) {
   LLVMContext LLVMContext;
   SMDiagnostic Error;
   std::unique_ptr<Module> M = parseAssemblyString(
@@ -438,7 +439,7 @@ TEST_F(ExprEvaluatorTest, AsksUseOracleAboutConstants) {
 
 // Use counts come from the IR, except for values used across functions,
 // whose module only the oracle knows.
-TEST_F(ExprEvaluatorTest, CountsUsesWithTheUseOracle) {
+TEST_F(ConcreteEvaluatorTest, CountsUsesWithTheUseOracle) {
   LLVMContext LLVMContext;
   SMDiagnostic Error;
   std::unique_ptr<Module> M = parseAssemblyString(
@@ -481,7 +482,7 @@ TEST_F(ExprEvaluatorTest, CountsUsesWithTheUseOracle) {
   EXPECT_FALSE(evaluateBoolean(Uses("hasNUsesOrMore", GlobalExpr, 2)));
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesOpcodePredicates) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesOpcodePredicates) {
   LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   auto Add = std::unique_ptr<BinaryOperator>(BinaryOperator::CreateAdd(
@@ -512,7 +513,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesOpcodePredicates) {
             "instruction operand");
 }
 
-TEST_F(ExprEvaluatorTest, ConvertsSymbolicBindingsToStrings) {
+TEST_F(ConcreteEvaluatorTest, ConvertsSymbolicBindingsToStrings) {
   Var Predicate = var("predicate", Sort::CmpPredicate);
   Var IntrinsicVariable = var("intrinsic", Sort::IntrinsicID);
   Value PredicateExpression = read(Predicate, Sort::String);
@@ -528,7 +529,7 @@ TEST_F(ExprEvaluatorTest, ConvertsSymbolicBindingsToStrings) {
       evaluateBoolean(binary("==", IntrinsicExpression, string("llvm.abs"))));
 }
 
-TEST_F(ExprEvaluatorTest, ReportsEvaluationErrors) {
+TEST_F(ConcreteEvaluatorTest, ReportsEvaluationErrors) {
   Var Missing = var("missing", Sort::Nat);
   Value MissingExpression = read(Missing, Sort::Integer);
   Expected<ConstraintValue> MissingResult = evaluateResult(MissingExpression);
@@ -609,7 +610,7 @@ TEST_F(ExprEvaluatorTest, ReportsEvaluationErrors) {
             "out of range");
 }
 
-TEST_F(ExprEvaluatorTest, RejectsInvalidCoercionsAndComparisons) {
+TEST_F(ConcreteEvaluatorTest, RejectsInvalidCoercionsAndComparisons) {
   LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   Constant *One = ConstantInt::get(I32, 1);
@@ -658,7 +659,7 @@ TEST_F(ExprEvaluatorTest, RejectsInvalidCoercionsAndComparisons) {
             "is negative");
 }
 
-TEST_F(ExprEvaluatorTest, EvaluatesValueTrackingOperators) {
+TEST_F(ConcreteEvaluatorTest, EvaluatesValueTrackingOperators) {
   LLVMContext LLVMContext;
   Module Module("module", LLVMContext);
   llvm::Type *I8 = llvm::Type::getInt8Ty(LLVMContext);
@@ -794,7 +795,7 @@ TEST_F(ExprEvaluatorTest, EvaluatesValueTrackingOperators) {
             "an instruction context operand");
 }
 
-TEST_F(ExprEvaluatorTest, ResolvesDefaultValueTrackContext) {
+TEST_F(ConcreteEvaluatorTest, ResolvesDefaultValueTrackContext) {
   LLVMContext LLVMContext;
   Module Module("module", LLVMContext);
   llvm::Type *I8 = llvm::Type::getInt8Ty(LLVMContext);
@@ -840,7 +841,7 @@ TEST_F(ExprEvaluatorTest, ResolvesDefaultValueTrackContext) {
             "constraint after an instruction or pass ?ctx explicitly)");
 }
 
-TEST_F(ExprEvaluatorTest, ValueTrackContextBuildsLazily) {
+TEST_F(ConcreteEvaluatorTest, ValueTrackContextBuildsLazily) {
   LLVMContext LLVMContext;
   Module Module("module", LLVMContext);
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
@@ -865,7 +866,7 @@ TEST_F(ExprEvaluatorTest, ValueTrackContextBuildsLazily) {
 // The integer predicates answer false for an operand that is not an integer;
 // the failed coercion must be consumed (an unchecked llvm::Error aborts in
 // builds with LLVM_ENABLE_ABI_BREAKING_CHECKS).
-TEST_F(ExprEvaluatorTest, IntegerPredicatesRejectNonIntegers) {
+TEST_F(ConcreteEvaluatorTest, IntegerPredicatesRejectNonIntegers) {
   for (StringRef Name :
        {"isPower2", "isZero", "isAllOnes", "isLowBitMask", "isPower2OrZero",
         "isLowBitMaskOrZero", "isNegative", "isNonNegative",
@@ -878,7 +879,7 @@ TEST_F(ExprEvaluatorTest, IntegerPredicatesRejectNonIntegers) {
 // A variable's binding, read as each sort: a constant reads as its number or
 // truth value; predicates and intrinsics read as their names; a binding of
 // another kind is incompatible.
-TEST_F(ExprEvaluatorTest, ReadsBindingsAsTheirSort) {
+TEST_F(ConcreteEvaluatorTest, ReadsBindingsAsTheirSort) {
   llvm::LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   llvm::Constant *Seven = ConstantInt::get(I32, 7);
@@ -926,7 +927,7 @@ TEST_F(ExprEvaluatorTest, ReadsBindingsAsTheirSort) {
 }
 
 // A variable of unknown sort reads whatever its binding is, as its own kind.
-TEST_F(ExprEvaluatorTest, ReadsUnknownSortBindingsAsTheyAre) {
+TEST_F(ConcreteEvaluatorTest, ReadsUnknownSortBindingsAsTheyAre) {
   llvm::LLVMContext LLVMContext;
   llvm::Type *I32 = llvm::Type::getInt32Ty(LLVMContext);
   llvm::Constant *Seven = ConstantInt::get(I32, 7);
@@ -954,14 +955,14 @@ TEST_F(ExprEvaluatorTest, ReadsUnknownSortBindingsAsTheyAre) {
   EXPECT_FALSE(bool(readUnknown(Binding())));
 }
 
-TEST_F(ExprEvaluatorTest, BindsDefinitionParametersToArguments) {
+TEST_F(ConcreteEvaluatorTest, BindsDefinitionParametersToArguments) {
   define("isOne", [&](Value X) { return binary("==", X, integer(1)); });
 
   EXPECT_TRUE(evaluateBoolean(call("isOne", integer(1))));
   EXPECT_FALSE(evaluateBoolean(call("isOne", integer(2))));
 }
 
-TEST_F(ExprEvaluatorTest, RejectsDefinitionCallsNestedTooDeeply) {
+TEST_F(ConcreteEvaluatorTest, RejectsDefinitionCallsNestedTooDeeply) {
   define("loop", [&](Value X) { return call("loop", X); });
 
   Expected<ConstraintValue> Result = evaluateResult(call("loop", integer(1)));
@@ -971,7 +972,7 @@ TEST_F(ExprEvaluatorTest, RejectsDefinitionCallsNestedTooDeeply) {
             "are nested too deeply");
 }
 
-TEST_F(ExprEvaluatorTest, HidesTheCallersSlotsFromADefinition) {
+TEST_F(ConcreteEvaluatorTest, HidesTheCallersSlotsFromADefinition) {
   // A definition reads only its parameters: it is outside the plan whose
   // slots its caller reads.
   Var Bits = var("bits", Sort::Nat);
@@ -986,13 +987,13 @@ TEST_F(ExprEvaluatorTest, HidesTheCallersSlotsFromADefinition) {
             std::string::npos);
 }
 
-TEST_F(ExprEvaluatorTest, ReportsOperatorsWithoutDescriptors) {
+TEST_F(ConcreteEvaluatorTest, ReportsOperatorsWithoutDescriptors) {
   Expected<ConstraintValue> Result =
       evaluateResult(operation(constraint::Call, "isZero", {integer(0)}));
   consumeError(Result.takeError());
 }
 
-TEST_F(ExprEvaluatorTest, ReportsErrorsOfEveryPart) {
+TEST_F(ConcreteEvaluatorTest, ReportsErrorsOfEveryPart) {
   Var Missing = var("missing", Sort::Nat);
   Value Bad = read(Missing, Sort::Integer);
   Value BadArray = read(Missing, Sort::ValueArray);

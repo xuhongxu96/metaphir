@@ -24,7 +24,7 @@ class ConstraintOperator<string spelling> {
   list<string> ArgumentSorts = [];
   string RestSort = "Unknown";
   /// Whether it is backed by value tracking, which takes an optional trailing
-  /// context instruction: ExprEvaluator builds the SimplifyQuery, and
+  /// context instruction: ConcreteEvaluator builds the SimplifyQuery, and
   /// IndexQuery looks at the context's sites.
   bit ValueTracking = 0;
 }

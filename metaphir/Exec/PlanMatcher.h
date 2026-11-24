@@ -10,7 +10,7 @@
 #ifndef METAPHIR_EXEC_PLANMATCHER_H
 #define METAPHIR_EXEC_PLANMATCHER_H
 
-#include "metaphir/Exec/ExprEvaluator.h"
+#include "metaphir/Exec/ConcreteEvaluator.h"
 #include "metaphir/Exec/TypePattern.h"
 #include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/Binding.h"
@@ -138,7 +138,7 @@ public:
   explicit PlanMatcher(const PlanProgram &Program);
   ~PlanMatcher();
 
-  /// See ExprEvaluator::setUseOracle.
+  /// See ConcreteEvaluator::setUseOracle.
   void setUseOracle(UseOracle *Oracle) { Evaluator.setUseOracle(Oracle); }
 
   /// The matches of the plan in F, each once. If there are none, the
@@ -157,7 +157,7 @@ public:
 private:
   class Run;
   const PlanProgram &Program;
-  ExprEvaluator Evaluator;
+  ConcreteEvaluator Evaluator;
 };
 
 } // namespace metaphir

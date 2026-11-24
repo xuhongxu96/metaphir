@@ -18,8 +18,8 @@ namespace metaphir {
 /// Every operator is a descriptor struct, Op<ID> for its ID in
 /// ConstraintOperators.td, whose static concrete(const ConcreteCall &)
 /// computes its result on the IR. How operands are evaluated is up to the
-/// evaluators (ExprEvaluator, IndexQuery), so the descriptors only apply the
-/// operator.
+/// evaluators (ConcreteEvaluator, IndexQuery), so the descriptors only apply
+/// the operator.
 struct ConcreteCall {
   /// The evaluated operands, including an optional trailing bit width; a
   /// value-tracking operator's explicit context is not among them.

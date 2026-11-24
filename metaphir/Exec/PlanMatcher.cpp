@@ -514,7 +514,7 @@ static std::optional<Binding> toBinding(const ConstraintValue &V, Sort S) {
 
 class PlanMatcher::Run {
 public:
-  Run(const PlanProgram &Program, ExprEvaluator &Evaluator,
+  Run(const PlanProgram &Program, ConcreteEvaluator &Evaluator,
       const llvm::Function &F, bool Relaxed, bool Explaining)
       : P(Program), Evaluator(Evaluator), Relaxed(Relaxed),
         Explaining(Explaining), Registers(Program.NumRegisters),
@@ -534,7 +534,7 @@ public:
 private:
   using Step = PlanProgram::Step;
   const PlanProgram &P;
-  ExprEvaluator &Evaluator;
+  ConcreteEvaluator &Evaluator;
   bool Relaxed;
   bool Explaining;
   SmallVector<const llvm::Instruction *, 64> Instructions;

@@ -747,6 +747,32 @@ TEST_F(FeaturesTest, RequiresValueTrackingFacts) {
   EXPECT_TRUE(passes("unknown"));
 }
 
+// Value tracking in a constraint definition is anchored where it is called.
+TEST_F(FeaturesTest, AnchorsValueTrackingInDefinitionsAtTheirCall) {
+  parse(R"(
+    constraint isNeg(?v) {
+      isKnownNegative(?v)
+    }
+    %d = udiv i32 ?x, ?y
+    ;; isNeg(?y)
+  )",
+        R"(
+    define i32 @sign_bit(i32 %x, i32 %n) {
+      %y = or i32 %n, -2147483648
+      %d = udiv i32 %x, %y
+      ret i32 %d
+    }
+    define i32 @unknown(i32 %x, i32 %n) {
+      %d = udiv i32 %x, %n
+      ret i32 %d
+    }
+  )");
+  EXPECT_TRUE(matches(*M->getFunction("sign_bit")));
+  EXPECT_TRUE(passesWithValueFacts("sign_bit"));
+  EXPECT_FALSE(matches(*M->getFunction("unknown")));
+  EXPECT_FALSE(passesWithValueFacts("unknown"));
+}
+
 TEST_F(FeaturesTest, RequiresKnownZeroBits) {
   parse(R"(
     %r = add i32 ?x, ?y
@@ -951,6 +977,60 @@ TEST_F(FeaturesTest, BindsSwappedOperandTypes) {
   )");
   EXPECT_TRUE(matches(*M->getFunction("umax")));
   EXPECT_TRUE(passes("umax"));
+}
+
+// An error the IR evaluation certainly has propagates through a connective
+// the left side does not decide, as in the matcher: it is not read as false,
+// which '!' would turn into true.
+TEST_F(FeaturesTest, AnErrorTheLeftSideDoesNotDecidePrunes) {
+  parse(R"(
+    %r = add i?n ?x, ?y
+    ;; !(?n == 64 || udiv(1, 0) == 0)
+  )",
+        R"(
+    define i32 @add(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_FALSE(matches(*M->getFunction("add")));
+  EXPECT_FALSE(passes("add"));
+}
+
+// An array the index knows every element of is indexed as in the matcher.
+TEST_F(FeaturesTest, IndexesArraysOfKnownElements) {
+  parse(R"(
+    %r = add ?t ?x, ?y
+    %s = sub ?u ?x, ?y
+    ;; [?t, ?u][1] != ?u
+  )",
+        R"(
+    define i32 @f(i32 %x, i32 %y) {
+      %r = add i32 %x, %y
+      %s = sub i32 %x, %y
+      ret i32 %s
+    }
+  )");
+  EXPECT_FALSE(matches(*M->getFunction("f")));
+  EXPECT_FALSE(passes("f"));
+}
+
+// An element of an array literal is known to the index if it is, whether
+// the others are or not.
+TEST_F(FeaturesTest, IndexesArraysAtTheirKnownElements) {
+  parse(R"(
+    %r = add ?t ?x, ?y
+    ;; [opcode(?x), "sub"][1] == "add"
+  )",
+        R"(
+    define i32 @f(i32 %x, i32 %y) {
+      %m = mul i32 %x, %y
+      %r = add i32 %m, %y
+      ret i32 %r
+    }
+  )");
+  EXPECT_FALSE(matches(*M->getFunction("f")));
+  EXPECT_FALSE(passes("f"));
 }
 
 TEST_F(FeaturesTest, MergedFeaturesAdmitEveryFunction) {

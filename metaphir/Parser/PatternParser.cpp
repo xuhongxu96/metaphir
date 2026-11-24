@@ -294,8 +294,8 @@ private:
                              LocTy Loc);
   LogicalResult checkOperands(mpir_expr::CallOp Operator, StringRef Spelling);
   LogicalResult requireBooleanConstraint(Value C);
-  /// Anchors the value-tracking operators of C that have no context at the
-  /// instruction Anchor.
+  /// Anchors the value-tracking operators of C, and its calls of
+  /// definitions, that have no context at the instruction Anchor.
   void setDefaultContext(Value C, Value Anchor);
 
   // Definitions.
@@ -538,9 +538,14 @@ void Parser::setDefaultContext(Value C, Value Anchor) {
   Operation *Def = C.getDefiningOp();
   if (!Def || !isa<mpir_expr::ExprDialect>(Def->getDialect()))
     return;
+  auto SetAnchor = [&](auto Op) {
+    if (!Op.getAnchor() && Anchor)
+      Op.getAnchorMutable().assign(Anchor);
+  };
   if (auto Call = dyn_cast<mpir_expr::CallOp>(Def))
-    if (!Call.getAnchor() && Anchor)
-      Call.getAnchorMutable().assign(Anchor);
+    SetAnchor(Call);
+  else if (auto Apply = dyn_cast<mpir_expr::ApplyOp>(Def))
+    SetAnchor(Apply);
   if (isa<mpir_expr::ReadOp>(Def))
     return;
   for (Value Operand : Def->getOperands())
@@ -1921,7 +1926,7 @@ LogicalResult Parser::parseConstraintCall(Value &Result) {
     return ArityError(Arity, Arity);
   Result = mpir_expr::ApplyOp::create(
       Builder, loc(Loc), sortType(bodySort(Def.getBody().front())),
-      mlir::FlatSymbolRefAttr::get(Context, Name), Args);
+      mlir::FlatSymbolRefAttr::get(Context, Name), Args, /*anchor=*/Value());
   return success();
 }
 

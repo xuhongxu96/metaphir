@@ -31,8 +31,9 @@ using namespace mpir;
 // mpir-desugar-metaflags
 //===----------------------------------------------------------------------===//
 
-/// Anchors the value-tracking operators of the expression C that have none at
-/// Anchor, a matcher's result, as setDefaultContextInstruction does.
+/// Anchors the value-tracking operators of the expression C, and its calls of
+/// definitions, that have none at Anchor, a matcher's result, as
+/// setDefaultContextInstruction does.
 static void setDefaultAnchor(Value C, Value Anchor,
                              DenseSet<Operation *> &Visited) {
   assert(Anchor);
@@ -40,9 +41,14 @@ static void setDefaultAnchor(Value C, Value Anchor,
   if (!Def || !isa<mpir_expr::ExprDialect>(Def->getDialect()) ||
       !Visited.insert(Def).second)
     return;
+  auto SetAnchor = [&](auto Op) {
+    if (!Op.getAnchor())
+      Op.getAnchorMutable().assign(Anchor);
+  };
   if (auto Call = dyn_cast<mpir_expr::CallOp>(Def))
-    if (!Call.getAnchor())
-      Call.getAnchorMutable().assign(Anchor);
+    SetAnchor(Call);
+  else if (auto Apply = dyn_cast<mpir_expr::ApplyOp>(Def))
+    SetAnchor(Apply);
   if (isa<mpir_expr::ReadOp>(Def))
     return;
   for (Value Operand : Def->getOperands())

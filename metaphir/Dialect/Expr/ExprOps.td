@@ -103,11 +103,20 @@ def Expr_CallOp : Expr_Op<"call", [AttrSizedOperandSegments]> {
 }
 
 def Expr_ApplyOp : Expr_Op<"apply",
-                           [DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
+                           [AttrSizedOperandSegments,
+                            DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
   let summary = "A call of a 'constraint' definition";
-  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<Mpir_Term>:$args);
+  let description = [{
+    The value-tracking operators of the definition without an explicit
+    context argument are anchored at `anchor`, as if written in its place.
+  }];
+  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<Mpir_Term>:$args,
+                       Optional<Mpir_Term>:$anchor);
   let results = (outs Mpir_Term:$result);
-  let assemblyFormat = "$callee `(` $args `)` attr-dict `:` functional-type($args, $result)";
+  let assemblyFormat = [{
+    $callee `(` $args `)` (`anchor` $anchor^)? attr-dict
+    `:` functional-type(operands, $result)
+  }];
 }
 
 #endif // METAPHIR_DIALECT_EXPR_EXPROPS_TD

@@ -1,6 +1,7 @@
 #include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
+#include "metaphir/Exec/ConcreteEvaluator.h"
 #include "metaphir/Exec/ConstraintDispatch.inc"
 #include "metaphir/Exec/ExprEvaluator.h"
 #include "metaphir/Matching/ConstraintCoercion.h"
@@ -38,7 +39,7 @@ static bool isDerived(mlir::Operation &Op) {
 
 IndexQuery::IndexQuery(mpir_index::QueryOp Query)
     : TypeContext(std::make_unique<LLVMContext>()) {
-  ExprEvaluator Concrete;
+  ConcreteEvaluator Concrete;
   for (auto Retrieve : Query.getBody().front().getOps<mpir_index::RetrieveOp>())
     Retrieval = compileRetrieval(Retrieve);
   for (auto VariantOp :
@@ -284,72 +285,31 @@ IndexQuery::joinSignatures(const Variant &V,
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// Evaluates mpir_expr on a function's features, where a constraint is
-/// false only if no match in the function can satisfy it.
+/// The index's values: what a function's features say of a pattern value.
+/// A constraint is false only if no match in the function can satisfy it.
 ///
-/// Operators on concrete operands compute their result as on the IR; on
-/// others, they apply their abstract() faces, or are unknown. A concrete
-/// boolean B stands for "B, or an evaluation error": either rejects a match
-/// when B is false. An error is one the IR evaluation certainly has.
-class AbstractEvaluator {
+/// A leaf is a type the typing binds, the sites of an IR value, or unknown.
+/// An operator on known operands computes its result as on the IR; on
+/// others, it applies its abstract() face, or is unknown. A known boolean B
+/// stands for "B, or an evaluation error": either rejects a match when B is
+/// false.
+class AbstractDomain {
 public:
-  AbstractEvaluator(const FunctionFeatures &Features,
-                    const IndexQuery::Row &Types)
+  using Value = AbstractValue;
+  using Argument = AbstractValue;
+
+  AbstractDomain(const FunctionFeatures &Features, const IndexQuery::Row &Types)
       : Features(Features), Types(Types) {}
 
-  struct Frame {
-    DenseMap<mlir::Value, AbstractValue> Parameters;
-  };
-
-  Expected<AbstractValue> eval(mlir::Value E, Frame &F);
-
-private:
-  const FunctionFeatures &Features;
-  const IndexQuery::Row &Types;
-  unsigned CallDepth = 0;
-
-  Expected<SmallVector<AbstractValue, 2>> evalAll(mlir::ValueRange Values,
-                                                  Frame &F) {
-    SmallVector<AbstractValue, 2> Result;
-    for (mlir::Value V : Values) {
-      Expected<AbstractValue> Value = eval(V, F);
-      if (!Value)
-        return Value.takeError();
-      Result.push_back(std::move(*Value));
-    }
-    return Result;
-  }
-  static std::optional<SmallVector<ConstraintValue, 2>>
-  allConcrete(ArrayRef<AbstractValue> Operands) {
-    SmallVector<ConstraintValue, 2> Concrete;
-    for (const AbstractValue &Operand : Operands) {
-      if (!Operand.isConcrete())
-        return std::nullopt;
-      Concrete.push_back(Operand.getConcrete());
-    }
-    return Concrete;
-  }
-  Expected<AbstractValue> evalCall(mpir_expr::CallOp Call, Frame &F);
-  Expected<AbstractValue> evalApply(mpir_expr::ApplyOp Apply, Frame &F);
-};
-} // namespace
-
-Expected<AbstractValue> AbstractEvaluator::eval(mlir::Value E, Frame &F) {
-  Operation *Def = E.getDefiningOp();
-  auto Concrete = [](ConstraintValue V) {
+  Value lift(ConstraintValue V) const {
     return AbstractValue::concrete(std::move(V));
-  };
-  if (!Def) {
-    auto It = F.Parameters.find(E);
-    return It == F.Parameters.end() ? AbstractValue::unknown() : It->second;
   }
-  if (auto Int = dyn_cast<mpir_expr::IntOp>(Def))
-    return Concrete(ConstraintValue::getInteger(Int.getAPSInt()));
-  if (auto Bool = dyn_cast<mpir_expr::BoolOp>(Def))
-    return Concrete(ConstraintValue::getBoolean(Bool.getValue()));
-  if (auto Str = dyn_cast<mpir_expr::StrOp>(Def))
-    return Concrete(ConstraintValue::getString(Str.getValue()));
-  if (auto Read = dyn_cast<mpir_expr::ReadOp>(Def)) {
+  const ConstraintValue *known(const Value &V) const {
+    return V.isConcrete() ? &V.getConcrete() : nullptr;
+  }
+  Value unknown() const { return AbstractValue::unknown(); }
+
+  Expected<Value> read(mpir_expr::ReadOp Read) {
     mlir::Value V = Read.getValue();
     if (auto Sites = V.getDefiningOp<mpir_index::SitesOp>()) {
       ::llvm::metaphir::Sites Of;
@@ -361,193 +321,79 @@ Expected<AbstractValue> AbstractEvaluator::eval(mlir::Value E, Frame &F) {
       unsigned Slot = Var.getSlot();
       if (Slot < Types.size() &&
           !std::holds_alternative<std::monostate>(Types[Slot].Data)) {
-        Expected<ConstraintValue> Value = readBinding(E, Types[Slot]);
-        if (!Value)
-          return Value.takeError();
-        return Concrete(std::move(*Value));
+        Expected<ConstraintValue> Type = readBinding(Read, Types[Slot]);
+        if (!Type)
+          return Type.takeError();
+        return lift(std::move(*Type));
       }
-      return AbstractValue::unknown();
-    }
-    if (isa<mlir::BlockArgument>(V)) {
-      auto It = F.Parameters.find(V);
-      if (It != F.Parameters.end())
-        return It->second;
     }
     // Whatever the IR binds it to is not known here.
-    return AbstractValue::unknown();
+    return unknown();
   }
-  if (auto Array = dyn_cast<mpir_expr::ArrayOp>(Def)) {
-    Expected<SmallVector<AbstractValue, 2>> Elements =
-        evalAll(Array.getElements(), F);
-    if (!Elements)
-      return Elements.takeError();
-    std::optional<SmallVector<ConstraintValue, 2>> Values =
-        allConcrete(*Elements);
-    if (!Values)
-      return AbstractValue::unknown();
-    switch (cast<mpir::SortType>(Array.getType()).getSort()) {
-    case Sort::TypeArray: {
-      Binding::TypeArray Types;
-      for (const ConstraintValue &V : *Values)
-        Types.push_back(V.getType());
-      return Concrete(ConstraintValue::getTypeArray(std::move(Types)));
-    }
-    case Sort::ValueArray: {
-      Binding::ValueArray Vals;
-      for (const ConstraintValue &V : *Values)
-        Vals.push_back(V.getValue());
-      return Concrete(ConstraintValue::getValueArray(std::move(Vals)));
-    }
-    default: {
-      ConstraintValue::StringArrayStorage Strings;
-      for (const ConstraintValue &V : *Values) {
-        Expected<std::string> S = requireString(V, Array.getResult());
-        if (!S)
-          return S.takeError();
-        Strings.push_back(std::move(*S));
-      }
-      return Concrete(ConstraintValue::getStringArray(std::move(Strings)));
-    }
-    }
+
+  Expected<Argument> pass(Value V, mlir::Value) { return V; }
+  Expected<Value> readArgument(mpir_expr::ReadOp, const Argument &A) {
+    return A;
   }
-  if (isa<mpir_expr::IndexOp>(Def))
-    // Arrays of the IR are not known here; literals rarely are indexed.
-    return AbstractValue::unknown();
-  if (auto Call = dyn_cast<mpir_expr::CallOp>(Def))
-    return evalCall(Call, F);
-  if (auto Apply = dyn_cast<mpir_expr::ApplyOp>(Def))
-    return evalApply(Apply, F);
-  return AbstractValue::unknown();
-}
 
-Expected<AbstractValue> AbstractEvaluator::evalApply(mpir_expr::ApplyOp Apply,
-                                                     Frame &F) {
-  mlir::Value Expression = Apply.getResult();
-  auto Def = mlir::SymbolTable::lookupNearestSymbolFrom<mpir::ConstraintDefOp>(
-      Apply, Apply.getCalleeAttr());
-  if (!Def)
-    return make_error<ConstraintEvaluationError>(
-        Expression, Twine("unknown operator '") + Apply.getCallee() + "'");
-  if (CallDepth == 256)
-    return make_error<ConstraintEvaluationError>(
-        Expression, "user-defined constraints are nested too deeply");
-  mlir::Block &Body = Def.getBody().front();
-  Frame Callee;
-  for (auto [Index, Arg] : enumerate(Apply.getArgs())) {
-    Expected<AbstractValue> Value = eval(Arg, F);
-    if (!Value)
-      return Value.takeError();
-    Callee.Parameters.insert_or_assign(Body.getArgument(Index),
-                                       std::move(*Value));
-  }
-  mlir::Value Result = (*Body.getOps<mpir::YieldOp>().begin()).getValue();
-  ++CallDepth;
-  Expected<AbstractValue> Value = eval(Result, Callee);
-  --CallDepth;
-  return Value;
-}
-
-Expected<AbstractValue> AbstractEvaluator::evalCall(mpir_expr::CallOp Call,
-                                                    Frame &F) {
-  mlir::Value Expression = Call.getResult();
-  mlir::OperandRange Arguments = Call.getArgs();
-  auto Boolean = [](bool B) {
-    return AbstractValue::concrete(ConstraintValue::getBoolean(B));
-  };
-
-  auto Logical = [&](bool IsOr) -> Expected<AbstractValue> {
-    Expected<AbstractValue> Left = eval(Arguments[0], F);
-    if (!Left)
-      return Left.takeError();
-    if (Left->isConcrete()) {
-      Expected<bool> Value = requireBoolean(Left->getConcrete(), Expression);
-      if (!Value)
-        return Value.takeError();
-      if (*Value == IsOr)
-        return Boolean(*Value);
-    }
-    // The right side: true, false (an error, which rejects, too), or
-    // unknown.
-    Expected<AbstractValue> Right = eval(Arguments[1], F);
-    std::optional<bool> RightValue;
-    if (!Right) {
-      consumeError(Right.takeError());
-      RightValue = false;
-    } else if (Right->isConcrete()) {
-      Expected<bool> Value = requireBoolean(Right->getConcrete(), Expression);
-      if (Value) {
-        RightValue = *Value;
-      } else {
-        consumeError(Value.takeError());
-        RightValue = false;
-      }
-    }
-    if (Left->isConcrete())
-      return RightValue ? Boolean(*RightValue) : AbstractValue::unknown();
-    if (RightValue && *RightValue == IsOr)
-      return Boolean(*RightValue);
-    return AbstractValue::unknown();
-  };
-
-  auto Builtin = [&](auto Descriptor) -> Expected<AbstractValue> {
-    using Op = decltype(Descriptor);
-    if constexpr (Op::ShortCircuits) {
-      return Logical(Call.getOperatorID() == constraint::O_LogicalOr);
-    } else {
-      Expected<SmallVector<AbstractValue, 2>> Operands = evalAll(Arguments, F);
-      if (!Operands)
-        return Operands.takeError();
-      if (std::optional<SmallVector<ConstraintValue, 2>> Concrete =
-              allConcrete(*Operands)) {
-        Expected<ConstraintValue> Result = Op::concrete(
-            ConcreteCall{*Concrete, Expression, [](const llvm::Value &) {
-                           return std::optional<ModuleUses>();
-                         }});
-        if (!Result)
-          return Result.takeError();
-        return AbstractValue::concrete(std::move(*Result));
-      }
-      if constexpr (detail::HasAbstract<Op>::value)
-        return Op::abstract(AbstractCall{*Operands, Expression, Features});
-      return AbstractValue::unknown();
-    }
-  };
-
-  auto ValueTrack = [&](auto Descriptor,
-                        unsigned BaseArity) -> Expected<AbstractValue> {
-    using Op = decltype(Descriptor);
-    Expected<SmallVector<AbstractValue, 2>> Operands =
-        evalAll(Arguments.take_front(BaseArity), F);
-    if (!Operands)
-      return Operands.takeError();
-    int64_t Context = -1;
-    if (Arguments.size() > BaseArity) {
-      Expected<AbstractValue> Explicit = eval(Arguments[BaseArity], F);
-      if (!Explicit)
-        return Explicit.takeError();
-    } else if (mlir::Value Anchor = Call.getAnchor()) {
-      if (auto Node = Anchor.getDefiningOp<mpir_index::NodeOp>())
-        Context = Node.getNode();
+  template <class Op>
+  Expected<Value> apply(ArrayRef<Value> Operands, mpir_expr::CallOp Call) {
+    mlir::Value Expression = Call.getResult();
+    if (std::optional<SmallVector<ConstraintValue, 2>> Known =
+            allKnown(Operands)) {
+      // No operand is an IR value here, so how one is used is not asked.
+      Expected<ConstraintValue> Result = Op::concrete(
+          ConcreteCall{*Known, Expression, [](const llvm::Value &) {
+                         return std::optional<ModuleUses>();
+                       }});
+      if (!Result)
+        return Result.takeError();
+      return lift(std::move(*Result));
     }
     if constexpr (detail::HasAbstract<Op>::value)
-      if (Context >= 0)
-        return Op::abstract(
-            AbstractCall{*Operands, Expression, Features, Context});
-    return AbstractValue::unknown();
-  };
+      return Op::abstract(AbstractCall{Operands, Expression, Features});
+    return unknown();
+  }
 
-  return visitOperator<Expected<AbstractValue>>(
-      Call.getOperatorID(), Builtin, ValueTrack,
-      []() -> Expected<AbstractValue> { return AbstractValue::unknown(); });
-}
+  /// Apply a value-tracking operator at the node its anchor is; an explicit
+  /// context is no node the index knows.
+  template <class Op>
+  Expected<Value>
+  applyValueTracking(ArrayRef<Value> Operands, mpir_expr::CallOp Call,
+                     const Value *Explicit, mlir::Value Anchor) {
+    if constexpr (detail::HasAbstract<Op>::value) {
+      if (!Explicit && Anchor)
+        if (auto Node = Anchor.getDefiningOp<mpir_index::NodeOp>())
+          return Op::abstract(AbstractCall{Operands, Call.getResult(), Features,
+                                           int64_t(Node.getNode())});
+    }
+    return unknown();
+  }
+
+private:
+  static std::optional<SmallVector<ConstraintValue, 2>>
+  allKnown(ArrayRef<Value> Operands) {
+    SmallVector<ConstraintValue, 2> Known;
+    for (const Value &Operand : Operands) {
+      if (!Operand.isConcrete())
+        return std::nullopt;
+      Known.push_back(Operand.getConcrete());
+    }
+    return Known;
+  }
+
+  const FunctionFeatures &Features;
+  const IndexQuery::Row &Types;
+};
+} // namespace
 
 bool IndexQuery::constraintsMayHold(const Variant &V,
                                     const FunctionFeatures &Features,
                                     const Row &Types) const {
-  AbstractEvaluator Evaluator(Features, Types);
+  AbstractDomain Domain(Features, Types);
+  ExprEvaluator<AbstractDomain> Evaluator(Domain);
   for (mlir::Value C : V.Constraints) {
-    AbstractEvaluator::Frame F;
-    Expected<AbstractValue> Result = Evaluator.eval(C, F);
+    Expected<AbstractValue> Result = Evaluator.evaluate(C);
     // An error rejects every match, as on the IR.
     if (!Result) {
       consumeError(Result.takeError());
