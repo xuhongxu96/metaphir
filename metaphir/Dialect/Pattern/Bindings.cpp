@@ -80,10 +80,7 @@ TypePatternAttr mpir::encodeTypePattern(Value T, const SlotAssignment &Slots,
                : IntWidthTypePatternAttr::get(Context, Width);
   }
   if (auto Ptr = dyn_cast<PtrTypeOp>(Def)) {
-    std::optional<unsigned> Space;
-    if (std::optional<uint32_t> Written = Ptr.getAddressSpace())
-      Space = *Written;
-    return PtrTypePatternAttr::get(Context, Space,
+    return PtrTypePatternAttr::get(Context, Ptr.getAddressSpace(),
                                    Ptr.getElement() ? Nested(Ptr.getElement())
                                                     : TypePatternAttr());
   }

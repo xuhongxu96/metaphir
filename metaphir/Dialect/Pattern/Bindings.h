@@ -18,7 +18,6 @@
 #define METAPHIR_DIALECT_PATTERN_BINDINGS_H
 
 #include "metaphir/Dialect/Pattern/PatternDialect.h"
-#include "mlir/IR/Builders.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 
