@@ -103,7 +103,9 @@ public:
                  ModuleSlotTracker *Slots,
                  const SourceMgr *Source = nullptr) const;
 
-  bool operator==(const PlanMatch &Other) const;
+  bool operator==(const PlanMatch &Other) const {
+    return Bindings == Other.Bindings;
+  }
 
 private:
   const PlanProgram *Program;

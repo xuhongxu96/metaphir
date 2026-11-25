@@ -1,4 +1,4 @@
-//===- PlanMatcher.Match.cpp - Print the matches of match plans -----------===//
+//===- PlanMatcher.Print.cpp - Print matches and conflicts ----------------===//
 //===----------------------------------------------------------------------===//
 
 #include "metaphir/Exec/PlanMatcher.h"
@@ -92,10 +92,6 @@ void PlanMatch::printLine(raw_ostream &OS, StringRef Module,
     printInstructions(OS, *Source);
   }
   OS << '\n';
-}
-
-bool PlanMatch::operator==(const PlanMatch &Other) const {
-  return Bindings == Other.Bindings;
 }
 
 void PlanConflict::print(raw_ostream &OS, ModuleSlotTracker *Slots) const {
