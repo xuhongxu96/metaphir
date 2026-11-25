@@ -12,6 +12,7 @@
 
 #include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Exec/PlanProgram.h"
+#include "metaphir/Index/Retrieval.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/OwningOpRef.h"
@@ -40,6 +41,8 @@ struct CompiledPattern {
   mlir::OwningOpRef<mlir::ModuleOp> Module;
   std::unique_ptr<PlanProgram> Program;
   std::unique_ptr<IndexQuery> Query;
+  /// How an index finds the functions the query may admit.
+  RetrievalPlan Retrieval;
 
   /// Another IndexQuery of the module's query, as Query, for another thread.
   std::unique_ptr<IndexQuery> makeQuery() const;

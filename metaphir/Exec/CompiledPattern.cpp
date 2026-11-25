@@ -1,6 +1,7 @@
 #include "metaphir/Exec/CompiledPattern.h"
 #include "metaphir/Dialect/Index/IndexDialect.h"
 #include "metaphir/Dialect/Plan/PlanDialect.h"
+#include "metaphir/Exec/RetrievalCompiler.h"
 #include "metaphir/Parser/PatternParser.h"
 #include "metaphir/Transforms/Lowering/Lowering.h"
 #include "metaphir/Transforms/ToIndex/Passes.h"
@@ -49,9 +50,16 @@ CompiledPattern::compile(std::unique_ptr<MemoryBuffer> Buffer, raw_ostream &Err,
   }
   for (auto Plan : Compiled->Module->getOps<mpir_plan::MatcherOp>())
     Compiled->Program = PlanProgram::compile(Plan);
-  for (auto Query : Compiled->Module->getOps<mpir_index::QueryOp>())
+  bool HasRetrieval = false;
+  for (auto Query : Compiled->Module->getOps<mpir_index::QueryOp>()) {
     Compiled->Query = std::make_unique<IndexQuery>(Query);
-  if (!Compiled->Program || !Compiled->Query) {
+    for (auto Retrieve :
+         Query.getBody().front().getOps<mpir_index::RetrieveOp>()) {
+      Compiled->Retrieval = compileRetrieval(Retrieve);
+      HasRetrieval = true;
+    }
+  }
+  if (!Compiled->Program || !Compiled->Query || !HasRetrieval) {
     if (ProgName)
       Err << ProgName << ": ";
     Err << "error: the pattern has no instructions\n";

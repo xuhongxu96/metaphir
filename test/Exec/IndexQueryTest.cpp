@@ -73,7 +73,7 @@ protected:
       return It->second;
     };
     std::optional<std::vector<uint32_t>> Found =
-        cantFail(Query->getRetrieval()->evaluate(
+        cantFail(Compiled->Retrieval.evaluate(
             [&](const PostingKey &Key) -> uint64_t { return List(Key).size(); },
             [&](const PostingKey &Key) -> Expected<ArrayRef<uint32_t>> {
               return List(Key);
@@ -94,7 +94,6 @@ protected:
   // Every function with a match must pass the filter, with or without
   // value-tracking facts, and be retrieved.
   void expectSound() {
-    ASSERT_NE(Query->getRetrieval(), nullptr);
     std::vector<std::string> Retrieved = retrieved();
     for (const Function &F : *M) {
       if (F.isDeclaration() || !matches(F))

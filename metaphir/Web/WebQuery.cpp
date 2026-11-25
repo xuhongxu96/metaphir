@@ -62,8 +62,7 @@ std::vector<ByteRange> WebQuery::getKeyRanges() const {
   std::vector<ByteRange> Ranges;
   if (Mode == WebQueryMode::NoIndex)
     return Ranges;
-  for (const PostingKey &Key :
-       Pattern->Pattern->Query->getRetrieval()->getKeys())
+  for (const PostingKey &Key : Pattern->Pattern->Retrieval.getKeys())
     if (std::optional<ByteRange> Block = Index.getKeyBlock(Key))
       Ranges.push_back(*Block);
   return mergeRanges(std::move(Ranges));
@@ -72,7 +71,7 @@ std::vector<ByteRange> WebQuery::getKeyRanges() const {
 Expected<std::vector<ByteRange>> WebQuery::findLists(const ByteCache &Cache) {
   if (Mode == WebQueryMode::NoIndex)
     return std::vector<ByteRange>();
-  const RetrievalPlan &Plan = *Pattern->Pattern->Query->getRetrieval();
+  const RetrievalPlan &Plan = Pattern->Pattern->Retrieval;
   std::map<PostingKey, std::optional<WebPosting>> Postings;
   for (const PostingKey &Key : Plan.getKeys()) {
     Expected<std::optional<WebPosting>> Found = Index.findPosting(Key, Cache);
@@ -130,7 +129,7 @@ WebQuery::findCandidates(const ByteCache &Cache) {
   for (const ChosenList &List : Lists)
     Counts[List.Key] = List.Count;
   Expected<std::optional<std::vector<uint32_t>>> Found =
-      Pattern->Pattern->Query->getRetrieval()->evaluate(
+      Pattern->Pattern->Retrieval.evaluate(
           [&](const PostingKey &Key) -> uint64_t {
             auto It = Counts.find(Key);
             return It == Counts.end() ? 0 : It->second;

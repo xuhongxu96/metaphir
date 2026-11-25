@@ -778,11 +778,8 @@ int main(int Argc, char **Argv) {
   }
   std::optional<IndexUse> Use;
   if (Index) {
-    // The pipeline always plans the query's retrieval.
-    const RetrievalPlan *Retrieval = Pattern->filter().getRetrieval();
-    assert(Retrieval && "the index query has no retrieval");
     Expected<std::optional<std::vector<FunctionLocation>>> Found =
-        Index->findCandidates(*Retrieval);
+        Index->findCandidates(Pattern->Compiled->Retrieval);
     if (!Found) {
       logAllUnhandledErrors(Found.takeError(), errs(),
                             Twine(ToolName) + ": error: ");

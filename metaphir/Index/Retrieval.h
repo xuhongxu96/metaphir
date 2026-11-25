@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Error.h"
 #include <optional>
+#include <variant>
 #include <vector>
 
 namespace llvm {
@@ -23,13 +24,23 @@ namespace metaphir {
 
 class RetrievalPlan {
 public:
-  enum class Kind : uint8_t { Postings, Intersect, Union, Universe };
-  struct Node {
-    Kind K;
-    PostingKey Key{PostingKey::Instruction, 0};
-    SmallVector<unsigned, 4> Children;
+  /// The functions in a posting list.
+  struct Postings {
+    PostingKey Key;
   };
+  /// The functions in every one of Sets, the nodes it is of.
+  struct Intersect {
+    SmallVector<unsigned, 4> Sets;
+  };
+  /// The functions in any of Sets, the nodes it is of.
+  struct Union {
+    SmallVector<unsigned, 4> Sets;
+  };
+  /// Every function.
+  struct Universe {};
+  using Node = std::variant<Postings, Intersect, Union, Universe>;
 
+  /// Adds N, whose sets are nodes added before it; returns its index.
   unsigned add(Node N) {
     Nodes.push_back(std::move(N));
     return Nodes.size() - 1;
@@ -55,15 +66,35 @@ public:
   chooseLists(function_ref<uint64_t(const PostingKey &)> Count) const;
 
 private:
-  Expected<std::optional<std::vector<uint32_t>>>
-  eval(unsigned Index, function_ref<uint64_t(const PostingKey &)> Count,
-       function_ref<Expected<ArrayRef<uint32_t>>(const PostingKey &)> List)
-      const;
+  using Set = std::optional<std::vector<uint32_t>>;
+  using CountFn = function_ref<uint64_t(const PostingKey &)>;
+  using ListFn = function_ref<Expected<ArrayRef<uint32_t>>(const PostingKey &)>;
+
+  /// The sets of I that evaluating reads: its shortest few posting lists,
+  /// then every other set; std::nullopt if one of its lists is empty, so it
+  /// is too.
+  std::optional<SmallVector<unsigned, 4>> readSets(const Intersect &I,
+                                                   CountFn Count) const;
+
+  Expected<Set> eval(unsigned Index, CountFn Count, ListFn List) const;
+  Expected<Set> eval(const Postings &P, CountFn Count, ListFn List) const;
+  Expected<Set> eval(const Intersect &I, CountFn Count, ListFn List) const;
+  Expected<Set> eval(const Union &U, CountFn Count, ListFn List) const;
+  Expected<Set> eval(const Universe &, CountFn, ListFn) const { return Set(); }
 
   /// Adds the lists node Index reads to Keys; returns false if it is every
   /// function.
-  bool choose(unsigned Index, function_ref<uint64_t(const PostingKey &)> Count,
+  bool choose(unsigned Index, CountFn Count,
               SmallVectorImpl<PostingKey> &Keys) const;
+  bool choose(const Postings &P, CountFn Count,
+              SmallVectorImpl<PostingKey> &Keys) const;
+  bool choose(const Intersect &I, CountFn Count,
+              SmallVectorImpl<PostingKey> &Keys) const;
+  bool choose(const Union &U, CountFn Count,
+              SmallVectorImpl<PostingKey> &Keys) const;
+  bool choose(const Universe &, CountFn, SmallVectorImpl<PostingKey> &) const {
+    return false;
+  }
 
   std::vector<Node> Nodes;
   unsigned Root = 0;
