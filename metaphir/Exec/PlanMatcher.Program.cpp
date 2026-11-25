@@ -48,6 +48,7 @@ void PlanProgram::Builder::either(plan::EitherOp EitherOp) {
   // The either goes before its alternatives, which say what it is: hold its
   // place until they are laid out, then put it there whole.
   unsigned Index = Program.Steps.size();
+  // emit a placeholder that will be replaced by the Either step
   emit(std::monostate());
   plan_step::Either EitherStep;
   for (mlir::Region &Alternative : EitherOp->getRegions()) {
@@ -56,7 +57,7 @@ void PlanProgram::Builder::either(plan::EitherOp EitherOp) {
     EitherStep.Alternatives.push_back({Begin, unsigned(Program.Steps.size())});
   }
   EitherStep.After = Program.Steps.size();
-  Program.Steps[Index] = std::move(EitherStep);
+  Program.Steps[Index] = std::move(EitherStep); // replace the placeholder
 }
 
 void PlanProgram::Builder::op(mlir::Operation &Op) {

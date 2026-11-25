@@ -138,7 +138,7 @@ public:
       Instructions.push_back(&I);
   }
 
-  void run() { exec(0, P.Steps.size()); }
+  void run() { exec(0, P.Steps.size(), NoContinuation); }
 
   std::vector<PlanMatch> Matches;
   SmallVector<PlanRejection, 4> Rejections;
@@ -160,7 +160,14 @@ private:
   /// The constraints of the path so far, to evaluate at emit.
   SmallVector<Constraint, 8> Constraints;
   SmallVector<PlanConflict, 2> Conflicts;
-  SmallVector<std::pair<unsigned, unsigned>, 8> Continuations;
+  /// Where a path goes on once an alternative's range ends: the steps
+  /// [PC, End), then the continuation Parent.
+  struct ContinuationRange {
+    unsigned PC, End, Parent;
+  };
+  static constexpr unsigned NoContinuation = ~0u;
+  /// The continuations of the eithers being run, innermost last.
+  SmallVector<ContinuationRange, 8> Continuations;
   DenseMap<const llvm::Instruction *, SmallVector<const llvm::Value *, 4>>
       Operands;
 
@@ -216,11 +223,13 @@ private:
     return It->second;
   }
 
-  /// Runs the steps [PC, End), then the rest of the path.
-  void exec(unsigned PC, unsigned End);
+  /// Runs the steps [PC, End), then the continuation Continuation.
+  void exec(unsigned PC, unsigned End, unsigned Continuation);
   /// Runs the rest of the path, from the step after PC, once per choice.
-  void choose(const plan_step::Foreach &S, unsigned PC, unsigned End);
-  void choose(const plan_step::Either &S, unsigned PC, unsigned End);
+  void choose(const plan_step::Foreach &S, unsigned PC, unsigned End,
+              unsigned Continuation);
+  void choose(const plan_step::Either &S, unsigned PC, unsigned End,
+              unsigned Continuation);
   /// Whether the path goes on after a step that is not a choice.
   bool step(const plan_step::GetOperand &S);
   bool step(const plan_step::GetOperandsFrom &S);
@@ -480,49 +489,56 @@ bool PlanMatcher::Run::step(const Emit &) {
   return true;
 }
 
-void PlanMatcher::Run::choose(const Foreach &S, unsigned PC, unsigned End) {
+void PlanMatcher::Run::choose(const Foreach &S, unsigned PC, unsigned End,
+                              unsigned Continuation) {
   for (const llvm::Instruction *I : Instructions) {
     Registers[S.Result] = Binding(static_cast<const llvm::Value *>(I));
     Mark M = mark();
-    exec(PC + 1, End);
+    exec(PC + 1, End, Continuation);
     undo(M);
   }
 }
 
-void PlanMatcher::Run::choose(const Either &S, unsigned PC, unsigned End) {
-  Continuations.push_back({S.After, End});
+void PlanMatcher::Run::choose(const Either &S, unsigned PC, unsigned End,
+                              unsigned Continuation) {
+  // Each alternative goes on after the either, then where the either does.
+  Continuations.push_back({S.After, End, Continuation});
+  unsigned After = Continuations.size() - 1;
   for (auto [Begin, AlternativeEnd] : S.Alternatives) {
     Mark M = mark();
-    exec(Begin, AlternativeEnd);
+    exec(Begin, AlternativeEnd, After);
     undo(M);
   }
   Continuations.pop_back();
 }
 
-void PlanMatcher::Run::exec(unsigned PC, unsigned End) {
-  for (; PC != End; ++PC) {
-    bool GoesOn = std::visit(
-        [&](const auto &S) {
-          using Kind = std::decay_t<decltype(S)>;
-          if constexpr (std::is_same_v<Kind, Foreach> ||
-                        std::is_same_v<Kind, Either>) {
-            // A choice runs the rest of the path itself.
-            choose(S, PC, End);
-            return false;
-          } else {
-            return step(S);
-          }
-        },
-        P.Steps[PC]);
-    if (!GoesOn)
+void PlanMatcher::Run::exec(unsigned PC, unsigned End, unsigned Continuation) {
+  for (;;) {
+    for (; PC != End; ++PC) {
+      bool GoesOn = std::visit(
+          [&](const auto &S) {
+            using Kind = std::decay_t<decltype(S)>;
+            if constexpr (std::is_same_v<Kind, Foreach> ||
+                          std::is_same_v<Kind, Either>) {
+              // A choice runs the rest of the path itself.
+              choose(S, PC, End, Continuation);
+              return false;
+            } else {
+              return step(S);
+            }
+          },
+          P.Steps[PC]);
+      if (!GoesOn)
+        return;
+    }
+    if (Continuation == NoContinuation)
       return;
+    // The path goes on after the either it was an alternative of.
+    ContinuationRange C = Continuations[Continuation];
+    PC = C.PC;
+    End = C.End;
+    Continuation = C.Parent;
   }
-  // The path goes on after the either it was an alternative of.
-  if (Continuations.empty())
-    return;
-  std::pair<unsigned, unsigned> Next = Continuations.pop_back_val();
-  exec(Next.first, Next.second);
-  Continuations.push_back(Next);
 }
 
 void PlanMatcher::Run::emit() {
