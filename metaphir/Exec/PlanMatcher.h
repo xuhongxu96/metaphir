@@ -10,11 +10,15 @@
 #ifndef METAPHIR_EXEC_PLANMATCHER_H
 #define METAPHIR_EXEC_PLANMATCHER_H
 
+#include "metaphir/Dialect/Pattern/PatternDialect.h"
 #include "metaphir/Exec/ConcreteEvaluator.h"
+#include "metaphir/IR/Instruction.h"
 #include "metaphir/IR/Sort.h"
 #include "metaphir/Matching/Binding.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/Value.h"
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SMLoc.h"
@@ -49,21 +53,77 @@ struct SlotInfo {
   SMLoc Loc;
 };
 
-/// A plan compiled to steps (see PlanMatcher.cpp).
+/// A plan compiled to steps (see PlanMatcher.Program.cpp).
 class PlanProgram {
 public:
   /// Compiles Matcher, which must outlive the program: its constraints are
   /// evaluated from its expressions.
   static std::unique_ptr<PlanProgram> compile(mpir_plan::MatcherOp Matcher);
-  ~PlanProgram();
 
   ArrayRef<SlotInfo> getSlots() const { return Slots; }
 
-  struct Step;
+  /// One step of the program (see PlanMatcher.Program.cpp for how they are laid
+  /// out).
+  struct Step {
+    enum Kind : uint8_t {
+      Foreach,
+      Either,
+      GetOperand,
+      GetOperandsFrom,
+      GetType,
+      GetParentBlock,
+      GetFlag,
+      GetKeyed,
+      GetElement,
+      CheckOpcode,
+      CheckFlag,
+      CheckOperandCount,
+      CheckType,
+      CheckInteger,
+      CheckFloat,
+      CheckKeyword,
+      CheckGlobal,
+      CheckAggregate,
+      CheckBound,
+      Fail,
+      Bind,
+      BindConstant,
+      Check,
+      Let,
+      Emit,
+    };
+    Kind K;
+    int32_t Dst = -1;
+    int32_t Src = -1;
+    int32_t A = 0;
+    int32_t B = 0;
+    /// A flag of the step: present, at least, types, of an operand, bound,
+    /// treat integers as vectors.
+    bool Flag = false;
+    /// Bind: whether to bind by sort, A being the slot and B the sort.
+    bool BySort = false;
+    /// Either: its alternatives, Regions[A, A + B), and where the path goes on.
+    unsigned After = 0;
+    instruction::InstructionID Opcode = instruction::InstructionID(0);
+    std::optional<APSInt> Integer;
+    std::optional<APFloat> Float;
+    std::string Name;
+    /// CheckType: the pattern.
+    mpir::TypePatternAttr Type;
+    /// Check and Let: the condition, its source range, and whether a
+    /// metaflag says it. Let: A is the slot, Assigned the expression to bind it
+    /// to, and Condition what has to hold if it is bound already.
+    mlir::Value Condition;
+    mlir::Value Assigned;
+    SMRange Range;
+    bool FromMetaflag = false;
+  };
 
 private:
   friend class PlanMatcher;
-  PlanProgram();
+  /// Fills a program in from a plan (see PlanMatcher.Program.cpp).
+  class Builder;
+  PlanProgram() = default;
 
   std::vector<SlotInfo> Slots;
   std::vector<Step> Steps;
