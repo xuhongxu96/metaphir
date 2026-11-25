@@ -74,6 +74,11 @@ public:
   /// Sorted, unique hashes of the globals that are operands of instructions.
   SmallVector<uint64_t, 4> Globals;
 
+  // A fact or measure key: the instruction matcher from bit 14, the
+  // position in bits 12-13, and the rest below.
+  static_assert(ResultPosition < 4,
+                "a fact or measure key has two bits for the position");
+
   /// The key of fact A at a site.
   static uint32_t getFactKey(instruction::InstructionID ID, unsigned Position,
                              Atom A) {
