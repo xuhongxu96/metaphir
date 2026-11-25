@@ -193,16 +193,16 @@ IndexQuery::joinSignatures(const Variant &V,
   SmallVector<TypeBindings, 4> Joined(1, TypeBindings(NumVars));
   bool Overflowed = false;
   for (const Typing &T : V.Typings) {
-    SmallVector<TypeBindings, 4> Each = BindingsOf(T);
-    if (Each.empty())
+    SmallVector<TypeBindings, 4> BindingChoices = BindingsOf(T);
+    if (BindingChoices.empty())
       return {};
-    if (Overflowed || Each.size() > MaxTypings) {
+    if (Overflowed || BindingChoices.size() > MaxTypings) {
       Overflowed = true;
       continue;
     }
     SmallVector<TypeBindings, 4> Next;
-    for (const TypeBindings &Partial : Joined)
-      for (const TypeBindings &Bindings : Each) {
+    for (const TypeBindings &Partial : Joined) {
+      for (const TypeBindings &Bindings : BindingChoices) {
         TypeBindings Merged = Partial;
         Merged.resize(std::max(Merged.size(), Bindings.size()));
         bool Agrees = true;
@@ -219,6 +219,7 @@ IndexQuery::joinSignatures(const Variant &V,
         if (Agrees && !is_contained(Next, Merged))
           Next.push_back(std::move(Merged));
       }
+    }
     if (Next.empty())
       return {};
     if (Next.size() > MaxTypings)
