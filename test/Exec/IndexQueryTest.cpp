@@ -1,5 +1,6 @@
 #include "metaphir/Exec/IndexQuery.h"
 #include "metaphir/Exec/CompiledPattern.h"
+#include "metaphir/Exec/PlanMatcher.h"
 #include "metaphir/Index/Postings.h"
 #include "metaphir/Matching/Features.h"
 #include "test/TestUtils.h"

@@ -12,7 +12,7 @@ add_library(metaphir-exec ConcreteEvaluator.cpp ConcreteEvaluator.h ExprEvaluato
                           PrimitiveTypeMatch.h TypePattern.cpp
                           TypePattern.h IndexQuery.cpp IndexQuery.h
                           PlanMatcher.cpp PlanMatcher.h
-                          PlanMatcher.Print.cpp PlanMatcher.Program.cpp
+                          PlanMatcher.Print.cpp PlanProgram.cpp PlanProgram.h
                           PlanStep.h)
 add_dependencies(metaphir-exec MetaphIRExecTableGen MetaphIRPatternOpsIncGen MetaphIRExprOpsIncGen
                  MetaphIRPlanOpsIncGen MetaphIRIndexOpsIncGen)

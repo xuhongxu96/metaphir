@@ -1,7 +1,7 @@
 //===- PlanStep.h - The steps of a compiled match plan ----------*- C++ -*-===//
 //
 // A plan compiled to a flat program is a sequence of steps, one per plan
-// operation (see PlanMatcher.Program.cpp). Each kind of step is a struct of
+// operation (see PlanProgram.cpp). Each kind of step is a struct of
 // its own, naming what it reads and writes. Registers hold what a get step
 // reads from the IR for later steps; slots hold the plan's bindings.
 //

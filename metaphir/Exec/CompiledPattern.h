@@ -11,7 +11,7 @@
 #define METAPHIR_EXEC_COMPILEDPATTERN_H
 
 #include "metaphir/Exec/IndexQuery.h"
-#include "metaphir/Exec/PlanMatcher.h"
+#include "metaphir/Exec/PlanProgram.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/OwningOpRef.h"

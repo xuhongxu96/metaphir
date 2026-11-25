@@ -132,13 +132,13 @@ public:
   Run(const PlanProgram &Program, ConcreteEvaluator &Evaluator,
       const llvm::Function &F, bool FindingConflicts, bool Explaining)
       : P(Program), Evaluator(Evaluator), FindingConflicts(FindingConflicts),
-        Explaining(Explaining), Registers(Program.NumRegisters),
-        Slots(Program.Slots.size()) {
+        Explaining(Explaining), Registers(Program.getNumRegisters()),
+        Slots(Program.getSlots().size()) {
     for (const llvm::Instruction &I : instructions(F))
       Instructions.push_back(&I);
   }
 
-  void run() { exec(0, P.Steps.size(), NoContinuation); }
+  void run() { exec(0, P.getSteps().size(), NoContinuation); }
 
   std::vector<PlanMatch> Matches;
   SmallVector<PlanRejection, 4> Rejections;
@@ -199,9 +199,9 @@ private:
     }
     if (Slots[Slot] == Target)
       return true;
-    if (!FindingConflicts || P.Slots[Slot].IsInstruction)
+    if (!FindingConflicts || P.getSlots()[Slot].IsInstruction)
       return false;
-    const std::string &Name = P.Slots[Slot].Name;
+    const std::string &Name = P.getSlots()[Slot].Name;
     if (none_of(Conflicts, [&](const PlanConflict &C) {
           return C.Variable == Name && C.First == Slots[Slot] &&
                  C.Second == Target;
@@ -528,7 +528,7 @@ void PlanMatcher::Run::exec(unsigned PC, unsigned End, unsigned Continuation) {
               return step(S);
             }
           },
-          P.Steps[PC]);
+          P.getSteps()[PC]);
       if (!GoesOn)
         return;
     }
@@ -604,11 +604,11 @@ void PlanMatcher::Run::emit() {
     if (!Result)
       return Result.takeError();
     std::optional<Binding> Target =
-        toBinding(*Result, P.Slots[L->Slot].VariableSort);
+        toBinding(*Result, P.getSlots()[L->Slot].VariableSort);
     if (!Target)
       return make_error<detail::ConstraintEvaluationError>(
           L->Assigned,
-          "'" + P.Slots[L->Slot].Name + "' cannot be bound to this value");
+          "'" + P.getSlots()[L->Slot].Name + "' cannot be bound to this value");
     return unify(L->Slot, *Target);
   };
   bool Satisfies = true;

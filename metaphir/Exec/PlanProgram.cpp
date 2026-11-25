@@ -1,4 +1,4 @@
-//===- PlanMatcher.Program.cpp - Compile match plans to steps -------------===//
+//===- PlanProgram.cpp - Compile match plans to steps ---------------------===//
 //
 // A plan's steps are laid out in order, each either's alternatives after it:
 //
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "metaphir/Exec/PlanMatcher.h"
+#include "metaphir/Exec/PlanProgram.h"
 
 #include "metaphir/Dialect/Expr/ExprDialect.h"
 #include "metaphir/Dialect/Pattern/SourceLocation.h"

@@ -2,6 +2,7 @@
 #include "metaphir/Dialect/Pattern/SourceLocation.h"
 #include "metaphir/Dialect/Surface/SurfacePrinter.h"
 #include "metaphir/Exec/CompiledPattern.h"
+#include "metaphir/Exec/PlanMatcher.h"
 #include "metaphir/Index/FeatureCoding.h"
 #include "metaphir/Index/FunctionPack.h"
 #include "llvm/ADT/STLExtras.h"

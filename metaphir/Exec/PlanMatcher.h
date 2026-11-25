@@ -1,9 +1,8 @@
 //===- PlanMatcher.h - Run match plans on LLVM IR ---------------*- C++ -*-===//
 //
-// A match plan (an mpir_plan.matcher) compiled to a flat program, and the
-// interpreter that runs it on a function: it follows each path of the plan,
-// backtracking at its choices, and keeps the paths that reach emit and
-// satisfy the plan's constraints.
+// The interpreter that runs a compiled match plan (see PlanProgram.h) on a
+// function: it follows each path of the plan, backtracking at its choices,
+// and keeps the paths that reach emit and satisfy the plan's constraints.
 //
 //===----------------------------------------------------------------------===//
 
@@ -11,8 +10,7 @@
 #define METAPHIR_EXEC_PLANMATCHER_H
 
 #include "metaphir/Exec/ConcreteEvaluator.h"
-#include "metaphir/Exec/PlanStep.h"
-#include "metaphir/IR/Sort.h"
+#include "metaphir/Exec/PlanProgram.h"
 #include "metaphir/Matching/Binding.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/Value.h"
@@ -32,45 +30,6 @@ class Function;
 class ModuleSlotTracker;
 class SourceMgr;
 namespace metaphir {
-
-namespace mpir_plan {
-class MatcherOp;
-} // namespace mpir_plan
-
-/// What a slot of a plan is: a meta variable or an instruction matcher, its
-/// name, and its location.
-struct SlotInfo {
-  std::string Name;
-  bool IsInstruction = false;
-  /// For a meta variable, its sort.
-  Sort VariableSort = Sort::Unknown;
-  /// The start of the slot in the pattern. A slot from an inlined matcher
-  /// body is located at the outermost use of the matcher, so the slots of
-  /// different uses get different locations.
-  SMLoc Loc;
-};
-
-/// A plan compiled to steps (see PlanMatcher.Program.cpp).
-class PlanProgram {
-public:
-  /// Compiles Matcher, which must outlive the program: its constraints are
-  /// evaluated from its expressions.
-  static std::unique_ptr<PlanProgram> compile(mpir_plan::MatcherOp Matcher);
-
-  ArrayRef<SlotInfo> getSlots() const { return Slots; }
-
-  using Step = plan_step::Step;
-
-private:
-  friend class PlanMatcher;
-  /// Fills a program in from a plan (see PlanMatcher.Program.cpp).
-  class Builder;
-  PlanProgram() = default;
-
-  std::vector<SlotInfo> Slots;
-  std::vector<Step> Steps;
-  unsigned NumRegisters = 0;
-};
 
 /// A match: the bindings of a plan's slots.
 class PlanMatch {
