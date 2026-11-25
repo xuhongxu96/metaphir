@@ -14,8 +14,9 @@ add_public_tablegen_target(MetaphIRPlanOpsIncGen)
 
 add_library(metaphir-dialect-plan PlanDialect.cpp PlanDialect.h)
 add_dependencies(metaphir-dialect-plan MetaphIRPlanOpsIncGen
-                 MetaphIRPatternOpsIncGen)
-target_link_libraries(metaphir-dialect-plan PUBLIC metaphir-dialect-pattern)
+                 MetaphIRPatternOpsIncGen MetaphIRExprOpsIncGen)
+target_link_libraries(metaphir-dialect-plan PUBLIC metaphir-dialect-pattern
+                                                   metaphir-dialect-expr)
 # The generated op definitions call the builders they deprecate.
 target_compile_options(metaphir-dialect-plan
                        PRIVATE -Wno-error=deprecated-declarations

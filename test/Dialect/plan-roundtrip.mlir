@@ -107,7 +107,15 @@ mpir_plan.matcher <slot_names = ["x", "%r", "t", "blk"], slot_kinds = [variable,
 // CHECK:           mpir_plan.check %[[CALL_0]] : <Boolean>
   mpir_plan.check %z <from_metaflag> : !mpir.sort<Boolean> loc("plan-roundtrip.mlir":108:1)
 // CHECK:           mpir_plan.check %[[CALL_0]] <from_metaflag> : <Boolean>
-  mpir_plan.emit loc("plan-roundtrip.mlir":110:1)
+  %b3 = mpir_plan.slot 3 : !mpir.sort<Boolean> loc("plan-roundtrip.mlir":110:1)
+// CHECK:           %[[SLOT_1:.*]] = mpir_plan.slot 3 : <Boolean>
+  %r3 = mpir_expr.read %b3 : (!mpir.sort<Boolean>) -> !mpir.sort<Boolean> loc("plan-roundtrip.mlir":112:1)
+// CHECK:           %[[READ_0:.*]] = mpir_expr.read %[[SLOT_1]] : (!mpir.sort<Boolean>) -> !mpir.sort<Boolean>
+  %same = mpir_expr.call binary "=="(%r3, %z) : (!mpir.sort<Boolean>, !mpir.sort<Boolean>) -> !mpir.sort<Boolean> loc("plan-roundtrip.mlir":114:1)
+// CHECK:           %[[CALL_1:.*]] = mpir_expr.call binary "=="(%[[READ_0]], %[[CALL_0]]) : (!mpir.sort<Boolean>, !mpir.sort<Boolean>) -> !mpir.sort<Boolean>
+  mpir_plan.let 3, %z, %same : !mpir.sort<Boolean>, !mpir.sort<Boolean> loc("plan-roundtrip.mlir":116:1)
+// CHECK:           mpir_plan.let 3, %[[CALL_0]], %[[CALL_1]] : <Boolean>, <Boolean>
+  mpir_plan.emit loc("plan-roundtrip.mlir":118:1)
 // CHECK:           mpir_plan.emit
-} loc("plan-roundtrip.mlir":112:1)
+} loc("plan-roundtrip.mlir":120:1)
 // CHECK:         }

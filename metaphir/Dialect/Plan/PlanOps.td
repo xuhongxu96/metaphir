@@ -251,6 +251,7 @@ def Plan_LetOp : Plan_Op<"let"> {
   let arguments = (ins I32Attr:$slot, Mpir_Term:$value, Mpir_Term:$condition);
   let assemblyFormat =
       "$slot `,` $value `,` $condition attr-dict `:` type($value) `,` type($condition)";
+  let hasVerifier = 1;
 }
 
 def Plan_SlotOp : Plan_Op<"slot", [Pure]> {
