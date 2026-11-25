@@ -334,7 +334,7 @@ Error WebQuery::match(uint32_t Function, StringRef Frame, unsigned PackIndex,
         R.Function = ("@" + F.getName()).str();
         raw_string_ostream Message(R.Constraint.Message);
         printSurfaceExpression(Message, U.Expression);
-        SMLoc Loc = U.Written.Start;
+        SMLoc Loc = U.Range.Start;
         const SourceMgr &SM = Pattern->Pattern->Source;
         if (getMainFileLine(SM, Loc))
           std::tie(R.Constraint.Line, R.Constraint.Column) =

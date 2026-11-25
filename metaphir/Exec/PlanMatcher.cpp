@@ -90,12 +90,12 @@ struct PlanProgram::Step {
   std::string Name;
   /// CheckType: the pattern.
   mpir::TypePatternAttr Type;
-  /// Check and Let: the condition, where it is written, and whether a
+  /// Check and Let: the condition, its source range, and whether a
   /// metaflag says it. Let: A is the slot, Assigned the expression to bind it
   /// to, and Condition what has to hold if it is bound already.
   mlir::Value Condition;
   mlir::Value Assigned;
-  SMRange Written;
+  SMRange Range;
   bool FromMetaflag = false;
 };
 
@@ -274,7 +274,7 @@ void ProgramBuilder::op(mlir::Operation &Op) {
   }
   if (auto Check = dyn_cast<plan::CheckOp>(Op)) {
     S.Condition = Check.getCondition();
-    S.Written = getSourceRange(Check.getLoc());
+    S.Range = getSourceRange(Check.getLoc());
     S.FromMetaflag = Check.getFromMetaflag();
     return Emit(Step::Check);
   }
@@ -282,7 +282,7 @@ void ProgramBuilder::op(mlir::Operation &Op) {
     S.A = Let.getSlot();
     S.Assigned = Let.getValue();
     S.Condition = Let.getCondition();
-    S.Written = getSourceRange(Let.getLoc());
+    S.Range = getSourceRange(Let.getLoc());
     return Emit(Step::Let);
   }
   if (isa<plan::EmitOp>(Op))
@@ -298,8 +298,8 @@ std::unique_ptr<PlanProgram> PlanProgram::compile(plan::MatcherOp Matcher) {
     SlotInfo Info;
     Info.Name = cast<mlir::StringAttr>(Name).getValue().str();
     Info.IsInstruction = Kind == plan::SlotKind::Instruction;
-    Info.VariableSort = Sort(S);
-    Info.Written = getOutermostSourceRange(cast<mlir::LocationAttr>(Loc)).Start;
+    Info.VariableSort = S;
+    Info.Loc = getOutermostSourceRange(cast<mlir::LocationAttr>(Loc)).Start;
     Program->Slots.push_back(std::move(Info));
   }
   ProgramBuilder Builder(Program->Steps, Program->Regions);
@@ -356,7 +356,7 @@ void PlanMatch::printInstructions(raw_ostream &OS,
     // An unnamed matcher is named by its opcode: that of the instruction it
     // matched.
     std::string Name = Slot.Name.empty() ? Target->getOpcodeName() : Slot.Name;
-    All.push_back({getMainFileLine(Source, Slot.Written), Name, Target});
+    All.push_back({getMainFileLine(Source, Slot.Loc), Name, Target});
   }
   if (All.empty()) {
     OS << "{}";
@@ -868,11 +868,10 @@ void PlanMatcher::Run::emit() {
     if (!Explaining)
       return;
     if (none_of(Rejections, [&](const PlanRejection &R) {
-          return R.Written.Start == C.Written.Start &&
-                 R.Written.End == C.Written.End;
+          return R.Range.Start == C.Range.Start && R.Range.End == C.Range.End;
         }))
       Rejections.push_back(
-          {C.Condition, C.Written, std::move(Reason), PlanMatch(P, Slots)});
+          {C.Condition, C.Range, std::move(Reason), PlanMatch(P, Slots)});
   };
   auto Slot = [&](unsigned Slot) -> const Binding * {
     return isBound(Slot) ? &Slots[Slot] : nullptr;

@@ -37,15 +37,16 @@ class MatcherOp;
 } // namespace mpir_plan
 
 /// What a slot of a plan is: a meta variable or an instruction matcher, its
-/// name, and where the pattern writes it.
+/// name, and its location.
 struct SlotInfo {
   std::string Name;
   bool IsInstruction = false;
   /// For a meta variable, its sort.
   Sort VariableSort = Sort::Unknown;
-  /// Where it is written in the pattern: for one inlined from a matcher,
-  /// where the use is.
-  SMLoc Written;
+  /// The start of the slot in the pattern. A slot from an inlined matcher
+  /// body is located at the outermost use of the matcher, so the slots of
+  /// different uses get different locations.
+  SMLoc Loc;
 };
 
 /// A plan compiled to steps (see PlanMatcher.cpp).
@@ -112,8 +113,8 @@ private:
 /// A constraint that rejected a structural match.
 struct PlanRejection {
   mlir::Value Expression;
-  /// Where the constraint is written, which identifies it.
-  SMRange Written;
+  /// The constraint's source range, which identifies it.
+  SMRange Range;
   /// Why it could not be evaluated; empty if it was false.
   std::string Reason;
   /// The first structural match it rejected.

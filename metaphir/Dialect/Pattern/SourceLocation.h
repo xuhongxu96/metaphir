@@ -30,8 +30,8 @@ inline mlir::Location getLocation(mlir::MLIRContext *Context,
 /// site (an inlined matcher body), that of the callee. Invalid if it has none.
 SMRange getSourceRange(mlir::Location Loc);
 
-/// For a location of an operation inlined from a matcher's body, the range of
-/// the use it was inlined at, outermost first; otherwise Loc's own range.
+/// For a location inlined from a matcher's body, the range of the outermost
+/// use of the matcher; otherwise Loc's own range.
 SMRange getOutermostSourceRange(mlir::Location Loc);
 
 /// The line of Loc in the main file of SM (the pattern parsed first), if it
