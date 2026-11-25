@@ -130,8 +130,8 @@ static std::optional<Binding> toBinding(const ConstraintValue &V, Sort S) {
 class PlanMatcher::Run {
 public:
   Run(const PlanProgram &Program, ConcreteEvaluator &Evaluator,
-      const llvm::Function &F, bool Relaxed, bool Explaining)
-      : P(Program), Evaluator(Evaluator), Relaxed(Relaxed),
+      const llvm::Function &F, bool FindingConflicts, bool Explaining)
+      : P(Program), Evaluator(Evaluator), FindingConflicts(FindingConflicts),
         Explaining(Explaining), Registers(Program.NumRegisters),
         Slots(Program.Slots.size()) {
     for (const llvm::Instruction &I : instructions(F))
@@ -143,7 +143,7 @@ public:
   std::vector<PlanMatch> Matches;
   SmallVector<PlanRejection, 4> Rejections;
   bool HadStructuralMatch = false;
-  /// Relaxed: the structural match with the fewest conflicts, if any.
+  /// When finding conflicts: the structural match with the fewest, if any.
   std::optional<SmallVector<PlanConflict, 1>> Closest;
 
 private:
@@ -151,7 +151,7 @@ private:
       PointerUnion<const plan_step::Check *, const plan_step::Let *>;
   const PlanProgram &P;
   ConcreteEvaluator &Evaluator;
-  bool Relaxed;
+  bool FindingConflicts;
   bool Explaining;
   SmallVector<const llvm::Instruction *, 64> Instructions;
   std::vector<Binding> Registers;
@@ -189,7 +189,8 @@ private:
   }
 
   /// Binds Slot to Target if it is unbound; otherwise whether its binding is
-  /// Target, or, relaxed, records a meta variable bound to another target.
+  /// Target, or, when finding conflicts, records a meta variable bound to
+  /// another target.
   bool unify(unsigned Slot, const Binding &Target) {
     if (!isBound(Slot)) {
       Slots[Slot] = Target;
@@ -198,7 +199,7 @@ private:
     }
     if (Slots[Slot] == Target)
       return true;
-    if (!Relaxed || P.Slots[Slot].IsInstruction)
+    if (!FindingConflicts || P.Slots[Slot].IsInstruction)
       return false;
     const std::string &Name = P.Slots[Slot].Name;
     if (none_of(Conflicts, [&](const PlanConflict &C) {
@@ -543,7 +544,7 @@ void PlanMatcher::Run::exec(unsigned PC, unsigned End, unsigned Continuation) {
 
 void PlanMatcher::Run::emit() {
   HadStructuralMatch = true;
-  if (Relaxed) {
+  if (FindingConflicts) {
     if (!Conflicts.empty() && (!Closest || Conflicts.size() < Closest->size()))
       Closest =
           SmallVector<PlanConflict, 1>(Conflicts.begin(), Conflicts.end());
@@ -641,7 +642,7 @@ PlanMatcher::match(const llvm::Function &F,
                    bool *HadStructuralMatch) {
   // Analyses cached for an earlier function may belong to a freed one.
   Evaluator.resetAnalyses();
-  Run R(Program, Evaluator, F, /*Relaxed=*/false,
+  Run R(Program, Evaluator, F, /*FindingConflicts=*/false,
         /*Explaining=*/Unsatisfied != nullptr);
   R.run();
   if (HadStructuralMatch)
@@ -654,7 +655,7 @@ PlanMatcher::match(const llvm::Function &F,
 SmallVector<PlanConflict, 1>
 PlanMatcher::findConflicts(const llvm::Function &F) {
   Evaluator.resetAnalyses();
-  Run R(Program, Evaluator, F, /*Relaxed=*/true, /*Explaining=*/false);
+  Run R(Program, Evaluator, F, /*FindingConflicts=*/true, /*Explaining=*/false);
   R.run();
   if (!R.Closest)
     return {};

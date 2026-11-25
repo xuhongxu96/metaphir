@@ -123,7 +123,7 @@ struct PlanRejection {
   PlanMatch Rejected;
 };
 
-/// A meta variable a relaxed match found bound to two targets.
+/// A meta variable PlanMatcher::findConflicts found bound to two targets.
 struct PlanConflict {
   std::string Variable;
   Binding First;
