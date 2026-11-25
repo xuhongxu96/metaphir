@@ -60,7 +60,7 @@ public:
 
   struct Typing;
   /// A way to type a variant's instructions: its type variables' bindings.
-  using Row = std::vector<Binding>;
+  using TypeBindings = std::vector<Binding>;
 
 private:
   struct Variant {
@@ -75,10 +75,10 @@ private:
     bool Impossible = false;
   };
 
-  SmallVector<Row, 4> joinSignatures(const Variant &V,
-                                     const FunctionFeatures &Features) const;
+  SmallVector<TypeBindings, 4>
+  joinSignatures(const Variant &V, const FunctionFeatures &Features) const;
   bool constraintsMayHold(const Variant &V, const FunctionFeatures &Features,
-                          const Row &Types) const;
+                          const TypeBindings &Types) const;
 
   std::vector<Variant> Variants;
   /// Where the types of signatures are decoded; queries are therefore not

@@ -134,15 +134,15 @@ IndexQuery::~IndexQuery() = default;
 
 static constexpr size_t MaxTypings = 256;
 
-SmallVector<IndexQuery::Row, 4>
+SmallVector<IndexQuery::TypeBindings, 4>
 IndexQuery::joinSignatures(const Variant &V,
                            const FunctionFeatures &Features) const {
   unsigned NumVars = V.NumTypeVariables;
   auto Unbound = [](const Binding &B) {
     return std::holds_alternative<std::monostate>(B.Data);
   };
-  auto Typings = [&](const Typing &T) {
-    SmallVector<Row, 4> Rows;
+  auto BindingsOf = [&](const Typing &T) {
+    SmallVector<TypeBindings, 4> All;
     Signature First;
     First.ID = T.ID;
     for (auto It =
@@ -153,15 +153,15 @@ IndexQuery::joinSignatures(const Variant &V,
          It != Features.Signatures.end() && It->ID == T.ID; ++It) {
       if ((It->Flags & T.Present) != T.Present || (It->Flags & T.Absent) != 0)
         continue;
-      Row R(NumVars);
+      TypeBindings Bindings(NumVars);
       auto Unify = [&](unsigned Slot, const Binding &B) {
-        if (Slot >= R.size())
-          R.resize(Slot + 1);
-        if (Unbound(R[Slot])) {
-          R[Slot] = B;
+        if (Slot >= Bindings.size())
+          Bindings.resize(Slot + 1);
+        if (Unbound(Bindings[Slot])) {
+          Bindings[Slot] = B;
           return true;
         }
-        return R[Slot] == B;
+        return Bindings[Slot] == B;
       };
       bool Fits = true;
       unsigned Position = 0;
@@ -184,29 +184,29 @@ IndexQuery::joinSignatures(const Variant &V,
           break;
         }
       }
-      if (Fits && !is_contained(Rows, R))
-        Rows.push_back(std::move(R));
+      if (Fits && !is_contained(All, Bindings))
+        All.push_back(std::move(Bindings));
     }
-    return Rows;
+    return All;
   };
 
-  SmallVector<Row, 4> Joined(1, Row(NumVars));
+  SmallVector<TypeBindings, 4> Joined(1, TypeBindings(NumVars));
   bool Overflowed = false;
   for (const Typing &T : V.Typings) {
-    SmallVector<Row, 4> Each = Typings(T);
+    SmallVector<TypeBindings, 4> Each = BindingsOf(T);
     if (Each.empty())
       return {};
     if (Overflowed || Each.size() > MaxTypings) {
       Overflowed = true;
       continue;
     }
-    SmallVector<Row, 4> Next;
-    for (const Row &Partial : Joined)
-      for (const Row &Typing : Each) {
-        Row Merged = Partial;
-        Merged.resize(std::max(Merged.size(), Typing.size()));
+    SmallVector<TypeBindings, 4> Next;
+    for (const TypeBindings &Partial : Joined)
+      for (const TypeBindings &Bindings : Each) {
+        TypeBindings Merged = Partial;
+        Merged.resize(std::max(Merged.size(), Bindings.size()));
         bool Agrees = true;
-        for (auto [Slot, B] : enumerate(Typing)) {
+        for (auto [Slot, B] : enumerate(Bindings)) {
           if (Unbound(B))
             continue;
           if (Unbound(Merged[Slot]))
@@ -227,7 +227,7 @@ IndexQuery::joinSignatures(const Variant &V,
       Joined = std::move(Next);
   }
   if (Overflowed)
-    return SmallVector<Row, 4>(1, Row(NumVars));
+    return SmallVector<TypeBindings, 4>(1, TypeBindings(NumVars));
   return Joined;
 }
 
@@ -249,7 +249,8 @@ public:
   using Value = AbstractValue;
   using Argument = AbstractValue;
 
-  AbstractDomain(const FunctionFeatures &Features, const IndexQuery::Row &Types)
+  AbstractDomain(const FunctionFeatures &Features,
+                 const IndexQuery::TypeBindings &Types)
       : Features(Features), Types(Types) {}
 
   Value lift(ConstraintValue V) const {
@@ -334,13 +335,13 @@ private:
   }
 
   const FunctionFeatures &Features;
-  const IndexQuery::Row &Types;
+  const IndexQuery::TypeBindings &Types;
 };
 } // namespace
 
 bool IndexQuery::constraintsMayHold(const Variant &V,
                                     const FunctionFeatures &Features,
-                                    const Row &Types) const {
+                                    const TypeBindings &Types) const {
   AbstractDomain Domain(Features, Types);
   ExprEvaluator<AbstractDomain> Evaluator(Domain);
   for (mlir::Value C : V.Constraints) {
@@ -377,7 +378,7 @@ bool IndexQuery::mayMatchVariant(unsigned Index,
     return false;
   if (!Features.HasDetail)
     return true;
-  return any_of(joinSignatures(V, Features), [&](const Row &Types) {
+  return any_of(joinSignatures(V, Features), [&](const TypeBindings &Types) {
     return constraintsMayHold(V, Features, Types);
   });
 }
