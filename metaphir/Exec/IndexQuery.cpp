@@ -121,14 +121,7 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
       else if (auto Has = dyn_cast<mpir_index::HasGlobalOp>(Op))
         R.Globals.push_back(hashGlobalName(Has.getName()));
     }
-    llvm::sort(R.Shapes);
-    llvm::sort(R.Siblings);
-    R.Siblings.erase(std::unique(R.Siblings.begin(), R.Siblings.end()),
-                     R.Siblings.end());
-    llvm::sort(R.Globals);
-    R.Globals.erase(std::unique(R.Globals.begin(), R.Globals.end()),
-                    R.Globals.end());
-    llvm::sort(R.SiteFacts);
+    Normalize(R);
     Variants.push_back(std::move(V));
   }
 }
