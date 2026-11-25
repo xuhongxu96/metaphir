@@ -8,7 +8,6 @@
 #include "metaphir/Matching/ConstraintCoercion.h"
 #include "metaphir/Matching/Operators/AbstractCall.h"
 #include "metaphir/Matching/TypeCode.h"
-#include "mlir/IR/SymbolTable.h"
 
 namespace llvm {
 namespace metaphir {
@@ -86,15 +85,14 @@ IndexQuery::IndexQuery(mpir_index::QueryOp Query)
       } else if (auto Var = dyn_cast<mpir_index::TypeVarOp>(Op)) {
         V.NumTypeVariables = std::max(V.NumTypeVariables, Var.getSlot() + 1);
       } else if (auto Assume = dyn_cast<mpir_index::AssumeOp>(Op)) {
-        V.Constraints.push_back(Assume.getCondition());
+        mlir::Value Condition = Assume.getCondition();
+        V.Constraints.push_back(Condition);
         // A closed constraint evaluates alike in every match, and rejects
         // it when it is false or fails to evaluate.
         if (Assume.getClosed()) {
           Expected<ConstraintValue> Result = Concrete.evaluate(
-              Assume.getCondition(),
-              [](unsigned) -> const Binding * { return nullptr; });
-          mlir::Value Expression = Assume.getCondition();
-          Expected<bool> Holds = Result ? requireBoolean(*Result, Expression)
+              Condition, [](unsigned) -> const Binding * { return nullptr; });
+          Expected<bool> Holds = Result ? requireBoolean(*Result, Condition)
                                         : Expected<bool>(Result.takeError());
           if (!Holds) {
             consumeError(Holds.takeError());
