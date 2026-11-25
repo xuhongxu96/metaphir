@@ -81,7 +81,7 @@ protected:
     std::vector<IndexedModule> Modules;
     for (const std::string &Path : Paths) {
       Expected<IndexedModule> Module =
-          CorpusIndex::indexFile(Corpus, sys::path::filename(Path));
+          IndexedModule::computeFile(Corpus, sys::path::filename(Path));
       ASSERT_TRUE(static_cast<bool>(Module)) << toString(Module.takeError());
       Modules.push_back(std::move(*Module));
     }

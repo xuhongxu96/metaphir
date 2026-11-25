@@ -7,7 +7,6 @@
 
 using namespace llvm;
 using namespace llvm::metaphir;
-namespace MIRInstruction = llvm::metaphir::instruction;
 
 namespace {
 
@@ -38,7 +37,7 @@ protected:
   }
 
   IndexedModule index(StringRef Relative) {
-    Expected<IndexedModule> Module = CorpusIndex::indexFile(Root, Relative);
+    Expected<IndexedModule> Module = IndexedModule::computeFile(Root, Relative);
     EXPECT_TRUE(static_cast<bool>(Module)) << toString(Module.takeError());
     return Module ? std::move(*Module) : IndexedModule();
   }
@@ -187,10 +186,10 @@ TEST_F(CorpusIndexTest, RejectsOtherFiles) {
   Expected<CorpusIndex> CutPostings = CorpusIndex::read(path("cut-postings"));
   ASSERT_TRUE(static_cast<bool>(CutPostings))
       << toString(CutPostings.takeError());
-  Expected<std::vector<uint32_t>> Postings = CutPostings->readPostings(
-      PostingKey{PostingKey::Sibling,
-                 FunctionFeatures::getEdgeKey(instruction::I_ret,
-                                              instruction::I_ret)});
+  Expected<std::vector<uint32_t>> Postings =
+      CutPostings->readPostings(PostingKey{
+          PostingKey::Sibling, FunctionFeatures::getEdgeKey(
+                                   instruction::I_ret, instruction::I_ret)});
   ASSERT_FALSE(static_cast<bool>(Postings));
   consumeError(Postings.takeError());
 

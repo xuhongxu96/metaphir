@@ -88,7 +88,7 @@ static int build(StringRef ToolName) {
       SmallString<256> Relative(Files[Index]);
       sys::path::replace_path_prefix(Relative, CorpusDir, "");
       StringRef Path = sys::path::relative_path(Relative);
-      Expected<IndexedModule> Module = CorpusIndex::indexFile(
+      Expected<IndexedModule> Module = IndexedModule::computeFile(
           CorpusDir, Path, FeatureOptions{/*ValueFacts=*/!NoValueFacts});
       if (!Module) {
         logAllUnhandledErrors(Module.takeError(), errs(),

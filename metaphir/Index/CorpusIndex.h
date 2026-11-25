@@ -65,6 +65,11 @@ struct IndexedModule {
   /// Indexes Module, read from the file at Path (relative to the corpus).
   static IndexedModule compute(StringRef Path, const Module &Module,
                                const FeatureOptions &Options = {});
+  /// Indexes the file at Path, relative to Root: its stamp, and, when it
+  /// parses, its functions.
+  static Expected<IndexedModule> computeFile(StringRef Root, StringRef Path,
+                                             const FeatureOptions &Options = {
+                                                 /*ValueFacts=*/true});
 };
 
 /// A file's entry in a read index. Its features are read when asked for.
@@ -95,12 +100,6 @@ public:
   static Error write(StringRef File, StringRef Root,
                      ArrayRef<IndexedModule> Modules);
   static Expected<CorpusIndex> read(StringRef File);
-
-  /// Indexes the file at Path, relative to Root: its stamp, and, when it
-  /// parses, its functions.
-  static Expected<IndexedModule> indexFile(StringRef Root, StringRef Path,
-                                           const FeatureOptions &Options = {
-                                               /*ValueFacts=*/true});
 
   StringRef getRoot() const { return Root; }
   size_t size() const { return Entries.size(); }

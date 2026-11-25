@@ -114,8 +114,9 @@ IndexedModule IndexedModule::compute(StringRef Path, const Module &Module,
   return Indexed;
 }
 
-Expected<IndexedModule> CorpusIndex::indexFile(StringRef Root, StringRef Path,
-                                               const FeatureOptions &Options) {
+Expected<IndexedModule>
+IndexedModule::computeFile(StringRef Root, StringRef Path,
+                           const FeatureOptions &Options) {
   SmallString<256> FullPath(Root);
   sys::path::append(FullPath, Path);
   sys::fs::file_status Status;
