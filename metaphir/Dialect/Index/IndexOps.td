@@ -58,8 +58,14 @@ def Index_VariantOp : Index_Op<"variant", [HasParent<"QueryOp">, SingleBlock,
 
 def Index_HasInstructionOp : Index_Op<"has_instruction"> {
   let summary = "Some instruction matches the instruction matcher";
-  // What the constraints, not the instructions, need: a function without it
-  // may still match the variant's instructions.
+  let description = [{
+    With `derived`, a constraint needs the instruction, not the variant's
+    instructions: mpir-index-structuralize derives it from a constraint such
+    as `opcode(?i) == "sext"`. A function without it cannot match the
+    variant, but may still match its instructions, so the feature prunes
+    functions but is not part of the variant's structure (what
+    explainNoStructure reports on).
+  }];
   let arguments = (ins Mpir_OpcodeAttr:$opcode, UnitAttr:$derived);
   let assemblyFormat = "$opcode prop-dict attr-dict";
 }
@@ -78,7 +84,11 @@ def Index_HasSiblingOp : Index_Op<"has_sibling"> {
 
 def Index_HasGlobalOp : Index_Op<"has_global"> {
   let summary = "Some instruction has the global (an intrinsic, for 'llvm.*') as an operand";
-  // What the constraints, not the instructions, need, as for has_instruction.
+  let description = [{
+    With `derived`, a constraint needs the global, not the variant's
+    instructions, as for mpir_index.has_instruction: one such as
+    `?id == "llvm.ctlz"` on a callee, or `intrinsic(?f) == "llvm.smax"`.
+  }];
   let arguments = (ins StrAttr:$name, UnitAttr:$derived);
   let assemblyFormat = "$name prop-dict attr-dict";
 }

@@ -21,8 +21,9 @@ namespace metaphir {
 enum class WebQueryMode : uint8_t {
   /// The posting lists, then the features, evaluating the constraints on them.
   Full,
-  /// As Full, but a function's features need only have the instructions the
-  /// pattern matches (as metaphir-match --no-constraint-prefilter).
+  /// As Full, but a function's features and posting lists need only have
+  /// the instructions the pattern matches (as metaphir-match
+  /// --no-constraint-prefilter).
   NoConstraints,
   /// Without the index: every function is matched, so every pack is read.
   NoIndex,
@@ -75,13 +76,12 @@ struct RejectingConstraint {
 class WebQuery {
 public:
   /// Compiles the pattern Source, named Name in diagnostics, to match
-  /// against Index.
+  /// against Index, narrowing the functions to match as Mode says.
   static Expected<std::unique_ptr<WebQuery>>
-  compile(const WebIndex &Index, StringRef Source, StringRef Name);
+  compile(const WebIndex &Index, StringRef Source, StringRef Name,
+          WebQueryMode Mode = WebQueryMode::Full);
 
   ~WebQuery();
-
-  void setMode(WebQueryMode NewMode) { Mode = NewMode; }
 
   std::vector<ByteRange> getKeyRanges() const;
   Expected<std::vector<ByteRange>> findLists(const ByteCache &Cache);

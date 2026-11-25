@@ -82,11 +82,10 @@ public:
     // does not keep every query's.
     Cache.clear();
     Expected<std::unique_ptr<WebQuery>> Compiled =
-        WebQuery::compile(*Index, Pattern, Name);
+        WebQuery::compile(*Index, Pattern, Name, Mode);
     if (!Compiled)
       return errorValue(Compiled.takeError());
     Query = std::move(*Compiled);
-    Query->setMode(Mode);
     val Result = rangesValue(Query->getKeyRanges());
     val Warnings = val::array();
     for (const PatternNote &Warning : Query->getWarnings())

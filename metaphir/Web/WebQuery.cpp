@@ -32,9 +32,16 @@ struct WebQuery::Compiled {
 WebQuery::WebQuery(const WebIndex &Index) : Index(Index) {}
 WebQuery::~WebQuery() = default;
 
-Expected<std::unique_ptr<WebQuery>>
-WebQuery::compile(const WebIndex &Index, StringRef Source, StringRef Name) {
+Expected<std::unique_ptr<WebQuery>> WebQuery::compile(const WebIndex &Index,
+                                                      StringRef Source,
+                                                      StringRef Name,
+                                                      WebQueryMode Mode) {
   std::unique_ptr<WebQuery> Query(new WebQuery(Index));
+  Query->Mode = Mode;
+  // Without the constraints, no features are derived from them either: the
+  // posting lists look up only what the instructions need.
+  PipelineOptions Options;
+  Options.Structuralize = Mode != WebQueryMode::NoConstraints;
   Query->Pattern = std::make_unique<Compiled>();
   Compiled &Pattern = *Query->Pattern;
   std::string Message;
@@ -42,7 +49,7 @@ WebQuery::compile(const WebIndex &Index, StringRef Source, StringRef Name) {
   // Warnings are not errors: they are kept for the page.
   Pattern.Pattern = CompiledPattern::compile(
       MemoryBuffer::getMemBufferCopy(Source, Name), Err, /*ProgName=*/nullptr,
-      {}, [&](SourceMgr &SM) {
+      Options, [&](SourceMgr &SM) {
         SM.setDiagHandler(
             [](const SMDiagnostic &Diag, void *Warnings) {
               bool Located = Diag.getLineNo() > 0;

@@ -119,11 +119,10 @@ protected:
                WebQueryMode Mode = WebQueryMode::Full) {
     Result R;
     Expected<std::unique_ptr<WebQuery>> Query =
-        WebQuery::compile(*Web, Pattern, "pattern.mpir");
+        WebQuery::compile(*Web, Pattern, "pattern.mpir", Mode);
     EXPECT_TRUE(static_cast<bool>(Query)) << toString(Query.takeError());
     if (!Query)
       return R;
-    (*Query)->setMode(Mode);
     ByteCache Cache;
     fetch((*Query)->getKeyRanges(), Cache);
     using Stage =
@@ -455,6 +454,32 @@ TEST_F(WebQueryTest, MatchesTheSameInEveryMode) {
   Result NoIndex = query(Pattern, false, false, WebQueryMode::NoIndex);
   EXPECT_EQ(NoIndex.Matches, Full.Matches);
   EXPECT_EQ(NoIndex.Candidates, (std::vector<uint32_t>{0, 1}));
+}
+
+// The intrinsic is a feature only the constraint needs: without the
+// constraints, the posting lists do not look it up either.
+TEST_F(WebQueryTest, NoConstraintsLooksUpNoFeatureAConstraintNeeds) {
+  writeFile("a.ll", R"(
+    define i32 @ctlz(i32 %x) {
+      %r = call i32 @llvm.ctlz.i32(i32 %x, i1 false)
+      ret i32 %r
+    }
+    define i32 @cttz(i32 %x) {
+      %r = call i32 @llvm.cttz.i32(i32 %x, i1 false)
+      ret i32 %r
+    }
+    declare i32 @llvm.ctlz.i32(i32, i1)
+    declare i32 @llvm.cttz.i32(i32, i1)
+  )");
+  publish();
+  const char *Pattern = "%c = call i32 @llvm.?id(i32 ?x, i1 ?z)\n"
+                        ";; ?id == \"llvm.ctlz\"\n";
+  Result Full = query(Pattern);
+  EXPECT_EQ(Full.Candidates, (std::vector<uint32_t>{0}));
+  Result NoConstraints =
+      query(Pattern, false, false, WebQueryMode::NoConstraints);
+  EXPECT_EQ(NoConstraints.Candidates, (std::vector<uint32_t>{0, 1}));
+  EXPECT_EQ(NoConstraints.Matches, Full.Matches);
 }
 
 TEST_F(WebQueryTest, ReportsStagesThatLackTheirBytes) {
