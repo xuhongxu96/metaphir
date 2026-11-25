@@ -18,6 +18,8 @@ class Function;
 class GlobalValue;
 namespace metaphir {
 
+static_assert(NoType == 0, "a value-initialized type code is NoType");
+
 /// An instruction's kind as a built-in instruction matcher, the flags it has
 /// of those the matcher supports, and its types: its result's, and those of
 /// its first matcher operands (see collectMatcherOperands).
@@ -25,7 +27,8 @@ struct Signature {
   instruction::InstructionID ID = instruction::InstructionID(0);
   uint32_t Flags = 0;
   TypeCode Result = NoType;
-  std::array<TypeCode, NumOperandPositions> Operands = {NoType, NoType, NoType};
+  /// NoType for every position.
+  std::array<TypeCode, NumOperandPositions> Operands = {};
 
   auto tie() const { return std::make_tuple(ID, Flags, Result, Operands); }
   bool operator<(const Signature &Other) const { return tie() < Other.tie(); }
